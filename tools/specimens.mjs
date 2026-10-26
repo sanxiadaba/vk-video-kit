@@ -57,7 +57,8 @@ function rootAttrs(snippet) {
 function withWidth(snippet, tag, extra = '') {
   let s = snippet.trim();
   const hasW = !!TAGS[tag]?.attrs?.w;
-  if (tag === 'vk-page' || INLINE.has(tag) || !hasW) {
+  // vk-text 的 measure 会压过 w；这种文本不要再塞一个假的硬宽。
+  if (tag === 'vk-page' || INLINE.has(tag) || !hasW || (tag === 'vk-text' && /\smeasure="/.test(s))) {
     return extra ? s.replace(new RegExp(`^<${tag}`), `<${tag} ${extra}`) : s;
   }
   if (!rootAttrs(s).has('w')) s = s.replace(new RegExp(`^<${tag}`), `<${tag} w="1400"`);
@@ -188,15 +189,27 @@ function plateLens(tag) {
 
 /** 变体镜头里的目标先落到能装进 888 的密度；控件仍然可以改回去。 */
 function fitVariant(s, tag) {
+  const W = { 'vk-img': [900, 506], 'vk-figure': [520, null], 'vk-browser': [1100, null] };
+  if (W[tag]) {
+    const [w, h] = W[tag];
+    s = s.replace(/\sw="\d+"/, ` w="${w}"`);
+    if (h) s = s.replace(/\sh="\d+"/, ` h="${h}"`);
+  }
+  // 行内标记离开正文就没有字号；给它一个 body 语境，44px 地板才成立。
+  if (tag === 'vk-mark') return `<vk-text size="body">${s}</vk-text>`;
   if (tag !== 'vk-code' && tag !== 'vk-term') return s;
   return /\sdensity="/.test(s)
     ? s.replace(/\sdensity="[^"]*"/, ' density="compact"')
     : s.replace(new RegExp(`^<${tag}`), `<${tag} density="compact"`);
 }
 
+const CONTEXTUAL = new Set(['vk-edge', 'vk-annotate', 'vk-note']);
+
 function variantLens(tag) {
   const base = rootAttrs(extractSnippet(tag));
-  const snippet = withWidth(extractSnippet(tag), tag, 'data-variant-target');
+  const snippet = CONTEXTUAL.has(tag)
+    ? (sceneOf.get(tag) || '').trim().replace(new RegExp(`<${tag}(?=[\\s>])`), `<${tag} data-variant-target`)
+    : withWidth(extractSnippet(tag), tag, 'data-variant-target');
   const presets = presetsHtml(tag, base);
   const controls = TALL.has(tag) ? '' : controlsHtml(tag, base);
   if (tag === 'vk-page') {
@@ -205,16 +218,18 @@ function variantLens(tag) {
       data: presets.data,
     };
   }
-  const target = fitVariant(
-    clampWidth(
-      tag === 'vk-frames'
-        ? withWidth(extractSnippet(tag), tag, 'data-variant-target summary="none"')
-        : snippet
-    ),
-    tag
-  );
+  const target = CONTEXTUAL.has(tag)
+    ? clampWidth(snippet)
+    : fitVariant(
+        clampWidth(
+          tag === 'vk-frames'
+            ? withWidth(extractSnippet(tag), tag, 'data-variant-target summary="none"')
+            : snippet
+        ),
+        tag
+      );
   return {
-    html: `<vk-stack gap="md">
+    html: `<vk-stack gap="sm">
       ${presets.html}
       ${controls}
       <vk-box w="1680" surface="none">${target}</vk-box>
@@ -231,6 +246,14 @@ function anatomyLens(tag) {
       <vk-box x="0" y="792" w="1680" h="96" surface="none" border="hair" radius="none"><vk-text x="24" y="20" size="meta" mono emphasis="muted">页脚轨道 · 96</vk-text></vk-box>
     </vk-canvas>`;
   }
+  // 关系型组件离开它的语境（canvas / 代码）就没有意义；解剖整段场景。
+  // 场景本身已经是成品，不再叠芯片/引线——那会把关系图遮住。
+  if (tag === 'vk-edge' || tag === 'vk-annotate') {
+    const scene = (sceneOf.get(tag) || '').trim();
+    return `<vk-canvas w="1680" h="888" grid="24" data-anatomy>
+      <vk-box x="0" y="40" w="1680" surface="none">${scene}</vk-box>
+    </vk-canvas>`;
+  }
   const snippet = fitVariant(
     clampWidth(
       withWidth(
@@ -238,19 +261,26 @@ function anatomyLens(tag) {
         tag,
         tag === 'vk-frames' ? 'data-anatomy-target summary="none"' : 'data-anatomy-target'
       ),
-      1200
+      1100
     ),
     tag
   );
   return `<vk-canvas w="1680" h="888" grid="24" data-anatomy>
-    <vk-box x="80" y="40" w="1200" surface="none">${snippet}</vk-box>
+    <vk-box x="120" y="40" w="1100" surface="none">${snippet}</vk-box>
   </vk-canvas>`;
+}
+
+/** 用法镜头只给根标签；子内容省略，避免 620 宽把片段折成几十行。 */
+function minimalSnippet(tag) {
+  const raw = withWidth(extractSnippet(tag), tag, '').trim();
+  const m = raw.match(/^<[^>]+>/s);
+  return (m ? m[0] : raw).replace(/\s+/g, ' ').trim();
 }
 
 function usageLens(tag) {
   const uses = occurrences.get(tag) || [];
   const rows = uses
-    .slice(0, 6)
+    .slice(0, 4)
     .map((other) => {
       const def = TAGS[other];
       return `<a href="${other}.html"><vk-row gap="md" align="baseline" justify="between">
@@ -266,7 +296,7 @@ function usageLens(tag) {
   const snippet =
     tag === 'vk-page'
       ? '<vk-callout tone="accent" size="body">页面没有更小的用法片段；它本身就是容器。</vk-callout>'
-      : `<vk-code lang="html" density="compact" fit="wrap" w="620">${esc(withWidth(extractSnippet(tag), tag, '').trim())}</vk-code>`;
+      : `<vk-code lang="html" density="compact" fit="wrap" w="620">${esc(minimalSnippet(tag))}</vk-code>`;
   const partners = (PARTNERS[tag] || [])
     .slice(0, 3)
     .map((other) => `<a href="${other}.html"><vk-tag size="meta" tone="muted">${esc(other)}</vk-tag></a>`)
@@ -313,7 +343,7 @@ function apiRows(tag) {
 
 function apiLens(tag) {
   const rows = apiRows(tag);
-  const per = 8;
+  const per = 5;
   const html = rows
     .map((r, i) => r.replace('data-api-page="0"', `data-api-page="${Math.floor(i / per)}"`))
     .join('');

@@ -78,12 +78,18 @@ const specimenDir = `${SITE}/specimen`;
 const specimenFiles = fs.existsSync(specimenDir)
   ? fs.readdirSync(specimenDir).filter((f) => f.endsWith('.html')).sort()
   : [];
-const targets = specimenFiles.map((f) => ({
-  kind: 'specimen',
-  tag: f.replace(/\.html$/, ''),
-  label: f.replace(/\.html$/, ''),
-  path: `specimen/${f}`,
-}));
+const LENSES = ['plate', 'variants', 'anatomy', 'usage', 'api'];
+const checkLenses = !args.includes('--plate-only');
+const targets = specimenFiles.flatMap((f) => {
+  const tag = f.replace(/\.html$/, '');
+  const base = { kind: 'specimen', tag, path: `specimen/${f}` };
+  if (!checkLenses) return [{ ...base, label: tag }];
+  return LENSES.map((lens) => ({
+    ...base,
+    lens,
+    label: lens === 'plate' ? tag : `${tag}#${lens}`,
+  }));
+});
 if (fs.existsSync(`${SITE}/index.html`)) {
   targets.push({ kind: 'specimen', tag: 'index', label: 'index', path: 'index.html' });
 }
@@ -123,23 +129,38 @@ const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 
 async function open(target) {
   consoleIssues = [];
+  const hash = target.lens && target.lens !== 'plate' ? `#${target.lens}` : '';
+  // 先加载页面，再切 hash；Playwright 对同文档 hash 导航会返回 null。
   const resp = await page.goto(`${base}/${target.path}`, { waitUntil: 'load' });
   if (!resp || !resp.ok()) {
     fail(target.label, `页面加载失败 ${resp?.status()}`);
     return false;
   }
-  const needsVk = !(target.kind === 'page' && target.tag === 'index');
-  if (needsVk) {
-    await page.evaluate(() => window.vk?.ready?.());
-    const ready = await page.evaluate(() => !!window.vk);
-    if (!ready) {
-      fail(target.label, '运行时未就绪：window.vk 未定义');
-      return false;
-    }
-    await page.evaluate(() => window.vk?.freeze?.());
+  await page.evaluate(() => window.vk?.ready?.());
+  const ready = await page.evaluate(() => !!window.vk);
+  if (!ready) {
+    fail(target.label, '运行时未就绪：window.vk 未定义');
+    return false;
   }
+  await page.evaluate(() => window.vk?.freeze?.());
   await page.evaluate(() => document.fonts?.ready);
-  await sleep(60);
+  if (hash) {
+    await page.evaluate((lens) => {
+      location.hash = lens;
+    }, target.lens);
+    await page.waitForFunction(
+      (lens) => {
+        const section = document.querySelector(`[data-lens="${lens}"]`);
+        return section && !section.hidden && section.dataset.filled === '1';
+      },
+      target.lens,
+      { timeout: 4000 }
+    ).catch(() => {});
+    await page.evaluate(() => window.vk?.layout?.());
+    await sleep(200);
+  } else {
+    await sleep(60);
+  }
   return true;
 }
 

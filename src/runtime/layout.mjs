@@ -141,16 +141,21 @@ export class VkEdge extends VkElement {
     const host = this.closest('vk-canvas, vk-annotate, [data-vk-frame]') || this.parentElement;
     if (!host) return;
 
+    // 隐藏的镜头/模板不参与布局：没有盒子就不画，也不报警。
+    if (!host.getClientRects().length) return;
+
     const fromEl = safeQuery(host, this.getAttribute('from'), this);
     const toEl = safeQuery(host, this.getAttribute('to'), this);
     if (!fromEl || !toEl) {
-      this._warnOnce('endpoint', '找不到 from/to 目标，连线已清空');
+      if (host.getClientRects().length) this._warnOnce('endpoint', '找不到 from/to 目标，连线已清空');
       return;
     }
+    if (!fromEl.getClientRects().length || !toEl.getClientRects().length) return;
 
     // 坐标基准必须是 canvas 自己：SVG 是 inset:0 铺在 canvas 上的，
     // 用 offsetParent 会把 canvas 在页面里的偏移整段加进路径。
     const hr = host.getBoundingClientRect();
+    if (hr.width < 1 || hr.height < 1) return;
     const toLocal = (el) => {
       const r = el.getBoundingClientRect();
       const p = visualToLocal(r, hr, host.offsetWidth);
