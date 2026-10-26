@@ -219,7 +219,7 @@ export class VkFigure extends VkElement {
         cls: 'vk-fig-win',
         attrs: ' role="figure"',
         head: '<b class="vk-fig-fig"></b>',
-        inner: `<div class="vk-fig-body"><div class="vk-fig-slot"></div><div class="vk-fig-ph" aria-hidden="true">图未加载</div></div><figcaption class="vk-fig-caption"></figcaption><div class="vk-fig-url"></div>`,
+        inner: `<div class="vk-fig-body" data-vk-part="fig-body"><div class="vk-fig-slot"></div><div class="vk-fig-ph" aria-hidden="true">图未加载</div></div><figcaption class="vk-fig-caption"></figcaption><div class="vk-fig-url"></div>`,
       });
       this._shell = this.querySelector('.vk-win');
       this._hd = this.querySelector('.vk-hd');
@@ -558,7 +558,7 @@ export class VkTree extends VkElement {
 
     this.innerHTML = `
       <div class="vk-tree" data-variant="${esc(variant)}">
-        <div class="vk-tree-hd">
+        <div class="vk-tree-hd" data-vk-part="tree-hd">
           <span class="vk-tree-title">${esc(label)}</span>
           ${meta ? `<span class="vk-tree-meta">${meta}</span>` : ''}
         </div>
@@ -638,7 +638,7 @@ export class VkBytes extends VkElement {
       surface: 'paper',
       chrome: 'min',
       head: fileHead(file, 'bytes', range),
-      inner: `<div class="vk-bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
+      inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
     });
   }
 }
@@ -689,7 +689,7 @@ export class VkFrames extends VkElement {
             </div>`
           )
           .join('');
-        return `<section class="vk-frame" data-active="${index === active ? '1' : '0'}" data-index="${index}">
+        return `<section class="vk-frame" data-vk-part="frame" data-active="${index === active ? '1' : '0'}" data-index="${index}">
           <header class="vk-frame-hd">
             <span class="vk-frame-n">${esc(f.name ?? 'frame')}</span>
             ${addresses ? `<span class="vk-frame-fa">${esc(f.addr ?? '')}</span>` : ''}
@@ -701,10 +701,10 @@ export class VkFrames extends VkElement {
     const head =
       this.getAttribute('summary') === 'none'
         ? ''
-        : `<div class="vk-frames-hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · ${grows === 'up' ? '向上' : '向下'}生长</span></div>`;
+        : `<div class="vk-frames-hd" data-vk-part="hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · ${grows === 'up' ? '向上' : '向下'}生长</span></div>`;
     this.innerHTML = `<div class="vk-frames" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}" data-summary="${esc(this.getAttribute('summary') || 'all')}">
       ${head}
-      <div class="vk-frames-bd">${body}</div>
+      <div class="vk-frames-bd" data-vk-part="bd">${body}</div>
     </div>`;
   }
 }
@@ -824,7 +824,7 @@ export class VkCells extends VkElement {
       .map((v, i) => {
         const isFlag = flag === i + 1;
         const label = isFlag ? `${labels[i] || `[${i}]`} · 越界` : labels[i];
-        return `<div class="vk-cell"${isFlag ? ' data-flag="1"' : ''} role="listitem">
+        return `<div class="vk-cell" data-vk-part="cell"${isFlag ? ' data-flag="1"' : ''} role="listitem">
           ${label ? `<span class="vk-cell-l">${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(v)}</span>
           ${addr ? `<span class="vk-cell-a">${fmtAddr(base + i * stride)}</span>` : ''}

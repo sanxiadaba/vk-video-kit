@@ -1,4 +1,4 @@
-/* 灯箱：帧外只有这一页纸。帧内的一切都由 vk 组件画。 */
+/* 印刷台面：帧外只有一张有标记的墨色台面，不是黑边。 */
 html,
 body {
   margin: 0;
@@ -10,9 +10,28 @@ body {
   place-items: center;
   overflow: hidden;
 }
-vk-page {
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(120, 140, 170, 0.09) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(120, 140, 170, 0.09) 1px, transparent 1px);
+  background-size: 48px 48px;
+  pointer-events: none;
+}
+body > vk-page {
+  position: relative;
+  z-index: 1;
   width: min(100vw, calc(100vh * 16 / 9));
   height: auto;
+  outline: 1px solid #26313e;
+  outline-offset: 10px;
+  box-shadow: 0 30px 90px rgba(0, 0, 0, 0.5);
+}
+/* 嵌套在 vk-page 里的页面不跟视口走，跟宿主走。 */
+vk-page {
+  width: 100%;
 }
 
 /* 隐藏的镜头/页不能占位；UA 的 [hidden] 会被组件的 display 覆盖。 */
@@ -20,9 +39,9 @@ vk-page {
   display: none !important;
 }
 
-/* 链接只做语义与可访问性，视觉全部交给 vk。 */
+/* 链接只做语义与可访问性，视觉全部交给 vk；display:contents 会让锚点失去盒子、无法聚焦。 */
 a {
-  display: contents;
+  display: block;
   color: inherit;
   text-decoration: none;
 }

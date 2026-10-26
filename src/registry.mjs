@@ -385,6 +385,7 @@ export const TAGS = {
     attrs: {
       'tone': oneOf('neutral', 'accent', 'ok', 'warn', 'err', 'muted'),
       'size': oneOf('label', 'meta'),
+      'state': oneOf('selected', 'current', 'disabled'),
       'bare': bool(),
     },
   },
@@ -486,7 +487,7 @@ export const TAGS = {
       'variant': oneOf('ledger', 'compare', 'spec'),
       'stripe': bool(),
       'mono': bool(),
-      'density': oneOf('normal', 'compact'),
+      'density': oneOf('normal', 'compact', 'dense'),
     },
   },
   'vk-math': {

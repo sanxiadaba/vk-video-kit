@@ -85,7 +85,12 @@ for (const page of pages) {
       if (targetIds === null) {
         failures.push(`${page} → ${raw}: 目标页打不开 HTTP ${url.pathname}`);
       } else if (id && !targetIds.has(id)) {
-        failures.push(`${page} → ${raw}: 锚点 #${id} 不存在${samePath ? '' : `（目标 ${url.pathname}）`}`);
+        // 镜头/索引页是 JS 路由，不靠 DOM id 落点；有 data-lens / data-docpage 即为合法。
+        const lensRoute = samePath && /^(plate|variants|anatomy|usage|api)$/.test(id) && /data-lens=/.test(html);
+        const docRoute = samePath && /^p\d+$/.test(id) && /data-docpage=/.test(html);
+        if (!lensRoute && !docRoute) {
+          failures.push(`${page} → ${raw}: 锚点 #${id} 不存在${samePath ? '' : `（目标 ${url.pathname}）`}`);
+        }
       }
       if (samePath) continue;
       // 跨页 hash：目标页已通过 idsOf 取到 200，不再重复检查 content-type。

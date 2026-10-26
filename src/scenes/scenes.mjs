@@ -131,7 +131,7 @@ export const SCENES = [
   {
     tag: 'vk-math',
     body: s`
-<div style="width:1400px"><vk-math display size="heading" src="../code/formula.tex"></vk-math></div>`,
+<vk-math display size="heading" w="1400" src="../code/formula.tex"></vk-math>`,
   },
 
   {

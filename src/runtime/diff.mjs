@@ -100,7 +100,7 @@ export class VkDiff extends VkElement {
     const cell = ({ kind, n, html, row }) => {
       const sign = kind === 'del' ? '−' : kind === 'add' ? '+' : '';
       const sr = kind === 'del' ? '删除' : kind === 'add' ? '新增' : '';
-      const ln = showNums ? `<span class="vk-ln" aria-hidden="true">${n}</span>` : '';
+      const ln = showNums ? `<span class="vk-ln" data-vk-part="ln" aria-hidden="true">${n}</span>` : '';
       return `<div class="vk-dline is-${kind}" data-row="${row}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${ln}<span class="vk-dsrc">${html || ' '}</span></div>`;
     };
     // 统一视图：旧/新双行号；空号保留列位，读改前改后不会错位。
@@ -108,7 +108,7 @@ export class VkDiff extends VkElement {
       const sign = kind === 'del' ? '−' : kind === 'add' ? '+' : '';
       const sr = kind === 'del' ? '删除' : kind === 'add' ? '新增' : '';
       const nums = showNums
-        ? `<span class="vk-dnums" aria-hidden="true"><span class="vk-ln">${oldN || ''}</span><span class="vk-ln">${newN || ''}</span></span>`
+        ? `<span class="vk-dnums" aria-hidden="true"><span class="vk-ln" data-vk-part="ln">${oldN || ''}</span><span class="vk-ln" data-vk-part="ln">${newN || ''}</span></span>`
         : '';
       return `<div class="vk-dline is-${kind}" data-row="${row}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${nums}<span class="vk-dsrc">${html || ' '}</span></div>`;
     };

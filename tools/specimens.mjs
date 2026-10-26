@@ -104,55 +104,86 @@ function controlsOf(tag) {
 }
 
 function controlsHtml(tag, base) {
-  const groups = controlsOf(tag).map((name) => {
+  const groups = controlsOf(tag).slice(0, 3).map((name) => {
     const spec = TAGS[tag].attrs[name];
     const on = base.get(name);
     const tags = spec.values
-      .map((v) => `<vk-tag data-attr="${esc(name)}" data-value="${esc(v)}" tone="${on === v ? 'accent' : 'muted'}" size="meta">${esc(VALUE_LABELS[v] ?? v)}</vk-tag>`)
+      .map((v) => `<vk-tag data-attr="${esc(name)}" data-value="${esc(v)}" role="button" tabindex="0" aria-pressed="${on === v}" ${on === v ? 'state="selected"' : ''} tone="muted" size="meta">${esc(VALUE_LABELS[v] ?? v)}</vk-tag>`)
       .join('');
-    return `<vk-stack gap="2xs" w="360">
+    return `<vk-stack gap="2xs" w="390">
       <vk-text size="meta" mono emphasis="muted">${esc(spec.label || name)}</vk-text>
       <vk-row gap="2xs" wrap>${tags}</vk-row>
     </vk-stack>`;
   });
-  return groups.length ? `<vk-row gap="lg" align="top" wrap>${groups.join('')}</vk-row>` : '';
+  return groups.length ? `<vk-row gap="md" align="top" wrap data-controls>${groups.join('')}</vk-row>` : '';
 }
 
 function presetsHtml(tag, base) {
   const list = [{ label: '默认', attrs: {} }, ...(PRESETS[tag] || [])];
   const tags = list
-    .map((p, i) => `<vk-tag data-preset="${i}" tone="${i === 0 ? 'accent' : 'muted'}" size="meta">${esc(p.label)}</vk-tag>`)
+    .map((p, i) => `<vk-tag data-preset="${i}" role="button" tabindex="0" aria-pressed="${i === 0}" ${i === 0 ? 'state="selected"' : ''} tone="muted" size="meta">${esc(p.label)}</vk-tag>`)
     .join('');
   const data = JSON.stringify(list).replace(/</g, '\\u003c');
   return {
-    html: `<vk-row gap="xs" align="center" wrap data-presets>${tags}</vk-row>`,
+    html: `<vk-stack gap="2xs"><vk-text size="meta" mono emphasis="muted">预设</vk-text><vk-row gap="2xs" align="center" wrap data-presets>${tags}</vk-row></vk-stack>`,
     data: `<script type="application/json" id="vk-presets">${data}</script>`,
   };
 }
 
 /* --------------------------------------------------------------- 页块 */
 
-function lensBar(tag, info) {
-  const defs = [
-    ['plate', '成品'],
-    ['variants', '变体'],
-    ['anatomy', '解剖'],
-    ['usage', '用法'],
-    ['api', 'API'],
-  ];
-  const tags = defs
-    .map(([id, label]) => `<a href="#${id}"><vk-tag data-lens-tag="${id}" tone="${id === 'plate' ? 'accent' : 'muted'}" size="meta">${label}</vk-tag></a>`)
+const LENSES = [
+  ['plate', '成品'],
+  ['variants', '变体'],
+  ['anatomy', '解剖'],
+  ['usage', '用法'],
+  ['api', 'API'],
+];
+
+function pageHead(tag) {
+  const def = TAGS[tag];
+  const i = ORDER.indexOf(tag);
+  const no = String(i + 1).padStart(2, '0');
+  const total = String(ORDER.length).padStart(2, '0');
+  const nav = LENSES
+    .map(([id, label]) => `<a href="#${id}" role="tab" aria-selected="${id === 'plate'}" data-lens-link><vk-tag data-lens-tag="${id}" ${id === 'plate' ? 'state="selected"' : ''} tone="muted" size="meta">${label}</vk-tag></a>`)
     .join('');
+  return `<vk-row slot="header" w="1680" justify="between" align="center">
+    <vk-row gap="sm" align="baseline">
+      <vk-text size="meta" mono emphasis="muted">PLATE ${no} / ${total}</vk-text>
+      <vk-text size="label" mono weight="medium" role="heading" aria-level="1">${tag}</vk-text>
+      <vk-text size="label" emphasis="secondary">${esc(def.name)}</vk-text>
+      <vk-tag size="meta" tone="muted">${esc(LAYER_NAME[def.layer])}</vk-tag>
+    </vk-row>
+    <vk-row gap="2xs" align="center" role="tablist" aria-label="镜头">${nav}</vk-row>
+  </vk-row>`;
+}
+
+function pageFoot(tag) {
+  const i = ORDER.indexOf(tag);
+  const n = ORDER.length;
+  const prev = ORDER[(i - 1 + n) % n];
+  const next = ORDER[(i + 1) % n];
+  const no = String(i + 1).padStart(2, '0');
+  const total = String(n).padStart(2, '0');
   return `<vk-row slot="footer" w="1680" justify="between" align="center">
-    <vk-row gap="xs" align="center">${tags}</vk-row>
+    <vk-row gap="sm" align="center">
+      <a href="../index.html"><vk-tag size="meta" tone="muted">目录</vk-tag></a>
+      <a href="${prev}.html" rel="prev"><vk-tag size="meta" tone="muted">← ${prev}</vk-tag></a>
+      <a href="${next}.html" rel="next"><vk-tag size="meta" tone="muted">${next} →</vk-tag></a>
+    </vk-row>
     <vk-row gap="md" align="center">
-      <vk-text size="meta" mono emphasis="muted" data-pageinfo>${info}</vk-text>
-      <vk-text size="meta" mono emphasis="muted">← → 翻页 · [ ] 换组件</vk-text>
+      <vk-text size="meta" mono emphasis="muted" data-pageinfo></vk-text>
+      <vk-text size="meta" mono emphasis="muted">${no} / ${total} · ← → · [ ]</vk-text>
     </vk-row>
   </vk-row>`;
 }
 
-function shell({ title, tag, page, header, footer, body, scripts }) {
+function shell({ title, tag, page, body, scripts }) {
+  const i = ORDER.indexOf(tag);
+  const n = ORDER.length;
+  const prev = ORDER[(i - 1 + n) % n];
+  const next = ORDER[(i + 1) % n];
   return `<!doctype html>
 <!-- generated by tools/specimens.mjs — do not edit -->
 <html lang="zh-CN">
@@ -166,12 +197,13 @@ function shell({ title, tag, page, header, footer, body, scripts }) {
 <link rel="stylesheet" href="${page === 'specimen' ? '../' : ''}vk/vk.css">
 <link rel="stylesheet" href="${page === 'specimen' ? '../' : ''}showcase.css">
 </head>
-<body data-page="${page}"${tag ? ` data-tag="${tag}"` : ''}${scripts || ''}>
-<vk-page fit="contain" align="center" header="${esc(header)}">
-${lensBar(tag, '')}
+<body data-page="${page}"${tag ? ` data-tag="${tag}" data-prev="${prev}.html" data-next="${next}.html"` : ''}>
+<vk-page fit="contain" align="top">
+${pageHead(tag)}
 ${body}
+${pageFoot(tag)}
 </vk-page>
-${footer || ''}
+${scripts || ''}
 <script src="${page === 'specimen' ? '../' : ''}dist/vk.js"></script>
 <script src="${page === 'specimen' ? '../' : ''}showcase.js"></script>
 <script>window.vk.ready();</script>
@@ -184,7 +216,9 @@ ${footer || ''}
 function plateLens(tag) {
   let body = sceneOf.get(tag) || '';
   if (tag === 'vk-page') body = body.replace('<vk-page', '<vk-page fit="contain"');
-  return `<vk-stack w="1680" h="888" justify="center" align="center">${body}</vk-stack>`;
+  return `<vk-box w="1680" h="888" surface="paper" border="hair" radius="none">
+    <vk-stack w="1680" h="888" justify="center" align="center">${body}</vk-stack>
+  </vk-box>`;
 }
 
 /** 变体镜头里的目标先落到能装进 888 的密度；控件仍然可以改回去。 */
@@ -219,31 +253,48 @@ function variantLens(tag) {
     };
   }
   const target = CONTEXTUAL.has(tag)
-    ? clampWidth(snippet)
+    ? clampWidth(snippet, 1240)
     : fitVariant(
         clampWidth(
           tag === 'vk-frames'
             ? withWidth(extractSnippet(tag), tag, 'data-variant-target summary="none"')
-            : snippet
+            : snippet,
+          1240
         ),
         tag
       );
+  const tall = TALL.has(tag);
+  // 宽关系图（edge / annotate）不塞进 1240 的舞台：整幅 + 顶部预设 + 底部控件。
+  if (CONTEXTUAL.has(tag) || tag === 'vk-canvas') {
+    const wide = clampWidth(snippet, 1680);
+    const presetRow = presets.html.replace('<vk-text size="meta" mono emphasis="muted">预设</vk-text>', '');
+    return {
+      html: `<vk-stack h="888" gap="sm">
+        <vk-row justify="between" align="bottom" w="1680">${presetRow}<vk-text size="meta" mono emphasis="muted">关系图 · 整幅</vk-text></vk-row>
+        <vk-stack h="520" justify="center" align="center">${wide}</vk-stack>
+        ${controls}
+      </vk-stack>`,
+      data: presets.data,
+    };
+  }
   return {
-    html: `<vk-stack gap="sm">
-      ${presets.html}
-      ${controls}
-      <vk-box w="1680" surface="none">${target}</vk-box>
-    </vk-stack>`,
+    html: `<vk-row gap="lg" align="top" w="1680" h="888">
+      <vk-box w="380" surface="none"><vk-stack gap="md">${presets.html}</vk-stack></vk-box>
+      <vk-box w="1240" surface="none"><vk-stack h="888" gap="md">
+        ${!tall && !PRESETS[tag]?.length && !controlsOf(tag).length ? `<vk-callout tone="accent" title="没有可见变体" size="body">它的形状由内容长度决定；换内容比换属性更接近它的用法。下面是最小形态，解剖页给出实际尺寸。</vk-callout>` : ''}
+        <vk-stack h="${tall ? 888 : 660}" justify="center" align="center">${target}</vk-stack>
+        ${tall ? '' : controls}
+      </vk-stack></vk-box>
+    </vk-row>`,
     data: presets.data,
   };
 }
 
 function anatomyLens(tag) {
   if (tag === 'vk-page') {
+    const scene = (sceneOf.get('vk-page') || '').trim().replace(/^<vk-page/, '<vk-page data-anatomy-target');
     return `<vk-canvas w="1680" h="888" grid="24" data-anatomy>
-      <vk-box x="0" y="72" w="1680" h="96" surface="none" border="hair" radius="none"><vk-text x="24" y="20" size="meta" mono emphasis="muted">页眉轨道 · 96</vk-text></vk-box>
-      <vk-box x="0" y="216" w="1680" h="528" surface="none" border="strong" radius="none"><vk-text x="24" y="20" size="meta" mono emphasis="muted">正文 · 1680×888 安全区</vk-text></vk-box>
-      <vk-box x="0" y="792" w="1680" h="96" surface="none" border="hair" radius="none"><vk-text x="24" y="20" size="meta" mono emphasis="muted">页脚轨道 · 96</vk-text></vk-box>
+      <vk-box x="120" y="40" w="1400" surface="none">${scene}</vk-box>
     </vk-canvas>`;
   }
   // 关系型组件离开它的语境（canvas / 代码）就没有意义；解剖整段场景。
@@ -254,6 +305,8 @@ function anatomyLens(tag) {
       <vk-box x="0" y="40" w="1680" surface="none">${scene}</vk-box>
     </vk-canvas>`;
   }
+  const WIDE = { 'vk-bytes': 1240, 'vk-canvas': 1400, 'vk-table': 1400, 'vk-frames': 1400, 'vk-browser': 1400 };
+  const fitW = WIDE[tag] || 1100;
   const snippet = fitVariant(
     clampWidth(
       withWidth(
@@ -261,12 +314,12 @@ function anatomyLens(tag) {
         tag,
         tag === 'vk-frames' ? 'data-anatomy-target summary="none"' : 'data-anatomy-target'
       ),
-      1100
+      fitW
     ),
     tag
   );
   return `<vk-canvas w="1680" h="888" grid="24" data-anatomy>
-    <vk-box x="120" y="40" w="1100" surface="none">${snippet}</vk-box>
+    <vk-box x="120" y="40" w="${fitW}" surface="none">${snippet}</vk-box>
   </vk-canvas>`;
 }
 
@@ -344,19 +397,38 @@ function apiRows(tag) {
 function apiLens(tag) {
   const rows = apiRows(tag);
   const per = 5;
+  if (!rows.length) {
+    return `<vk-row justify="between" align="center">
+      <vk-text size="heading" weight="bold" role="heading" aria-level="2">属性</vk-text>
+      <vk-tag data-copy role="button" tabindex="0" tone="muted" size="meta">复制当前片段</vk-tag>
+    </vk-row>
+    <vk-row gap="xl" align="center" w="1680">
+      <vk-box w="360" surface="none"><vk-stack gap="2xs">
+        <vk-text size="display" weight="bold">0</vk-text>
+        <vk-text size="title" weight="medium">个公开属性</vk-text>
+        <vk-text size="body" emphasis="secondary">内容就是全部 API。</vk-text>
+      </vk-stack></vk-box>
+      <vk-box w="1200" surface="none"><vk-stack gap="md">
+        <vk-callout tone="accent" title="没有公开属性" size="body">这个组件只消费文本内容；它的形状由内容本身决定，没有可调的外观或布局开关。用法页给最小片段，解剖页给尺寸。</vk-callout>
+        <vk-text size="body" mono emphasis="secondary" w="1200">${esc(minimalSnippet(tag))}</vk-text>
+      </vk-stack></vk-box>
+    </vk-row>`;
+  }
+  const pages = Math.max(1, Math.ceil(rows.length / per));
+  const balanced = Math.max(1, Math.ceil(rows.length / pages));
   const html = rows
-    .map((r, i) => r.replace('data-api-page="0"', `data-api-page="${Math.floor(i / per)}"`))
+    .map((r, i) => r.replace('data-api-page="0"', `data-api-page="${Math.floor(i / balanced)}"`))
     .join('');
   return `<vk-row justify="between" align="center">
-    <vk-text size="heading" weight="bold">属性</vk-text>
+    <vk-text size="heading" weight="bold" role="heading" aria-level="2">属性</vk-text>
     <vk-row gap="md" align="center">
-      <vk-text size="meta" mono emphasis="muted" data-apipages>${Math.max(1, Math.ceil(rows.length / per))} 页</vk-text>
-      <vk-tag data-copy tone="muted" size="meta">复制当前片段</vk-tag>
+      <vk-text size="meta" mono emphasis="muted" data-apipages>${pages} 页 · ${rows.length} 项</vk-text>
+      <vk-tag data-copy role="button" tabindex="0" tone="muted" size="meta">复制当前片段</vk-tag>
     </vk-row>
   </vk-row>
-  <vk-table variant="spec" density="compact" w="1680">
+  <vk-table variant="spec" density="dense" w="1680">
     <table>
-      <colgroup><col style="width:320px"><col style="width:200px"><col style="width:800px"><col style="width:360px"></colgroup>
+      <colgroup><col style="width:280px"><col style="width:160px"><col style="width:940px"><col style="width:300px"></colgroup>
       <thead><tr><th>属性</th><th>中文</th><th>类型</th><th>默认</th></tr></thead>
       <tbody>${html}</tbody>
     </table>
@@ -368,27 +440,25 @@ function apiLens(tag) {
 const pages = [];
 for (const tag of ORDER) {
   const def = TAGS[tag];
-  const no = String(tagIndex.get(tag) + 1).padStart(2, '0');
-  const header = `${no} / 31 · ${tag} · ${def.name} · ${LAYER_NAME[def.layer]}`;
   const variants = variantLens(tag);
   const body = [
-    `<vk-box w="1680" h="888" surface="none" id="plate" data-lens="plate">${plateLens(tag)}</vk-box>`,
-    `<vk-box w="1680" h="888" surface="none" id="variants" data-lens="variants" hidden></vk-box>`,
+    `<vk-box w="1680" h="888" surface="none" data-lens="plate">${plateLens(tag)}</vk-box>`,
+    `<vk-box w="1680" h="888" surface="none" data-lens="variants" hidden></vk-box>`,
     `<template data-lens-template="variants">${variants.html}</template>`,
-    `<vk-box w="1680" h="888" surface="none" id="anatomy" data-lens="anatomy" hidden></vk-box>`,
+    `<vk-box w="1680" h="888" surface="none" data-lens="anatomy" hidden></vk-box>`,
     `<template data-lens-template="anatomy">${anatomyLens(tag)}</template>`,
-    `<vk-box w="1680" h="888" surface="none" id="usage" data-lens="usage" hidden></vk-box>`,
+    `<vk-box w="1680" h="888" surface="none" data-lens="usage" hidden></vk-box>`,
     `<template data-lens-template="usage">${usageLens(tag)}</template>`,
-    `<vk-box w="1680" h="888" surface="none" id="api" data-lens="api" hidden></vk-box>`,
+    `<vk-box w="1680" h="888" surface="none" data-lens="api" hidden></vk-box>`,
     `<template data-lens-template="api">${apiLens(tag)}</template>`,
-    variants.data,
-    `<script type="application/json" data-base-snippet>${JSON.stringify({
-      html: tag === 'vk-page' ? '' : withWidth(extractSnippet(tag), tag, '').trim(),
-    }).replace(/</g, '\\u003c')}</script>`,
   ].join('\n');
+  const scripts = `${variants.data}
+<script type="application/json" data-base-snippet>${JSON.stringify({
+    html: tag === 'vk-page' ? '' : withWidth(extractSnippet(tag), tag, '').trim(),
+  }).replace(/</g, '\\u003c')}</script>`;
   pages.push({
     tag,
-    html: shell({ title: `${tag} · ${def.name} · vk 标本册`, tag, page: 'specimen', header, body, footer: '' }),
+    html: shell({ title: `${tag} · ${def.name} · vk 标本册`, tag, page: 'specimen', body, scripts }),
   });
 }
 
@@ -411,24 +481,48 @@ function indexColumn(entries) {
 
 function indexPageHtml() {
   const entries = ORDER.map((tag, i) => indexRow(tag, i));
-  const perPage = 26;
+  const perPage = 16;
   const chunks = [];
   for (let i = 0; i < entries.length; i += perPage) chunks.push(entries.slice(i, i + perPage));
-  const sections = chunks
+  const total = ORDER.length;
+  const layerTags = LAYERS.map((l) => `<vk-tag size="meta" tone="muted">${esc(l.label)} · ${ORDER.filter((t) => TAGS[t].layer === l.id).length}</vk-tag>`).join('');
+  const cover = `<vk-box w="1680" h="888" surface="none" data-docpage="0">
+    <vk-stack h="888" justify="center" gap="md">
+      <vk-text size="display" weight="bold" role="heading" aria-level="1">${total}</vk-text>
+      <vk-text size="title" weight="medium">个组件，5 层，一张 1920×1080 的台面。</vk-text>
+      <vk-row gap="sm" align="center" wrap>${layerTags}</vk-row>
+      <vk-text size="body" emphasis="secondary" w="1100">不是 ${total} 个 demo，是 ${total} 张标本。每张五个镜头：成品、变体、解剖、用法、API。</vk-text>
+    </vk-stack>
+  </vk-box>`;
+  const contents = chunks
     .map((chunk, page) => {
-      const left = chunk.slice(0, 13);
-      const right = chunk.slice(13);
-      return `<vk-box w="1680" h="888" surface="none" id="p${page + 1}" data-docpage="${page}"${page ? ' hidden' : ''}>
-        <vk-row gap="md" align="top">${indexColumn(left)}${indexColumn(right)}</vk-row>
+      const half = Math.ceil(chunk.length / 2);
+      const left = chunk.slice(0, half);
+      const right = chunk.slice(half);
+      return `<vk-box w="1680" h="888" surface="none" data-docpage="${page + 1}" hidden>
+        <vk-stack gap="md">
+          <vk-row justify="between" align="baseline">
+            <vk-text size="heading" weight="bold" role="heading" aria-level="2">目录</vk-text>
+            <vk-text size="meta" mono emphasis="muted">${String(page * perPage + 1).padStart(2, '0')}–${String(page * perPage + chunk.length).padStart(2, '0')}</vk-text>
+          </vk-row>
+          <vk-row gap="md" align="top">${indexColumn(left)}${indexColumn(right)}</vk-row>
+        </vk-stack>
       </vk-box>`;
     })
     .join('');
-  const pageTags = chunks
-    .map((_, i) => `<a href="#p${i + 1}"><vk-tag data-docpage-tag="${i}" tone="${i === 0 ? 'accent' : 'muted'}" size="meta">${i + 1}</vk-tag></a>`)
+  const pageTags = ['封面', ...chunks.map((_, i) => String(i + 1))]
+    .map((label, i) => `<a href="#p${i + 1}"><vk-tag data-docpage-tag="${i}" ${i === 0 ? 'state="selected"' : ''} tone="muted" size="meta">${label}</vk-tag></a>`)
     .join('');
+  const header = `<vk-row slot="header" w="1680" justify="between" align="center">
+    <vk-row gap="sm" align="baseline">
+      <vk-text size="label" mono weight="medium" role="heading" aria-level="1">vk 标本册</vk-text>
+      <vk-text size="meta" mono emphasis="muted">${total} 个组件 · 5 层 · 1920 × 1080</vk-text>
+    </vk-row>
+    <vk-text size="meta" mono emphasis="muted">vi · 2026</vk-text>
+  </vk-row>`;
   const footer = `<vk-row slot="footer" w="1680" justify="between" align="center">
     <vk-row gap="xs" align="center">${pageTags}</vk-row>
-    <vk-text size="meta" mono emphasis="muted">31 个组件 · 5 层 · 1920 × 1080</vk-text>
+    <vk-text size="meta" mono emphasis="muted">← → 翻页 · 1–${total} 组件 · 1–5 镜头</vk-text>
   </vk-row>`;
   return `<!doctype html>
 <!-- generated by tools/specimens.mjs — do not edit -->
@@ -438,15 +532,17 @@ function indexPageHtml() {
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light">
 <link rel="icon" href="data:,">
-<title>vk 标本册 · 31 个组件</title>
+<title>vk 标本册 · ${total} 个组件</title>
 <link rel="stylesheet" href="vk/fonts.css">
 <link rel="stylesheet" href="vk/vk.css">
 <link rel="stylesheet" href="showcase.css">
 </head>
 <body data-page="index">
-<vk-page fit="contain" align="top" header="vk 标本册 · 31 个组件 · 5 层">
+<vk-page fit="contain" align="top">
+${header}
 ${footer}
-${sections}
+${cover}
+${contents}
 </vk-page>
 <script src="dist/vk.js"></script>
 <script src="showcase.js"></script>

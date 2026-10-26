@@ -244,6 +244,21 @@ vk-tag[tone='ok'] { background: var(--vk-ok-weak); border-color: var(--vk-ok); }
 vk-tag[tone='err'] { background: var(--vk-err-weak); border-color: var(--vk-err); }
 vk-tag[tone='warn'] { background: var(--vk-warn-weak); border-color: var(--vk-warn); }
 vk-tag[tone='muted'] { background: var(--vk-surface-2); border-color: var(--vk-line-2); color: var(--vk-ink-3); }
+/* state 是状态，不是语气：selected 有可见的选中标记，disabled 真的退后。 */
+vk-tag[state='selected'] {
+  background: var(--vk-focus-soft);
+  border-color: var(--vk-focus-line);
+  color: var(--vk-ink-1);
+  box-shadow: inset 0 -4px 0 var(--vk-focus-line);
+}
+vk-tag[state='current'] {
+  background: var(--vk-focus);
+  border-color: var(--vk-focus);
+  color: #fff;
+}
+vk-tag[state='disabled'] {
+  opacity: 0.42;
+}
 
 /* bare 是"只剩字"，必须把 ink 反色一起收掉。 */
 vk-tag[bare] {
@@ -659,6 +674,11 @@ vk-table th[align='right'] { font-variant-numeric: tabular-nums; }
 
 vk-table[density='compact'] th { padding: var(--vk-s1) var(--vk-s3); font-size: var(--vk-t-6); }
 vk-table[density='compact'] td { padding: var(--vk-s2) var(--vk-s3); }
+/* dense：44px 字，16/8 内边距；规格表 8 行能进 888。 */
+vk-table[density='dense'] table { font-size: var(--vk-t-6); }
+vk-table[density='dense'] th,
+vk-table[density='dense'] td { padding: 8px 16px; }
+vk-table[density='dense'] th { font-size: var(--vk-t-6); }
 
 vk-table[stripe] tbody tr:nth-child(even) { background: var(--vk-surface-2); }
 vk-table tr[data-em] td { background: var(--vk-focus-soft); }
@@ -1228,16 +1248,17 @@ vk-steps { display: block; }
 .vk-step[data-state='done'] .vk-step-n::after {
   content: '✓';
   position: absolute;
-  top: -10px;
-  right: -10px;
+  top: -18px;
+  right: -18px;
   display: grid;
   place-items: center;
-  width: 36px;
-  height: 36px;
+  width: 32px;
+  height: 32px;
+  border: 4px solid var(--vk-surface-1);
   border-radius: 50%;
   background: var(--vk-ok);
   color: #fff;
-  font-size: var(--vk-t-6);
+  font-size: 20px;
   line-height: 1;
 }
 .vk-step[data-state='done'] .vk-step-t { color: var(--vk-ink-1); }

@@ -1,5 +1,15 @@
 # Changelog
 
+## 2.1.0
+
+标本台第一轮：把“幻灯片”改成有页眉、图版、栏位、图例和真导航的标本册。
+
+- **版面**：每页页眉是图版号 / 名称 / 层 / 五镜头；页脚是目录 / 上一页 / 下一页；成品加 1680×888 图版装裱；变体改成左预设栏 + 舞台 + 底部控件 dock；解剖的 part 改为 `data-vk-part`，宽目标用底部横向图例带；索引改成封面 + 16/15 两页目录；非 16:9 帧外是墨色网格台面。
+- **交互**：修掉 `[` / `]` 空接线与 `Esc` 相对路径 500；所有锚点从 `display:contents` 改成可聚焦；镜头/目录路由用 pushState，不再把页眉滚出画布；镜头有 `state` / `aria-selected`，控件可 Enter/Space；补 h1 与 main 语义。
+- **库**：`vk-tag` 新增 `state`（selected / current / disabled）；`vk-table` 新增 `dense`；code / term / diff / tree / bytes / frames / figure / browser / page / cells 的内部区域统一发 `data-vk-part`；`vk-page` 暴露真实页眉/正文/页脚 part；`vk-steps` 完成徽标不再压住编号；`vk-math` 场景去掉裸 `<div>`。
+- **空状态**：0 属性的 API 用大号 0 + 内容模型；无可见变体的组件给出解释；API 5 行/页，按组均分，不再 29 个单元格换行。
+- **门禁**：五镜头 156 个对象全绿；contract 264 个属性；links 识别镜头/索引 hash 路由；`npm test` 8 组全绿。
+
 ## 2.0.0
 
 展示站重写成一本自举的标本册；组件集从 30 个重整为 31 个 / 5 层。

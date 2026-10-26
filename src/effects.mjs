@@ -147,6 +147,7 @@ export const EFFECTS = {
   'vk-tag': {
     tone: { on: 'vk-tag', kind: 'style', prop: 'background-color' },
     size: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
+    state: { on: 'vk-tag', kind: 'style', prop: 'box-shadow' },
     bare: { on: 'vk-tag', kind: 'style', prop: 'padding-left' },
   },
 

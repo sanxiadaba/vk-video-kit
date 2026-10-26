@@ -137,7 +137,7 @@ export class VkCode extends VkElement {
       const cls = ['vk-line'];
       if (hl.has(n)) cls.push('is-hl');
       if (focus.size && !focus.has(n)) cls.push('is-dim');
-      const num = showNums ? `<span class="vk-ln" aria-hidden="true">${noOf(n)}</span>` : '';
+      const num = showNums ? `<span class="vk-ln" data-vk-part="ln" aria-hidden="true">${noOf(n)}</span>` : '';
       rows.push(
         `<div class="${cls.join(' ')}" data-line="${noOf(n)}" style="--i:${i}">${num}<span class="vk-src">${line || ' '}</span></div>`
       );
@@ -150,7 +150,7 @@ export class VkCode extends VkElement {
         cls: 'vk-code',
         attrs: ` data-density="${density}"`,
         head: fileHead(file, label, this.getAttribute('lines') || ''),
-        inner: `<div class="vk-bd">${rows.join('')}</div>`,
+        inner: `<div class="vk-bd" data-vk-part="bd">${rows.join('')}</div>`,
       });
 
     if (marks.length) {
@@ -314,7 +314,7 @@ export class VkTerm extends VkElement {
       cls: 'vk-term',
       attrs: ` data-density="${density}"${typed ? ' data-type' : ''}`,
       head: title ? `<span class="vk-tab">${esc(title)}</span>` : '',
-      inner: `<div class="vk-bd">${body}</div>`,
+      inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });
 
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;

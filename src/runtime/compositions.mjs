@@ -35,7 +35,7 @@ export class VkPage extends VkElement {
       }
       const body = takeSlot(this);
       this.innerHTML = `<div class="vk-page" data-align="top" style="--pw:${w}px;--ph:${h}px">
-        <div class="vk-page-inner"><div class="vk-page-bd"></div></div>
+        <div class="vk-page-inner"><div class="vk-page-bd" data-vk-part="bd"></div></div>
       </div>`;
       this._shell = this.querySelector('.vk-page');
       this._inner = this.querySelector('.vk-page-inner');
@@ -52,6 +52,7 @@ export class VkPage extends VkElement {
       if (!hd) {
         hd = document.createElement('header');
         hd.className = 'vk-page-hd';
+        hd.dataset.vkPart = 'hd';
         this._inner.insertBefore(hd, this._bd);
       }
       if (hasHdSlot) {
@@ -71,6 +72,7 @@ export class VkPage extends VkElement {
       if (!ft) {
         ft = document.createElement('footer');
         ft.className = 'vk-page-ft';
+        ft.dataset.vkPart = 'ft';
         this._inner.append(ft);
       }
       if (hasFtSlot) {

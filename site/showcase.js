@@ -9,7 +9,32 @@
 
   const LENSES = ['plate', 'variants', 'anatomy', 'usage', 'api'];
 
+  // 镜头的 id 与 hash 同名；浏览器会滚到 section，把页眉页脚顶出画布。
+  function resetScroll() {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    for (const el of $$('.vk-page, vk-page')) el.scrollTop = 0;
+  }
+
   /* ------------------------------------------------------------- 镜头 */
+
+  function prefixIds(root, lens) {
+    const map = new Map();
+    for (const el of $$('[id]', root)) {
+      const old = el.id;
+      if (!old) continue;
+      const id = `${lens}-${old}`;
+      map.set(old, id);
+      el.id = id;
+    }
+    for (const el of $$('[from], [to], [for]', root)) {
+      for (const attr of ['from', 'to', 'for']) {
+        const v = el.getAttribute(attr);
+        if (v && v.startsWith('#') && map.has(v.slice(1))) el.setAttribute(attr, `#${map.get(v.slice(1))}`);
+      }
+    }
+  }
 
   function showLens(name, push = true) {
     const lens = LENSES.includes(name) ? name : 'plate';
@@ -18,14 +43,23 @@
       if (on && section.dataset.filled !== '1') {
         const tpl = $(`template[data-lens-template="${lens}"]`);
         if (tpl) {
-          section.append(tpl.content.cloneNode(true));
+          const clone = tpl.content.cloneNode(true);
+          prefixIds(clone, lens);
+          section.append(clone);
           section.dataset.filled = '1';
         }
       }
       section.hidden = !on;
     }
-    for (const tag of $$('[data-lens-tag]')) tag.setAttribute('tone', tag.dataset.lensTag === lens ? 'accent' : 'muted');
-    if (push && location.hash !== `#${lens}`) history.replaceState(null, '', `#${lens}`);
+    for (const tag of $$('[data-lens-tag]')) {
+      const on = tag.dataset.lensTag === lens;
+      if (on) tag.setAttribute('state', 'selected'); else tag.removeAttribute('state');
+      tag.setAttribute('tone', 'muted');
+      tag.setAttribute('aria-selected', String(on));
+      tag.closest('a')?.setAttribute('aria-selected', String(on));
+    }
+    if (push && location.hash !== `#${lens}`) history.pushState(null, '', `#${lens}`);
+    resetScroll();
     const info = $('[data-pageinfo]');
     if (info) info.textContent = '';
     if (lens === 'variants') {
@@ -76,7 +110,13 @@
       if (v === null) t.removeAttribute(k);
       else t.setAttribute(k, v);
     }
-    for (const tag of $$('[data-preset]')) tag.setAttribute('tone', Number(tag.dataset.preset) === index ? 'accent' : 'muted');
+    for (const tag of $$('[data-preset]')) {
+      const on = Number(tag.dataset.preset) === index;
+      tag.setAttribute('tone', 'muted');
+      tag.setAttribute('aria-pressed', String(on));
+      if (on) tag.setAttribute('state', 'selected');
+      else tag.removeAttribute('state');
+    }
     for (const tag of $$('[data-attr]')) markControl(tag.dataset.attr);
     vk()?.layout?.();
   }
@@ -86,7 +126,11 @@
     if (!t) return;
     const now = t.getAttribute(name);
     for (const tag of $$(`[data-attr="${name}"]`)) {
-      tag.setAttribute('tone', tag.dataset.value === now ? 'accent' : 'muted');
+      const on = tag.dataset.value === now;
+      tag.setAttribute('tone', 'muted');
+      tag.setAttribute('aria-pressed', String(on));
+      if (on) tag.setAttribute('state', 'selected');
+      else tag.removeAttribute('state');
     }
   }
 
@@ -95,7 +139,11 @@
     if (!t) return;
     rememberBase();
     t.setAttribute(name, value);
-    for (const p of $$('[data-preset]')) p.setAttribute('tone', 'muted');
+    for (const p of $$('[data-preset]')) {
+      p.setAttribute('tone', 'muted');
+      p.setAttribute('aria-pressed', 'false');
+      p.removeAttribute('state');
+    }
     markControl(name);
     vk()?.layout?.();
   }
@@ -135,8 +183,14 @@
     const max = Math.max(0, docPages().length - 1);
     docPage = Math.max(0, Math.min(max, next));
     for (const section of docPages()) section.hidden = Number(section.dataset.docpage) !== docPage;
-    for (const tag of $$('[data-docpage-tag]')) tag.setAttribute('tone', Number(tag.dataset.docpageTag) === docPage ? 'accent' : 'muted');
-    if (push && location.hash !== `#p${docPage + 1}`) history.replaceState(null, '', `#p${docPage + 1}`);
+    for (const tag of $$('[data-docpage-tag]')) {
+      const on = Number(tag.dataset.docpageTag) === docPage;
+      if (on) tag.setAttribute('state', 'selected'); else tag.removeAttribute('state');
+      tag.setAttribute('tone', 'muted');
+      tag.setAttribute('aria-current', on ? 'page' : 'false');
+    }
+    if (push && location.hash !== `#p${docPage + 1}`) history.pushState(null, '', `#p${docPage + 1}`);
+    resetScroll();
     vk()?.layout?.();
   }
 
@@ -226,6 +280,7 @@
     'frame': '帧',
     'fig-body': '图体',
     cell: '格',
+    ft: '页脚',
   };
 
   function addChip(canvas, index) {
@@ -233,7 +288,7 @@
     chip.id = `anno-${index}`;
     chip.setAttribute('size', 'meta');
     chip.setAttribute('tone', 'accent');
-    chip.setAttribute('x', '8');
+    chip.setAttribute('x', '0');
     chip.setAttribute('y', String(80 + (index - 1) * 64));
     chip.setAttribute('data-anno', '');
     chip.style.pointerEvents = 'none';
@@ -260,27 +315,31 @@
   }
 
   function addLegend(canvas, r, rows) {
+    // 宽目标放不下右栏图例：改成目标下方的一条横向图例带，像制图的 key。
+    const wide = r.x + r.w + 40 + 340 > 1680;
     const box = document.createElement('vk-box');
-    box.setAttribute('x', '1300');
-    box.setAttribute('y', '80');
-    box.setAttribute('w', '340');
+    box.setAttribute('x', '120');
+    box.setAttribute('y', wide ? String(Math.min(888 - 84, r.y + r.h + 4)) : '80');
+    box.setAttribute('w', wide ? '1400' : '340');
+    if (wide) box.setAttribute('h', '80');
     box.setAttribute('surface', 'paper');
     box.setAttribute('border', 'hair');
-    box.setAttribute('pad', 'sm');
+    box.setAttribute('pad', wide ? 'xs' : 'sm');
     box.setAttribute('radius', 'md');
     box.setAttribute('data-anno', '');
     box.style.zIndex = '5';
     const title = document.createElement('vk-text');
-    title.setAttribute('size', 'heading');
-    title.setAttribute('weight', 'bold');
+    title.setAttribute('size', 'meta');
+    title.setAttribute('weight', wide ? 'medium' : 'bold');
     title.textContent = '解剖';
     const dim = document.createElement('vk-text');
     dim.setAttribute('size', 'meta');
     dim.setAttribute('mono', '');
     dim.setAttribute('emphasis', 'muted');
     dim.textContent = `${Math.round(r.w)}×${Math.round(r.h)}`;
-    const list = document.createElement('vk-stack');
-    list.setAttribute('gap', '2xs');
+    const list = document.createElement(wide ? 'vk-row' : 'vk-stack');
+    list.setAttribute('gap', wide ? 'md' : '2xs');
+    if (wide) list.setAttribute('align', 'center');
     list.append(title, dim);
     for (const row of rows) {
       const t = document.createElement('vk-text');
@@ -302,19 +361,31 @@
     vk()?.layout?.();
     const r = designRect(t, canvas);
     addBox(canvas, r, { border: 'strong' });
-    const wanted = ['vk-hd', 'vk-tab', 'vk-bd', 'vk-ln', 'vk-cell', 'vk-frame', 'vk-fig-body', 'vk-tree-hd'];
-    const parts = wanted.map((c) => t.querySelector(`.${c}`)).filter(Boolean).slice(0, 4);
+    // 嵌套页面的页眉/页脚是运行时创建的，补一次显式 part。
+    if (t.tagName === 'VK-PAGE') {
+      for (const [sel, key] of [['.vk-page-hd', 'hd'], ['.vk-page-bd', 'bd'], ['.vk-page-ft', 'ft']]) {
+        const el = t.querySelector(sel);
+        if (el && !el.dataset.vkPart) el.dataset.vkPart = key;
+      }
+    }
+    const parts = [];
+    const seen = new Set();
+    for (const p of $$('[data-vk-part]', t)) {
+      const key = p.dataset.vkPart;
+      if (!key || seen.has(key)) continue;
+      seen.add(key);
+      parts.push(p);
+    }
     const rows = [];
-    parts.forEach((p, i) => {
+    parts.slice(0, 4).forEach((p) => {
       const pr = designRect(p, canvas);
-      if (pr.w < 80 || pr.h < 48) return;
-      const n = i + 1;
+      if (pr.w < 80 || pr.h < 48 || pr.x < 0 || pr.y < 0 || pr.x + pr.w > 1680 || pr.y + pr.h > 888) return;
+      const n = rows.length + 1;
       p.id = `part-${n}`;
       addBox(canvas, pr);
       addChip(canvas, n);
-      addLead(canvas, n);
-      const cls = [...p.classList].find((c) => c.startsWith('vk-'))?.replace(/^vk-/, '') || 'part';
-      rows.push(`${n} ${PART_NAME[cls] || cls} ${Math.round(pr.h)}`);
+      const key = p.dataset.vkPart;
+      rows.push(`${n} ${PART_NAME[key] || key} ${Math.round(pr.h)}`);
     });
     addLegend(canvas, r, rows);
     vk()?.layout?.();
@@ -341,6 +412,18 @@
     }
 
     document.addEventListener('click', (e) => {
+      const lensLink = e.target.closest('[data-lens-link]');
+      if (lensLink) {
+        e.preventDefault();
+        showLens(lensLink.hash.replace(/^#/, ''));
+        return;
+      }
+      const docLink = e.target.closest('[data-docpage-tag]')?.closest('a');
+      if (docLink) {
+        e.preventDefault();
+        showDocPage(Number(docLink.hash.replace(/^#p/, '')) - 1);
+        return;
+      }
       const preset = e.target.closest('[data-preset]');
       if (preset) {
         e.preventDefault();
@@ -362,9 +445,15 @@
 
     document.addEventListener('keydown', (e) => {
       if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const actionable = e.target.closest?.('[data-preset], [data-attr], [data-copy]');
+      if (actionable && (e.key === 'Enter' || e.key === ' ')) {
+        e.preventDefault();
+        actionable.click();
+        return;
+      }
       if (e.key === 'Escape') {
         if (docPages().length) return;
-        location.href = 'index.html';
+        location.href = new URL('../index.html', location.href).href;
         return;
       }
       if (/^[1-5]$/.test(e.key) && !docPages().length) {
@@ -392,7 +481,7 @@
       }
     });
 
-    window.addEventListener('hashchange', () => {
+    const onHash = () => {
       const h = location.hash.replace(/^#/, '');
       if (docPages().length) {
         const m = h.match(/^p(\d+)$/);
@@ -400,7 +489,11 @@
       } else if (LENSES.includes(h)) {
         showLens(h, false);
       }
-    });
+      resetScroll();
+    };
+    window.addEventListener('hashchange', onHash);
+    window.addEventListener('popstate', onHash);
+    setTimeout(resetScroll, 60);
   }
 
   // vk.ready 之后再量；否则字体/预编译数据可能还没到位。

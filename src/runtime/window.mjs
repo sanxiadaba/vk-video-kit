@@ -10,7 +10,7 @@ export const DOTS = '<span class="vk-dots"><i></i><i></i><i></i></span>';
 export function win({ surface = 'paper', chrome = 'min', head = '', inner = '', cls = '', attrs = '' } = {}) {
   const material = surface === 'ink' ? 'ink' : 'paper';
   const klass = cls ? ` ${cls}` : '';
-  const bar = chrome === 'none' ? '' : `<div class="vk-hd">${DOTS}${head}</div>`;
+  const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${DOTS}${head}</div>`;
   return `<div class="vk-win${klass}" data-material="${material}" data-surface="${material}" data-chrome="${esc(chrome)}"${attrs}>${bar}${inner}</div>`;
 }
 
