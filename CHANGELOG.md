@@ -4,7 +4,7 @@
 
 标本台第一轮：把“幻灯片”改成有页眉、图版、栏位、图例和真导航的标本册。
 
-- **版面**：深墨书脊 280 + 纸舞台 1376。书脊是衬线图版号 / 名称 / 层 / 五镜头；页眉只剩 wordmark 与 015/031；页脚是目录 / 上一页 / 下一页；成品是图版座 + 图注（PLATE 015 / vk-code / L3）；变体是 380 控件栏 + 940 舞台；解剖是实测 part + 底部图例带；用法是两栏 + 整行 mono 片段；索引是 31 格接触印样。非 16:9 帧外是墨色网格台面。
+- **版面**：深墨书脊 280 + 纸舞台 1376。书脊是衬线图版号 / 名称 / 层 / 五镜头；页眉只剩 wordmark 与 015/031；页脚是目录 / 上一页 / 下一页；成品是图版座 + 图注（PLATE 015 / vk-code / L3）；变体是 380 控件栏 + 940 舞台；解剖是实测 part + 底部图例带；用法是两栏 + 整行 mono 片段；索引是深墨封面 + 31 格接触印样。非 16:9 帧外是墨色网格台面。
 - **交互**：修掉 `[` / `]` 空接线与 `Esc` 相对路径 500；所有锚点从 `display:contents` 改成可聚焦；镜头路由用 pushState，不再把页眉滚出画布；镜头有 aria-current / aria-selected，控件可 Enter/Space；补 h1 与 main 语义。
 - **库**：`vk-tag` 新增 `state`（selected / current / disabled）；`vk-table` 新增 `dense`；`vk-page` 新增 `surface`（paper / ink）；code / term / diff / tree / bytes / frames / figure / browser / page / cells 的内部区域统一发 `data-vk-part`；`vk-note` 的 tone 从“只换一笔”改成整条底色 + 左边线（annotate 里仍保持无底色）；`vk-steps` 完成徽标不再压住编号；`vk-math` 场景去掉裸 `<div>`。
 - **内容**：API 4 行/页，按组均分；0 属性用大号 0 + 内容模型；无可见变体给出解释；用法片段只给根标签的前两个属性 + `…`，完整片段仍在复制数据里。
