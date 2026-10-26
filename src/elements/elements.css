@@ -1,0 +1,299 @@
+/* ============================================================================
+   L1 · 元素
+   屏幕上真实存在的单个物件。不认识兄弟、不认识父级、不排别人。
+   ========================================================================== */
+
+/* ---------------------------------------------------- 生成内容的默认值
+   组件吐出来的 <p>/<ul>/<figure> 不许带 UA 外边距：
+   纵向节奏只能来自布局 gap 或组件显式声明的 margin。 */
+:where(vk-title, vk-text, vk-list, vk-tag, vk-callout, vk-code, vk-term, vk-diff,
+  vk-table, vk-math, vk-figure, vk-browser, vk-filetree, vk-keys, vk-note,
+  vk-cells, vk-steps, vk-mark)
+  :where(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, figure, blockquote, pre) {
+  margin-block: 0;
+}
+
+/* 等宽：连字必须关掉，<= 不能被渲染成 ≤。 */
+vk-text[mono] {
+  font-family: var(--vk-font-mono);
+  font-variant-ligatures: none;
+  font-feature-settings: 'calt' 0, 'liga' 0, 'dlig' 0, 'clig' 0;
+  letter-spacing: 0;
+}
+
+/* --------------------------------------------------------------- vk-box */
+
+vk-box {
+  --vk-box-bg: transparent;
+  --vk-box-line: transparent;
+  --vk-box-bw: 0px;
+
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  padding: 0;
+  border: var(--vk-box-bw) solid var(--vk-box-line);
+  border-radius: var(--vk-r-3);
+  background: var(--vk-box-bg);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+}
+
+/* 内距 */
+vk-box[pad='2xs'] { padding: var(--vk-s1); }
+vk-box[pad='xs'] { padding: var(--vk-s2); }
+vk-box[pad='sm'] { padding: var(--vk-s3); }
+vk-box[pad='md'] { padding: var(--vk-s4); }
+vk-box[pad='lg'] { padding: var(--vk-s5); }
+vk-box[pad='xl'] { padding: var(--vk-s6); }
+vk-box[pad='2xl'] { padding: var(--vk-s7); }
+vk-box[pad='3xl'] { padding: var(--vk-s8); }
+vk-box[pad-x='2xs'] { padding-left: var(--vk-s1); padding-right: var(--vk-s1); }
+vk-box[pad-x='xs'] { padding-left: var(--vk-s2); padding-right: var(--vk-s2); }
+vk-box[pad-x='sm'] { padding-left: var(--vk-s3); padding-right: var(--vk-s3); }
+vk-box[pad-x='md'] { padding-left: var(--vk-s4); padding-right: var(--vk-s4); }
+vk-box[pad-x='lg'] { padding-left: var(--vk-s5); padding-right: var(--vk-s5); }
+vk-box[pad-x='xl'] { padding-left: var(--vk-s6); padding-right: var(--vk-s6); }
+vk-box[pad-x='2xl'] { padding-left: var(--vk-s7); padding-right: var(--vk-s7); }
+vk-box[pad-x='3xl'] { padding-left: var(--vk-s8); padding-right: var(--vk-s8); }
+vk-box[pad-y='2xs'] { padding-top: var(--vk-s1); padding-bottom: var(--vk-s1); }
+vk-box[pad-y='xs'] { padding-top: var(--vk-s2); padding-bottom: var(--vk-s2); }
+vk-box[pad-y='sm'] { padding-top: var(--vk-s3); padding-bottom: var(--vk-s3); }
+vk-box[pad-y='md'] { padding-top: var(--vk-s4); padding-bottom: var(--vk-s4); }
+vk-box[pad-y='lg'] { padding-top: var(--vk-s5); padding-bottom: var(--vk-s5); }
+vk-box[pad-y='xl'] { padding-top: var(--vk-s6); padding-bottom: var(--vk-s6); }
+vk-box[pad-y='2xl'] { padding-top: var(--vk-s7); padding-bottom: var(--vk-s7); }
+vk-box[pad-y='3xl'] { padding-top: var(--vk-s8); padding-bottom: var(--vk-s8); }
+
+/* 圆角 */
+vk-box[radius='sm'] { border-radius: var(--vk-r-1); }
+vk-box[radius='md'] { border-radius: var(--vk-r-2); }
+vk-box[radius='lg'] { border-radius: var(--vk-r-3); }
+vk-box[radius='xl'] { border-radius: var(--vk-r-4); }
+vk-box[radius='pill'] { border-radius: var(--vk-r-pill); }
+vk-box[radius='none'] { border-radius: 0; }
+
+/* 表面：只表示材质 */
+vk-box[surface='paper'] { --vk-box-bg: var(--vk-surface-1); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
+vk-box[surface='soft'] { --vk-box-bg: var(--vk-surface-3); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
+vk-box[surface='inverse'],
+vk-box[surface='ink'] {
+  --vk-box-bg: var(--vk-ink-surface-1);
+  --vk-box-line: var(--vk-ink-edge);
+  --vk-box-bw: 2px;
+  color: var(--vk-ink-text-1);
+}
+/* 语义色只叠加在表面上，不承担材质。 */
+vk-box[tone='accent'] { --vk-box-bg: var(--vk-focus-soft); --vk-box-line: var(--vk-focus-line); }
+vk-box[tone='ok'] { --vk-box-bg: var(--vk-ok-weak); --vk-box-line: var(--vk-ok); }
+vk-box[tone='err'] { --vk-box-bg: var(--vk-err-weak); --vk-box-line: var(--vk-err); }
+vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-warn); }
+
+/* 描边是显式选择，必须压过 tone 的默认线——所以放在 tone 之后。 */
+vk-box[border='hair'] { --vk-box-line: var(--vk-line-3); --vk-box-bw: var(--vk-line-w); }
+vk-box[border='strong'] { --vk-box-line: var(--vk-line-strong); --vk-box-bw: var(--vk-line-w-strong); }
+vk-box[border='none'] { --vk-box-line: transparent; --vk-box-bw: 0px; }
+
+/* 定位：只有显式声明才离开文档流 */
+/* 定位：给 x/y 即绝对定位；没有 pos 属性。 */
+vk-box[x], vk-box[y] { position: absolute; }
+/* -------------------------------------------------------------- vk-text */
+
+vk-text {
+  display: block;
+  margin: 0;
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-4);
+  line-height: var(--vk-lh-body);
+  color: inherit;
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+}
+
+vk-text[size='display'] { font-size: var(--vk-t-1); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
+vk-text[size='title'] { font-size: var(--vk-t-2); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
+vk-text[size='heading'] { font-size: var(--vk-t-3); line-height: var(--vk-lh-snug); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); }
+vk-text[size='body'] { font-size: var(--vk-t-4); }
+vk-text[size='label'] { font-size: var(--vk-t-5); line-height: var(--vk-lh-body); }
+vk-text[size='meta'] { font-size: var(--vk-t-6); line-height: var(--vk-lh-body); }
+
+vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
+vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
+vk-text[weight='bold'] { font-weight: var(--vk-w-bold); }
+
+vk-text[tone='primary'],
+vk-text[emphasis='primary'] { color: var(--vk-ink-1); }
+vk-text[tone='secondary'],
+vk-text[emphasis='secondary'] { color: var(--vk-ink-2); }
+vk-text[tone='tertiary'],
+vk-text[emphasis='tertiary'] { color: var(--vk-ink-3); }
+vk-text[tone='muted'],
+vk-text[emphasis='muted'] { color: var(--vk-ink-4); }
+
+vk-text[align='center'] { text-align: center; }
+vk-text[align='right'] { text-align: right; }
+vk-text[measure][align='center'] { margin-inline: auto; }
+vk-text[measure][align='right'] { margin-inline: auto 0; }
+
+vk-text[measure='body'] { max-width: var(--vk-measure-body); }
+vk-text[measure='title'] { max-width: var(--vk-measure-title); }
+
+/* em 只有一个意思：作者想让观众看这里。
+   焦点色只做"底"，不用另一个前景色。 */
+vk-text em,
+vk-title em {
+  font-style: normal;
+  background: var(--vk-focus-mark);
+  padding: 0 0.06em;
+}
+
+/* muted 正文里的 em 改用下划线标记：底太浅仍只有 4.45，不如换一种焦点标记。 */
+vk-text[tone='muted'] em,
+vk-text[emphasis='muted'] em {
+  background: none;
+  box-shadow: inset 0 -0.12em 0 var(--vk-focus-soft);
+}
+
+/* -------------------------------------------------------------- vk-icon */
+
+vk-icon {
+  display: inline-flex;
+  vertical-align: -0.14em;
+  font-size: var(--vk-icon-size, 64px);
+}
+vk-icon[size='sm'],
+vk-icon[scale='sm'] { --vk-icon-size: 48px; }
+vk-icon[size='md'],
+vk-icon[scale='md'] { --vk-icon-size: 64px; }
+vk-icon[size='lg'],
+vk-icon[scale='lg'] { --vk-icon-size: 80px; }
+vk-icon[size='xl'],
+vk-icon[scale='xl'] { --vk-icon-size: 96px; }
+vk-icon[size='inherit'],
+vk-icon[scale='inherit'] { --vk-icon-size: 1em; }
+
+vk-icon .vk-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: inherit;
+}
+vk-icon .vk-icon svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+vk-icon[tone='primary'],
+vk-icon[emphasis='primary'] .vk-icon { color: var(--vk-ink-1); }
+vk-icon[tone='secondary'],
+vk-icon[emphasis='secondary'] .vk-icon { color: var(--vk-ink-2); }
+vk-icon[tone='tertiary'],
+vk-icon[emphasis='tertiary'] .vk-icon { color: var(--vk-ink-3); }
+vk-icon[tone='muted'],
+vk-icon[emphasis='muted'] .vk-icon { color: var(--vk-ink-4); }
+vk-icon[tone='accent'] .vk-icon { color: var(--vk-focus); }
+vk-icon[tone='ok'] .vk-icon { color: var(--vk-ok); }
+vk-icon[tone='err'] .vk-icon { color: var(--vk-err); }
+vk-icon[tone='warn'] .vk-icon { color: var(--vk-warn); }
+
+/* --------------------------------------------------------------- vk-img */
+
+vk-img { display: block; }
+
+vk-img .vk-img {
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+  border: 0;
+  border-radius: var(--vk-r-3);
+  background: var(--vk-surface-2);
+}
+vk-img[border='none'] .vk-img { border: 0; }
+vk-img[border='hair'] .vk-img { border: 2px solid var(--vk-line-3); }
+vk-img[border='strong'] .vk-img { border: 4px solid var(--vk-line-strong); }
+vk-img .vk-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+vk-img .vk-img-ph {
+  display: none;
+  position: absolute;
+  inset: 0;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--vk-t-5);
+  color: var(--vk-ink-4);
+  background: var(--vk-surface-2);
+}
+vk-img[data-error] .vk-img-ph { display: flex; }
+vk-img[data-error] img { display: none; }
+vk-img .vk-img[data-radius='sm'] { border-radius: var(--vk-r-1); }
+vk-img .vk-img[data-radius='md'] { border-radius: var(--vk-r-2); }
+vk-img .vk-img[data-radius='lg'] { border-radius: var(--vk-r-3); }
+vk-img .vk-img[data-radius='xl'] { border-radius: var(--vk-r-4); }
+vk-img .vk-img[data-radius='pill'] { border-radius: var(--vk-r-pill); }
+vk-img .vk-img[data-radius='none'] { border-radius: 0; }
+
+/* -------------------------------------------------------------- vk-rule */
+
+vk-rule {
+  display: block;
+  width: 100%;
+  align-self: stretch;
+  height: var(--vk-line-w);
+  background: var(--vk-line-3);
+  border: 0;
+}
+vk-rule[weight='thin'],
+vk-rule[variant='thin'] { background: var(--vk-line-3); height: var(--vk-line-w); }
+vk-rule[weight='strong'],
+vk-rule[variant='strong'] { background: var(--vk-line-strong); height: var(--vk-line-w-strong); }
+vk-rule[weight='accent'],
+vk-rule[variant='accent'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
+
+/* -------------------------------------------------------------- vk-mark */
+
+vk-mark {
+  --vk-mark-fill: var(--vk-focus-mark);
+  --vk-mark-rule: var(--vk-focus-line);
+
+  display: inline;
+  background: var(--vk-mark-fill);
+  border-radius: 2px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+vk-mark[variant='underline'] {
+  background: none;
+  border-radius: 0;
+  padding: 0;
+  box-shadow: inset 0 -0.16em 0 var(--vk-mark-fill);
+}
+vk-mark[variant='strike'] {
+  background: none;
+  padding: 0;
+  text-decoration: line-through;
+  text-decoration-thickness: 0.07em;
+  text-decoration-color: var(--vk-mark-rule);
+}
+vk-mark[variant='circle'] {
+  background: var(--vk-mark-fill);
+  border: 0.08em solid var(--vk-mark-rule);
+  border-radius: 0.45em;
+  padding: 0 0.16em;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+/* tone 只换"这一笔"的颜色，不换字体、不换布局 */
+vk-mark[tone='ok'] { --vk-mark-fill: var(--vk-ok-mark); --vk-mark-rule: var(--vk-ok); }
+vk-mark[tone='err'] { --vk-mark-fill: var(--vk-err-mark); --vk-mark-rule: var(--vk-err); }
+vk-mark[tone='warn'] { --vk-mark-fill: var(--vk-warn-mark); --vk-mark-rule: var(--vk-warn); }

@@ -1,0 +1,10 @@
+diff --git a/bounds.c b/bounds.c
+index 3f9a2b1..8c4d5e6 100644
+--- a/bounds.c
++++ b/bounds.c
+@@ -10,5 +10,5 @@
+ int a[3] = {1, 2, 3};
+ int i;
+-for (i = 0; i <= 3; i++)
++for (i = 0; i < 3; i++)
+     a[i] = 0;

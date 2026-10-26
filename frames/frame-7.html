@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>vk · Frame 7</title>
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #e9eef5; overflow: hidden; }
+  body { display: grid; place-items: center; min-height: 100vh; }
+  vk-page { width: min(100vw, calc(100vh * 16 / 9)); max-height: 100vh; }
+</style>
+</head>
+<body>
+<vk-page align="center">
+  <vk-stack gap="sm">
+    <vk-title index="08" eyebrow="内存格 · 批注" size="title">一格一格看，<br><em>越界就在下一格</em>。</vk-title>
+    <vk-cells values="1|2|3|0" labels="a[0]|a[1]|a[2]|a[3]" addr="0x7ffc" stride="4" flag="4"></vk-cells>
+    <vk-annotate w="560">
+      <vk-code w="1040" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2">
+
+</vk-code>
+      <vk-note line="1">下标只有 0–2。</vk-note>
+      <vk-note line="2">i &lt;= 3 让 i 到 3。</vk-note>
+      <vk-note line="3">i = 3 时写到 a[3]。</vk-note>
+    </vk-annotate>
+  </vk-stack>
+</vk-page>
+<script src="../dist/vk.js"></script>
+<script>window.vk.ready();</script>
+</body>
+</html>
+

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>vk · Frame 5</title>
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #e9eef5; overflow: hidden; }
+  body { display: grid; place-items: center; min-height: 100vh; }
+  vk-page { width: min(100vw, calc(100vh * 16 / 9)); max-height: 100vh; }
+</style>
+</head>
+<body>
+<vk-page align="center">
+  <vk-stack gap="xl">
+    <vk-title index="06" eyebrow="步骤 · 清单" size="title">先按顺序走，<br>再<em>记住边界</em>。</vk-title>
+    <vk-row gap="xl" align="top">
+      <vk-box w="800" surface="none">
+        <vk-steps current="2">
+          <li>写代码</li>
+          <li>编译</li>
+          <li>运行</li>
+          <li>观察内存</li>
+        </vk-steps>
+      </vk-box>
+      <vk-box w="800" surface="none">
+        <vk-list gap="sm">
+          <li><b>char</b> 是 1 个字节</li>
+          <li><b>int</b> 通常是 4 个字节</li>
+          <li><b>unsigned</b> 只是换一种解释</li>
+          <li><b>长度</b> = 元素个数 × 元素大小</li>
+        </vk-list>
+      </vk-box>
+    </vk-row>
+  </vk-stack>
+</vk-page>
+<script src="../dist/vk.js"></script>
+<script>window.vk.ready();</script>
+</body>
+</html>
+

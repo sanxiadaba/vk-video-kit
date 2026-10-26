@@ -1,0 +1,201 @@
+/* ============================================================================
+   L1 · 窗（window）
+   ----------------------------------------------------------------------------
+   全库唯一的窗口壳。code / term / diff / figure / browser 只往窗里填内容，
+   不各自再画一遍边框、三点、标题栏。
+
+   一块「窗」的全部颜色在 .vk-win 上定；data-surface="ink" 只换这一组变量。
+   ========================================================================== */
+
+.vk-win {
+  --vk-win-bg: var(--vk-surface-1);
+  --vk-win-soft: var(--vk-surface-2);
+  --vk-win-fg: var(--vk-ink-1);
+  --vk-win-fg-2: var(--vk-ink-2);
+  --vk-win-meta: var(--vk-ink-3);
+  --vk-win-meta-2: var(--vk-ink-4);
+  --vk-win-rule: var(--vk-line-2);
+  --vk-win-edge: var(--vk-line-1);
+  --vk-win-tab-line: var(--vk-line-3);
+
+  --vk-win-hl-bg: rgba(27, 63, 214, 0.12);
+  --vk-win-hl-line: var(--vk-focus-line);
+
+  --vk-win-k: var(--vk-win-fg);
+  --vk-win-f: var(--vk-syn-function);
+  --vk-win-s: var(--vk-syn-string);
+  --vk-win-n: var(--vk-syn-number);
+  --vk-win-b: var(--vk-syn-builtin);
+  --vk-win-o: var(--vk-syn-operator);
+  --vk-win-p: var(--vk-syn-punct);
+  --vk-win-c: var(--vk-syn-comment);
+
+  --vk-win-add-line: var(--vk-add);
+  --vk-win-del: var(--vk-del-weak);
+  --vk-win-del-line: var(--vk-del);
+  --vk-win-ok: var(--vk-ok);
+  --vk-win-ok-bg: var(--vk-ok-weak);
+  --vk-win-err: var(--vk-err);
+  --vk-win-err-bg: var(--vk-err-weak);
+  --vk-win-warn: var(--vk-warn);
+  --vk-win-warn-bg: var(--vk-warn-weak);
+
+  position: relative;
+  box-sizing: border-box;
+  display: block;
+  overflow: hidden;
+  border: var(--vk-win-border) solid var(--vk-win-edge);
+  border-radius: var(--vk-win-radius);
+  background: var(--vk-win-bg);
+  color: var(--vk-win-fg);
+  font-family: var(--vk-font-sans);
+  font-variant-ligatures: none;
+  box-shadow: none;
+}
+
+/* --------------------------------------------------------------- 深色 */
+
+.vk-win[data-surface='ink'] {
+  --vk-win-bg: var(--vk-ink-surface-1);
+  --vk-win-soft: var(--vk-ink-surface-2);
+  --vk-win-fg: var(--vk-ink-text-1);
+  --vk-win-fg-2: var(--vk-ink-text-2);
+  --vk-win-meta: var(--vk-ink-text-3);
+  --vk-win-meta-2: var(--vk-ink-text-4);
+  --vk-win-rule: var(--vk-ink-line);
+  --vk-win-edge: var(--vk-ink-edge);
+  --vk-win-tab-line: var(--vk-ink-tab-line);
+
+  --vk-win-hl-bg: rgba(27, 63, 214, 0.24);
+  --vk-win-hl-line: #6f8cff;
+
+  --vk-win-k: var(--vk-syn-keyword-ink);
+  --vk-win-f: var(--vk-syn-function-ink);
+  --vk-win-s: var(--vk-syn-string-ink);
+  --vk-win-n: var(--vk-syn-number-ink);
+  --vk-win-b: var(--vk-syn-builtin-ink);
+  --vk-win-o: var(--vk-ink-text-2);
+  --vk-win-p: var(--vk-ink-text-3);
+  --vk-win-c: var(--vk-syn-comment-ink);
+
+  --vk-win-add-line: #59d99a;
+  --vk-win-del: rgba(179, 38, 30, 0.24);
+  --vk-win-del-line: #ff8f8a;
+  --vk-win-ok: var(--vk-ok-ink);
+  --vk-win-ok-bg: rgba(127, 214, 196, 0.16);
+  --vk-win-err: var(--vk-err-ink);
+  --vk-win-err-bg: rgba(255, 167, 161, 0.16);
+  --vk-win-warn: var(--vk-warn-ink);
+  --vk-win-warn-bg: rgba(233, 179, 106, 0.16);
+}
+
+/* --------------------------------------------------------------- 标题栏 */
+
+.vk-hd {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--vk-s2);
+  box-sizing: border-box;
+  height: var(--vk-win-hd);
+  padding: 0 var(--vk-s4);
+  border-bottom: var(--vk-line-w) solid var(--vk-win-rule);
+  background: var(--vk-win-soft);
+  white-space: nowrap;
+}
+
+/* 三点是窗的形状，不是语义；红 / 黄 / 绿，一眼认出"这是一个窗口"。 */
+.vk-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  flex: 0 0 auto;
+}
+.vk-dots i {
+  display: block;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+}
+.vk-dots i:nth-child(1) { background: var(--vk-dot-red); }
+.vk-dots i:nth-child(2) { background: var(--vk-dot-yellow); }
+.vk-dots i:nth-child(3) { background: var(--vk-dot-green); }
+
+/* 文件名是标题栏里唯一要读的字：做成真正的 tab，44px（手机横屏约 14.7px）。 */
+.vk-tab {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-width: 0;
+  height: 62px;
+  padding: 0 18px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  border: 2px solid var(--vk-win-tab-line);
+  border-radius: 8px;
+  background: var(--vk-win-bg);
+  box-shadow: inset 0 -3px 0 var(--vk-focus);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-6);
+  font-weight: var(--vk-w-med);
+  line-height: 1;
+  letter-spacing: 0.01em;
+  color: var(--vk-win-fg);
+}
+
+/* 语言角标贴在右边，是"这是什么"，不是标题。 */
+.vk-lang {
+  margin-left: auto;
+  flex: 0 0 auto;
+  padding: 2px 12px;
+  border: 2px solid var(--vk-win-tab-line);
+  border-radius: 6px;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-6);
+  font-weight: var(--vk-w-med);
+  letter-spacing: 0.08em;
+  color: var(--vk-win-meta-2);
+  text-transform: uppercase;
+}
+
+/* --------------------------------------------------------------- 页脚 */
+
+.vk-ft {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--vk-s3);
+  box-sizing: border-box;
+  height: 56px;
+  padding: 0 var(--vk-s4);
+  border-top: var(--vk-line-w) solid var(--vk-win-rule);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-6);
+  color: var(--vk-win-meta-2);
+  background: var(--vk-win-soft);
+}
+
+/* --------------------------------------------------------------- 语法 */
+
+.vk-k { color: var(--vk-win-k); font-weight: var(--vk-w-med); }
+.vk-s { color: var(--vk-win-s); }
+.vk-n { color: var(--vk-win-n); }
+.vk-f { color: var(--vk-win-f); }
+.vk-b { color: var(--vk-win-b); }
+.vk-o { color: var(--vk-win-o); }
+.vk-p { color: var(--vk-win-p); }
+.vk-c { color: var(--vk-win-c); font-style: italic; }
+
+/* --------------------------------------------------------------- 无头 */
+
+/* chrome="none" 只去标题栏；面板、底色、圆角仍然是这个元件的一部分。
+   要连窗壳一起去掉用 bare（vk-figure bare 用它）。 */
+.vk-win[data-bare] {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
+.vk-win[data-chrome='none'] > .vk-hd,
+.vk-win[data-chrome='none'] > .vk-ft {
+  display: none;
+}

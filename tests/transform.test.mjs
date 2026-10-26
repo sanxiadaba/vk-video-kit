@@ -1,0 +1,145 @@
+import test, { after } from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs';
+import os from 'node:os';
+import path from 'node:path';
+import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
+
+const hl = await createVkHighlighter(['c', 'diff']);
+const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vk-transform-'));
+fs.writeFileSync(path.join(dir, 'hello.c'), 'int main(void) {\n  return 0;\n}\n');
+fs.writeFileSync(path.join(dir, 'bounds.diff'), ' int a[3];\n-int i = 0;\n+int i = 1;\n');
+fs.writeFileSync(path.join(dir, 'hello.term'), '$ echo hi\nhi\n');
+fs.writeFileSync(path.join(dir, 'formula.tex'), 'a^2 + b^2 = c^2\n');
+fs.mkdirSync(path.join(dir, 'app', 'src'), { recursive: true });
+fs.writeFileSync(path.join(dir, 'app', 'main.py'), 'print("hi")\n');
+fs.writeFileSync(path.join(dir, 'app', 'src', 'parser.py'), 'def parse(): pass\n');
+
+test('inline code：预编译、hash、幂等', async () => {
+  const html = '<vk-code lang="c">int x = 1;\nint y = 2;</vk-code>';
+  const one = await transformHtml(html, { file: 'inline.html', highlighter: hl });
+  assert.ok(one.html.includes('data-vk-hl'));
+  assert.ok(one.html.includes('data-vk-hash='));
+  const two = await transformHtml(one.html, { file: 'inline.html', highlighter: hl });
+  assert.equal(two.html, one.html);
+});
+
+test('src + lines：只取片段，行号基准在运行时', async () => {
+  const html = '<vk-code lang="c" src="hello.c" lines="2-2"></vk-code>';
+  const out = await transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(out.html.includes('return 0;'));
+  assert.ok(!out.html.includes('int main'));
+  assert.equal(out.deps.length, 1);
+});
+
+test('diff：预编译行对与词级区间', async () => {
+  const html = '<vk-diff lang="diff" src="bounds.diff"></vk-diff>';
+  const out = await transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(out.html.includes('data-vk-hl-diff'));
+  assert.ok(out.html.includes('"l"'));
+});
+
+test('math：KaTeX 预编译，hash 校验源', async () => {
+  const html = '<vk-math>a^2 + b^2 = c^2</vk-math>';
+  const out = await transformHtml(html, { file: 'math.html', highlighter: hl });
+  assert.ok(out.html.includes('data-vk-math'));
+  assert.ok(out.html.includes('katex'));
+});
+
+test('src 从真实文件来：不再把源码手敲进 HTML', async () => {
+  const html = '<vk-code lang="c" src="hello.c"></vk-code>';
+  const out = await transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(out.html.includes('data-vk-src'));
+  assert.ok(!/<vk-code[^>]*>\s*int main/.test(out.html));
+});
+
+test('term / math / filetree 也支持真实文件', async () => {
+  const term = await transformHtml('<vk-term src="hello.term"></vk-term>', { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(term.html.includes('data-vk-src'));
+  assert.ok(term.html.includes('echo hi'));
+
+  const math = await transformHtml('<vk-math src="formula.tex"></vk-math>', { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(math.html.includes('data-vk-src'));
+  assert.ok(math.html.includes('data-vk-math'));
+
+  const tree = await transformHtml('<vk-filetree src="app"></vk-filetree>', { file: path.join(dir, 'page.html'), highlighter: hl });
+  assert.ok(tree.html.includes('data-vk-tree'));
+  assert.ok(tree.html.includes('parser.py'));
+});
+
+test('构建期拒绝未知枚举、越界数字、未知属性、未知图标、布尔 false', async () => {
+  const cases = [
+    ['<vk-text size="t9">x</vk-text>', /size="t9"/],
+    ['<vk-box w="50%"></vk-box>', /不是数字/],
+    ['<vk-box w="-10"></vk-box>', /超出/],
+    ['<vk-code lang="c" src="hello.c" typo="x"></vk-code>', /未知属性 typo/],
+    ['<vk-icon name="not-a-real-icon"></vk-icon>', /没有图标/],
+    ['<vk-tag bare="false"></vk-tag>', /布尔属性/],
+    ['<vk-canvas layout="flow"></vk-canvas>', /未知属性 layout/],
+    ['<vk-page w="800"></vk-page>', /未知属性 w/],
+  ];
+  for (const [html, re] of cases) {
+    await assert.rejects(() => transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl }), re);
+  }
+});
+
+test('具名槽：允许 eyebrow/sub/title；槽和属性不能同时写', async () => {
+  const ok = await transformHtml(
+    '<vk-title sub="属性副题"><span slot="eyebrow">眉题</span>主标题</vk-title>',
+    { file: 'slots.html', highlighter: hl }
+  );
+  assert.ok(ok.html.includes('slot="eyebrow"'));
+  await assert.rejects(
+    () => transformHtml('<vk-title sub="属性" slot="x">主标题</vk-title>', { file: 'slots.html', highlighter: hl }),
+    /不支持 slot/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-title sub="属性"><span slot="sub">槽</span></vk-title>', { file: 'slots.html', highlighter: hl }),
+    /不能同时写 slot 和属性/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-callout><span slot="body">x</span></vk-callout>', { file: 'slots.html', highlighter: hl }),
+    /不支持 slot/
+  );
+});
+
+test('图标构建期内联，未知图标仍然报错', async () => {
+  const out = await transformHtml('<vk-icon name="terminal"></vk-icon>', { file: 'icon.html', highlighter: hl });
+  assert.ok(out.html.includes('data-vk-inline'));
+  assert.ok(out.html.includes('data-vk-name="terminal"'));
+  assert.ok(out.html.includes('<svg'));
+});
+
+test('filetree current 必须存在；note 的 line/for 只能在 annotate 内', async () => {
+  await assert.rejects(
+    () => transformHtml('<vk-filetree src="app" active="nope.py"></vk-filetree>', { file: path.join(dir, 'page.html'), highlighter: hl }),
+    /active="nope.py"/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-note line="1">x</vk-note>', { file: 'note.html', highlighter: hl }),
+    /只能写在 <vk-annotate> 内/
+  );
+});
+
+test('行段越界在构建期报错', async () => {
+  await assert.rejects(
+    () => transformHtml('<vk-code lang="c" src="hello.c" fold="9-12"></vk-code>', { file: path.join(dir, 'page.html'), highlighter: hl }),
+    /fold="9-12"/
+  );
+});
+
+test('缺失 src 明确报错', async () => {
+  await assert.rejects(
+    () => transformHtml('<vk-code lang="c" src="missing.c"></vk-code>', { file: path.join(dir, 'page.html'), highlighter: hl }),
+    /找不到 missing\.c/
+  );
+});
+
+test('源码里的 < 未转义时明确报错，不静默吞掉', async () => {
+  await assert.rejects(
+    () => transformHtml('<vk-code lang="c"><b>int</b> x;</vk-code>', { file: 'bad.html', highlighter: hl }),
+    /必须写成/
+  );
+});
+
+after(() => fs.rmSync(dir, { recursive: true, force: true }));

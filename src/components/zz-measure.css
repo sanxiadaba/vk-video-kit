@@ -1,0 +1,5 @@
+/* Frame · measure
+   组件层自己的 max-width:100% 会盖住 L2 的 [measure]；这里在组件层末尾再声明一次。
+   只改测量宽，不改组件内部布局。 */
+[measure='body'] { max-width: var(--vk-measure-body); }
+[measure='title'] { max-width: var(--vk-measure-title); }

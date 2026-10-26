@@ -1,0 +1,26 @@
+# 依赖
+node_modules/
+
+# 生成物：npm run build 随时重建，不进 git
+_site/
+dist/
+vk/
+types/
+assets/fonts/
+docs/reference.md
+docs/choosing.md
+icons.json
+custom-elements.json
+vscode-html-data.json
+web-types.json
+src/icons.generated.mjs
+src/icons.core.generated.mjs
+
+# 本地日志 / 临时目录
+.tmp/
+*.log
+
+# 系统文件
+.DS_Store
+Thumbs.db
+desktop.ini

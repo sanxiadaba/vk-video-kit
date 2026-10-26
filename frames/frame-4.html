@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>vk · Frame 4</title>
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
+<style>
+  html, body { margin: 0; height: 100%; background: #e9eef5; overflow: hidden; }
+  body { display: grid; place-items: center; min-height: 100vh; }
+  vk-page { width: min(100vw, calc(100vh * 16 / 9)); max-height: 100vh; }
+</style>
+</head>
+<body>
+<vk-page align="center">
+  <vk-stack gap="xl">
+    <vk-title index="05" eyebrow="坐标系 · 连线" size="title">两个名字，<br><em>指向同一块内存</em>。</vk-title>
+    <vk-canvas w="1400" h="520">
+      <vk-box id="name-a" x="0" y="120" w="240" radius="pill" pad-y="xs" surface="soft">
+        <vk-text size="body" weight="bold" mono align="center">a</vk-text>
+      </vk-box>
+      <vk-box id="obj-1" x="720" y="120" w="620" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+        <vk-row gap="sm" align="baseline" justify="between">
+          <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
+          <vk-text size="label" mono emphasis="muted">0x7f2a</vk-text>
+        </vk-row>
+      </vk-box>
+      <vk-box id="name-b" x="0" y="340" w="240" radius="pill" pad-y="xs" surface="soft">
+        <vk-text size="body" weight="bold" mono align="center">b</vk-text>
+      </vk-box>
+      <vk-box id="obj-2" x="720" y="340" w="620" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+        <vk-row gap="sm" align="baseline" justify="between">
+          <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
+          <vk-text size="label" mono emphasis="muted">0x7f2a</vk-text>
+        </vk-row>
+      </vk-box>
+      <vk-edge from="#name-a" to="#obj-1" label="引用"></vk-edge>
+      <vk-edge from="#name-b" to="#obj-2" label="同一块" tone="accent" dash></vk-edge>
+    </vk-canvas>
+  </vk-stack>
+</vk-page>
+<script src="../dist/vk.js"></script>
+<script>window.vk.ready();</script>
+</body>
+</html>
+

@@ -1,0 +1,6 @@
+$ gcc code/warn.c -o warn
+! warning: unused variable
+$ ./warn
+✓ 进程退出 0
+$ gcc code/broken.c -o broken
+✗ error: expected ';'
