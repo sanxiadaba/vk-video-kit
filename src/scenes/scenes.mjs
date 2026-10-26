@@ -26,8 +26,8 @@ export const SCENES = [
   {
     tag: 'vk-annotate',
     body: s`
-<vk-annotate w="560">
-  <vk-code w="1040" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
+<vk-annotate w="340">
+  <vk-code w="890" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
   <vk-note line="1">下标只有 0–2。</vk-note>
   <vk-note line="2">i &lt;= 3 让 i 到 3。</vk-note>
   <vk-note line="3">i = 3 时写到 a[3]。</vk-note>
@@ -137,11 +137,11 @@ export const SCENES = [
   {
     tag: 'vk-canvas',
     body: s`
-<vk-canvas w="1400" h="420">
+<vk-canvas w="1200" h="420">
   <vk-box id="name-a" x="0" y="120" w="240" radius="pill" pad-y="xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">a</vk-text>
   </vk-box>
-  <vk-box id="obj-1" x="720" y="120" w="620" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-1" x="560" y="120" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
       <vk-text size="label" mono emphasis="muted">0x7f2a</vk-text>
@@ -150,7 +150,7 @@ export const SCENES = [
   <vk-box id="name-b" x="0" y="300" w="240" radius="pill" pad-y="xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">b</vk-text>
   </vk-box>
-  <vk-box id="obj-2" x="720" y="300" w="620" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-2" x="560" y="300" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
       <vk-text size="label" mono emphasis="muted">0x7f2e</vk-text>
@@ -164,11 +164,11 @@ export const SCENES = [
   {
     tag: 'vk-edge',
     body: s`
-<vk-canvas w="1600" h="520">
-  <vk-box id="buf" x="0" y="70" w="380" radius="lg" pad-y="sm" surface="soft">
+<vk-canvas w="1200" h="520">
+  <vk-box id="buf" x="0" y="70" w="320" radius="lg" pad-y="sm" surface="soft">
     <vk-text size="heading" mono align="center">buf</vk-text>
   </vk-box>
-  <vk-box id="mem" x="980" y="280" w="620" border="strong" radius="lg" pad-y="sm" surface="paper">
+  <vk-box id="mem" x="700" y="280" w="480" border="strong" radius="lg" pad-y="sm" surface="paper">
     <vk-text size="heading" mono align="center">一块内存</vk-text>
   </vk-box>
   <vk-edge from="#buf" to="#mem" label="指向" tension="42" arrow-style="solid" arrow-size="36"></vk-edge>

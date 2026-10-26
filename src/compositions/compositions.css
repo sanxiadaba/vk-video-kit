@@ -30,6 +30,15 @@ vk-page {
   font-family: var(--vk-font-sans);
   -webkit-font-smoothing: antialiased;
 }
+.vk-page[data-surface='ink'] {
+  background: var(--vk-ink-1);
+  color: var(--vk-surface-1);
+}
+.vk-page[data-surface='ink'] .vk-page-hd,
+.vk-page[data-surface='ink'] .vk-page-ft {
+  color: rgba(255, 255, 255, 0.62);
+  border-top-color: rgba(255, 255, 255, 0.16);
+}
 
 /* 安全区的上下 96 是页眉/页脚的家：正文永远是 888，不被页眉页脚压缩。 */
 .vk-page-inner {
@@ -173,7 +182,9 @@ vk-note { display: block; }
 
   position: relative;
   display: block;
-  padding-left: 24px;
+  padding: 10px 16px 10px 24px;
+  border-radius: 4px;
+  background: var(--vk-focus-soft);
   font-size: var(--vk-t-4);
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-1);
@@ -194,12 +205,23 @@ vk-note[size='heading'] .vk-note { font-size: var(--vk-t-3); }
 vk-note[emphasis='secondary'] .vk-note { color: var(--vk-ink-2); }
 vk-note[emphasis='tertiary'] .vk-note { color: var(--vk-ink-3); }
 vk-note[emphasis='muted'] .vk-note { color: var(--vk-ink-4); }
+vk-note[emphasis='muted'] .vk-note:not([data-tone='inverse']) { color: var(--vk-ink-3); }
 
-/* tone 只换"这一笔"的颜色；正文永远是墨色。 */
-.vk-note[data-tone='inverse'] { --vk-note-line: var(--vk-ink-1); }
-.vk-note[data-tone='accent'] { --vk-note-line: var(--vk-focus-line); }
-.vk-note[data-tone='ok'] { --vk-note-line: var(--vk-ok); }
-.vk-note[data-tone='err'] { --vk-note-line: var(--vk-err); }
+/* tone 是整条的底色 + 左边线；在 annotate 里退回只留这一笔。 */
+.vk-note[data-tone='inverse'] { --vk-note-line: var(--vk-ink-1); background: var(--vk-ink-1); color: var(--vk-surface-1); }
+.vk-note[data-tone='accent'] { --vk-note-line: var(--vk-focus-line); background: var(--vk-focus-soft); }
+.vk-note[data-tone='ok'] { --vk-note-line: var(--vk-ok); background: var(--vk-ok-weak); }
+.vk-note[data-tone='err'] { --vk-note-line: var(--vk-err); background: var(--vk-err-weak); }
+.vk-note[data-tone='inverse'] em { background: rgba(255, 255, 255, 0.16); }
+
+/* 行旁批注保持无底色：它贴在代码边，不能变成一列色块。 */
+.vk-anno-notes .vk-note {
+  padding: 0 0 0 24px;
+  border-radius: 0;
+  background: transparent;
+  color: var(--vk-ink-1);
+}
+.vk-anno-notes .vk-note[data-tone='inverse'] { background: transparent; color: var(--vk-ink-1); }
 
 .vk-note em {
   font-family: var(--vk-font-mono);

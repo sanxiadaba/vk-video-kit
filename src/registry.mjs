@@ -157,7 +157,7 @@ const DEFAULTS = {
   'vk-frames': { grows: 'down', show: 'all', summary: 'all', density: 'normal' },
   'vk-cells': { cols: '0' },
   'vk-steps': { current: '1' },
-  'vk-page': { align: 'top' },
+  'vk-page': { align: 'top', surface: 'paper' },
   'vk-annotate': { w: '600' },
   'vk-note': { tone: 'accent', size: 'body' },
 };
@@ -671,6 +671,7 @@ export const TAGS = {
       'header': text(),
       'footer': text(),
       'align': oneOf('top', 'center'),
+      'surface': oneOf('paper', 'ink'),
     },
   },
   'vk-annotate': {

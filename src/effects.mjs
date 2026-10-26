@@ -308,6 +308,7 @@ Object.assign(EFFECTS['vk-note'], {
   emphasis: { on: '.vk-note', kind: 'style', prop: 'color' },
 });
 Object.assign(EFFECTS['vk-page'], {
+  surface: { on: '.vk-page', kind: 'style', prop: 'background-color' },
   // fit 只在宿主小于 16:9 时有差异；由 EFFECT_ANY 登记，不在这里造一个假的 height 效果。
 });
 EFFECTS['vk-annotate'] = {

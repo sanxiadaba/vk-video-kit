@@ -24,6 +24,7 @@ export class VkPage extends VkElement {
     const w = 1920;
     const h = 1080;
     const align = this.getAttribute('align') === 'center' ? 'center' : 'top';
+    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
 
     if (!this._shell) {
       // 页眉/页脚槽：先摘出来，剩下的才是正文。槽的优先级高于同名属性。
@@ -39,12 +40,14 @@ export class VkPage extends VkElement {
       </div>`;
       this._shell = this.querySelector('.vk-page');
       this._inner = this.querySelector('.vk-page-inner');
+      this._shell.dataset.surface = surface;
       this._bd = this.querySelector('.vk-page-bd');
       fillSlot(this._bd, body);
       this.dataset.vkPlace = '';
       this._watch();
     }
 
+    this._shell.dataset.surface = surface;
     // header / footer 是页面的装饰，不是作者槽；每次只更新它们，不碰 vk-page-bd。
     const hasHdSlot = this._headerSlot?.length;
     let hd = this._inner.querySelector(':scope > .vk-page-hd');

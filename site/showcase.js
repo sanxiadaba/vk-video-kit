@@ -51,12 +51,10 @@
       }
       section.hidden = !on;
     }
-    for (const tag of $$('[data-lens-tag]')) {
-      const on = tag.dataset.lensTag === lens;
-      if (on) tag.setAttribute('state', 'selected'); else tag.removeAttribute('state');
-      tag.setAttribute('tone', 'muted');
-      tag.setAttribute('aria-selected', String(on));
-      tag.closest('a')?.setAttribute('aria-selected', String(on));
+    for (const a of $$('[data-lens-link]')) {
+      const on = a.hash === `#${lens}`;
+      a.setAttribute('aria-current', on ? 'page' : 'false');
+      a.setAttribute('aria-selected', String(on));
     }
     if (push && location.hash !== `#${lens}`) history.pushState(null, '', `#${lens}`);
     resetScroll();
@@ -316,11 +314,13 @@
 
   function addLegend(canvas, r, rows) {
     // 宽目标放不下右栏图例：改成目标下方的一条横向图例带，像制图的 key。
-    const wide = r.x + r.w + 40 + 340 > 1680;
+    const cw = canvas.offsetWidth || 1352;
+    const ch = canvas.offsetHeight || 768;
+    const wide = r.x + r.w + 40 + 340 > cw;
     const box = document.createElement('vk-box');
-    box.setAttribute('x', '120');
-    box.setAttribute('y', wide ? String(Math.min(888 - 84, r.y + r.h + 4)) : '80');
-    box.setAttribute('w', wide ? '1400' : '340');
+    box.setAttribute('x', wide ? '24' : String(cw - 364));
+    box.setAttribute('y', wide ? String(Math.min(ch - 84, r.y + r.h + 4)) : '80');
+    box.setAttribute('w', wide ? '1300' : '340');
     if (wide) box.setAttribute('h', '80');
     box.setAttribute('surface', 'paper');
     box.setAttribute('border', 'hair');
@@ -379,7 +379,7 @@
     const rows = [];
     parts.slice(0, 4).forEach((p) => {
       const pr = designRect(p, canvas);
-      if (pr.w < 80 || pr.h < 48 || pr.x < 0 || pr.y < 0 || pr.x + pr.w > 1680 || pr.y + pr.h > 888) return;
+      if (pr.w < 80 || pr.h < 48 || pr.x < 0 || pr.y < 0 || pr.x + pr.w > (canvas.offsetWidth || 1352) || pr.y + pr.h > (canvas.offsetHeight || 768)) return;
       const n = rows.length + 1;
       p.id = `part-${n}`;
       addBox(canvas, pr);
