@@ -132,7 +132,7 @@ function snapshotInPage(tag) {
     'width', 'height', 'aspect-ratio', 'object-fit', 'object-position', 'text-decoration-line',
     'grid-template-columns', 'row-gap', 'column-gap', 'list-style-type',
     'flex-wrap', 'align-items', 'align-self', 'justify-content', 'justify-items', 'flex-direction', 'flex-grow', 'grid-template-rows',
-    'overflow', 'overflow-x', 'overflow-y', 'left', 'top',
+    'overflow', 'overflow-x', 'overflow-y', 'left', 'top', 'background-image', 'background-size',
     '--vk-note-line', '--vk-box-line', '--vk-box-bg', '--vk-mark-fill', '--vk-icon-size',
   ];
   const pathOf = (el, root) => {
@@ -161,6 +161,11 @@ function snapshotInPage(tag) {
     row['rect.y'] = Math.round(r.top * 10) / 10;
     for (const a of ['d', 'stroke', 'stroke-width', 'stroke-dasharray', 'fill', 'data-style']) {
       if (el.hasAttribute(a)) row['@' + a] = el.getAttribute(a);
+    }
+    // 契约用 data-* 表达结构状态（variant / show / active / group / grid…）。
+    // data-vk-* 是运行时内部标记，不参与断言。
+    for (const a of el.attributes) {
+      if (a.name.startsWith('data-') && !a.name.startsWith('data-vk-')) row['@' + a.name] = a.value;
     }
     if (!el.children.length && el.textContent.trim()) row['#text'] = el.textContent.trim().slice(0, 120);
     out[key] = row;
@@ -447,7 +452,10 @@ try {
         const visual = exempt ? [] : await page.evaluate(visualInPage, tag);
         const afterCount = eff.kind === 'dom' ? await countSel(tag, eff.prop) : 0;
         const hit = effectHit(eff, diffs, beforeCount, afterCount, targetPaths);
-        if (!best || diffs.length > best.diffs.length) best = { value, diffs, visual, hit };
+        // dom 类效果不一定产生快照 diff；优先保留命中的那一档。
+        if (!best || (hit.ok && !best.hit.ok) || (hit.ok === best.hit.ok && diffs.length > best.diffs.length)) {
+          best = { value, diffs, visual, hit };
+        }
         if (visual.length) {
           const vk = JSON.stringify(visual.slice(0, 3));
           if (!visualSeen.has(vk)) {

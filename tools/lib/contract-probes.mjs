@@ -60,6 +60,13 @@ export const PROBES = {
       why: '真折叠会多出一条 .is-fold 行；行数不变，不能只数 .vk-line。',
     },
   },
+  'vk-bytes': {
+    highlight: {
+      values: ['9-12'],
+      effect: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
+      why: '高亮字节会换一组 i 的背景色；断言背景而不是 data-hl 标记。',
+    },
+  },
   'vk-figure': {
     ratio: {
       values: ['2 / 1'],
@@ -115,6 +122,11 @@ export const EFFECT_ANY = [
     tag: 'vk-code',
     attr: 'numbering',
     reason: 'specimen 没有 lines 区间，slice/file 都从 1 开始；有 lines 时由 frame-6 验证。',
+  },
+  {
+    tag: 'vk-tree',
+    attr: 'limit',
+    reason: 'AST 标本只有一个根，limit 的 1/500 都只显示这一个根；顶层截断由文件树变体覆盖。',
   },
 ];
 export const EFFECT_ANY_BUDGET = 10;

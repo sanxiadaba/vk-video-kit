@@ -38,6 +38,15 @@ const ATTR_META = {
   values: { label: '值', content: true },
   labels: { label: '标签', content: true },
   addr: { label: '起始地址', content: true },
+  offset: { label: '起始字节', content: true },
+  length: { label: '字节数', content: true },
+  group: { label: '分组', group: 'appearance' },
+  ascii: { label: 'ASCII 列', group: 'appearance' },
+  address: { label: '地址列', group: 'appearance' },
+  grows: { label: '生长方向', group: 'appearance' },
+  show: { label: '显示列', group: 'appearance' },
+  grid: { label: '栅格', group: 'appearance' },
+  kinds: { label: '类型标记', group: 'appearance' },
   mark: { label: '标记词', content: true },
   'fold-note': { label: '折叠说明', content: true },
   for: { label: '目标', content: true },
@@ -143,7 +152,9 @@ const DEFAULTS = {
   'vk-math': { size: 'body' },
   'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', surface: 'paper', chrome: 'min' },
   'vk-browser': { chrome: 'min', surface: 'paper' },
-  'vk-filetree': { depth: '4' },
+  'vk-tree': { variant: 'files', depth: '4', summary: 'all' },
+  'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal' },
+  'vk-frames': { grows: 'down', show: 'all', density: 'normal' },
   'vk-cells': { cols: '0' },
   'vk-steps': { current: '1' },
   'vk-page': { align: 'top' },
@@ -153,10 +164,11 @@ const DEFAULTS = {
 
 export const LAYERS = [
   { id: 'tokens', label: 'L0 值', note: '不可再分的决定，只读' },
-  { id: 'elements', label: 'L1 元素', note: '屏幕上真实存在的单个物件' },
-  { id: 'layout', label: 'L2 布局', note: '只决定在哪、多大' },
-  { id: 'components', label: 'L3 组件', note: '有语义、有成品外观' },
-  { id: 'compositions', label: 'L4 装置', note: '多组件 + 跨组件几何 + 页面' },
+  { id: 'elements', label: 'L1 原子', note: '屏幕上真实存在的单个物件' },
+  { id: 'layout', label: 'L2 排布', note: '只决定在哪、多大' },
+  { id: 'components', label: 'L3 器械', note: '渲染一种编程数据的形状' },
+  { id: 'relations', label: 'L4 关系', note: '两点之间的关系与批注' },
+  { id: 'page', label: 'L5 页面', note: '一整张 1920×1080 的画布' },
 ];
 
 export const TAGS = {
@@ -289,16 +301,17 @@ export const TAGS = {
   'vk-canvas': {
     name: '坐标系',
     layer: 'layout',
-    summary: '坐标空间。子节点用 x/y 明确摆放；不做自动布局。',
+    summary: '坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。',
     attrs: {
       'w': num({ min: 48, max: 1680, step: 1 }),
       'h': num({ min: 48, max: 888, step: 1 }),
       'pad': num({ min: 0, max: 200, step: 1 }),
+      'grid': num({ min: 0, max: 192, step: 8 }),
     },
   },
   'vk-edge': {
     name: '连线',
-    layer: 'layout',
+    layer: 'relations',
     summary: '两点之间的连线。自己算锚点，三种形状。',
     attrs: {
       'from': sel(),
@@ -535,17 +548,17 @@ export const TAGS = {
       'w': num({ min: 840, max: 1680, step: 1 }),
     },
   },
-  'vk-filetree': {
-    name: '文件树',
+  'vk-tree': {
+    name: '树',
     layer: 'components',
-    summary: '文件树：src 指向真实目录；层级、文件类型、大小、当前文件、+/*/- 变更。',
+    summary: '树：src 指向真实目录或 JSON。文件树、语法树、普通结构共用一套行渲染。',
     content: {
       kind: 'text',
-      target: 'vk-filetree',
+      target: 'vk-tree',
       fields: [
         { name: 'tree', label: '树数据（JSON）', type: 'textarea', script: 'data-vk-tree', clears: ['src'] },
         { name: 'title', label: '标题', type: 'text', attr: 'title' },
-        { name: 'active', label: '当前文件', type: 'text', attr: 'active' },
+        { name: 'active', label: '当前节点', type: 'text', attr: 'active' },
       ],
     },
     attrs: {
@@ -553,6 +566,7 @@ export const TAGS = {
       'title': text(),
       'active': text(),
       'collapsed': text(),
+      'variant': oneOf('files', 'ast', 'generic'),
       'limit': int({ min: 1, max: 500, step: 1 }),
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
@@ -591,6 +605,36 @@ export const TAGS = {
       'flag': int({ min: 1, max: 64, step: 1 }),
     },
   },
+  'vk-bytes': {
+    name: '字节',
+    layer: 'components',
+    summary: '字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，highlight 标出一段字节。',
+    attrs: {
+      'src': text(),
+      'addr': text(),
+      'offset': text(),
+      'length': text(),
+      'cols': oneOf('4', '8'),
+      'group': oneOf('1', '2', '4', '8'),
+      'ascii': oneOf('all', 'none'),
+      'address': oneOf('all', 'none'),
+      'highlight': text(),
+      'density': oneOf('compact', 'normal'),
+    },
+  },
+  'vk-frames': {
+    name: '栈帧',
+    layer: 'components',
+    summary: '栈帧：src 指向真实 JSON；一帧一组槽位，标出当前帧、地址与生长方向。',
+    attrs: {
+      'src': text(),
+      'title': text(),
+      'active': int({ min: 1, max: 99, step: 1 }),
+      'grows': oneOf('down', 'up'),
+      'show': oneOf('all', 'values', 'addresses'),
+      'density': oneOf('compact', 'normal'),
+    },
+  },
   'vk-steps': {
     name: '步骤',
     layer: 'components',
@@ -605,26 +649,14 @@ export const TAGS = {
     },
   },
 
-  'vk-progress': {
-    name: '进度',
-    layer: 'components',
-    summary: '一条进度：0–100，带标签与数值。',
-    content: {
-      kind: 'text',
-      target: 'vk-progress',
-      fields: [{ name: 'label', label: '标签', type: 'text', attr: 'label' }],
-    },
-    attrs: {
-      'value': int({ min: 0, max: 100, step: 1 }),
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
-      'label': text(),
-    },
-  },
-
   'vk-page': {
     name: '页面',
-    layer: 'compositions',
+    layer: 'page',
     summary: '1080p 画布工具：安全区、可选页眉页脚、按容器宽度缩放。',
+    slots: [
+      { name: 'header', description: '页眉内容；优先级高于 header 属性' },
+      { name: 'footer', description: '页脚内容；优先级高于 footer 属性' },
+    ],
     content: {
       kind: 'text',
       target: 'vk-page',
@@ -641,14 +673,14 @@ export const TAGS = {
   },
   'vk-annotate': {
     name: '行旁批注',
-    layer: 'compositions',
+    layer: 'relations',
     summary: '把批注绑到代码行：按行心对齐、贴在该行右侧；引线只服务非代码目标。',
     attrs: {
     },
   },
   'vk-note': {
     name: '讲解条',
-    layer: 'compositions',
+    layer: 'relations',
     summary: '一条讲解：line 指向代码行，for 指向任意元素，由 vk-annotate 组织。',
     content: {
       kind: 'text',
@@ -728,7 +760,7 @@ const EXTRA = {
     border: oneOf('none', 'hair', 'strong'),
   },
   'vk-figure': { position: text() },
-  'vk-filetree': {
+  'vk-tree': {
     collapsed: text(),
     active: text(),
     hidden: { ...bool(), content: true },
@@ -764,8 +796,8 @@ export const TAG_NAMES = Object.keys(TAGS);
 
 /** 同名属性在不同标签上含义不同时，在这里覆盖。 */
 const ATTR_META_BY_TAG = {
-  'vk-filetree': {
-    fold: { label: '收起目录', content: true },
+  'vk-bytes': {
+    highlight: { label: '高亮字节', group: 'state' },
   },
 };
 

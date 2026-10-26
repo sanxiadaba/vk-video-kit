@@ -7,7 +7,7 @@ import { TAGS } from '../src/registry.mjs';
 const registryAttrs = new Set();
 for (const def of Object.values(TAGS)) for (const name of Object.keys(def.attrs || {})) registryAttrs.add(name);
 
-const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open']);
+const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot']);
 const IGNORE = (name) => name.startsWith('data-') || name.startsWith('aria-') || ALLOW.has(name);
 
 function walk(dir, out = []) {

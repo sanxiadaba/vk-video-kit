@@ -70,7 +70,7 @@ const FRAMES = [
     topic: '文件树 · 代码',
     title: '先找到文件，再看那一行。',
     note: '文件树给路径，代码窗只截取需要的那四行。',
-    tags: ['vk-title', 'vk-filetree', 'vk-code'],
+    tags: ['vk-title', 'vk-tree', 'vk-code'],
   },
   {
     no: '08',

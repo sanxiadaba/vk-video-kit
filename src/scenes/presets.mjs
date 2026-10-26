@@ -146,11 +146,27 @@ export const PRESETS = {
     { label: '无头', attrs: { chrome: 'none' } },
     { label: '深色', attrs: { surface: 'ink' } },
   ],
-  'vk-filetree': [
+  'vk-tree': [
     { label: '只看顶层', attrs: { depth: '0' } },
     { label: '只显示 2 个顶层', attrs: { limit: '2' } },
-    { label: '收起 tests', attrs: { collapsed: 'tests' } },
     { label: '隐藏统计', attrs: { summary: 'none' } },
+    { label: '文件树', attrs: { variant: 'files', src: '../code/app' } },
+    { label: '普通结构', attrs: { variant: 'generic' } },
+  ],
+  'vk-bytes': [
+    { label: '四列', attrs: { cols: '4' } },
+    { label: '按字节分组', attrs: { group: '1' } },
+    { label: '按 4 字节分组', attrs: { group: '4' } },
+    { label: '不要 ASCII', attrs: { ascii: 'none' } },
+    { label: '不要地址', attrs: { address: 'none' } },
+    { label: '紧凑', attrs: { density: 'compact' } },
+  ],
+  'vk-frames': [
+    { label: '第 1 帧', attrs: { active: '1' } },
+    { label: '第 2 帧', attrs: { active: '2' } },
+    { label: '只看值', attrs: { show: 'values' } },
+    { label: '只看地址', attrs: { show: 'addresses' } },
+    { label: '向上生长', attrs: { grows: 'up' } },
   ],
   'vk-keys': [],
   'vk-cells': [
@@ -160,14 +176,6 @@ export const PRESETS = {
   'vk-steps': [
     { label: '第一步', attrs: { current: '1' } },
     { label: '第三步', attrs: { current: '3' } },
-  ],
-  'vk-progress': [
-    { label: '20%', attrs: { value: '20' } },
-    { label: '50%', attrs: { value: '50' } },
-    { label: '80%', attrs: { value: '80' } },
-    { label: '完成', attrs: { value: '100', tone: 'ok' } },
-    { label: '注意', attrs: { value: '60', tone: 'warn' } },
-    { label: '错误', attrs: { value: '30', tone: 'err' } },
   ],
   'vk-annotate': [
     { label: '窄栏', attrs: { w: '520' } },

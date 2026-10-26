@@ -26,6 +26,13 @@ export class VkPage extends VkElement {
     const align = this.getAttribute('align') === 'center' ? 'center' : 'top';
 
     if (!this._shell) {
+      // 页眉/页脚槽：先摘出来，剩下的才是正文。槽的优先级高于同名属性。
+      this._headerSlot = [...this.children].filter((el) => el.getAttribute?.('slot') === 'header');
+      this._footerSlot = [...this.children].filter((el) => el.getAttribute?.('slot') === 'footer');
+      for (const el of [...this._headerSlot, ...this._footerSlot]) {
+        el.removeAttribute('slot');
+        el.remove();
+      }
       const body = takeSlot(this);
       this.innerHTML = `<div class="vk-page" data-align="top" style="--pw:${w}px;--ph:${h}px">
         <div class="vk-page-inner"><div class="vk-page-bd"></div></div>
@@ -39,32 +46,46 @@ export class VkPage extends VkElement {
     }
 
     // header / footer 是页面的装饰，不是作者槽；每次只更新它们，不碰 vk-page-bd。
+    const hasHdSlot = this._headerSlot?.length;
     let hd = this._inner.querySelector(':scope > .vk-page-hd');
-    if (header) {
+    if (header || hasHdSlot) {
       if (!hd) {
         hd = document.createElement('header');
         hd.className = 'vk-page-hd';
         this._inner.insertBefore(hd, this._bd);
       }
-      hd.textContent = header;
+      if (hasHdSlot) {
+        hd.classList.add('is-slot');
+        for (const el of this._headerSlot) if (el.parentNode !== hd) hd.append(el);
+      } else {
+        hd.classList.remove('is-slot');
+        hd.textContent = header;
+      }
     } else if (hd) {
       hd.remove();
     }
 
+    const hasFtSlot = this._footerSlot?.length;
     let ft = this._inner.querySelector(':scope > .vk-page-ft');
-    if (footer) {
+    if (footer || hasFtSlot) {
       if (!ft) {
         ft = document.createElement('footer');
         ft.className = 'vk-page-ft';
         this._inner.append(ft);
       }
-      const parts = footer.split('|').map((s) => s.trim());
-      if (parts.length > 1) {
-        ft.innerHTML = '<span></span><span class="vk-page-div"></span><span></span>';
-        ft.children[0].textContent = parts[0];
-        ft.children[2].textContent = parts.slice(1).join(' | ');
+      if (hasFtSlot) {
+        ft.classList.add('is-slot');
+        for (const el of this._footerSlot) if (el.parentNode !== ft) ft.append(el);
       } else {
-        ft.textContent = footer;
+        ft.classList.remove('is-slot');
+        const parts = footer.split('|').map((s) => s.trim());
+        if (parts.length > 1) {
+          ft.innerHTML = '<span></span><span class="vk-page-div"></span><span></span>';
+          ft.children[0].textContent = parts[0];
+          ft.children[2].textContent = parts.slice(1).join(' | ');
+        } else {
+          ft.textContent = footer;
+        }
       }
     } else if (ft) {
       ft.remove();

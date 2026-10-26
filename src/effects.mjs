@@ -84,11 +84,6 @@ export const EFFECTS = {
     pad: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   },
 
-  'vk-progress': {
-    value: { on: '.vk-progress-track i', kind: 'style', prop: 'width' },
-    tone: { on: '.vk-progress-track i', kind: 'style', prop: 'background-color' },
-  },
-
   'vk-page': {
     align: { on: 'vk-page', kind: 'style', prop: 'justify-content' },
   },
@@ -121,10 +116,26 @@ export const EFFECTS = {
     variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
   },
 
-  'vk-filetree': {
-    limit: { on: 'vk-filetree', kind: 'geometry', prop: 'height' },
-    depth: { on: 'vk-filetree', kind: 'geometry', prop: 'height' },
+  'vk-tree': {
+    depth: { on: 'vk-tree', kind: 'geometry', prop: 'height' },
     summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
+    variant: { on: '.vk-tree', kind: 'attr', prop: 'data-variant' },
+  },
+
+  'vk-bytes': {
+    cols: { on: '.vk-bytes-row', kind: 'style', prop: 'grid-template-columns' },
+    group: { on: '.vk-bytes-x', kind: 'attr', prop: 'data-group' },
+    ascii: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-c' },
+    address: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-a' },
+    highlight: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
+    density: { on: '.vk-bytes-row', kind: 'style', prop: 'line-height' },
+  },
+
+  'vk-frames': {
+    active: { on: '.vk-frame', kind: 'style', prop: 'background-color' },
+    grows: { on: 'vk-frames', kind: 'text', prop: '.vk-frame-n' },
+    show: { on: 'vk-frames', kind: 'dom', prop: '.vk-frame-sa' },
+    density: { on: '.vk-frame-slot', kind: 'style', prop: 'line-height' },
   },
 
   'vk-mark': {
@@ -220,8 +231,8 @@ const COMMON = {
 const COMMON_TAGS = [
   'vk-box', 'vk-text', 'vk-stack', 'vk-row', 'vk-grid', 'vk-rule', 'vk-title',
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
-  'vk-math', 'vk-figure', 'vk-browser', 'vk-filetree', 'vk-cells', 'vk-steps',
-  'vk-progress', 'vk-note',
+  'vk-math', 'vk-figure', 'vk-browser', 'vk-tree', 'vk-cells', 'vk-bytes',
+  'vk-frames', 'vk-steps', 'vk-note',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -287,8 +298,9 @@ Object.assign(EFFECTS['vk-edge'], {
   'label-dx': { on: '.vk-edge-label', kind: 'style', prop: 'left' },
   'label-dy': { on: '.vk-edge-label', kind: 'style', prop: 'top' },
 });
-Object.assign(EFFECTS['vk-filetree'], {
+Object.assign(EFFECTS['vk-tree'], {
   summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
+  variant: { on: '.vk-tree', kind: 'attr', prop: 'data-variant' },
 });
 Object.assign(EFFECTS['vk-note'], {
   emphasis: { on: '.vk-note', kind: 'style', prop: 'color' },
@@ -302,5 +314,6 @@ EFFECTS['vk-annotate'] = {
 Object.assign(EFFECTS['vk-canvas'], {
   inset: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   overflow: { on: 'vk-canvas', kind: 'style', prop: 'overflow-x', skipVisual: true },
+  grid: { on: 'vk-canvas', kind: 'style', prop: 'background-image' },
 });
 

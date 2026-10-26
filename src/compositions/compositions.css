@@ -72,6 +72,14 @@ vk-page {
   background: var(--vk-line-2);
   text-decoration: none;
 }
+/* 槽模式：页眉/页脚里放的是组件，不是字符串。 */
+.vk-page-hd.is-slot > *,
+.vk-page-ft.is-slot > * {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+.vk-page-hd.is-slot,
+.vk-page-ft.is-slot { color: var(--vk-ink-2); }
 
 /* ----------------------------------------------------------- vk-annotate */
 /*

@@ -193,7 +193,7 @@ function validateAuthorHtml(doc, file) {
       if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) {
         if (name === 'slot') {
           const parent = node.parentNode?.tagName;
-          const allowed = { 'vk-title': ['eyebrow', 'sub'], 'vk-callout': ['title'] }[parent] || [];
+          const allowed = (TAGS[parent]?.slots || []).map((s) => s.name);
           if (!allowed.includes(raw)) errors.push(`${file}:${lineOf(node)} <${parent || '?'}> 不支持 slot="${raw}"；可用：${allowed.join(', ') || '无'}`);
         }
         continue;
@@ -246,8 +246,9 @@ function validateAuthorHtml(doc, file) {
         if (bad) errors.push(`${where} ${name}="${raw}" 不是合法行段（1、1-8、1,3-5）`);
       }
     }
-    if (tag === 'vk-title' || tag === 'vk-callout') {
-      const allowedSlots = tag === 'vk-title' ? ['eyebrow', 'sub'] : ['title'];
+    const slotDefs = def.slots || [];
+    if (slotDefs.length) {
+      const allowedSlots = slotDefs.map((s) => s.name);
       const childSlots = [];
       for (const child of node.childNodes || []) {
         const slotAttr = (child.attrs || []).find((a) => a.name === 'slot');
@@ -258,8 +259,7 @@ function validateAuthorHtml(doc, file) {
         }
       }
       const slots = new Set(childSlots);
-      const pairs = tag === 'vk-title' ? [['sub'], ['eyebrow']] : [['title']];
-      for (const [slotName] of pairs) {
+      for (const slotName of allowedSlots) {
         if (slots.has(slotName) && attrs.has(slotName)) {
           errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${slotName} 不能同时写 slot 和属性；二选一`);
         }
@@ -302,7 +302,13 @@ function collectText(node) {
     if (n.tagName) {
       if (
         n.tagName === 'script' &&
-        (hasAttr(n, 'data-vk-hl') || hasAttr(n, 'data-vk-hl-diff') || hasAttr(n, 'data-vk-math') || hasAttr(n, 'data-vk-src') || hasAttr(n, 'data-vk-tree'))
+        (hasAttr(n, 'data-vk-hl') ||
+          hasAttr(n, 'data-vk-hl-diff') ||
+          hasAttr(n, 'data-vk-math') ||
+          hasAttr(n, 'data-vk-src') ||
+          hasAttr(n, 'data-vk-tree') ||
+          hasAttr(n, 'data-vk-bytes') ||
+          hasAttr(n, 'data-vk-frames'))
       )
         return;
       hasElement = true;
@@ -406,6 +412,8 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   const maths = [];
   const terms = [];
   const trees = [];
+  const bytesNodes = [];
+  const frameNodes = [];
   const iconNames = new Set();
   const iconNodes = [];
 
@@ -413,7 +421,9 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (node.tagName === 'vk-code' || node.tagName === 'vk-diff') blocks.push(node);
     if (node.tagName === 'vk-math') maths.push(node);
     if (node.tagName === 'vk-term') terms.push(node);
-    if (node.tagName === 'vk-filetree') trees.push(node);
+    if (node.tagName === 'vk-tree') trees.push(node);
+    if (node.tagName === 'vk-bytes') bytesNodes.push(node);
+    if (node.tagName === 'vk-frames') frameNodes.push(node);
     if (node.tagName === 'vk-icon') iconNodes.push(node);
   });
 
@@ -523,12 +533,12 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${srcScript(source)}\n` });
   }
 
-  // 文件树：src 指向真实目录，构建期扫出条目；不手写目录内容。
+  // 树：src 指向真实目录或 JSON。目录扫出条目；JSON 原样作为结构数据。
   for (const node of trees) {
     const loc = locOf(node);
     const line = lineOf(node);
     if (!loc.startTag || !loc.endTag) {
-      throw new Error(`${file}:${line} <vk-filetree> 缺少结束标签，无法预编译。`);
+      throw new Error(`${file}:${line} <vk-tree> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
     if (!src) continue;
@@ -537,18 +547,110 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
     }
     deps.push(abs);
-    const depth = parseInt(attr(node, 'depth') || '4', 10);
-    const data = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
-    const current = attr(node, 'active') || attr(node, 'current');
-    if (current && !data.entries.some((e) => e.path === current || e.name === current)) {
-      errors.push(`${file}:${line} <vk-filetree> 的 active="${current}" 不在目录里`);
+    let payload;
+    if (/\.json$/i.test(src)) {
+      let data;
+      try {
+        data = JSON.parse(fs.readFileSync(abs, 'utf8'));
+      } catch (e) {
+        throw new Error(`${file}:${line} <vk-tree> 的 ${src} 不是合法 JSON：${e.message}`);
+      }
+      payload = { json: data, source: src.replace(/\\/g, '/') };
+    } else {
+      const depth = parseInt(attr(node, 'depth') || '4', 10);
+      payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
+      const current = attr(node, 'active') || attr(node, 'current');
+      if (current && !payload.entries.some((e) => e.path === current || e.name === current)) {
+        errors.push(`${file}:${line} <vk-tree> 的 active="${current}" 不在目录里`);
+      }
+      for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
     }
-    for (const e of data.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
-    const json = JSON.stringify(data).replace(/</g, '\\u003c');
+    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
       start: loc.startTag.endOffset,
       end: loc.endTag.startOffset,
       inner: `\n<script type="application/json" data-vk-tree>${json}</script>\n`,
+    });
+  }
+
+  // 字节：src 指向真实二进制，构建期切行；运行时只摆格子。
+  for (const node of bytesNodes) {
+    const loc = locOf(node);
+    const line = lineOf(node);
+    if (!loc.startTag || !loc.endTag) {
+      throw new Error(`${file}:${line} <vk-bytes> 缺少结束标签，无法预编译。`);
+    }
+    const src = attr(node, 'src');
+    if (!src) continue;
+    const abs = path.resolve(path.dirname(file), src);
+    if (!fs.existsSync(abs)) {
+      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+    }
+    deps.push(abs);
+    const buf = fs.readFileSync(abs);
+    const start = Math.max(0, parseInt(attr(node, 'offset') || '0', 10) || 0);
+    const want = Math.max(1, parseInt(attr(node, 'length') || '64', 10) || 64);
+    const end = Math.min(buf.length, start + want);
+    const addrText = attr(node, 'addr') || '0x0000';
+    const base = /^0x[0-9a-f]+$/i.test(addrText) ? parseInt(addrText, 16) : parseInt(addrText, 10) || 0;
+    const hl = new Set();
+    for (const part of (attr(node, 'highlight') || '').split(',')) {
+      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+      if (!m) continue;
+      const a = parseInt(m[1], 10);
+      const b = parseInt(m[2] || m[1], 10);
+      for (let i = a; i <= b; i++) hl.add(start + i - 1);
+    }
+    const bytes = [...buf.subarray(start, end)];
+    const payload = {
+      file: path.basename(abs),
+      start,
+      end: end > start ? end - 1 : start,
+      base,
+      bytes: bytes.map((b) => b.toString(16).padStart(2, '0')),
+      hl: bytes.map((_, i) => hl.has(start + i)),
+    };
+    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
+    edits.push({
+      start: loc.startTag.endOffset,
+      end: loc.endTag.startOffset,
+      inner: `\n<script type="application/json" data-vk-bytes>${json}</script>\n`,
+    });
+  }
+
+  // 栈帧：src 指向真实 JSON；只摆数据，不猜结构。
+  for (const node of frameNodes) {
+    const loc = locOf(node);
+    const line = lineOf(node);
+    if (!loc.startTag || !loc.endTag) {
+      throw new Error(`${file}:${line} <vk-frames> 缺少结束标签，无法预编译。`);
+    }
+    const src = attr(node, 'src');
+    if (!src) continue;
+    const abs = path.resolve(path.dirname(file), src);
+    if (!fs.existsSync(abs)) {
+      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+    }
+    let data;
+    try {
+      data = JSON.parse(fs.readFileSync(abs, 'utf8'));
+    } catch (e) {
+      throw new Error(`${file}:${line} <vk-frames> 的 ${src} 不是合法 JSON：${e.message}`);
+    }
+    deps.push(abs);
+    const payload = Array.isArray(data) ? { frames: data } : data;
+    if (!payload || !Array.isArray(payload.frames)) {
+      errors.push(`${file}:${line} <vk-frames> 的 ${src} 需要 { frames: [...] }`);
+      continue;
+    }
+    if (payload.frames.some((f) => !f || typeof f !== 'object' || !Array.isArray(f.slots))) {
+      errors.push(`${file}:${line} <vk-frames> 的每一帧都需要 slots 数组`);
+    }
+    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
+    edits.push({
+      start: loc.startTag.endOffset,
+      end: loc.endTag.startOffset,
+      inner: `\n<script type="application/json" data-vk-frames>${json}</script>\n`,
     });
   }
 

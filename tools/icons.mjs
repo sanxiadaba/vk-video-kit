@@ -105,7 +105,7 @@ export function generateIcons() {
   // 运行时只带组件内部真正用到的图标；作者页面的 vk-icon 由 vk build 按页注入。
   const CORE = [
     'circle-help', 'info', 'circle-check', 'triangle-alert', 'circle-x',
-    'folder', 'file', 'file-code', 'file-json', 'file-text', 'file-terminal',
+    'folder', 'file', 'file-code', 'file-json', 'file-text', 'file-terminal', 'braces',
   ];
   const coreRows = CORE.map((name) => {
     if (!icons.has(name)) throw new Error(`核心图标不存在：${name}`);

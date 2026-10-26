@@ -286,15 +286,15 @@ test('figure 的原生 figcaption 进入图注，不混进媒体槽', async () =
   assert.equal(r.slot, '');
 });
 
-test('filetree 折叠的是子列表，数量来自未过滤的真实条目', async () => {
-  await reset(`<vk-filetree collapsed="src"><script type="application/json" data-vk-tree>{"root":"app","entries":[
+test('tree 折叠的是子列表，数量来自未过滤的真实条目', async () => {
+  await reset(`<vk-tree collapsed="src"><script type="application/json" data-vk-tree>{"root":"app","entries":[
     {"name":"src","path":"src","depth":0,"type":"dir","ext":"","size":0},
     {"name":"a.py","path":"src/a.py","depth":1,"type":"file","ext":"py","size":1},
     {"name":"b.py","path":"src/b.py","depth":1,"type":"file","ext":"py","size":1}
-  ]}</script></vk-filetree>`);
+  ]}</script></vk-tree>`);
   const r = await page.evaluate(() => ({
     text: document.querySelector('.vk-tree-fold')?.textContent.trim(),
-    child: document.querySelectorAll('vk-filetree .vk-tree-list .vk-tree-list').length,
+    child: document.querySelectorAll('vk-tree .vk-tree-list .vk-tree-list').length,
   }));
   assert.match(r.text, /2 项已收起/);
   assert.equal(r.child, 0);

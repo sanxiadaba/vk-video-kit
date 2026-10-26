@@ -53,7 +53,7 @@ test('src 从真实文件来：不再把源码手敲进 HTML', async () => {
   assert.ok(!/<vk-code[^>]*>\s*int main/.test(out.html));
 });
 
-test('term / math / filetree 也支持真实文件', async () => {
+test('term / math / tree 也支持真实文件', async () => {
   const term = await transformHtml('<vk-term src="hello.term"></vk-term>', { file: path.join(dir, 'page.html'), highlighter: hl });
   assert.ok(term.html.includes('data-vk-src'));
   assert.ok(term.html.includes('echo hi'));
@@ -62,7 +62,7 @@ test('term / math / filetree 也支持真实文件', async () => {
   assert.ok(math.html.includes('data-vk-src'));
   assert.ok(math.html.includes('data-vk-math'));
 
-  const tree = await transformHtml('<vk-filetree src="app"></vk-filetree>', { file: path.join(dir, 'page.html'), highlighter: hl });
+  const tree = await transformHtml('<vk-tree src="app"></vk-tree>', { file: path.join(dir, 'page.html'), highlighter: hl });
   assert.ok(tree.html.includes('data-vk-tree'));
   assert.ok(tree.html.includes('parser.py'));
 });
@@ -110,9 +110,9 @@ test('图标构建期内联，未知图标仍然报错', async () => {
   assert.ok(out.html.includes('<svg'));
 });
 
-test('filetree current 必须存在；note 的 line/for 只能在 annotate 内', async () => {
+test('tree current 必须存在；note 的 line/for 只能在 annotate 内', async () => {
   await assert.rejects(
-    () => transformHtml('<vk-filetree src="app" active="nope.py"></vk-filetree>', { file: path.join(dir, 'page.html'), highlighter: hl }),
+    () => transformHtml('<vk-tree src="app" active="nope.py"></vk-tree>', { file: path.join(dir, 'page.html'), highlighter: hl }),
     /active="nope.py"/
   );
   await assert.rejects(

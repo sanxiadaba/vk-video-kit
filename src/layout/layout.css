@@ -145,6 +145,13 @@ vk-canvas > svg {
   overflow: visible;
   pointer-events: none;
 }
+/* 蓝图纸：栅格只是底，不参与布局；--vk-grid 由运行时写入。 */
+vk-canvas[data-grid='1'] {
+  background-image:
+    linear-gradient(to right, var(--vk-line-2) 2px, transparent 2px),
+    linear-gradient(to bottom, var(--vk-line-2) 2px, transparent 2px);
+  background-size: var(--vk-grid, 24px) var(--vk-grid, 24px);
+}
 
 /* --------------------------------------------------------------- vk-edge */
 

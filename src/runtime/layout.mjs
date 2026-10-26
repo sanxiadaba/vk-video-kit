@@ -7,7 +7,23 @@ export class VkCanvas extends VkElement {
   static watchSource = false;
   static frame = false;
 
+  onAttr(name) {
+    if (name === 'grid') this._grid();
+  }
+
+  _grid() {
+    const g = numAttr(this, 'grid', { min: 0, max: 192, fallback: 0 });
+    if (g > 0) {
+      this.style.setProperty('--vk-grid', g + 'px');
+      this.dataset.grid = '1';
+    } else {
+      this.removeAttribute('data-grid');
+      this.style.removeProperty('--vk-grid');
+    }
+  }
+
   render() {
+    this._grid();
     this.dataset.vkPlace = '';
     VK._invalidate();
   }

@@ -1,6 +1,6 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { iconOf } from './icons.mjs';
-import { win } from './window.mjs';
+import { win, fileHead } from './window.mjs';
 
 /* ------------------------------------------------------------------ title */
 
@@ -369,18 +369,54 @@ const FILE_ICON = {
   sh: 'file-terminal', bash: 'file-terminal', zsh: 'file-terminal',
 };
 
-export class VkFiletree extends VkElement {
+/** 把任意 AST / 结构 JSON 归一成 entries：name、kind、value、children。 */
+function jsonEntries(value) {
+  const entries = [];
+  let root = '结构';
+  if (value && !Array.isArray(value) && value.root && typeof value.root === 'object') root = String(value.root.name || value.root.type || '结构');
+  const list = Array.isArray(value)
+    ? value
+    : (value && (value.nodes || value.children || value.tree || value.body)) || (value && value.root ? [value.root] : []);
+  const seen = new Map();
+  const walk = (node, depth, parentPath, idx) => {
+    if (node == null) return;
+    if (typeof node !== 'object') {
+      const name = String(node);
+      const path = `${parentPath ? parentPath + '/' : ''}${name}[${idx}]`;
+      entries.push({ name, path, depth, type: 'node', kind: '', value: '', ext: '', size: 0, flag: '' });
+      return;
+    }
+    const explicit = node.name ?? node.label;
+    const type = node.type ?? node.kind;
+    const name = String(explicit ?? type ?? 'node');
+    // 名字就是类型时不重复一枚 kind 徽标。
+    const kind = explicit != null && type ? String(type) : '';
+    const rawValue = node.value ?? node.operator ?? node.text ?? '';
+    const valueText = rawValue === '' || rawValue == null ? '' : String(rawValue);
+    const path = `${parentPath ? parentPath + '/' : ''}${name}[${idx}]`;
+    const n = (seen.get(path) || 0) + 1;
+    seen.set(path, n);
+    const unique = n > 1 ? `${path}#${n}` : path;
+    entries.push({ name, path: unique, depth, type: 'node', kind, value: valueText, ext: '', size: 0, flag: '' });
+    const kids = node.children || node.nodes || node.body;
+    if (Array.isArray(kids)) kids.forEach((child, i) => walk(child, depth + 1, unique, i));
+  };
+  if (Array.isArray(list)) list.forEach((n, i) => walk(n, 0, '', i));
+  return { root, entries, total: entries.length, truncated: false };
+}
+
+export class VkTree extends VkElement {
   static watchSource = true;
   static renderedRoot = '.vk-tree';
 
   capture() {
     this._preSrc = precompiledSource(this);
     const tree = this.querySelector(':scope > script[data-vk-tree]');
-    this._tree = null;
+    this._raw = null;
     if (tree) {
       try {
         const data = JSON.parse(tree.textContent);
-        if (data && Array.isArray(data.entries)) this._tree = data;
+        if (data && (Array.isArray(data.entries) || data.json !== undefined)) this._raw = data;
       } catch {
         /* 损坏的树数据按缺失处理 */
       }
@@ -389,7 +425,7 @@ export class VkFiletree extends VkElement {
     clone.querySelectorAll('script[data-vk-tree], script[data-vk-src]').forEach((n) => n.remove());
     this._src = clone.textContent.replace(/\r\n?/g, '\n');
     if (!this._src.trim() && this._preSrc != null) this._src = this._preSrc;
-    if (this.getAttribute('src') && !this._tree && !this._src.trim()) this.stale('缺少预编译文件树');
+    if (this.getAttribute('src') && !this._raw && !this._src.trim()) this.stale('缺少预编译树数据');
   }
 
   _inlineEntries() {
@@ -425,12 +461,14 @@ export class VkFiletree extends VkElement {
   }
 
   render() {
+    const variant = this.getAttribute('variant') || 'files';
+    const tree = this._raw?.json !== undefined ? jsonEntries(this._raw.json) : this._raw;
     const title = this.getAttribute('title') || '';
     const current = this.getAttribute('active') || '';
     const maxDepth = this.hasAttribute('depth')
       ? Math.min(8, Math.max(0, parseInt(this.getAttribute('depth'), 10) || 0))
       : 4;
-    const allEntries = (this._tree?.entries || this._inlineEntries()).filter(
+    const allEntries = (tree?.entries || (variant === 'files' ? this._inlineEntries() : [])).filter(
       (entry) => !Number.isFinite(maxDepth) || entry.depth <= maxDepth
     );
     const fold = new Set(
@@ -439,12 +477,17 @@ export class VkFiletree extends VkElement {
         .map((s) => s.trim().replace(/\/+$/, ''))
         .filter(Boolean)
     );
+    const isNode = variant !== 'files';
     const entries = allEntries.filter((entry) => ![...fold].some((dir) => entry.path.startsWith(dir + '/')));
-    const files = allEntries.filter((e) => e.type !== 'dir').length;
+    const files = allEntries.filter((e) => e.type !== 'dir' && e.type !== 'node').length;
     const dirs = allEntries.filter((e) => e.type === 'dir').length;
-    const root = this._tree?.root || '';
-    const truncated = !!this._tree?.truncated;
-    const limit = this.hasAttribute('limit') ? Math.min(500, Math.max(1, parseInt(this.getAttribute('limit'), 10) || 1)) : 14;
+    const branches = allEntries.filter(
+      (e) => e.type === 'dir' || (isNode && allEntries.some((o) => o.path.startsWith(e.path + '/')))
+    ).length;
+    const leaves = allEntries.length - branches;
+    const root = tree?.root || '';
+    const truncated = !!tree?.truncated;
+    const limit = this.hasAttribute('limit') ? Math.min(500, Math.max(1, parseInt(this.getAttribute('limit'), 10) || 1)) : isNode ? 24 : 14;
     const top = entries.filter((e) => e.depth === 0);
     let shownTop = top.slice(0, limit);
     if (current) {
@@ -474,20 +517,25 @@ export class VkFiletree extends VkElement {
     const renderNode = (node) => {
       const entry = node.entry;
       const isDir = entry.type === 'dir';
+      const isBranch = isDir || (isNode && node.children.length > 0);
       const name = entry.name;
-      const icon = isDir ? 'folder' : Object.hasOwn(FILE_ICON, entry.ext) ? FILE_ICON[entry.ext] : 'file';
+      const icon = isNode ? 'braces' : isDir ? 'folder' : Object.hasOwn(FILE_ICON, entry.ext) ? FILE_ICON[entry.ext] : 'file';
       const flag = entry.flag || '';
       const now = current && (entry.path === current || entry.name === current);
-      const collapsed = isDir && fold.has(entry.path);
-      const allDesc = isDir ? allEntries.filter((e) => e.path.startsWith(entry.path + '/')).length : 0;
+      const collapsed = isBranch && fold.has(entry.path);
+      const allDesc = isBranch ? allEntries.filter((e) => e.path.startsWith(entry.path + '/')).length : 0;
       const hasChild = node.children.length > 0;
-      const row = `<div class="vk-tree-row" data-dir="${isDir ? '1' : '0'}" data-depth="${entry.depth}" data-ext="${esc(entry.ext || '')}"${flag ? ` data-flag="${flag}"` : ''}${
-        now ? ' data-current="1"' : ''
-      }${collapsed ? ' data-folded="1"' : ''}${isDir && !allDesc ? ' data-empty="1"' : ''} style="--depth:${entry.depth}">
+      const row = `<div class="vk-tree-row" data-dir="${isBranch ? '1' : '0'}" data-node="${isNode ? '1' : '0'}" data-depth="${entry.depth}" data-ext="${esc(entry.ext || '')}"${
+        entry.kind ? ` data-kind="${esc(entry.kind)}"` : ''
+      }${flag ? ` data-flag="${flag}"` : ''}${now ? ' data-current="1"' : ''}${
+        collapsed ? ' data-folded="1"' : ''
+      }${isBranch && !allDesc ? ' data-empty="1"' : ''} style="--depth:${entry.depth}">
         <span class="vk-tree-guides" aria-hidden="true"></span>
-        ${isDir ? '<span class="vk-tree-chevron" aria-hidden="true"></span>' : '<span class="vk-tree-chevron is-file" aria-hidden="true"></span>'}
+        ${isBranch ? '<span class="vk-tree-chevron" aria-hidden="true"></span>' : '<span class="vk-tree-chevron is-file" aria-hidden="true"></span>'}
         <svg class="vk-ic" viewBox="0 0 24 24" aria-hidden="true">${iconOf(icon)}</svg>
         <span class="vk-tree-name">${esc(name)}</span>
+        ${entry.kind ? `<span class="vk-tree-kind">${esc(entry.kind)}</span>` : ''}
+        ${entry.value ? `<span class="vk-tree-val">${esc(entry.value)}</span>` : ''}
         ${flag === 'add' ? '<span class="vk-tree-tag">新增</span>' : flag === 'mod' ? '<span class="vk-tree-tag">修改</span>' : flag === 'del' ? '<span class="vk-tree-tag">删除</span>' : ''}
         ${entry.size ? `<span class="vk-tree-size">${bytes(entry.size)}</span>` : ''}
       </div>`;
@@ -498,15 +546,162 @@ export class VkFiletree extends VkElement {
       return `<li class="vk-tree-item" role="listitem"${now ? ' aria-current="true"' : ''}>${row}${folded}${children}</li>`;
     };
 
+    const label = title || root || (variant === 'ast' ? '语法树' : variant === 'generic' ? '结构' : '文件树');
+    const meta =
+      this.getAttribute('summary') === 'none'
+        ? ''
+        : variant === 'ast'
+          ? `${allEntries.length} 节点 · ${leaves} 叶`
+          : variant === 'generic'
+            ? `${allEntries.length} 项`
+            : `${files} 文件 · ${dirs} 目录`;
+
     this.innerHTML = `
-      <div class="vk-tree">
+      <div class="vk-tree" data-variant="${esc(variant)}">
         <div class="vk-tree-hd">
-          <span class="vk-tree-title">${esc(title || root || '文件树')}</span>
-          ${this.getAttribute('summary') === 'none' ? '' : `<span class="vk-tree-meta">${files} 文件 · ${dirs} 目录</span>`}
+          <span class="vk-tree-title">${esc(label)}</span>
+          ${meta ? `<span class="vk-tree-meta">${meta}</span>` : ''}
         </div>
-        <ul class="vk-tree-bd vk-tree-list" role="list" aria-label="${esc(title || root || '文件树')}">${roots.map(renderNode).join('')}${hidden > 0 ? `<li class="vk-tree-more" role="listitem">还有 ${hidden}${truncated ? '+' : ''} 项</li>` : ''}</ul>
+        <ul class="vk-tree-bd vk-tree-list" role="list" aria-label="${esc(label)}">${roots.map(renderNode).join('')}${hidden > 0 ? `<li class="vk-tree-more" role="listitem">还有 ${hidden}${truncated ? '+' : ''} 项</li>` : ''}</ul>
       </div>
     `;
+  }
+}
+
+/* ----------------------------------------------------------------- bytes */
+
+export class VkBytes extends VkElement {
+  static watchSource = true;
+  static renderedRoot = '.vk-bytes';
+
+  capture() {
+    const data = this.querySelector(':scope > script[data-vk-bytes]');
+    this._data = null;
+    if (data) {
+      try {
+        const d = JSON.parse(data.textContent);
+        if (d && Array.isArray(d.bytes)) this._data = d;
+      } catch {
+        /* 损坏的字节数据按缺失处理 */
+      }
+    }
+    if (this.getAttribute('src') && !this._data) this.stale('缺少预编译字节数据');
+  }
+
+  render() {
+    const d = this._data;
+    if (!d) {
+      this.innerHTML = '<div class="vk-bytes" data-empty>缺少预编译字节数据</div>';
+      return;
+    }
+    const cols = this.getAttribute('cols') === '4' ? 4 : 8;
+    const group = Math.max(1, Math.min(8, parseInt(this.getAttribute('group'), 10) || 1));
+    const ascii = this.getAttribute('ascii') !== 'none';
+    const address = this.getAttribute('address') !== 'none';
+    const density = this.getAttribute('density') || 'normal';
+    const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
+    const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
+    const live = this.getAttribute('highlight');
+    const liveHl = new Set();
+    if (live != null) {
+      for (const part of live.split(',')) {
+        const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+        if (!m) continue;
+        const a = parseInt(m[1], 10);
+        const b = parseInt(m[2] || m[1], 10);
+        for (let i = a; i <= b; i++) liveHl.add(d.start + i - 1);
+      }
+    }
+    const rows = [];
+    for (let at = 0; at < d.bytes.length; at += cols) {
+      const chunk = d.bytes.slice(at, at + cols);
+      const flags = (live != null ? Array.from({ length: cols }, (_, i) => liveHl.has(d.start + at + i)) : (d.hl || [])).slice(0, chunk.length);
+      const addr = '0x' + (d.base + d.start + at).toString(16).padStart(4, '0');
+      const hex = chunk
+        .map((b, i) => {
+          const cls = i && i % group === 0 ? ' class="is-group"' : '';
+          return `<i${cls} data-hl="${flags[i] ? '1' : '0'}">${esc(b)}</i>`;
+        })
+        .join('');
+      const text = chunk.map((h) => {
+        const n = parseInt(h, 16);
+        return n >= 32 && n < 127 ? String.fromCharCode(n) : '.';
+      }).join('');
+      rows.push(`<div class="vk-bytes-row">
+        ${address ? `<span class="vk-bytes-a">${addr}</span>` : ''}
+        <span class="vk-bytes-x" data-group="${group}">${hex}</span>
+        ${ascii ? `<span class="vk-bytes-c">${esc(text)}</span>` : ''}
+      </div>`);
+    }
+    const rowsHtml = rows.join('');
+    this.innerHTML = win({
+      surface: 'paper',
+      chrome: 'min',
+      head: fileHead(file, 'bytes', range),
+      inner: `<div class="vk-bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
+    });
+  }
+}
+
+/* ----------------------------------------------------------------- frames */
+
+export class VkFrames extends VkElement {
+  static watchSource = true;
+  static renderedRoot = '.vk-frames';
+
+  capture() {
+    const data = this.querySelector(':scope > script[data-vk-frames]');
+    this._data = null;
+    if (data) {
+      try {
+        const d = JSON.parse(data.textContent);
+        if (d && Array.isArray(d.frames)) this._data = d;
+      } catch {
+        /* 损坏的栈数据按缺失处理 */
+      }
+    }
+    if (this.getAttribute('src') && !this._data) this.stale('缺少预编译栈帧数据');
+  }
+
+  render() {
+    const d = this._data;
+    if (!d) {
+      this.innerHTML = '<div class="vk-frames" data-empty>缺少预编译栈帧数据</div>';
+      return;
+    }
+    const active = parseInt(this.getAttribute('active'), 10) || 0;
+    const grows = this.getAttribute('grows') || 'down';
+    const show = this.getAttribute('show') || 'all';
+    const density = this.getAttribute('density') || 'normal';
+    const title = this.getAttribute('title') || d.title || '调用栈';
+    const values = show !== 'addresses';
+    const addresses = show !== 'values';
+    const frames = grows === 'up' ? [...d.frames].reverse() : d.frames;
+    const body = frames
+      .map((f) => {
+        const index = d.frames.indexOf(f) + 1;
+        const slots = (f.slots || [])
+          .map(
+            (s) => `<div class="vk-frame-slot">
+              ${values ? `<span class="vk-frame-l">${esc(s.label ?? '')}</span>` : ''}
+              ${values ? `<span class="vk-frame-v">${esc(s.value ?? '')}</span>` : ''}
+              ${addresses ? `<span class="vk-frame-sa">${esc(s.addr ?? '')}</span>` : ''}
+            </div>`
+          )
+          .join('');
+        return `<section class="vk-frame" data-active="${index === active ? '1' : '0'}" data-index="${index}">
+          <header class="vk-frame-hd">
+            <span class="vk-frame-n">${esc(f.name ?? 'frame')}</span>
+            ${addresses ? `<span class="vk-frame-fa">${esc(f.addr ?? '')}</span>` : ''}
+          </header>
+          <div class="vk-frame-bd">${slots}</div>
+        </section>`;
+      })
+      .join('');
+    this.innerHTML = `<div class="vk-frames" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}">
+      <div class="vk-frames-hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · 向下生长</span></div>
+      <div class="vk-frames-bd">${body}</div>
+    </div>`;
   }
 }
 
@@ -695,34 +890,19 @@ export class VkSteps extends VkElement {
   }
 }
 
-/* --------------------------------------------------------------- progress */
-
-export class VkProgress extends VkElement {
-  static watchSource = false;
-
-  render() {
-    const value = Math.round(numAttr(this, 'value', { min: 0, max: 100, fallback: 0 }));
-    const label = this.getAttribute('label') || '';
-    const tone = this.getAttribute('tone') || 'accent';
-    this.innerHTML = `<div class="vk-progress" data-tone="${esc(tone)}">
-      <div class="vk-progress-hd"><span class="vk-progress-label">${esc(label)}</span><span class="vk-progress-val">${value}%</span></div>
-      <div class="vk-progress-track" role="progressbar" aria-valuenow="${value}" aria-valuemin="0" aria-valuemax="100"><i style="width:${value}%"></i></div>
-    </div>`;
-  }
-}
-
 export function defineComponents() {
   define('vk-title', VkTitle);
   define('vk-list', VkList);
   define('vk-callout', VkCallout);
   define('vk-figure', VkFigure);
   define('vk-browser', VkBrowser);
-  define('vk-filetree', VkFiletree);
+  define('vk-tree', VkTree);
   define('vk-keys', VkKeys);
   define('vk-math', VkMath);
   define('vk-cells', VkCells);
+  define('vk-bytes', VkBytes);
+  define('vk-frames', VkFrames);
   define('vk-steps', VkSteps);
-  define('vk-progress', VkProgress);
   define('vk-tag', VkTag);
   define('vk-table', VkTable);
 }

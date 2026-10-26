@@ -270,10 +270,10 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-filetree',
+    tag: 'vk-tree',
     body: s`
-<vk-box w="900" surface="none">
-  <vk-filetree title="app · 表达式解析器" src="../code/app" active="src/parser.py"></vk-filetree>
+<vk-box w="1200" surface="none">
+  <vk-tree title="a[i] = 0 · 语法树" variant="ast" src="../code/ast.json" depth="4"></vk-tree>
 </vk-box>`,
   },
 
@@ -383,11 +383,15 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-progress',
+    tag: 'vk-bytes',
     body: s`
-<vk-box w="1200" surface="none">
-  <vk-progress value="62" label="解析进度" tone="accent"></vk-progress>
-</vk-box>`,
+<vk-bytes w="1360" src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="1-6"></vk-bytes>`,
+  },
+
+  {
+    tag: 'vk-frames',
+    body: s`
+<vk-frames w="1400" src="../code/stack.json" active="3" density="compact"></vk-frames>`,
   },
 
   {
