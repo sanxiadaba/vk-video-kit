@@ -137,6 +137,7 @@
   --vk-edge-cap: 14px;
 
   /* ---------------------------------------------------------------- 字 */
+  --vk-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif SC", serif;
   --vk-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     system-ui, sans-serif;
   --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "SFMono-Regular", Consolas,

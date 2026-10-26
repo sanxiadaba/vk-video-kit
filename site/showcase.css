@@ -101,3 +101,7 @@ body[data-page='index'] [data-stage] vk-text { line-height: 1; }
 [data-usage-snippet] { line-height: 1.1; }
 
 .api-table table { table-layout: fixed; }
+
+.plate-no { font-family: var(--vk-font-display); font-weight: 400; letter-spacing: -0.05em; }
+.plate-name { font-family: var(--vk-font-display); font-weight: 400; letter-spacing: -0.02em; }
+[data-plate-mount] { box-shadow: 0 18px 40px rgba(8, 12, 20, 0.08); }

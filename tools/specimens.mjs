@@ -186,9 +186,9 @@ function rail(tag) {
     .join('');
   return `<vk-box w="${RAIL_W}" h="888" surface="ink" pad="md">
     <vk-stack h="840" justify="start" gap="sm">
-      <vk-text size="title" mono weight="bold">${no}</vk-text>
+      <vk-text class="plate-no" size="title" weight="bold">${no}</vk-text>
       <vk-stack gap="2xs">
-        <vk-text size="label" weight="medium" role="heading" aria-level="1">${esc(def.name)}</vk-text>
+        <vk-text class="plate-name" size="label" weight="medium" role="heading" aria-level="1">${esc(def.name)}</vk-text>
         <vk-text size="meta" mono>${tag}</vk-text>
         <vk-tag size="meta" tone="muted">${esc(LAYER_NAME[def.layer])}</vk-tag>
       </vk-stack>
@@ -245,9 +245,20 @@ ${scripts || ''}
 function plateLens(tag) {
   let body = sceneOf.get(tag) || '';
   if (tag === 'vk-page') body = body.replace('<vk-page', '<vk-page fit="contain"');
-  const PLATE_W = { 'vk-edge': 1300, 'vk-canvas': 1300 };
-  if (tag !== 'vk-annotate') body = clampWidth(body, PLATE_W[tag] || 1240);
-  return `<vk-stack h="872" justify="center" align="center">${body}</vk-stack>`;
+  if (['vk-code', 'vk-term'].includes(tag)) {
+    body = /\sdensity="/.test(body)
+      ? body.replace(/\sdensity="[^"]*"/, ' density="compact"')
+      : body.replace(new RegExp(`^<${tag}`), `<${tag} density="compact"`);
+  }
+  const PLATE_W = { 'vk-edge': 1300, 'vk-canvas': 1300, 'vk-annotate': 1300 };
+  if (tag !== 'vk-annotate') body = clampWidth(body, PLATE_W[tag] || 1100);
+  const def = TAGS[tag];
+  const no = String(ORDER.indexOf(tag) + 1).padStart(3, '0');
+  if (['vk-frames', 'vk-figure', 'vk-page'].includes(tag)) return `<vk-stack h="872" justify="center" align="center">${body}</vk-stack>`;
+  return `<vk-stack h="872" gap="sm" justify="center" align="center">
+    <vk-box surface="paper" border="hair" pad="sm" radius="md" data-plate-mount>${body}</vk-box>
+    <vk-text size="meta" mono emphasis="muted">PLATE ${no} / ${tag} / ${esc(LAYER_NAME[def.layer])}</vk-text>
+  </vk-stack>`;
 }
 
 /** 变体镜头里的目标先落到能装进 888 的密度；控件仍然可以改回去。 */
@@ -535,7 +546,7 @@ function indexPageHtml() {
   }).join('');
   const railBox = `<vk-box w="${RAIL_W}" h="888" surface="ink" pad="md">
     <vk-stack h="840" justify="start" gap="sm">
-      <vk-text size="title" mono weight="bold" role="heading" aria-level="1">${total}</vk-text>
+      <vk-text class="plate-no" size="title" weight="bold" role="heading" aria-level="1">${total}</vk-text>
       <vk-text size="label" weight="medium">plates</vk-text>
       <vk-text size="meta">5 layers</vk-text>
       <vk-rule variant="thin"></vk-rule>
