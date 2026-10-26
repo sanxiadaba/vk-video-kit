@@ -135,6 +135,7 @@ export const EFFECTS = {
     active: { on: '.vk-frame', kind: 'style', prop: 'background-color' },
     grows: { on: 'vk-frames', kind: 'text', prop: '.vk-frame-n' },
     show: { on: 'vk-frames', kind: 'dom', prop: '.vk-frame-sa' },
+    summary: { on: 'vk-frames', kind: 'dom', prop: '.vk-frames-hd' },
     density: { on: '.vk-frame-slot', kind: 'style', prop: 'line-height' },
   },
 

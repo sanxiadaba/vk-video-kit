@@ -180,7 +180,7 @@ ${rows ? `| 属性 | 值 | 默认 |\n|---|---|---|\n${rows}` : '_无属性_'}
 const md = `# vk 组件参考
 
 > 由 \`tools/gen.mjs\` 从 \`src/registry.mjs\` 生成 —— 不要手改。
-> ${TAG_NAMES.length} 个标签，L0–L4。组件索引在 [components](../components/index.html)，示例在 [examples](../examples.html)。
+> ${TAG_NAMES.length} 个标签，L0–L5。每页的 API 镜头与 [标本册](../index.html) 同源；属性表由 registry 生成。
 
 ${LAYERS.filter((l) => byLayer(l.id).length)
   .map((l) => `## ${l.label} · ${l.note}\n\n${byLayer(l.id).map(card).join('\n')}`)

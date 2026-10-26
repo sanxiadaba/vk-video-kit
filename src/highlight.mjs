@@ -173,6 +173,8 @@ const hasAttr = (node, name) => !!(node.attrs || []).find((x) => x.name === name
 function walk(node, fn) {
   fn(node);
   if (node.childNodes) for (const c of node.childNodes) walk(c, fn);
+  // <template> 的内容不在 childNodes 里；标本页的四个非默认镜头靠它做惰性装载。
+  if (node.content) walk(node.content, fn);
 }
 
 const GLOBAL_ATTRS = new Set([

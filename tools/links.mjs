@@ -22,11 +22,11 @@ function walkHtml(dir, out) {
 }
 
 const PAGES = [];
-for (const p of ['index.html', 'docs.html', 'examples.html']) {
+for (const p of ['index.html']) {
   const abs = `${SITE}/${p}`;
   if (fs.existsSync(abs)) PAGES.push(abs);
 }
-for (const dir of [`${SITE}/frames`, `${SITE}/components`]) walkHtml(dir, PAGES);
+walkHtml(`${SITE}/specimen`, PAGES);
 const pages = [...new Set(PAGES)].map((p) => p.slice(SITE.length + 1));
 
 const { base, close } = await startServer({ port: 0, root: SITE, transform: true });
@@ -99,7 +99,7 @@ for (const page of pages) {
     if (seen.has(key)) continue;
     seen.add(key);
 
-    // vk-filetree 的 src 指向真实目录（构建期扫描），不是浏览器资源。
+    // vk-tree 的 src 指向真实目录（构建期扫描），不是浏览器资源。
     const local = decodeURIComponent(url.pathname).replace(/^\/+/, '');
     try {
       const localPath = `${SITE}/${local}`;
@@ -119,6 +119,8 @@ for (const page of pages) {
       failures.push(`${page} → ${raw}: HTTP ${r.status}`);
       continue;
     }
+    // .bin 是 vk-bytes 的构建期数据，浏览器不直接渲染它；存在即可。
+    if (/\.bin$/i.test(local)) continue;
     const ct = r.headers.get('content-type') || '';
     if (!contentTypeOk(ct)) failures.push(`${page} → ${raw}: content-type ${ct || '空'} 不可渲染`);
   }

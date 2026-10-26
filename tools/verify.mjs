@@ -11,12 +11,11 @@ import { spawnSync } from 'node:child_process';
 const steps = [
   ['generated types / reference', ['tools/gen.mjs', '--check']],
   ['css / js', ['tools/build.mjs', '--check']],
-  ['specimens', ['tools/scenes.mjs', '--check']],
+  ['specimen hosts', ['tools/scenes.mjs', '--check']],
   ['site assets', ['tools/assemble.mjs', '--check']],
-  ['precompiled code / math', ['cli/build.mjs', '--check', '_site/specimens', '_site/frames']],
-  ['docs', ['tools/docs.mjs', '--check']],
-  ['components', ['tools/components.mjs', '--check']],
-  ['site', ['tools/site.mjs', '--check']],
+  ['precompiled hosts', ['cli/build.mjs', '--check', '_site/specimens']],
+  ['specimen pages', ['tools/specimens.mjs', '--check']],
+  ['precompiled site', ['cli/build.mjs', '--check', '_site/specimen', '_site/index.html']],
 ];
 
 let failed = 0;

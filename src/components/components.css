@@ -423,10 +423,10 @@ vk-term { display: block; }
   padding: 0 var(--vk-s4);
 }
 .vk-code[data-density='compact'] .vk-bd { font-size: var(--vk-t-6); }
-vk-code[data-density='compact'] .vk-line { min-height: 64px; }
-vk-term[data-density='compact'] .vk-bd { font-size: var(--vk-t-6); }
-vk-term[data-density='compact'] .vk-line { min-height: 64px; }
-vk-term[data-density='large'] .vk-line { min-height: 81px; }
+.vk-code[data-density='compact'] .vk-line { min-height: 64px; }
+.vk-term[data-density='compact'] .vk-bd { font-size: var(--vk-t-6); }
+.vk-term[data-density='compact'] .vk-line { min-height: 64px; }
+.vk-term[data-density='large'] .vk-line { min-height: 81px; }
 
 .vk-prompt {
   flex: 0 0 auto;

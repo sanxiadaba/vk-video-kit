@@ -302,13 +302,9 @@ const failures = [];
 const checked = [];
 
 async function open(tag) {
-  // vk-page 没有场景；frame-0 是稳定宿主。
-  const pagePath =
-    tag === 'vk-page'
-      ? fs.existsSync(`${SITE}/frames/frame-0.html`)
-        ? 'frames/frame-0.html'
-        : 'specimens/vk-page.html'
-      : `specimens/${tag}.html`;
+  // 契约宿主是 scenes 生成的 specimens/，不是 31 张标本页：
+  // 标本页有五镜头和惰性模板，不适合做属性的单点探针。
+  const pagePath = tag === 'vk-page' ? 'specimens/_host.html' : `specimens/${tag}.html`;
   const resp = await page.goto(`${base}/${pagePath}`, { waitUntil: 'load' });
   if (!resp || !resp.ok()) throw new Error(`${tag}: HTTP ${resp?.status()}`);
   await page.evaluate(() => window.vk?.ready?.());

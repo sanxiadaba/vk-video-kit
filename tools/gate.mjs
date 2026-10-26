@@ -25,7 +25,6 @@ import { chromium } from 'playwright-core';
 import { PNG } from 'pngjs';
 import { startServer } from '../cli/serve.mjs';
 import { SITE } from './lib/paths.mjs';
-import { SCENES } from '../src/scenes/scenes.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { TAGS } from '../src/registry.mjs';
 
@@ -75,21 +74,18 @@ if (checkPresets) {
 
 /* --------------------------------------------------------------- 检查对象 */
 
-const targets = [
-  ...SCENES.map((s) => ({ kind: 'specimen', tag: s.tag, label: s.tag, path: `specimens/${s.tag}.html` })),
-];
-
-const frameFiles = fs.existsSync(`${SITE}/frames`)
-  ? fs
-      .readdirSync(`${SITE}/frames`)
-      .filter((f) => /^frame-\d+\.html$/.test(f))
-      .sort()
+const specimenDir = `${SITE}/specimen`;
+const specimenFiles = fs.existsSync(specimenDir)
+  ? fs.readdirSync(specimenDir).filter((f) => f.endsWith('.html')).sort()
   : [];
-if (frameFiles.length !== 8) fail('frames', `应该是 8 个 frame-*.html，实际 ${frameFiles.length} 个`);
-for (const f of frameFiles) targets.push({ kind: 'frame', label: f.replace(/\.html$/, ''), path: `frames/${f}` });
-
+const targets = specimenFiles.map((f) => ({
+  kind: 'specimen',
+  tag: f.replace(/\.html$/, ''),
+  label: f.replace(/\.html$/, ''),
+  path: `specimen/${f}`,
+}));
 if (fs.existsSync(`${SITE}/index.html`)) {
-  targets.push({ kind: 'page', tag: 'index', label: 'index', path: 'index.html' });
+  targets.push({ kind: 'specimen', tag: 'index', label: 'index', path: 'index.html' });
 }
 
 /* ------------------------------------------------------------------ 分片 */
@@ -426,21 +422,6 @@ let checked = 0;
 for (const target of list) {
   if (!(await open(target))) continue;
   checked++;
-
-  if (target.kind === 'page' && target.tag === 'index') {
-    // 展示站首页只做静态冒烟；它不加载 vk 运行时，结构由展示站自己的测试负责。
-    const smoke = await page.evaluate(() => ({
-      body: document.body?.textContent?.trim().length || 0,
-      main: !!document.querySelector('main'),
-    }));
-    if (!smoke.body) fail('index', '页面没有可读内容');
-    if (!smoke.main) fail('index', '页面没有 main');
-    for (const m of consoleIssues) {
-      if (/\[vk\]/.test(m) || /pageerror/.test(m) || /^error:/.test(m)) fail('index', m);
-    }
-    console.log(`${smoke.body && smoke.main ? '✓' : '✗'} index`);
-    continue;
-  }
 
   const { issues, special, page: pageSize } = await inspect();
   const fonts = await fontIssues();

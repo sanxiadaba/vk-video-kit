@@ -57,8 +57,36 @@ for (const scene of SCENES) {
   }
 }
 
+// vk-page 的契约宿主：页面本身就是 1920×1080，不能再套一层 .vk-stage。
+writeIfChanged(
+  path.join(out, '_host.html'),
+  `<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="icon" href="data:,">
+<title>vk-page host</title>
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
+<style>html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#fff}</style>
+</head>
+<body>
+<vk-page header="契约宿主 · vk-page" footer="1920 × 1080 | 安全区 1680 × 888">
+  <vk-stack gap="lg">
+    <vk-text size="heading" weight="bold">页面是画布工具。</vk-text>
+    <vk-text size="body" measure="body">页眉、正文、页脚三行固定；正文永远是 888，不被页眉页脚压缩。</vk-text>
+  </vk-stack>
+</vk-page>
+<script src="../dist/vk.js"></script>
+</body>
+</html>
+`,
+  check
+);
+
 const keep = new Set(SCENES.map((s) => `${s.tag}.html`));
 keep.add('_stage.css');
+keep.add('_host.html');
 for (const f of fs.readdirSync(out)) {
   if (keep.has(f)) continue;
   if (check) {

@@ -1,5 +1,17 @@
 # Changelog
 
+## 2.0.0
+
+展示站重写成一本自举的标本册；组件集从 30 个重整为 31 个 / 5 层。
+
+- **分层**：L1 原子 6 / L2 排布 4 / L3 器械 17 / L4 关系 3 / L5 页面 1。`vk-edge` 从排布移到关系；`vk-page` 独立成 L5。
+- **重组**：删除 `vk-progress`（顺序由 `vk-steps` 表达）；`vk-filetree` 泛化为 `vk-tree`（目录 / AST / 普通结构）；新增 `vk-bytes`（真实二进制 → 十六进制 + ASCII）与 `vk-frames`（真实 JSON 栈帧）。
+- **库增强**：`vk-canvas grid` 蓝图纸栅格；`vk-page` 支持 header / footer slot；`vk-frames` 支持 summary / show / density。
+- **标本册**：31 张 1920×1080 帧，每页五镜头（成品 / 变体 / 解剖 / 用法 / API）；索引两栏分页；镜头靠 `<template>` 惰性装载。
+- **自举**：去掉 45KB 的 site.css / site.js；帧外只剩灯箱、隐藏、焦点三组 CSS；导航、控件、解剖标注全部是 vk 组件。
+- **门禁**：`gate` 改为检查 31 张标本页 + 索引；`links` 扫描新站；`contract` 使用 scenes 宿主；`verify` 跟随新生成链。
+- **文档**：README / USAGE / design 更新到 5 层与新站；`docs/guide.md`、`examples.html`、`components/`、8 帧与旧生成器退役。
+
 ## 1.0.0
 
 首个公开版本。30 个标签（29 个元件 + 1 个页面工具）、8 个成品帧、1920×1080、桌面 only。

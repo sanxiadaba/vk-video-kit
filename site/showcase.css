@@ -1,0 +1,33 @@
+/* 灯箱：帧外只有这一页纸。帧内的一切都由 vk 组件画。 */
+html,
+body {
+  margin: 0;
+  height: 100%;
+  background: #0b0f14;
+}
+body {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+vk-page {
+  width: min(100vw, calc(100vh * 16 / 9));
+  height: auto;
+}
+
+/* 隐藏的镜头/页不能占位；UA 的 [hidden] 会被组件的 display 覆盖。 */
+[hidden] {
+  display: none !important;
+}
+
+/* 链接只做语义与可访问性，视觉全部交给 vk。 */
+a {
+  display: contents;
+  color: inherit;
+  text-decoration: none;
+}
+a:focus-visible,
+vk-tag[role='button']:focus-visible {
+  outline: 3px solid #6f8cff;
+  outline-offset: 3px;
+}

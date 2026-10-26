@@ -79,14 +79,19 @@ npm i /path/to/vk-video-kit
 
 `flag` 是 1-based；示例里 `flag="4"` 指向 `a[3]`，越界那一格会变红并把标签换成“越界”。
 
-### 文件树与公式
+### 树、字节、栈帧与公式
 
 ```html
-<vk-filetree src="code/app" active="src/parser.py" depth="2"></vk-filetree>
+<vk-tree src="code/app" active="src/parser.py" depth="2"></vk-tree>
+<vk-tree variant="ast" src="code/ast.json" title="a[i] = 0 · 语法树"></vk-tree>
+<vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" highlight="1-6"></vk-bytes>
+<vk-frames src="code/stack.json" active="3"></vk-frames>
 <vk-math display size="body" src="code/formula.tex"></vk-math>
 ```
 
-- `vk-filetree` 的 `src` 是**真实目录**：构建期扫描出层级、文件类型、大小；`active` 高亮当前文件，`depth` 控制展开层数。
+- `vk-tree` 的 `src` 可以是**真实目录**（构建期扫描层级、类型、大小）或 `.json`（语法树/普通结构）；`variant` 决定行怎么读。
+- `vk-bytes` 的 `src` 是真实二进制：构建期切成十六进制 + ASCII + 地址；`highlight` 是 1-based 字节段。
+- `vk-frames` 的 `src` 是真实 `.json`：一帧一组槽位；`active` 标当前帧，`grows` 只改生长方向。
 - `vk-math` 的 `src` 是真实 `.tex` 文件；构建期 KaTeX 编译，运行时只读产物。
 
 ## 6 · 页面
@@ -147,14 +152,15 @@ npx vk serve 8099         # 开发服务器，改 .c 刷新即见
 - `data-type`：逐行打字 + 块状光标。
 - `vk.freeze()` 或 `<html data-vk-motion="off">`：一键冻在终态（截图、录首帧）。什么时候播、播多久，仍由编排层决定。
 
-## 10 · 从展示站拿代码
+## 10 · 从标本册拿代码
 
-展示站不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/components/index.html`，按 L1–L4 找元件，每个元件一页：
+标本册不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **预览**：真实 `specimens/<tag>.html` 的 16:9 iframe；preset 直接改 iframe 里的属性，再 `vk.layout()`。
-- **复制**：复制当前变体的 HTML 片段。片段里的 `src` 仍指向真实文件；粘到新页面后要跑 `npx vk build`（或 dev server）预编译。
-- **属性**：从 registry 生成；中文名、类型、默认值都在。`src` / `lines` / `file` / `title` 等属于内容，不在这里改。
-- **文档**：`docs.html` 一个 H1 + 左 TOC；`examples.html` 是 8 帧索引。
+- **索引**：31 个条目，编号 / 标签 / 中文 / 层；←/→ 翻页。
+- **一页一个组件**：成品 / 变体 / 解剖 / 用法 / API 五个镜头，`1–5` 切换。
+- **复制**：变体和 API 镜头都能复制当前片段。片段里的 `src` 仍指向真实文件；粘到新页面后要跑 `npx vk build`（或 dev server）预编译。
+- **属性**：API 镜头从 registry 生成，8 行/页；`src` / `lines` / `file` / `title` 等属于内容，不在这里改。
+- **解剖**：运行时量 DOM 生成的蓝图；不是手绘图。
 - 桌面 only；不提供移动布局。
 
 ## 进阶属性
@@ -169,7 +175,7 @@ npx vk serve 8099         # 开发服务器，改 .c 刷新即见
 
 <vk-title size="display">第一章</vk-title>
 <vk-term src="code/hello.term" lines="2-8"></vk-term>
-<vk-filetree src="code/app" active="src/parser.py"></vk-filetree>
+<vk-tree src="code/app" active="src/parser.py"></vk-tree>
 
 <vk-annotate w="560">
   <vk-code id="arr" src="code/array.c"></vk-code>

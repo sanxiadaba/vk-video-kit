@@ -698,8 +698,12 @@ export class VkFrames extends VkElement {
         </section>`;
       })
       .join('');
-    this.innerHTML = `<div class="vk-frames" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}">
-      <div class="vk-frames-hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · 向下生长</span></div>
+    const head =
+      this.getAttribute('summary') === 'none'
+        ? ''
+        : `<div class="vk-frames-hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · ${grows === 'up' ? '向上' : '向下'}生长</span></div>`;
+    this.innerHTML = `<div class="vk-frames" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}" data-summary="${esc(this.getAttribute('summary') || 'all')}">
+      ${head}
       <div class="vk-frames-bd">${body}</div>
     </div>`;
   }
