@@ -106,13 +106,13 @@
   --vk-mod-ink-mark: rgba(233, 179, 106, 0.28);
 
   /* ---------------------------------------------------------------- 语法 */
-  /* 低饱和：关键字/函数墨色加粗，字符串绿，数字琥珀；焦点蓝仍是唯一亮色。 */
-  --vk-syn-keyword: #1d2939;
+  /* B · 钴蓝关键字：关键字品牌蓝 + 600，函数墨色 + 600，字符串绿，数字琥珀；焦点蓝仍是当前行。 */
+  --vk-syn-keyword: #1d4ed8;
   --vk-syn-string: #0b6b4f;
   --vk-syn-number: #7a4a00;
   --vk-syn-function: #1d2939;
   --vk-syn-builtin: #344054;
-  --vk-syn-operator: #344054;
+  --vk-syn-operator: #475467;
   --vk-syn-punct: #475467;
   --vk-syn-comment: #667085;
 

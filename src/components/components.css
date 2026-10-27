@@ -473,7 +473,7 @@ vk-term { display: block; }
 .vk-cmd-exe { color: var(--vk-win-k); font-weight: var(--vk-w-bold); }
 .vk-cmd-str,
 .vk-cmd-path { color: var(--vk-win-s); }
-.vk-cmd-flag,
+.vk-cmd-flag { color: var(--vk-win-p); }
 .vk-cmd-num { color: var(--vk-win-n); }
 .vk-cmd-comment { color: var(--vk-win-c); font-style: italic; }
 .vk-term .vk-txt { min-width: 0; white-space: pre-wrap; word-break: break-word; }
