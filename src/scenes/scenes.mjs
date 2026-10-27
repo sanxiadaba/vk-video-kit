@@ -26,11 +26,11 @@ export const SCENES = [
   {
     tag: 'vk-annotate',
     body: s`
-<vk-annotate w="400">
-  <vk-code w="872" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
-  <vk-note line="4">下标只有 0–2。</vk-note>
-  <vk-note line="5">i&lt;=3 到 3。</vk-note>
-  <vk-note line="6">i=3 写 a[3]。</vk-note>
+<vk-annotate w="327">
+  <vk-code w="945" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
+  <vk-note line="4">下标 0–2。</vk-note>
+  <vk-note line="5">i&lt;=3 越界。</vk-note>
+  <vk-note line="6">i=3 越界。</vk-note>
 </vk-annotate>`,
   },
 

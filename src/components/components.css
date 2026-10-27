@@ -385,6 +385,10 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
   color: var(--vk-win-meta-2);
   user-select: none;
 }
+.vk-code .vk-k, .vk-code .vk-f { font-weight: 600; }
+.vk-code .vk-bd { padding-left: 118px; }
+.vk-code .vk-ln { text-align: left; }
+vk-annotate .vk-code .vk-bd { font-size: 44px; }
 .vk-src { padding-left: var(--vk-s3); tab-size: 4; }
 .vk-term .vk-txt { tab-size: 4; }
 .vk-dsrc { tab-size: 4; }
