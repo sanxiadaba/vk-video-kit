@@ -7,10 +7,10 @@ test('registry 自检通过', () => {
   assert.deepEqual(validate(), []);
 });
 
-test('34 个标签，分在 5 个有内容的层', () => {
-  assert.equal(TAG_NAMES.length, 34);
+test('40 个标签，分在 5 个有内容的层', () => {
+  assert.equal(TAG_NAMES.length, 40);
   const counts = Object.fromEntries(LAYERS.map((l) => [l.id, byLayer(l.id).length]));
-  assert.deepEqual(counts, { tokens: 0, elements: 7, layout: 4, components: 19, relations: 3, page: 1 });
+  assert.deepEqual(counts, { tokens: 0, elements: 7, layout: 4, components: 22, relations: 6, page: 1 });
 });
 
 test('每个标签都有说明和合法属性', () => {

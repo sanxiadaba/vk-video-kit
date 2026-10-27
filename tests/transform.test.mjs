@@ -24,6 +24,23 @@ test('inline code：预编译、hash、幂等', async () => {
   assert.equal(two.html, one.html);
 });
 
+test('data-vk-source：不转义 <，构建后源码块消失；与 src 互斥', async () => {
+  const html =
+    '<vk-code lang="c"><script type="text/plain" data-vk-source>\n#include <stdio.h>\nint main(void) { return 0; }\n</script></vk-code>';
+  const out = await transformHtml(html, { file: 'source.html', highlighter: hl });
+  assert.ok(out.html.includes('data-vk-hl'));
+  assert.ok(out.html.includes('stdio.h'));
+  assert.ok(!out.html.includes('data-vk-source'), '源码块应当被构建产物替换');
+  await assert.rejects(
+    () =>
+      transformHtml(
+        '<vk-code src="hello.c"><script type="text/plain" data-vk-source>int x;</script></vk-code>',
+        { file: path.join(dir, 'page.html'), highlighter: hl }
+      ),
+    /只能有一个/
+  );
+});
+
 test('src + lines：只取片段，行号基准在运行时', async () => {
   const html = '<vk-code lang="c" src="hello.c" lines="2-2"></vk-code>';
   const out = await transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl });
@@ -110,14 +127,14 @@ test('图标构建期内联，未知图标仍然报错', async () => {
   assert.ok(out.html.includes('<svg'));
 });
 
-test('tree current 必须存在；note 的 line/for 只能在 annotate 内', async () => {
+test('tree current 必须存在；note 的 line 需要代码上下文', async () => {
   await assert.rejects(
     () => transformHtml('<vk-tree src="app" active="nope.py"></vk-tree>', { file: path.join(dir, 'page.html'), highlighter: hl }),
     /active="nope.py"/
   );
   await assert.rejects(
     () => transformHtml('<vk-note line="1">x</vk-note>', { file: 'note.html', highlighter: hl }),
-    /只能写在 <vk-annotate> 内/
+    /需要放在 vk-annotate/
   );
 });
 
@@ -150,7 +167,7 @@ test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套�
     ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@line:1">x</vk-note></vk-annotate>', /不支持 @line/],
     ['<vk-window><vk-code chrome="min">x</vk-code></vk-window>', /两条窗头/],
     ['<vk-bars><i label="a"></i></vk-bars>', /缺数字 value/],
-    ['<vk-code lang="c">int x;</vk-code><vk-note line="9">x</vk-note>', /只能写在 <vk-annotate> 内/],
+    ['<vk-code lang="c">int x;</vk-code><vk-note line="9">x</vk-note>', /需要放在 vk-annotate/],
   ];
   for (const [html, re] of cases) {
     await assert.rejects(() => transformHtml(html, { file: 'refs.html', highlighter: hl }), re);
@@ -172,6 +189,17 @@ test('asm：x86 汇编能高亮，.s 扩展名自动识别', async () => {
   });
   assert.ok(out.html.includes('data-vk-hl'), '没有生成高亮数据');
   assert.ok(out.html.includes('data-vk-lang="asm"'));
+});
+
+test('asm：lang 仍是合法入口，addr 进入机器数据', async () => {
+  const html = `<vk-asm lang="asm" addr="0x401136" bytes><script type="text/plain" data-vk-source>
+0000000000401136 <main>:
+  401136: 55                    push   %rbp
+  401137: c3                    ret
+</script></vk-asm>`;
+  const out = await transformHtml(html, { file: 'asm-inline.html', highlighter: hl });
+  assert.ok(out.html.includes('data-vk-asm'));
+  assert.ok(out.html.includes('"base":"0x401136"'));
 });
 
 after(() => fs.rmSync(dir, { recursive: true, force: true }));

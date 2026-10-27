@@ -1,0 +1,94 @@
+/* ============================================================================
+   L4 · 覆盖层：圈选 / 聚光 / 批注气泡
+   ----------------------------------------------------------------------------
+   只画在包含块上，不占布局；目标由 #id@part:arg 锚定。
+   ========================================================================== */
+
+vk-ring,
+vk-spotlight,
+vk-pin {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vk-ov-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+/* ---------------------------------------------------------------- ring */
+
+.vk-ring-shape {
+  fill: none;
+  stroke: var(--vk-focus);
+  stroke-width: var(--vk-ring-w, 4px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  vector-effect: non-scaling-stroke;
+}
+.vk-ov-svg[data-tone='err'] .vk-ring-shape { stroke: var(--vk-err); }
+.vk-ov-svg[data-tone='ok'] .vk-ring-shape { stroke: var(--vk-ok); }
+.vk-ov-svg[data-tone='warn'] .vk-ring-shape { stroke: var(--vk-warn); }
+.vk-ov-svg[data-tone='ink'] .vk-ring-shape { stroke: var(--vk-ink-1); }
+.vk-ov-svg[data-dash] .vk-ring-shape { stroke-dasharray: 16 12; }
+
+/* ------------------------------------------------------------ spotlight */
+
+.vk-ov-svg[data-tone='paper'] { color: var(--vk-ink-1); }
+
+/* ------------------------------------------------------------------ pin */
+
+.vk-pin-bd {
+  position: absolute;
+  box-sizing: border-box;
+  padding: var(--vk-s2) var(--vk-s3);
+  border: 1px solid var(--vk-line-3);
+  border-left: 4px solid var(--vk-focus);
+  border-radius: var(--vk-r-3);
+  background: var(--vk-surface-1);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-5);
+  line-height: 1.35;
+}
+.vk-pin-bd[data-tone='err'] { border-left-color: var(--vk-err); }
+.vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
+.vk-pin-bd[data-tone='warn'] { border-left-color: var(--vk-warn); }
+.vk-pin-bd[data-tone='ink'] { border-left-color: var(--vk-ink-1); }
+.vk-pin-bd[data-tone='inverse'] {
+  background: var(--vk-ink-1);
+  color: var(--vk-surface-1);
+  border-color: var(--vk-ink-1);
+}
+.vk-pin-bd[data-size='label'] { font-size: var(--vk-t-6); padding: var(--vk-s1) var(--vk-s2); }
+.vk-pin-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 40px;
+  height: 40px;
+  margin-right: var(--vk-s1);
+  padding: 0 10px;
+  border-radius: var(--vk-r-pill);
+  background: var(--vk-focus);
+  color: var(--vk-paper-surface-1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-micro);
+  font-weight: var(--vk-w-bold);
+  vertical-align: 4px;
+}
+.vk-pin-t { display: inline; }
+.vk-pin-leader {
+  stroke: var(--vk-focus);
+  stroke-width: 4px;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.vk-pin-dot { fill: var(--vk-focus); }

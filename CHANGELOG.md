@@ -1,5 +1,40 @@
 # Changelog
 
+## 5.0.0
+
+把库推进到「可寻址的讲解画布」：6 个新标签、8 个核心件做透、内联源码、覆盖层与 40 页标本册。
+
+### 新增 6 个标签（40 个标签 / 5 层）
+
+- **`vk-memory`**：进程地址空间，text / data / bss / heap / stack 一段一段摆开，支持地址、大小、生长方向与 `@seg` 锚点。
+- **`vk-asm`**：汇编清单，地址 / 机器码 / 指令三列，支持 `@line` 与 `@addr`；与 `vk-code` 同行连线。
+- **`vk-timeline`**：年份轴（等宽列、按日期排序）与多泳道（`variant="lanes"`），支持 `@event` / `@lane`。
+- **`vk-pin`**：自由批注气泡 + 引线，自动贴边或写死 `x` / `y`，支持多步编号。
+- **`vk-ring`**：圈选 / 框选 / 下划线 / 括号，绑任意锚点，只画覆盖层。
+- **`vk-spotlight`**：除目标外整体压暗，可多目标，`dim` / `feather` 可调。
+
+### 8 个核心件做透
+
+- **`vk-cells`**：`offsets` 字节尺、`direction="rtl"`、`align` 对齐括号、每字节 `data-byte` 锚点。
+- **`vk-bits`**：子节点 `<i label value>` 多行矩阵、每格 `data-bit` 锚点、按位数自动缩放。
+- **`vk-bytes`**：`word` 分组、`endian="little"`、内联 hex、`@byte` 锚点。
+- **`vk-code`**：内联源码、`span` 逗号多区间、行/字符锚点不变。
+- **`vk-table`**：每个 `td` 写 `data-cell="r,c"`，支持 `@cell:行,列`。
+- **`vk-note`**：`for` 可独立使用；`line` 仍由 `vk-annotate` 组织。
+- **`vk-edge`**：`via="x,y;x,y"` 路径点，支持所有 part 锚点。
+- **`vk-frames`**：槽位 `@slot:帧,槽` 与 `@frame` 锚点。
+
+### 构建 / 作者入口
+
+- **内联源码块**：`<script type="text/plain" data-vk-source>` 可用于 `code` / `diff` / `term` / `math` / `tree` / `frames` / `bytes` / `asm`；与 `src` 只能二选一。
+- **锚点协议 v2**：新增 `seg` / `addr` / `bit` / `slot` / `event` / `lane`，覆盖层 `for` 支持逗号多目标；构建期继续静态校验越界与未知 part。
+- **标本册**：40 页；成品镜头不再统一 clamp 到 1100，数据件铺满 1360 舞台；索引重排以容纳 40 格。
+
+### 视觉
+
+- 纸面/钴蓝保持；汇编与图解统一 2px 结构线、44 地板；覆盖层只压暗/描边，不改内容尺寸。
+- 不新增字体、阴影或动效；静帧仍是唯一成品。
+
 ## 4.6.0
 
 两个"看起来能用、其实没接上"的问题，以及一轮性能治理。

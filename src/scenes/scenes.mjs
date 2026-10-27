@@ -27,7 +27,7 @@ export const SCENES = [
     tag: 'vk-annotate',
     body: s`
 <vk-annotate w="327">
-  <vk-code w="945" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
+  <vk-code id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
   <vk-note line="4">下标 0–2。</vk-note>
   <vk-note line="5">i&lt;=3 越界。</vk-note>
   <vk-note line="6">i=3 越界。</vk-note>
@@ -381,7 +381,7 @@ export const SCENES = [
   {
     tag: 'vk-cells',
     body: s`
-<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1"></vk-cells>`,
+<vk-cells w="1360" values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets></vk-cells>`,
   },
 
   {
@@ -419,7 +419,10 @@ export const SCENES = [
   {
     tag: 'vk-bits',
     body: s`
-<vk-bits value="1111 1111" index="7-0" group="4" sign label="有符号视角：-1"></vk-bits>`,
+<vk-bits w="1240" group="4" sign>
+  <i label="位模式" value="1111 1111 0001"></i>
+  <i label="有符号" value="1111 1111 0001"></i>
+</vk-bits>`,
   },
 
   {
@@ -430,6 +433,88 @@ export const SCENES = [
   <i value="120" label="内存"></i>
   <i value="1000000" label="磁盘"></i>
 </vk-bars>`,
+  },
+
+  {
+    tag: 'vk-memory',
+    body: s`
+<vk-memory w="1280" addr="0x7fff_ffff" unit="B" title="进程地址空间">
+  <i label="stack" size="8 MB" grows="down" mark>局部变量 / 返回地址</i>
+  <i label="heap" grows="up">malloc / free</i>
+  <i label=".bss" size="4 KB">未初始化全局</i>
+  <i label=".data" size="4 KB">已初始化全局</i>
+  <i label=".text" size="16 KB">机器码</i>
+</vk-memory>`,
+  },
+
+  {
+    tag: 'vk-asm',
+    body: s`
+<vk-asm w="1360" title="main.s" lines="1-13" highlight="6" bytes>
+  <script type="text/plain" data-vk-source>
+0000000000401136 <main>:
+  401136: 55                    push   %rbp
+  401137: 48 89 e5              mov    %rsp,%rbp
+  40113a: c7 45 fc 2a 00 00 00  movl   $0x2a,-0x4(%rbp)
+  401141: 8b 45 fc              mov    -0x4(%rbp),%eax
+  401144: 83 c0 01              add    $0x1,%eax
+  401147: 89 45 fc              mov    %eax,-0x4(%rbp)
+  40114a: b8 00 00 00 00        mov    $0x0,%eax
+  40114f: 5d                    pop    %rbp
+  401150: c3                    ret
+  </script>
+</vk-asm>`,
+  },
+
+  {
+    tag: 'vk-timeline',
+    body: s`
+<vk-timeline w="1500" start="1972" end="2018" lanes="A,B" title="C 的五十年">
+  <i date="1972" lane="A" at="0" label="C 诞生">Dennis Ritchie，Bell Labs</i>
+  <i date="1989" lane="A" at="1" label="C89">ANSI X3.159-1989</i>
+  <i date="1999" lane="B" at="2" label="C99">// 注释、变长数组</i>
+  <i date="2011" lane="A" at="3" label="C11">_Generic、原子操作</i>
+  <i date="2018" lane="B" at="4" label="C17">只修缺陷，不加新特性</i>
+</vk-timeline>`,
+  },
+
+  {
+    tag: 'vk-pin',
+    body: s`
+<vk-canvas w="1360" h="520" grid="16">
+  <vk-box id="pin-target" x="120" y="150" w="440" h="200" surface="soft" border="hair" radius="lg">
+    <vk-text size="heading" mono>s[5]</vk-text>
+  </vk-box>
+  <vk-pin for="#pin-target" side="right" tone="err" n="1">越界写入</vk-pin>
+</vk-canvas>`,
+  },
+
+  {
+    tag: 'vk-ring',
+    body: s`
+<vk-canvas w="1360" h="520" grid="16">
+  <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
+    <vk-text size="heading" mono>0x2a</vk-text>
+  </vk-box>
+  <vk-ring for="#ring-target" shape="ellipse" tone="err" pad="16" dash></vk-ring>
+</vk-canvas>`,
+  },
+
+  {
+    tag: 'vk-spotlight',
+    body: s`
+<vk-canvas w="1360" h="520">
+  <vk-box x="80" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
+    <vk-text size="label">不看的行</vk-text>
+  </vk-box>
+  <vk-box id="spot-target" x="520" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
+    <vk-text size="label" mono>0x2a</vk-text>
+  </vk-box>
+  <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
+    <vk-text size="label">不看的行</vk-text>
+  </vk-box>
+  <vk-spotlight for="#spot-target" dim="0.72" feather="24"></vk-spotlight>
+</vk-canvas>`,
   },
 
   {

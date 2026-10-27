@@ -16,6 +16,7 @@ import path from 'node:path';
 import { parse } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
+import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
@@ -188,14 +189,19 @@ const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree
 const ANCHORS = {
   'vk-code': ['line', 'char'],
   'vk-diff': ['line', 'char'],
-  'vk-cells': ['cell'],
+  'vk-asm': ['line', 'addr'],
+  'vk-cells': ['cell', 'byte'],
   'vk-bytes': ['byte'],
-  'vk-table': ['row'],
+  'vk-bits': ['bit'],
+  'vk-table': ['row', 'cell'],
   'vk-tree': ['node'],
   'vk-steps': ['step'],
   'vk-list': ['item'],
+  'vk-memory': ['seg'],
+  'vk-timeline': ['event', 'lane'],
+  'vk-frames': ['slot', 'frame'],
 };
-const INDEX_PART = new Set(['cell', 'byte', 'row', 'step', 'item']);
+const INDEX_PART = new Set(['cell', 'byte', 'bit', 'slot', 'seg', 'event', 'row', 'step', 'item']);
 
 const countTag = (node, tag) => {
   let n = 0;
@@ -234,7 +240,13 @@ function anchorCapacity(node) {
   }
   if (tag === 'vk-cells') {
     const n = (attr(node, 'values') || '').split('|').filter((s) => s.trim()).length;
-    return n ? { from: 0, to: n - 1 } : null;
+    const spans = (attr(node, 'spans') || '')
+      .split('|')
+      .map((s) => parseInt(s.trim(), 10))
+      .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
+    const total = spans.reduce((a, b) => a + b, 0);
+    const max = Math.max(n - 1, total - 1);
+    return max >= 0 ? { from: 0, to: max } : null;
   }
   if (tag === 'vk-bytes') {
     const n = parseInt(attr(node, 'length') || '', 10);
@@ -247,6 +259,18 @@ function anchorCapacity(node) {
   if (tag === 'vk-steps' || tag === 'vk-list') {
     const n = countTag(node, 'li');
     return n ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-memory' || tag === 'vk-timeline') {
+    const n = countTag(node, 'i');
+    return n ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-bits') {
+    const n = String(attr(node, 'value') || '').replace(/[^01]/g, '').length;
+    return n ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-asm') {
+    const r = lineRange(node);
+    return r ? { from: r[0], to: r[1] } : null;
   }
   return null;
 }
@@ -470,14 +494,14 @@ function validateAuthorHtml(doc, file) {
       if (caps > 1) errors.push(`${file}:${lineOf(node)} <vk-figure> 只能有一个 figcaption`);
       if (caps && attrs.has('caption')) errors.push(`${file}:${lineOf(node)} <vk-figure> 的 figcaption 和 caption 不能同时写`);
     }
-    if (tag === 'vk-note' && (attrs.has('line') || attrs.has('for'))) {
+    if (tag === 'vk-note' && attrs.has('line')) {
       let p = node.parentNode;
-      let inside = false;
+      let hasContext = false;
       while (p) {
-        if (p.tagName === 'vk-annotate') inside = true;
+        if (p.tagName === 'vk-code' || p.tagName === 'vk-diff' || p.tagName === 'vk-annotate') hasContext = true;
         p = p.parentNode;
       }
-      if (!inside) errors.push(`${file}:${lineOf(node)} <vk-note> 的 line/for 只能写在 <vk-annotate> 内`);
+      if (!hasContext) errors.push(`${file}:${lineOf(node)} <vk-note> 的 line 需要放在 vk-annotate / 代码旁边（或用 for 指向元素）`);
     }
     if (tag === 'vk-icon') {
       const name = attrs.get('name');
@@ -507,6 +531,8 @@ function collectText(node) {
           hasAttr(n, 'data-vk-hl-diff') ||
           hasAttr(n, 'data-vk-math') ||
           hasAttr(n, 'data-vk-src') ||
+          hasAttr(n, 'data-vk-source') ||
+          hasAttr(n, 'data-vk-asm') ||
           hasAttr(n, 'data-vk-tree') ||
           hasAttr(n, 'data-vk-bytes') ||
           hasAttr(n, 'data-vk-frames'))
@@ -529,6 +555,27 @@ const lineOf = (node) => {
 /** 源码从真实文件来；HTML 里只留引用，源码放在机器数据里，不重复第二份。 */
 const srcScript = (text) =>
   `<script type="application/json" data-vk-src>${JSON.stringify({ text }).replace(/</g, '\\u003c')}</script>`;
+
+/**
+ * 内联源码块：<script type="text/plain" data-vk-source>…</script>
+ *
+ * 浏览器不会解析 script 里的 "<"，所以 C 代码、模板、HTML 都能直接放进来。
+ * 构建期把它变成和高亮数据一起的机器数据；运行时不认识这个块。
+ */
+const inlineSourceNode = (node) =>
+  (node.childNodes || []).find((c) => c.tagName === 'script' && hasAttr(c, 'data-vk-source'));
+
+const inlineSourceText = (node) => {
+  const s = inlineSourceNode(node);
+  if (!s) return null;
+  return dedent((s.childNodes || []).map((n) => n.value || '').join(''));
+};
+
+function sourceConflict(node, tag, file, line) {
+  if (attr(node, 'src') && inlineSourceNode(node)) {
+    throw new Error(`${file}:${line} <${tag}> 同时写了 src 与 data-vk-source；源码只能有一个入口。`);
+  }
+}
 
 /** 真实目录 -> 树数据；不猜状态，只报目录里真实存在的东西。 */
 function treeOf(abs, rootLabel, maxDepth = 4, showHidden = false) {
@@ -615,6 +662,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   const trees = [];
   const bytesNodes = [];
   const frameNodes = [];
+  const asmNodes = [];
   const iconNames = new Set();
   const iconNodes = [];
 
@@ -625,6 +673,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (node.tagName === 'vk-tree') trees.push(node);
     if (node.tagName === 'vk-bytes') bytesNodes.push(node);
     if (node.tagName === 'vk-frames') frameNodes.push(node);
+    if (node.tagName === 'vk-asm') asmNodes.push(node);
     if (node.tagName === 'vk-icon') iconNodes.push(node);
   });
 
@@ -641,7 +690,9 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <${tag}> 缺少结束标签，无法预编译。`);
     }
 
+    sourceConflict(node, tag, file, line);
     const { text, hasElement } = collectText(node);
+    const inline = inlineSourceText(node);
     let source;
     if (src) {
       const abs = path.resolve(path.dirname(file), src);
@@ -651,11 +702,13 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       const raw = fs.readFileSync(abs, 'utf8');
       source = dedent(attr(node, 'lines') ? sliceLines(raw, attr(node, 'lines')) : raw);
       deps.push(abs);
+    } else if (inline != null) {
+      source = dedent(inline);
     } else {
       if (hasElement) {
         throw new Error(
           `${file}:${line} <${tag}> 里有被浏览器解析掉的元素。源码里的 "<" 必须写成 "&lt;"，` +
-            `或者把代码放进单独的文件：<${tag} src="…">。`
+            `或者把代码放进 <script type="text/plain" data-vk-source>，也可以改用 src。`
         );
       }
       source = dedent(text);
@@ -715,7 +768,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }
 
-  // 终端：src 指向真实 transcript 文件；没有 src 时保持内联。
+  // 终端：src 指向真实 transcript 文件；也收内联源码块。
   for (const node of terms) {
     const loc = locOf(node);
     const line = lineOf(node);
@@ -723,18 +776,25 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <vk-term> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
-    if (!src) continue;
-    const abs = path.resolve(path.dirname(file), src);
-    if (!fs.existsSync(abs)) {
-      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+    const inline = inlineSourceText(node);
+    if (!src && inline == null) continue;
+    sourceConflict(node, 'vk-term', file, line);
+    let source;
+    if (src) {
+      const abs = path.resolve(path.dirname(file), src);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+      }
+      const raw = fs.readFileSync(abs, 'utf8');
+      source = dedent(attr(node, 'lines') ? sliceLines(raw, attr(node, 'lines')) : raw);
+      deps.push(abs);
+    } else {
+      source = dedent(inline);
     }
-    const raw = fs.readFileSync(abs, 'utf8');
-    const source = dedent(attr(node, 'lines') ? sliceLines(raw, attr(node, 'lines')) : raw);
-    deps.push(abs);
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${srcScript(source)}\n` });
   }
 
-  // 树：src 指向真实目录；构建期扫出条目。
+  // 树：src 指向真实目录；内联时收 JSON 条目。
   for (const node of trees) {
     const loc = locOf(node);
     const line = lineOf(node);
@@ -742,23 +802,39 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <vk-tree> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
-    if (!src) continue;
-    const abs = path.resolve(path.dirname(file), src);
-    if (!fs.existsSync(abs)) {
-      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
-    }
-    deps.push(abs);
+    const inline = inlineSourceText(node);
+    if (!src && inline == null) continue;
+    sourceConflict(node, 'vk-tree', file, line);
     let payload;
-    if (/\.json$/i.test(src)) {
-      throw new Error(`${file}:${line} <vk-tree> 只收目录；JSON 树已移除。`);
+    if (inline != null) {
+      let data;
+      try {
+        data = JSON.parse(inline);
+      } catch (e) {
+        throw new Error(`${file}:${line} <vk-tree> 的内联 JSON 不合法：${e.message}`);
+      }
+      payload = Array.isArray(data) ? { root: attr(node, 'title') || '', entries: data, total: data.length } : data;
+      if (!payload || !Array.isArray(payload.entries)) {
+        errors.push(`${file}:${line} <vk-tree> 的内联 JSON 需要条目数组`);
+        continue;
+      }
+    } else {
+      const abs = path.resolve(path.dirname(file), src);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+      }
+      deps.push(abs);
+      if (/\.json$/i.test(src)) {
+        throw new Error(`${file}:${line} <vk-tree> 只收目录；JSON 树请用内联 data-vk-source。`);
+      }
+      const depth = parseInt(attr(node, 'depth') || '4', 10);
+      payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
+      for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
     }
-    const depth = parseInt(attr(node, 'depth') || '4', 10);
-    payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
     const current = attr(node, 'active') || attr(node, 'current');
     if (current && !payload.entries.some((e) => e.path === current || e.name === current)) {
       errors.push(`${file}:${line} <vk-tree> 的 active="${current}" 不在目录里`);
     }
-    for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
       start: loc.startTag.endOffset,
@@ -767,7 +843,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     });
   }
 
-  // 字节：src 指向真实二进制，构建期切行；运行时只摆格子。
+  // 字节：src 指向真实二进制；内联时收十六进制文本。
   for (const node of bytesNodes) {
     const loc = locOf(node);
     const line = lineOf(node);
@@ -775,13 +851,24 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <vk-bytes> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
-    if (!src) continue;
-    const abs = path.resolve(path.dirname(file), src);
-    if (!fs.existsSync(abs)) {
-      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+    const inline = inlineSourceText(node);
+    if (!src && inline == null) continue;
+    sourceConflict(node, 'vk-bytes', file, line);
+    let buf;
+    let fileName = attr(node, 'file') || '';
+    if (src) {
+      const abs = path.resolve(path.dirname(file), src);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+      }
+      deps.push(abs);
+      buf = fs.readFileSync(abs);
+      fileName = fileName || path.basename(abs);
+    } else {
+      const hex = String(inline).replace(/0x/gi, '').replace(/[^0-9a-f]/gi, '');
+      if (hex.length % 2) throw new Error(`${file}:${line} <vk-bytes> 的内联十六进制字节数为奇数`);
+      buf = Buffer.from(hex, 'hex');
     }
-    deps.push(abs);
-    const buf = fs.readFileSync(abs);
     const start = Math.max(0, parseInt(attr(node, 'offset') || '0', 10) || 0);
     const want = Math.max(1, parseInt(attr(node, 'length') || '64', 10) || 64);
     const end = Math.min(buf.length, start + want);
@@ -797,7 +884,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     }
     const bytes = [...buf.subarray(start, end)];
     const payload = {
-      file: path.basename(abs),
+      file: fileName,
       start,
       end: end > start ? end - 1 : start,
       base,
@@ -820,21 +907,31 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <vk-frames> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
-    if (!src) continue;
-    const abs = path.resolve(path.dirname(file), src);
-    if (!fs.existsSync(abs)) {
-      throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
-    }
+    const inline = inlineSourceText(node);
+    if (!src && inline == null) continue;
+    sourceConflict(node, 'vk-frames', file, line);
     let data;
-    try {
-      data = JSON.parse(fs.readFileSync(abs, 'utf8'));
-    } catch (e) {
-      throw new Error(`${file}:${line} <vk-frames> 的 ${src} 不是合法 JSON：${e.message}`);
+    if (src) {
+      const abs = path.resolve(path.dirname(file), src);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+      }
+      try {
+        data = JSON.parse(fs.readFileSync(abs, 'utf8'));
+      } catch (e) {
+        throw new Error(`${file}:${line} <vk-frames> 的 ${src} 不是合法 JSON：${e.message}`);
+      }
+      deps.push(abs);
+    } else {
+      try {
+        data = JSON.parse(inline);
+      } catch (e) {
+        throw new Error(`${file}:${line} <vk-frames> 的内联 JSON 不合法：${e.message}`);
+      }
     }
-    deps.push(abs);
     const payload = Array.isArray(data) ? { frames: data } : data;
     if (!payload || !Array.isArray(payload.frames)) {
-      errors.push(`${file}:${line} <vk-frames> 的 ${src} 需要 { frames: [...] }`);
+      errors.push(`${file}:${line} <vk-frames> 需要 { frames: [...] }`);
       continue;
     }
     if (payload.frames.some((f) => !f || typeof f !== 'object' || !Array.isArray(f.slots))) {
@@ -848,6 +945,73 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     });
   }
 
+  // 汇编：src 或内联文本；解析地址/机器码后逐行高亮。
+  for (const node of asmNodes) {
+    const loc = locOf(node);
+    const line = lineOf(node);
+    if (!loc.startTag || !loc.endTag) {
+      throw new Error(`${file}:${line} <vk-asm> 缺少结束标签，无法预编译。`);
+    }
+    const src = attr(node, 'src');
+    const inline = inlineSourceText(node);
+    if (!src && inline == null) continue;
+    sourceConflict(node, 'vk-asm', file, line);
+    let raw;
+    let fileName = attr(node, 'file') || attr(node, 'title') || '';
+    if (src) {
+      const abs = path.resolve(path.dirname(file), src);
+      if (!fs.existsSync(abs)) {
+        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
+      }
+      deps.push(abs);
+      raw = fs.readFileSync(abs, 'utf8');
+      fileName = fileName || path.basename(abs);
+    } else {
+      raw = inline;
+    }
+    const { rows, labels } = parseAsm(raw);
+    const asmLang = resolveLang(attr(node, 'lang') || 'asm');
+    const range = lineRange(node);
+    const selected = range ? rows.filter((r) => r.line >= range[0] && r.line <= range[1]) : rows;
+    if (!selected.length) {
+      errors.push(`${file}:${line} <vk-asm> 的 lines="${attr(node, 'lines') || ''}" 没有命中任何行`);
+    }
+    const hl = new Set();
+    for (const part of (attr(node, 'highlight') || '').split(',')) {
+      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+      if (!m) continue;
+      const a = parseInt(m[1], 10);
+      const b = parseInt(m[2] || m[1], 10);
+      for (let i = a; i <= b; i++) hl.add(i);
+    }
+    const painted = [];
+    for (const row of selected) {
+      let h = escText(row.text);
+      if (row.text && row.kind === 'insn') {
+        try {
+          const lines = await paintCode(highlighter, row.text, asmLang);
+          if (lines[0]) h = lines[0];
+        } catch {
+          /* 没有 asm 语法就退化为等宽纯文本，不阻断构建 */
+        }
+      }
+      painted.push({
+        ...row,
+        m: row.kind === 'insn' ? splitInsn(row.text).mnemonic : '',
+        o: row.kind === 'insn' ? splitInsn(row.text).operands : '',
+        h,
+        hl: hl.has(row.line),
+      });
+    }
+    const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang };
+    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
+    edits.push({
+      start: loc.startTag.endOffset,
+      end: loc.endTag.startOffset,
+      inner: `\n<script type="application/json" data-vk-asm>${json}</script>\n`,
+    });
+  }
+
   // 公式：构建期 KaTeX 渲染，运行时只做一次 hash 校验
   for (const node of maths) {
     const loc = locOf(node);
@@ -856,6 +1020,8 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       throw new Error(`${file}:${line} <vk-math> 缺少结束标签，无法预编译。`);
     }
     const src = attr(node, 'src');
+    const inline = inlineSourceText(node);
+    sourceConflict(node, 'vk-math', file, line);
     let tex;
     if (src) {
       const abs = path.resolve(path.dirname(file), src);
@@ -864,6 +1030,8 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       }
       tex = dedent(fs.readFileSync(abs, 'utf8')).trim();
       deps.push(abs);
+    } else if (inline != null) {
+      tex = inline.trim();
     } else {
       const { text, hasElement } = collectText(node);
       if (hasElement) {

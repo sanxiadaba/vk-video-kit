@@ -23,7 +23,7 @@ const LAYER_NAME = Object.fromEntries(LAYERS.map((l) => [l.id, l.label]));
 const ORDER = [];
 for (const layer of LAYERS) for (const tag of byLayer(layer.id)) ORDER.push(tag);
 
-const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys']);
+const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys', 'vk-pin', 'vk-ring', 'vk-spotlight']);
 const TALL = new Set(['vk-table', 'vk-frames', 'vk-page']);
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -156,9 +156,9 @@ function topbar(tag) {
     return `<vk-row slot="header" w="1680" h="64" justify="between" align="center" data-topbar>
       ${brand()}
       <vk-row gap="sm" align="baseline" data-crumb>
-        <vk-text size="caption" weight="medium" data-meta>Overview</vk-text>
+        <vk-text size="caption" weight="medium" data-meta>目录</vk-text>
       </vk-row>
-      <vk-text size="micro" mono data-meta>${ORDER.length} components</vk-text>
+      <vk-text size="micro" mono data-meta>5.0 · ${ORDER.length} tags</vk-text>
     </vk-row>`;
   }
   const def = TAGS[tag];
@@ -295,8 +295,20 @@ function plateLens(tag) {
       ? body.replace(/\sdensity="[^"]*"/, ' density="compact"')
       : body.replace(new RegExp(`^<${tag}`), `<${tag} density="compact"`);
   }
-  const PLATE_W = { 'vk-edge': 1300, 'vk-canvas': 1300, 'vk-annotate': 1300, 'vk-bytes': 1200 };
-  if (tag !== 'vk-annotate') body = clampWidth(body, PLATE_W[tag] || 1100);
+  const PLATE_W = {
+    'vk-edge': 1360,
+    'vk-canvas': 1360,
+    'vk-annotate': 1360,
+    'vk-bytes': 1360,
+    'vk-memory': 1360,
+    'vk-asm': 1360,
+    'vk-timeline': 1360,
+    'vk-pin': 1360,
+    'vk-ring': 1360,
+    'vk-spotlight': 1360,
+  };
+  const SMALL_PLATE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys', 'vk-rule', 'vk-badge']);
+  if (tag !== 'vk-annotate') body = clampWidth(body, SMALL_PLATE.has(tag) ? 900 : PLATE_W[tag] || 1360);
   const def = TAGS[tag];
   const no = String(ORDER.indexOf(tag) + 1).padStart(3, '0');
   if (['vk-frames', 'vk-figure', 'vk-page'].includes(tag)) return `<vk-stack h="872" justify="center" align="center">${body}</vk-stack>`;
@@ -349,8 +361,11 @@ function variantLens(tag) {
         tag
       );
   const tall = TALL.has(tag);
-  // 宽关系图：整幅 + 顶部预设；控件让位给场景本身。
-  if (CONTEXTUAL.has(tag) || ['vk-canvas', 'vk-bytes', 'vk-stack'].includes(tag)) {
+  // 宽关系图 / 宽数据件：整幅 + 顶部预设；控件让位给场景本身。
+  if (
+    CONTEXTUAL.has(tag) ||
+    ['vk-canvas', 'vk-bytes', 'vk-stack', 'vk-asm', 'vk-bits', 'vk-memory', 'vk-timeline', 'vk-cells', 'vk-table'].includes(tag)
+  ) {
     const wide = tag === 'vk-annotate' ? snippet : clampWidth(snippet, 1300);
     return {
       html: `<vk-stack h="872" gap="sm">
@@ -380,15 +395,26 @@ function anatomyLens(tag) {
     </vk-canvas>`;
   }
   // 关系型组件离开它的语境（canvas / 代码）就没有意义；解剖整段场景。
-  if (tag === 'vk-edge' || tag === 'vk-annotate') {
+  if (['vk-edge', 'vk-annotate', 'vk-pin', 'vk-ring', 'vk-spotlight'].includes(tag)) {
     const scene = tag === 'vk-annotate'
       ? (sceneOf.get(tag) || '').trim().replace(/^<vk-annotate/, '<vk-annotate data-anatomy-target')
-      : clampWidth((sceneOf.get(tag) || '').trim(), 1300);
+      : (sceneOf.get(tag) || '').trim().replace(new RegExp(`<${tag}(?=[\\s>])`), `<${tag} data-anatomy-target`);
     return `<vk-canvas w="1352" h="872" grid="24" data-anatomy>
-      <vk-box x="8" y="40" w="1336" surface="none">${scene}</vk-box>
+      <vk-box x="8" y="40" w="1336" surface="none">${clampWidth(scene, 1336)}</vk-box>
     </vk-canvas>`;
   }
-  const WIDE = { 'vk-bytes': 1200, 'vk-canvas': 1200, 'vk-table': 1100, 'vk-frames': 1100, 'vk-browser': 1200 };
+  const WIDE = {
+    'vk-bytes': 1200,
+    'vk-canvas': 1200,
+    'vk-table': 1100,
+    'vk-frames': 1100,
+    'vk-browser': 1200,
+    'vk-asm': 1240,
+    'vk-bits': 1240,
+    'vk-memory': 1280,
+    'vk-timeline': 1280,
+    'vk-cells': 1240,
+  };
   const fitW = WIDE[tag] || 1100;
   const snippet = fitVariant(
     clampWidth(
@@ -579,9 +605,11 @@ function indexCell(tag, i) {
   const no = String(i + 1).padStart(2, '0');
   const layer = (LAYERS.find((l) => l.id === def.layer)?.label || '').replace(/^L\d\s*/, '');
   const query = [tag, def.name, def.summary, layer].join(' ');
-  return `<a href="specimen/${tag}.html" data-index-cell data-layer="${esc(def.layer)}" data-search="${esc(query)}"><vk-box w="260" h="96" surface="paper" border="hair" pad="2xs" radius="sm" data-index-card>
-    <vk-row justify="between" align="baseline"><vk-text size="micro" mono data-meta>${no}</vk-text><vk-text size="micro" mono emphasis="muted" data-meta>${esc(tag.replace(/^vk-/, ''))}</vk-text></vk-row>
-    <vk-text size="sub" data-meta>${esc(def.name)}</vk-text>
+  return `<a href="specimen/${tag}.html" data-index-cell data-layer="${esc(def.layer)}" data-search="${esc(query)}"><vk-box w="200" h="96" surface="none" border="none" data-index-card>
+    <vk-stack h="84" gap="2xs" justify="between">
+      <vk-row justify="between" align="baseline"><vk-text size="micro" mono data-meta>${no}</vk-text><vk-text size="micro" mono emphasis="muted" data-meta>${esc(tag.replace(/^vk-/, ''))}</vk-text></vk-row>
+      <vk-text size="meta">${esc(def.name)}</vk-text>
+    </vk-stack>
   </vk-box></a>`;
 }
 
@@ -592,25 +620,35 @@ function indexPageHtml() {
     const label = (l.label || '').replace(/^L\d\s*/, '');
     return `<vk-tag size="micro" data-meta tone="muted" data-index-layer="${l.id}" role="button" tabindex="0">${esc(label)}</vk-tag>`;
   }).join('');
-  const body = `<vk-row w="1680" h="952" align="top" gap="sm" data-app>
-    ${sidebar('', 'specimen/')}
-    <vk-box w="${STAGE_W}" h="952" surface="none" pad-y="md" pad-x="sm" data-main>
-      <vk-stack h="888" gap="sm">
-        <vk-stack gap="2xs">
-          <vk-text class="index-h1" size="heading" weight="bold" role="heading" aria-level="1">Components</vk-text>
-          <vk-text size="micro" emphasis="muted" data-meta>${total} components, five lenses each. Pick one to open its plate.</vk-text>
-        </vk-stack>
-        <vk-row w="1332" gap="sm" align="center" justify="between" data-index-tools>
-          <vk-row gap="2xs" align="center" data-index-layers>
-            <vk-tag size="micro" data-meta tone="muted" data-index-layer="all" state="selected" role="button" tabindex="0">全部</vk-tag>
-            ${layerTags}
-          </vk-row>
-          <vk-row gap="sm" align="center">
-            <vk-text size="micro" mono data-meta data-index-count>${total} / ${total}</vk-text>
-          </vk-row>
+  const body = `<vk-row w="1680" h="952" align="top" gap="md" data-app>
+    <vk-stack w="600" h="888" gap="lg" justify="between" data-hero>
+      <vk-stack gap="lg">
+        <vk-title size="heading" sub="不提供页面模板，不规定叙事；调用方自己拼。">
+          <em>40</em> 个画面组件，<br>每个都独立成立。
+        </vk-title>
+        <vk-code w="560" lang="c" file="hello.c" density="compact" highlight="2">
+          <script type="text/plain" data-vk-source>
+char s[] = "hi";
+s[0] = 'H';
+          </script>
+        </vk-code>
+      </vk-stack>
+      <vk-stack gap="sm">
+        <input class="index-search" data-side-search placeholder="搜索 40 个组件" aria-label="搜索组件">
+        <vk-row gap="2xs" wrap data-index-layers>
+          <vk-tag size="micro" data-meta tone="muted" data-index-layer="all" state="selected" role="button" tabindex="0">全部</vk-tag>
+          ${layerTags}
         </vk-row>
-        <vk-row gap="2xs" wrap w="1332" data-index-grid>${cells}</vk-row>
-        <vk-text size="caption" emphasis="muted" data-meta data-index-empty hidden>No component matches. Clear the search with Esc.</vk-text>
+      </vk-stack>
+    </vk-stack>
+    <vk-box w="1040" h="888" surface="none" data-catalog>
+      <vk-stack gap="sm">
+        <vk-row justify="between" align="baseline" w="1040">
+          <vk-text size="label" mono data-meta>Index</vk-text>
+          <vk-text size="micro" mono emphasis="muted" data-meta data-index-count>${total} / ${total}</vk-text>
+        </vk-row>
+        <vk-grid cols="5" gap="2xs" w="1032" data-index-grid>${cells}</vk-grid>
+        <vk-text size="caption" emphasis="muted" data-meta data-index-empty hidden>没有匹配的组件。按 Esc 清空搜索。</vk-text>
       </vk-stack>
     </vk-box>
   </vk-row>`;

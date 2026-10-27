@@ -1,25 +1,30 @@
 # vk 作者手册（写给 AI）
 
-> 你在写**一帧 1920×1080 的画面**，不是网页。成品是一张静帧，会被剪进视频。
-> 只读这一份就能开始；属性细节在 [`docs/reference.md`](reference.md)。
-> **速查表在文末，由 registry 生成，不要手改。**
+> 你在用**一个组件**，不是在建一套页面框架。  
+> 每个标签离开兄弟节点也能成立；页面的编排、容器尺寸、页眉页脚是调用方的事。
+> 属性细节在 [`docs/reference.md`](reference.md)；**速查表在文末，由 registry 生成，不要手改。**
 
 ---
 
-## 1 · 最小骨架：每帧都从这里开始
+## 1 · 组件自己成立
+
+从任意一个标签开始，不需要先搭 `vk-page`：
 
 ```html
-<vk-page footer="第 1 章 · 从能跑到讲清楚 | 01 / 12">
-  <vk-stack gap="lg">
-    <vk-title index="01" sub="改一个字符，改的是内存里的一个字节。">字符串不是值，是<em>一块内存</em></vk-title>
-    <vk-code src="code/hello.c" lines="4-6" highlight="2"></vk-code>
-  </vk-stack>
-</vk-page>
+<vk-code src="code/hello.c" lines="4-6" highlight="2"></vk-code>
 ```
 
-- 一页 = 一个 `vk-page`。安全区固定 1680×888（左右 120、上下 96），**不要自己加 padding 去"撑满"**。
-- 一帧只讲一件事。第二件事 → 另起一帧。
-- 默认全部纸面。要深色就在组件上写 `surface="ink"`（`vk-page` 也可以整页深）。
+```html
+<vk-memory w="720">
+  <i label="stack" size="8 MB" grows="down">局部变量</i>
+  <i label=".text" size="16 KB">机器码</i>
+</vk-memory>
+```
+
+- 组件不要求父级、兄弟或整页上下文；`w` / `h` 是组件自己的尺寸，不写就按内容或容器。
+- `vk-page` 只是可选的画布工具（1920×1080、安全区、缩放），不是入口，也不是必写项。
+- 需要多组件拼一帧时，用 `vk-stack` / `vk-row` / `vk-grid` / `vk-canvas`；这是调用方的选择，库不规定。
+- 深色是组件自己的 `surface="ink"`，不是整页开关。
 
 ## 2 · 三条硬规矩
 
@@ -27,19 +32,31 @@
 2. **焦点只有一个颜色**（钴蓝）。语义色（对/错/注意）只出现在色条、底色、图标上，**不写正文**。
 3. **装不下就删内容，不缩字**。一行代码约 24 字符；带标题的一屏约 9 行代码。
 
-## 3 · 内容从哪来（三套入口，别混）
+## 3 · 内容从哪来（四套入口，别混）
 
 | 数据类型 | 怎么写 | 谁在用 |
 |---|---|---|
-| 真实文件 | `src="code/hello.c"` + `lines="1-8"` | `code` `diff` `term` `tree` `bytes` `frames` `math` `figure` |
-| 结构化内容 | 子节点：`<li>` / 表格里直接写 `<table><tr>` / `<i value label>` | `list` `steps` `table` `bars` |
+| 真实文件 | `src="code/hello.c"` + `lines="1-8"` | `code` `diff` `term` `tree` `bytes` `frames` `math` `asm` `figure` |
+| 内联源码 | `<script type="text/plain" data-vk-source>…</script>` | 同上；短代码、聊天式 AI 产出一个 HTML 时用 |
+| 结构化内容 | 子节点：`<li>` / `<i value label>` / 表格 `<table><tr>` | `list` `steps` `table` `bars` `memory` `timeline` |
 | 一行值 | 属性串（用竖线分隔，见下例） | `cells` |
 
 ```html
 <vk-cells values="1|2|3|0" labels="a[0]|a[1]|a[2]|a[3]" addr="0x7ffc" stride="4" flag="3"></vk-cells>
 ```
 
-**真实文件是唯一真相**：不要把源码抄进 HTML。构建期读文件，运行时零依赖。
+内联源码块不用把 `<` 写成 `&lt;`：
+
+```html
+<vk-code lang="c" file="hello.c">
+  <script type="text/plain" data-vk-source>
+#include <stdio.h>
+int main(void) { return 0; }
+  </script>
+</vk-code>
+```
+
+`src` 与内联块**只能有一个**；同时出现构建期报错。长文件仍首选 `src`。
 
 ## 4 · 指到组件内部（批注 / 箭头）
 
@@ -52,16 +69,33 @@
 
 | part | 用在 | arg |
 |---|---|---|
-| `line` | `vk-code` / `vk-diff` | **源文件行号**（`lines="4-6"` 时就是 4–6） |
+| `line` | `vk-code` / `vk-diff` / `vk-asm` | **源文件行号**（`lines="4-6"` 时就是 4–6） |
 | `char` | `vk-code` | `行:起-止`，列**从 0 起**，左闭右开 |
-| `cell` | `vk-cells` | 下标，**从 0 起** |
-| `byte` | `vk-bytes` | 偏移，**从 0 起** |
-| `row` | `vk-table` | 行下标，**从 0 起** |
+| `cell` | `vk-cells` / `vk-table` | 字段下标 / `行,列`，**从 0 起** |
+| `byte` | `vk-cells` / `vk-bytes` | 字节下标 / 偏移，**从 0 起** |
+| `bit` | `vk-bits` | `行:位`，多行时用 `0:7` |
+| `slot` | `vk-frames` | `帧:槽`，例如 `1:0` |
+| `seg` | `vk-memory` | 段下标或段名 |
+| `addr` | `vk-asm` | 指令地址 |
+| `event` | `vk-timeline` | 事件下标 |
+| `lane` | `vk-timeline` | 泳道名 |
+| `row` | `vk-table` | 行下标 |
 | `node` | `vk-tree` | 节点路径 |
-| `step` | `vk-steps` | 下标，**从 0 起** |
-| `item` | `vk-list` | 下标，**从 0 起** |
+| `step` | `vk-steps` | 下标 |
+| `item` | `vk-list` | 下标 |
 
 一句话：**代码用行号（身份），其余用下标（位置），一律从 0 起。**
+
+覆盖层也只认锚点，`for` 可以逗号列多个：
+
+```html
+<vk-canvas w="1200" h="420">
+  <vk-box id="cell" x="80" y="80" w="320" h="180">0x2a</vk-box>
+  <vk-spotlight for="#cell" dim="0.72"></vk-spotlight>
+  <vk-ring for="#cell" shape="ellipse" tone="err"></vk-ring>
+  <vk-pin for="#cell" side="right" n="1">越界写入</vk-pin>
+</vk-canvas>
+```
 
 行内讲一个字符区间，用 `span`（`vk-code` 写 `行:起-止`，`vk-note` 写 `起-止`）：
 
@@ -72,7 +106,7 @@
 </vk-annotate>
 ```
 
-`vk-note` 写在 `vk-annotate` 里才有效；它按行心对齐，不画长引线。
+`vk-note` 用 `line` 时写在 `vk-annotate` 里，按行心对齐；用 `for` 时可以独立作为一条批注块。
 
 `vk-canvas` 的子件用 `x` / `y` 定位（任意标签都能写，API 面板里不显示）：
 
@@ -84,16 +118,17 @@
 </vk-canvas>
 ```
 
-结构体内存布局（字段占几格 / 填充 / 高亮）：
+结构体内存布局（字段占几格 / 填充 / 高亮 / 字节尺）：
 
 ```html
 <vk-cells values="0x2a|'h'|…" labels="int x|char y|填充 3 字节"
-          spans="4|1|3" pad="2" addr="0x7ffc" stride="1"></vk-cells>
+          spans="4|1|3" pad="2" addr="0x7ffc" stride="1"
+          offsets align></vk-cells>
 ```
 
-`spans` / `pad` / `mark` 的编号都从 0 起（`mark` 是格序号，不是字节）；地址按字段的起始字节算。格宽 ≤150px 时地址会自动退到 28px，再窄才省略。图里指一个局部用 `crop="x,y,w,h"`：0–100，**按图片本身算**（cover / contain 下也准）。
+`spans` / `pad` / `mark` 的编号都从 0 起（`mark` 是格序号，不是字节）；`offsets` 打开后字段下方出现字节尺，每格带 `@byte` 锚点；`direction="rtl"` 把字节尺倒过来看大端。地址按字段的起始字节算。图里指一个局部用 `crop="x,y,w,h"`：0–100，**按图片本身算**（cover / contain 下也准）。
 
-## 5 · 工作循环（一帧四步）
+## 5 · 工作循环（一个组件四步）
 
 ```bash
 npx vk build page.html          # 预编译 + 校验；错在这里报
@@ -102,8 +137,8 @@ npx vk shot page.html --phone   # 出 640 宽近似手机横屏
 npx vk shot page.html --crop 900,300,600,300   # 出 1:1 局部
 ```
 
-1. 写 HTML → 2. `vk build` → 3. `vk shot` → 4. **看那张图**：有没有重叠、裁切、两条窗头、字太小。
-   改完回到 2。`vk build` 的报错是给你的，按提示改，不要猜。
+1. 写组件 → 2. `vk build` → 3. `vk shot` → 4. **看那张图**：有没有重叠、裁切、两条窗头、字太小。
+   改完回到 2。`vk build` 的报错是给你的，按提示改，不要猜。`vk shot` 只是调用方拿静帧的一种方式，不是组件的职责。
 
 ## 6 · 常见错（`vk build` 会拦住这些）
 
@@ -118,7 +153,9 @@ npx vk shot page.html --crop 900,300,600,300   # 出 1:1 局部
 | `span 不是 起-止` | `span` 要写 `起-止` 且起 < 止 |
 | `没写 chrome="none"，会出现两条窗头` | `<vk-window>` 里放 code/term/diff/figure/tree/bytes/frames 时必须去窗头 |
 | `<vk-bars>` 只收 `<i value label>` | 条的行必须是 `<i value="1" label="CPU">` |
-| `源码里的 "<" 必须写成 "&lt;"` | 代码别手写进 HTML，用 `src` 指向文件 |
+| `源码里的 "<" 必须写成 "&lt;"` | 代码别手写进 HTML；用 `src` 或 `data-vk-source` 内联块 |
+| `同时写了 src 与 data-vk-source` | 源码只能有一个入口；删掉一个 |
+| `line 需要放在 vk-annotate / 代码旁边` | `line` 批注没有代码上下文；改用 `for` 指向元素 |
 
 ## 7 · 窗：一个组件，四种窗头
 
@@ -129,11 +166,23 @@ npx vk shot page.html --crop 900,300,600,300   # 出 1:1 局部
 <vk-window chrome="none" pad="none"><vk-code chrome="none" src="code/hello.c"></vk-code></vk-window>
 ```
 
-`code` / `term` / `diff` / `figure` / `tree` / `bytes` / `frames` 自带窗头；放进 `vk-window` 时要 `chrome="none"`。
+`code` / `term` / `diff` / `asm` / `figure` / `tree` / `bytes` / `frames` 自带窗头；放进 `vk-window` 时要 `chrome="none"`。
 
 ## 8 · 没有动效
 
 库不提供播放器、时间轴、逐行淡入、打字机。**静止帧就是成品**；动效在剪辑软件里做。
+
+## 9 · 六个新标签（别再用 canvas 手摆）
+
+| 要讲什么 | 用 | 最小写法 |
+|---|---|---|
+| 进程地址空间 | `vk-memory` | `<vk-memory><i label="stack" grows="down">…</i></vk-memory>` |
+| 汇编 / 指令 | `vk-asm` | `<vk-asm src="a.s" highlight="3" bytes>` |
+| 年份 / 事件 | `vk-timeline` | `<vk-timeline><i date="1972" label="C 诞生">…</i></vk-timeline>` |
+| 线程交错 | `vk-timeline` | `<vk-timeline variant="lanes" steps="6" lanes="主线程,中断">…</vk-timeline>` |
+| 指着某一格 / 某一行 | `vk-pin` `vk-ring` `vk-spotlight` | `<vk-ring for="#id@cell:3">` |
+
+`vk-memory` / `vk-timeline` 收 `<i>` 子节点，不读 `src`；`vk-asm` 收 `src` 或内联块。
 
 ---
 
@@ -218,10 +267,10 @@ npx vk shot page.html --crop 900,300,600,300   # 出 1:1 局部
   - 属性：（无）
   - 例：`<vk-keys>`
 - **`vk-cells`** · 内存格 — 一行连续的内存格：标签、值、地址；flag 标出越界的那一格。
-  - 属性：`values` · `labels` · `spans` · `pad` · `mark` · `addr` · `cols` · `flag` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `stride`
-  - 例：`<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1">`
+  - 属性：`values` · `labels` · `spans` · `pad` · `mark` · `addr` · `cols` · `flag` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `stride` · `offsets` · `direction` · `align`
+  - 例：`<vk-cells w="1360" values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets>`
 - **`vk-bytes`** · 字节 — 字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，highlight 标出一段字节。
-  - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `highlight` · `density` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `highlight` · `density` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `word` · `endian`
   - 例：`<vk-bytes w="1360" src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5">`
 - **`vk-frames`** · 栈帧 — 栈帧：src 指向真实 JSON；一帧一组槽位，标出当前帧、地址与生长方向。
   - 属性：`src` · `title` · `active` · `grows` · `show` · `summary` · `density` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
@@ -234,22 +283,40 @@ npx vk shot page.html --crop 900,300,600,300   # 出 1:1 局部
   - 例：`<vk-quote w="1280" source="C11 §6.7.3" author="ISO/IEC 9899">`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
   - 属性：`value` · `index` · `group` · `sign` · `label` · `tone` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
-  - 例：`<vk-bits value="1111 1111" index="7-0" group="4" sign label="有符号视角：-1">`
+  - 例：`<vk-bits w="1240" group="4" sign>`
 - **`vk-bars`** · 条 — 一组横向条：标签、数值条、单位。子节点写成 <i value label>。
   - 属性：`max` · `scale` · `unit` · `density` · `tone` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
   - 例：`<vk-bars w="1280" max="1000000" scale="log" unit="ns">`
+- **`vk-memory`** · 内存图 — 地址空间：text / data / bss / heap / stack 一段一段摆开，标地址、大小与生长方向。
+  - 属性：`title` · `addr` · `unit` · `scale` · `show` · `orientation` · `density` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 例：`<vk-memory w="1280" addr="0x7fff_ffff" unit="B" title="进程地址空间">`
+- **`vk-asm`** · 汇编 — 汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。
+  - 属性：`lang` · `src` · `lines` · `file` · `highlight` · `focus` · `addr` · `title` · `bytes` · `address` · `density` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 例：`<vk-asm w="1360" title="main.s" lines="1-13" highlight="6" bytes>`
+- **`vk-timeline`** · 时间线 — 时间线：年份/事件轴，或按步展开的多泳道；一条事项一个 <i>。
+  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `density` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 例：`<vk-timeline w="1500" start="1972" end="2018" lanes="A,B" title="C 的五十年">`
 
 ### L4 关系 · 两点之间的关系与批注
 
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
-  - 属性：`from` · `to` · `from-side` · `to-side` · `shape` · `tension` · `label` · `tone` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap` · `bend` · `cap` · `clearance` · `label-size` · `label-dx` · `label-dy`
+  - 属性：`from` · `to` · `from-side` · `to-side` · `shape` · `tension` · `label` · `tone` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap` · `bend` · `cap` · `clearance` · `label-size` · `label-dx` · `label-dy` · `via`
   - 例：`<vk-edge from="#buf" to="#mem" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
 - **`vk-annotate`** · 行旁批注 — 把批注绑到代码行：按行心对齐、贴在该行右侧；引线只服务非代码目标。
   - 属性：`w`
   - 例：`<vk-annotate w="327">`
-- **`vk-note`** · 讲解条 — 一条讲解：line 指向代码行，for 指向任意元素，由 vk-annotate 组织。
+- **`vk-note`** · 讲解条 — 一条讲解：line 指向代码行，for 指向任意元素；可独立使用，也可放进 vk-annotate。
   - 属性：`n` · `line` · `span` · `tone` · `size` · `for` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `emphasis`
   - 例：`<vk-note tone="accent" size="body">`
+- **`vk-pin`** · 批注气泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
+  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `leader` · `gap` · `w` · `size` · `z`
+  - 例：`<vk-pin for="#pin-target" side="right" tone="err" n="1">`
+- **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
+  - 属性：`for` · `shape` · `pad` · `tone` · `dash` · `width` · `z`
+  - 例：`<vk-ring for="#ring-target" shape="ellipse" tone="err" pad="16" dash>`
+- **`vk-spotlight`** · 聚光 — 聚光：除目标外整体压暗，可多目标；放在 canvas 或 page 里。
+  - 属性：`for` · `dim` · `feather` · `tone` · `shape` · `z`
+  - 例：`<vk-spotlight for="#spot-target" dim="0.72" feather="24">`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 

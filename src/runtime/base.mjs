@@ -87,7 +87,16 @@ export function precompiledSource(el) {
 /** 作者漏了转义时明确警告，不静默吞掉 */
 export function warnIfParsed(el) {
   const junk = [...el.children].filter(
-    (c) => !(c.tagName === 'SCRIPT' && (c.hasAttribute('data-vk-hl') || c.hasAttribute('data-vk-hl-diff') || c.hasAttribute('data-vk-src') || c.hasAttribute('data-vk-tree')))
+    (c) =>
+      !(
+        c.tagName === 'SCRIPT' &&
+        (c.hasAttribute('data-vk-hl') ||
+          c.hasAttribute('data-vk-hl-diff') ||
+          c.hasAttribute('data-vk-src') ||
+          c.hasAttribute('data-vk-source') ||
+          c.hasAttribute('data-vk-asm') ||
+          c.hasAttribute('data-vk-tree'))
+      )
   );
   if (!junk.length) return false;
   el.dataset.vkParsed = '1';
@@ -118,6 +127,13 @@ const ANCHOR_ATTR = {
   line: 'data-line',
   cell: 'data-cell',
   byte: 'data-byte',
+  bit: 'data-bit',
+  slot: 'data-slot',
+  seg: 'data-seg',
+  addr: 'data-addr',
+  event: 'data-event',
+  lane: 'data-lane',
+  frame: 'data-frame',
   row: 'data-row',
   node: 'data-node-path',
   step: 'data-step',
@@ -144,7 +160,9 @@ export function resolveTarget(root, expr, owner) {
     }
     if (part === 'line' || part === 'char') {
       const lineNo = (args[0] || '').trim();
-      const lineEl = host.querySelector(`.vk-line[data-line="${cssEscape(lineNo)}"]`);
+      const lineEl = host.querySelector(
+        `.vk-line[data-line="${cssEscape(lineNo)}"], [data-vk-part="line"][data-line="${cssEscape(lineNo)}"]`
+      );
       if (!lineEl) {
         owner?._warnOnce?.(`target:${id}:${lineNo}`, `#${id} 没有第 ${lineNo} 行`);
         return null;
@@ -166,7 +184,9 @@ export function resolveTarget(root, expr, owner) {
       return null;
     }
     const want = args.join(':');
-    const el = host.querySelector(`[${attr}="${cssEscape(want)}"]`);
+    const el =
+      (part === 'seg' ? host.querySelector(`[data-seg-name="${cssEscape(want)}"]`) : null) ||
+      host.querySelector(`[${attr}="${cssEscape(want)}"]`);
     if (!el) {
       owner?._warnOnce?.(`target:${id}:${part}:${want}`, `#${id} 没有 ${part}="${want}"`);
       return null;

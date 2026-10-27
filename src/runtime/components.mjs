@@ -692,6 +692,8 @@ export class VkBytes extends VkElement {
     }
     const cols = this.getAttribute('cols') === '4' ? 4 : 8;
     const group = Math.max(1, Math.min(8, parseInt(this.getAttribute('group'), 10) || 1));
+    const word = [1, 2, 4, 8].includes(parseInt(this.getAttribute('word'), 10)) ? parseInt(this.getAttribute('word'), 10) : 1;
+    const endian = this.getAttribute('endian') === 'big' ? 'big' : 'little';
     const ascii = this.getAttribute('ascii') !== 'none';
     const address = this.getAttribute('address') !== 'none';
     const density = this.getAttribute('density') || 'normal';
@@ -713,19 +715,26 @@ export class VkBytes extends VkElement {
       const chunk = d.bytes.slice(at, at + cols);
       const flags = (live != null ? Array.from({ length: cols }, (_, i) => liveHl.has(d.start + at + i)) : (d.hl || [])).slice(0, chunk.length);
       const addr = '0x' + (d.base + d.start + at).toString(16).padStart(4, '0');
-      const hex = chunk
-        .map((b, i) => {
-          const cls = group > 1 && i % group === 0 ? ' class="is-group"' : '';
-          return `<i${cls} data-byte="${at + i}" data-hl="${flags[i] ? '1' : '0'}">${esc(b)}</i>`;
-        })
-        .join('');
+      const units = chunk.map((b, i) => ({ b, i, flag: flags[i] }));
+      const ordered = [];
+      for (let w = 0; w < units.length; w += word) {
+        const part = units.slice(w, w + word);
+        ordered.push(...(word > 1 && endian === 'little' ? part.reverse() : part));
+      }
+      const words = [];
+      for (let w = 0; w < ordered.length; w += word) {
+        const part = ordered.slice(w, w + word);
+        words.push(`<span class="vk-bytes-w">${part
+          .map((u) => `<i${group > 1 && u.i % group === 0 ? ' class="is-group"' : ''} data-byte="${at + u.i}" data-hl="${u.flag ? '1' : '0'}">${esc(u.b)}</i>`)
+          .join('')}</span>`);
+      }
       const text = chunk.map((h) => {
         const n = parseInt(h, 16);
         return n >= 32 && n < 127 ? String.fromCharCode(n) : '.';
       }).join('');
       rows.push(`<div class="vk-bytes-row">
         ${address ? `<span class="vk-bytes-a">${addr}</span>` : ''}
-        <span class="vk-bytes-x" data-group="${group}">${hex}</span>
+        <span class="vk-bytes-x" data-group="${group}" data-word="${word}" data-endian="${endian}">${words.join('')}</span>
         ${ascii ? `<span class="vk-bytes-c">${esc(text)}</span>` : ''}
       </div>`);
     }
@@ -734,7 +743,7 @@ export class VkBytes extends VkElement {
       surface: 'paper',
       chrome: this.getAttribute('chrome') === 'none' ? 'none' : 'min',
       head: fileHead(file, 'bytes', range),
-      inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
+      inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}" data-word="${word}" data-endian="${endian}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
     });
   }
 }
@@ -778,14 +787,14 @@ export class VkFrames extends VkElement {
         const index = d.frames.indexOf(f) + 1;
         const slots = (f.slots || [])
           .map(
-            (s) => `<div class="vk-frame-slot">
+            (s, si) => `<div class="vk-frame-slot" data-vk-part="slot" data-slot="${index}:${si}">
               ${values ? `<span class="vk-frame-l">${esc(s.label ?? '')}</span>` : ''}
               ${values ? `<span class="vk-frame-v">${esc(s.value ?? '')}</span>` : ''}
               ${addresses ? `<span class="vk-frame-sa" data-meta>${esc(s.addr ?? '')}</span>` : ''}
             </div>`
           )
           .join('');
-        return `<section class="vk-frame" data-vk-part="frame" data-active="${index === active ? '1' : '0'}" data-index="${index}">
+        return `<section class="vk-frame" data-vk-part="frame" data-frame="${index}" data-active="${index === active ? '1' : '0'}" data-index="${index}">
           <header class="vk-frame-hd">
             <span class="vk-frame-n">${esc(f.name ?? 'frame')}</span>
             ${addresses ? `<span class="vk-frame-fa" data-meta>${esc(f.addr ?? '')}</span>` : ''}
@@ -940,6 +949,8 @@ export class VkCells extends VkElement {
     const base = addr ? parseInt(addr, 16) : NaN;
     const pad = addr && addr.startsWith('0x') ? Math.max(4, addr.length - 2) : 0;
     const fmtAddr = (n) => (Number.isFinite(n) ? '0x' + n.toString(16).padStart(pad, '0') : '');
+    const byteMode = this.hasAttribute('offsets') || this.hasAttribute('align') || this.getAttribute('direction') === 'rtl';
+    const direction = this.getAttribute('direction') === 'rtl' ? 'rtl' : 'ltr';
 
     // 地址按"这个字段从第几个字节开始"算：跨格字段后面的字段要跳过它占的宽度。
     const offsets = [];
@@ -954,15 +965,24 @@ export class VkCells extends VkElement {
         const label = isFlag ? `${labels[i] || `[${i}]`} · 越界` : labels[i];
         const span = spans[i];
         const marks = `${isFlag ? ' data-flag="1"' : ''}${padSet.has(i) ? ' data-pad="1"' : ''}${markSet.has(i) ? ' data-mark="1"' : ''}`;
-        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
+        const startOff = offsets[i] * stride;
+        const ruler = byteMode
+          ? `<span class="vk-cell-bytes" aria-hidden="true">${Array.from({ length: span }, (_, k) => {
+              const order = direction === 'rtl' ? span - 1 - k : k;
+              const byteOff = startOff + order * stride;
+              return `<span class="vk-cell-byte" data-byte="${byteOff}" data-meta>${addr ? fmtAddr(base + byteOff) : `+${byteOff}`}</span>`;
+            }).join('')}</span>`
+          : '';
+        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('align') ? ' data-align="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(v)}</span>
-          ${addr ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + offsets[i] * stride)}</span>` : ''}
+          ${ruler}
+          ${addr ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + startOff)}</span>` : ''}
         </div>`;
       })
       .join('');
 
-    this.innerHTML = `<div class="vk-cells" style="--cols:${cols}" role="list">${cells}</div>`;
+    this.innerHTML = `<div class="vk-cells" style="--cols:${cols}" data-direction="${direction}" role="list">${cells}</div>`;
   }
 }
 
@@ -1058,25 +1078,38 @@ export class VkBits extends VkElement {
   static watchSource = true;
   static renderedRoot = '.vk-bits-wrap';
 
+  capture() {
+    this._rows = [...this.querySelectorAll(':scope > i')].map((el) => ({
+      label: el.getAttribute('label') || '',
+      value: el.getAttribute('value') || el.textContent.trim(),
+      mark: el.hasAttribute('mark'),
+    }));
+  }
+
   render() {
-    const raw = (this.getAttribute('value') || '').replace(/\s+/g, '');
-    const bits = raw.split('').filter((c) => c === '0' || c === '1');
-    if (!bits.length) {
-      this._warnOnce('value', '缺少 value="1010…"，位栏没有内容');
-      this.innerHTML = '<div class="vk-bits-wrap"><div class="vk-bits"><span class="vk-bit">?</span></div></div>';
-      return;
-    }
+    const rows = this._rows && this._rows.length
+      ? this._rows
+      : [{ label: this.getAttribute('label') || '', value: this.getAttribute('value') || '', mark: false }];
     const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
-    const label = this.getAttribute('label') || '';
-    const cols = bits
-      .map((b, i) => {
-        const n = index === 'none' ? null : index === '0-7' ? i : bits.length - 1 - i;
-        const isSign = sign && i === 0;
-        return `<div class="vk-bit-col">${n === null ? '' : `<span class="vk-bit-i">${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}">${b}</span></div>`;
-      })
-      .join('');
-    this.innerHTML = `<div class="vk-bits-wrap"><div class="vk-bits">${cols}</div>${label ? `<p class="vk-bits-label" data-meta>${esc(label)}</p>` : ''}</div>`;
+    const tone = this.getAttribute('tone') === 'accent' ? 'accent' : 'ink';
+    const multi = rows.length > 1;
+
+    const rendered = rows.map((row, r) => {
+      const bits = String(row.value || '').replace(/\s+/g, '').split('').filter((c) => c === '0' || c === '1');
+      if (!bits.length) return '';
+      const cols = bits
+        .map((b, i) => {
+          const n = index === 'none' ? null : index === '0-7' ? i : bits.length - 1 - i;
+          const isSign = sign && i === 0;
+          const bitId = multi ? `${r}:${i}` : String(i);
+          return `<div class="vk-bit-col">${n === null ? '' : `<span class="vk-bit-i" data-meta>${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}" data-bit="${bitId}">${b}</span></div>`;
+        })
+        .join('');
+      return `<div class="vk-bit-row" data-row="${r}"${row.mark ? ' data-mark' : ''}>${row.label ? `<span class="vk-bit-label" data-meta>${esc(row.label)}</span>` : ''}<div class="vk-bits">${cols}</div></div>`;
+    }).join('');
+
+    this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}">${rendered || '<div class="vk-bits"><span class="vk-bit">?</span></div>'}</div>`;
   }
 }
 
@@ -1155,8 +1188,15 @@ export class VkTag extends VkElement {
   }
 }
 
-/** 原生 <table> 的宿主：内容不动，Frame 只负责 w。 */
+/** 原生 <table> 的宿主：内容不动，Frame 只负责 w；给每格写锚点。 */
 export class VkTable extends VkElement {
   static watchSource = false;
-  render() {}
+  render() {
+    this.querySelectorAll('tr').forEach((tr, r) => {
+      tr.dataset.row = String(r);
+      [...tr.children].forEach((cell, c) => {
+        if (cell.tagName === 'TD' || cell.tagName === 'TH') cell.dataset.cell = `${r},${c}`;
+      });
+    });
+  }
 }

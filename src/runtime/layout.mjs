@@ -1,5 +1,5 @@
 import { VK, EDGES, numAttr, VkElement, define, plain, resolveTarget } from './base.mjs';
-import { autoSide, connectorGeometry, labelSpot, pathLength, tipOpenPath, tipPath, visualToLocal } from './geometry.mjs';
+import { autoSide, connectorGeometry, labelSpot, pathLength, roundedPath, tipOpenPath, tipPath, visualToLocal } from './geometry.mjs';
 
 /* ------------------------------------------------------------------ 摆位 */
 
@@ -32,7 +32,7 @@ export class VkCanvas extends VkElement {
     const kids = [...this.children].filter((el) => el.tagName.toLowerCase() !== 'svg');
     if (!kids.length) return;
 
-    const nodes = kids.filter((el) => el.tagName !== 'VK-EDGE');
+    const nodes = kids.filter((el) => el.tagName !== 'VK-EDGE' && !el.hasAttribute('data-vk-overlay'));
     const sizes = new Map();
     // 先批量写位置，再批量读尺寸：循环里写读交替会让每个子元素各触发一次强制布局。
     for (const el of nodes) {
@@ -191,6 +191,27 @@ export class VkEdge extends VkElement {
     }
 
     let g = connectorGeometry({ from: a, to: b, s1, s2, shape, gap, bend, r, tension });
+
+    // 作者显式写的路径点：先直连再圆角，箭头方向按最后一段算。
+    const viaRaw = this.getAttribute('via');
+    if (viaRaw) {
+      const pts = viaRaw
+        .split(';')
+        .map((part) => part.split(',').map((n) => Number(n.trim())))
+        .filter(([x, y]) => Number.isFinite(x) && Number.isFinite(y))
+        .map(([x, y]) => ({ x, y }));
+      if (pts.length) {
+        const start = g.points[0];
+        const end = g.points[g.points.length - 1];
+        const all = [start, ...pts, end];
+        const prev = pts[pts.length - 1] || start;
+        g.points = all;
+        g.tip = { ...g.tip, x: end.x, y: end.y, angle: Math.atan2(end.y - prev.y, end.x - prev.x) };
+        g.d = roundedPath(all, r);
+      } else {
+        this._warnOnce('via', '的 via 不是 x,y;x,y 坐标，已忽略');
+      }
+    }
 
     // 强制边如果背对目标，线会先穿出自己的盒子：不静默接受，退回自动选边
     if (forced && crossesOwnBox(g.points, a, b)) {

@@ -160,6 +160,8 @@ export const PRESETS = {
     { label: '四列', attrs: { cols: '4' } },
     { label: '两字节分组', attrs: { group: '2' } },
     { label: '按 4 字节分组', attrs: { group: '4' } },
+    { label: '4 字节一组', attrs: { word: '4', group: '4' } },
+    { label: '大端', attrs: { word: '4', endian: 'big' } },
     { label: '不要 ASCII', attrs: { ascii: 'none' } },
     { label: '不要地址', attrs: { address: 'none' } },
     { label: '紧凑', attrs: { density: 'compact' } },
@@ -176,14 +178,16 @@ export const PRESETS = {
     { label: '高亮 x', attrs: { mark: '0' } },
     { label: '去掉填充标记', attrs: { pad: null } },
     { label: '三等分', attrs: { spans: '1|1|1' } },
+    { label: '字节尺', attrs: { offsets: '', align: '' } },
+    { label: '大端视角', attrs: { offsets: '', direction: 'rtl' } },
   ],
   'vk-steps': [
     { label: '第一步', attrs: { current: '1' } },
     { label: '第三步', attrs: { current: '3' } },
   ],
   'vk-annotate': [
-    { label: '窄栏', attrs: { w: '520' } },
-    { label: '宽栏', attrs: { w: '640' } },
+    { label: '窄批注', attrs: { w: '320' } },
+    { label: '宽批注', attrs: { w: '440' } },
   ],
   'vk-note': [
     { label: '大号', attrs: { size: 'heading' } },
@@ -208,5 +212,39 @@ export const PRESETS = {
     { label: '强调当前', attrs: { tone: 'accent' } },
     { label: '紧凑', attrs: { density: 'compact' } },
     { label: '线性刻度', attrs: { scale: 'linear' } },
+  ],
+  'vk-memory': [
+    { label: '只看地址', attrs: { show: 'addresses' } },
+    { label: '横向分区', attrs: { orientation: 'horizontal' } },
+    { label: '按大小', attrs: { scale: 'linear' } },
+    { label: '紧凑', attrs: { density: 'compact' } },
+  ],
+  'vk-asm': [
+    { label: '无机器码', attrs: { bytes: null } },
+    { label: '无地址列', attrs: { address: 'none' } },
+    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '去窗头', attrs: { chrome: 'none' } },
+  ],
+  'vk-timeline': [
+    { label: '泳道', attrs: { variant: 'lanes' } },
+    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '从 1989 起', attrs: { start: '1989' } },
+  ],
+  'vk-pin': [
+    { label: '左侧', attrs: { side: 'left' } },
+    { label: '无引线', attrs: { leader: 'none' } },
+    { label: '小字', attrs: { size: 'label' } },
+    { label: '编号 3', attrs: { n: '3' } },
+  ],
+  'vk-ring': [
+    { label: '矩形', attrs: { shape: 'rect' } },
+    { label: '下划线', attrs: { shape: 'underline' } },
+    { label: '实线', attrs: { dash: null } },
+    { label: '大留白', attrs: { pad: '28' } },
+  ],
+  'vk-spotlight': [
+    { label: '椭圆', attrs: { shape: 'ellipse' } },
+    { label: '更暗', attrs: { dim: '0.9' } },
+    { label: '硬边', attrs: { feather: '0' } },
   ],
 };

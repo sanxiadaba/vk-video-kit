@@ -13,6 +13,11 @@
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
   'vk-edge': {
+    via: {
+      values: ['100,100;300,100'],
+      effect: { on: 'svg path', kind: 'attr', prop: 'd' },
+      why: '路径点最终改写 path 的 d。',
+    },
     'label-dx': {
       values: ['20'],
       effect: { on: '.vk-edge-label', kind: 'style', prop: 'left' },
@@ -65,6 +70,18 @@ export const PROBES = {
       values: ['9-12'],
       effect: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
       why: '高亮字节会换一组 i 的背景色；断言背景而不是 data-hl 标记。',
+    },
+  },
+  'vk-asm': {
+    highlight: {
+      values: ['2'],
+      effect: { on: '.vk-asm-row', kind: 'style', prop: 'background-color' },
+      why: '高亮行必须有背景色差。',
+    },
+    focus: {
+      values: ['2'],
+      effect: { on: '.vk-asm-row', kind: 'style', prop: 'opacity' },
+      why: '聚光让非目标行透明度下降。',
     },
   },
   'vk-figure': {

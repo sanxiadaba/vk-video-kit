@@ -264,6 +264,7 @@ const COMMON_TAGS = [
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-figure', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-frames', 'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-note',
+  'vk-memory', 'vk-asm', 'vk-timeline',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -346,5 +347,81 @@ Object.assign(EFFECTS['vk-canvas'], {
   inset: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   overflow: { on: 'vk-canvas', kind: 'style', prop: 'overflow-x', skipVisual: true },
   grid: { on: 'vk-canvas', kind: 'style', prop: 'background-image' },
+});
+
+/* ---------------------------------------------------------- 5.0 新件 / 升级 */
+
+Object.assign((EFFECTS['vk-memory'] ||= {}), {
+  title: { on: '.vk-mem-title', kind: 'text' },
+  addr: { on: '.vk-mem-note', kind: 'text' },
+  unit: { on: '.vk-mem-meta', kind: 'text' },
+  scale: { on: '.vk-mem-row', kind: 'geometry', prop: 'height' },
+  show: { on: '.vk-mem-size', kind: 'text' },
+  orientation: { on: '.vk-mem-bd', kind: 'style', prop: 'flex-direction' },
+  density: { on: '.vk-mem-row', kind: 'style', prop: 'min-height' },
+});
+
+Object.assign((EFFECTS['vk-asm'] ||= {}), {
+  title: { on: '.vk-asm-file', kind: 'text' },
+  bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b' },
+  address: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-a' },
+  density: { on: '.vk-asm-row', kind: 'style', prop: 'font-size' },
+  chrome: { on: '.vk-asm-hd', kind: 'style', prop: 'display' },
+  highlight: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-hl' },
+  focus: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-dim' },
+  addr: { on: '.vk-asm-range', kind: 'text' },
+  lang: { kind: 'any', reason: '语法在构建期确定，运行时只显示产物' },
+});
+
+Object.assign((EFFECTS['vk-timeline'] ||= {}), {
+  title: { on: '.vk-tl-title', kind: 'text' },
+  variant: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-lanes' },
+  steps: { kind: 'any', reason: '只在 lanes 模式下改变步数' },
+  density: { on: '.vk-tl-date', kind: 'style', prop: 'height' },
+});
+
+Object.assign((EFFECTS['vk-pin'] ||= {}), {
+  tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
+  gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
+  w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
+  size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
+  n: { on: 'vk-pin', kind: 'dom', prop: '.vk-pin-n:not([hidden])' },
+  z: { on: 'vk-pin', kind: 'style', prop: 'z-index' },
+  leader: { kind: 'any', reason: '引线有无/形状都改 path' },
+  side: { kind: 'any', reason: '自动贴边，位置随目标变化' },
+  x: { kind: 'any', reason: '作者写死的气泡坐标' },
+  y: { kind: 'any', reason: '作者写死的气泡坐标' },
+});
+
+Object.assign((EFFECTS['vk-ring'] ||= {}), {
+  shape: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
+  pad: { on: '.vk-ring-shape', kind: 'geometry', prop: 'width' },
+  tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
+  dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray' },
+  width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
+  z: { on: 'vk-ring', kind: 'style', prop: 'z-index' },
+});
+
+Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
+  dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
+  feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
+  tone: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
+  shape: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
+  z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },
+});
+
+Object.assign(EFFECTS['vk-cells'], {
+  offsets: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell-byte' },
+  direction: { kind: 'any', reason: '只在字节模式下改变字节尺方向' },
+  align: { kind: 'any', reason: '只在字节模式下画对齐括号' },
+});
+
+Object.assign(EFFECTS['vk-bytes'], {
+  word: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-w' },
+  endian: { on: '.vk-bytes-x', kind: 'attr', prop: 'data-endian' },
+});
+
+Object.assign(EFFECTS['vk-edge'], {
+  via: { on: 'svg path', kind: 'attr', prop: 'd' },
 });
 

@@ -163,7 +163,7 @@ export class VkAnnotate extends VkElement {
   static frame = false;
 
   render() {
-    const width = numAttr(this, 'w', { min: 320, max: 800, fallback: 600 });
+    const width = numAttr(this, 'w', { min: 200, max: 800, fallback: 600 });
     if (width > 0) this.style.setProperty('--vk-anno-w', width + 'px');
     else this.style.removeProperty('--vk-anno-w');
 

@@ -86,6 +86,25 @@ const ATTR_META = {
   source: { label: '出处', content: true },
   author: { label: '作者', content: true },
   sign: { label: '符号位', group: 'appearance' },
+  start: { label: '起点', content: true },
+  end: { label: '终点', content: true },
+  lanes: { label: '泳道', content: true },
+  steps: { label: '步数', group: 'layout' },
+  date: { label: '日期', content: true },
+  lane: { label: '泳道', content: true },
+  at: { label: '所在步', group: 'layout' },
+  via: { label: '路径点', group: 'layout' },
+  side: { label: '贴边', group: 'layout' },
+  leader: { label: '引线', group: 'appearance' },
+  dim: { label: '压暗', group: 'appearance' },
+  feather: { label: '羽化', group: 'appearance' },
+  bytes: { label: '机器码列', group: 'appearance' },
+  offsets: { label: '字节偏移', group: 'appearance' },
+  direction: { label: '方向', group: 'appearance' },
+  marks: { label: '字符标记', content: true },
+  row: { label: '行', content: true },
+  col: { label: '列', content: true },
+  width: { label: '线宽', group: 'appearance' },
 
   pad: { label: '内距', group: 'layout' },
   'pad-x': { label: '左右内距', group: 'layout' },
@@ -115,7 +134,6 @@ const ATTR_META = {
   'to-side': { label: '终点边', group: 'layout' },
   scale: { label: '图形尺寸', group: 'appearance' },
   emphasis: { label: '墨阶', group: 'appearance' },
-  fit: { label: '适配', group: 'appearance' },
   overflow: { label: '溢出', group: 'appearance' },
   fill: { label: '填满', group: 'layout' },
   orientation: { label: '方向', group: 'layout' },
@@ -152,6 +170,12 @@ const DEFAULTS = {
   'vk-tag': { tone: 'neutral', size: 'label' },
   'vk-callout': { tone: 'accent', size: 'body' },
   'vk-code': { surface: 'paper', chrome: 'min', density: 'normal' },
+  'vk-memory': { scale: 'schematic', show: 'all', orientation: 'vertical', density: 'normal' },
+  'vk-asm': { bytes: '', address: 'all', density: 'normal', chrome: 'min' },
+  'vk-timeline': { variant: 'axis', density: 'normal' },
+  'vk-pin': { side: 'auto', leader: 'elbow', tone: 'accent', size: 'body' },
+  'vk-ring': { shape: 'ellipse', tone: 'accent', pad: 8, width: 4 },
+  'vk-spotlight': { dim: 0.72, feather: 24, tone: 'paper', shape: 'rect' },
   'vk-term': { prompt: '$', surface: 'paper', chrome: 'min', density: 'normal' },
   'vk-diff': { variant: 'unified', surface: 'paper', chrome: 'min' },
   'vk-table': { variant: 'ledger', density: 'normal' },
@@ -722,6 +746,67 @@ export const TAGS = {
     },
   },
 
+  'vk-memory': {
+    name: '内存图',
+    layer: 'components',
+    summary: '地址空间：text / data / bss / heap / stack 一段一段摆开，标地址、大小与生长方向。',
+    content: {
+      kind: 'items',
+      target: 'vk-memory',
+      fields: [{ name: 'items', label: '段（一行一个：label|size|addr）', type: 'lines', item: 'i' }],
+    },
+    attrs: {
+      'title': text(),
+      'addr': text(),
+      'unit': text(),
+      'scale': oneOf('schematic', 'linear'),
+      'show': oneOf('all', 'values', 'addresses'),
+      'orientation': oneOf('vertical', 'horizontal'),
+      'density': oneOf('normal', 'compact'),
+    },
+  },
+  'vk-asm': {
+    name: '汇编',
+    layer: 'components',
+    summary: '汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。',
+    content: {
+      kind: 'rebuild',
+      note: '汇编文本由构建期解析与高亮；改文本请改 src 文件并运行 npm run build。',
+    },
+    attrs: {
+      'lang': text(),
+      'src': text(),
+      'lines': text(),
+      'file': text(),
+      'highlight': lines(),
+      'focus': lines(),
+      'addr': text(),
+      'title': text(),
+      'bytes': bool(),
+      'address': oneOf('all', 'none'),
+      'density': oneOf('compact', 'normal'),
+      'chrome': oneOf('min', 'none'),
+    },
+  },
+  'vk-timeline': {
+    name: '时间线',
+    layer: 'components',
+    summary: '时间线：年份/事件轴，或按步展开的多泳道；一条事项一个 <i>。',
+    content: {
+      kind: 'items',
+      target: 'vk-timeline',
+      fields: [{ name: 'items', label: '事件（一行一个：日期|标题|说明）', type: 'lines', item: 'i' }],
+    },
+    attrs: {
+      'start': text(),
+      'end': text(),
+      'variant': oneOf('axis', 'lanes'),
+      'steps': int({ min: 1, max: 16, step: 1 }),
+      'lanes': text(),
+      'title': text(),
+      'density': oneOf('normal', 'compact'),
+    },
+  },
   'vk-page': {
     name: '页面',
     layer: 'page',
@@ -755,7 +840,7 @@ export const TAGS = {
   'vk-note': {
     name: '讲解条',
     layer: 'relations',
-    summary: '一条讲解：line 指向代码行，for 指向任意元素，由 vk-annotate 组织。',
+    summary: '一条讲解：line 指向代码行，for 指向任意元素；可独立使用，也可放进 vk-annotate。',
     content: {
       kind: 'text',
       target: 'vk-note',
@@ -773,6 +858,59 @@ export const TAGS = {
       'for': sel(),
     },
   },
+  'vk-pin': {
+    name: '批注气泡',
+    layer: 'relations',
+    summary: '自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。',
+    content: {
+      kind: 'text',
+      target: 'vk-pin',
+      fields: [
+        { name: 'text', label: '批注文字', type: 'textarea', text: true },
+        { name: 'for', label: '目标', type: 'text', attr: 'for' },
+      ],
+    },
+    attrs: {
+      'for': sel(),
+      'side': oneOf('top', 'right', 'bottom', 'left', 'auto'),
+      'x': num({ min: -4000, max: 4000, step: 1 }),
+      'y': num({ min: -4000, max: 4000, step: 1 }),
+      'n': int({ min: 1, max: 99, step: 1 }),
+      'tone': oneOf('accent', 'ok', 'err', 'warn', 'ink', 'inverse'),
+      'leader': oneOf('elbow', 'straight', 'none'),
+      'gap': num({ min: 0, max: 240, step: 1 }),
+      'w': size({ min: 160, max: 900, step: 1 }),
+      'size': oneOf('body', 'label'),
+      'z': int({ min: 0, max: 99, step: 1 }),
+    },
+  },
+  'vk-ring': {
+    name: '圈选',
+    layer: 'relations',
+    summary: '圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。',
+    attrs: {
+      'for': sel(),
+      'shape': oneOf('ellipse', 'rect', 'underline', 'bracket'),
+      'pad': num({ min: 0, max: 80, step: 1 }),
+      'tone': oneOf('accent', 'ok', 'err', 'warn', 'ink'),
+      'dash': bool(),
+      'width': num({ min: 1, max: 12, step: 1 }),
+      'z': int({ min: 0, max: 99, step: 1 }),
+    },
+  },
+  'vk-spotlight': {
+    name: '聚光',
+    layer: 'relations',
+    summary: '聚光：除目标外整体压暗，可多目标；放在 canvas 或 page 里。',
+    attrs: {
+      'for': sel(),
+      'dim': num({ min: 0, max: 1, step: 0.01 }),
+      'feather': num({ min: 0, max: 120, step: 1 }),
+      'tone': oneOf('paper', 'ink'),
+      'shape': oneOf('rect', 'ellipse'),
+      'z': int({ min: 0, max: 99, step: 1 }),
+    },
+  },
 };
 
 /* ----------------------------------------------------------------- v10 共享语法
@@ -780,7 +918,16 @@ export const TAGS = {
    行内组件（icon/tag/mark/keys）不拿 w；
    自定义几何（page/annotate/edge/canvas/img）自己声明。 */
 const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys']);
-const CUSTOM = new Set(['vk-page', 'vk-annotate', 'vk-edge', 'vk-canvas', 'vk-img']);
+const CUSTOM = new Set([
+  'vk-page',
+  'vk-annotate',
+  'vk-edge',
+  'vk-canvas',
+  'vk-img',
+  'vk-pin',
+  'vk-ring',
+  'vk-spotlight',
+]);
 const COMMON = {
   w: size({ min: 48, max: 1920, step: 1 }),
   h: size({ min: 48, max: 1080, step: 1 }),
@@ -828,6 +975,13 @@ const EXTRA = {
   'vk-cells': {
     stride: oneOf('1', '2', '4', '8'),
     cols: int({ min: 1, max: 8, step: 1 }),
+    offsets: bool(),
+    direction: oneOf('ltr', 'rtl'),
+    align: bool(),
+  },
+  'vk-bytes': {
+    word: oneOf('1', '2', '4', '8'),
+    endian: oneOf('little', 'big'),
   },
   'vk-img': {
     position: text(),
@@ -845,8 +999,9 @@ const EXTRA = {
     'label-size': oneOf('label', 'meta'),
     'label-dx': num({ min: -400, max: 400, step: 1 }),
     'label-dy': num({ min: -200, max: 200, step: 1 }),
+    via: text(),
   },
-  'vk-annotate': { w: num({ min: 320, max: 800, step: 1 }) },
+  'vk-annotate': { w: num({ min: 200, max: 800, step: 1 }) },
   'vk-page': { fit: oneOf('width', 'contain') },
   'vk-grid': {
     cols: text(),

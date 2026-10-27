@@ -99,22 +99,32 @@ vk-page {
 
 vk-annotate {
   position: relative;
-  display: flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) var(--vk-anno-w, 600px);
+  column-gap: var(--vk-s6);
+  align-items: start;
   box-sizing: border-box;
-  padding-right: calc(var(--vk-anno-w, 600px) + var(--vk-s6));
+  width: 100%;
+  max-width: 100%;
 }
 
-/* 批注列：右边一栏，宽度由 width 属性决定。 */
+/* 代码列必须能缩：作者给 vk-code 写的硬宽在这里让位给批注列。 */
+vk-annotate > vk-code {
+  width: auto !important;
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* 批注列是网格里的第二列，不再用 padding-right 假占位。 */
 .vk-anno-notes {
-  position: absolute;
-  top: 0;
-  right: 0;
-  width: var(--vk-anno-w, 600px);
+  position: relative;
+  grid-column: 2;
+  width: auto;
   z-index: 1;
 }
 .vk-anno-notes > vk-note {
   position: absolute;
+  left: 0;
   right: 0;
   width: 100%;
 }

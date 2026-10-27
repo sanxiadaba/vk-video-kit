@@ -16,6 +16,10 @@ import { defineCode } from './code.mjs';
 import { defineDiff } from './diff.mjs';
 import { defineComponents } from './components.mjs';
 import { defineCompositions } from './compositions.mjs';
+import { defineMemory } from './memory.mjs';
+import { defineAsm } from './asm.mjs';
+import { defineTimeline } from './timeline.mjs';
+import { defineOverlays } from './overlays.mjs';
 
 defineElements();
 defineLayout();
@@ -23,6 +27,10 @@ defineCode();
 defineDiff();
 defineComponents();
 defineCompositions();
+defineMemory();
+defineAsm();
+defineTimeline();
+defineOverlays();
 
 export { VK };
 export default VK;
