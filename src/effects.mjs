@@ -18,11 +18,13 @@ export const EFFECTS = {
   'vk-cells': {
     cols: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
     flag: { on: 'vk-cells', kind: 'style', prop: 'background-color' },
+    spans: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
+    pad: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
+    mark: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
   },
 
   'vk-term': {
     surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
-    caret: { on: 'vk-term', kind: 'dom', prop: '.vk-caret' },
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
     density: { on: '.vk-bd', kind: 'style', prop: 'font-size' },
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
@@ -31,16 +33,40 @@ export const EFFECTS = {
   'vk-figure': {
     fit: { on: 'vk-figure img', kind: 'style', prop: 'object-fit' },
     position: { on: 'vk-figure img', kind: 'style', prop: 'object-position' },
+    crop: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
     surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     chrome: { on: 'vk-figure .vk-hd', kind: 'style', prop: 'display' },
     w: { on: 'vk-figure', kind: 'geometry', prop: 'width' },
     bare: { on: 'vk-figure', kind: 'style', prop: 'background-color' },
   },
 
-  'vk-browser': {
+  'vk-window': {
+    title: { on: '.vk-file', kind: 'text' },
+    url: { on: '.vk-br-url', kind: 'dom' },
+    chrome: { on: '.vk-hd', kind: 'style', prop: 'display' },
+    tone: { on: '.vk-win', kind: 'style', prop: 'border-top-color' },
     surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
-    chrome: { on: 'vk-browser .vk-hd', kind: 'style', prop: 'display' },
-    w: { on: 'vk-browser', kind: 'geometry', prop: 'width' },
+    pad: { on: '.vk-win-bd', kind: 'style', prop: 'padding-top' },
+    w: { on: 'vk-window', kind: 'geometry', prop: 'width' },
+  },
+
+  'vk-quote': {
+    variant: { on: '.vk-quote', kind: 'style', prop: 'border-left-width' },
+    size: { on: '.vk-quote', kind: 'style', prop: 'font-size' },
+  },
+
+  'vk-bits': {
+    index: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-i' },
+    group: { on: '.vk-bits', kind: 'style', prop: 'column-gap' },
+    sign: { on: '.vk-bit', kind: 'style', prop: 'background-color' },
+    tone: { on: '.vk-bit', kind: 'style', prop: 'color' },
+  },
+
+  'vk-bars': {
+    max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    density: { on: '.vk-bar', kind: 'style', prop: 'line-height' },
+    tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
   },
 
   'vk-diff': {
@@ -119,7 +145,7 @@ export const EFFECTS = {
   'vk-tree': {
     depth: { on: 'vk-tree', kind: 'geometry', prop: 'height' },
     summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
-    variant: { on: '.vk-tree', kind: 'attr', prop: 'data-variant' },
+    chrome: { on: '.vk-tree-hd', kind: 'style', prop: 'display' },
   },
 
   'vk-bytes': {
@@ -129,6 +155,7 @@ export const EFFECTS = {
     address: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-a' },
     highlight: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
     density: { on: '.vk-bytes-row', kind: 'style', prop: 'line-height' },
+    chrome: { on: 'vk-bytes', kind: 'dom', prop: '.vk-hd' },
   },
 
   'vk-frames': {
@@ -137,6 +164,7 @@ export const EFFECTS = {
     show: { on: 'vk-frames', kind: 'dom', prop: '.vk-frame-sa' },
     summary: { on: 'vk-frames', kind: 'dom', prop: '.vk-frames-hd' },
     density: { on: '.vk-frame-slot', kind: 'style', prop: 'line-height' },
+    chrome: { on: '.vk-frames-hd', kind: 'style', prop: 'display' },
   },
 
   'vk-mark': {
@@ -177,6 +205,7 @@ export const EFFECTS = {
   'vk-title': {
     size: { on: '.vk-title-main', kind: 'style', prop: 'font-size' },
     align: { on: '.vk-title', kind: 'style', prop: 'text-align' },
+    level: { on: '.vk-title-main', kind: 'attr', prop: 'aria-level' },
   },
 
   'vk-table': {
@@ -233,8 +262,8 @@ const COMMON = {
 const COMMON_TAGS = [
   'vk-box', 'vk-text', 'vk-stack', 'vk-row', 'vk-grid', 'vk-rule', 'vk-title',
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
-  'vk-math', 'vk-figure', 'vk-browser', 'vk-tree', 'vk-cells', 'vk-bytes',
-  'vk-frames', 'vk-steps', 'vk-note',
+  'vk-math', 'vk-figure', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
+  'vk-frames', 'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-note',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -302,7 +331,6 @@ Object.assign(EFFECTS['vk-edge'], {
 });
 Object.assign(EFFECTS['vk-tree'], {
   summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
-  variant: { on: '.vk-tree', kind: 'attr', prop: 'data-variant' },
 });
 Object.assign(EFFECTS['vk-note'], {
   emphasis: { on: '.vk-note', kind: 'style', prop: 'color' },

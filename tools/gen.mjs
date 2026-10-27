@@ -72,9 +72,6 @@ export interface VkApi {
   /** 等所有组件、fetch、字体、图片、布局就绪；超时返回 false。 */
   ready(): Promise<boolean>;
   layout(): void;
-  /** 冻住光标 / 显隐动画，截图与录首帧用 */
-  freeze(): void;
-  unfreeze(): void;
   /** 扫描组件内容溢出；门禁与作者自检共用。 */
   auditOverflow(root?: ParentNode): Array<{
     tag: string;

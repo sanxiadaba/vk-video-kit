@@ -65,7 +65,6 @@ const ATTR_META = {
   border: { label: '描边', group: 'appearance' },
   fit: { label: '填充', group: 'appearance' },
   chrome: { label: '窗头', group: 'appearance' },
-  caret: { label: '光标', group: 'state' },
   stripe: { label: '斑马', group: 'appearance' },
   flat: { label: '无底色', group: 'appearance' },
   bare: { label: '无外壳', group: 'appearance' },
@@ -80,6 +79,13 @@ const ATTR_META = {
   highlight: { label: '高亮行', group: 'state' },
   focus: { label: '聚光行', group: 'state' },
   fold: { label: '折叠行', group: 'state' },
+  span: { label: '字符区间', content: true },
+  value: { label: '数值', content: true },
+  unit: { label: '单位', content: true },
+  max: { label: '最大值', group: 'appearance' },
+  source: { label: '出处', content: true },
+  author: { label: '作者', content: true },
+  sign: { label: '符号位', group: 'appearance' },
 
   pad: { label: '内距', group: 'layout' },
   'pad-x': { label: '左右内距', group: 'layout' },
@@ -151,8 +157,11 @@ const DEFAULTS = {
   'vk-table': { variant: 'ledger', density: 'normal' },
   'vk-math': { size: 'body' },
   'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', surface: 'paper', chrome: 'min' },
-  'vk-browser': { chrome: 'min', surface: 'paper' },
-  'vk-tree': { variant: 'files', depth: '4', summary: 'all' },
+  'vk-tree': { depth: '4', summary: 'all' },
+  'vk-window': { chrome: 'min', surface: 'paper', pad: 'md' },
+  'vk-quote': { variant: 'rule', size: 'body' },
+  'vk-bits': { index: '7-0', group: '4', tone: 'ink' },
+  'vk-bars': { density: 'normal', tone: 'ink', scale: 'linear' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal' },
   'vk-frames': { grows: 'down', show: 'all', summary: 'all', density: 'normal' },
   'vk-cells': { cols: '0' },
@@ -263,6 +272,19 @@ export const TAGS = {
       'tone': oneOf('accent', 'ok', 'err', 'warn'),
     },
   },
+  'vk-window': {
+    name: '窗',
+    layer: 'elements',
+    summary: '一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。',
+    attrs: {
+      'title': text(),
+      'url': text(),
+      'chrome': oneOf('min', 'none', 'browser', 'dialog'),
+      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'surface': oneOf('paper', 'ink'),
+      'pad': oneOf('none', 'sm', 'md', 'lg'),
+    },
+  },
 
   'vk-stack': {
     name: '竖排',
@@ -271,7 +293,7 @@ export const TAGS = {
     attrs: {
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'align': oneOf('start', 'center', 'end', 'stretch'),
-      'justify': { ...oneOf('start', 'center', 'end', 'between'), hidden: true },
+      'justify': oneOf('start', 'center', 'end', 'between'),
       'grow': { ...bool(), hidden: true },
     },
   },
@@ -353,7 +375,7 @@ export const TAGS = {
       'index': text(),
       'eyebrow': text(),
       'sub': text(),
-      'level': { ...oneOf('1', '2', '3'), hidden: true },
+      'level': oneOf('1', '2', '3'),
       'size': oneOf('display', 'title', 'heading'),
       'align': oneOf('left', 'center'),
     },
@@ -425,6 +447,7 @@ export const TAGS = {
       'highlight': lines(),
       'focus': lines(),
       'fold': lines(),
+      'span': text(),
       'fold-note': text(),
       'surface': oneOf('ink', 'paper'),
       'chrome': oneOf('min', 'none'),
@@ -434,7 +457,7 @@ export const TAGS = {
   'vk-term': {
     name: '终端',
     layer: 'components',
-    summary: '终端。src 指向真实 transcript；默认浅色；命令、输出、✓/!/✗ 三种结果行、块状光标。',
+    summary: '终端。src 指向真实 transcript；默认浅色；命令、输出、✓/!/✗ 三种结果行。',
     content: {
       kind: 'text',
       target: 'vk-term',
@@ -526,6 +549,7 @@ export const TAGS = {
       'fig': text(),
       'url': text(),
       'ratio': text(),
+      'crop': text(),
       'fit': oneOf('cover', 'contain'),
       'surface': oneOf('paper', 'ink'),
       'chrome': oneOf('min', 'none'),
@@ -533,26 +557,10 @@ export const TAGS = {
       'bare': bool(),
     },
   },
-  'vk-browser': {
-    name: '浏览器',
-    layer: 'components',
-    summary: '浏览器窗：地址栏 + 内容槽。',
-    content: {
-      kind: 'text',
-      target: 'vk-browser',
-      fields: [{ name: 'url', label: '地址', type: 'text', attr: 'url' }],
-    },
-    attrs: {
-      'url': text(),
-      'surface': oneOf('paper', 'ink'),
-      'chrome': oneOf('min', 'none'),
-      'w': num({ min: 840, max: 1680, step: 1 }),
-    },
-  },
   'vk-tree': {
-    name: '树',
+    name: '文件树',
     layer: 'components',
-    summary: '树：src 指向真实目录或 JSON。文件树、语法树、普通结构共用一套行渲染。',
+    summary: '文件树：src 指向真实目录，构建期扫描层级、类型、大小。',
     content: {
       kind: 'text',
       target: 'vk-tree',
@@ -567,11 +575,11 @@ export const TAGS = {
       'title': text(),
       'active': text(),
       'collapsed': text(),
-      'variant': oneOf('files', 'ast', 'generic'),
       'limit': int({ min: 1, max: 500, step: 1 }),
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
       'hidden': { ...bool(), content: true },
+      'chrome': oneOf('min', 'none'),
     },
   },
   'vk-keys': {
@@ -601,9 +609,12 @@ export const TAGS = {
     attrs: {
       'values': text(),
       'labels': text(),
+      'spans': text(),
+      'pad': text(),
+      'mark': text(),
       'addr': text(),
       'cols': int({ min: 0, max: 24, step: 1 }),
-      'flag': int({ min: 1, max: 64, step: 1 }),
+      'flag': int({ min: 0, max: 63, step: 1 }),
     },
   },
   'vk-bytes': {
@@ -621,6 +632,7 @@ export const TAGS = {
       'address': oneOf('all', 'none'),
       'highlight': text(),
       'density': oneOf('compact', 'normal'),
+      'chrome': oneOf('min', 'none'),
     },
   },
   'vk-frames': {
@@ -635,6 +647,7 @@ export const TAGS = {
       'show': oneOf('all', 'values', 'addresses'),
       'summary': oneOf('all', 'none'),
       'density': oneOf('compact', 'normal'),
+      'chrome': oneOf('min', 'none'),
     },
   },
   'vk-steps': {
@@ -648,6 +661,64 @@ export const TAGS = {
     },
     attrs: {
       'current': int({ min: 1, max: 99, step: 1 }),
+    },
+  },
+  'vk-quote': {
+    name: '引文',
+    layer: 'components',
+    summary: '一段引文：出处、作者；左侧竖线或压角引号。',
+    content: {
+      kind: 'text',
+      target: 'vk-quote',
+      fields: [
+        { name: 'text', label: '引文', type: 'textarea', text: true },
+        { name: 'source', label: '出处', type: 'text', attr: 'source' },
+        { name: 'author', label: '作者', type: 'text', attr: 'author' },
+      ],
+    },
+    attrs: {
+      'source': text(),
+      'author': text(),
+      'variant': oneOf('rule', 'mark'),
+      'size': oneOf('heading', 'body'),
+    },
+  },
+  'vk-bits': {
+    name: '位',
+    layer: 'components',
+    summary: '一行二进制位：索引、分组、符号位。',
+    content: {
+      kind: 'text',
+      target: 'vk-bits',
+      fields: [
+        { name: 'value', label: '二进制（可含空格）', type: 'text', attr: 'value' },
+        { name: 'label', label: '说明', type: 'text', attr: 'label' },
+      ],
+    },
+    attrs: {
+      'value': text(),
+      'index': oneOf('7-0', '0-7', 'none'),
+      'group': oneOf('1', '4', '8'),
+      'sign': bool(),
+      'label': text(),
+      'tone': oneOf('ink', 'accent'),
+    },
+  },
+  'vk-bars': {
+    name: '条',
+    layer: 'components',
+    summary: '一组横向条：标签、数值条、单位。子节点写成 <i value label>。',
+    content: {
+      kind: 'items',
+      target: 'vk-bars',
+      fields: [{ name: 'items', label: '条目（一行一个：标签|数值）', type: 'lines', item: 'i' }],
+    },
+    attrs: {
+      'max': num({ min: 1, max: 1000000000, step: 1 }),
+      'scale': oneOf('linear', 'log'),
+      'unit': text(),
+      'density': oneOf('compact', 'normal'),
+      'tone': oneOf('ink', 'accent'),
     },
   },
 
@@ -696,6 +767,7 @@ export const TAGS = {
     attrs: {
       'n': int({ min: 1, max: 99, step: 1 }),
       'line': int({ min: 1, max: 999, step: 1 }),
+      'span': text(),
       'tone': oneOf('inverse', 'accent', 'ok', 'err'),
       'size': oneOf('heading', 'body', 'label'),
       'for': sel(),
@@ -745,7 +817,6 @@ const EXTRA = {
     density: oneOf('compact', 'normal', 'large'),
   },
   'vk-term': {
-    caret: text(),
     density: oneOf('compact', 'normal', 'large'),
   },
   'vk-table': { fit: oneOf('wrap', 'scroll') },
@@ -801,6 +872,13 @@ export const TAG_NAMES = Object.keys(TAGS);
 const ATTR_META_BY_TAG = {
   'vk-bytes': {
     highlight: { label: '高亮字节', group: 'state' },
+  },
+  'vk-cells': {
+    pad: { label: '填充格', group: 'appearance' },
+    mark: { label: '高亮格（序号，0 起）', group: 'state' },
+  },
+  'vk-figure': {
+    crop: { label: '裁切框', group: 'appearance' },
   },
 };
 

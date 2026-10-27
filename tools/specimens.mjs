@@ -600,12 +600,14 @@ function indexPageHtml() {
           <vk-text class="index-h1" size="heading" weight="bold" role="heading" aria-level="1">Components</vk-text>
           <vk-text size="micro" emphasis="muted" data-meta>${total} components, five lenses each. Pick one to open its plate.</vk-text>
         </vk-stack>
-        <vk-row w="1332" gap="sm" align="center" data-index-tools>
+        <vk-row w="1332" gap="sm" align="center" justify="between" data-index-tools>
           <vk-row gap="2xs" align="center" data-index-layers>
             <vk-tag size="micro" data-meta tone="muted" data-index-layer="all" state="selected" role="button" tabindex="0">全部</vk-tag>
             ${layerTags}
           </vk-row>
-          <vk-text size="micro" mono data-meta data-index-count>${total} / ${total}</vk-text>
+          <vk-row gap="sm" align="center">
+            <vk-text size="micro" mono data-meta data-index-count>${total} / ${total}</vk-text>
+          </vk-row>
         </vk-row>
         <vk-row gap="2xs" wrap w="1332" data-index-grid>${cells}</vk-row>
         <vk-text size="caption" emphasis="muted" data-meta data-index-empty hidden>No component matches. Clear the search with Esc.</vk-text>
@@ -666,6 +668,17 @@ let written = 0;
 for (const p of pages) {
   const file = path.join(out, 'specimen', `${p.tag}.html`);
   if (writePage(file, p.html)) written++;
+}
+// 退场的标签不能留旧页：index / 门禁 / links 都会顺着目录扫。
+for (const f of fs.readdirSync(path.join(out, 'specimen'))) {
+  if (!f.endsWith('.html')) continue;
+  if (TAG_NAMES.includes(f.slice(0, -5))) continue;
+  if (check) {
+    console.error(`✗ specimen/${f}  标签已退场，页面应删除`);
+    process.exitCode = 1;
+  } else {
+    fs.rmSync(path.join(out, 'specimen', f));
+  }
 }
 if (writePage(path.join(out, 'index.html'), indexPageHtml())) written++;
 console.log(`specimens: ${pages.length} 页${check ? '（检查）' : ''}${written ? ` · ${written} 写` : ' · 无变化'}`);

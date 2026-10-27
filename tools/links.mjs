@@ -34,6 +34,10 @@ const failures = [];
 const seen = new Set();
 const idCache = new Map();
 
+/** 可达性图：从 index.html 出发，站内 href 走一遍。孤儿页 = 永远没人链到它。 */
+const pageSet = new Set(pages);
+const graph = new Map(pages.map((p) => [p, new Set()]));
+
 const skip = (href) =>
   !href ||
   href.startsWith('data:') ||
@@ -72,6 +76,15 @@ for (const page of pages) {
   const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
   idCache.set(pageUrl.origin + pageUrl.pathname, ids);
   const links = [...html.matchAll(/\b(?:href|src)="([^"]+)"/g)].map((m) => m[1]);
+
+  // 只记 href（src 不是导航），落到站内页面才算一条边。
+  for (const raw of [...html.matchAll(/\bhref="([^"]+)"/g)].map((m) => m[1])) {
+    if (skip(raw)) continue;
+    const u = new URL(raw, pageUrl);
+    if (u.origin !== new URL(base).origin) continue;
+    const p = decodeURIComponent(u.pathname).replace(/^\/+/, '');
+    if (pageSet.has(p)) graph.get(page).add(p);
+  }
 
   for (const raw of links) {
     if (skip(raw)) continue;
@@ -133,6 +146,25 @@ for (const page of pages) {
 }
 
 await close();
+
+// 可达性：index.html 走不到的页面就是孤儿（画廊曾经就是这样上线的）。
+if (pageSet.has('index.html')) {
+  const reach = new Set(['index.html']);
+  const queue = ['index.html'];
+  while (queue.length) {
+    const cur = queue.shift();
+    for (const n of graph.get(cur) || []) {
+      if (reach.has(n)) continue;
+      reach.add(n);
+      queue.push(n);
+    }
+  }
+  const orphans = pages.filter((p) => !reach.has(p));
+  if (orphans.length) {
+    failures.push(`不可达：${orphans.slice(0, 8).join(', ')}${orphans.length > 8 ? ` 等 ${orphans.length} 页` : ''}（没有任何页面链到它）`);
+  }
+}
+
 if (failures.length) {
   console.log(`\n链接失败 ${failures.length} 条：`);
   for (const f of failures) console.log('  ✗ ' + f);

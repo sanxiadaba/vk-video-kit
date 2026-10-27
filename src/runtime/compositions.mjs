@@ -1,4 +1,5 @@
-import { VK, VkElement, define, takeSlot, fillSlot, safeQuery, numAttr } from './base.mjs';
+import { VK, VkElement, define, takeSlot, fillSlot, resolveTarget, numAttr } from './base.mjs';
+import { wrapCharRange } from './code-utils.mjs';
 import { roundedPath } from './geometry.mjs';
 
 const num = (v, fallback) => {
@@ -238,7 +239,7 @@ export class VkAnnotate extends VkElement {
       const n = parseInt(note.getAttribute('line') || '', 10);
       if (!n) return null;
       const forSel = note.getAttribute('for');
-      const scope = forSel ? safeQuery(host, forSel, this) : code;
+      const scope = forSel ? resolveTarget(host, forSel, this) : code;
       return (scope || code || host).querySelector(`.vk-line[data-line="${n}"]`);
     };
 
@@ -246,7 +247,7 @@ export class VkAnnotate extends VkElement {
     for (const note of this._notes) {
       const line = lineOf(note);
       const forSel = note.getAttribute('for');
-      const target = line || (forSel ? safeQuery(host, forSel, this) : null);
+      const target = line || (forSel ? resolveTarget(host, forSel, this) : null);
       if (!target) {
         note.hidden = true;
         note.style.display = 'none';
@@ -258,6 +259,16 @@ export class VkAnnotate extends VkElement {
       }
       note.hidden = false;
       note.style.display = '';
+      // 批注指向行内一段字符：把那段包出来，读者才知道说的是哪几个字。
+      if (line && note.hasAttribute('span')) {
+        const m = (note.getAttribute('span') || '').match(/^\s*(\d+)\s*-\s*(\d+)\s*$/);
+        if (m) {
+          const src = line.querySelector('.vk-src');
+          wrapCharRange(src, Number(m[1]), Number(m[2]), 'vk-anno-hl', `n${note.getAttribute('line')}:${m[1]}-${m[2]}`);
+        } else {
+          this._warnOnce(`span:${note.getAttribute('line')}`, `的 span="${note.getAttribute('span')}" 不是 起-止，已忽略`);
+        }
+      }
       const h = note.offsetHeight || 0;
       if (!h) continue;
       const noteBody = note.querySelector('.vk-note');

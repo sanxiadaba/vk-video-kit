@@ -78,6 +78,28 @@ export const PROBES = {
       effect: { on: 'vk-figure img', kind: 'style', prop: 'object-position', expect: /30%\s+70%/ },
       why: '焦点由内部 vk-img 的 object-position 表达。',
     },
+    crop: {
+      values: ['20,20,30,30'],
+      effect: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
+      why: '裁切框是 .vk-fig-crop 覆盖层；标本已经有框，换个矩形就是 left/top/width/height 的变化。',
+    },
+  },
+  'vk-cells': {
+    spans: {
+      values: ['1|1|1'],
+      effect: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
+      why: '跨格通过 grid-column: span 改变格子宽度，断宽度而不是断 data-*。',
+    },
+    pad: {
+      values: ['0'],
+      effect: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
+      why: '填充格是斜纹底图，断 background-image。',
+    },
+    mark: {
+      values: ['1'],
+      effect: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
+      why: '高亮格底和边一起亮；断边框色，才是在断"框"。',
+    },
   },
 };
 
@@ -126,7 +148,7 @@ export const EFFECT_ANY = [
   {
     tag: 'vk-tree',
     attr: 'limit',
-    reason: 'AST 标本只有一个根，limit 的 1/500 都只显示这一个根；顶层截断由文件树变体覆盖。',
+    reason: '文件树标本只有一个根，limit 的 1/500 都只显示这一个根；顶层截断由「只看顶层」预设覆盖。',
   },
 ];
 export const EFFECT_ANY_BUDGET = 10;
@@ -136,7 +158,6 @@ export const SHARED_VALUES = {
   w: ['1200', '1000'],
   h: ['400'],
   cols: ['4'],
-  caret: ['__toggle__'],
 };
 
 /**

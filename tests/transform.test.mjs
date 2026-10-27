@@ -142,4 +142,36 @@ test('源码里的 < 未转义时明确报错，不静默吞掉', async () => {
   );
 });
 
+test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套都在构建期报错', async () => {
+  const cases = [
+    ['<vk-nope></vk-nope>', /未知标签 <vk-nope>/],
+    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#nope">x</vk-note></vk-annotate>', /找不到 #nope/],
+    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:9">x</vk-note></vk-annotate>', /越界/],
+    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@line:1">x</vk-note></vk-annotate>', /不支持 @line/],
+    ['<vk-window><vk-code chrome="min">x</vk-code></vk-window>', /两条窗头/],
+    ['<vk-bars><i label="a"></i></vk-bars>', /缺数字 value/],
+    ['<vk-code lang="c">int x;</vk-code><vk-note line="9">x</vk-note>', /只能写在 <vk-annotate> 内/],
+  ];
+  for (const [html, re] of cases) {
+    await assert.rejects(() => transformHtml(html, { file: 'refs.html', highlighter: hl }), re);
+  }
+});
+
+test('引用关系：合法锚点不报错', async () => {
+  const html =
+    '<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:1">x</vk-note></vk-annotate>';
+  const out = await transformHtml(html, { file: 'refs-ok.html', highlighter: hl });
+  assert.ok(out.html.includes('id="c"'));
+});
+
+test('asm：x86 汇编能高亮，.s 扩展名自动识别', async () => {
+  fs.writeFileSync(path.join(dir, 'a.s'), 'mov eax, 1\nadd ebx, eax\n');
+  const out = await transformHtml('<vk-code src="a.s"></vk-code>', {
+    file: path.join(dir, 'page.html'),
+    highlighter: hl,
+  });
+  assert.ok(out.html.includes('data-vk-hl'), '没有生成高亮数据');
+  assert.ok(out.html.includes('data-vk-lang="asm"'));
+});
+
 after(() => fs.rmSync(dir, { recursive: true, force: true }));

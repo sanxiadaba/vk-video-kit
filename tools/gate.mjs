@@ -80,7 +80,9 @@ const specimenFiles = fs.existsSync(specimenDir)
   ? fs.readdirSync(specimenDir).filter((f) => f.endsWith('.html')).sort()
   : [];
 const LENSES = ['plate', 'variants', 'anatomy', 'usage', 'api'];
-const checkLenses = !args.includes('--plate-only');
+// 默认只查「成品」：其余四个镜头是标本册自己的 UI，改动少、成本是 5 倍。
+// 需要全量时加 --full（npm run gate:full）。
+const checkLenses = args.includes('--full');
 const targets = specimenFiles.flatMap((f) => {
   const tag = f.replace(/\.html$/, '');
   const base = { kind: 'specimen', tag, path: `specimen/${f}` };
@@ -508,7 +510,8 @@ for (const target of list) {
     else if (Math.abs(r - 1) > 0.01) fail(target.label, `KaTeX 字号是 ${r.toFixed(2)}em，应为 1em`);
   }
 
-  if (checkPresets && target.kind === 'specimen') {
+  // 预设只对"成品"镜头有意义：其余四个镜头里这块元件是隐藏的，改了也拍不到。
+  if (checkPresets && target.kind === 'specimen' && target.lens === 'plate') {
     const baseShot = await page.screenshot();
     await presetDiff(target.tag, baseShot);
   }

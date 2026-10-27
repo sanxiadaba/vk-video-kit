@@ -133,6 +133,8 @@ export const PRESETS = {
     { label: '行内', attrs: { display: null } },
   ],
   'vk-figure': [
+    { label: '裁切右下', attrs: { crop: '45,45,50,50' } },
+    { label: '无裁切框', attrs: { crop: null } },
     { label: '方图', attrs: { ratio: '1 / 1' } },
     { label: '4:3', attrs: { ratio: '4 / 3' } },
     { label: '无头', attrs: { chrome: 'none' } },
@@ -142,20 +144,21 @@ export const PRESETS = {
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
   ],
-  'vk-browser': [
-    { label: '无头', attrs: { chrome: 'none' } },
+  'vk-window': [
+    { label: '对话框', attrs: { chrome: 'dialog', tone: 'err' } },
     { label: '深色', attrs: { surface: 'ink' } },
+    { label: '无窗头', attrs: { chrome: 'none' } },
+    { label: '宽内距', attrs: { pad: 'lg' } },
   ],
   'vk-tree': [
     { label: '收起 tests', attrs: { collapsed: 'tests' } },
     { label: '只看 src', attrs: { collapsed: 'tests', depth: '2' } },
     { label: '只看顶层', attrs: { depth: '0' } },
     { label: '隐藏统计', attrs: { summary: 'none' } },
-    { label: '普通结构', attrs: { variant: 'generic' } },
   ],
   'vk-bytes': [
     { label: '四列', attrs: { cols: '4' } },
-    { label: '按字节分组', attrs: { group: '1' } },
+    { label: '两字节分组', attrs: { group: '2' } },
     { label: '按 4 字节分组', attrs: { group: '4' } },
     { label: '不要 ASCII', attrs: { ascii: 'none' } },
     { label: '不要地址', attrs: { address: 'none' } },
@@ -170,8 +173,9 @@ export const PRESETS = {
   ],
   'vk-keys': [],
   'vk-cells': [
-    { label: '两列', attrs: { cols: '2' } },
-    { label: '三列', attrs: { cols: '3' } },
+    { label: '高亮 x', attrs: { mark: '0' } },
+    { label: '去掉填充标记', attrs: { pad: null } },
+    { label: '三等分', attrs: { spans: '1|1|1' } },
   ],
   'vk-steps': [
     { label: '第一步', attrs: { current: '1' } },
@@ -188,5 +192,21 @@ export const PRESETS = {
   'vk-page': [
     { label: '加页眉', attrs: { header: '第 1 章 · 从能跑到讲清楚' } },
     { label: '加页脚', attrs: { footer: 'vk · 一页一个概念' } },
+  ],
+  'vk-quote': [
+    { label: '压角引号', attrs: { variant: 'mark' } },
+    { label: '小标题阶', attrs: { size: 'heading' } },
+    { label: '长出处', attrs: { author: 'ISO/IEC 9899:2011 第 6.7.3 节' } },
+  ],
+  'vk-bits': [
+    { label: '索引反向', attrs: { index: '0-7' } },
+    { label: '无索引', attrs: { index: 'none' } },
+    { label: '逐位分开', attrs: { group: '1' } },
+    { label: '强调色', attrs: { tone: 'accent' } },
+  ],
+  'vk-bars': [
+    { label: '强调当前', attrs: { tone: 'accent' } },
+    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '线性刻度', attrs: { scale: 'linear' } },
   ],
 };

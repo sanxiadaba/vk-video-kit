@@ -23,7 +23,7 @@ npm i /path/to/vk-video-kit
 </vk-code>
 ```
 
-- `src` 指向真实源文件，`lines="1-8"` 选片段；行号按片段从 1 起。
+- `src` 指向真实源文件，`lines="1-8"` 选片段；行号默认按**源文件**行号（4-6 就是 4/5/6），`numbering="slice"` 才从 1 起。
 - `src` 相对当前 HTML 文件；文件不存在时 `npx vk build` 会直接报错。
 - `highlight="4"` 高亮片段第 4 行；`focus="4"` 让其余行退到 0.28。
 - `fold="4"` 在第 4 行后插一条“中间省略”，被折叠的行真的不渲染。
@@ -34,7 +34,7 @@ npm i /path/to/vk-video-kit
 终端默认浅色，和代码窗一致；要深色写 `surface="ink"`。结果行用**显式前缀**，不猜；`src` 指向真实 transcript 文件：
 
 ```html
-<vk-term title="zsh" caret src="code/hello.term"></vk-term>
+<vk-term title="zsh" src="code/hello.term"></vk-term>
 ```
 
 `code/hello.term` 是一段真实终端记录：命令行以 `$` 开头，结果行用 `✓` / `!` / `✗` 前缀。`!` 是作者标注，不是工具输出。
@@ -59,7 +59,8 @@ npm i /path/to/vk-video-kit
 </vk-annotate>
 ```
 
-- `line="3"` 指代码行；`for="#id"` 指任意元素。
+- `line="3"` 指代码行；`for="#id"` 指任意元素，也可以写 `for="#id@part:arg"` 指到内部（见 §11）。
+- `span="9-12"` 和 `line` 一起用，表示这一行里第 9–12 个字符（列从 0 起）。
 - 绑代码行的批注按行心对齐、贴在行右侧；**没有长引线**。
 - `for` 目标才会画一条短正交引线（目标处一个圆点）。
 - `w` 是批注栏宽（默认 600）；`n="1"` 是可选的“第几步”，默认不出现。
@@ -68,7 +69,7 @@ npm i /path/to/vk-video-kit
 
 ```html
 <vk-cells values="1|2|3|0" labels="a[0]|a[1]|a[2]|a[3]"
-          addr="0x7ffc" stride="4" flag="4"></vk-cells>
+          addr="0x7ffc" stride="4" flag="3"></vk-cells>
 
 <vk-steps current="2">
   <li>写代码</li>
@@ -77,19 +78,29 @@ npm i /path/to/vk-video-kit
 </vk-steps>
 ```
 
-`flag` 是 1-based；示例里 `flag="4"` 指向 `a[3]`，越界那一格会变红并把标签换成“越界”。
+`flag` 是 0-based；示例里 `flag="3"` 指向 `a[3]`，越界那一格会变红并把标签换成“越界”。
+
+结构体 / 内存对齐用三个下标属性（都从 0 起）：
+
+```html
+<vk-cells values="0x2a|'h'|…" labels="int x · 4 字节|char y|填充 3 字节"
+          spans="4|1|3" pad="2" addr="0x7ffc" stride="1"></vk-cells>
+```
+
+- `spans`：每个字段占几个格（缺省 1）；地址按“字段从第几个字节开始”算，跨格后的字段会跳过它占的宽度。
+- `pad`：哪些字段是填充格（斜纹底 + 虚线边），可写 `2` 或 `2,4-5`。
+- `mark`：哪些格高亮（钴蓝底 + 钴蓝边），可写 `0` 或 `0,2-3`。**是格序号，不是字节偏移**；格宽 ≤150px 时地址自动退到 28px，再窄才省略。
 
 ### 树、字节、栈帧与公式
 
 ```html
 <vk-tree src="code/app" active="src/parser.py" depth="2"></vk-tree>
-<vk-tree variant="ast" src="code/ast.json" title="a[i] = 0 · 语法树"></vk-tree>
 <vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" highlight="1-6"></vk-bytes>
 <vk-frames src="code/stack.json" active="3"></vk-frames>
 <vk-math display size="body" src="code/formula.tex"></vk-math>
 ```
 
-- `vk-tree` 的 `src` 可以是**真实目录**（构建期扫描层级、类型、大小）或 `.json`（语法树/普通结构）；`variant` 决定行怎么读。
+- `vk-tree` 的 `src` 必须是**真实目录**：构建期扫描层级、类型、大小；JSON 树已移除。
 - `vk-bytes` 的 `src` 是真实二进制：构建期切成十六进制 + ASCII + 地址；`highlight` 是 1-based 字节段。
 - `vk-frames` 的 `src` 是真实 `.json`：一帧一组槽位；`active` 标当前帧，`grows` 只改生长方向。
 - `vk-math` 的 `src` 是真实 `.tex` 文件；构建期 KaTeX 编译，运行时只读产物。
@@ -118,6 +129,7 @@ npx vk build page.html    # 处理一个文件
 npx vk build .            # 处理当前目录（递归）
 npx vk check              # 只检查代码/公式预编译是否最新
 npx vk serve 8099         # 开发服务器，改 .c 刷新即见
+npx vk shot page.html     # 截图：默认 1920×1080；--phone 出 640；--crop x,y,w,h 出局部
 ```
 
 没有构建时：`vk-code` / `vk-diff` 在 HTTP 下会退化成纯文本并警告；`file://` 下 `src` 取不到，请先 `npx vk serve` 或 `npx vk build`，不要直接双击 HTML。
@@ -139,24 +151,37 @@ npx vk serve 8099         # 开发服务器，改 .c 刷新即见
 - `vk-code` / `vk-diff` / `vk-figure` 默认纸面；`surface="ink"` 变深。
 - 同屏可以混用——默认都浅，终端要深色时显式写 `surface="ink"`。
 
-## 9 · 动效原语
+## 9 · 没有动效
 
-库只提供“动起来是什么样”，不提供时间轴：
+库不提供播放器、时间轴、逐行淡入、打字机，也没有 `vk.freeze()`。
+**静止帧就是成品**：`vk shot` 出的那张图就是最终画面；转场与动效在剪辑软件里做。
+
+## 10 · 锚点与内部寻址
+
+`for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
 
 ```html
-<vk-term caret data-type>…</vk-term>
-<vk-code data-reveal>…</vk-code>
+<vk-note for="#arr@line:4">第 4 行</vk-note>
+<vk-note for="#cells@cell:3">第 3 格</vk-note>
+<vk-edge from="#arr@line:4" to="#cells@cell:3"></vk-edge>
 ```
 
-- `data-reveal`：逐行淡入。
-- `data-type`：逐行打字 + 块状光标。
-- `vk.freeze()` 或 `<html data-vk-motion="off">`：一键冻在终态（截图、录首帧）。什么时候播、播多久，仍由编排层决定。
+| part | 用在 | 编号 |
+|---|---|---|
+| `line` / `char` | `vk-code` / `vk-diff` | 源文件行号；字符列从 0 起 |
+| `cell` | `vk-cells` | 下标从 0 起 |
+| `byte` | `vk-bytes` | 偏移从 0 起（`highlight` 同样是 0-based） |
+| `row` | `vk-table` | 行下标从 0 起 |
+| `node` | `vk-tree` | 节点路径 |
+| `step` / `item` | `vk-steps` / `vk-list` | 下标从 0 起 |
 
-## 10 · 从标本册拿代码
+写错会在 `npx vk build` 报错：找不到 id、组件不支持该 part、下标越界、批注行号超出代码行数。
+
+## 11 · 从标本册拿代码
 
 标本册不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **索引**：浅色 docs 外壳；31 个组件总览、搜索、层筛选，点卡进页。
+- **索引**：浅色 docs 外壳；34 个组件总览、搜索、层筛选，点卡进页。
 - **一页一个组件**：成品 / 变体 / 解剖 / 用法 / API 五个镜头，`1–5` 切换。
 - **复制**：变体和 API 镜头都能复制当前片段。片段里的 `src` 仍指向真实文件；粘到新页面后要跑 `npx vk build`（或 dev server）预编译。
 - **属性**：API 镜头从 registry 生成，4 行/页；`src` / `lines` / `file` / `title` 等属于内容，不在这里改。

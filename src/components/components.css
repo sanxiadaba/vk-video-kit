@@ -13,7 +13,10 @@ vk-code,
 vk-term,
 vk-diff,
 vk-figure,
-vk-browser,
+vk-window,
+vk-quote,
+vk-bits,
+vk-bars,
 vk-cells {
   display: block;
   box-sizing: border-box;
@@ -386,7 +389,7 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
   user-select: none;
 }
 .vk-code .vk-k, .vk-code .vk-f { font-weight: 600; }
-.vk-code .vk-bd { padding-left: 118px; }
+.vk-code .vk-bd { padding-left: var(--vk-s4); }
 .vk-code .vk-ln { text-align: left; }
 vk-annotate .vk-code .vk-bd { font-size: 44px; }
 .vk-src { padding-left: var(--vk-s3); tab-size: 4; }
@@ -492,17 +495,6 @@ vk-term { display: block; }
 .vk-term .is-warn .vk-sign { color: var(--vk-win-warn); }
 .vk-term .is-err { background: var(--vk-win-err-bg); box-shadow: inset 4px 0 0 var(--vk-win-err); }
 .vk-term .is-err .vk-sign { color: var(--vk-win-err); }
-
-/* 光标：块，不是竖线。 */
-.vk-caret {
-  display: inline-block;
-  width: var(--vk-caret-w);
-  height: var(--vk-caret-h);
-  margin-left: 0.08em;
-  vertical-align: -0.16em;
-  background: currentColor;
-  animation: vk-blink 1.06s steps(1) infinite;
-}
 
 /* --------------------------------------------------------------- vk-diff */
 
@@ -777,6 +769,15 @@ vk-math[size='label'] .vk-math { font-size: var(--vk-t-5); }
   overflow: hidden;
   background: var(--vk-surface-2);
 }
+/* 裁切框：2px 钴蓝 + 框外压暗，只服务"看这一块"。百分比定位，不依赖原图尺寸。 */
+.vk-fig-crop {
+  position: absolute;
+  z-index: 3;
+  border: 2px solid var(--vk-focus);
+  border-radius: 4px;
+  box-shadow: 0 0 0 9999px rgba(11, 15, 20, 0.12);
+  pointer-events: none;
+}
 .vk-fig-img {
   display: block;
   width: 100%;
@@ -809,29 +810,32 @@ vk-figure:has(vk-img[data-error]) .vk-fig-img { visibility: hidden; }
   text-overflow: ellipsis;
 }
 
-/* ------------------------------------------------------------ vk-browser */
+/* --------------------------------------------------- 窗的地址栏（browser） */
 
-.vk-br .vk-hd { background: var(--vk-win-soft); }
+.vk-win-tag[data-chrome='browser'] > .vk-hd { padding-right: var(--vk-s2); background: var(--vk-win-soft); }
 .vk-br-url {
   flex: 1 1 auto;
   display: flex;
-  align-items: baseline;
+  align-items: center;
   min-width: 0;
-  height: 60px;
-  line-height: 1.25;
+  height: 48px;
+  line-height: 1.2;
   padding: 0 var(--vk-s3);
-  border: 2px solid var(--vk-win-rule);
+  border: 1px solid var(--vk-win-rule);
   border-radius: var(--vk-r-pill);
   background: var(--vk-win-bg);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-6);
+  font-size: var(--vk-t-sub);
   white-space: nowrap;
   overflow: hidden;
 }
-.vk-br-host { display: inline-block; max-width: 60%; vertical-align: bottom; color: var(--vk-win-fg); font-weight: var(--vk-w-med); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vk-br-host { display: inline-block; max-width: 60%; vertical-align: bottom; color: var(--vk-win-fg); font-weight: var(--vk-w-med); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }
 .vk-br-host.is-empty { color: var(--vk-win-meta-2); font-weight: 400; }
-.vk-br-path { min-width: 0; white-space: nowrap; color: var(--vk-win-meta); overflow: hidden; text-overflow: ellipsis; }
-.vk-br-body { padding: var(--vk-s5); }
+.vk-br-path { min-width: 0; white-space: nowrap; color: var(--vk-win-meta); overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }
+/* 地址栏只在 browser 头出现；必须写在 components 层里 ——
+   elements 层的同名规则会被后加载的层整体压过，与选择器权重无关。 */
+.vk-win-tag[data-chrome='min'] > .vk-hd .vk-br-url,
+.vk-win-tag[data-chrome='dialog'] > .vk-hd .vk-br-url { display: none; }
 
 /* ----------------------------------------------------------- vk-filetree */
 
@@ -986,6 +990,8 @@ vk-tree { display: block; }
   line-height: 1;
   color: var(--vk-ink-3);
 }
+.vk-tree-row[data-dir='1'] { cursor: pointer; }
+.vk-tree-row[data-dir='1']:focus-visible { outline: 2px solid var(--vk-focus); outline-offset: -2px; border-radius: var(--vk-r-1); }
 .vk-tree-row[data-dir='1'] .vk-ic { color: var(--vk-ink-2); }
 .vk-tree-row[data-dir='1'] .vk-tree-name { font-weight: var(--vk-w-med); }
 .vk-tree-row[data-flag='add'] .vk-tree-tag { border-color: var(--vk-add); background: var(--vk-add-weak); color: var(--vk-ink-1); }
@@ -1185,16 +1191,19 @@ vk-cells { display: block; }
   justify-content: space-between;
   box-sizing: border-box;
   min-height: 168px;
-  padding: var(--vk-s2);
+  padding: var(--vk-s2) var(--vk-s1);
   border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-r-2);
   background: var(--vk-surface-1);
   font-family: var(--vk-font-mono);
 }
 .vk-cell-l {
-  font-size: var(--vk-t-6);
+  font-size: var(--vk-t-sub);
   line-height: 1.2;
   color: var(--vk-ink-4);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .vk-cell-v {
   font-size: var(--vk-t-4);
@@ -1203,9 +1212,13 @@ vk-cells { display: block; }
   overflow-wrap: anywhere;
 }
 .vk-cell-a {
-  font-size: var(--vk-t-6);
+  font-size: var(--vk-t-sub);
   line-height: 1.2;
+  letter-spacing: -0.02em;
   color: var(--vk-ink-4);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 .vk-cell[data-flag] {
   border-color: var(--vk-err);
@@ -1214,6 +1227,24 @@ vk-cells { display: block; }
 /* 越界只靠边框和底：正文仍然是墨色，别让"错误"变成一种字体颜色。 */
 .vk-cell[data-flag] .vk-cell-l { color: var(--vk-ink-1); font-weight: var(--vk-w-med); }
 .vk-cell[data-flag] .vk-cell-v { color: var(--vk-ink-1); }
+
+/* 填充格：斜纹底 + 虚线边，和"数据"分开。 */
+.vk-cell[data-pad] {
+  border-style: dashed;
+  background-image: repeating-linear-gradient(
+    45deg,
+    transparent 0 10px,
+    var(--vk-surface-3) 10px 12px
+  );
+}
+.vk-cell[data-pad] .vk-cell-v { color: var(--vk-ink-4); }
+
+/* 高亮格：底和边一起亮。只亮里面、边框还是灰的，看着像"没框准"。 */
+.vk-cell[data-mark] { background-color: var(--vk-focus-soft); }
+.vk-cell[data-mark]:not([data-flag]) { border-color: var(--vk-focus); border-style: solid; }
+/* 淡底会把 28–40 的元信息压到 4.45:1，标记格里的标签/地址要退一档墨色。 */
+.vk-cell[data-mark] .vk-cell-l,
+.vk-cell[data-mark] .vk-cell-a { color: var(--vk-ink-3); }
 
 /* -------------------------------------------------------------- vk-steps */
 
@@ -1311,48 +1342,137 @@ vk-steps[density='compact'] .vk-step { gap: var(--vk-s1); }
 vk-steps[density='compact'] .vk-step-t { font-size: var(--vk-t-5); }
 .vk-step-line:last-child { display: none; }
 
-/* ------------------------------------------------------------- 动效原语
-   只描述"动起来是什么样"；什么时候播，归编排层。
-   html[data-vk-motion="off"] 一键冻结，供截图/首帧。 */
-
-@keyframes vk-blink {
-  0%, 49% { opacity: 1; }
-  50%, 100% { opacity: 0; }
+/* ------------------------------------------------------- 行内高亮与批注区 */
+/* 代码里的字符区间：span="4:9-12" 与 @char 都落到这两个类上。 */
+.vk-char {
+  border-radius: 4px;
+  background: var(--vk-focus-soft);
+  box-shadow: inset 0 -3px 0 var(--vk-focus);
 }
-@keyframes vk-reveal {
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: none; }
-}
-@keyframes vk-type {
-  from { clip-path: inset(0 100% 0 0); }
-  to { clip-path: inset(0 0 0 0); }
+.vk-anno-hl {
+  border-radius: 4px;
+  background: var(--vk-focus-mark);
 }
 
-[data-reveal] .vk-line {
-  animation: vk-reveal var(--vk-dur-3) var(--vk-ease) both;
-  animation-delay: calc(var(--i, 0) * 90ms);
+/* ---- 树：允许去窗头（和 code / term / diff 并列，便于拼窗） ---- */
+.vk-tree[data-chrome='none'] > .vk-tree-hd { display: none; }
+.vk-frames[data-chrome='none'] > .vk-frames-hd { display: none; }
+
+/* --------------------------------------------------------------- vk-quote */
+vk-quote { display: block; }
+.vk-quote {
+  position: relative;
+  padding: var(--vk-s1) 0 var(--vk-s1) var(--vk-s4);
+  border-left: 4px solid var(--vk-ink-1);
+  font-size: var(--vk-t-4);
+  line-height: 1.5;
+  color: var(--vk-ink-1);
+  text-wrap: pretty;
 }
-[data-type] .vk-line .vk-txt {
-  display: inline-block;
-  animation: vk-type 1.4s steps(40) both;
-  animation-delay: calc(var(--i, 0) * 900ms);
+vk-quote[size='heading'] .vk-quote { font-size: var(--vk-t-3); line-height: 1.35; }
+vk-quote[variant='mark'] .vk-quote {
+  padding-top: 72px;
+  padding-left: 0;
+  border-left-width: 0;
+}
+vk-quote[variant='mark'] .vk-quote::before {
+  content: '\201C';
+  position: absolute;
+  left: -6px;
+  top: -18px;
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-1);
+  line-height: 1;
+  color: var(--vk-ink-4);
+}
+.vk-quote-src {
+  display: block;
+  margin-top: var(--vk-s2);
+  font-size: var(--vk-t-micro);
+  line-height: 1.4;
+  color: var(--vk-ink-3);
+}
+.vk-quote-src b { font-weight: var(--vk-w-med); color: var(--vk-ink-2); }
+
+/* ---------------------------------------------------------------- vk-bits */
+vk-bits { display: block; }
+.vk-bits-wrap { display: inline-flex; flex-direction: column; gap: var(--vk-s2); }
+.vk-bits { display: inline-flex; gap: var(--vk-s2); align-items: flex-end; }
+vk-bits[group='4'] .vk-bits { gap: var(--vk-s3); }
+vk-bits[group='8'] .vk-bits { gap: var(--vk-s4); }
+vk-bits[group='1'] .vk-bits { gap: var(--vk-s1); }
+.vk-bit-col { display: flex; flex-direction: column; align-items: center; gap: var(--vk-s1); }
+.vk-bit-i {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-6);
+  line-height: 1;
+  color: var(--vk-ink-4);
+}
+.vk-bit {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: 84px;
+  height: 104px;
+  border-radius: var(--vk-r-2);
+  background: var(--vk-surface-2);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-4);
+  line-height: 1;
+  color: var(--vk-ink-1);
+}
+.vk-bit.is-sign { background: var(--vk-focus-soft); box-shadow: inset 0 -4px 0 var(--vk-focus); }
+vk-bits[tone='accent'] .vk-bit { color: var(--vk-focus); }
+.vk-bits-label {
+  margin: var(--vk-s1) 0 0;
+  font-size: var(--vk-t-micro);
+  line-height: 1.4;
+  color: var(--vk-ink-3);
 }
 
-html[data-vk-motion='off'] .vk-caret,
-html[data-vk-motion='off'] [data-reveal] .vk-line,
-html[data-vk-motion='off'] [data-type] .vk-line .vk-txt {
-  animation: none;
-  opacity: var(--vk-line-opacity, 1);
-  transform: none;
-  clip-path: none;
+/* ---------------------------------------------------------------- vk-bars */
+vk-bars { display: block; }
+.vk-bars { display: flex; flex-direction: column; gap: var(--vk-s3); }
+.vk-bar {
+  display: grid;
+  grid-template-columns: 220px 1fr 168px;
+  align-items: center;
+  gap: var(--vk-s3);
+  font-size: var(--vk-t-5);
+  line-height: 1.5;
 }
-@media (prefers-reduced-motion: reduce) {
-  .vk-caret,
-  [data-reveal] .vk-line,
-  [data-type] .vk-line .vk-txt {
-    animation: none;
-    opacity: var(--vk-line-opacity, 1);
-    transform: none;
-    clip-path: none;
-  }
+.vk-bar-l { color: var(--vk-ink-2); }
+.vk-bar-t {
+  position: relative;
+  height: 24px;
+  overflow: hidden;
+  border-radius: var(--vk-r-1);
+  background: var(--vk-surface-2);
+}
+.vk-bar-fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--vk-r-1);
+  background: var(--vk-ink-3);
+}
+vk-bars[tone='accent'] .vk-bar-fill { background: var(--vk-focus); }
+.vk-bar-v {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-6);
+  text-align: right;
+  color: var(--vk-ink-2);
+}
+vk-bars[density='compact'] .vk-bar { font-size: var(--vk-t-6); line-height: 1.15; }
+vk-bars[density='compact'] .vk-bar-t { height: 16px; }
+.vk-bars-unit {
+  margin: 0;
+  font-size: var(--vk-t-micro);
+  color: var(--vk-ink-3);
+}
+
+
+/* 窄格子（展示站的小镜头）里地址退到元信息档；真帧里 8 列 ≥1100 不会触发。 */
+@container (max-width: 150px) {
+  .vk-cell-a { font-size: var(--vk-t-micro); letter-spacing: -0.04em; }
 }

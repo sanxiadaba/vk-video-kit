@@ -104,34 +104,6 @@ if (!tags.length) {
   process.exit(0);
 }
 
-const STYLE_PROPS = [
-  'font-size',
-  'font-weight',
-  'font-family',
-  'line-height',
-  'color',
-  'background-color',
-  'border-top-width',
-  'border-bottom-width',
-  'border-left-width',
-  'border-right-width',
-  'padding-top',
-  'padding-right',
-  'padding-bottom',
-  'padding-left',
-  'margin-top',
-  'opacity',
-  'text-align',
-  'white-space',
-  'display',
-  'visibility',
-  'transform',
-  'fill',
-  'stroke',
-  'stroke-width',
-  'stroke-dasharray',
-];
-
 /* ------------------------------------------------------------- 页面内函数 */
 
 function pathInPage(el, root) {
@@ -146,8 +118,8 @@ function pathInPage(el, root) {
   return parts.join('/');
 }
 
-function snapshotInPage(tag) {
-  const STYLE = [
+function snapshotInPage({ tag, props }) {
+  const STYLE = props && props.length ? props : [
     'font-size', 'font-weight', 'font-family', 'line-height', 'color', 'background-color',
     'border-top-width', 'border-bottom-width', 'border-left-width', 'border-right-width',
     'padding-top', 'padding-right', 'padding-bottom', 'padding-left', 'margin-top',
@@ -184,7 +156,7 @@ function snapshotInPage(tag) {
     row['rect.h'] = Math.round(r.height * 10) / 10;
     row['rect.x'] = Math.round(r.left * 10) / 10;
     row['rect.y'] = Math.round(r.top * 10) / 10;
-    for (const a of ['d', 'stroke', 'stroke-width', 'stroke-dasharray', 'fill', 'data-style']) {
+    for (const a of ['d', 'stroke', 'stroke-width', 'stroke-dasharray', 'fill', 'data-style', 'aria-level']) {
       if (el.hasAttribute(a)) row['@' + a] = el.getAttribute(a);
     }
     // 契约用 data-* 表达结构状态（variant / show / active / group / grid…）。
@@ -405,6 +377,21 @@ async function countSel(tag, sel) {
   );
 }
 
+/** 每个标签只看它自己声明的属性：55 个属性 × 整棵子树是这里最贵的一步。 */
+const BASE_PROPS = ['display', 'visibility', 'opacity'];
+function stylePropsFor(tag) {
+  const set = new Set(BASE_PROPS);
+  const add = (eff) => {
+    if (!eff || eff.kind !== 'style' || !eff.prop) return;
+    if (eff.prop.startsWith('.')) return;
+    set.add(eff.prop);
+  };
+  for (const eff of Object.values(EFFECTS[tag] || {})) add(eff);
+  for (const [k, eff] of Object.entries(EFFECT_OVERRIDES)) if (k.startsWith(tag + '.')) add(eff);
+  for (const p of Object.values(PROBES[tag] || {})) add(p?.effect);
+  return [...set];
+}
+
 try {
   for (const tag of tags) {
     if (!TAGS[tag]) {
@@ -415,7 +402,8 @@ try {
     await open(tag);
     const attrs = TAGS[tag].attrs || {};
     const original = await baseAttrs(tag);
-    const baseSnap = await page.evaluate(snapshotInPage, tag);
+    const props = stylePropsFor(tag);
+    const baseSnap = await page.evaluate(snapshotInPage, { tag, props });
     const baseVisual = await page.evaluate(visualInPage, tag);
     if (baseVisual.length) failures.push(`${tag}: 默认态画面问题 ${JSON.stringify(baseVisual.slice(0, 3))}`);
     const visualSeen = new Set(baseVisual.length ? [JSON.stringify(baseVisual.slice(0, 3))] : []);
@@ -471,7 +459,7 @@ try {
         const has = original.some(([k]) => k === name);
         const value = raw === '__toggle__' ? (has ? null : '') : raw;
         await setAttr(tag, name, value);
-        const snap = await page.evaluate(snapshotInPage, tag);
+        const snap = await page.evaluate(snapshotInPage, { tag, props });
         const diffs = diffSnap(baseSnap, snap);
         const visual = exempt ? [] : await page.evaluate(visualInPage, tag);
         const afterCount = eff.kind === 'dom' ? await countSel(tag, eff.prop) : 0;

@@ -1,4 +1,4 @@
-import { VK, EDGES, numAttr, VkElement, define, plain, safeQuery } from './base.mjs';
+import { VK, EDGES, numAttr, VkElement, define, plain, resolveTarget } from './base.mjs';
 import { autoSide, connectorGeometry, labelSpot, pathLength, tipOpenPath, tipPath, visualToLocal } from './geometry.mjs';
 
 /* ------------------------------------------------------------------ 摆位 */
@@ -144,8 +144,8 @@ export class VkEdge extends VkElement {
     // 隐藏的镜头/模板不参与布局：没有盒子就不画，也不报警。
     if (!host.getClientRects().length) return;
 
-    const fromEl = safeQuery(host, this.getAttribute('from'), this);
-    const toEl = safeQuery(host, this.getAttribute('to'), this);
+    const fromEl = resolveTarget(host, this.getAttribute('from'), this);
+    const toEl = resolveTarget(host, this.getAttribute('to'), this);
     if (!fromEl || !toEl) {
       if (host.getClientRects().length) this._warnOnce('endpoint', '找不到 from/to 目标，连线已清空');
       return;

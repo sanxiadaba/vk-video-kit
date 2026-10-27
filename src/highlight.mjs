@@ -182,6 +182,204 @@ const GLOBAL_ATTRS = new Set([
   'x', 'y', 'lang', 'dir', 'hidden', 'aria-hidden', 'aria-label', 'aria-labelledby',
 ]);
 
+/** 具名窗体的组件：它们自己带窗头，嵌进 vk-window 时必须 chrome="none"。 */
+const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes', 'vk-frames', 'vk-window']);
+/** 每个组件支持的内部锚点（与运行时 resolveTarget 同一份约定）。 */
+const ANCHORS = {
+  'vk-code': ['line', 'char'],
+  'vk-diff': ['line', 'char'],
+  'vk-cells': ['cell'],
+  'vk-bytes': ['byte'],
+  'vk-table': ['row'],
+  'vk-tree': ['node'],
+  'vk-steps': ['step'],
+  'vk-list': ['item'],
+};
+const INDEX_PART = new Set(['cell', 'byte', 'row', 'step', 'item']);
+
+const countTag = (node, tag) => {
+  let n = 0;
+  if (node.childNodes) for (const c of node.childNodes) n += countTag(c, tag);
+  if (node.content) n += countTag(node.content, tag);
+  if (node.tagName === tag) n += 1;
+  return n;
+};
+
+const ancestors = (node) => {
+  const out = [];
+  for (let p = node.parentNode; p; p = p.parentNode) out.push(p);
+  return out;
+};
+
+/** 标本页用 <template> 惰性装镜头：同一段场景会重复多次，页内 id 允许重复。 */
+const walkTpl = (node, fn, inTpl = false) => {
+  fn(node, inTpl);
+  if (node.childNodes) for (const c of node.childNodes) walkTpl(c, fn, inTpl);
+  if (node.content) walkTpl(node.content, fn, true);
+};
+
+function lineRange(node) {
+  const m = String(attr(node, 'lines') || '').match(/^\s*(\d+)\s*(?:-\s*(\d+))?/);
+  if (!m) return null;
+  const a = parseInt(m[1], 10);
+  return [a, m[2] ? parseInt(m[2], 10) : a];
+}
+
+/** 这个宿主能容纳的锚点范围；null = 静态算不出，跳过。 */
+function anchorCapacity(node) {
+  const tag = node.tagName;
+  if (tag === 'vk-code' || tag === 'vk-diff') {
+    const r = lineRange(node);
+    return r ? { from: r[0], to: r[1] } : null;
+  }
+  if (tag === 'vk-cells') {
+    const n = (attr(node, 'values') || '').split('|').filter((s) => s.trim()).length;
+    return n ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-bytes') {
+    const n = parseInt(attr(node, 'length') || '', 10);
+    return Number.isFinite(n) && n > 0 ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-table') {
+    const n = countTag(node, 'tr');
+    return n ? { from: 0, to: n - 1 } : null;
+  }
+  if (tag === 'vk-steps' || tag === 'vk-list') {
+    const n = countTag(node, 'li');
+    return n ? { from: 0, to: n - 1 } : null;
+  }
+  return null;
+}
+
+/**
+ * 引用关系校验：AI 写错锚点最典型的症状是"页面看起来没事，注解没了"。
+ * 静态能判的一律在这里拦下 —— 运行时 warn 进 console，AI 看不到。
+ */
+function validateRefs(doc, file, errors) {
+  const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
+  const ids = new Map();
+  walkTpl(doc, (node, inTpl) => {
+    if (inTpl || !node.tagName) return;
+    const id = attr(node, 'id');
+    if (!id) return;
+    if (!ids.has(id)) ids.set(id, []);
+    ids.get(id).push(node);
+  });
+  for (const [id, list] of ids) {
+    if (list.length > 1) errors.push(`${file}: 页面里有 ${list.length} 个 id="${id}"，for/from/to 会指错`);
+  }
+  const idNames = [...ids.keys()];
+
+  walkTpl(doc, (node, inTpl) => {
+    const tag = node.tagName;
+    if (!tag || inTpl) return;
+
+    // 1) 未知的 vk- 标签：以前被静默忽略。
+    if (tag.startsWith('vk-') && !TAGS[tag]) {
+      errors.push(`${file}:${lineOf(node)} 未知标签 <${tag}>；可用：${Object.keys(TAGS).join(', ')}`);
+      return;
+    }
+
+    // 2) for / from / to 的 `#id@part:arg` 形式（裸 CSS 选择器静态判不了，留给运行时）
+    for (const name of ['for', 'from', 'to']) {
+      const raw = attr(node, name);
+      if (!raw) continue;
+      const v = String(raw).trim();
+      const m = v.match(/^#([^@\s]+?)(?:@([a-z]+)(?::(.+))?)?$/);
+      if (!m) continue;
+      const [, id, part, argRaw] = m;
+      const where = `${file}:${lineOf(node)} <${tag}> 的 ${name}="${v}"`;
+      if (!ids.has(id)) {
+        errors.push(`${where}：找不到 #${id}${idNames.length ? `（可用：${idNames.slice(0, 8).join(', ')}）` : '（页面里没有任何 id）'}`);
+        continue;
+      }
+      if (!part) continue;
+      const host = ids.get(id)[0];
+      const allowed = ANCHORS[host.tagName] || [];
+      if (!allowed.includes(part)) {
+        errors.push(`${where}：#${id} 是 <${host.tagName}>，不支持 @${part}${allowed.length ? `；支持 ${allowed.join(' / ')}` : '；没有内部锚点'}`);
+        continue;
+      }
+      const cap = anchorCapacity(host);
+      if (!cap) continue;
+      if (part === 'line' || part === 'char') {
+        const n = parseInt((argRaw || '').split(':')[0], 10);
+        if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
+          errors.push(`${where}：#${id} 的行范围是 ${cap.from}–${cap.to}，${argRaw || ''} 越界`);
+          continue;
+        }
+        if (part === 'char') {
+          const range = (argRaw || '').split(':')[1] || '';
+          const mm = range.match(/^(\d+)-(\d+)$/);
+          if (!mm || Number(mm[1]) >= Number(mm[2])) errors.push(`${where}：字符区间应为 起-止，且起 < 止`);
+        }
+      } else if (INDEX_PART.has(part)) {
+        const n = parseInt(argRaw, 10);
+        if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
+          errors.push(`${where}：${part} 的可选范围是 ${cap.from}–${cap.to}，${argRaw} 越界（下标从 0 起）`);
+        }
+      }
+    }
+
+    // 3) vk-note 的 line / span
+    if (tag === 'vk-note') {
+      const lineAttr = attr(node, 'line');
+      if (lineAttr) {
+        const code = ancestors(node).find((p) => p.tagName === 'vk-code' || p.tagName === 'vk-diff');
+        const cap = code ? anchorCapacity(code) : null;
+        const n = parseInt(lineAttr, 10);
+        if (cap && (!Number.isFinite(n) || n < cap.from || n > cap.to)) {
+          errors.push(`${file}:${lineOf(node)} <vk-note> 的 line="${lineAttr}" 超出上面代码的 ${cap.from}–${cap.to}`);
+        }
+      }
+      const span = attr(node, 'span');
+      if (span) {
+        const mm = String(span).match(/^(\d+)-(\d+)$/);
+        if (!mm || Number(mm[1]) >= Number(mm[2])) {
+          errors.push(`${file}:${lineOf(node)} <vk-note> 的 span="${span}" 不是 起-止，且起 < 止`);
+        }
+        if (!lineAttr) errors.push(`${file}:${lineOf(node)} <vk-note> 写了 span 却没写 line，不知道是哪一行`);
+      }
+    }
+
+    // 4) vk-code 的 span="行:起-止"
+    if (tag === 'vk-code') {
+      for (const part of String(attr(node, 'span') || '').split(',')) {
+        const s = part.trim();
+        if (!s) continue;
+        const mm = s.match(/^(\d+):(\d+)-(\d+)$/);
+        if (!mm || Number(mm[2]) >= Number(mm[3])) {
+          errors.push(`${file}:${lineOf(node)} <vk-code> 的 span="${s}" 不是 行:起-止，且起 < 止`);
+        }
+      }
+    }
+
+    // 5) vk-bars 的行必须是 <i value label>
+    if (tag === 'vk-bars') {
+      for (const child of node.childNodes || []) {
+        if (!child.tagName) continue;
+        if (child.tagName !== 'i') {
+          errors.push(`${file}:${lineOf(child)} <vk-bars> 只收 <i value="…" label="…">，现在收到 <${child.tagName}>`);
+          continue;
+        }
+        if (!attr(child, 'label')) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <i> 缺 label`);
+        const v = attr(child, 'value');
+        if (v == null || !Number.isFinite(Number(v))) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <i> 缺数字 value`);
+      }
+    }
+
+    // 6) 窗头嵌套：一个窗里再放一个带窗头的组件，会画出两条标题栏
+    if (tag === 'vk-window') {
+      walk(node, (inner) => {
+        if (inner === node || !inner.tagName || !WINDOWED.has(inner.tagName)) return;
+        if (attr(inner, 'chrome') !== 'none') {
+          errors.push(`${file}:${lineOf(inner)} <${inner.tagName}> 在 <vk-window> 里没写 chrome="none"，会出现两条窗头`);
+        }
+      });
+    }
+  });
+}
+
 /** 构建期校验：作者页面的枚举/范围/布尔/图标名必须在 registry 内，不能静默。 */
 function validateAuthorHtml(doc, file) {
   const errors = [];
@@ -289,6 +487,7 @@ function validateAuthorHtml(doc, file) {
       }
     }
   });
+  validateRefs(doc, file, errors);
   return errors;
 }
 
@@ -535,7 +734,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${srcScript(source)}\n` });
   }
 
-  // 树：src 指向真实目录或 JSON。目录扫出条目；JSON 原样作为结构数据。
+  // 树：src 指向真实目录；构建期扫出条目。
   for (const node of trees) {
     const loc = locOf(node);
     const line = lineOf(node);
@@ -551,22 +750,15 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     deps.push(abs);
     let payload;
     if (/\.json$/i.test(src)) {
-      let data;
-      try {
-        data = JSON.parse(fs.readFileSync(abs, 'utf8'));
-      } catch (e) {
-        throw new Error(`${file}:${line} <vk-tree> 的 ${src} 不是合法 JSON：${e.message}`);
-      }
-      payload = { json: data, source: src.replace(/\\/g, '/') };
-    } else {
-      const depth = parseInt(attr(node, 'depth') || '4', 10);
-      payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
-      const current = attr(node, 'active') || attr(node, 'current');
-      if (current && !payload.entries.some((e) => e.path === current || e.name === current)) {
-        errors.push(`${file}:${line} <vk-tree> 的 active="${current}" 不在目录里`);
-      }
-      for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
+      throw new Error(`${file}:${line} <vk-tree> 只收目录；JSON 树已移除。`);
     }
+    const depth = parseInt(attr(node, 'depth') || '4', 10);
+    payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
+    const current = attr(node, 'active') || attr(node, 'current');
+    if (current && !payload.entries.some((e) => e.path === current || e.name === current)) {
+      errors.push(`${file}:${line} <vk-tree> 的 active="${current}" 不在目录里`);
+    }
+    for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
       start: loc.startTag.endOffset,
@@ -601,7 +793,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       if (!m) continue;
       const a = parseInt(m[1], 10);
       const b = parseInt(m[2] || m[1], 10);
-      for (let i = a; i <= b; i++) hl.add(start + i - 1);
+      for (let i = a; i <= b; i++) hl.add(start + i);
     }
     const bytes = [...buf.subarray(start, end)];
     const payload = {

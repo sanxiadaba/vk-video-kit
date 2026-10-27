@@ -59,7 +59,6 @@
   --vk-ink-focus: #6f8cff;
   --vk-ink-focus-soft: rgba(111, 140, 255, 0.18);
   --vk-ink-focus-mark: rgba(111, 140, 255, 0.28);
-  --vk-ink-focus-ink: #a9bcff;
 
   /* ---------------------------------------------------------------- 语义（原始值） */
   --vk-ok-paper: #0a6b57;
@@ -100,10 +99,8 @@
 
   --vk-mod-paper: #8a5a00;
   --vk-mod-paper-weak: rgba(138, 90, 0, 0.1);
-  --vk-mod-paper-mark: rgba(138, 90, 0, 0.22);
   --vk-mod-ink: #e9b36a;
   --vk-mod-ink-weak: rgba(233, 179, 106, 0.16);
-  --vk-mod-ink-mark: rgba(233, 179, 106, 0.28);
 
   /* ---------------------------------------------------------------- 语法 */
   /* B · 钴蓝关键字：关键字品牌蓝 + 600，函数墨色 + 600，字符串绿，数字琥珀；焦点蓝仍是当前行。 */
@@ -138,7 +135,6 @@
   --vk-edge-cap: 14px;
 
   /* ---------------------------------------------------------------- 字 */
-  --vk-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, "Noto Serif SC", serif;
   --vk-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
     system-ui, sans-serif;
   --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "SFMono-Regular", Consolas,
@@ -157,7 +153,6 @@
   --vk-t-gutter: 36px; /* 代码行号 */
   --vk-t-code: 48px;
   --vk-t-code-lg: 56px;
-  --vk-t-note: 52px;
 
   --vk-w-reg: 400;
   --vk-w-med: 500;
@@ -201,11 +196,7 @@
   --vk-win-hd: 56px;
 
   /* ---------------------------------------------------------------- 动 */
-  --vk-dur-3: 480ms;
-  --vk-ease: cubic-bezier(0.2, 0.6, 0.2, 1);
-  --vk-caret-w: 0.62em;
-  --vk-caret-h: 1.15em;
-
+    
   /* ---------------------------------------------------------------- 材质：paper（默认）
      只有一个材质开关。paper/soft 是浅色；ink 是深色。
      tone 只产 wash/tone，不重置材质。 */

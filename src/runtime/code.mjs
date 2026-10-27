@@ -3,7 +3,7 @@ import {
   precompiledSource, numAttr, VkElement, define,
 } from './base.mjs';
 import { sliceLines } from '../shared/code.mjs';
-import { markTerms } from './code-utils.mjs';
+import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
 
 /* ------------------------------------------------------------------- code */
@@ -69,7 +69,9 @@ export class VkCode extends VkElement {
     const source = this._raw ? sliceLines(full, this.getAttribute('lines')) : full;
     const lang = (this.getAttribute('lang') || this._hlLang || 'text').toLowerCase();
     const label = langLabel(lang);
-    const file = this.getAttribute('file') || '';
+    // 没有显式 file 时从 src 取文件名：窗头有 chip，读者才知道这段代码从哪来。
+    const srcPath = this.getAttribute('src') || '';
+    const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '');
     const chrome = this.getAttribute('chrome') || 'min';
     const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
     const density = ['large', 'compact'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
@@ -157,6 +159,22 @@ export class VkCode extends VkElement {
     if (marks.length) {
       const bodyEl = this.querySelector('.vk-bd');
       bodyEl.querySelectorAll('.vk-src').forEach((el) => markTerms(el, marks));
+    }
+
+    // 行内字符区间：span="4:9-12" 指第 4 行第 9–12 个字符（列从 0 起）。
+    for (const part of (this.getAttribute('span') || '').split(',')) {
+      const m = part.trim().match(/^(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);
+      if (!m) {
+        if (part.trim()) this._warnOnce('span', `的 span="${part.trim()}" 不是 行:起-止，已忽略`);
+        continue;
+      }
+      const lineNo = Number(m[1]);
+      const lineEl = this.querySelector(`.vk-line[data-line="${lineNo}"]`);
+      if (!lineEl) {
+        this._warnOnce(`span:${lineNo}`, `的 span 指向第 ${lineNo} 行，但这段里没有这一行`);
+        continue;
+      }
+      wrapCharRange(lineEl.querySelector('.vk-src'), Number(m[2]), Number(m[3]), 'vk-char', `c${lineNo}:${m[2]}-${m[3]}`);
     }
 
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
@@ -259,11 +277,8 @@ export class VkTerm extends VkElement {
       ? sliceLines(dedent(this._raw), this.getAttribute('lines'))
       : dedent(this._src || '');
     const prompt = this.getAttribute('prompt') || '$';
-    const title = this.getAttribute('title') || '';
-    const caret = this.hasAttribute('caret');
-    const caretMode = (this.getAttribute('caret') || '').toLowerCase() === 'prompt' ? 'prompt' : 'inline';
+    const title = this.getAttribute('title') || '';
     const density = ['large', 'compact'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
-    const typed = this.hasAttribute('data-type');
 
     const rows = source
       .split('\n')
@@ -286,23 +301,16 @@ export class VkTerm extends VkElement {
         return { kind: 'out', text: esc(line) || ' ' };
       });
 
-    // caret=prompt：另起一条空命令（真实的等待输入）；caret（默认 inline）：叠在末行。
-    if (caret && caretMode === 'prompt') {
-      const last = rows[rows.length - 1];
-      if (!last || last.kind !== 'cmd') rows.push({ kind: 'cmd', text: '', empty: true });
-    }
 
     const body = rows
-      .map((r, i) => {
-        const isLast = i === rows.length - 1;
+      .map((r, i) => {
         const sign = r.kind === 'cmd' ? prompt : r.kind === 'out' ? '' : r.sign;
         const signCls = r.kind === 'cmd' ? 'vk-prompt' : r.kind === 'out' ? '' : 'vk-sign';
-        const caretHtml = caret && caretMode === 'inline' && isLast ? '<span class="vk-caret" aria-hidden="true"></span>' : '';
         const cls = `vk-line is-${r.kind}`;
         const sr = r.kind === 'ok' ? '成功：' : r.kind === 'warn' ? '警告：' : r.kind === 'err' ? '错误：' : '';
         // 输出从 0 列开始：真实终端不会把 stdout 缩进到 prompt 列。
         const signHtml = r.kind === 'out' ? '' : `<span class="${signCls}">${esc(sign || ' ')}</span>`;
-        return `<div class="${cls}" style="--i:${i}"><span class="vk-sr">${sr}</span>${signHtml}<span class="vk-txt">${r.text || ' '}${caretHtml}</span></div>`;
+        return `<div class="${cls}" style="--i:${i}"><span class="vk-sr">${sr}</span>${signHtml}<span class="vk-txt">${r.text || ' '}</span></div>`;
       })
       .join('');
 
@@ -313,7 +321,7 @@ export class VkTerm extends VkElement {
       surface,
       chrome,
       cls: 'vk-term',
-      attrs: ` data-density="${density}"${typed ? ' data-type' : ''}`,
+      attrs: ` data-density="${density}"`,
       head: title ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
       inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });

@@ -13,6 +13,7 @@
 import { TAGS, TAG_NAMES, observedOf } from '../registry.mjs';
 import { dedent, expandLeadingTabs, hash32, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
+import { wrapCharRange } from './code-utils.mjs';
 
 export { TAGS, TAG_NAMES, dedent, expandLeadingTabs, hash32, lineSet, langKey, langLabel };
 
@@ -108,6 +109,71 @@ export function safeQuery(root, sel, owner) {
     owner?._warnOnce?.('selector', `的 ${sel} 不是有效选择器`);
     return null;
   }
+}
+
+/* ------------------------------------------------------------- 关系层寻址 */
+
+/** 内部件锚点：part -> 属性名。编号一律 0 起（代码行除外，用源文件行号）。 */
+const ANCHOR_ATTR = {
+  line: 'data-line',
+  cell: 'data-cell',
+  byte: 'data-byte',
+  row: 'data-row',
+  node: 'data-node-path',
+  step: 'data-step',
+  item: 'data-item',
+};
+
+const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
+
+/**
+ * `for` / `from` / `to` 的解析：CSS 选择器，或 `#id@part:arg`。
+ * 后者能被构建期静态校验，是"AI 写错了却看起来没事"的唯一拦法。
+ */
+export function resolveTarget(root, expr, owner) {
+  if (!root || !expr) return null;
+  const raw = String(expr).trim();
+  const at = raw.indexOf('@');
+  if (raw.startsWith('#') && at > 1) {
+    const id = raw.slice(1, at);
+    const [part, ...args] = raw.slice(at + 1).split(':');
+    const host = safeQuery(root, `#${cssEscape(id)}`, owner);
+    if (!host) {
+      owner?._warnOnce?.(`target:${id}`, `找不到 #${id}`);
+      return null;
+    }
+    if (part === 'line' || part === 'char') {
+      const lineNo = (args[0] || '').trim();
+      const lineEl = host.querySelector(`.vk-line[data-line="${cssEscape(lineNo)}"]`);
+      if (!lineEl) {
+        owner?._warnOnce?.(`target:${id}:${lineNo}`, `#${id} 没有第 ${lineNo} 行`);
+        return null;
+      }
+      if (part === 'line') return lineEl;
+      const [s, e] = (args[1] || '').split('-').map((n) => parseInt(n, 10));
+      if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) {
+        owner?._warnOnce?.(`target:${id}:range`, `#${id} 的字符区间 "${args[1] || ''}" 不合法（应为 起-止）`);
+        return lineEl;
+      }
+      return wrapCharRange(lineEl.querySelector('.vk-src'), s, e, 'vk-char', `x${lineNo}`) || lineEl;
+    }
+    const attr = ANCHOR_ATTR[part];
+    if (!attr) {
+      owner?._warnOnce?.(
+        `target:${id}:${part}`,
+        `#${id} 不支持 @${part}；支持 ${Object.keys(ANCHOR_ATTR).join(' / ')}`
+      );
+      return null;
+    }
+    const want = args.join(':');
+    const el = host.querySelector(`[${attr}="${cssEscape(want)}"]`);
+    if (!el) {
+      owner?._warnOnce?.(`target:${id}:${part}:${want}`, `#${id} 没有 ${part}="${want}"`);
+      return null;
+    }
+    return el;
+  }
+  return safeQuery(root, raw, owner);
 }
 
 /* ---------------------------------------------------------------- 读取源码 */
@@ -469,10 +535,6 @@ VK._invalidate = () => {
 /** 公开 API：手动重排一次（类型里有声明，就必须真的存在） */
 VK.layout = layout;
 VK.auditOverflow = auditOverflow;
-
-/** 动效原语的总开关：截图 / 录首帧时把一切动画冻在终态。 */
-VK.freeze = () => HAS_DOM && document.documentElement.setAttribute('data-vk-motion', 'off');
-VK.unfreeze = () => HAS_DOM && document.documentElement.removeAttribute('data-vk-motion');
 
 /** 渲染器的等待点 */
 VK.ready = async () => {

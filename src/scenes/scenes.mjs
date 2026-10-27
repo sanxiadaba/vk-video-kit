@@ -20,7 +20,7 @@ export const SCENES = [
   {
     tag: 'vk-term',
     body: s`
-<vk-term w="1500" title="zsh" prompt="$" caret src="../code/hello.term"></vk-term>`,
+<vk-term w="1500" title="zsh" prompt="$" src="../code/hello.term"></vk-term>`,
   },
 
   {
@@ -251,13 +251,13 @@ export const SCENES = [
   {
     tag: 'vk-figure',
     body: s`
-<vk-figure w="1200" fig="01" caption="一张 16:9 的图" ratio="16 / 9" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure>`,
+<vk-figure w="1200" fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure>`,
   },
 
   {
-    tag: 'vk-browser',
+    tag: 'vk-window',
     body: s`
-<vk-browser w="1200" url="http://127.0.0.1:5000/hello">
+<vk-window w="1200" chrome="browser" url="http://127.0.0.1:5000/hello">
   <vk-stack gap="sm">
     <vk-text size="heading" weight="bold">Hello, C</vk-text>
     <vk-text size="label" emphasis="secondary">路由函数返回什么，浏览器就显示什么。</vk-text>
@@ -266,14 +266,14 @@ export const SCENES = [
       <vk-text size="meta" mono emphasis="muted">text/html · 12 B</vk-text>
     </vk-row>
   </vk-stack>
-</vk-browser>`,
+</vk-window>`,
   },
 
   {
     tag: 'vk-tree',
     body: s`
 <vk-box w="1200" surface="none">
-  <vk-tree title="app" variant="files" active="src/parser.py" depth="4">
+  <vk-tree title="app" active="src/parser.py" depth="4">
     src/
       __init__.py
       ast.py
@@ -381,7 +381,7 @@ export const SCENES = [
   {
     tag: 'vk-cells',
     body: s`
-<vk-cells values="1|2|3|0" labels="a[0]|a[1]|a[2]|a[3]" addr="0x7ffc" stride="4" flag="4"></vk-cells>`,
+<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1"></vk-cells>`,
   },
 
   {
@@ -399,13 +399,37 @@ export const SCENES = [
   {
     tag: 'vk-bytes',
     body: s`
-<vk-bytes w="1360" src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="1-6"></vk-bytes>`,
+<vk-bytes w="1360" src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5"></vk-bytes>`,
   },
 
   {
     tag: 'vk-frames',
     body: s`
 <vk-frames w="1400" src="../code/stack.json" active="3" density="compact"></vk-frames>`,
+  },
+
+  {
+    tag: 'vk-quote',
+    body: s`
+<vk-quote w="1280" source="C11 §6.7.3" author="ISO/IEC 9899">
+  任何修改 const 变量的行为，都是未定义的。
+</vk-quote>`,
+  },
+
+  {
+    tag: 'vk-bits',
+    body: s`
+<vk-bits value="1111 1111" index="7-0" group="4" sign label="有符号视角：-1"></vk-bits>`,
+  },
+
+  {
+    tag: 'vk-bars',
+    body: s`
+<vk-bars w="1280" max="1000000" scale="log" unit="ns">
+  <i value="1" label="CPU"></i>
+  <i value="120" label="内存"></i>
+  <i value="1000000" label="磁盘"></i>
+</vk-bars>`,
   },
 
   {

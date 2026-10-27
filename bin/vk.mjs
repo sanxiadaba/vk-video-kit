@@ -31,6 +31,9 @@ if (cmd === 'build' || cmd === 'check') {
   await need('katex', '公式渲染');
   const m = await import('../cli/serve.mjs');
   await m.main(Number(rest[0]) || 8099, process.cwd());
+} else if (cmd === 'shot') {
+  const m = await import('../cli/shot.mjs');
+  void m;
 } else {
   console.log(`
 vk —— 把内容做成画面单元
@@ -38,7 +41,8 @@ vk —— 把内容做成画面单元
   vk build [files...]   预编译代码高亮与公式（产物自包含）
   vk check              只检查是否最新，不写入
   vk serve [port]       开发服务器（默认 8099）
+  vk shot <page.html>   截一张 1920×1080（--phone / --crop x,y,w,h）
 
-用法与属性见包内的 README.md / USAGE.md。
+用法与属性见包内的 README.md / USAGE.md，给 AI 的入口是 docs/ai.md。
 `);
 }

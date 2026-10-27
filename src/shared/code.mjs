@@ -221,6 +221,9 @@ export const LANG_ALIAS = {
   make: 'makefile',
   plaintext: 'text',
   txt: 'text',
+  x86asm: 'asm',
+  nasm: 'asm',
+  assembly: 'asm',
 };
 
 /** 扩展名 -> 语言；构建期 inferLang 与运行时文件树共用这一份。 */
@@ -248,6 +251,8 @@ export const EXT_LANG = {
   '.swift': 'swift',
   '.lua': 'lua',
   '.sh': 'bash',
+  '.s': 'asm',
+  '.asm': 'asm',
   '.sql': 'sql',
   '.html': 'html',
   '.css': 'css',
@@ -270,6 +275,7 @@ export const LANG_LABEL = {
   jsx: 'JSX',
   tsx: 'TSX',
   bash: 'Shell',
+  asm: 'ASM',
   json: 'JSON',
   sql: 'SQL',
   html: 'HTML',

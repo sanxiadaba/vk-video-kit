@@ -1,5 +1,90 @@
 # Changelog
 
+## 4.6.0
+
+两个"看起来能用、其实没接上"的问题，以及一轮性能治理。
+
+### 性能：`npm test` 180s → 13s（源码没变）
+
+| 原来 | 现在 | 为什么 |
+|---|---|---|
+| 门禁跑 5 个镜头（171 个对象，73s） | 默认只跑「成品」（35 个，约 12s） | 变体 / 解剖 / 用法 / API 四个镜头是**标本册自己的 UI**，不是组件；要全量用 `gate:full` |
+| `npm test` 先完整 build 一次 | 产物指纹与源码一致就跳过 | 内容哈希写在 `_site/.fingerprint`，不用 mtime（重写同样内容 mtime 会变） |
+| 分片固定 4、四组一起抢核 | 契约 4 片、门禁 2 片，分两波 | 实测：8 片比 4 片慢，十几 个 Chromium 互相拖 |
+| 契约每个探针快照整棵子树 × 55 个属性 | 只快照该标签**声明的**属性 | `STYLE_PROPS` 是死代码；55 → 平均 6 |
+
+### 两个修复
+
+- **`vk-tree` 的目录行真的能点**：以前三角和文件夹只是画出来的，点击没有任何反应。现在目录行是 `role="button"` + `tabindex="0"` + `aria-expanded`，点击 / Enter / Space 都能开合，`collapsed` 属性仍是最初状态。
+- **`vk-figure` 的 `crop` 改成"图片的百分比"**：以前按容器百分比定位，`object-fit: cover` / `contain` 下图片的可见矩形和容器不一致，框会整体偏移（1:1 时偏 200px 以上）。现在按 object-fit / object-position 求出图片画在哪，再把图片坐标换成容器坐标，并按容器裁掉看不见的部分。
+
+## 4.5.0
+
+清历史遗留：撤销 2.0 的「文件树泛化成通用树」，并删掉一批没人用的东西。
+
+- **`vk-tree` 只剩文件树**：去掉 `variant`（files / ast / generic）与两条分支、`jsonEntries`、`code/ast.json`；`src` 只收真实目录，指向 `.json` 会在 `vk build` 直接报错。标签名改为「文件树」。
+- 删 `tools/lib/site-ui.mjs`：2.x 多页站壳，没有任何文件 import。
+- 删 7 个从未被引用的令牌：`--vk-ink-focus-ink`、`--vk-mod-paper-mark`、`--vk-mod-ink-mark`、`--vk-font-display`、`--vk-t-note`、`--vk-dur-3`、`--vk-ease`（后两个是删动效后的残留）。
+- 删 `geometry.mjs` 里只出现一次的 `frameOf`。
+
+## 4.4.0
+
+删掉整帧示例与画廊（4.2 引入的东西）。
+
+- 这一层只负责组件。**把几件拼成一帧是编排层的事**，库不提供成品页、也不提供"配方"。
+- 删除 `_site/frame/*`、`_site/gallery.html`、`src/scenes/frames.mjs`、`tools/frames.mjs`。
+- 删除索引页与标本页上的"整帧示例"入口，以及 `links` / `gate` / `verify` 里的帧目标。
+- 保留 `links` 的可达性检查（从 index.html BFS）：抓的是"页面没人链"，与帧无关。
+
+## 4.3.0
+
+用户实测反馈的四件事：代码窗左边空一条、内存格地址溢出/框不准、画廊点不进去、终端光标。
+
+- **代码窗左侧内距 118 → 32**：118 是为了让行号落在文件名 chip 下方，但 chip 是可选的（没写 `file` 就没有），于是窄窗口左边空出 158px。现在行号与代码都从窗头内距开始；`file` 缺省时自动从 `src` 取文件名，窗头仍然有 chip。设计说明同步改写。
+- **`vk-cells` 地址不再溢出**：地址字号 44 → 40（元信息档）、横向内距 16 → 8；格宽 ≤150px 时用容器查询退到 28px；极端窄格才省略（`data-ellipsis`，只对元信息生效）。
+- **`vk-cells` 的高亮框**：`[data-mark]` 现在同时改边框色与边框样式，填充格（虚线 + 斜纹）上也能读成"框住"；契约从断底色改为断边框色。
+- **`cols` 小于最宽跨格时抬到跨格宽度并警告**：以前会静默生成隐式轨道。
+- **`vk-figure` 裁切框补 `box-sizing: border-box`**：帧页没有标本册的全局 reset，边框会额外 +4px 并溢出到裁切区外。
+- **导航打通**：标本册索引 → 画廊；每张标本页页脚 → 画廊；画廊页脚 → 标本册；每张帧页脚 → 画廊 / 上一张 / 下一张。`links` 新增**可达性检查**（从 index.html BFS，孤儿页直接失败）——画廊当初就是这样"存在但没人链"。
+- **帧与画廊补 `vk.ready()`**：`data-vk-ready` 不再缺席。
+- **帧标题不再统一写"C 语言"**：05 换成"数学 · π 与它的算法"；02/03 的副题缩到一行，避免末行只剩一个字。
+
+## 4.2.0
+
+六张整帧示例 + 画廊。
+
+- **`_site/frame/*.html`**：代码+批注、终端、内存格+箭头、diff、公式、窗口+报错，每张都是完整 1920×1080（页眉 / 标题 / 主体 / 页脚）。
+- **`_site/gallery.html`**：六张的索引页；标本册回答“这一件长什么样”，画廊回答“几件怎么拼”。
+- 帧页与画廊进 `verify`、`links`、`gate`（门禁对象 171 → 178）。
+- **终端去掉块状光标**：打字动效删掉之后，那个方块没有存在理由；`caret` 属性、CSS、token 一并移除。
+- **`vk-cells` 高亮格补边框**：只亮底、边框仍是灰的，看着像“没框准”；现在底和边一起亮（越界格的红色优先）。
+- `vk-figure` 的裁切框示例调准到终止符那一格。
+
+## 4.1.0
+
+把"内存模型"这一层做深，补上汇编。
+
+- **`vk-cells` 三个下标属性**（都从 0 起）：`spans="4|1|3"` 字段跨格、`pad="2"` 填充格（斜纹 + 虚线边）、`mark="0,2-3"` 高亮格。地址改为按**字段起始字节**算，跨格字段后面的字段会跳过它占的宽度。
+- **格标签降到 40 并标 `data-meta`**：它是元信息，不是正文；单字节字段的 `char y` 不再折成两行。
+- **高亮格的元信息退一档墨色**（`ink-4` → `ink-3`）：钴蓝淡底会把 28–40 的对比度压到 4.45:1，正好卡在 4.5 地板下。
+- **`vk-figure` 裁切框** `crop="x,y,w,h"`：0–100 百分比矩形 + 2px 钴蓝 + 框外 14% 压暗，不依赖原图尺寸。
+- **`asm` / `x86asm` 语言**：Shiki 的 x86 语法接入，`.s` / `.asm` 扩展名自动识别；C 行 ↔ 汇编行用 `vk-annotate` 配对，不加组件。
+- 契约补 4 条（cells 的 spans/pad/mark、figure 的 crop），预设与场景同步：`vk-cells` 的成品换成结构体布局，`vk-figure` 的成品带裁切框。
+
+## 4.0.0
+
+用户变成 AI，整库按"AI 能写对、写错能被抓住"重排。破坏性改动。
+
+- **构建期静态交叉校验**：未知 vk 标签、找不到的 `#id`、`@part` 不匹配、`@cell/@byte/@row` 越界、`vk-note` 行号超出代码、`span` 区间非法、`<vk-window>` 里的双窗头、`<vk-bars>` 子节点不合规——全部在 `vk build` 报中文错，不再只进 console。
+- **锚点契约**：内部件输出 `data-line` / `data-char` / `data-cell` / `data-byte` / `data-row` / `data-node-path` / `data-step` / `data-item`；`for` / `from` / `to` 支持 `#id@part:arg`；`vk-code` 与 `vk-note` 增 `span`。下标一律 0 起（代码用源文件行号）。
+- **`vk-window` 成为 L1 标签**：min / none / browser / dialog 四种窗头 + 内容槽；`vk-browser` 退场（迁移：`<vk-browser url>` → `<vk-window chrome="browser" url>`）。`vk-tree` / `vk-bytes` / `vk-frames` 补 `chrome="none"`，可以拼进一个窗。
+- **三个新件**：`vk-quote`（出处是结构）、`vk-bits`（索引 / 分组 / 符号位）、`vk-bars`（`scale="log"` 才扛得住跨数量级）。
+- **删动效**：`data-reveal` / `data-type` / `vk.freeze()` / `data-vk-motion` 全部移除；静止帧就是成品。
+- **取消 4 个 hidden 属性**：`vk-stack.justify`、`vk-title.level` 转为公开并有契约；`vk-box.x/y` 仍是 canvas 子件的定位属性（面板不显示，文档写明）。
+- **`flag` 与 `bytes.highlight` 改 0-based**，与锚点下标一致。
+- **`vk shot`**：CLI 出图，默认 1920×1080，`--phone` / `--crop` 按需；不给 AI 固定喂一张它看不清的小图。
+- **`docs/ai.md`**：手写正文 + registry 生成的组件速查，作为 AI 的唯一入口；`npm run build` 重建，`verify` 看守。
+
 ## 3.0.2
 
 语法选 B：钴蓝关键字。

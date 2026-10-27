@@ -41,8 +41,17 @@ export function markTerms(root, terms) {
   }
 }
 
-export function wrapRange(root, start, end) {
-  if (!root || start >= end) return;
+/**
+ * 把一个字符区间包成 span（可重复调用：同一个 key 会先拆掉旧包）。
+ * 返回第一个包好的 span，供 vk-edge 之类需要"指到字符"的地方取包围盒。
+ */
+export function wrapCharRange(root, start, end, cls = 'vk-dw', key = '') {
+  if (!root) return null;
+  if (key) {
+    for (const old of root.querySelectorAll(`[data-vk-range="${key}"]`)) {
+      old.replaceWith(...old.childNodes);
+    }
+  }
   const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
   const targets = [];
   let pos = 0;
@@ -54,12 +63,20 @@ export function wrapRange(root, start, end) {
     if (s < e) targets.push({ node, s, e });
     pos += len;
   }
+  let first = null;
   for (const { node, s, e } of targets) {
     const mid = node.splitText(s);
     mid.splitText(e - s);
     const span = document.createElement('span');
-    span.className = 'vk-dw';
+    span.className = cls;
+    if (key) span.dataset.vkRange = key;
     mid.replaceWith(span);
     span.appendChild(mid);
+    if (!first) first = span;
   }
+  return first;
+}
+
+export function wrapRange(root, start, end) {
+  return wrapCharRange(root, start, end, 'vk-dw', '');
 }

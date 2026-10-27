@@ -10,13 +10,23 @@
  * 3. 浏览器任务最多 2 个并发、默认 2 路分片；unit 只跑纯函数测试。
  */
 import { spawn, spawnSync } from 'node:child_process';
+import fs from 'node:fs';
+import path from 'node:path';
 import os from 'node:os';
 
 const args = process.argv.slice(2);
 const fast = args.includes('--fast');
 const skipBuild = fast || args.includes('--no-build') || process.env.VK_SKIP_BUILD === '1';
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const shards = Math.max(1, Math.min(4, (os.availableParallelism?.() ?? os.cpus().length) - 1));
+const shards = Math.max(1, Math.min(8, (os.availableParallelism?.() ?? os.cpus().length) - 1));
+
+/** 产物指纹与源码一致就不重建：npm run build 之后的 npm test 不该再 build 一次。 */
+async function freshEnough() {
+  const stamp = '_site/.fingerprint';
+  if (!fs.existsSync(stamp) || !fs.existsSync('_site/index.html')) return false;
+  const { fingerprint } = await import('./lib/fingerprint.mjs');
+  return fs.readFileSync(stamp, 'utf8').trim() === fingerprint();
+}
 
 const results = [];
 let aborted = false;
@@ -100,8 +110,8 @@ const nodeTest = [
 const browserTest = [npx, '--test', '--test-concurrency=1', 'tests/canvas.test.mjs', 'tests/dom.test.mjs'];
 const browserEnv = {
   ...process.env,
-  CONTRACT_SHARDS: process.env.CONTRACT_SHARDS || String(shards),
-  GATE_SHARDS: process.env.GATE_SHARDS || String(shards),
+  CONTRACT_SHARDS: process.env.CONTRACT_SHARDS || String(Math.min(4, shards)),
+  GATE_SHARDS: process.env.GATE_SHARDS || String(Math.min(2, shards)),
   GATE_TIMEOUT_MS: process.env.GATE_TIMEOUT_MS || '600000',
   CONTRACT_TIMEOUT_MS: process.env.CONTRACT_TIMEOUT_MS || '300000',
 };
@@ -122,7 +132,9 @@ if (fast) {
     if (unit.code !== 0) aborted = true;
   }
 } else {
-  if (!skipBuild) {
+  if (!skipBuild && (await freshEnough())) {
+    console.log('· build 已跳过（产物比 src 新）');
+  } else if (!skipBuild) {
     const build = await run('build', [npmCmd, 'run', 'build'], { timeoutMs: 300000, env: process.env });
     if (build.code !== 0) aborted = true;
   } else {
@@ -142,18 +154,26 @@ if (fast) {
   }
 
   if (!aborted) {
-    // 契约、门禁、浏览器回归、纯函数单测一起跑：四组都是只读，互不共享页面。
-    // 门禁/契约各自分片；浏览器回归自己一个进程；不再串行等待。
-    const wave = await pool(
+    // 浏览器是稀缺资源：十几 个 Chromium 同时抢核只会互相拖慢（实测 34s vs 39s）。
+    // 两波：契约（4 片）+ 纯函数单测，然后门禁（2 片）+ 浏览器回归。
+    const waveA = await pool(
       [
         () => run('contract', [process.execPath, 'tools/contract-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
-        () => run('gate', [process.execPath, 'tools/gate-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
-        () => run('browser', browserTest, { timeoutMs: 600000, env: browserEnv }),
         () => run('unit', nodeTest, { timeoutMs: 120000 }),
       ],
-      4
+      2
     );
-    if (wave) aborted = true;
+    if (waveA) aborted = true;
+    if (!aborted) {
+      const waveB = await pool(
+        [
+          () => run('gate', [process.execPath, 'tools/gate-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
+          () => run('browser', browserTest, { timeoutMs: 600000, env: browserEnv }),
+        ],
+        2
+      );
+      if (waveB) aborted = true;
+    }
   }
 }
 

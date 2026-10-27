@@ -1,14 +1,15 @@
 {
   "name": "vk-video-kit",
-  "version": "3.0.2",
-  "description": "把内容做成画面单元：31 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
+  "version": "4.6.0",
+  "description": "把内容做成画面单元：34 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node cli/build.mjs _site/specimens && node tools/specimens.mjs && node cli/build.mjs _site/specimen _site/index.html",
+    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node cli/build.mjs _site/specimens && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimen _site/index.html",
     "build:pkg": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs",
     "gen": "node tools/gen.mjs",
+    "ai": "node tools/ai-doc.mjs",
     "links": "node tools/links.mjs",
     "contract": "node tools/contract-all.mjs",
     "contract:one": "node tools/contract.mjs",
@@ -21,6 +22,7 @@
     "shot": "node tools/shot.mjs",
     "quick": "node tools/quick.mjs",
     "gate": "node tools/gate-all.mjs",
+    "gate:full": "node tools/gate-all.mjs --full",
     "gate:visual": "node tools/gate-all.mjs --presets",
     "gate:one": "node tools/gate.mjs",
     "verify": "node tools/verify.mjs",
@@ -118,3 +120,5 @@
     "1920x1080"
   ]
 }
+
+

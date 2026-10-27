@@ -10,6 +10,7 @@ import { spawnSync } from 'node:child_process';
 
 const steps = [
   ['generated types / reference', ['tools/gen.mjs', '--check']],
+  ['ai authoring doc', ['tools/ai-doc.mjs', '--check']],
   ['css / js', ['tools/build.mjs', '--check']],
   ['specimen hosts', ['tools/scenes.mjs', '--check']],
   ['site assets', ['tools/assemble.mjs', '--check']],

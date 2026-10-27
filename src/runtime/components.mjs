@@ -94,8 +94,9 @@ export class VkList extends VkElement {
     if (ordered) ul.dataset.ordered = '';
     if (rule) ul.dataset.rule = '';
     if (bare) ul.dataset.bare = '';
-    for (const it of this._items || []) {
+    for (const [i, it] of (this._items || []).entries()) {
       const li = document.createElement('li');
+      li.dataset.item = String(i);
       for (const [n, v] of it.attrs || []) {
         try {
           li.setAttribute(n, v);
@@ -273,6 +274,15 @@ export class VkFigure extends VkElement {
       ? '图未加载 · 检查路径'
       : src ? '图未加载' : '还没有图片';
 
+    // 裁切框：crop 是"图片的百分比"，不是容器的百分比（cover / contain 下两者不等）。
+    if (!this._crop) {
+      this._crop = document.createElement('span');
+      this._crop.className = 'vk-fig-crop';
+      this._crop.setAttribute('aria-hidden', 'true');
+      this._body.appendChild(this._crop);
+    }
+    this._placeCrop();
+
     if (url) {
       this._url.textContent = url;
       this._url.style.display = '';
@@ -285,6 +295,81 @@ export class VkFigure extends VkElement {
     this.style.width = Number.isFinite(w) ? w + 'px' : '100%';
   }
 
+  /**
+   * crop 用"图片自己"的百分比。cover / contain 下图片的可见矩形与容器不等，
+   * 所以先按 object-fit / object-position 求出图片画在哪，再把图片坐标换成容器坐标。
+   */
+  _placeCrop() {
+    const cropEl = this._crop;
+    if (!cropEl) return;
+    const raw = (this.getAttribute('crop') || '').trim();
+    const p = raw.split(',').map((n) => Number(n.trim()));
+    const ok =
+      p.length === 4 &&
+      p.every(Number.isFinite) &&
+      p[2] > 0 &&
+      p[3] > 0 &&
+      p[0] >= 0 &&
+      p[1] >= 0 &&
+      p[0] + p[2] <= 100 &&
+      p[1] + p[3] <= 100;
+    if (!ok) {
+      cropEl.hidden = true;
+      if (raw) this._warnOnce('crop', `的 crop="${raw}" 不是 0–100 内的 x,y,w,h`);
+      return;
+    }
+    const [x, y, w, h] = p;
+    const body = this._body;
+    const W = body.clientWidth;
+    const H = body.clientHeight;
+    const img = body.querySelector('img');
+    const nw = img?.naturalWidth || 0;
+    const nh = img?.naturalHeight || 0;
+    let left = (x / 100) * W;
+    let top = (y / 100) * H;
+    let width = (w / 100) * W;
+    let height = (h / 100) * H;
+    if (nw && nh && W && H) {
+      const cs = getComputedStyle(img);
+      const contain = cs.objectFit === 'contain';
+      const scale = contain ? Math.min(W / nw, H / nh) : Math.max(W / nw, H / nh);
+      const dw = nw * scale;
+      const dh = nh * scale;
+      const pos = (cs.objectPosition || '50% 50%').split(/\s+/);
+      const frac = (t) => {
+        if (!t) return 0.5;
+        if (t.endsWith('%')) return parseFloat(t) / 100;
+        if (t === 'left' || t === 'top') return 0;
+        if (t === 'right' || t === 'bottom') return 1;
+        return 0.5;
+      };
+      const ox = (W - dw) * frac(pos[0]);
+      const oy = (H - dh) * frac(pos[1] ?? pos[0]);
+      left = ox + (x / 100) * dw;
+      top = oy + (y / 100) * dh;
+      width = (w / 100) * dw;
+      height = (h / 100) * dh;
+      // 只画容器里看得见的那一段；整块都在画面外就不画。
+      const x0 = Math.max(0, left);
+      const y0 = Math.max(0, top);
+      const x1 = Math.min(W, left + width);
+      const y1 = Math.min(H, top + height);
+      if (x1 - x0 < 2 || y1 - y0 < 2) {
+        cropEl.hidden = true;
+        return;
+      }
+      left = x0;
+      top = y0;
+      width = x1 - x0;
+      height = y1 - y0;
+    }
+    cropEl.hidden = false;
+    cropEl.style.left = `${left}px`;
+    cropEl.style.top = `${top}px`;
+    cropEl.style.width = `${width}px`;
+    cropEl.style.height = `${height}px`;
+  }
+
   _bindImg() {
     if (!this._img || this._img._vkFigureBound) return;
     this._img._vkFigureBound = true;
@@ -295,48 +380,64 @@ export class VkFigure extends VkElement {
         : this.hasAttribute('src') ? '图未加载' : '还没有图片';
     };
     this._img.addEventListener('vk:img-error', () => { this._shell?.setAttribute('data-error', ''); setPh(); });
-    this._img.addEventListener('vk:img-load', () => { this._shell?.removeAttribute('data-error'); setPh(); });
+    this._img.addEventListener('vk:img-load', () => { this._shell?.removeAttribute('data-error'); setPh(); this._placeCrop(); });
   }
 }
 
-/* ---------------------------------------------------------------- browser */
+/* ---------------------------------------------------------------- window */
 
-export class VkBrowser extends VkElement {
+const WIN_CHROME = new Set(['min', 'none', 'browser', 'dialog']);
+const WIN_PAD = new Set(['none', 'sm', 'md', 'lg']);
+const WIN_TONES = new Set(['accent', 'ok', 'warn', 'err']);
+
+/**
+ * 窗：L1 原子。三点窗头 + 标题 / 地址栏 / 对话框，内容由作者放。
+ * 与 code / term / diff 共用同一个 win() 实现，**不嵌套**。
+ */
+export class VkWindow extends VkElement {
   static watchSource = true;
   static slot = true;
-  static slotHost = '.vk-br-body';
-  static renderedRoot = '.vk-br';
+  static slotHost = '.vk-win-bd';
+  static renderedRoot = '.vk-win';
 
   capture() {}
 
   render() {
-    const url = this.getAttribute('url') || '';
-    const chrome = this.getAttribute('chrome') || 'min';
+    const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
     const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
+    const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'md';
+    const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
+    const title = this.getAttribute('title') || '';
+    const url = this.getAttribute('url') || '';
 
     if (!this._shell) {
       const body = takeSlot(this);
       this.innerHTML = win({
         surface,
         chrome: 'min',
-        cls: 'vk-br',
-        head: '<span class="vk-br-url"><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
-        inner: '<div class="vk-br-body"></div>',
+        cls: 'vk-win-tag',
+        head: '<span class="vk-file" data-meta></span><span class="vk-br-url" data-meta><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
+        inner: '<div class="vk-win-bd" data-vk-part="bd"></div>',
       });
       this._shell = this.querySelector('.vk-win');
+      this._file = this.querySelector('.vk-file');
+      this._url = this.querySelector('.vk-br-url');
       this._host = this.querySelector('.vk-br-host');
       this._path = this.querySelector('.vk-br-path');
-      this._body = this.querySelector('.vk-br-body');
-      fillSlot(this._body, body);
+      this._slot = this.querySelector('.vk-win-bd');
+      fillSlot(this._slot, body);
     }
 
     this._shell.dataset.chrome = chrome;
     this._shell.dataset.material = surface;
+    this._shell.dataset.pad = pad;
     if (surface === 'ink') this._shell.dataset.surface = 'ink';
     else delete this._shell.dataset.surface;
-    this._shell.setAttribute('role', 'region');
-    if (url) this._shell.setAttribute('aria-label', `浏览器 · ${url}`);
-    else this._shell.removeAttribute('aria-label');
+    if (tone) this._shell.dataset.tone = tone;
+    else delete this._shell.dataset.tone;
+
+    this._file.textContent = title;
+    this._file.style.display = title ? '' : 'none';
 
     // 只突出"在哪"：域名是主体，路径淡化；解析失败也不把整段 URL 塞进 host。
     let host = '';
@@ -355,6 +456,11 @@ export class VkBrowser extends VkElement {
     this._path.textContent = path;
     this._path.style.display = path ? '' : 'none';
 
+    const label = title || url;
+    this._shell.setAttribute('role', 'region');
+    if (label) this._shell.setAttribute('aria-label', label);
+    else this._shell.removeAttribute('aria-label');
+
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
     this.style.width = Number.isFinite(w) ? w + 'px' : '100%';
   }
@@ -369,42 +475,6 @@ const FILE_ICON = {
   sh: 'file-terminal', bash: 'file-terminal', zsh: 'file-terminal',
 };
 
-/** 把任意 AST / 结构 JSON 归一成 entries：name、kind、value、children。 */
-function jsonEntries(value) {
-  const entries = [];
-  let root = '结构';
-  if (value && !Array.isArray(value) && value.root && typeof value.root === 'object') root = String(value.root.name || value.root.type || '结构');
-  const list = Array.isArray(value)
-    ? value
-    : (value && (value.nodes || value.children || value.tree || value.body)) || (value && value.root ? [value.root] : []);
-  const seen = new Map();
-  const walk = (node, depth, parentPath, idx) => {
-    if (node == null) return;
-    if (typeof node !== 'object') {
-      const name = String(node);
-      const path = `${parentPath ? parentPath + '/' : ''}${name}[${idx}]`;
-      entries.push({ name, path, depth, type: 'node', kind: '', value: '', ext: '', size: 0, flag: '' });
-      return;
-    }
-    const explicit = node.name ?? node.label;
-    const type = node.type ?? node.kind;
-    const name = String(explicit ?? type ?? 'node');
-    // 名字就是类型时不重复一枚 kind 徽标。
-    const kind = explicit != null && type ? String(type) : '';
-    const rawValue = node.value ?? node.operator ?? node.text ?? '';
-    const valueText = rawValue === '' || rawValue == null ? '' : String(rawValue);
-    const path = `${parentPath ? parentPath + '/' : ''}${name}[${idx}]`;
-    const n = (seen.get(path) || 0) + 1;
-    seen.set(path, n);
-    const unique = n > 1 ? `${path}#${n}` : path;
-    entries.push({ name, path: unique, depth, type: 'node', kind, value: valueText, ext: '', size: 0, flag: '' });
-    const kids = node.children || node.nodes || node.body;
-    if (Array.isArray(kids)) kids.forEach((child, i) => walk(child, depth + 1, unique, i));
-  };
-  if (Array.isArray(list)) list.forEach((n, i) => walk(n, 0, '', i));
-  return { root, entries, total: entries.length, truncated: false };
-}
-
 export class VkTree extends VkElement {
   static watchSource = true;
   static renderedRoot = '.vk-tree';
@@ -416,7 +486,7 @@ export class VkTree extends VkElement {
     if (tree) {
       try {
         const data = JSON.parse(tree.textContent);
-        if (data && (Array.isArray(data.entries) || data.json !== undefined)) this._raw = data;
+        if (data && Array.isArray(data.entries)) this._raw = data;
       } catch {
         /* 损坏的树数据按缺失处理 */
       }
@@ -471,34 +541,50 @@ export class VkTree extends VkElement {
     });
   }
 
+  onAttr(name) {
+    if (name === 'collapsed') this._fold = null;
+  }
+
+  /** 目录行点一下就能开合：箭头不是装饰。 */
+  _toggleFrom(target) {
+    const row = target?.closest?.('.vk-tree-row[data-dir="1"]');
+    if (!row || !this.contains(row)) return false;
+    const path = row.dataset.nodePath;
+    if (!path) return false;
+    if (!this._fold) this._fold = new Set();
+    if (this._fold.has(path)) this._fold.delete(path);
+    else this._fold.add(path);
+    this.paint();
+    return true;
+  }
+
   render() {
-    const variant = this.getAttribute('variant') || 'files';
-    const tree = this._raw?.json !== undefined ? jsonEntries(this._raw.json) : this._raw;
+    const tree = this._raw;
     const title = this.getAttribute('title') || '';
     const current = this.getAttribute('active') || '';
     const maxDepth = this.hasAttribute('depth')
       ? Math.min(8, Math.max(0, parseInt(this.getAttribute('depth'), 10) || 0))
       : 4;
-    const allEntries = (tree?.entries || (variant === 'files' ? this._inlineEntries() : [])).filter(
+    const allEntries = (tree?.entries || this._inlineEntries()).filter(
       (entry) => !Number.isFinite(maxDepth) || entry.depth <= maxDepth
     );
-    const fold = new Set(
-      (this.getAttribute('collapsed') || '')
-        .split(',')
-        .map((s) => s.trim().replace(/\/+$/, ''))
-        .filter(Boolean)
-    );
-    const isNode = variant !== 'files';
+    if (!this._fold) {
+      this._fold = new Set(
+        (this.getAttribute('collapsed') || '')
+          .split(',')
+          .map((s) => s.trim().replace(/\/+$/, ''))
+          .filter(Boolean)
+      );
+    }
+    const fold = this._fold;
     const entries = allEntries.filter((entry) => ![...fold].some((dir) => entry.path.startsWith(dir + '/')));
-    const files = allEntries.filter((e) => e.type !== 'dir' && e.type !== 'node').length;
+    const files = allEntries.filter((e) => e.type === 'file').length;
     const dirs = allEntries.filter((e) => e.type === 'dir').length;
-    const branches = allEntries.filter(
-      (e) => e.type === 'dir' || (isNode && allEntries.some((o) => o.path.startsWith(e.path + '/')))
-    ).length;
+    const branches = allEntries.filter((e) => e.type === 'dir').length;
     const leaves = allEntries.length - branches;
     const root = tree?.root || '';
     const truncated = !!tree?.truncated;
-    const limit = this.hasAttribute('limit') ? Math.min(500, Math.max(1, parseInt(this.getAttribute('limit'), 10) || 1)) : isNode ? 24 : 14;
+    const limit = this.hasAttribute('limit') ? Math.min(500, Math.max(1, parseInt(this.getAttribute('limit'), 10) || 1)) : 14;
     const top = entries.filter((e) => e.depth === 0);
     let shownTop = top.slice(0, limit);
     if (current) {
@@ -528,25 +614,23 @@ export class VkTree extends VkElement {
     const renderNode = (node) => {
       const entry = node.entry;
       const isDir = entry.type === 'dir';
-      const isBranch = isDir || (isNode && node.children.length > 0);
+      const isBranch = isDir;
       const name = entry.name;
-      const icon = isNode ? 'braces' : isDir ? 'folder' : Object.hasOwn(FILE_ICON, entry.ext) ? FILE_ICON[entry.ext] : 'file';
+      const icon = isDir ? 'folder' : Object.hasOwn(FILE_ICON, entry.ext) ? FILE_ICON[entry.ext] : 'file';
       const flag = entry.flag || '';
       const now = current && (entry.path === current || entry.name === current);
       const collapsed = isBranch && fold.has(entry.path);
       const allDesc = isBranch ? allEntries.filter((e) => e.path.startsWith(entry.path + '/')).length : 0;
       const hasChild = node.children.length > 0;
-      const row = `<div class="vk-tree-row" data-dir="${isBranch ? '1' : '0'}" data-node="${isNode ? '1' : '0'}" data-depth="${entry.depth}" data-ext="${esc(entry.ext || '')}"${
+      const row = `<div class="vk-tree-row" data-dir="${isBranch ? '1' : '0'}" data-node-path="${esc(entry.path || name)}" data-depth="${entry.depth}" data-ext="${esc(entry.ext || '')}"${
         entry.kind ? ` data-kind="${esc(entry.kind)}"` : ''
       }${flag ? ` data-flag="${flag}"` : ''}${now ? ' data-current="1"' : ''}${
         collapsed ? ' data-folded="1"' : ''
-      }${isBranch && !allDesc ? ' data-empty="1"' : ''} style="--depth:${entry.depth}">
+      }${isBranch && !allDesc ? ' data-empty="1"' : ''} style="--depth:${entry.depth}"${isBranch ? ` role="button" tabindex="0" aria-expanded="${!collapsed}"` : ''}>
         <span class="vk-tree-guides" aria-hidden="true"></span>
         ${isBranch ? '<span class="vk-tree-chevron" aria-hidden="true"></span>' : '<span class="vk-tree-chevron is-file" aria-hidden="true"></span>'}
         <svg class="vk-ic" viewBox="0 0 24 24" aria-hidden="true">${iconOf(icon)}</svg>
         <span class="vk-tree-name" data-ellipsis title="${esc(entry.path || name)}">${esc(name)}</span>
-        ${entry.kind ? `<span class="vk-tree-kind">${esc(entry.kind)}</span>` : ''}
-        ${entry.value ? `<span class="vk-tree-val">${esc(entry.value)}</span>` : ''}
         ${flag === 'add' ? '<span class="vk-tree-tag">新增</span>' : flag === 'mod' ? '<span class="vk-tree-tag">修改</span>' : flag === 'del' ? '<span class="vk-tree-tag">删除</span>' : ''}
         ${entry.size ? `<span class="vk-tree-size">${bytes(entry.size)}</span>` : ''}
       </div>`;
@@ -557,18 +641,19 @@ export class VkTree extends VkElement {
       return `<li class="vk-tree-item" role="listitem"${now ? ' aria-current="true"' : ''}>${row}${folded}${children}</li>`;
     };
 
-    const label = title || root || (variant === 'ast' ? '语法树' : variant === 'generic' ? '结构' : '文件树');
-    const meta =
-      this.getAttribute('summary') === 'none'
-        ? ''
-        : variant === 'ast'
-          ? `${allEntries.length} 节点 · ${leaves} 叶`
-          : variant === 'generic'
-            ? `${allEntries.length} 项`
-            : `${files} 文件 · ${dirs} 目录`;
+    if (!this._treeBound) {
+      this._treeBound = true;
+      this.addEventListener('click', (e) => this._toggleFrom(e.target));
+      this.addEventListener('keydown', (e) => {
+        if ((e.key === 'Enter' || e.key === ' ') && this._toggleFrom(e.target)) e.preventDefault();
+      });
+    }
+
+    const label = title || root || '文件树';
+    const meta = this.getAttribute('summary') === 'none' ? '' : `${files} 文件 · ${dirs} 目录`;
 
     this.innerHTML = `
-      <div class="vk-tree" data-variant="${esc(variant)}">
+      <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}">
         <div class="vk-tree-hd" data-vk-part="tree-hd">
           <span class="vk-tree-title">${esc(label)}</span>
           ${meta ? `<span class="vk-tree-meta">${meta}</span>` : ''}
@@ -620,7 +705,7 @@ export class VkBytes extends VkElement {
         if (!m) continue;
         const a = parseInt(m[1], 10);
         const b = parseInt(m[2] || m[1], 10);
-        for (let i = a; i <= b; i++) liveHl.add(d.start + i - 1);
+        for (let i = a; i <= b; i++) liveHl.add(d.start + i);
       }
     }
     const rows = [];
@@ -631,7 +716,7 @@ export class VkBytes extends VkElement {
       const hex = chunk
         .map((b, i) => {
           const cls = group > 1 && i % group === 0 ? ' class="is-group"' : '';
-          return `<i${cls} data-hl="${flags[i] ? '1' : '0'}">${esc(b)}</i>`;
+          return `<i${cls} data-byte="${at + i}" data-hl="${flags[i] ? '1' : '0'}">${esc(b)}</i>`;
         })
         .join('');
       const text = chunk.map((h) => {
@@ -647,7 +732,7 @@ export class VkBytes extends VkElement {
     const rowsHtml = rows.join('');
     this.innerHTML = win({
       surface: 'paper',
-      chrome: 'min',
+      chrome: this.getAttribute('chrome') === 'none' ? 'none' : 'min',
       head: fileHead(file, 'bytes', range),
       inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
     });
@@ -713,7 +798,7 @@ export class VkFrames extends VkElement {
       this.getAttribute('summary') === 'none'
         ? ''
         : `<div class="vk-frames-hd" data-vk-part="hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · ${grows === 'up' ? '向上' : '向下'}生长</span></div>`;
-    this.innerHTML = `<div class="vk-frames" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}" data-summary="${esc(this.getAttribute('summary') || 'all')}">
+    this.innerHTML = `<div class="vk-frames" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}" data-summary="${esc(this.getAttribute('summary') || 'all')}">
       ${head}
       <div class="vk-frames-bd" data-vk-part="bd">${body}</div>
     </div>`;
@@ -782,7 +867,7 @@ export class VkMath extends VkElement {
  * 内存格：一行连续的格子，每个格子有标签、值、地址。
  *   <vk-cells values="h|e|l|l|o|\0" labels="s[0]|s[1]|s[2]|s[3]|s[4]|\\0"
  *             addr="0x7ffc" flag="6"></vk-cells>
- * 越界的那一格用 flag（1-based）+ 红色"越界"角标。
+ * 越界的那一格用 flag（格序号，0 起）+ 红色"越界"角标；mark 同样是格序号，不是字节偏移。
  */
 export class VkCells extends VkElement {
   static watchSource = true;
@@ -803,18 +888,43 @@ export class VkCells extends VkElement {
       values = (this._src || '').split(/\s+/).filter(Boolean);
     }
     const labels = parse('labels');
+    const spansRaw = parse('spans');
+    const spans = values.map((_, i) => {
+      const n = parseInt(spansRaw[i], 10);
+      return Number.isFinite(n) && n >= 1 && n <= 8 ? n : 1;
+    });
+    const total = spans.reduce((a, b) => a + b, 0);
+    const idxSet = (name) => {
+      const out = new Set();
+      for (const part of (this.getAttribute(name) || '').split(',')) {
+        const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+        if (!m) continue;
+        const a = parseInt(m[1], 10);
+        const b = m[2] ? parseInt(m[2], 10) : a;
+        for (let i = a; i <= b; i++) if (i >= 0 && i < values.length) out.add(i);
+      }
+      return out;
+    };
+    const padSet = idxSet('pad');
+    const markSet = idxSet('mark');
     const addr = this.getAttribute('addr') || '';
-    let flag = parseInt(this.getAttribute('flag') || '0', 10);
-    if (!Number.isFinite(flag) || flag < 1) flag = 0;
-    else if (flag > values.length) {
-      this._warnOnce('flag', `的 flag="${flag}" 超过 ${values.length} 格，按最后一格处理`);
-      flag = values.length;
+    let flag = parseInt(this.getAttribute('flag') || '-1', 10);
+    if (!Number.isFinite(flag) || flag < 0) flag = -1;
+    else if (flag >= values.length) {
+      this._warnOnce('flag', `的 flag="${flag}" 超过 ${values.length - 1}，按最后一格处理`);
+      flag = values.length - 1;
     }
-    let cols = parseInt(this.getAttribute('cols') || String(values.length), 10);
-    if (!Number.isFinite(cols) || cols < 1) cols = values.length;
-    if (cols > values.length) {
-      this._warnOnce('cols', `的 cols="${cols}" 超过 ${values.length} 格，按 ${values.length} 列处理`);
-      cols = values.length;
+    const maxSpan = Math.max(...spans);
+    let cols = parseInt(this.getAttribute('cols') || String(total), 10);
+    if (!Number.isFinite(cols) || cols < 1) cols = total;
+    if (cols > total) {
+      this._warnOnce('cols', `的 cols="${cols}" 超过 ${total} 格，按 ${total} 列处理`);
+      cols = total;
+    }
+    // 跨格比列数还宽时，隐含轨道会静默出现：抬到 maxSpan 并说一声。
+    if (cols < maxSpan) {
+      this._warnOnce('cols', `的 cols="${cols}" 小于最宽的跨格 ${maxSpan}，按 ${maxSpan} 列处理`);
+      cols = maxSpan;
     }
     // 视频帧不做横向滚动：最多 8 列，超出自动换行。
     if (cols > 8) {
@@ -831,14 +941,23 @@ export class VkCells extends VkElement {
     const pad = addr && addr.startsWith('0x') ? Math.max(4, addr.length - 2) : 0;
     const fmtAddr = (n) => (Number.isFinite(n) ? '0x' + n.toString(16).padStart(pad, '0') : '');
 
+    // 地址按"这个字段从第几个字节开始"算：跨格字段后面的字段要跳过它占的宽度。
+    const offsets = [];
+    let acc = 0;
+    for (let i = 0; i < values.length; i++) {
+      offsets.push(acc);
+      acc += spans[i];
+    }
     const cells = values
       .map((v, i) => {
-        const isFlag = flag === i + 1;
+        const isFlag = flag === i;
         const label = isFlag ? `${labels[i] || `[${i}]`} · 越界` : labels[i];
-        return `<div class="vk-cell" data-vk-part="cell"${isFlag ? ' data-flag="1"' : ''} role="listitem">
-          ${label ? `<span class="vk-cell-l">${esc(label)}</span>` : ''}
+        const span = spans[i];
+        const marks = `${isFlag ? ' data-flag="1"' : ''}${padSet.has(i) ? ' data-pad="1"' : ''}${markSet.has(i) ? ' data-mark="1"' : ''}`;
+        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
+          ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(v)}</span>
-          ${addr ? `<span class="vk-cell-a">${fmtAddr(base + i * stride)}</span>` : ''}
+          ${addr ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + offsets[i] * stride)}</span>` : ''}
         </div>`;
       })
       .join('');
@@ -879,6 +998,7 @@ export class VkSteps extends VkElement {
       const state = n < current ? 'done' : n === current ? 'current' : 'todo';
       const step = document.createElement('li');
       step.className = 'vk-step';
+      step.dataset.step = String(i);
       step.dataset.state = state;
       if (state === 'current') step.setAttribute('aria-current', 'step');
       for (const [name, value] of it.attrs || []) {
@@ -905,12 +1025,106 @@ export class VkSteps extends VkElement {
   }
 }
 
+/* ---------------------------------------------------------------- quote */
+
+export class VkQuote extends VkElement {
+  static watchSource = true;
+  static slot = true;
+  static slotHost = '.vk-quote-t';
+  static renderedRoot = '.vk-quote';
+
+  capture() {}
+
+  render() {
+    if (!this._shell) {
+      const body = takeSlot(this);
+      this.innerHTML = '<blockquote class="vk-quote"><div class="vk-quote-t"></div><cite class="vk-quote-src" data-meta></cite></blockquote>';
+      this._shell = this.querySelector('.vk-quote');
+      this._t = this.querySelector('.vk-quote-t');
+      this._src = this.querySelector('.vk-quote-src');
+      fillSlot(this._t, body);
+    }
+    const source = this.getAttribute('source') || '';
+    const author = this.getAttribute('author') || '';
+    const origin = source && author ? `${source} · ${author}` : source || author;
+    this._src.textContent = origin ? `— ${origin}` : '';
+    this._src.style.display = origin ? '' : 'none';
+  }
+}
+
+/* ----------------------------------------------------------------- bits */
+
+export class VkBits extends VkElement {
+  static watchSource = true;
+  static renderedRoot = '.vk-bits-wrap';
+
+  render() {
+    const raw = (this.getAttribute('value') || '').replace(/\s+/g, '');
+    const bits = raw.split('').filter((c) => c === '0' || c === '1');
+    if (!bits.length) {
+      this._warnOnce('value', '缺少 value="1010…"，位栏没有内容');
+      this.innerHTML = '<div class="vk-bits-wrap"><div class="vk-bits"><span class="vk-bit">?</span></div></div>';
+      return;
+    }
+    const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
+    const sign = this.hasAttribute('sign');
+    const label = this.getAttribute('label') || '';
+    const cols = bits
+      .map((b, i) => {
+        const n = index === 'none' ? null : index === '0-7' ? i : bits.length - 1 - i;
+        const isSign = sign && i === 0;
+        return `<div class="vk-bit-col">${n === null ? '' : `<span class="vk-bit-i">${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}">${b}</span></div>`;
+      })
+      .join('');
+    this.innerHTML = `<div class="vk-bits-wrap"><div class="vk-bits">${cols}</div>${label ? `<p class="vk-bits-label" data-meta>${esc(label)}</p>` : ''}</div>`;
+  }
+}
+
+/* ----------------------------------------------------------------- bars */
+
+export class VkBars extends VkElement {
+  static watchSource = true;
+  static renderedRoot = '.vk-bars';
+
+  capture() {
+    this._rows = [...this.querySelectorAll(':scope > i')].map((el) => ({
+      label: el.getAttribute('label') || el.textContent.trim(),
+      value: Number(el.getAttribute('value') ?? el.textContent.trim()),
+    }));
+    if (this._rows.some((r) => !Number.isFinite(r.value))) {
+      this._warnOnce('value', '子节点 <i> 的 value 必须是数字');
+      this._rows = this._rows.filter((r) => Number.isFinite(r.value));
+    }
+  }
+
+  render() {
+    const rows = this._rows || [];
+    if (!rows.length) {
+      this.innerHTML = '<div class="vk-bars"><span class="vk-bar-l">（没有条目）</span></div>';
+      return;
+    }
+    const attrMax = Number(this.getAttribute('max'));
+    const max = Number.isFinite(attrMax) && attrMax > 0 ? attrMax : Math.max(...rows.map((r) => r.value), 1);
+    const unit = this.getAttribute('unit') || '';
+    const log = this.getAttribute('scale') === 'log';
+    const denom = log ? Math.log1p(max) : max;
+    const items = rows
+      .map((r) => {
+        const raw = log ? Math.log1p(Math.max(0, r.value)) : Math.max(0, r.value);
+        const pct = denom > 0 ? Math.max(0, Math.min(1, raw / denom)) * 100 : 0;
+        return `<div class="vk-bar"><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t"><span class="vk-bar-fill" style="width:${pct.toFixed(2)}%"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
+      })
+      .join('');
+    this.innerHTML = `<div class="vk-bars">${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;
+  }
+}
+
 export function defineComponents() {
   define('vk-title', VkTitle);
   define('vk-list', VkList);
   define('vk-callout', VkCallout);
   define('vk-figure', VkFigure);
-  define('vk-browser', VkBrowser);
+  define('vk-window', VkWindow);
   define('vk-tree', VkTree);
   define('vk-keys', VkKeys);
   define('vk-math', VkMath);
@@ -918,6 +1132,9 @@ export function defineComponents() {
   define('vk-bytes', VkBytes);
   define('vk-frames', VkFrames);
   define('vk-steps', VkSteps);
+  define('vk-quote', VkQuote);
+  define('vk-bits', VkBits);
+  define('vk-bars', VkBars);
   define('vk-tag', VkTag);
   define('vk-table', VkTable);
 }

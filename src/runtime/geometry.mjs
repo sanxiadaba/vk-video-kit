@@ -15,19 +15,6 @@ export function visualToLocal(r, hr, layoutWidth = hr.width) {
 }
 
 /** 包含块：最近的定位祖先，连同它的缩放比 */
-export function frameOf(host) {
-  const el = host.offsetParent || document.body;
-  const cr = el.getBoundingClientRect();
-  const layoutW = el.offsetWidth || el.clientWidth || 1;
-  return {
-    el,
-    rect: cr,
-    scale: layoutW ? cr.width / layoutW : 1,
-    ox: el.clientLeft || 0,
-    oy: el.clientTop || 0,
-  };
-}
-
 /** 盒子上某个边的锚点 */
 export function pointOn(b, side, off = 0) {
   switch (side) {

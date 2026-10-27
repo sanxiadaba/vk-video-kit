@@ -2,7 +2,7 @@
  * 画面截图 —— 给人看的，不是基线。
  *
  *   node tools/shot.mjs                  # _site/specimens/*.html → _site/shots/
- *   node tools/shot.mjs _site/frames     # 8 个成品帧
+ *   node tools/shot.mjs _site/specimens   # 契约宿主
  *   node tools/shot.mjs --force          # 忽略时间戳，全部重拍
  *
  * 只有 1920×1080 一个画布；手机横屏由播放端缩放。截图读 _site/ 里构建好的

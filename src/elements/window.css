@@ -206,3 +206,22 @@
 .vk-win[data-chrome='none'] > .vk-ft {
   display: none;
 }
+
+/* ------------------------------------------------------------ vk-window */
+/* 窗的公开标签：与 code / term / diff 共用同一个 .vk-win，不嵌套。 */
+vk-window { display: block; }
+
+.vk-win-tag { overflow: hidden; border-top: 0 solid transparent; }
+.vk-win-tag[data-tone] { border-top-width: 4px; }
+.vk-win-tag[data-tone='accent'] { border-top-color: var(--vk-focus); }
+.vk-win-tag[data-tone='ok'] { border-top-color: var(--vk-ok); }
+.vk-win-tag[data-tone='warn'] { border-top-color: var(--vk-warn); }
+.vk-win-tag[data-tone='err'] { border-top-color: var(--vk-err); }
+
+.vk-win-tag .vk-win-bd { padding: var(--vk-s5); }
+.vk-win-tag[data-pad='none'] .vk-win-bd { padding: 0; }
+.vk-win-tag[data-pad='sm'] .vk-win-bd { padding: var(--vk-s3); }
+.vk-win-tag[data-pad='lg'] .vk-win-bd { padding: var(--vk-s7); }
+
+/* 窗头按 chrome 变形：min / dialog 显示标题，browser 显示地址栏。 */
+.vk-win-tag[data-chrome='browser'] > .vk-hd .vk-file { display: none; }

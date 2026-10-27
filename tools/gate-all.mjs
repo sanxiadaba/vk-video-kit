@@ -19,7 +19,7 @@ if (names.length) {
     process.exitCode = code ?? (signal ? 1 : 0);
   });
 } else {
-  const raw = process.env.GATE_SHARDS || '4';
+  const raw = process.env.GATE_SHARDS || '2';
   const n = Number(raw);
   if (!Number.isInteger(n) || n < 1 || n > 16) {
     console.error(`GATE_SHARDS 必须是 1..16 的整数，收到 ${JSON.stringify(raw)}`);

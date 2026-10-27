@@ -3,9 +3,9 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 5-layer visual language of 31 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, and the visual system is desktop-only with a 44px minimum type size. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 5-layer visual language of 34 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, and the visual system is desktop-only with a 44px minimum type size. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一页能直接录进视频的画面。**31 个标签、5 层、1920×1080，桌面 only。**
+写一页能直接录进视频的画面。**34 个标签、5 层、1920×1080，桌面 only。**
 
 ![vk 代码窗](docs/cover.png)
 
@@ -14,16 +14,16 @@
 - **分则独立。** 每个标签离开兄弟节点也能成立：不伪造内容，不依赖父级上下文，不要求作者补一次性 CSS。
 - **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条 44px 字号地板。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、栈帧、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
-- **静止即成品。** 没有播放器，也没有时间轴。`data-reveal` / `data-type` 只描述“动起来是什么样”，什么时候播由编排层决定。
+- **静止即成品。** 没有播放器、没有时间轴、没有动效。输出就是一张静帧，动效在剪辑层做。
 - **展示站也是库。** 标本册的导航、镜头、变体控件、解剖标注全部由 vk 组件构成；帧外只有十几行灯箱 CSS。
 
 ## 五层
 
 | 层 | 数量 | 标签 |
 |---|---|---|
-| L1 原子 | 6 | `vk-box` `vk-text` `vk-icon` `vk-img` `vk-rule` `vk-mark` |
+| L1 原子 | 7 | `vk-box` `vk-text` `vk-icon` `vk-img` `vk-rule` `vk-mark` `vk-window` |
 | L2 排布 | 4 | `vk-stack` `vk-row` `vk-grid` `vk-canvas` |
-| L3 器械 | 17 | `vk-title` `vk-list` `vk-tag` `vk-callout` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-figure` `vk-browser` `vk-tree` `vk-keys` `vk-cells` `vk-bytes` `vk-frames` `vk-steps` |
+| L3 器械 | 19 | `vk-title` `vk-list` `vk-tag` `vk-callout` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-figure` `vk-tree` `vk-keys` `vk-cells` `vk-bytes` `vk-frames` `vk-steps` `vk-quote` `vk-bits` `vk-bars` |
 | L4 关系 | 3 | `vk-edge` `vk-annotate` `vk-note` |
 | L5 页面 | 1 | `vk-page` |
 
@@ -31,9 +31,9 @@ L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、�
 
 ## 标本册
 
-`npm run build` 生成的不是组件文档，而是一本 31 页的标本册：
+`npm run build` 生成的不是组件文档，而是一本 34 页的标本册：
 
-- **索引**：浅色 docs 外壳（280 全局 sidebar + 64 top bar）；31 个组件总览、搜索、层筛选，点卡进页。
+- **索引**：浅色 docs 外壳（280 全局 sidebar + 64 top bar）；34 个组件总览、搜索、层筛选，点卡进页。
 - **每个组件一页**：顶栏是面包屑 + 五镜头 tabs；左侧 280 是全局组件导航；主区 1376 纸舞台；页脚是全部组件 / 上一页 / 下一页。
 - **五个镜头**（键盘 `1–5`）：
   1. **成品**：这个组件在真实讲解画面里的样子。
@@ -106,15 +106,19 @@ npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（�
 npm run specimens   # 只重生成标本册
 npm run verify      # 只读校验：生成物与源码不一致就失败
 npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
-npm test            # 全量（默认走缓存；VK_CHECK_CACHE=0 强制全跑）
+npm test            # 全量（约 13s；源码没变会跳过 build，默认走缓存）
+npm test -- --fast  # 只跑静态检查（不起浏览器）
 npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
-npm run gate        # 44px / 对比度 / 安全区 / 裁切 / console / 溢出
+npm run gate        # 44px / 对比度 / 安全区 / 裁切 / console / 溢出（默认只查成品镜头，约 12s）
+npm run gate:full   # 五个镜头全查（约 75s，改动展示站时才需要）
+npm run gate:visual # 预设像素差
 npm run links       # 站内链接门禁
 npm run pack:check  # 包体文件数 / 体积 / 白名单
 npm run shot -- _site/specimen/vk-code.html
+npx vk shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
 ```
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 31 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 34 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 
@@ -124,7 +128,7 @@ cli/      随包发布的 CLI：build / serve
 tools/    仅开发：registry 生成、scenes、标本册、契约、门禁
 site/     灯箱与显示引擎（showcase.css / showcase.js）
 code/     真实示例文件（含 .bin / .json）
-docs/     设计说明 + 生成的属性参考
+docs/     设计说明 + 给 AI 的作者手册 + 生成的属性参考
 tests/    纯函数单测与浏览器回归
 _site/    构建产物（gitignore）
 ```
@@ -140,3 +144,4 @@ _site/    构建产物（gitignore）
 ## 许可
 
 MIT。字体 OFL 1.1、Shiki MIT、KaTeX MIT、Lucide ISC，见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+
