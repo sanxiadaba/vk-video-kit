@@ -1,6 +1,6 @@
 {
   "name": "vk-video-kit",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "把内容做成画面单元：31 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
@@ -19,6 +19,7 @@
     "serve": "node cli/serve.mjs 8099 _site",
     "dev": "npm run build && node tools/dev.mjs",
     "shot": "node tools/shot.mjs",
+    "quick": "node tools/quick.mjs",
     "gate": "node tools/gate-all.mjs",
     "gate:visual": "node tools/gate-all.mjs --presets",
     "gate:one": "node tools/gate.mjs",

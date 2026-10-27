@@ -24,3 +24,5 @@ src/icons.core.generated.mjs
 .DS_Store
 Thumbs.db
 desktop.ini
+
+.vk-cache/

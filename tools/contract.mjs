@@ -16,6 +16,7 @@ import { TAGS, TAG_NAMES, isContent, isHidden } from '../src/registry.mjs';
 import { EFFECTS } from '../src/effects.mjs';
 import { diffSnap, effectHit, valuesFor } from './lib/contract-core.mjs';
 import { PROBES, EFFECT_OVERRIDES, VISUAL_EXEMPT, EFFECT_ANY, EFFECT_ANY_BUDGET, SHARED_VALUES, visualExemptReason } from './lib/contract-probes.mjs';
+import { cacheEnabled, cacheKey, isCached, markCached, pageHash, sharedHash } from './lib/check-cache.mjs';
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
 const shardArg = process.argv.find((a) => a.startsWith('--shard='));
@@ -77,6 +78,30 @@ if (shard) tags = tags.filter((_, idx) => idx % shard[1] === shard[0] - 1);
 if (!tags.length) {
   console.error(`没有匹配的标签：${only.join(' ') || '<全部>'}${shard ? `（shard ${shard[0]}/${shard[1]}）` : ''}`);
   process.exit(1);
+}
+
+/* ------------------------------------------------------------------ 缓存 */
+
+const cacheOn = cacheEnabled(process.argv.slice(2));
+const totalTags = tags.length;
+let cacheHits = 0;
+const cacheKeys = new Map();
+if (cacheOn) {
+  const shared = sharedHash(SITE);
+  tags = tags.filter((tag) => {
+    const rel = tag === 'vk-page' ? 'specimens/_host.html' : `specimens/${tag}.html`;
+    const k = cacheKey('contract', shared, pageHash(SITE, rel), tag, process.env.VK_INJECT_CSS || '');
+    cacheKeys.set(tag, k);
+    if (isCached(k)) {
+      cacheHits++;
+      return false;
+    }
+    return true;
+  });
+}
+if (!tags.length) {
+  console.log(`契约通过：${totalTags} 个标签，${cacheHits} 个缓存命中，未启动浏览器。`);
+  process.exit(0);
 }
 
 const STYLE_PROPS = [
@@ -386,6 +411,7 @@ try {
       failures.push(`${tag}: 不在 registry`);
       continue;
     }
+    const failedBefore = failures.length;
     await open(tag);
     const attrs = TAGS[tag].attrs || {};
     const original = await baseAttrs(tag);
@@ -490,6 +516,7 @@ try {
       checked.push({ tag, name: `state=${s}` });
       console.log(`  ✓ state=${s}${diffs.length ? `  ${diffs.length} 项变化` : ''}`);
     }
+    if (cacheOn && failures.length === failedBefore) markCached(cacheKeys.get(tag));
   }
   if (!checked.length) failures.push('契约没有检查任何属性：0 个对象不算通过');
 } catch (e) {
@@ -505,5 +532,7 @@ if (failures.length) {
   for (const f of failures) console.log('  ✗ ' + f);
   process.exitCode = 1;
 } else {
-  console.log(`\n契约通过：${checked.length} 个属性 / state，${tags.length} 个标签。`);
+  console.log(
+    `\n契约通过：${checked.length} 个属性 / state，${tags.length + cacheHits}/${totalTags} 个标签${cacheHits ? `（${cacheHits} 个缓存命中）` : ''}。`
+  );
 }

@@ -24,6 +24,7 @@ import fs from 'node:fs';
 import { chromium } from 'playwright-core';
 import { PNG } from 'pngjs';
 import { startServer } from '../cli/serve.mjs';
+import { cacheEnabled, cacheKey, isCached, markCached, pageHash, sharedHash } from './lib/check-cache.mjs';
 import { SITE } from './lib/paths.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { TAGS } from '../src/registry.mjs';
@@ -111,6 +112,29 @@ if (shardArg) {
 if (!list.length) {
   console.error(`没有匹配的检查对象：${only.join(' ')}`);
   process.exit(1);
+}
+
+/* ------------------------------------------------------------------ 缓存 */
+
+const cacheOn = cacheEnabled(args);
+const total = list.length;
+let cacheHits = 0;
+const cacheKeys = new Map();
+if (cacheOn) {
+  const shared = sharedHash(SITE);
+  list = list.filter((t) => {
+    const k = cacheKey('gate', shared, pageHash(SITE, t.path), t.label, checkPresets ? 'presets' : 'plain');
+    cacheKeys.set(t.label, k);
+    if (isCached(k)) {
+      cacheHits++;
+      return false;
+    }
+    return true;
+  });
+}
+if (!list.length) {
+  console.log(`门禁全绿（${total}/${total} 个检查对象，${cacheHits} 个缓存命中，未启动浏览器）。`);
+  process.exit(0);
 }
 
 /* ------------------------------------------------------------------ 启动 */
@@ -446,6 +470,7 @@ let checked = 0;
 for (const target of list) {
   if (!(await open(target))) continue;
   checked++;
+  const failedBefore = failed.length;
 
   const { issues, special, page: pageSize } = await inspect();
   const fonts = await fontIssues();
@@ -490,6 +515,7 @@ for (const target of list) {
 
   const bad = issues.length + special.length;
   console.log(`${bad ? '✗' : '✓'} ${target.label}${bad ? `  ${bad} 个画面问题` : ''}  ${pageSize[0]}×${pageSize[1]}`);
+  if (cacheOn && failed.length === failedBefore) markCached(cacheKeys.get(target.label));
 }
 
 await browser.close();
@@ -512,5 +538,8 @@ if (!checked) {
   for (const f of failed) console.log('  ✗ ' + f);
   process.exitCode = 1;
 } else {
-  console.log(`\n门禁全绿（${checked}/${targets.length} 个检查对象，预设像素差${checkPresets ? '已跑' : '已跳过'}）。`);
+  const seen = checked + cacheHits;
+  console.log(
+    `\n门禁全绿（${seen}/${total} 个检查对象${cacheHits ? `，${cacheHits} 个缓存命中` : ''}，预设像素差${checkPresets ? '已跑' : '已跳过'}）。`
+  );
 }

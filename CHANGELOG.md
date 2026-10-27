@@ -1,5 +1,15 @@
 # Changelog
 
+## 3.0.1
+
+开发闭环提速 + 语法样片。站点本身的视觉不变。
+
+- **单组件闭环** `npm run quick -- vk-code`：build + 该标签 5 个镜头门禁 + 一张截图，约 8s；不再为一个视觉改动跑全量。
+- **检查缓存**：`.vk-cache/`，键 = 共享产物（vk/、dist/、assets/、showcase.css/js、检查工具）+ 页面 + 对象名。门禁/契约第二次 no-op 从 60s 级降到 2s 级；`VK_CHECK_CACHE=0` 可强制全跑。失败不写缓存。
+- **test-all 并行**：contract / gate / browser / unit 四组同时跑；全量首次 80s，缓存后 36s（build 仍占大头）。
+- **dev 重建**：`npm run dev` 现在 watch `src` / `site` / 构建工具，保存即重 build；不再手动 build。
+- **语法样片**：`docs/syntax-lab.png` 给出 A–E 五个度（墨骨 / 钴蓝关键字 / 钴蓝函数 / GitHub Light / One Light），站点暂不改色，等选择。
+
 ## 3.0.0
 
 浅色产品文档外壳 + 全组件复审。把“深墨书脊 + 白纸舞台”换成 280 侧栏 + 64 顶栏的 docs shell。

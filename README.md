@@ -101,11 +101,12 @@ npx vk serve 8099        # 开发服务器；改 .c 刷新即见
 
 ```bash
 npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata
-npm run dev         # build 后启动 dev server（8099，服务 _site/）
+npm run dev         # build + watch 重建 + dev server（8099）
+npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（约 8s）
 npm run specimens   # 只重生成标本册
 npm run verify      # 只读校验：生成物与源码不一致就失败
 npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
-npm test            # 全量：build + 静态 + 契约 + 渲染门禁 + 浏览器回归 + 单测
+npm test            # 全量（默认走缓存；VK_CHECK_CACHE=0 强制全跑）
 npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
 npm run gate        # 44px / 对比度 / 安全区 / 裁切 / console / 溢出
 npm run links       # 站内链接门禁
@@ -113,7 +114,7 @@ npm run pack:check  # 包体文件数 / 体积 / 白名单
 npm run shot -- _site/specimen/vk-code.html
 ```
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 31 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 31 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 

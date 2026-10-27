@@ -70,6 +70,62 @@ try {
   /* 平台不支持 recursive 就算了，watchFile 已经覆盖固定文件 */
 }
 
+/* ------------------------------------------------------------------ 重建 */
+
+const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+let building = false;
+let queued = null;
+let buildTimer = 0;
+
+function rebuild(reason) {
+  if (building) {
+    queued = reason;
+    return;
+  }
+  building = true;
+  const t = Date.now();
+  console.log(`[dev] build ← ${reason}`);
+  const b = spawn(npmCmd, ['run', 'build'], {
+    cwd: ROOT,
+    stdio: 'inherit',
+    shell: process.platform === 'win32',
+  });
+  b.on('exit', (code) => {
+    building = false;
+    console.log(`[dev] build ${code ? '✗' : '✓'} ${((Date.now() - t) / 1000).toFixed(1)}s`);
+    if (queued) {
+      const next = queued;
+      queued = null;
+      rebuild(next);
+    }
+  });
+}
+
+function scheduleBuild(reason) {
+  if (buildTimer) clearTimeout(buildTimer);
+  buildTimer = setTimeout(() => {
+    buildTimer = 0;
+    rebuild(reason);
+  }, 180);
+}
+
+function watchTree(rel, filter) {
+  try {
+    fs.watch(path.join(ROOT, rel), { recursive: true }, (_e, file) => {
+      if (!file || file.includes('.tmp') || file.startsWith('.')) return;
+      if (filter && !filter(file)) return;
+      scheduleBuild(`${rel}/${file}`);
+    });
+  } catch {
+    /* 平台不支持 recursive：保留固定文件 watch */
+  }
+}
+
+watchTree('src', (f) => !/(icons|icons\\.core)\\.generated/.test(f));
+watchTree('site');
+watchTree('tools', (f) => /(specimens|scenes|gen|build|assemble|icons|fonts|katex)\.mjs$/.test(f));
+watchTree('cli', (f) => /(build|transform|highlight)/.test(f));
+
 function stop() {
   if (child) child.kill();
   child = null;

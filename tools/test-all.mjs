@@ -142,28 +142,19 @@ if (fast) {
   }
 
   if (!aborted) {
-    // 契约与门禁同时跑，各自分片；两套都是只读浏览器任务，互不共享页面。
+    // 契约、门禁、浏览器回归、纯函数单测一起跑：四组都是只读，互不共享页面。
+    // 门禁/契约各自分片；浏览器回归自己一个进程；不再串行等待。
     const wave = await pool(
       [
         () => run('contract', [process.execPath, 'tools/contract-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
         () => run('gate', [process.execPath, 'tools/gate-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
+        () => run('browser', browserTest, { timeoutMs: 600000, env: browserEnv }),
+        () => run('unit', nodeTest, { timeoutMs: 120000 }),
       ],
-      2
+      4
     );
     if (wave) aborted = true;
   }
-
-  if (!aborted) {
-    // 浏览器回归测试单独跑，一个进程内并发 1，避免和门禁抢内存。
-    const browser = await run('browser', browserTest, { timeoutMs: 600000, env: browserEnv });
-    if (browser.code !== 0) aborted = true;
-  }
-}
-
-// 纯函数单测最后跑；全量里即使前面失败也留着结果便于诊断（fast 已单独跑过）。
-if (!fast && !aborted) {
-  const unit = await run('unit', nodeTest, { timeoutMs: 120000 });
-  if (unit.code !== 0) aborted = true;
 }
 
 console.log('');
