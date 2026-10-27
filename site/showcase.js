@@ -197,35 +197,45 @@
     vk()?.layout?.();
   }
 
-  /* --------------------------------------------------------- 索引搜索 */
+  /* ------------------------------------------------------ 全局组件搜索 */
 
-  const indexSearch = $('[data-index-search]');
-  if (indexSearch) {
+  const sideSearch = $('[data-side-search]');
+  if (sideSearch) {
     const indexCells = $$('[data-index-cell]');
+    const sideLinks = $$('[data-side-link]');
+    const sideGroups = $$('[data-side-group]');
     const indexCount = $('[data-index-count]');
     const indexEmpty = $('[data-index-empty]');
     let indexLayer = 'all';
 
     const filterIndex = () => {
-      const q = indexSearch.value.trim().toLowerCase();
+      const q = sideSearch.value.trim().toLowerCase();
+      const matches = (el) => !q || (el.dataset.search || '').toLowerCase().includes(q);
       let n = 0;
       for (const cell of indexCells) {
-        const ok = (indexLayer === 'all' || cell.dataset.layer === indexLayer)
-          && (!q || cell.dataset.search.toLowerCase().includes(q));
+        const ok = (indexLayer === 'all' || cell.dataset.layer === indexLayer) && matches(cell);
         cell.hidden = !ok;
         if (ok) n++;
       }
-      if (indexCount) indexCount.textContent = `${n} / ${indexCells.length}`;
+      for (const link of sideLinks) {
+        const ok = matches(link);
+        link.hidden = !ok;
+      }
+      for (const group of sideGroups) {
+        const links = [...group.querySelectorAll('[data-side-link]')];
+        if (links.length) group.hidden = links.every((a) => a.hidden);
+      }
+      if (indexCount && indexCells.length) indexCount.textContent = `${n} / ${indexCells.length}`;
       if (indexEmpty) indexEmpty.hidden = n !== 0;
       vk()?.layout?.();
     };
 
-    indexSearch.addEventListener('input', filterIndex);
-    indexSearch.addEventListener('keydown', (e) => {
+    sideSearch.addEventListener('input', filterIndex);
+    sideSearch.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
-        indexSearch.value = '';
+        sideSearch.value = '';
         filterIndex();
-        indexSearch.blur();
+        sideSearch.blur();
         e.stopPropagation();
       }
     });
@@ -248,6 +258,19 @@
       });
     }
     filterIndex();
+
+    // 让当前组件在侧栏里自动露出来，但不要把整个页面滚走。
+    const current = $('[data-side-link][aria-current="page"]');
+    if (current) {
+      requestAnimationFrame(() => {
+        const nav = $('[data-side-nav]');
+        if (!nav) return;
+        const top = current.offsetTop;
+        const bottom = top + current.offsetHeight;
+        if (top < nav.scrollTop) nav.scrollTop = top - 8;
+        else if (bottom > nav.scrollTop + nav.clientHeight) nav.scrollTop = bottom - nav.clientHeight + 8;
+      });
+    }
   }
 
   /* ------------------------------------------------------------- 复制 */
@@ -337,16 +360,21 @@
     'fig-body': '图体',
     cell: '格',
     ft: '页脚',
+    notes: '批注栏',
+    box: '节点',
+    edge: '连线',
   };
 
-  function addChip(canvas, index) {
+  function addChip(canvas, index, pr) {
+    const cw = canvas.offsetWidth || 1352;
+    const ch = canvas.offsetHeight || 872;
     const chip = document.createElement('vk-tag');
     chip.id = `anno-${index}`;
     chip.setAttribute('size', 'meta');
     chip.setAttribute('tone', 'accent');
-    chip.setAttribute('x', '0');
-    chip.setAttribute('y', String(80 + (index - 1) * 64));
-    chip.setAttribute('data-anno', '');
+    chip.setAttribute('x', String(Math.max(8, Math.round(pr.x - 64))));
+    chip.setAttribute('y', String(Math.max(8, Math.min(Math.round(pr.y + 8), ch - 64))));
+    chip.dataset.anno = '';
     chip.style.pointerEvents = 'none';
     chip.style.zIndex = '6';
     chip.textContent = String(index);
@@ -364,6 +392,7 @@
     edge.setAttribute('clearance', '8');
     edge.setAttribute('dash', '');
     edge.setAttribute('data-anno', '');
+    edge.setAttribute('data-allow-short', '');
     edge.style.pointerEvents = 'none';
     edge.style.zIndex = '3';
     canvas.append(edge);
@@ -387,11 +416,13 @@
     box.setAttribute('data-anno', '');
     box.style.zIndex = '5';
     const title = document.createElement('vk-text');
-    title.setAttribute('size', 'meta');
+    title.setAttribute('size', 'caption');
+    title.setAttribute('data-meta', '');
     title.setAttribute('weight', wide ? 'medium' : 'bold');
     title.textContent = '解剖';
     const dim = document.createElement('vk-text');
-    dim.setAttribute('size', 'meta');
+    dim.setAttribute('size', 'micro');
+    dim.setAttribute('data-meta', '');
     dim.setAttribute('mono', '');
     dim.setAttribute('emphasis', 'muted');
     dim.textContent = `${Math.round(r.w)}×${Math.round(r.h)}`;
@@ -401,7 +432,8 @@
     list.append(title, dim);
     for (const row of rows) {
       const t = document.createElement('vk-text');
-      t.setAttribute('size', 'meta');
+      t.setAttribute('size', 'micro');
+      t.setAttribute('data-meta', '');
       t.setAttribute('mono', '');
       t.textContent = row;
       list.append(t);
@@ -418,7 +450,7 @@
     for (const n of $$('[data-anno]', canvas)) n.remove();
     vk()?.layout?.();
     const r = designRect(t, canvas);
-    addBox(canvas, r, { border: 'strong' });
+    addBox(canvas, r, { border: 'hair' });
     // 嵌套页面的页眉/页脚是运行时创建的，补一次显式 part。
     if (t.tagName === 'VK-PAGE') {
       for (const [sel, key] of [['.vk-page-hd', 'hd'], ['.vk-page-bd', 'bd'], ['.vk-page-ft', 'ft']]) {
@@ -437,13 +469,14 @@
     const rows = [];
     parts.slice(0, 4).forEach((p) => {
       const pr = designRect(p, canvas);
-      if (pr.w < 80 || pr.h < 48 || pr.x < 0 || pr.y < 0 || pr.x + pr.w > (canvas.offsetWidth || 1352) || pr.y + pr.h > (canvas.offsetHeight || 768)) return;
+      if (pr.w < 40 || pr.h < 40 || pr.x < 0 || pr.y < 0 || pr.x + pr.w > (canvas.offsetWidth || 1352) || pr.y + pr.h > (canvas.offsetHeight || 872)) return;
       const n = rows.length + 1;
       p.id = `part-${n}`;
       addBox(canvas, pr);
-      addChip(canvas, n);
+      addChip(canvas, n, pr);
+      addLead(canvas, n);
       const key = p.dataset.vkPart;
-      rows.push(`${n} ${PART_NAME[key] || key} ${Math.round(pr.h)}`);
+      rows.push(`${n} ${PART_NAME[key] || key} ${Math.round(pr.w)}×${Math.round(pr.h)}`);
     });
     addLegend(canvas, r, rows);
     vk()?.layout?.();
@@ -510,11 +543,11 @@
         return;
       }
       if (e.key === 'Escape') {
-        if (docPages().length) return;
+        if (document.body.dataset.page === 'index') return;
         location.href = new URL('../index.html', location.href).href;
         return;
       }
-      if (/^[1-5]$/.test(e.key) && !docPages().length) {
+      if (/^[1-5]$/.test(e.key) && document.body.dataset.page === 'specimen') {
         e.preventDefault();
         showLens(LENSES[Number(e.key) - 1]);
         return;
@@ -535,12 +568,11 @@
       }
       if (
         e.key === '/' &&
-        docPages().length &&
-        !/^(input|textarea|select)$/i.test(e.target.tagName)
+        !/^(input|textarea|select)$/i.test(e.target.tagName) &&
+        $('[data-side-search]')
       ) {
         e.preventDefault();
-        showDocPage(1);
-        setTimeout(() => $('[data-index-search]')?.focus(), 0);
+        $('[data-side-search]')?.focus();
         return;
       }
       if (e.key === '[' || e.key === ']') {

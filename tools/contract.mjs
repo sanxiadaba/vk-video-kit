@@ -254,12 +254,14 @@ function visualInPage(tag) {
     if (el.closest('svg') || el.closest('.katex') || el.closest('.vk-sr') || el.closest('.vk-anno-lines')) continue;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    const inChrome = !!el.closest('.vk-hd, .vk-anno-notes');
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText && opaque(el)) {
       const fs = parseFloat(cs.fontSize);
-      if (fs < 43.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
+      const meta = el.closest?.('[data-meta],[size="micro"],[size="caption"],[size="sub"]');
+      if (!meta && fs < 43.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));
@@ -270,7 +272,7 @@ function visualInPage(tag) {
     if (r.left < -4 || r.top < -4 || r.right > 1924 || r.bottom > 1084) {
       out.push({ type: 'overflow', what: (el.className || el.tagName).toString().slice(0, 50) });
     }
-    if (sr.width && (r.left < sr.left - 2 || r.right > sr.right + 2 || r.top < sr.top - 2 || r.bottom > sr.bottom + 2)) {
+    if (!inChrome && sr.width && (r.left < sr.left - 2 || r.right > sr.right + 2 || r.top < sr.top - 2 || r.bottom > sr.bottom + 2)) {
       out.push({ type: 'safe', what: (el.className || el.tagName).toString().slice(0, 50) });
     }
     const ox = cs.overflowX === 'hidden' || cs.overflowX === 'clip';

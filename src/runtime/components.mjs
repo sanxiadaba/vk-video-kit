@@ -429,35 +429,46 @@ export class VkTree extends VkElement {
   }
 
   _inlineEntries() {
-    return (this._src || '')
-      .split('\n')
-      .filter((l) => l.trim())
-      .map((raw) => {
-        const lead = (raw.match(/^ */) || [''])[0].length;
-        let name = raw.trim();
-        let flag = '';
-        if (name.startsWith('+ ')) {
-          flag = 'add';
-          name = name.slice(2);
-        } else if (name.startsWith('* ')) {
-          flag = 'mod';
-          name = name.slice(2);
-        } else if (name.startsWith('- ')) {
-          flag = 'del';
-          name = name.slice(2);
-        }
-        const isDir = name.endsWith('/');
-        const clean = isDir ? name.slice(0, -1) : name;
-        return {
-          name: clean,
-          path: clean,
-          depth: Math.floor(lead / 2),
-          type: isDir ? 'dir' : 'file',
-          ext: clean.includes('.') ? clean.slice(clean.lastIndexOf('.') + 1).toLowerCase() : '',
-          size: 0,
-          flag,
-        };
-      });
+    const lines = (this._src || '').split('\n').filter((l) => l.trim());
+    if (!lines.length) return [];
+    const leads = lines.map((l) => (l.match(/^ */) || [''])[0].length);
+    const minLead = Math.min(...leads);
+    const stack = [];
+    return lines.map((raw) => {
+      const lead = (raw.match(/^ */) || [''])[0].length;
+      const depth = Math.max(0, Math.round((lead - minLead) / 2));
+      let name = raw.trim();
+      let flag = '';
+      if (name.startsWith('+ ')) {
+        flag = 'add';
+        name = name.slice(2);
+      } else if (name.startsWith('* ')) {
+        flag = 'mod';
+        name = name.slice(2);
+      } else if (name.startsWith('- ')) {
+        flag = 'del';
+        name = name.slice(2);
+      }
+      const isDir = name.endsWith('/');
+      const clean = isDir ? name.slice(0, -1) : name;
+      const parent = depth > 0 ? stack[depth - 1] || '' : '';
+      const p = parent ? `${parent}/${clean}` : clean;
+      if (isDir) {
+        stack.length = depth;
+        stack[depth] = p;
+      } else {
+        stack.length = depth;
+      }
+      return {
+        name: clean,
+        path: p,
+        depth,
+        type: isDir ? 'dir' : 'file',
+        ext: clean.includes('.') ? clean.slice(clean.lastIndexOf('.') + 1).toLowerCase() : '',
+        size: 0,
+        flag,
+      };
+    });
   }
 
   render() {
@@ -533,7 +544,7 @@ export class VkTree extends VkElement {
         <span class="vk-tree-guides" aria-hidden="true"></span>
         ${isBranch ? '<span class="vk-tree-chevron" aria-hidden="true"></span>' : '<span class="vk-tree-chevron is-file" aria-hidden="true"></span>'}
         <svg class="vk-ic" viewBox="0 0 24 24" aria-hidden="true">${iconOf(icon)}</svg>
-        <span class="vk-tree-name">${esc(name)}</span>
+        <span class="vk-tree-name" data-ellipsis title="${esc(entry.path || name)}">${esc(name)}</span>
         ${entry.kind ? `<span class="vk-tree-kind">${esc(entry.kind)}</span>` : ''}
         ${entry.value ? `<span class="vk-tree-val">${esc(entry.value)}</span>` : ''}
         ${flag === 'add' ? '<span class="vk-tree-tag">新增</span>' : flag === 'mod' ? '<span class="vk-tree-tag">修改</span>' : flag === 'del' ? '<span class="vk-tree-tag">删除</span>' : ''}
@@ -685,14 +696,14 @@ export class VkFrames extends VkElement {
             (s) => `<div class="vk-frame-slot">
               ${values ? `<span class="vk-frame-l">${esc(s.label ?? '')}</span>` : ''}
               ${values ? `<span class="vk-frame-v">${esc(s.value ?? '')}</span>` : ''}
-              ${addresses ? `<span class="vk-frame-sa">${esc(s.addr ?? '')}</span>` : ''}
+              ${addresses ? `<span class="vk-frame-sa" data-meta>${esc(s.addr ?? '')}</span>` : ''}
             </div>`
           )
           .join('');
         return `<section class="vk-frame" data-vk-part="frame" data-active="${index === active ? '1' : '0'}" data-index="${index}">
           <header class="vk-frame-hd">
             <span class="vk-frame-n">${esc(f.name ?? 'frame')}</span>
-            ${addresses ? `<span class="vk-frame-fa">${esc(f.addr ?? '')}</span>` : ''}
+            ${addresses ? `<span class="vk-frame-fa" data-meta>${esc(f.addr ?? '')}</span>` : ''}
           </header>
           <div class="vk-frame-bd">${slots}</div>
         </section>`;

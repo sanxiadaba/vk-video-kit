@@ -147,10 +147,10 @@ export const PRESETS = {
     { label: '深色', attrs: { surface: 'ink' } },
   ],
   'vk-tree': [
+    { label: '收起 tests', attrs: { collapsed: 'tests' } },
+    { label: '只看 src', attrs: { collapsed: 'tests', depth: '2' } },
     { label: '只看顶层', attrs: { depth: '0' } },
-    { label: '只显示 2 个顶层', attrs: { limit: '2' } },
     { label: '隐藏统计', attrs: { summary: 'none' } },
-    { label: '文件树', attrs: { variant: 'files', src: '../code/app' } },
     { label: '普通结构', attrs: { variant: 'generic' } },
   ],
   'vk-bytes': [

@@ -200,7 +200,7 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'size': oneOf('display', 'title', 'heading', 'body', 'label', 'meta'),
+      'size': oneOf('display', 'title', 'heading', 'body', 'label', 'meta', 'sub', 'caption', 'micro'),
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
@@ -384,7 +384,7 @@ export const TAGS = {
     },
     attrs: {
       'tone': oneOf('neutral', 'accent', 'ok', 'warn', 'err', 'muted'),
-      'size': oneOf('label', 'meta'),
+      'size': oneOf('label', 'meta', 'micro'),
       'state': oneOf('selected', 'current', 'disabled'),
       'bare': bool(),
     },

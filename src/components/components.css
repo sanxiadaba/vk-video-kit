@@ -236,6 +236,7 @@ vk-tag .vk-tag-t {
 }
 vk-tag[size='meta'] .vk-tag-t { line-height: 1.15; }
 vk-tag[size='meta'] { height: 56px; padding: 0 var(--vk-s1); font-size: var(--vk-t-6); border-radius: var(--vk-r-1); }
+vk-tag[size='micro'] { height: 40px; padding: 0 var(--vk-s1); font-size: var(--vk-t-micro); border-radius: var(--vk-r-1); }
 vk-tag .vk-icon { flex: 0 0 auto; width: 1em; height: 1em; font-size: inherit; }
 vk-tag .vk-icon svg { width: 100%; height: 100%; }
 
@@ -372,12 +373,12 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
   box-sizing: border-box;
   /* 行号栏收窄一档，分隔线随之外移；数字不再悬在空白里。 */
   flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s1));
-  padding-right: var(--vk-s2);
+  padding-right: var(--vk-s1);
   margin-right: var(--vk-s1);
-  border-right: 2px solid var(--vk-win-meta-2);
+  border-right: 1px solid var(--vk-win-rule);
   background: var(--vk-win-soft);
   text-align: right;
-  font-size: var(--vk-t-6);
+  font-size: var(--vk-t-micro);
   font-variant-numeric: tabular-nums;
   color: var(--vk-win-meta-2);
   user-select: none;
@@ -386,12 +387,13 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
 .vk-term .vk-txt { tab-size: 4; }
 .vk-dsrc { tab-size: 4; }
 
-/* 焦点行：冷蓝底 + 4px 蓝线。线画在 gutter 外，行内容不位移。 */
+/* 当前行：整行 6% 冷蓝，行号变蓝，代码左侧 2px 蓝线。 */
 .vk-line.is-hl {
-  background: var(--vk-win-hl-bg);
-  box-shadow: inset 4px 0 0 var(--vk-win-hl-line);
+  background: rgba(37, 99, 235, 0.06);
+  box-shadow: none;
 }
-.vk-line.is-hl .vk-ln { color: var(--vk-win-fg); }
+.vk-line.is-hl .vk-ln { color: var(--vk-focus); font-weight: var(--vk-w-bold); }
+.vk-line.is-hl .vk-src { box-shadow: inset 2px 0 0 var(--vk-focus); }
 
 /* 聚光：其余行真的退下去，不是 0.84 的"几乎没变"。高亮行不参与压暗。 */
 .vk-line.is-dim { --vk-line-opacity: var(--vk-dim); opacity: var(--vk-line-opacity); }
@@ -883,10 +885,10 @@ vk-tree { display: block; }
 }
 .vk-tree-guides {
   position: absolute;
-  left: 20px;
+  left: 12px;
   top: 0;
   bottom: 0;
-  width: max(0px, calc(var(--depth, 0) * 40px - 20px));
+  width: max(0px, calc(var(--depth, 0) * 40px));
   background: repeating-linear-gradient(to right, var(--vk-line-1) 0 1px, transparent 1px 40px);
   pointer-events: none;
 }
@@ -1095,13 +1097,14 @@ vk-frames { display: block; }
   font-size: var(--vk-t-5);
 }
 .vk-frame-n { font-weight: var(--vk-w-med); }
-.vk-frame-fa { font-size: var(--vk-t-6); color: var(--vk-ink-3); font-variant-numeric: tabular-nums; }
-.vk-frame-bd { display: flex; flex-direction: column; }
+.vk-frame-fa { font-size: var(--vk-t-micro); color: var(--vk-ink-3); font-variant-numeric: tabular-nums; }
+.vk-frame-bd { display: grid; grid-template-columns: max-content minmax(0, 1fr) max-content; column-gap: var(--vk-s3); }
 .vk-frame-slot {
   display: grid;
-  grid-template-columns: 18ch minmax(0, 1fr) 12ch;
+  grid-column: 1 / -1;
+  grid-template-columns: subgrid;
   align-items: center;
-  gap: var(--vk-s3);
+  gap: 0;
   border-top: 1px solid var(--vk-line-2);
   min-height: 58px;
   line-height: 1.3;
@@ -1109,14 +1112,15 @@ vk-frames { display: block; }
   font-size: var(--vk-t-5);
 }
 .vk-frame-l { color: var(--vk-ink-2); }
-.vk-frame-v { color: var(--vk-ink-1); }
-.vk-frame-sa { color: var(--vk-ink-3); font-size: var(--vk-t-6); font-variant-numeric: tabular-nums; }
+.vk-frame-v { color: var(--vk-ink-1); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.vk-frame-sa { color: var(--vk-ink-3); font-size: var(--vk-t-micro); font-variant-numeric: tabular-nums; }
 .vk-frames[data-show='values'] .vk-frame-sa,
 .vk-frames[data-show='values'] .vk-frame-fa { display: none; }
 .vk-frames[data-show='addresses'] .vk-frame-v,
 .vk-frames[data-show='addresses'] .vk-frame-l { display: none; }
-.vk-frames[data-show='addresses'] .vk-frame-slot { grid-template-columns: 18ch 12ch; }
+.vk-frames[data-show='addresses'] .vk-frame-bd { grid-template-columns: max-content minmax(0, 1fr); }
 .vk-frames[data-show='addresses'] .vk-frame-sa { grid-column: 2; justify-self: end; }
+.vk-frames[data-show='values'] .vk-frame-bd { grid-template-columns: max-content minmax(0, 1fr); }
 .vk-frames[data-density='compact'] .vk-frame-slot {
   min-height: 52px;
   line-height: 1.2;

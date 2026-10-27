@@ -26,11 +26,11 @@ export const SCENES = [
   {
     tag: 'vk-annotate',
     body: s`
-<vk-annotate w="340">
+<vk-annotate w="360">
   <vk-code w="890" id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
-  <vk-note line="1">下标只有 0–2。</vk-note>
-  <vk-note line="2">i &lt;= 3 让 i 到 3。</vk-note>
-  <vk-note line="3">i = 3 时写到 a[3]。</vk-note>
+  <vk-note line="4">下标只有 0–2。</vk-note>
+  <vk-note line="5">i &lt;= 3 让 i 到 3。</vk-note>
+  <vk-note line="6">i = 3 时写到 a[3]。</vk-note>
 </vk-annotate>`,
   },
 
@@ -273,7 +273,21 @@ export const SCENES = [
     tag: 'vk-tree',
     body: s`
 <vk-box w="1200" surface="none">
-  <vk-tree title="a[i] = 0 · 语法树" variant="ast" src="../code/ast.json" depth="4"></vk-tree>
+  <vk-tree title="app" variant="files" active="src/parser.py" depth="4">
+    src/
+      __init__.py
+      ast.py
+      errors.py
+      lexer.py
+      * parser.py
+      a_very_long_module_name_for_testing.py
+    tests/
+      fixtures/
+        basic.tokens
+      test_lexer.py
+    + main.py
+    README.md
+  </vk-tree>
 </vk-box>`,
   },
 

@@ -121,6 +121,9 @@ vk-text[size='heading'] { font-size: var(--vk-t-3); line-height: var(--vk-lh-snu
 vk-text[size='body'] { font-size: var(--vk-t-4); }
 vk-text[size='label'] { font-size: var(--vk-t-5); line-height: var(--vk-lh-body); }
 vk-text[size='meta'] { font-size: var(--vk-t-6); line-height: var(--vk-lh-body); }
+vk-text[size='sub'] { font-size: var(--vk-t-sub); line-height: var(--vk-lh-snug); }
+vk-text[size='caption'] { font-size: var(--vk-t-caption); line-height: var(--vk-lh-snug); }
+vk-text[size='micro'] { font-size: var(--vk-t-micro); line-height: var(--vk-lh-snug); }
 
 vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }

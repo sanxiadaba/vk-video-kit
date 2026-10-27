@@ -1,139 +1,305 @@
-/* 深墨台面 + 一张纸舞台：帧外不是黑边，是工作台。 */
-html,
+/* vk specimen · light product-docs shell
+   ----------------------------------------------------------------------------
+   The library owns the paper; this file owns the app around it:
+   a light sidebar, a 64px top bar, a quiet content canvas and the contact sheet.
+   No dark mat, no cover, no serif plate numbers. */
+
+:root {
+  --app: #f6f7f9;
+  --surface: #ffffff;
+  --side: #fcfcfd;
+  --line: #e4e7ec;
+  --line-strong: #c9cfd8;
+  --ink: #101828;
+  --muted: #667085;
+  --faint: #98a2b3;
+  --accent: #2563eb;
+  --accent-ink: #1d4ed8;
+  --accent-weak: #eff4ff;
+  --focus: #1d4ed8;
+}
+
+* { box-sizing: border-box; }
+a { color: inherit; text-decoration: none; }
+
+html, body { min-height: 100%; }
+
 body {
   margin: 0;
-  height: 100%;
-  background: #090d12;
-}
-body {
+  background: var(--app);
+  color: var(--ink);
+  font-family: var(--vk-font-sans);
   display: grid;
   place-items: center;
-  overflow: hidden;
+  min-height: 100vh;
 }
-body::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(120, 140, 170, 0.08) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(120, 140, 170, 0.08) 1px, transparent 1px);
-  background-size: 48px 48px;
-  pointer-events: none;
-}
+
 body > vk-page {
-  position: relative;
-  z-index: 1;
   width: min(100vw, calc(100vh * 16 / 9));
-  height: auto;
-  outline: 1px solid #26313e;
-  outline-offset: 10px;
-  box-shadow: 0 40px 120px rgba(0, 0, 0, 0.6);
-}
-vk-page {
-  width: 100%;
 }
 
-/* 镜头/页的隐藏必须是硬规则。 */
-[hidden] {
-  display: none !important;
+body > vk-page .vk-page {
+  background: var(--app);
+  color: var(--ink);
 }
 
-/* 链接有真实盒子，才能 Tab、焦点和点击。 */
-a {
-  display: block;
-  color: inherit;
-  text-decoration: none;
-}
-a:focus-visible,
-vk-tag[role='button']:focus-visible {
-  outline: 3px solid #7c96ff;
-  outline-offset: 4px;
+/* 64 / 952 / 64 — the app is a full-height docs shell, not a sheet on a mat. */
+body .vk-page-inner {
+  grid-template-rows: 64px minmax(0, 1fr) 64px;
 }
 
-/* 深墨页眉页脚。 */
-.vk-page[data-surface='ink'] vk-rule { background: rgba(255, 255, 255, 0.16); }
-.vk-page[data-surface='ink'] .vk-page-hd a,
-.vk-page[data-surface='ink'] .vk-page-ft a {
-  color: rgba(255, 255, 255, 0.78);
-}
-.vk-page[data-surface='ink'] .vk-page-hd a:hover,
-.vk-page[data-surface='ink'] .vk-page-ft a:hover {
-  color: #fff;
-  text-decoration: underline;
-}
-
-/* 左栏是页面身份：巨大图版号、名称、层、镜头。 */
-[data-lens-nav] a {
-  padding: 2px 0 2px 12px;
-  border-left: 3px solid transparent;
-  color: rgba(255, 255, 255, 0.48);
-  transition: color 120ms ease, border-color 120ms ease;
-}
-[data-lens-nav] a:hover { color: rgba(255, 255, 255, 0.86); }
-[data-lens-nav] a[aria-current='page'] {
-  color: #fff;
-  border-left-color: #6f8cff;
-}
-[data-lens-nav] a vk-text { color: inherit; line-height: 1.1; }
-
-/* 纸舞台有重量，不是贴在黑上的白方块。 */
-[data-stage] {
-  border-radius: 2px;
-  background-image: linear-gradient(180deg, #ffffff 0%, #fbf9f4 100%);
-  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.42);
-}
-.vk-page[data-surface='ink'] .vk-win {
-  box-shadow: 0 18px 50px rgba(8, 12, 20, 0.08);
+body .vk-page-hd,
+body .vk-page-ft {
+  min-height: 0;
+  padding: 0;
+  background: var(--side);
+  border-color: var(--line);
+  font-family: var(--vk-font-sans);
+  letter-spacing: 0;
+  color: var(--muted);
 }
 
-/* 索引是一张接触印样：31 个图版号，不是 31 行目录。 */
-body[data-page='index'] a > vk-box {
-  transition: border-color 120ms ease, transform 120ms ease;
-}
-body[data-page='index'] a:hover > vk-box {
-  border-color: var(--vk-focus-line);
-  transform: translateY(-2px);
+body .vk-page-hd {
+  border-bottom: 1px solid var(--line);
+  align-self: stretch;
 }
 
-/* 索引卡是接触印样：44px 字必须单行紧凑，不能被 1.5 行高撑出卡片。 */
-body[data-page='index'] [data-stage] vk-text { line-height: 1; }
+body .vk-page-ft {
+  border-top: 1px solid var(--line);
+  align-self: stretch;
+}
 
-[data-usage-snippet] { line-height: 1.1; }
-
-.api-table table { table-layout: fixed; }
-
-.plate-no { font-family: var(--vk-font-display); font-weight: 400; letter-spacing: -0.05em; }
-.plate-name { font-family: var(--vk-font-display); font-weight: 400; letter-spacing: -0.02em; }
-[data-plate-mount] { box-shadow: 0 18px 40px rgba(8, 12, 20, 0.08); }
-
-.vk-page[data-surface='ink'] .vk-page-ft vk-tag { color: var(--vk-ink-3); }
-
-.vk-page[data-surface='ink'] .vk-page-ft vk-tag[state='selected'] { color: var(--vk-ink-1); }
-
-.vk-page[data-surface='ink'] .vk-page-ft vk-tag[state='selected'] { background: #e7ebff; border-color: #b9c5ff; color: #0b0f14; }
-
-/* 目录搜索：原生 input 只负责输入，外观全部在 vk-box 里。 */
-[data-index-search] {
+body .vk-page-hd.is-slot > *,
+body .vk-page-ft.is-slot > * {
   flex: 1 1 auto;
   min-width: 0;
+}
+
+/* --------------------------------------------------------------- top bar */
+
+[data-topbar],
+[data-footer] {
   width: 100%;
-  height: 44px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 0;
+}
+
+[data-brand] {
+  width: 280px;
+  min-width: 280px;
+  height: 64px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 0;
+}
+
+[data-brand] vk-text:first-child {
+  font-size: 40px;
+  line-height: 1;
+  letter-spacing: -0.04em;
+}
+
+[data-crumb] {
+  flex: 1 1 auto;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-crumb] a { text-decoration: none; }
+[data-crumb] a:hover vk-text { color: var(--accent-ink); }
+
+[data-lens-nav] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.lens-tab {
+  display: inline-flex;
+  align-items: center;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 6px;
+  color: var(--muted);
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.lens-tab:hover { color: var(--ink); background: #f2f4f7; }
+
+.lens-tab[aria-current='page'] {
+  color: var(--accent-ink);
+  background: var(--accent-weak);
+  font-weight: 500;
+}
+
+.lens-tab:focus-visible,
+[data-crumb] a:focus-visible,
+[data-side-link]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+[data-footer] { justify-content: space-between; }
+[data-footer] a { text-decoration: none; }
+[data-footer] a:hover vk-text { color: var(--accent-ink); }
+
+/* --------------------------------------------------------------- sidebar */
+
+[data-sidebar] {
+  width: 280px;
+  min-width: 280px;
+  height: 952px;
+  background: var(--side);
+  border: 0;
+  border-right: 1px solid var(--line);
+  border-radius: 0;
+}
+
+[data-side-search-box] {
+  height: 64px;
+  display: flex;
+  align-items: center;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--line);
+}
+
+[data-side-search-box] vk-row {
+  width: 100%;
+  gap: 8px;
+  align-items: center;
+  height: 40px;
+  padding: 0 10px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+[data-side-search-box] vk-row:focus-within {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+}
+
+[data-side-search] {
+  flex: 1 1 auto;
+  min-width: 0;
   border: 0;
   background: transparent;
-  color: var(--vk-ink-1);
+  color: var(--ink);
   font-family: var(--vk-font-sans);
-  font-size: 44px;
-  line-height: 1.1;
+  font-size: 28px;
+  line-height: 1;
   outline: none;
 }
-[data-index-search]::placeholder { color: var(--vk-ink-4); }
-[data-index-tools] vk-box:focus-within {
-  border-color: var(--vk-focus-line);
-  box-shadow: 0 0 0 3px var(--vk-focus-soft);
+
+[data-side-search]::placeholder { color: var(--faint); }
+
+[data-side-nav] {
+  height: 888px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 8px 12px 16px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line-strong) transparent;
 }
-[data-index-count] { margin-left: auto; white-space: nowrap; }
-[data-index-empty] { padding-top: var(--vk-s2); }
-[data-index-tools] > vk-box { flex: 1 1 auto; }
+
+[data-side-nav]::-webkit-scrollbar { width: 8px; }
+[data-side-nav]::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 8px; }
+
+[data-side-group] { display: block; margin-bottom: 12px; }
+
+[data-side-link] {
+  display: block;
+  padding: 5px 8px 6px;
+  margin: 1px 0;
+  border-radius: 6px;
+  text-decoration: none;
+  color: var(--ink);
+}
+
+[data-side-link] > vk-text { line-height: 1.25; }
+[data-side-link] vk-text { color: inherit; }
+[data-side-link] vk-text[emphasis='muted'],
+[data-side-link] vk-text:first-child { color: var(--muted); }
+
+[data-side-link]:hover { background: #f2f4f7; }
+
+[data-side-link][aria-current='page'] {
+  background: var(--accent-weak);
+  color: var(--accent-ink);
+  box-shadow: inset 2px 0 0 var(--accent);
+}
+
+[data-side-link][aria-current='page'] vk-text { color: var(--accent-ink); }
+[data-side-group] > vk-row vk-text { color: var(--muted); }
+
+/* --------------------------------------------------------------- main */
+
+[data-main] {
+  width: 1376px;
+  min-width: 0;
+  height: 952px;
+  padding: 32px 0;
+  background: var(--app);
+}
+
+[data-stage] {
+  width: 1376px;
+  height: 888px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: 0 1px 2px rgba(16, 24, 40, 0.04);
+}
+
+/* --------------------------------------------------------------- index */
+
+[data-index-tools] {
+  height: 40px;
+  align-items: center;
+}
+
 [data-index-layers] { flex: 0 0 auto; }
-[data-index-layers] vk-tag { flex: 0 0 auto; }
-[data-index-count] { flex: 0 0 auto; }
+[data-index-count] { margin-left: auto; }
+
+[data-index-card] {
+  width: 260px;
+  height: 96px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 8px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+[data-index-card] vk-text:last-child { color: var(--ink); }
+
+[data-index-cell]:hover [data-index-card] {
+  border-color: var(--line-strong);
+  background: #fbfcfe;
+}
+
+[data-index-cell]:hover [data-index-card] vk-text:last-child { color: var(--accent-ink); }
+
+[data-index-empty] { padding-top: 8px; }
+[data-index-grid] { align-content: flex-start; }
+
+/* --------------------------------------------------------------- utility */
+
+[hidden] { display: none !important; }
+
+::selection { background: var(--accent-weak); color: var(--ink); }
+
+.index-h1 { line-height: 1.05; letter-spacing: -0.035em; }
+
+body[data-page='index'] [data-main] { padding: 32px 16px; }

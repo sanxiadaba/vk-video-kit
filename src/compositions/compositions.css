@@ -119,7 +119,7 @@ vk-annotate {
   width: 100%;
 }
 .vk-anno-notes .vk-note {
-  font-size: var(--vk-t-note);
+  font-size: var(--vk-t-6);
   line-height: var(--vk-lh-note);
   color: var(--vk-ink-1);
 }

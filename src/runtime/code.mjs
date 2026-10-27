@@ -109,14 +109,14 @@ export class VkCode extends VkElement {
     }
     const digits = String(
       Math.max(
-        this.getAttribute('numbering') === 'file'
+        this.getAttribute('numbering') !== 'slice'
           ? (Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1) + lines.length - 1
           : lines.length,
         1
       )
     ).length;
     this.style.setProperty('--vk-digits', String(digits));
-    const numbering = this.getAttribute('numbering') === 'file' ? 'file' : 'slice';
+    const numbering = this.getAttribute('numbering') === 'slice' ? 'slice' : 'file';
     const startNo = numbering === 'file' ? Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1 : 1;
     const noOf = (n) => startNo + n - 1;
 
@@ -137,9 +137,10 @@ export class VkCode extends VkElement {
       const cls = ['vk-line'];
       if (hl.has(n)) cls.push('is-hl');
       if (focus.size && !focus.has(n)) cls.push('is-dim');
-      const num = showNums ? `<span class="vk-ln" data-vk-part="ln" aria-hidden="true">${noOf(n)}</span>` : '';
+      const num = showNums ? `<span class="vk-ln" data-meta data-vk-part="ln" aria-hidden="true">${noOf(n)}</span>` : '';
+      const part = hl.has(n) ? ' data-vk-part="line"' : '';
       rows.push(
-        `<div class="${cls.join(' ')}" data-line="${noOf(n)}" style="--i:${i}">${num}<span class="vk-src">${line || ' '}</span></div>`
+        `<div class="${cls.join(' ')}"${part} data-line="${noOf(n)}" style="--i:${i}">${num}<span class="vk-src">${line || ' '}</span></div>`
       );
     });
 
@@ -313,7 +314,7 @@ export class VkTerm extends VkElement {
       chrome,
       cls: 'vk-term',
       attrs: ` data-density="${density}"${typed ? ' data-type' : ''}`,
-      head: title ? `<span class="vk-tab">${esc(title)}</span>` : '',
+      head: title ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
       inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });
 

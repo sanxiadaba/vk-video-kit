@@ -10,12 +10,12 @@ export const DOTS = '<span class="vk-dots"><i></i><i></i><i></i></span>';
 export function win({ surface = 'paper', chrome = 'min', head = '', inner = '', cls = '', attrs = '' } = {}) {
   const material = surface === 'ink' ? 'ink' : 'paper';
   const klass = cls ? ` ${cls}` : '';
-  const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${DOTS}${head}</div>`;
+  const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${head}</div>`;
   return `<div class="vk-win${klass}" data-material="${material}" data-surface="${material}" data-chrome="${esc(chrome)}"${attrs}>${bar}${inner}</div>`;
 }
 
 /** 文件名 + 可选行段 + 语言角标。tab 不再自带第二个"窗口点"。 */
 export function fileHead(file, lang, range = '') {
   const label = file ? `${file}${range && !file.includes(range) ? ` · ${range}` : ''}` : '';
-  return `${label ? `<span class="vk-tab">${esc(label)}</span>` : ''}${lang ? `<span class="vk-lang">${esc(lang)}</span>` : ''}`;
+  return `${label ? `<span class="vk-file" data-meta>${esc(label)}</span>` : ''}${lang ? `<span class="vk-lang" data-meta>${esc(lang)}</span>` : ''}`;
 }

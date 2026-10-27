@@ -247,7 +247,7 @@ export class VkEdge extends VkElement {
     // 两节点之间的净空太小 → 箭头会读成噪点。报告出来，别让它悄悄出现。
     const len = pathLength(g.points);
     const minGap = num('--vk-edge-min', 48);
-    if (len < minGap) {
+    if (len < minGap && !this.hasAttribute('data-allow-short')) {
       this._warnOnce(
         'short',
         `只有 ${Math.round(len)}px，短于 ${minGap}px：箭头会糊成一点。把两个节点拉开，或改用 label 说明关系`

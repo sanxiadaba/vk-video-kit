@@ -1,6 +1,6 @@
 {
   "name": "vk-video-kit",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "把内容做成画面单元：31 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",

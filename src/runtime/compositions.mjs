@@ -172,6 +172,7 @@ export class VkAnnotate extends VkElement {
 
       const col = document.createElement('div');
       col.className = 'vk-anno-notes';
+      col.dataset.vkPart = 'notes';
       for (const note of notes) {
         note.id = note.id || `vk-anno-${++ANNO_SEQ}`;
         col.append(note);
