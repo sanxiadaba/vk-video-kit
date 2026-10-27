@@ -91,11 +91,16 @@
   }
 
   function resetTarget(t) {
+    // 只撤销预设新增的属性；base 属性不拆掉再装回去。
+    // 否则 src 被移除会触发 <vk-code> 的 onAttr('src')，把已读入的
+    // 预编译高亮数据清空，下一帧就只能显示“构建数据过期”的纯文本。
     for (const a of [...t.attributes]) {
       if (a.name === 'data-variant-target' || a.name === 'id') continue;
-      t.removeAttribute(a.name);
+      if (!baseAttrs.has(a.name)) t.removeAttribute(a.name);
     }
-    for (const [k, v] of baseAttrs) t.setAttribute(k, v);
+    for (const [k, v] of baseAttrs) {
+      if (t.getAttribute(k) !== v) t.setAttribute(k, v);
+    }
   }
 
   function applyPreset(index) {
@@ -190,6 +195,59 @@
     if (push && location.hash !== `#p${docPage + 1}`) history.pushState(null, '', `#p${docPage + 1}`);
     resetScroll();
     vk()?.layout?.();
+  }
+
+  /* --------------------------------------------------------- 索引搜索 */
+
+  const indexSearch = $('[data-index-search]');
+  if (indexSearch) {
+    const indexCells = $$('[data-index-cell]');
+    const indexCount = $('[data-index-count]');
+    const indexEmpty = $('[data-index-empty]');
+    let indexLayer = 'all';
+
+    const filterIndex = () => {
+      const q = indexSearch.value.trim().toLowerCase();
+      let n = 0;
+      for (const cell of indexCells) {
+        const ok = (indexLayer === 'all' || cell.dataset.layer === indexLayer)
+          && (!q || cell.dataset.search.toLowerCase().includes(q));
+        cell.hidden = !ok;
+        if (ok) n++;
+      }
+      if (indexCount) indexCount.textContent = `${n} / ${indexCells.length}`;
+      if (indexEmpty) indexEmpty.hidden = n !== 0;
+      vk()?.layout?.();
+    };
+
+    indexSearch.addEventListener('input', filterIndex);
+    indexSearch.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        indexSearch.value = '';
+        filterIndex();
+        indexSearch.blur();
+        e.stopPropagation();
+      }
+    });
+
+    for (const tag of $$('[data-index-layer]')) {
+      const pick = () => {
+        indexLayer = tag.dataset.indexLayer;
+        for (const other of $$('[data-index-layer]')) {
+          if (other === tag) other.setAttribute('state', 'selected');
+          else other.removeAttribute('state');
+        }
+        filterIndex();
+      };
+      tag.addEventListener('click', pick);
+      tag.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          pick();
+        }
+      });
+    }
+    filterIndex();
   }
 
   /* ------------------------------------------------------------- 复制 */
@@ -473,6 +531,16 @@
           e.preventDefault();
           go(dir);
         }
+        return;
+      }
+      if (
+        e.key === '/' &&
+        docPages().length &&
+        !/^(input|textarea|select)$/i.test(e.target.tagName)
+      ) {
+        e.preventDefault();
+        showDocPage(1);
+        setTimeout(() => $('[data-index-search]')?.focus(), 0);
         return;
       }
       if (e.key === '[' || e.key === ']') {

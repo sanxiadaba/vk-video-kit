@@ -106,12 +106,12 @@ export const PRESETS = {
     { label: '深色', attrs: { surface: 'ink' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
-    { label: '折叠说明', attrs: { fold: '4', 'fold-note': '省略 10 行' } },
+    { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
     { label: '窄窗折行', attrs: { w: '720', fit: 'wrap' } },
   ],
   'vk-term': [
     { label: '大号', attrs: { density: 'large' } },
-    { label: '浅色', attrs: { surface: 'paper' } },
+    { label: '深色', attrs: { surface: 'ink' } },
     { label: '无头', attrs: { chrome: 'none' } },
   ],
   'vk-diff': [

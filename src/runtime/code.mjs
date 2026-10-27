@@ -306,7 +306,7 @@ export class VkTerm extends VkElement {
       .join('');
 
     const chrome = this.getAttribute('chrome') || 'min';
-    const surface = this.getAttribute('surface') === 'paper' ? 'paper' : 'ink';
+    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
 
     this.innerHTML = win({
       surface,

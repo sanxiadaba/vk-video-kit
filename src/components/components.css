@@ -370,8 +370,12 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
 
 .vk-ln {
   box-sizing: border-box;
-  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s3));
-  padding-right: var(--vk-s3);
+  /* 行号栏收窄一档，分隔线随之外移；数字不再悬在空白里。 */
+  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s1));
+  padding-right: var(--vk-s2);
+  margin-right: var(--vk-s1);
+  border-right: 2px solid var(--vk-win-meta-2);
+  background: var(--vk-win-soft);
   text-align: right;
   font-size: var(--vk-t-6);
   font-variant-numeric: tabular-nums;
@@ -549,6 +553,8 @@ vk-diff { display: block; }
 }
 .vk-dline .vk-ln {
   flex: 0 0 var(--vk-dnum-w, 56px);
+  margin-right: 0;
+  border-right: 0;
   padding-right: var(--vk-s3);
   text-align: right;
   font-size: var(--vk-t-6);

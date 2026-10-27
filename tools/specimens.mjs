@@ -531,7 +531,8 @@ function indexCell(tag, i) {
   const def = TAGS[tag];
   const no = String(i + 1).padStart(2, '0');
   const layer = (LAYERS.find((l) => l.id === def.layer)?.label || '').replace(/^L\d\s*/, '');
-  return `<a href="specimen/${tag}.html"><vk-box w="260" h="104" surface="paper" border="hair" pad="2xs" radius="sm">
+  const query = [tag, def.name, def.summary, layer].join(' ');
+  return `<a href="specimen/${tag}.html" data-index-cell data-layer="${esc(def.layer)}" data-search="${esc(query)}"><vk-box w="260" h="96" surface="paper" border="hair" pad="2xs" radius="sm">
     <vk-row justify="between" align="baseline"><vk-text size="meta" mono>${no}</vk-text><vk-text size="meta" mono emphasis="muted">${esc(layer)}</vk-text></vk-row>
     <vk-text size="meta" mono>${tag.replace(/^vk-/, '')}</vk-text>
   </vk-box></a>`;
@@ -553,9 +554,28 @@ function indexPageHtml() {
       <vk-stack gap="2xs">${layers}</vk-stack>
     </vk-stack>
   </vk-box>`;
+  const layerTags = LAYERS.filter((l) => l.id !== 'tokens').map((l) => {
+    const label = (l.label || '').replace(/^L\d\s*/, '');
+    return `<vk-tag size="meta" tone="muted" data-index-layer="${l.id}" role="button" tabindex="0">${esc(label)}</vk-tag>`;
+  }).join('');
+  const tools = `<vk-row w="1332" gap="sm" align="center" data-index-tools>
+    <vk-box w="1120" h="56" surface="paper" border="hair" radius="pill" pad-x="sm">
+      <vk-row gap="2xs" align="center">
+        <vk-icon name="search" scale="sm"></vk-icon>
+        <input type="search" data-index-search placeholder="搜组件 / 用途，如「代码」「提示」「键位」" aria-label="搜索组件">
+      </vk-row>
+    </vk-box>
+    <vk-text size="meta" mono data-index-count>${total} / ${total}</vk-text>
+  </vk-row>
+  <vk-row w="1332" gap="2xs" align="center" data-index-layers>
+    <vk-tag size="meta" tone="muted" data-index-layer="all" state="selected" role="button" tabindex="0">全部</vk-tag>
+    ${layerTags}
+  </vk-row>`;
   const stageBox = `<vk-box w="${STAGE_W}" h="888" surface="paper" pad="sm" data-stage>
-    <vk-stack h="856" justify="center">
-      <vk-row gap="2xs" wrap w="1332">${cells}</vk-row>
+    <vk-stack h="856" gap="2xs" justify="start">
+      ${tools}
+      <vk-row gap="2xs" wrap w="1332" data-index-grid>${cells}</vk-row>
+      <vk-text size="meta" emphasis="muted" data-index-empty hidden>没有匹配的组件。换个词，或按 Esc 清空。</vk-text>
     </vk-stack>
   </vk-box>`;
   let coverCode = (sceneOf.get('vk-code') || '').trim();
@@ -569,6 +589,7 @@ function indexPageHtml() {
         <vk-text class="plate-no" size="display" weight="bold" role="heading" aria-level="1">${total}</vk-text>
         <vk-text class="plate-name" size="title" weight="medium">件标本，五种看法。</vk-text>
         <vk-text size="body">一本 1920×1080 的标本册：每个组件五个镜头，成品 / 变体 / 解剖 / 用法 / API。</vk-text>
+        <vk-text size="meta" mono>按 / 搜索 31 个组件 · 代码 / 提示 / 布局 / 数据 / 页面</vk-text>
       </vk-stack>
       <vk-box w="780" surface="paper" border="hair" pad="sm" radius="md" data-plate-mount>${coverCode}</vk-box>
     </vk-row>

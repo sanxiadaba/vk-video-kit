@@ -31,7 +31,7 @@ npm i /path/to/vk-video-kit
 - `density="large"` 是 56px 主镜头；默认 48px。
 - `chrome="none"` 去窗头和页脚；行号由 `numbers="none"` 单独控制。
 
-终端默认深色。结果行用**显式前缀**，不猜；`src` 指向真实 transcript 文件：
+终端默认浅色，和代码窗一致；要深色写 `surface="ink"`。结果行用**显式前缀**，不猜；`src` 指向真实 transcript 文件：
 
 ```html
 <vk-term title="zsh" caret src="code/hello.term"></vk-term>
@@ -135,9 +135,9 @@ npx vk serve 8099         # 开发服务器，改 .c 刷新即见
 
 明暗：
 
-- `vk-term` 默认深色；`surface="paper"` 变浅。
+- `vk-term` 默认浅色；`surface="ink"` 变深。
 - `vk-code` / `vk-diff` / `vk-figure` 默认纸面；`surface="ink"` 变深。
-- 同屏可以混用——真实工具就是编辑器浅、终端深。
+- 同屏可以混用——默认都浅，终端要深色时显式写 `surface="ink"`。
 
 ## 9 · 动效原语
 

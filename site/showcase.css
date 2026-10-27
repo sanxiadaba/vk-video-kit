@@ -111,3 +111,29 @@ body[data-page='index'] [data-stage] vk-text { line-height: 1; }
 .vk-page[data-surface='ink'] .vk-page-ft vk-tag[state='selected'] { color: var(--vk-ink-1); }
 
 .vk-page[data-surface='ink'] .vk-page-ft vk-tag[state='selected'] { background: #e7ebff; border-color: #b9c5ff; color: #0b0f14; }
+
+/* 目录搜索：原生 input 只负责输入，外观全部在 vk-box 里。 */
+[data-index-search] {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+  height: 44px;
+  border: 0;
+  background: transparent;
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  font-size: 44px;
+  line-height: 1.1;
+  outline: none;
+}
+[data-index-search]::placeholder { color: var(--vk-ink-4); }
+[data-index-tools] vk-box:focus-within {
+  border-color: var(--vk-focus-line);
+  box-shadow: 0 0 0 3px var(--vk-focus-soft);
+}
+[data-index-count] { margin-left: auto; white-space: nowrap; }
+[data-index-empty] { padding-top: var(--vk-s2); }
+[data-index-tools] > vk-box { flex: 1 1 auto; }
+[data-index-layers] { flex: 0 0 auto; }
+[data-index-layers] vk-tag { flex: 0 0 auto; }
+[data-index-count] { flex: 0 0 auto; }

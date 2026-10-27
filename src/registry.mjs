@@ -146,7 +146,7 @@ const DEFAULTS = {
   'vk-tag': { tone: 'neutral', size: 'label' },
   'vk-callout': { tone: 'accent', size: 'body' },
   'vk-code': { surface: 'paper', chrome: 'min', density: 'normal' },
-  'vk-term': { prompt: '$', surface: 'ink', chrome: 'min', density: 'normal' },
+  'vk-term': { prompt: '$', surface: 'paper', chrome: 'min', density: 'normal' },
   'vk-diff': { variant: 'unified', surface: 'paper', chrome: 'min' },
   'vk-table': { variant: 'ledger', density: 'normal' },
   'vk-math': { size: 'body' },
@@ -434,7 +434,7 @@ export const TAGS = {
   'vk-term': {
     name: '终端',
     layer: 'components',
-    summary: '终端。src 指向真实 transcript；默认深色；命令、输出、✓/!/✗ 三种结果行、块状光标。',
+    summary: '终端。src 指向真实 transcript；默认浅色；命令、输出、✓/!/✗ 三种结果行、块状光标。',
     content: {
       kind: 'text',
       target: 'vk-term',
