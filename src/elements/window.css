@@ -21,7 +21,7 @@
   --vk-win-hl-bg: rgba(27, 63, 214, 0.12);
   --vk-win-hl-line: var(--vk-focus-line);
 
-  --vk-win-k: var(--vk-win-fg);
+  --vk-win-k: var(--vk-syn-keyword);
   --vk-win-f: var(--vk-syn-function);
   --vk-win-s: var(--vk-syn-string);
   --vk-win-n: var(--vk-syn-number);
@@ -121,7 +121,7 @@
 .vk-dots i:nth-child(2) { background: var(--vk-dot-yellow); }
 .vk-dots i:nth-child(3) { background: var(--vk-dot-green); }
 
-/* 文件名是标题栏里唯一要读的字：做成真正的 tab，44px（手机横屏约 14.7px）。 */
+/* 文件名是标题栏里唯一要读的字：强调，40px；行段退成 28。 */
 .vk-file {
   display: inline-flex;
   align-items: center;
@@ -133,11 +133,20 @@
   border: 0;
   background: none;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-caption);
-  font-weight: var(--vk-w-med);
-  line-height: 1.3;
-  letter-spacing: 0;
+  font-size: var(--vk-t-sub);
+  font-weight: 500;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
   color: var(--vk-win-fg);
+}
+
+.vk-range {
+  flex: 0 0 auto;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-micro);
+  font-weight: 400;
+  line-height: 1;
+  color: var(--vk-win-meta-2);
 }
 
 /* 语言角标贴在右边，是"这是什么"，不是标题。 */

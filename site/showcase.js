@@ -258,19 +258,6 @@
       });
     }
     filterIndex();
-
-    // 让当前组件在侧栏里自动露出来，但不要把整个页面滚走。
-    const current = $('[data-side-link][aria-current="page"]');
-    if (current) {
-      requestAnimationFrame(() => {
-        const nav = $('[data-side-nav]');
-        if (!nav) return;
-        const top = current.offsetTop;
-        const bottom = top + current.offsetHeight;
-        if (top < nav.scrollTop) nav.scrollTop = top - 8;
-        else if (bottom > nav.scrollTop + nav.clientHeight) nav.scrollTop = bottom - nav.clientHeight + 8;
-      });
-    }
   }
 
   /* ------------------------------------------------------------- 复制 */
@@ -493,6 +480,33 @@
 
   function boot() {
     rememberBase();
+    // 侧栏是全局导航：跨页保留滚动位置，不在点击后跳去追当前项。
+    const nav = $('[data-side-nav]');
+    if (nav) {
+      const key = 'vk-side-scroll';
+      let saved = null;
+      try {
+        saved = sessionStorage.getItem(key);
+      } catch {
+        saved = null;
+      }
+      if (saved !== null) {
+        requestAnimationFrame(() => {
+          nav.scrollTop = Math.min(Number(saved) || 0, nav.scrollHeight);
+        });
+      }
+      nav.addEventListener(
+        'scroll',
+        () => {
+          try {
+            sessionStorage.setItem(key, String(nav.scrollTop));
+          } catch {
+            /* 隐私模式不可写；不影响导航 */
+          }
+        },
+        { passive: true }
+      );
+    }
     for (const tag of $$('[data-attr]')) markControl(tag.dataset.attr);
     const hash = location.hash.replace(/^#/, '');
     if (docPages().length) {

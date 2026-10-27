@@ -106,14 +106,15 @@
   --vk-mod-ink-mark: rgba(233, 179, 106, 0.28);
 
   /* ---------------------------------------------------------------- 语法 */
-  /* 低饱和：关键字回到墨色（靠字重区分），蓝只留给焦点。 */
-  --vk-syn-string: #0b6b63;
-  --vk-syn-number: #9a4708;
-  --vk-syn-function: #5b21b6;
-  --vk-syn-builtin: #0b657f;
-  --vk-syn-operator: #475569;
-  --vk-syn-punct: #5b6779;
-  --vk-syn-comment: #5c6674;
+  /* One Light：关键字紫、字符串绿、函数蓝、数字琥珀；焦点蓝仍然是唯一强调。 */
+  --vk-syn-keyword: #8b1e8f;
+  --vk-syn-string: #2e7d32;
+  --vk-syn-number: #7a4f00;
+  --vk-syn-function: #3b5bdb;
+  --vk-syn-builtin: #8a5a00;
+  --vk-syn-operator: #0369a1;
+  --vk-syn-punct: #24292f;
+  --vk-syn-comment: #6e7781;
 
   --vk-syn-keyword-ink: #e6ecf5;
   --vk-syn-string-ink: #7fd6c4;
@@ -152,7 +153,8 @@
   --vk-t-6: 44px; /* 元信息：正文里的次级文字，地板 */
   --vk-t-sub: 40px; /* 索引卡名 / 侧栏组名 */
   --vk-t-caption: 32px; /* 图注 / 工具栏 / 面包屑 */
-  --vk-t-micro: 28px; /* 行号 / 编号 / 层 / 计数 */
+  --vk-t-micro: 28px; /* 编号 / 层 / 计数 */
+  --vk-t-gutter: 36px; /* 代码行号 */
   --vk-t-code: 48px;
   --vk-t-code-lg: 56px;
   --vk-t-note: 52px;

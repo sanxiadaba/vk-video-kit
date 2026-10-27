@@ -630,7 +630,7 @@ export class VkBytes extends VkElement {
       const addr = '0x' + (d.base + d.start + at).toString(16).padStart(4, '0');
       const hex = chunk
         .map((b, i) => {
-          const cls = i && i % group === 0 ? ' class="is-group"' : '';
+          const cls = group > 1 && i % group === 0 ? ' class="is-group"' : '';
           return `<i${cls} data-hl="${flags[i] ? '1' : '0'}">${esc(b)}</i>`;
         })
         .join('');

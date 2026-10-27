@@ -156,8 +156,6 @@ function topbar(tag) {
     return `<vk-row slot="header" w="1680" h="64" justify="between" align="center" data-topbar>
       ${brand()}
       <vk-row gap="sm" align="baseline" data-crumb>
-        <vk-text size="caption" emphasis="muted" data-meta>Components</vk-text>
-        <vk-text size="caption" mono emphasis="muted" data-meta>/</vk-text>
         <vk-text size="caption" weight="medium" data-meta>Overview</vk-text>
       </vk-row>
       <vk-text size="micro" mono data-meta>${ORDER.length} components</vk-text>
@@ -297,7 +295,7 @@ function plateLens(tag) {
       ? body.replace(/\sdensity="[^"]*"/, ' density="compact"')
       : body.replace(new RegExp(`^<${tag}`), `<${tag} density="compact"`);
   }
-  const PLATE_W = { 'vk-edge': 1300, 'vk-canvas': 1300, 'vk-annotate': 1300 };
+  const PLATE_W = { 'vk-edge': 1300, 'vk-canvas': 1300, 'vk-annotate': 1300, 'vk-bytes': 1200 };
   if (tag !== 'vk-annotate') body = clampWidth(body, PLATE_W[tag] || 1100);
   const def = TAGS[tag];
   const no = String(ORDER.indexOf(tag) + 1).padStart(3, '0');
@@ -390,7 +388,7 @@ function anatomyLens(tag) {
       <vk-box x="8" y="40" w="1336" surface="none">${scene}</vk-box>
     </vk-canvas>`;
   }
-  const WIDE = { 'vk-bytes': 1100, 'vk-canvas': 1200, 'vk-table': 1100, 'vk-frames': 1100, 'vk-browser': 1200 };
+  const WIDE = { 'vk-bytes': 1200, 'vk-canvas': 1200, 'vk-table': 1100, 'vk-frames': 1100, 'vk-browser': 1200 };
   const fitW = WIDE[tag] || 1100;
   const snippet = fitVariant(
     clampWidth(

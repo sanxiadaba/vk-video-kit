@@ -6,11 +6,12 @@
 
 - **外壳**：浅灰应用底、白色侧栏 / 内容、1px 边、钴蓝单一强调；31 个组件按层分组进侧栏，搜索/层筛选，`/` 聚焦；原来的封面、深墨台面、衬线图版号移除。
 - **字号**：正文 44 仍是地板；行号、图注、索引编号、层、侧栏标签改用 28–40，并显式标 `[data-meta]`；门禁与 contract 只对正文查 44。
-- **代码窗**：去掉红绿灯和假 tab；56 高文档头（文件 / 行段 / 语言）+ 28 行号 + 源文件行号（`lines="4-6"` → 4/5/6）；当前行是 6% 冷蓝 + 代码左侧 2px 蓝线 + 行号变蓝；折叠改虚线。
+- **代码窗**：三点回来；56 高文档头：40 文件名（强调）+ 28 行段 + 语言角标；行号 36、无底色/无阴影；源文件行号（`lines="4-6"` → 4/5/6）；当前行 6% 冷蓝 + 代码左侧 2px 蓝线 + 行号变蓝；语法换成 One Light；折叠虚线。
 - **vk-tree**：成品页改为真实文件树（src/tests/fixtures、长名、M/A 状态、current、深度、计数）；folder/file 图标；`collapsed`、`limit`、`truncated` 修正；溢出不再逃出画面。
 - **vk-frames**：slot / value / address 改成共享列（subgrid），address 28px、muted，长 value 省略，value/address 不再叠字。
-- **解剖/批注**：编号锚点贴到 part 左侧并加引线；code 的 window/header/body/line 四处可量；annotate 补上 `data-anatomy-target`，边注按源行号 4/5/6 对齐；图例缩到一行。
-- **索引**：31 格 5×7 接触印样；卡片中文名 40、tag/number 28，不再文字压卡；搜索 + 层筛选 + 空态。
+- **解剖/批注**：编号锚点贴到 part 左侧并加引线；code 的 window/header/body/line 四处可量；annotate 补上 `data-anatomy-target`，边注改成一行一条、按源行号 4/5/6 对齐；图例缩到一行。
+- **vk-bytes**：group=1 不再给每个字节加组间距；hex 用 max-content + 1200 宽，ASCII 独立列，不再压住。
+- **索引**：31 格 5×7 接触印样；卡片中文名 40、tag/number 28，不再文字压卡；搜索 + 层筛选 + 空态。侧栏跨页保留滚动位置，点击不再跳去追当前项；`overscroll-behavior: contain`。
 - **质量**：156 个五镜头对象全绿；contract 265 属性；links / verify / pack / browser / unit 全绿。
 
 ## 2.1.0
