@@ -88,16 +88,17 @@ vk-box[surface='ink'] {
   --vk-box-bw: 2px;
   color: var(--vk-ink-text-1);
 }
+/* 描边只管粗细；线色归 tone——所以"彩色描边卡"是 tone + border 的组合。 */
+vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
+vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
+vk-box[border='none'] { --vk-box-bw: 0px; --vk-box-line: transparent; }
+
 /* 语义色只叠加在表面上，不承担材质。 */
 vk-box[tone='accent'] { --vk-box-bg: var(--vk-focus-soft); --vk-box-line: var(--vk-focus-line); }
 vk-box[tone='ok'] { --vk-box-bg: var(--vk-ok-weak); --vk-box-line: var(--vk-ok); }
 vk-box[tone='err'] { --vk-box-bg: var(--vk-err-weak); --vk-box-line: var(--vk-err); }
 vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-warn); }
 
-/* 描边是显式选择，必须压过 tone 的默认线——所以放在 tone 之后。 */
-vk-box[border='hair'] { --vk-box-line: var(--vk-line-3); --vk-box-bw: var(--vk-line-w); }
-vk-box[border='strong'] { --vk-box-line: var(--vk-line-strong); --vk-box-bw: var(--vk-line-w-strong); }
-vk-box[border='none'] { --vk-box-line: transparent; --vk-box-bw: 0px; }
 
 /* 定位：只有显式声明才离开文档流 */
 /* 定位：给 x/y 即绝对定位；没有 pos 属性。 */
@@ -130,13 +131,13 @@ vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
 vk-text[weight='bold'] { font-weight: var(--vk-w-bold); }
 
 vk-text[tone='primary'],
-vk-text[emphasis='primary'] { color: var(--vk-ink-1); }
+vk-text[ink='primary'] { color: var(--vk-ink-1); }
 vk-text[tone='secondary'],
-vk-text[emphasis='secondary'] { color: var(--vk-ink-2); }
+vk-text[ink='secondary'] { color: var(--vk-ink-2); }
 vk-text[tone='tertiary'],
-vk-text[emphasis='tertiary'] { color: var(--vk-ink-3); }
-vk-text[tone='muted'],
-vk-text[emphasis='muted'] { color: var(--vk-ink-4); }
+vk-text[ink='tertiary'] { color: var(--vk-ink-3); }
+vk-text[ink='muted'],
+vk-text[ink='muted'] { color: var(--vk-ink-4); }
 
 vk-text[align='center'] { text-align: center; }
 vk-text[align='right'] { text-align: right; }
@@ -156,8 +157,8 @@ vk-title em {
 }
 
 /* muted 正文里的 em 改用下划线标记：底太浅仍只有 4.45，不如换一种焦点标记。 */
-vk-text[tone='muted'] em,
-vk-text[emphasis='muted'] em {
+vk-text[ink='muted'] em,
+vk-text[ink='muted'] em {
   background: none;
   box-shadow: inset 0 -0.12em 0 var(--vk-focus-soft);
 }
@@ -196,13 +197,13 @@ vk-icon .vk-icon svg {
   stroke-linejoin: round;
 }
 vk-icon[tone='primary'],
-vk-icon[emphasis='primary'] .vk-icon { color: var(--vk-ink-1); }
+vk-icon[ink='primary'] .vk-icon { color: var(--vk-ink-1); }
 vk-icon[tone='secondary'],
-vk-icon[emphasis='secondary'] .vk-icon { color: var(--vk-ink-2); }
+vk-icon[ink='secondary'] .vk-icon { color: var(--vk-ink-2); }
 vk-icon[tone='tertiary'],
-vk-icon[emphasis='tertiary'] .vk-icon { color: var(--vk-ink-3); }
-vk-icon[tone='muted'],
-vk-icon[emphasis='muted'] .vk-icon { color: var(--vk-ink-4); }
+vk-icon[ink='tertiary'] .vk-icon { color: var(--vk-ink-3); }
+vk-icon[ink='muted'],
+vk-icon[ink='muted'] .vk-icon { color: var(--vk-ink-4); }
 vk-icon[tone='accent'] .vk-icon { color: var(--vk-focus); }
 vk-icon[tone='ok'] .vk-icon { color: var(--vk-ok); }
 vk-icon[tone='err'] .vk-icon { color: var(--vk-err); }
@@ -305,3 +306,8 @@ vk-mark[variant='circle'] {
 vk-mark[tone='ok'] { --vk-mark-fill: var(--vk-ok-mark); --vk-mark-rule: var(--vk-ok); }
 vk-mark[tone='err'] { --vk-mark-fill: var(--vk-err-mark); --vk-mark-rule: var(--vk-err); }
 vk-mark[tone='warn'] { --vk-mark-fill: var(--vk-warn-mark); --vk-mark-rule: var(--vk-warn); }
+
+/* 线也能竖着站：竖向分隔线 */
+vk-rule[orientation='vertical'] { width: var(--vk-line-w); min-width: var(--vk-line-w); height: 100%; min-height: 48px; align-self: flex-start; }
+/* 空元素不该在画面上留一块色：没有内容就什么都不画。 */
+vk-mark:empty, vk-tag:empty { display: none; }

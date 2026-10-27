@@ -14,7 +14,7 @@ export const SCENES = [
   {
     tag: 'vk-code',
     body: s`
-<vk-code w="1360" lang="c" file="hello.c" src="../code/hello.c" lines="1-8" highlight="4" density="large"></vk-code>`,
+<vk-code w="1360" lang="c" file="hello.c" src="../code/hello.c" lines="1-8" highlight="4" density="loose"></vk-code>`,
   },
 
   {
@@ -27,7 +27,7 @@ export const SCENES = [
     tag: 'vk-annotate',
     body: s`
 <vk-annotate w="327">
-  <vk-code id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="2"></vk-code>
+  <vk-code id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="5"></vk-code>
   <vk-note line="4">下标 0–2。</vk-note>
   <vk-note line="5">i&lt;=3 越界。</vk-note>
   <vk-note line="6">i=3 越界。</vk-note>
@@ -84,7 +84,7 @@ export const SCENES = [
     body: s`
 <vk-box border="hair" radius="xl" pad="lg" w="1200" h="560" surface="paper">
   <vk-text size="body">数组不是指针。它是一块连续的内存，名字只是这块内存的入口。</vk-text>
-  <vk-text size="body" emphasis="secondary">名字不是值；改一个字符，改的是内存里的一个字节。</vk-text>
+  <vk-text size="body" ink="secondary">名字不是值；改一个字符，改的是内存里的一个字节。</vk-text>
 </vk-box>`,
   },
 
@@ -95,9 +95,9 @@ export const SCENES = [
 <vk-row gap="sm" align="center">
   <vk-tag>int</vk-tag>
   <vk-tag tone="accent">char</vk-tag>
-  <vk-tag tone="muted">4 B</vk-tag>
-  <vk-tag tone="muted">指针</vk-tag>
-  <vk-tag tone="muted" size="meta">0x10</vk-tag>
+  <vk-tag tone="neutral" emphasis="soft">4 B</vk-tag>
+  <vk-tag tone="neutral" emphasis="soft">指针</vk-tag>
+  <vk-tag tone="neutral" emphasis="soft" size="meta">0x10</vk-tag>
 </vk-row>
 <vk-row gap="sm" align="center">
   <vk-tag tone="ok">通过</vk-tag>
@@ -144,7 +144,7 @@ export const SCENES = [
   <vk-box id="obj-1" x="560" y="120" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
-      <vk-text size="label" mono emphasis="muted">0x7f2a</vk-text>
+      <vk-text size="label" mono ink="muted">0x7f2a</vk-text>
     </vk-row>
   </vk-box>
   <vk-box id="name-b" x="0" y="300" w="240" radius="pill" pad-y="xs" surface="soft">
@@ -153,7 +153,7 @@ export const SCENES = [
   <vk-box id="obj-2" x="560" y="300" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
-      <vk-text size="label" mono emphasis="muted">0x7f2e</vk-text>
+      <vk-text size="label" mono ink="muted">0x7f2e</vk-text>
     </vk-row>
   </vk-box>
   <vk-edge from="#name-a" to="#obj-1" label="引用"></vk-edge>
@@ -222,25 +222,25 @@ export const SCENES = [
 <vk-grid cols="3" gap="sm">
   <vk-box border="hair" radius="lg" pad="xl" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono emphasis="muted">类型</vk-text>
+      <vk-text size="meta" mono ink="muted">类型</vk-text>
       <vk-text size="body" weight="bold">int</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono emphasis="muted">字节</vk-text>
+      <vk-text size="meta" mono ink="muted">字节</vk-text>
       <vk-text size="body" weight="bold">4</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono emphasis="muted">最小值</vk-text>
+      <vk-text size="meta" mono ink="muted">最小值</vk-text>
       <vk-text size="body" weight="bold">-21 亿</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono emphasis="muted">最大值</vk-text>
+      <vk-text size="meta" mono ink="muted">最大值</vk-text>
       <vk-text size="body" weight="bold">21 亿</vk-text>
     </vk-stack>
   </vk-box>
@@ -260,10 +260,10 @@ export const SCENES = [
 <vk-window w="1200" chrome="browser" url="http://127.0.0.1:5000/hello">
   <vk-stack gap="sm">
     <vk-text size="heading" weight="bold">Hello, C</vk-text>
-    <vk-text size="label" emphasis="secondary">路由函数返回什么，浏览器就显示什么。</vk-text>
+    <vk-text size="label" ink="secondary">路由函数返回什么，浏览器就显示什么。</vk-text>
     <vk-row gap="sm" align="center">
       <vk-tag tone="ok">200 OK</vk-tag>
-      <vk-text size="meta" mono emphasis="muted">text/html · 12 B</vk-text>
+      <vk-text size="meta" mono ink="muted">text/html · 12 B</vk-text>
     </vk-row>
   </vk-stack>
 </vk-window>`,
@@ -312,33 +312,33 @@ export const SCENES = [
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="terminal" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">终端</vk-text>
+    <vk-text size="label" mono ink="tertiary">终端</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="code" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">源码</vk-text>
+    <vk-text size="label" mono ink="tertiary">源码</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="circle-x" scale="lg" tone="err"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">错误</vk-text>
+    <vk-text size="label" mono ink="tertiary">错误</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="rocket" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">运行</vk-text>
+    <vk-text size="label" mono ink="tertiary">运行</vk-text>
   </vk-stack>
 </vk-row>
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="database" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">数据</vk-text>
+    <vk-text size="label" mono ink="tertiary">数据</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="git-branch" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">分支</vk-text>
+    <vk-text size="label" mono ink="tertiary">分支</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="settings" scale="lg"></vk-icon>
-    <vk-text size="label" mono emphasis="tertiary">设置</vk-text>
+    <vk-text size="label" mono ink="tertiary">设置</vk-text>
   </vk-stack>
 </vk-row>`,
   },
@@ -363,7 +363,7 @@ export const SCENES = [
 <vk-stack gap="md">
   <vk-text size="body">编译成功只说明语法过关。</vk-text>
   <vk-rule></vk-rule>
-  <vk-text size="body" emphasis="secondary">警告说的是：这里你可能写错了。</vk-text>
+  <vk-text size="body" ink="secondary">警告说的是：这里你可能写错了。</vk-text>
 </vk-stack>`,
   },
 
@@ -372,7 +372,7 @@ export const SCENES = [
     body: s`
 <vk-stack gap="md">
   <vk-note tone="accent" size="body">传参时退化，这条要记住。</vk-note>
-  <vk-note tone="inverse" size="body">函数里的 sizeof(a) 是 8。</vk-note>
+  <vk-note surface="ink" size="body">函数里的 sizeof(a) 是 8。</vk-note>
   <vk-note tone="err" size="body">错：以为 a 在函数里还是数组。</vk-note>
   <vk-note tone="ok" size="body">对：长度和指针一起传。</vk-note>
 </vk-stack>`,
@@ -428,7 +428,7 @@ export const SCENES = [
   {
     tag: 'vk-bars',
     body: s`
-<vk-bars w="1280" max="1000000" scale="log" unit="ns">
+<vk-bars w="1280" max="1000000" mode="log" unit="ns">
   <i value="1" label="CPU"></i>
   <i value="120" label="内存"></i>
   <i value="1000000" label="磁盘"></i>
@@ -523,7 +523,7 @@ export const SCENES = [
 <vk-page>
   <vk-stack gap="lg">
     <vk-title index="01" eyebrow="m.c" size="title">一页只讲<em>一个概念</em>。</vk-title>
-    <vk-text size="body" measure="body">页眉和页脚是可选的；正文仍然是 888，这是视频里最稳的一屏。</vk-text>
+    <vk-text size="body" measure="body">坐标原点在左上，安全区 120 / 96；正文恒为 1680 × 888，缩放交给预览器。</vk-text>
   </vk-stack>
 </vk-page>`,
   },

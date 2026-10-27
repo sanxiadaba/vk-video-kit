@@ -44,7 +44,7 @@ export class VkMemory extends VkElement {
       this.innerHTML = '<div class="vk-memory" data-empty>（没有段）</div>';
       return;
     }
-    const scale = this.getAttribute('scale') === 'linear' ? 'linear' : 'schematic';
+    const scale = this.getAttribute('mode') === 'linear' ? 'linear' : 'schematic';
     const orientation = this.getAttribute('orientation') === 'horizontal' ? 'horizontal' : 'vertical';
     const show = this.getAttribute('show') || 'all';
     const density = this.getAttribute('density') || 'normal';
@@ -54,14 +54,22 @@ export class VkMemory extends VkElement {
     const total = items.reduce((n, it) => n + sizeBytes(it.size), 0);
     const maxSize = Math.max(...items.map((it) => sizeBytes(it.size)), 0);
 
+    // linear：总高固定，先给每段保底，再按字节数分剩下的高度——保证总和就是容器高。
+    const LINEAR_TOTAL = 540;
+    const LINEAR_MIN = 56;
+    const heights = items.map(() => 0);
+    if (scale === 'linear' && total > 0) {
+      const slack = Math.max(0, LINEAR_TOTAL - items.length * LINEAR_MIN);
+      items.forEach((it, i) => {
+        heights[i] = Math.round(LINEAR_MIN + slack * (sizeBytes(it.size) / total));
+      });
+    }
+
     const rows = items
       .map((it, i) => {
         const grow = it.grows === 'up' ? 'up' : it.grows === 'down' ? 'down' : '';
         const growMark = grow ? `<span class="vk-mem-grow" data-grow="${grow}" aria-hidden="true">${grow === 'up' ? '↑' : '↓'}</span>` : '';
-        const weight =
-          scale === 'linear' && total > 0 && maxSize > 0
-            ? ` style="--vk-mem-weight:${Math.max(1, Math.round((sizeBytes(it.size) / maxSize) * 100))}"`
-            : '';
+        const weight = heights[i] ? ` style="--vk-mem-h:${heights[i]}px"` : '';
         const showAddr = show !== 'values' && it.addr;
         const showSize = show !== 'addresses' && it.size;
         const tone = it.tone ? ` data-tone="${esc(it.tone)}"` : '';
@@ -79,7 +87,7 @@ export class VkMemory extends VkElement {
       <span class="vk-mem-meta" data-meta>${[addr, unit].filter(Boolean).map(esc).join(' · ')}</span>
     </header>`;
 
-    this.innerHTML = `<div class="vk-memory" data-scale="${scale}" data-orientation="${orientation}" data-density="${esc(density)}" data-addr="${items.some((it) => it.addr) ? 'all' : 'none'}" role="list">
+    this.innerHTML = `<div class="vk-memory" data-mode="${scale}" data-orientation="${orientation}" data-density="${esc(density)}" data-addr="${items.some((it) => it.addr) ? 'all' : 'none'}" role="list">
       ${head}
       <div class="vk-mem-bd">${rows}</div>
       <p class="vk-mem-note" data-meta>${esc(addr ? `高地址 ${addr}` : '')}</p>

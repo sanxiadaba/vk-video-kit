@@ -138,7 +138,8 @@ export class VkEdge extends VkElement {
     if (this._cap) this._cap.style.display = 'none';
     if (this._label) this._label.textContent = this.getAttribute('label') || '';
 
-    const host = this.closest('vk-canvas, vk-annotate, [data-vk-frame]') || this.parentElement;
+    const host = this.closest('vk-canvas, vk-annotate, vk-page, [data-vk-frame]') || this.parentElement;
+    if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
     if (!host) return;
 
     // 隐藏的镜头/模板不参与布局：没有盒子就不画，也不报警。

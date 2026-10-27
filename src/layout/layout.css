@@ -188,7 +188,7 @@ vk-edge[tone='accent'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-focus-
 vk-edge[tone='ok'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-ok); }
 vk-edge[tone='err'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-err); }
 vk-edge[tone='warn'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-warn); }
-vk-edge[tone='ghost'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-line-3); }
+vk-edge[emphasis='ghost'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-line-3); }
 vk-edge .vk-edge-cap {
   fill: var(--vk-ink-3);
   stroke: none;
@@ -206,9 +206,9 @@ vk-edge[tone='err'] .vk-edge-cap { fill: var(--vk-err); }
 vk-edge[tone='warn'] .vk-edge-path { stroke: var(--vk-warn); }
 vk-edge[tone='warn'] .vk-edge-tip,
 vk-edge[tone='warn'] .vk-edge-cap { fill: var(--vk-warn); }
-vk-edge[tone='ghost'] .vk-edge-path { stroke: var(--vk-line-strong); }
-vk-edge[tone='ghost'] .vk-edge-tip,
-vk-edge[tone='ghost'] .vk-edge-cap { fill: var(--vk-line-strong); }
+vk-edge[emphasis='ghost'] .vk-edge-path { stroke: var(--vk-line-strong); }
+vk-edge[emphasis='ghost'] .vk-edge-tip,
+vk-edge[emphasis='ghost'] .vk-edge-cap { fill: var(--vk-line-strong); }
 
 vk-edge[dash] .vk-edge-path { stroke-dasharray: 20 14; }
 

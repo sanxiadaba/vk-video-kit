@@ -304,3 +304,15 @@ after(async () => {
   await browser.close();
   await close();
 });
+
+test('锚点真的能解析到运行时元素（cell / line），不是只过构建', async () => {
+  await reset(
+    '<vk-page><vk-stack gap="sm"><vk-cells id="x" values="1|2|3"></vk-cells><vk-code id="c" lang="c">int a;' +
+      '\nint b;</vk-code></vk-stack></vk-page>'
+  );
+  const found = await page.evaluate(() => ({
+    cell: !!document.querySelector('#x [data-cell="2"]'),
+    line: !!document.querySelector('#c [data-line="2"]'),
+  }));
+  assert.deepEqual(found, { cell: true, line: true });
+});

@@ -19,16 +19,16 @@ npm i /path/to/vk-video-kit
 ## 2 · 写一个代码窗
 
 ```html
-<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" highlight="4" density="large">
+<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" highlight="4" density="loose">
 </vk-code>
 ```
 
 - `src` 指向真实源文件，`lines="1-8"` 选片段；行号默认按**源文件**行号（4-6 就是 4/5/6），`numbering="slice"` 才从 1 起。
 - `src` 相对当前 HTML 文件；文件不存在时 `npx vk build` 会直接报错。
-- `highlight="4"` 高亮片段第 4 行；`focus="4"` 让其余行退到 0.28。
+- `highlight="4"` 高亮源文件第 4 行；`focus="4"` 让其余行退到 0.28。
 - `fold="4"` 在第 4 行后插一条“中间省略”，被折叠的行真的不渲染。
 - `surface="ink"` 切深色；不写就是纸面。
-- `density="large"` 是 56px 主镜头；默认 48px。
+- `density="loose"` 是 56px 主镜头；默认 48px。
 - `chrome="none"` 去窗头和页脚；行号由 `numbers="none"` 单独控制。
 
 终端默认浅色，和代码窗一致；要深色写 `surface="ink"`。结果行用**显式前缀**，不猜；`src` 指向真实 transcript 文件：
@@ -107,10 +107,10 @@ npm i /path/to/vk-video-kit
 
 ## 6 · 页面
 
-`vk-page` 是画布工具：安全区 96 / 120、按容器宽度缩放、可选的页眉页脚。
+`vk-page` 是画布工具：安全区 96 / 120、按容器宽度缩放、可选的坐标系边界。
 
 ```html
-<vk-page footer="第 1 章 · 从能跑到讲清楚 | 01 / 12" align="center">
+<vk-page align="center">
   <vk-stack gap="lg">
     <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">
       字符串不是值，是<em>一块内存</em>
@@ -177,15 +177,14 @@ npx vk shot page.html     # 截图：默认 1920×1080；--phone 出 640；--cro
 
 写错会在 `npx vk build` 报错：找不到 id、组件不支持该 part、下标越界、批注行号超出代码行数。
 
-## 11 · 从标本册拿代码
+## 11 · 规格页
 
-标本册不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
+规格页不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **索引**：浅色 docs 外壳；40 个组件总览、搜索、层筛选，点卡进页。
-- **一页一个组件**：成品 / 变体 / 解剖 / 用法 / API 五个镜头，`1–5` 切换。
-- **复制**：变体和 API 镜头都能复制当前片段。片段里的 `src` 仍指向真实文件；粘到新页面后要跑 `npx vk build`（或 dev server）预编译。
-- **属性**：API 镜头从 registry 生成，4 行/页；`src` / `lines` / `file` / `title` 等属于内容，不在这里改。
-- **解剖**：运行时量 DOM 生成的蓝图；不是手绘图。
+- **索引**：40 格总览，一屏装得下，点卡进页。
+- **一页一个组件**：一行元信息 + 标准形态，**单镜头**，不滚动。
+- **属性表**：`docs/reference.md`（随包发布），由 registry 生成；`src` / `lines` / `file` 这类内容属性也在里面。
+- **变体**：不进页面；每个组件的预设由门禁逐条施加并比对像素，写错的预设会直接失败。
 - 桌面 only；不提供移动布局。
 
 ## 进阶属性

@@ -112,7 +112,7 @@ export const PROBES = {
       effect: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
       why: '填充格是斜纹底图，断 background-image。',
     },
-    mark: {
+    marked: {
       values: ['1'],
       effect: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
       why: '高亮格底和边一起亮；断边框色，才是在断"框"。',
@@ -130,9 +130,8 @@ export const EFFECT_OVERRIDES = {
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
-  'vk-code.fit': '换行/滚动是内容相关状态，长行按作者内容变高；只断言 white-space 真的变了。',
+  'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
   'vk-annotate.w': '只改批注栏宽这一条几何，不产生新文字/颜色。',
-  'vk-steps.orientation': '竖排会改变整块高度，安全区由作者内容决定；结构差异已由 flex-direction 断言覆盖。',
   'vk-canvas.inset': '画布内缩只改子节点坐标，不产生新文字/颜色。',
   'vk-canvas.overflow': '裁切是作者显式选择；画布内容的安全区由真实帧负责。',
   'vk-grid.cols': '列数变化只改几何；子节点本身的视觉在默认态已检查。',
@@ -147,11 +146,6 @@ export const VISUAL_EXEMPT = {
  * 当前 3 条。
  */
 export const EFFECT_ANY = [
-  {
-    tag: 'vk-page',
-    attr: 'fit',
-    reason: 'fit=contain 只在宿主小于 16:9 时产生缩放差；1920 契约宿主正好 16:9，行为由 page fixture 覆盖。',
-  },
   {
     tag: 'vk-mark',
     attr: 'variant',

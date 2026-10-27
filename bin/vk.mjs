@@ -32,8 +32,12 @@ if (cmd === 'build' || cmd === 'check') {
   const m = await import('../cli/serve.mjs');
   await m.main(Number(rest[0]) || 8099, process.cwd());
 } else if (cmd === 'shot') {
-  const m = await import('../cli/shot.mjs');
-  void m;
+  // shot 自己从 argv 取文件名；这里必须把 rest 交回去，否则它会把 "shot" 当成文件名。
+  process.argv = [process.argv[0], 'shot', ...rest];
+  const m = await need('playwright-core', '截图');
+  await m;
+  // cli/shot.mjs 是脚本：import 即执行。
+  await import('../cli/shot.mjs');
 } else {
   console.log(`
 vk —— 把内容做成画面单元

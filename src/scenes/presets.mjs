@@ -18,7 +18,7 @@ export const PRESETS = {
     { label: '纵向内距', attrs: { 'pad-y': 'xl' } },
   ],
   'vk-text': [
-    { label: '次要', attrs: { emphasis: 'tertiary' } },
+    { label: '次要', attrs: { ink: 'tertiary' } },
     { label: '大字', attrs: { size: 'heading' } },
     { label: '居中', attrs: { align: 'center' } },
     { label: '等宽', attrs: { mono: '' } },
@@ -100,17 +100,17 @@ export const PRESETS = {
     { label: '无底', attrs: { flat: '' } },
   ],
   'vk-code': [
-    { label: '主镜头', attrs: { density: 'large', chrome: 'none' } },
+    { label: '主镜头', attrs: { density: 'loose', chrome: 'none' } },
     { label: '聚光', attrs: { focus: '4', highlight: '4' } },
     { label: '缺口', attrs: { fold: '4' } },
     { label: '深色', attrs: { surface: 'ink' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
     { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
-    { label: '窄窗折行', attrs: { w: '720', fit: 'wrap' } },
+    { label: '窄窗折行', attrs: { w: '720', long: 'wrap' } },
   ],
   'vk-term': [
-    { label: '大号', attrs: { density: 'large' } },
+    { label: '大号', attrs: { density: 'loose' } },
     { label: '深色', attrs: { surface: 'ink' } },
     { label: '无头', attrs: { chrome: 'none' } },
   ],
@@ -145,7 +145,6 @@ export const PRESETS = {
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
   ],
   'vk-window': [
-    { label: '对话框', attrs: { chrome: 'dialog', tone: 'err' } },
     { label: '深色', attrs: { surface: 'ink' } },
     { label: '无窗头', attrs: { chrome: 'none' } },
     { label: '宽内距', attrs: { pad: 'lg' } },
@@ -175,7 +174,7 @@ export const PRESETS = {
   ],
   'vk-keys': [],
   'vk-cells': [
-    { label: '高亮 x', attrs: { mark: '0' } },
+    { label: '高亮第 1 格', attrs: { marked: '0' } },
     { label: '去掉填充标记', attrs: { pad: null } },
     { label: '三等分', attrs: { spans: '1|1|1' } },
     { label: '字节尺', attrs: { offsets: '', align: '' } },
@@ -194,8 +193,6 @@ export const PRESETS = {
     { label: '编号', attrs: { n: '1' } },
   ],
   'vk-page': [
-    { label: '加页眉', attrs: { header: '第 1 章 · 从能跑到讲清楚' } },
-    { label: '加页脚', attrs: { footer: 'vk · 一页一个概念' } },
   ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
@@ -211,12 +208,12 @@ export const PRESETS = {
   'vk-bars': [
     { label: '强调当前', attrs: { tone: 'accent' } },
     { label: '紧凑', attrs: { density: 'compact' } },
-    { label: '线性刻度', attrs: { scale: 'linear' } },
+    { label: '线性刻度', attrs: { mode: 'linear' } },
   ],
   'vk-memory': [
     { label: '只看地址', attrs: { show: 'addresses' } },
     { label: '横向分区', attrs: { orientation: 'horizontal' } },
-    { label: '按大小', attrs: { scale: 'linear' } },
+    { label: '按大小', attrs: { mode: 'linear' } },
     { label: '紧凑', attrs: { density: 'compact' } },
   ],
   'vk-asm': [

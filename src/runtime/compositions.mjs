@@ -20,86 +20,25 @@ export class VkPage extends VkElement {
   static renderedRoot = '.vk-page';
 
   render() {
-    const header = this.getAttribute('header') || '';
-    const footer = this.getAttribute('footer') || '';
     const w = 1920;
     const h = 1080;
     const align = this.getAttribute('align') === 'center' ? 'center' : 'top';
     const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
 
     if (!this._shell) {
-      // 页眉/页脚槽：先摘出来，剩下的才是正文。槽的优先级高于同名属性。
-      this._headerSlot = [...this.children].filter((el) => el.getAttribute?.('slot') === 'header');
-      this._footerSlot = [...this.children].filter((el) => el.getAttribute?.('slot') === 'footer');
-      for (const el of [...this._headerSlot, ...this._footerSlot]) {
-        el.removeAttribute('slot');
-        el.remove();
-      }
       const body = takeSlot(this);
+      // 坐标系根：只有 1920×1080 与安全区。页眉页脚与缩放在本层之外。
       this.innerHTML = `<div class="vk-page" data-align="top" style="--pw:${w}px;--ph:${h}px">
         <div class="vk-page-inner"><div class="vk-page-bd" data-vk-part="bd"></div></div>
       </div>`;
       this._shell = this.querySelector('.vk-page');
-      this._inner = this.querySelector('.vk-page-inner');
-      this._shell.dataset.surface = surface;
       this._bd = this.querySelector('.vk-page-bd');
       fillSlot(this._bd, body);
       this.dataset.vkPlace = '';
-      this._watch();
     }
 
     this._shell.dataset.surface = surface;
-    // header / footer 是页面的装饰，不是作者槽；每次只更新它们，不碰 vk-page-bd。
-    const hasHdSlot = this._headerSlot?.length;
-    let hd = this._inner.querySelector(':scope > .vk-page-hd');
-    if (header || hasHdSlot) {
-      if (!hd) {
-        hd = document.createElement('header');
-        hd.className = 'vk-page-hd';
-        hd.dataset.vkPart = 'hd';
-        this._inner.insertBefore(hd, this._bd);
-      }
-      if (hasHdSlot) {
-        hd.classList.add('is-slot');
-        for (const el of this._headerSlot) if (el.parentNode !== hd) hd.append(el);
-      } else {
-        hd.classList.remove('is-slot');
-        hd.textContent = header;
-      }
-    } else if (hd) {
-      hd.remove();
-    }
-
-    const hasFtSlot = this._footerSlot?.length;
-    let ft = this._inner.querySelector(':scope > .vk-page-ft');
-    if (footer || hasFtSlot) {
-      if (!ft) {
-        ft = document.createElement('footer');
-        ft.className = 'vk-page-ft';
-        ft.dataset.vkPart = 'ft';
-        this._inner.append(ft);
-      }
-      if (hasFtSlot) {
-        ft.classList.add('is-slot');
-        for (const el of this._footerSlot) if (el.parentNode !== ft) ft.append(el);
-      } else {
-        ft.classList.remove('is-slot');
-        const parts = footer.split('|').map((s) => s.trim());
-        if (parts.length > 1) {
-          ft.innerHTML = '<span></span><span class="vk-page-div"></span><span></span>';
-          ft.children[0].textContent = parts[0];
-          ft.children[2].textContent = parts.slice(1).join(' | ');
-        } else {
-          ft.textContent = footer;
-        }
-      }
-    } else if (ft) {
-      ft.remove();
-    }
-
     this._shell.dataset.align = align;
-    this._shell.style.setProperty('--pw', w + 'px');
-    this._shell.style.setProperty('--ph', h + 'px');
     this._apply();
   }
 
@@ -127,18 +66,11 @@ export class VkPage extends VkElement {
   _apply() {
     const inner = this._shell || this.querySelector('.vk-page');
     if (!inner) return;
-    const w = 1920;
-    const h = 1080;
-    const avail = this.parentElement?.clientWidth || this.clientWidth || w;
-    const boxH = this.parentElement?.clientHeight || this.clientHeight || 0;
-    const fit = this.getAttribute('fit') === 'contain' ? 'contain' : 'width';
-    const s = fit === 'contain' && boxH > 0 ? Math.min(1, avail / w, boxH / h) : Math.min(1, avail / w);
-    inner.style.width = w + 'px';
-    inner.style.height = h + 'px';
-    inner.style.transformOrigin = 'top left';
-    inner.style.transform = s === 1 ? '' : `scale(${s})`;
-    const hostH = Math.ceil(h * s) + 'px';
-    if (this.style.height !== hostH) this.style.height = hostH;
+    // 不缩放：出片尺寸就是设计尺寸，缩放属于预览器（vk shot）而不是组件。
+    inner.style.width = '1920px';
+    inner.style.height = '1080px';
+    inner.style.transform = '';
+    if (this.style.height !== '1080px') this.style.height = '1080px';
   }
 }
 
@@ -240,7 +172,7 @@ export class VkAnnotate extends VkElement {
       if (!n) return null;
       const forSel = note.getAttribute('for');
       const scope = forSel ? resolveTarget(host, forSel, this) : code;
-      return (scope || code || host).querySelector(`.vk-line[data-line="${n}"]`);
+      return (scope || code || host).querySelector(`.vk-line[data-line="${n}"], .vk-dline[data-line="${n}"], .vk-asm [data-line="${n}"]`);
     };
 
     const items = [];
@@ -361,6 +293,8 @@ export class VkNote extends VkElement {
       fillSlot(this._body, body);
     }
     this._shell.dataset.tone = tone;
+    this._shell.dataset.emphasis = this.getAttribute('emphasis') || 'solid';
+    this._shell.dataset.surface = this.getAttribute('surface') || 'paper';
     let num = this._body.querySelector(':scope > .vk-anno-n');
     if (n) {
       if (!num) {

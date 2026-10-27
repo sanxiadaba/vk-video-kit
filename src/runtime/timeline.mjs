@@ -44,7 +44,7 @@ export class VkTimeline extends VkElement {
       this.innerHTML = '<div class="vk-timeline" data-empty>（没有事件）</div>';
       return;
     }
-    const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'axis';
+    const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const density = this.getAttribute('density') || 'normal';
     const span = [this.getAttribute('start') || items[0]?.date, this.getAttribute('end') || items[items.length - 1]?.date]
@@ -74,7 +74,7 @@ export class VkTimeline extends VkElement {
       )
       .join('');
 
-    return `<ol class="vk-tl-axis" aria-label="事件">${rows}</ol>`;
+    return `<ol class="vk-tl-events" aria-label="事件">${rows}</ol>`;
   }
 
   _lanes(items) {

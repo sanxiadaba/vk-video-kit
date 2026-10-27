@@ -147,6 +147,11 @@ export class VkCallout extends VkElement {
 
   render() {
     this.setAttribute('role', 'note');
+    // 没有标题也没有正文：画面上不该留一条孤零零的色条。
+    if (!this.textContent.trim() && !this.getAttribute('title')) {
+      this.innerHTML = '';
+      return;
+    }
     const tone = this.getAttribute('tone') || 'accent';
     const title = this.getAttribute('title') || '';
     const flat = this.hasAttribute('flat');
@@ -915,7 +920,7 @@ export class VkCells extends VkElement {
       return out;
     };
     const padSet = idxSet('pad');
-    const markSet = idxSet('mark');
+    const markSet = idxSet('marked');
     const addr = this.getAttribute('addr') || '';
     let flag = parseInt(this.getAttribute('flag') || '-1', 10);
     if (!Number.isFinite(flag) || flag < 0) flag = -1;
@@ -977,7 +982,7 @@ export class VkCells extends VkElement {
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(v)}</span>
           ${ruler}
-          ${addr ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + startOff)}</span>` : ''}
+          ${addr && !byteMode ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + startOff)}</span>` : ""}
         </div>`;
       })
       .join('');
@@ -1056,6 +1061,11 @@ export class VkQuote extends VkElement {
   capture() {}
 
   render() {
+    // 空引文只剩一条黑竖杠；没有正文就不画。
+    if (!this.textContent.trim()) {
+      this.innerHTML = '';
+      return;
+    }
     if (!this._shell) {
       const body = takeSlot(this);
       this.innerHTML = '<blockquote class="vk-quote"><div class="vk-quote-t"></div><cite class="vk-quote-src" data-meta></cite></blockquote>';
@@ -1092,7 +1102,7 @@ export class VkBits extends VkElement {
       : [{ label: this.getAttribute('label') || '', value: this.getAttribute('value') || '', mark: false }];
     const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
-    const tone = this.getAttribute('tone') === 'accent' ? 'accent' : 'ink';
+    const tone = this.getAttribute('tone') === 'accent' ? 'accent' : 'neutral';
     const multi = rows.length > 1;
 
     const rendered = rows.map((row, r) => {
@@ -1139,7 +1149,7 @@ export class VkBars extends VkElement {
     const attrMax = Number(this.getAttribute('max'));
     const max = Number.isFinite(attrMax) && attrMax > 0 ? attrMax : Math.max(...rows.map((r) => r.value), 1);
     const unit = this.getAttribute('unit') || '';
-    const log = this.getAttribute('scale') === 'log';
+    const log = this.getAttribute('mode') === 'log';
     const denom = log ? Math.log1p(max) : max;
     const items = rows
       .map((r) => {

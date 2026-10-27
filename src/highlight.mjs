@@ -245,7 +245,10 @@ function anchorCapacity(node) {
       .map((s) => parseInt(s.trim(), 10))
       .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
     const total = spans.reduce((a, b) => a + b, 0);
-    const max = Math.max(n - 1, total - 1);
+    // @cell 指字段；@byte 指字节，只有开了字节尺（offsets/align/direction）才存在。
+    const byteMode = ['offsets', 'align', 'direction'].some((a) => node.attrs?.some((x) => x.name === a));
+    const cellCap = Math.max(n, spans.length) - 1;
+    const max = byteMode ? Math.max(cellCap, total - 1) : cellCap;
     return max >= 0 ? { from: 0, to: max } : null;
   }
   if (tag === 'vk-bytes') {
@@ -324,6 +327,10 @@ function validateRefs(doc, file, errors) {
         errors.push(`${where}：#${id} 是 <${host.tagName}>，不支持 @${part}${allowed.length ? `；支持 ${allowed.join(' / ')}` : '；没有内部锚点'}`);
         continue;
       }
+      if (part === 'byte' && host.tagName === 'vk-cells' && !['offsets', 'align', 'direction'].some((a) => host.attrs?.some((x) => x.name === a))) {
+        errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 offsets / align / direction`);
+        continue;
+      }
       const cap = anchorCapacity(host);
       if (!cap) continue;
       if (part === 'line' || part === 'char') {
@@ -339,6 +346,8 @@ function validateRefs(doc, file, errors) {
         }
       } else if (INDEX_PART.has(part)) {
         const n = parseInt(argRaw, 10);
+        // @seg:stack / @lane:主线程 是名字锚点，不是下标；数值型才校验范围。
+        if (!Number.isFinite(n) && (part === 'seg' || part === 'lane')) continue;
         if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
           errors.push(`${where}：${part} 的可选范围是 ${cap.from}–${cap.to}，${argRaw} 越界（下标从 0 起）`);
         }
@@ -349,7 +358,18 @@ function validateRefs(doc, file, errors) {
     if (tag === 'vk-note') {
       const lineAttr = attr(node, 'line');
       if (lineAttr) {
-        const code = ancestors(node).find((p) => p.tagName === 'vk-code' || p.tagName === 'vk-diff');
+        // line 的正常写法是"代码块的兄弟"，不是它的后代：先找容器，再在容器里找代码。
+        const host = ancestors(node).find((p) => ['vk-annotate', 'vk-canvas', 'vk-page'].includes(p.tagName));
+        const findCode = (n) => {
+          if (!n) return null;
+          if (n.tagName === 'vk-code' || n.tagName === 'vk-diff' || n.tagName === 'vk-asm') return n;
+          for (const c of [...(n.childNodes || []), ...(n.content?.childNodes || [])]) {
+            const hit = findCode(c);
+            if (hit) return hit;
+          }
+          return null;
+        };
+        const code = findCode(host) || ancestors(node).find((p) => p.tagName === 'vk-code' || p.tagName === 'vk-diff');
         const cap = code ? anchorCapacity(code) : null;
         const n = parseInt(lineAttr, 10);
         if (cap && (!Number.isFinite(n) || n < cap.from || n > cap.to)) {
@@ -717,14 +737,17 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const lang = resolveLang(rawLang || inferLang(src) || 'text');
     const hash = hash32(source);
     const total = source.split('\n').length;
+    // lines="4-6" 时，source 已经是切片；但 highlight/focus/fold 写的是源文件行号。
+    const base = Number((attr(node, 'lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
+    const hi = base + total - 1;
     for (const name of ['highlight', 'focus', 'fold']) {
       for (const part of (attr(node, name) || '').split(',')) {
         const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
         if (!m) continue;
         const a = parseInt(m[1], 10);
         const b = parseInt(m[2] || m[1], 10);
-        if (a > total || b > total) {
-          errors.push(`${file}:${line} <${tag}> 的 ${name}="${part.trim()}" 超出 ${total} 行`);
+        if (a < base || a > hi || b > hi) {
+          errors.push(`${file}:${line} <${tag}> 的 ${name}="${part.trim()}" 超出 ${base}–${hi} 行（源文件行号）`);
         }
       }
     }

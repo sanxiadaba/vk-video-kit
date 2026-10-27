@@ -71,7 +71,7 @@ writeIfChanged(
 <style>html,body{margin:0;width:1920px;height:1080px;overflow:hidden;background:#fff}</style>
 </head>
 <body>
-<vk-page header="契约宿主 · vk-page" footer="1920 × 1080 | 安全区 1680 × 888">
+<vk-page>
   <vk-stack gap="lg">
     <vk-text size="heading" weight="bold">页面是画布工具。</vk-text>
     <vk-text size="body" measure="body">页眉、正文、页脚三行固定；正文永远是 888，不被页眉页脚压缩。</vk-text>

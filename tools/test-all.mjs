@@ -100,6 +100,7 @@ const nodeTest = [
   npx,
   '--test',
   '--test-concurrency=1',
+  'tests/anchor.test.mjs',
   'tests/contract.test.mjs',
   'tests/geometry.test.mjs',
   'tests/package.test.mjs',
@@ -167,7 +168,7 @@ if (fast) {
     if (!aborted) {
       const waveB = await pool(
         [
-          () => run('gate', [process.execPath, 'tools/gate-all.mjs'], { timeoutMs: 600000, env: browserEnv }),
+          () => run('gate', [process.execPath, 'tools/gate-all.mjs', '--presets'], { timeoutMs: 600000, env: browserEnv }),
           () => run('browser', browserTest, { timeoutMs: 600000, env: browserEnv }),
         ],
         2

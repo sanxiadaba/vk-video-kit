@@ -85,7 +85,11 @@ class VkOverlay extends VkElement {
   }
 
   _tone() {
-    return this.getAttribute('tone') || (this.tagName === 'VK-SPOTLIGHT' ? 'paper' : 'accent');
+    return this.getAttribute('tone') || 'accent';
+  }
+
+  _surface() {
+    return this.getAttribute('surface') || 'paper';
   }
 
   draw() {
@@ -206,12 +210,12 @@ export class VkSpotlight extends VkOverlay {
         y: 0,
         width: f.w,
         height: f.h,
-        fill: this._tone() === 'ink' ? '#000000' : '#0b0f14',
+        fill: this._surface() === 'ink' ? '#000000' : '#0b0f14',
         opacity: dim,
         mask: `url(#${maskId})`,
       })
     );
-    this._svg.dataset.tone = this._tone();
+    this._svg.dataset.surface = this._surface();
   }
 }
 
@@ -254,6 +258,8 @@ export class VkPin extends VkOverlay {
     this._mount();
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }));
     this._bd.dataset.tone = this._tone();
+    this._bd.dataset.emphasis = this.getAttribute('emphasis') || 'soft';
+    this._bd.dataset.surface = this.getAttribute('surface') || 'paper';
     this._bd.dataset.size = this.getAttribute('size') || 'body';
     const w = numAttr(this, 'w', { min: 160, max: 900, fallback: 360 });
     this._bd.style.width = w + 'px';

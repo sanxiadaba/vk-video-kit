@@ -212,17 +212,17 @@ vk-note { display: block; }
 }
 vk-note[size='label'] .vk-note { font-size: var(--vk-t-5); }
 vk-note[size='heading'] .vk-note { font-size: var(--vk-t-3); }
-vk-note[emphasis='secondary'] .vk-note { color: var(--vk-ink-2); }
-vk-note[emphasis='tertiary'] .vk-note { color: var(--vk-ink-3); }
-vk-note[emphasis='muted'] .vk-note { color: var(--vk-ink-4); }
-vk-note[emphasis='muted'] .vk-note:not([data-tone='inverse']) { color: var(--vk-ink-3); }
+vk-note[ink='secondary'] .vk-note { color: var(--vk-ink-2); }
+vk-note[ink='tertiary'] .vk-note { color: var(--vk-ink-3); }
+vk-note[ink='muted'] .vk-note { color: var(--vk-ink-4); }
+vk-note[ink='muted'] .vk-note:not([data-surface='ink']) { color: var(--vk-ink-3); }
 
 /* tone 是整条的底色 + 左边线；在 annotate 里退回只留这一笔。 */
-.vk-note[data-tone='inverse'] { --vk-note-line: var(--vk-ink-1); background: var(--vk-ink-1); color: var(--vk-surface-1); }
+.vk-note[data-surface='ink'] { --vk-note-line: var(--vk-ink-1); background: var(--vk-ink-1); color: var(--vk-surface-1); }
 .vk-note[data-tone='accent'] { --vk-note-line: var(--vk-focus-line); background: var(--vk-focus-soft); }
 .vk-note[data-tone='ok'] { --vk-note-line: var(--vk-ok); background: var(--vk-ok-weak); }
 .vk-note[data-tone='err'] { --vk-note-line: var(--vk-err); background: var(--vk-err-weak); }
-.vk-note[data-tone='inverse'] em { background: rgba(255, 255, 255, 0.16); }
+.vk-note[data-surface='ink'] em { background: rgba(255, 255, 255, 0.16); }
 
 /* 行旁批注保持无底色：它贴在代码边，不能变成一列色块。 */
 .vk-anno-notes .vk-note {
@@ -231,7 +231,7 @@ vk-note[emphasis='muted'] .vk-note:not([data-tone='inverse']) { color: var(--vk-
   background: transparent;
   color: var(--vk-ink-1);
 }
-.vk-anno-notes .vk-note[data-tone='inverse'] { background: transparent; color: var(--vk-ink-1); }
+.vk-anno-notes .vk-note[data-surface='ink'] { background: transparent; color: var(--vk-ink-1); }
 
 .vk-note em {
   font-family: var(--vk-font-mono);
@@ -239,3 +239,13 @@ vk-note[emphasis='muted'] .vk-note:not([data-tone='inverse']) { color: var(--vk-
   background: var(--vk-focus-soft);
   padding: 0 0.06em;
 }
+
+/* 强度与材质：note 的三档底色；ink 换材质。 */
+.vk-note[data-emphasis='solid'] { background: var(--vk-focus-soft); }
+.vk-note[data-emphasis='soft'] { background: var(--vk-surface-2); }
+.vk-note[data-emphasis='ghost'] { background: transparent; box-shadow: none; }
+.vk-note[data-surface='ink'] { background: var(--vk-ink-1); color: var(--vk-surface-1); }
+.vk-note[data-surface='ink'] .vk-note-b { color: var(--vk-surface-1); }
+.vk-note[data-surface='ink'] .vk-note-b, .vk-note[data-surface='ink'] .vk-note-b * { color: var(--vk-surface-1); }
+/* ink 材质要压过语义底色：材质优先于语义。 */
+.vk-note[data-surface='ink'][data-tone] { background: var(--vk-ink-1); color: var(--vk-surface-1); }

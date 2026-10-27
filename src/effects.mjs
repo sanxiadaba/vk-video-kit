@@ -20,7 +20,7 @@ export const EFFECTS = {
     flag: { on: 'vk-cells', kind: 'style', prop: 'background-color' },
     spans: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
     pad: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
-    mark: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
+    marked: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
   },
 
   'vk-term': {
@@ -64,7 +64,7 @@ export const EFFECTS = {
 
   'vk-bars': {
     max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
-    scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    mode: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     density: { on: '.vk-bar', kind: 'style', prop: 'line-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
   },
@@ -117,7 +117,7 @@ export const EFFECTS = {
   'vk-text': {
     size: { on: 'vk-text', kind: 'style', prop: 'font-size' },
     weight: { on: 'vk-text', kind: 'style', prop: 'font-weight' },
-    tone: { on: 'vk-text', kind: 'style', prop: 'color' },
+    ink: { on: 'vk-text', kind: 'style', prop: 'color' },
     mono: { on: 'vk-text', kind: 'style', prop: 'font-family' },
     align: { on: 'vk-text', kind: 'style', prop: 'text-align' },
     measure: { on: 'vk-text', kind: 'style', prop: 'max-width' },
@@ -125,7 +125,7 @@ export const EFFECTS = {
 
   'vk-icon': {
     tone: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-    emphasis: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
+    ink: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
     scale: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
   },
 
@@ -175,7 +175,7 @@ export const EFFECTS = {
   'vk-tag': {
     tone: { on: 'vk-tag', kind: 'style', prop: 'background-color' },
     size: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
-    state: { on: 'vk-tag', kind: 'style', prop: 'box-shadow' },
+    emphasis: { on: 'vk-tag', kind: 'style', prop: 'background-color' },
     bare: { on: 'vk-tag', kind: 'style', prop: 'padding-left' },
   },
 
@@ -188,6 +188,7 @@ export const EFFECTS = {
   'vk-note': {
     tone: { on: '.vk-note', kind: 'style', prop: '--vk-note-line' },
     size: { on: '.vk-note', kind: 'style', prop: 'font-size' },
+    surface: { on: '.vk-note', kind: 'style', prop: 'background-color' },
   },
 
   'vk-box': {
@@ -223,6 +224,7 @@ export const EFFECTS = {
     gap: { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
+    emphasis: { kind: 'any', reason: 'solid 等于默认态；ghost 改用细线，没有可比的单一属性' },
     arrow: { on: 'svg path', kind: 'attr', prop: 'd' },
     'arrow-style': { on: '.vk-edge-tip', kind: 'attr', prop: 'data-style' },
     'arrow-size': { on: 'svg path', kind: 'attr', prop: 'd' },
@@ -240,7 +242,7 @@ export const EFFECTS = {
     surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
     // fit 是内容相关状态：换行后高度由内容决定，只验证 white-space 变了。
-    fit: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
+    long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
     w: { on: 'vk-code', kind: 'geometry', prop: 'width' },
     mark: { on: '.vk-tok', kind: 'style', prop: 'background-color' },
   },
@@ -297,29 +299,27 @@ Object.assign(EFFECTS['vk-list'], {
 });
 Object.assign(EFFECTS['vk-diff'], {
   variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },
-  fit: { on: '.vk-dsrc', kind: 'style', prop: 'white-space', skipVisual: true },
+  long: { on: '.vk-dsrc', kind: 'style', prop: 'white-space', skipVisual: true },
   numbers: { on: 'vk-diff', kind: 'dom', prop: '.vk-ln' },
   summary: { on: '.vk-dmeta', kind: 'style', prop: 'display' },
 });
 Object.assign(EFFECTS['vk-code'], {
-  fit: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
+  long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
   numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
 });
 Object.assign(EFFECTS['vk-term'], {
-  fit: { on: '.vk-txt', kind: 'style', prop: 'white-space', skipVisual: true },
+  long: { on: '.vk-txt', kind: 'style', prop: 'white-space', skipVisual: true },
 });
 Object.assign(EFFECTS['vk-table'], {
-  fit: { on: 'vk-table', kind: 'style', prop: 'overflow-x' },
 });
 Object.assign(EFFECTS['vk-callout'], {
   density: { on: '.vk-callout', kind: 'style', prop: 'padding-top' },
 });
 Object.assign(EFFECTS['vk-steps'], {
-  orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction', skipVisual: true },
   density: { on: '.vk-step-n', kind: 'style', prop: 'width' },
 });
 Object.assign(EFFECTS['vk-cells'], {
-  stride: { on: '.vk-cell-a', kind: 'text' },
+  stride: { kind: 'any', reason: '只在字节模式下改变地址步长' },
 });
 Object.assign(EFFECTS['vk-grid'], {
   justify: { on: 'vk-grid', kind: 'style', prop: 'justify-items' },
@@ -355,7 +355,7 @@ Object.assign((EFFECTS['vk-memory'] ||= {}), {
   title: { on: '.vk-mem-title', kind: 'text' },
   addr: { on: '.vk-mem-note', kind: 'text' },
   unit: { on: '.vk-mem-meta', kind: 'text' },
-  scale: { on: '.vk-mem-row', kind: 'geometry', prop: 'height' },
+  mode: { on: '.vk-mem-row', kind: 'geometry', prop: 'height' },
   show: { on: '.vk-mem-size', kind: 'text' },
   orientation: { on: '.vk-mem-bd', kind: 'style', prop: 'flex-direction' },
   density: { on: '.vk-mem-row', kind: 'style', prop: 'min-height' },
@@ -382,6 +382,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
+  surface: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
   gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
@@ -405,7 +406,7 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
   dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
   feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
-  tone: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
+  surface: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
   shape: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
   z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },
 });

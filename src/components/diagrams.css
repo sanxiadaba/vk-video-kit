@@ -262,13 +262,13 @@ vk-timeline { display: block; }
 
 /* 轴：竖向事件脊柱。日期右对齐、点落在脊柱上、正文左对齐。
    六条事件在 888 内排得下；更多事件由调用方分页。 */
-.vk-tl-axis {
+.vk-tl-events {
   position: relative;
   margin: 0;
   padding: 0;
   list-style: none;
 }
-.vk-tl-axis::before {
+.vk-tl-events::before {
   content: '';
   position: absolute;
   left: 205px;
@@ -384,3 +384,9 @@ vk-timeline { display: block; }
 .vk-tl-chip[data-tone='warn'] { border-left-color: var(--vk-warn); }
 .vk-tl-chip .vk-tl-name { font-size: var(--vk-t-6); margin-top: 0; white-space: normal; }
 .vk-tl-chip .vk-tl-desc { font-size: var(--vk-t-6); margin-top: 0; white-space: normal; }
+
+/* linear：行高直接由字节数算出来（--vk-mem-h 由运行时写入）。 */
+.vk-memory[data-mode='linear'] .vk-mem-row { min-height: var(--vk-mem-h, 64px); }
+
+/* 按比例的地图里，段高就是字节数；说明文字会让最小高度压过比例，所以只在 linear 下收起。 */
+.vk-memory[data-mode='linear'] .vk-mem-desc { display: none; }

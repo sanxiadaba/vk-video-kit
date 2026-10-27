@@ -95,17 +95,23 @@ export class VkCode extends VkElement {
     }
 
     const lines = valid ? this._hl : parsed.map((p) => esc(p.text) || ' ');
-    const hl = lineSet(this.getAttribute('highlight'));
-    const focus = lineSet(this.getAttribute('focus'));
+    // 行号只有一个基准：源文件行号。highlight / focus / fold / span / #id@line 全用它。
+    const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
+    const toSlice = (set) =>
+      new Set([...set].map((v) => v - startNo + 1).filter((v) => v >= 1 && v <= lines.length));
+    const hl = toSlice(lineSet(this.getAttribute('highlight')));
+    const focus = toSlice(lineSet(this.getAttribute('focus')));
     // 真折叠：区间内的行不渲染；只在区间开头留一条"几行已折叠"。
     const foldSet = new Set();
     const foldStarts = new Map();
     for (const part of (this.getAttribute('fold') || '').split(',')) {
       const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
       if (!m) continue;
-      const a = parseInt(m[1], 10);
-      const b = Math.min(Math.max(a, parseInt(m[2] || m[1], 10)), lines.length);
-      if (a > lines.length) continue;
+      const rawA = parseInt(m[1], 10) - startNo + 1;
+      const rawB = parseInt(m[2] || m[1], 10) - startNo + 1;
+      const a = Math.max(1, rawA);
+      const b = Math.min(Math.max(a, rawB), lines.length);
+      if (rawB < 1 || rawA > lines.length) continue;
       foldStarts.set(a, b);
       for (let n = a; n <= b; n++) foldSet.add(n);
     }
@@ -119,8 +125,9 @@ export class VkCode extends VkElement {
     ).length;
     this.style.setProperty('--vk-digits', String(digits));
     const numbering = this.getAttribute('numbering') === 'slice' ? 'slice' : 'file';
-    const startNo = numbering === 'file' ? Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1 : 1;
+    // data-line / 锚点永远是源文件行号；numbering 只影响左侧打印的数字。
     const noOf = (n) => startNo + n - 1;
+    const gutterOf = (n) => (numbering === 'slice' ? n : noOf(n));
 
     const rows = [];
     lines.forEach((line, i) => {
@@ -139,7 +146,7 @@ export class VkCode extends VkElement {
       const cls = ['vk-line'];
       if (hl.has(n)) cls.push('is-hl');
       if (focus.size && !focus.has(n)) cls.push('is-dim');
-      const num = showNums ? `<span class="vk-ln" data-meta data-vk-part="ln" aria-hidden="true">${noOf(n)}</span>` : '';
+      const num = showNums ? `<span class="vk-ln" data-meta data-vk-part="ln" aria-hidden="true">${gutterOf(n)}</span>` : '';
       const part = hl.has(n) ? ' data-vk-part="line"' : '';
       rows.push(
         `<div class="${cls.join(' ')}"${part} data-line="${noOf(n)}" style="--i:${i}">${num}<span class="vk-src">${line || ' '}</span></div>`
@@ -184,7 +191,7 @@ export class VkCode extends VkElement {
     requestAnimationFrame(() => {
       const bd = this.querySelector('.vk-bd');
       if (!bd) return;
-      const fit = this.getAttribute('fit') || 'clip';
+      const fit = this.getAttribute('long') || 'clip';
       const over = fit === 'clip' && bd.scrollWidth > bd.clientWidth + 1;
       if (over) this.dataset.vkOverflow = '';
       else delete this.dataset.vkOverflow;
@@ -277,7 +284,7 @@ export class VkTerm extends VkElement {
       ? sliceLines(dedent(this._raw), this.getAttribute('lines'))
       : dedent(this._src || '');
     const prompt = this.getAttribute('prompt') || '$';
-    const title = this.getAttribute('title') || '';
+    const title = this.getAttribute('title') || '';
     const density = ['large', 'compact'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
 
     const rows = source
@@ -303,7 +310,7 @@ export class VkTerm extends VkElement {
 
 
     const body = rows
-      .map((r, i) => {
+      .map((r, i) => {
         const sign = r.kind === 'cmd' ? prompt : r.kind === 'out' ? '' : r.sign;
         const signCls = r.kind === 'cmd' ? 'vk-prompt' : r.kind === 'out' ? '' : 'vk-sign';
         const cls = `vk-line is-${r.kind}`;
