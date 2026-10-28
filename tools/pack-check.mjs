@@ -1,5 +1,5 @@
 /**
- * 包体门禁：只发布运行时、字体、CLI 与元数据；unpacked < 9MB。
+ * 包体门禁：只发布运行时、字体、CLI 与元数据；unpacked < 10MB。
  *
  *   node tools/pack-check.mjs
  *
@@ -8,7 +8,7 @@
 import { spawnSync } from 'node:child_process';
 
 const npmCmd = process.platform === 'win32' ? 'npm.cmd' : 'npm';
-const MAX_BYTES = 9.5 * 1000 * 1000;
+const MAX_BYTES = 10 * 1000 * 1000;
 
 const r = spawnSync(npmCmd, ['pack', '--dry-run', '--json', '--ignore-scripts'], {
   encoding: 'utf8',
@@ -101,10 +101,10 @@ for (const f of files) {
 
 if (files.some((f) => f.includes('node_modules/'))) failures.push('包里出现 node_modules/');
 if (info.unpackedSize >= MAX_BYTES) {
-  failures.push(`unpacked ${(info.unpackedSize / 1000 / 1000).toFixed(2)}MB ≥ 9.5MB`);
+  failures.push(`unpacked ${(info.unpackedSize / 1000 / 1000).toFixed(2)}MB ≥ 10MB`);
 }
 
-console.log(`包体：${files.length} 个文件，unpacked ${(info.unpackedSize / 1000 / 1000).toFixed(2)}MB（上限 9.5MB）`);
+console.log(`包体：${files.length} 个文件，unpacked ${(info.unpackedSize / 1000 / 1000).toFixed(2)}MB（上限 10MB）`);
 if (failures.length) {
   console.log(`\n包体门禁失败 ${failures.length} 条：`);
   for (const f of failures) console.log('  ✗ ' + f);

@@ -10,10 +10,31 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 
 const SRC = 'node_modules/@fontsource';
 const FONT_DIR = 'assets/fonts';
 const NOTO_DIR = path.join(FONT_DIR, 'noto');
+const FORCE = process.argv.includes('--force');
+const STAMP = '.vk-cache/fonts.stamp';
+
+const versionOf = (pkg) => {
+  try {
+    return JSON.parse(fs.readFileSync(path.join(SRC, pkg, 'package.json'), 'utf8')).version;
+  } catch {
+    return 'missing';
+  }
+};
+const key = crypto
+  .createHash('sha1')
+  .update(fs.readFileSync(new URL(import.meta.url), 'utf8'))
+  .update(['inter', 'jetbrains-mono', 'noto-sans-sc'].map(versionOf).join('|'))
+  .digest('hex');
+
+if (!FORCE && fs.existsSync(STAMP) && fs.readFileSync(STAMP, 'utf8').trim() === key && fs.existsSync('vk/fonts.css') && fs.existsSync(NOTO_DIR)) {
+  console.log('fonts: 已是最新（跳过 7MB 复制）');
+  process.exit(0);
+}
 
 fs.mkdirSync(NOTO_DIR, { recursive: true });
 
@@ -116,6 +137,10 @@ for (const f of fs.readdirSync(FONT_DIR, { withFileTypes: true })) {
   if (f.isFile() && f.name.endsWith('.woff2')) fontBytes += fs.statSync(path.join(FONT_DIR, f.name)).size;
 }
 for (const f of fs.readdirSync(NOTO_DIR)) fontBytes += fs.statSync(path.join(NOTO_DIR, f)).size;
+
+fs.mkdirSync('vk', { recursive: true });
+fs.mkdirSync(path.dirname(STAMP), { recursive: true });
+fs.writeFileSync(STAMP, key + '\n');
 
 console.log(`vk/fonts.css  ${cssKb}`);
 console.log(`字体文件 ${copied} 个，共 ${kb(fontBytes)}`);

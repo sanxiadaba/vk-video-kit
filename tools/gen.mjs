@@ -82,6 +82,11 @@ export interface VkApi {
     sh: number;
     ch: number;
   }>;
+  /** 结构自检：字号 / 对比度 / 安全区 / 溢出 / 裁切 / 重叠 / 空锚点。 */
+  auditPage(root?: ParentNode): {
+    issues: Array<{ type: string; what?: string; [key: string]: unknown }>;
+    special: string[];
+  };
 }
 
 export const vk: VkApi;

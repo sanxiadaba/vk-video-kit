@@ -79,19 +79,11 @@ const specimenDir = `${SITE}/specimen`;
 const specimenFiles = fs.existsSync(specimenDir)
   ? fs.readdirSync(specimenDir).filter((f) => f.endsWith('.html')).sort()
   : [];
-const LENSES = ['plate', 'variants', 'anatomy', 'usage', 'api'];
-// 默认只查「成品」：其余四个镜头是标本册自己的 UI，改动少、成本是 5 倍。
-// 需要全量时加 --full（npm run gate:full）。
-const checkLenses = args.includes('--full');
-const targets = specimenFiles.flatMap((f) => {
+// 规格册是单镜头：每个组件一页，没有「成品 / 用法 / 解剖」多镜头。
+// --full 保留为「连 index 一起查」的显式写法，不再制造不存在的 #anatomy 页面。
+const targets = specimenFiles.map((f) => {
   const tag = f.replace(/\.html$/, '');
-  const base = { kind: 'specimen', tag, path: `specimen/${f}` };
-  if (!checkLenses) return [{ ...base, label: tag }];
-  return LENSES.map((lens) => ({
-    ...base,
-    lens,
-    label: lens === 'plate' ? tag : `${tag}#${lens}`,
-  }));
+  return { kind: 'specimen', tag, path: `specimen/${f}`, label: tag };
 });
 if (fs.existsSync(`${SITE}/index.html`)) {
   targets.push({ kind: 'specimen', tag: 'index', label: 'index', path: 'index.html' });
@@ -152,15 +144,23 @@ page.on('console', (m) => {
 page.on('pageerror', (e) => consoleIssues.push(`pageerror: ${e.message}`));
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+let loadedPath = null;
 
 async function open(target) {
   consoleIssues = [];
-  const hash = target.lens && target.lens !== 'plate' ? `#${target.lens}` : '';
-  // 先加载页面，再切 hash；Playwright 对同文档 hash 导航会返回 null。
-  const resp = await page.goto(`${base}/${target.path}`, { waitUntil: 'load' });
-  if (!resp || !resp.ok()) {
-    fail(target.label, `页面加载失败 ${resp?.status()}`);
-    return false;
+  const lens = target.lens && target.lens !== 'plate' ? target.lens : '';
+  const hash = lens ? `#${lens}` : '';
+  // 同一页的四个镜头只 load 一次：后面靠 hashchange 切镜头，省掉 3 次完整加载。
+  if (loadedPath !== target.path) {
+    const resp = await page.goto(`${base}/${target.path}${hash}`, { waitUntil: 'load' });
+    if (!resp || !resp.ok()) {
+      fail(target.label, `页面加载失败 ${resp?.status()}`);
+      return false;
+    }
+    loadedPath = target.path;
+  } else {
+    const cur = await page.evaluate(() => location.hash);
+    if (cur !== hash) await page.evaluate((h) => { location.hash = h; }, hash);
   }
   await page.evaluate(() => window.vk?.ready?.());
   const ready = await page.evaluate(() => !!window.vk);
@@ -170,16 +170,13 @@ async function open(target) {
   }
   await page.evaluate(() => window.vk?.freeze?.());
   await page.evaluate(() => document.fonts?.ready);
-  if (hash) {
-    await page.evaluate((lens) => {
-      location.hash = lens;
-    }, target.lens);
+  if (lens) {
     await page.waitForFunction(
-      (lens) => {
-        const section = document.querySelector(`[data-lens="${lens}"]`);
+      (name) => {
+        const section = document.querySelector(`[data-lens="${name}"]`);
         return section && !section.hidden && section.dataset.filled === '1';
       },
-      target.lens,
+      lens,
       { timeout: 4000 }
     ).catch(() => {});
     await page.evaluate(() => window.vk?.layout?.());
@@ -197,6 +194,12 @@ async function inspect() {
     ({ MIN_FONT, MIN_RATIO, LARGE_RATIO, LARGE_FONT }) => {
       const out = [];
       const stage = document.querySelector('.vk-page') || document.querySelector('.vk-stage') || document.body;
+      // 与 vk check / vk shot 共用同一份运行期审计；下面的手写检查只在旧产物缺 auditPage 时兜底。
+      const audited = window.vk?.auditPage?.();
+      if (audited) {
+        const r = stage.getBoundingClientRect();
+        return { issues: audited.issues, special: audited.special, page: [Math.round(r.width), Math.round(r.height)] };
+      }
       const safe = document.querySelector('.vk-page-bd') || document.querySelector('.vk-stage');
       const pageRect = stage.getBoundingClientRect();
       const safeRect = safe?.getBoundingClientRect();
@@ -383,9 +386,11 @@ async function inspect() {
   );
 }
 
-/** 字体：check() 不会触发加载，必须显式 load 一次。 */
+/** 字体：check() 不会触发加载，必须显式 load 一次；一页加载过全站共用。 */
+let fontCache = null;
 async function fontIssues() {
-  return page.evaluate(async () => {
+  if (fontCache) return fontCache;
+  fontCache = await page.evaluate(async () => {
     const list = [
       ['400 16px "Inter"', 'A'],
       ['500 16px "Inter"', 'A'],
@@ -408,6 +413,7 @@ async function fontIssues() {
     }
     return out;
   });
+  return fontCache;
 }
 
 /* -------------------------------------------------------------- 预设差异 */
@@ -486,6 +492,8 @@ for (const target of list) {
     if (e.type === 'clip') fail(target.label, `横向被裁：${e.what} (${e.sw} > ${e.cw})`);
     if (e.type === 'clip-y') fail(target.label, `纵向被裁：${e.what} (${e.sh} > ${e.ch})`);
     if (e.type === 'ln-overlap') fail(target.label, `行号压住代码 ${e.gap}px：${e.what}`);
+    if (e.type === 'zero') fail(target.label, `0 尺寸锚点：${e.what}`);
+    if (e.type === 'overlap') fail(target.label, `顶层重叠 ${(e.size || []).join('×')}：${e.what}`);
     if (e.type === 'w') fail(target.label, `w="${e.want}" 实际 ${e.got}px：${e.what}`);
     if (e.type === 'audit-overflow') {
       const parts = [];

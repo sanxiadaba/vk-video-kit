@@ -5,13 +5,13 @@ export const DOTS = '<span class="vk-dots"><i></i><i></i><i></i></span>';
 
 /**
  * 全库唯一的窗壳。L3 只决定 head 和 inner。
- * @param {{surface?: 'paper'|'ink', chrome?: 'min'|'none', head?: string, inner?: string, cls?: string}} o
+ * 只有白纸一种材质，所以这里没有 surface。
+ * @param {{chrome?: 'min'|'none'|'browser', head?: string, inner?: string, cls?: string, attrs?: string}} o
  */
-export function win({ surface = 'paper', chrome = 'min', head = '', inner = '', cls = '', attrs = '' } = {}) {
-  const material = surface === 'ink' ? 'ink' : 'paper';
+export function win({ chrome = 'min', head = '', inner = '', cls = '', attrs = '' } = {}) {
   const klass = cls ? ` ${cls}` : '';
   const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${DOTS}${head}</div>`;
-  return `<div class="vk-win${klass}" data-material="${material}" data-surface="${material}" data-chrome="${esc(chrome)}"${attrs}>${bar}${inner}</div>`;
+  return `<div class="vk-win${klass}" data-chrome="${esc(chrome)}"${attrs}>${bar}${inner}</div>`;
 }
 
 /** 文件名 + 可选行段 + 语言角标。tab 不再自带第二个"窗口点"。 */

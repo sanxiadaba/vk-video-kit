@@ -6,12 +6,30 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 
 const OUT_CSS = 'vk/katex.css';
 const OUT_FONT = 'vk/fonts/katex';
+const STAMP = '.vk-cache/katex.stamp';
+const version = () => {
+  try {
+    return JSON.parse(fs.readFileSync('node_modules/katex/package.json', 'utf8')).version;
+  } catch {
+    return 'missing';
+  }
+};
 
 export function installKatex() {
+  const key = crypto
+    .createHash('sha1')
+    .update(fs.readFileSync(new URL(import.meta.url), 'utf8'))
+    .update(version())
+    .digest('hex');
+  if (fs.existsSync(STAMP) && fs.readFileSync(STAMP, 'utf8').trim() === key && fs.existsSync(OUT_CSS) && fs.existsSync(OUT_FONT)) {
+    const files = fs.readdirSync(OUT_FONT).filter((f) => f.endsWith('.woff2')).length;
+    return { fonts: files, bytes: fs.statSync(OUT_CSS).size, cached: true };
+  }
   const dist = path.join('node_modules', 'katex', 'dist');
   const css = fs.readFileSync(path.join(dist, 'katex.min.css'), 'utf8');
 
@@ -30,6 +48,8 @@ export function installKatex() {
   // 字体目录换到 vk/fonts/katex，组件库自己带字体
   const rewritten = css.replace(/url\(fonts\//g, 'url(fonts/katex/');
   fs.writeFileSync(OUT_CSS, banner + rewritten);
+  fs.mkdirSync(path.dirname(STAMP), { recursive: true });
+  fs.writeFileSync(STAMP, key + '\n');
   return { fonts: copied, bytes: fs.statSync(OUT_CSS).size };
 }
 

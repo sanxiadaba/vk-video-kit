@@ -68,6 +68,14 @@ export class VkAsm extends VkElement {
       const b = parseInt(m[2] || m[1], 10);
       for (let i = a; i <= b; i++) focus.add(i);
     }
+    const orderList = (this.getAttribute('order') || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const showOrder = orderList.length > 0;
+    let insn = 0;
+    const fenceAfter = this.getAttribute('fence-after') || '';
+    const fenceLabel = this.getAttribute('fence-label') || '内存屏障';
     const rows = d.rows
       .map((r) => {
         if (r.kind === 'label') {
@@ -77,27 +85,39 @@ export class VkAsm extends VkElement {
         const isHl = hl.size ? hl.has(r.line) : !!r.hl;
         const isDim = focus.size && !focus.has(r.line);
         const parts = r.m || r.o ? { mnemonic: r.m || '', operands: r.o || '' } : splitInsn(r.text);
-        return `<div class="vk-asm-row${isHl ? ' is-hl' : ''}${isDim ? ' is-dim' : ''}" data-vk-part="line" data-line="${r.line}" data-addr="${esc(r.addr || '')}">
+        const ord = orderList[insn++];
+        const badge = ord != null ? `<span class="vk-asm-order" data-meta>${esc(ord)}</span>` : '';
+        const row = `<div class="vk-asm-row${isHl ? ' is-hl' : ''}${isDim ? ' is-dim' : ''}" data-vk-part="line" data-line="${r.line}" data-addr="${esc(r.addr || '')}">
+          ${showOrder ? `<span class="vk-asm-ord">${badge}</span>` : ''}
           ${showAddr ? `<span class="vk-asm-a" data-meta>${r.addr ? '0x' + esc(r.addr) : ''}</span>` : ''}
           ${showBytes ? `<span class="vk-asm-b" data-meta>${esc(r.bytes || '')}</span>` : ''}
           <span class="vk-asm-m">${esc(parts.mnemonic)}</span>
           <span class="vk-asm-o">${operandHtml(parts.operands)}</span>
         </div>`;
+        if (fenceAfter && String(r.line) === fenceAfter) {
+          return `${row}<div class="vk-asm-fence" data-fence="${esc(fenceAfter)}" data-meta><span class="vk-asm-fence-t">${esc(fenceLabel)}</span></div>`;
+        }
+        return row;
       })
       .join('');
-    const cols = `<div class="vk-asm-cols vk-asm-cols-hd" aria-hidden="true">
-      ${showAddr ? '<span class="vk-asm-a" data-meta>地址</span>' : ''}
-      ${showBytes ? '<span class="vk-asm-b" data-meta>机器码</span>' : ''}
-      <span class="vk-asm-m" data-meta>指令</span>
-      <span class="vk-asm-o" data-meta>操作数</span>
-    </div>`;
+    const labelsOn = this.getAttribute('labels') !== 'none';
+    const label = (name, fallback) => this.getAttribute(name) || fallback;
+    const cols = labelsOn
+      ? `<div class="vk-asm-cols vk-asm-cols-hd" aria-hidden="true">
+      ${showOrder ? '<span class="vk-asm-ord" data-meta>执行</span>' : ''}
+      ${showAddr ? `<span class="vk-asm-a" data-meta>${esc(label('address-label', '地址'))}</span>` : ''}
+      ${showBytes ? `<span class="vk-asm-b" data-meta>${esc(label('bytes-label', '机器码'))}</span>` : ''}
+      <span class="vk-asm-m" data-meta>${esc(label('mnemonic-label', '指令'))}</span>
+      <span class="vk-asm-o" data-meta>${esc(label('operands-label', '操作数'))}</span>
+    </div>`
+      : '';
     const head =
       this.getAttribute('chrome') === 'none'
         ? ''
         : `<div class="vk-asm-hd"><span class="vk-asm-file" data-meta>${esc(title)}</span><span class="vk-asm-range" data-meta>${esc(
             [this.getAttribute('lines') || '', d.base || ''].filter(Boolean).join(' · ')
           )}</span><span class="vk-asm-lang" data-meta>asm</span></div>`;
-    this.innerHTML = `<div class="vk-asm" data-density="${esc(density)}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}">
+    this.innerHTML = `<div class="vk-asm" data-density="${esc(density)}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
   }

@@ -88,10 +88,6 @@ class VkOverlay extends VkElement {
     return this.getAttribute('tone') || 'accent';
   }
 
-  _surface() {
-    return this.getAttribute('surface') || 'paper';
-  }
-
   draw() {
     this._svg?.replaceChildren();
   }
@@ -204,18 +200,28 @@ export class VkSpotlight extends VkOverlay {
     mask.append(holes);
     defs.append(mask);
     this._svg.append(defs);
+    const outline = tag('g', { class: 'vk-spotlight-ring' });
+    for (const el of targets) {
+      const b = this._box(el, f.host, f.hr);
+      const pad = 10;
+      if (shape === 'ellipse') {
+        outline.append(tag('ellipse', { cx: b.cx, cy: b.cy, rx: b.w / 2 + pad, ry: b.h / 2 + pad }));
+      } else {
+        outline.append(tag('rect', { x: b.x - pad, y: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, rx: 12 }));
+      }
+    }
     this._svg.append(
       tag('rect', {
         x: 0,
         y: 0,
         width: f.w,
         height: f.h,
-        fill: this._surface() === 'ink' ? '#000000' : '#0b0f14',
+        fill: '#ffffff',
         opacity: dim,
         mask: `url(#${maskId})`,
       })
     );
-    this._svg.dataset.surface = this._surface();
+    this._svg.append(outline);
   }
 }
 
@@ -259,7 +265,6 @@ export class VkPin extends VkOverlay {
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }));
     this._bd.dataset.tone = this._tone();
     this._bd.dataset.emphasis = this.getAttribute('emphasis') || 'soft';
-    this._bd.dataset.surface = this.getAttribute('surface') || 'paper';
     this._bd.dataset.size = this.getAttribute('size') || 'body';
     const w = numAttr(this, 'w', { min: 160, max: 900, fallback: 360 });
     this._bd.style.width = w + 'px';

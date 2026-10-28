@@ -12,7 +12,8 @@
    ========================================================================== */
 
 const num = (v) => {
-  const n = Number.parseFloat(v);
+  if (v == null || String(v).trim() === '') return null;
+  const n = Number(v);
   return Number.isFinite(n) ? n : null;
 };
 
@@ -43,7 +44,8 @@ export function applyFrame(el) {
   } else set('width', null);
 
   const h = el.getAttribute('h');
-  if (h === 'full') set('height', '100%');
+  if (h === 'fit') set('height', 'fit-content');
+  else if (h === 'full') set('height', '100%');
   else if (h != null && h !== '') {
     const n = num(h);
     if (n != null) set('height', `${n}px`);

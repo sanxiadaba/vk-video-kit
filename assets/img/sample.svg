@@ -3,7 +3,7 @@
 
   <!-- 标题：这是一个数组，不是五个散字符 -->
   <text x="120" y="130" fill="#4B5563" font-family="'JetBrains Mono', monospace" font-size="72" letter-spacing="4">s = "hello"</text>
-  <rect x="120" y="158" width="510" height="10" fill="#1B3FD6"/>
+  <rect x="120" y="158" width="510" height="10" fill="#C7D2DF"/>
 
   <!-- 六个格子：值 / 下标 / 地址 -->
   <g font-family="'JetBrains Mono', monospace" text-anchor="middle">
@@ -46,7 +46,5 @@
     </g>
   </g>
 
-  <!-- 一句话：六个字节，不是五个 -->
-  <text x="120" y="740" fill="#333D4B" font-family="Inter, 'Noto Sans SC', sans-serif" font-size="72">6 个字节，不是 5 个。</text>
-  <text x="120" y="810" fill="#5C6674" font-family="'JetBrains Mono', monospace" font-size="58">strlen(s) == 5 · sizeof(s) == 6</text>
+  <!-- 示例说明 -->
 </svg>

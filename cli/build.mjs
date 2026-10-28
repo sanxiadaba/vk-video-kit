@@ -12,8 +12,30 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
+
+const CACHE = '.vk-cache/precompile.json';
+const stripGenerated = (html) =>
+  html.replace(/<script\b[^>]*\bdata-vk-(?:src|hl|hl-diff|asm|tree|frames|bytes|math)\b[^>]*>[\s\S]*?<\/script>/gi, '');
+const fileKey = (file, html) => {
+  const h = crypto.createHash('sha1');
+  h.update(stripGenerated(html));
+  for (const m of html.matchAll(/\bsrc="([^"]+)"/g)) {
+    const src = m[1];
+    if (/^(?:[a-z]+:|\/|#)/i.test(src)) continue;
+    const abs = path.resolve(path.dirname(file), src.split(/[?#]/)[0]);
+    h.update('\0' + abs);
+    try {
+      const st = fs.statSync(abs);
+      h.update(`${st.size}:${st.mtimeMs}`);
+    } catch {
+      /* 缺文件交给 transform 报错 */
+    }
+  }
+  return h.digest('hex');
+};
 
 function walk(input, out) {
   const stat = fs.statSync(input);
@@ -32,7 +54,8 @@ function walk(input, out) {
 export async function main() {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
-  const inputs = args.filter((a) => a !== '--check');
+  const force = args.includes('--force');
+  const inputs = args.filter((a) => a !== '--check' && a !== '--force');
   const files = [];
 
   // 不带参数时：仓库里默认 _site/specimens，别的地方默认当前目录
@@ -54,15 +77,36 @@ export async function main() {
     }
   }
 
-  const highlighter = await createVkHighlighter();
+  let cache = {};
+  try {
+    cache = JSON.parse(fs.readFileSync(CACHE, 'utf8')).files || {};
+  } catch {
+    /* 首次构建：没有缓存 */
+  }
+  const nextCache = { ...cache };
+
+  let highlighter = null;
+  const getHighlighter = async () => (highlighter ||= await createVkHighlighter());
+
   let blocks = 0;
   let changed = 0;
   let failed = 0;
+  let skipped = 0;
 
   for (const file of files) {
+    const abs = path.resolve(file);
     const original = fs.readFileSync(file, 'utf8');
+    const key = fileKey(file, original);
+    const needs = /<vk-(?:code|term|diff|asm|math|tree|bytes|frames|icon)\b/.test(original);
+    const generated = /data-vk-(?:icons|math|hl|hl-diff|src|asm|tree|frames|bytes)\b/.test(original);
+    if (!check && !force && cache[abs] === key && (!needs || generated)) {
+      skipped++;
+      continue;
+    }
     try {
-      const out = await transformHtml(original, { file, highlighter });
+      const needsHl = /<vk-(?:code|diff|asm)\b/.test(original);
+      const hl = needsHl ? await getHighlighter() : null;
+      const out = await transformHtml(original, { file, highlighter: hl });
       blocks += out.count;
       if (check) {
         if (out.html !== original) {
@@ -70,11 +114,15 @@ export async function main() {
           failed++;
         } else {
           console.log(`✓ ${file}`);
+          nextCache[abs] = key;
         }
       } else if (out.html !== original) {
         fs.writeFileSync(file, out.html);
         changed++;
+        nextCache[abs] = key;
         console.log(`  ${file}  ${out.count} block(s)`);
+      } else {
+        nextCache[abs] = key;
       }
     } catch (e) {
       console.error(`✗ ${file}: ${e.message}`);
@@ -82,10 +130,15 @@ export async function main() {
     }
   }
 
+  if (!check) {
+    fs.mkdirSync(path.dirname(CACHE), { recursive: true });
+    fs.writeFileSync(CACHE, JSON.stringify({ files: nextCache }, null, 0) + '\n');
+  }
+
   if (check) {
-    console.log(failed ? `\n${failed} 个文件需要重新预编译` : '\n全部是最新的');
+    console.log(failed ? `\n${failed} 个文件需要重新预编译` : `\n全部是最新的${skipped ? `（${skipped} 个缓存命中）` : ''}`);
   } else {
-    console.log(`\ndone · ${blocks} block(s), ${changed} file(s) written${failed ? `, ${failed} failed` : ''}`);
+    console.log(`\ndone · ${blocks} block(s), ${changed} file(s) written${skipped ? `, ${skipped} cached` : ''}${failed ? `, ${failed} failed` : ''}`);
   }
   process.exitCode = failed ? 1 : 0;
 }

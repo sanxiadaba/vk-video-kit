@@ -1,5 +1,85 @@
 # Changelog
 
+## 8.0.0
+
+收敛回通用组件库。破坏性版本。
+
+### 删除
+
+- **6 个场景件**：`vk-annotate` / `vk-ref` / `vk-board` / `vk-trace` / `vk-memory` / `vk-frames`。标签面 43 → 37；不再提供这些场景的专用标签和专用样式。
+- **组合配方与场景建议**：删 `docs/patterns.md`，删 `docs/ai.md` 里的“深挖/8 类图组合”段落。文档只保留安装、构建、API、错误与最小示例。
+- **`vk-note` 的 `line` / `span`**：批注不再自动排到代码行旁；关系只走 `for="#id@part:arg"`。
+- **叙事标本**：所有规格页改成中性占位数据，不再写“数组不是指针”“C 的五十年”这类讲解。
+
+### 改变
+
+- **元数据下限 28 → 36**：地址、行号、列头、字段说明在 1/3 观看尺度下仍可读。
+- **块级组件默认满宽**：`width:100%`，由父容器决定；`w` 可选。`tag/icon/mark/keys` 仍按内容宽。
+- **默认只给结构**：位序号/字段说明、裁切标签、批注编号、asm 执行顺序与屏障都要作者显式开启。
+- **`vk-spotlight` 白色淡出**：去掉深灰遮罩，非目标用白色洗淡，目标加钴蓝描边；全库仍无黑色面。
+- **`vk-ring` 默认焦点色**：红色只留给错误。
+- **`vk-asm` 列头可替换**：`address-label` / `bytes-label` / `mnemonic-label` / `operands-label`，`labels="none"` 整体隐藏。
+
+### 修复
+
+- 中文标签不再被容器宽度压成竖排；`vk-tag` 按内容宽、单行。
+- 满宽标本下代码/汇编/位图不再缩成一条细线；`vk-stage` 子项默认拉伸。
+- 规格册索引 37 格、8 列 × 5 行；卡片高度与标签单行不再纵向裁切。
+- 图窗按 16:9 比例与安全区收口；页、树、索引的 1/3 尺度安全区全部重新测量。
+
+### 验收
+
+- 37 个标签、38 个门禁对象（37 + index）全绿；`npm test`、`verify`、`contract`、`vk check` 全绿。
+- 1/3 缩略图逐件审计；审计产物在 `_site/audit/`（生成物，不进包）。
+
+## 7.0.0
+
+白纸化 + 43 个标签 + 逐值契约。破坏性版本。
+
+### 删除
+
+- **深色整套**：删 `surface="ink"`（box / page / window / code / term / diff / figure / note / pin / spotlight）、ink 材质 token 与作用域、6 个深色预设、深色页/代码窗/黑卡。全库只有白纸 + 极浅灰。
+- **死实现**：`vk-rule[weight]`、`vk-text[tone]`、`vk-icon[size]`、`vk-code[fit]`、`vk-table[fit]`、`vk-table[density='dense']`、`vk-window chrome="dialog"`、`.vk-page-hd/.vk-page-ft/.vk-page-div`、`@container` 死规则。
+- **尺寸硬夹**：`vk-img` 上限 1680→1920、888→1080；`vk-canvas` 1920×1080；`w="50%"` 与 `h="fit"` 不再静默失效。
+
+### 修复
+
+- `long="wrap"` 真的换行（CSS 选择器从 `[fit]` 改为 `[long]`）；`density="loose"` 真的 56px（白名单从 `large/compact` 改为 `compact/loose`）。
+- `vk-diff @line` 真的可锚定：diff 行补 `data-vk-part="line"`。
+- `vk-steps current`、`vk-frames active`/`@slot`/`@frame`、`vk-timeline @event` 全部 0 起；泳道列头 0 起。
+- `vk-note` 的 `tone` 不再被 `emphasis` 覆盖；行旁批注透明，独立 note 保留淡底；`emphasis`/`pin emphasis` 注册。
+- `.vk-file` 不再纵向裁 3px；`vk-asm` 列宽改为 `max-content`，顺序徽标不再压住助记符。
+- `vk-shot` 自检改用 `VK.auditPage()`：`vk-edge`/`vk-pin` 等覆盖层不再被误报成重叠。
+- 深色残留、`--vk-del-row`/`--vk-add-row` 未定义、`data-node` 旧名、重复 `vk-page` 规则清理。
+
+### 新增
+
+- **`vk-ref`** 引用图：一排/多排值框 + `points` 箭头，支持 argv、链表、别名。
+- **`vk-board`** 字节板：多行字段共享一把字节尺，`pad` 填充、`mark` 高亮、`@field`/`@byte` 锚点。
+- **`vk-trace`** 轨迹：步 × 变量，`changed` 标变化格、`current` 标当前步、`@step`/`@cell` 锚点。
+- **深挖**：`vk-annotate` 逐 token 圆标、`vk-bits` 字段带/32/64 位、`vk-memory` 段内块 + `@block`、`vk-frames` 手写单帧/rbp/rsp/registers、`vk-asm` `order` + `fence-after`。
+- **AI 工具链**：`vk check`（字号/对比度/安全区/溢出/重叠/空锚点）、`vk tags`、`vk doc <tag>`、`vk icons [q]`。
+- **构建期校验**：结构化 `<i>` 未知属性、简单 `#id`/`.class` 选择器、本地图片存在性、尺寸只收数字/fit/full。
+- **契约逐值断言**：枚举与探针值必须每个都命中；新增 `vk-ref/board/trace` 与深挖属性的 effect/预设。
+- 规格册 43 张，索引 9 列 × 5 行；新增 `docs/patterns.md`（8 类图的组合路径）。
+
+### 取舍
+
+- 缓存层级/金字塔、编译流水线、1→N 展开、调用时序、数值轴、时序波形、多栏逐行、C↔asm 成组高亮不进标签；用 canvas + box + edge / table / bars 拼，见 `docs/patterns.md`。
+- 64 位 bits 按两行 32 位展开；如果宽度不够，`w` 要 ≥ 1600。
+
+### 性能
+
+- **增量预编译**：`vk build` 按「页面 + 引用源文件」缓存；43 页第二次 0.3s（首次 1.9s），`--force` 可整棵重建。
+- **产物缓存**：字体（7MB / 309 文件）、KaTeX、图标表、esbuild、站点镜像各有 stamp；`npm run build` 暖跑约 3.5s（原 15s 级）。`--check` 永远全量校验，不会用缓存掩盖漂移。
+- **多页自检**：`vk check a.html b.html ...` 只启动一次浏览器；3 页 2.45s，逐页启动约 2.7s/页。
+- **构建顺序**：规格页先落原文、再预编译，修掉“第二次 build 把预编译盖回原文”的陈旧产物。
+- **门禁去假镜头**：规格册是单镜头，`gate:full` 不再对不存在的 `#anatomy/#variants/#usage/#api` 等 4s 超时；44 页冷跑 8.5s、暖缓存 1.8s（原 195s 级）。
+
+## 6.0.0
+
+受控词表、坐标系根、规格页与可验证锚点：40 个标签、5 层、1920×1080；`vk-page` 固定画布；锚点校验与门禁缓存；包体只发运行时、字体、CLI 与元数据。
+
 ## 5.0.0
 
 把库推进到「可寻址的讲解画布」：6 个新标签、8 个核心件做透、内联源码、覆盖层与 40 页标本册。

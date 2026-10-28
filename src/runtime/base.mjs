@@ -130,6 +130,8 @@ const ANCHOR_ATTR = {
   bit: 'data-bit',
   slot: 'data-slot',
   seg: 'data-seg',
+  block: 'data-block',
+  field: 'data-field',
   addr: 'data-addr',
   event: 'data-event',
   lane: 'data-lane',

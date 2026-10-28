@@ -159,44 +159,40 @@ const ATTR_META = {
 /** 组件默认值：属性参考与组件页的“默认”列都读它。 */
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
-  'vk-text': { size: 'body', weight: 'regular', align: 'left', measure: 'none' },
-  'vk-icon': { name: 'circle-help', scale: 'md' },
-  'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg' },
-  'vk-rule': { variant: 'thin' },
+  'vk-text': { size: 'body', weight: 'regular', align: 'left', measure: 'none', ink: 'primary' },
+  'vk-icon': { name: 'circle-help', scale: 'md', ink: 'primary' },
+  'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
+  'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-mark': { variant: 'highlight', tone: 'accent' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start' },
   'vk-row': { gap: 'sm', align: 'stretch', justify: 'start' },
-  'vk-grid': { cols: '2', gap: 'sm', align: 'stretch' },
-  'vk-canvas': { pad: '0' },
-  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', shape: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none' },
-  'vk-title': { size: 'title', align: 'left' },
+  'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
+  'vk-canvas': { pad: '0', grid: '0', inset: '0', overflow: 'visible' },
+  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', shape: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label' },
+  'vk-title': { size: 'title', align: 'left', level: '2' },
   'vk-list': { variant: 'bullet', gap: 'sm' },
-  'vk-tag': { tone: 'neutral', size: 'label' },
-  'vk-callout': { tone: 'accent', size: 'body' },
-  'vk-code': { surface: 'paper', chrome: 'min', density: 'normal' },
-  'vk-memory': { mode: 'schematic', show: 'all', orientation: 'vertical', density: 'normal' },
+  'vk-tag': { tone: 'neutral', size: 'label', emphasis: 'solid' },
+  'vk-callout': { tone: 'accent', size: 'body', density: 'normal' },
+  'vk-code': { chrome: 'min', density: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', density: 'normal', chrome: 'min' },
   'vk-timeline': { variant: 'events', density: 'normal' },
-  'vk-pin': { side: 'auto', leader: 'elbow', tone: 'accent', size: 'body' },
+  'vk-pin': { side: 'auto', leader: 'elbow', tone: 'accent', size: 'body', emphasis: 'soft' },
   'vk-ring': { shape: 'ellipse', tone: 'accent', pad: 8, width: 4 },
-  'vk-spotlight': { dim: 0.72, feather: 24, surface: 'paper', shape: 'rect' },
-  'vk-term': { prompt: '$', surface: 'paper', chrome: 'min', density: 'normal' },
-  'vk-diff': { variant: 'unified', surface: 'paper', chrome: 'min' },
+  'vk-spotlight': { dim: 0.72, feather: 24, shape: 'rect' },
+  'vk-term': { prompt: '$', chrome: 'min', density: 'normal' },
+  'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all' },
   'vk-table': { variant: 'ledger', density: 'normal' },
   'vk-math': { size: 'body' },
-  'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', surface: 'paper', chrome: 'min' },
-  'vk-tree': { depth: '4', summary: 'all' },
-  'vk-window': { chrome: 'min', surface: 'paper', pad: 'md' },
+  'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'min' },
+  'vk-tree': { depth: '4', summary: 'all', chrome: 'min' },
+  'vk-window': { chrome: 'min', pad: 'md' },
   'vk-quote': { variant: 'rule', size: 'body' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral' },
   'vk-bars': { density: 'normal', tone: 'neutral', mode: 'linear' },
-  'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal' },
-  'vk-frames': { grows: 'down', show: 'all', summary: 'all', density: 'normal' },
-  'vk-cells': { cols: '0' },
-  'vk-steps': { current: '0' },
-  'vk-page': { align: 'top', surface: 'paper' },
-  'vk-annotate': { w: '600' },
-  'vk-note': { tone: 'accent', size: 'body' },
+  'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
+  'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
+  'vk-page': { align: 'top' },
+  'vk-note': { tone: 'accent', size: 'body', emphasis: 'solid' },
 };
 
 export const LAYERS = [
@@ -214,17 +210,17 @@ export const TAGS = {
     layer: 'elements',
     summary: '一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。',
     attrs: {
-      'surface': oneOf('none', 'paper', 'soft', 'ink'),
+      'surface': oneOf('none', 'paper', 'soft'),
       'tone': oneOf('accent', 'ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
-      'w': num({ min: 48, max: 1680, step: 1 }),
-      'h': num({ min: 48, max: 888, step: 1 }),
-      'x': { ...num({ min: -1680, max: 1680, step: 1 }), hidden: true },
-      'y': { ...num({ min: -1680, max: 1680, step: 1 }), hidden: true },
+      'w': num({ min: 48, max: 1920, step: 1 }),
+      'h': num({ min: 48, max: 1080, step: 1 }),
+      'x': { ...num({ min: -1920, max: 1920, step: 1 }), hidden: true },
+      'y': { ...num({ min: -1080, max: 1080, step: 1 }), hidden: true },
     },
   },
   'vk-text': {
@@ -277,15 +273,17 @@ export const TAGS = {
       'ratio': text(),
       'fit': oneOf('cover', 'contain'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
-      'w': num({ min: 48, max: 1680, step: 1 }),
-      'h': num({ min: 48, max: 888, step: 1 }),
+      'w': num({ min: 48, max: 1920, step: 1 }),
+      'h': num({ min: 48, max: 1080, step: 1 }),
     },
   },
   'vk-rule': {
     name: '分隔线',
     layer: 'elements',
     summary: '一根线。线宽三档；纯装饰或语义分隔。',
-    attrs: {},
+    attrs: {
+      'orientation': oneOf('horizontal', 'vertical'),
+    },
   },
   'vk-mark': {
     name: '标记',
@@ -309,7 +307,6 @@ export const TAGS = {
       'url': text(),
       'chrome': oneOf('min', 'none', 'browser'),
       'tone': oneOf('accent', 'ok', 'warn', 'err'),
-      'surface': oneOf('paper', 'ink'),
       'pad': oneOf('none', 'sm', 'md', 'lg'),
     },
   },
@@ -349,12 +346,12 @@ export const TAGS = {
     },
   },
   'vk-canvas': {
-    name: '坐标系',
+    name: '坐标画布',
     layer: 'layout',
     summary: '坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。',
     attrs: {
-      'w': num({ min: 48, max: 1680, step: 1 }),
-      'h': num({ min: 48, max: 888, step: 1 }),
+      'w': num({ min: 48, max: 1920, step: 1 }),
+      'h': num({ min: 48, max: 1080, step: 1 }),
       'pad': num({ min: 0, max: 200, step: 1 }),
       'grid': num({ min: 0, max: 192, step: 8 }),
     },
@@ -478,7 +475,6 @@ export const TAGS = {
       'fold': lines(),
       'span': text(),
       'fold-note': text(),
-      'surface': oneOf('ink', 'paper'),
       'chrome': oneOf('min', 'none'),
       'mark': text(),
     },
@@ -502,7 +498,6 @@ export const TAGS = {
       'lines': text(),
       'title': text(),
       'prompt': text(),
-      'surface': oneOf('ink', 'paper'),
       'chrome': oneOf('none', 'min'),
     },
   },
@@ -519,7 +514,6 @@ export const TAGS = {
       'src': text(),
       'lines': text(),
       'file': text(),
-      'surface': oneOf('ink', 'paper'),
       'chrome': oneOf('min', 'none'),
     },
   },
@@ -579,8 +573,8 @@ export const TAGS = {
       'url': text(),
       'ratio': text(),
       'crop': text(),
+      'crop-label': text(),
       'fit': oneOf('cover', 'contain'),
-      'surface': oneOf('paper', 'ink'),
       'chrome': oneOf('min', 'none'),
       'bare': bool(),
     },
@@ -663,21 +657,6 @@ export const TAGS = {
       'chrome': oneOf('min', 'none'),
     },
   },
-  'vk-frames': {
-    name: '栈帧',
-    layer: 'components',
-    summary: '栈帧：src 指向真实 JSON；一帧一组槽位，标出当前帧、地址与生长方向。',
-    attrs: {
-      'src': text(),
-      'title': text(),
-      'active': int({ min: 0, max: 99, step: 1 }),
-      'grows': oneOf('down', 'up'),
-      'show': oneOf('all', 'values', 'addresses'),
-      'summary': oneOf('all', 'none'),
-      'density': oneOf('compact', 'normal', 'loose'),
-      'chrome': oneOf('min', 'none'),
-    },
-  },
   'vk-steps': {
     name: '步骤',
     layer: 'components',
@@ -731,6 +710,9 @@ export const TAGS = {
       'sign': bool(),
       'label': text(),
       'tone': oneOf('neutral', 'accent'),
+      'width': oneOf('8', '16', '32', '64'),
+      'fields': text(),
+      'bytes': bool(),
     },
   },
   'vk-bars': {
@@ -751,25 +733,6 @@ export const TAGS = {
     },
   },
 
-  'vk-memory': {
-    name: '内存图',
-    layer: 'components',
-    summary: '地址空间：text / data / bss / heap / stack 一段一段摆开，标地址、大小与生长方向。',
-    content: {
-      kind: 'items',
-      target: 'vk-memory',
-      fields: [{ name: 'items', label: '段（一行一个：label|size|addr）', type: 'lines', item: 'i' }],
-    },
-    attrs: {
-      'title': text(),
-      'addr': text(),
-      'unit': text(),
-      'mode': oneOf('schematic', 'linear'),
-      'show': oneOf('all', 'values', 'addresses'),
-      'orientation': oneOf('vertical', 'horizontal'),
-      'density': oneOf('compact', 'normal', 'loose'),
-    },
-  },
   'vk-asm': {
     name: '汇编',
     layer: 'components',
@@ -791,6 +754,14 @@ export const TAGS = {
       'address': oneOf('all', 'none'),
       'density': oneOf('compact', 'normal', 'loose'),
       'chrome': oneOf('min', 'none'),
+      'order': text(),
+      'fence-after': text(),
+      'fence-label': text(),
+      'labels': oneOf('all', 'none'),
+      'address-label': text(),
+      'bytes-label': text(),
+      'mnemonic-label': text(),
+      'operands-label': text(),
     },
   },
   'vk-timeline': {
@@ -813,25 +784,17 @@ export const TAGS = {
     },
   },
   'vk-page': {
-    name: '坐标系',
+    name: '页面',
     layer: 'page',
     summary: '坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。',
     attrs: {
       'align': oneOf('top', 'center'),
-      'surface': oneOf('paper', 'ink'),
-    },
-  },
-  'vk-annotate': {
-    name: '行旁批注',
-    layer: 'layout',
-    summary: '代码 + 批注走廊的两列容器：批注按行心对齐，贴在该行右侧。',
-    attrs: {
     },
   },
   'vk-note': {
     name: '讲解条',
     layer: 'relations',
-    summary: '一条讲解：line 指向代码行，for 指向任意元素；可独立使用，也可放进 vk-annotate。',
+    summary: '一条讲解：for 指向任意元素，可独立使用。',
     content: {
       kind: 'text',
       target: 'vk-note',
@@ -842,16 +805,14 @@ export const TAGS = {
     },
     attrs: {
       'n': int({ min: 1, max: 99, step: 1 }),
-      'line': int({ min: 1, max: 999, step: 1 }),
-      'span': text(),
       'tone': oneOf('accent', 'ok', 'warn', 'err'),
-      'surface': oneOf('paper', 'ink'),
+      'emphasis': oneOf('solid', 'soft', 'ghost'),
       'size': oneOf('heading', 'body', 'label'),
       'for': sel(),
     },
   },
   'vk-pin': {
-    name: '批注气泡',
+    name: '批注泡',
     layer: 'relations',
     summary: '自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。',
     content: {
@@ -869,7 +830,7 @@ export const TAGS = {
       'y': num({ min: -4000, max: 4000, step: 1 }),
       'n': int({ min: 1, max: 99, step: 1 }),
       'tone': oneOf('accent', 'ok', 'warn', 'err'),
-      'surface': oneOf('paper', 'ink'),
+      'emphasis': oneOf('solid', 'soft', 'ghost'),
       'leader': oneOf('elbow', 'straight', 'none'),
       'gap': num({ min: 0, max: 240, step: 1 }),
       'w': size({ min: 160, max: 900, step: 1 }),
@@ -899,7 +860,6 @@ export const TAGS = {
       'for': sel(),
       'dim': num({ min: 0, max: 1, step: 0.01 }),
       'feather': num({ min: 0, max: 120, step: 1 }),
-      'surface': oneOf('paper', 'ink'),
       'shape': oneOf('rect', 'ellipse'),
       'z': int({ min: 0, max: 99, step: 1 }),
     },
@@ -913,7 +873,6 @@ export const TAGS = {
 const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys']);
 const CUSTOM = new Set([
   'vk-page',
-  'vk-annotate',
   'vk-edge',
   'vk-canvas',
   'vk-img',
@@ -926,8 +885,8 @@ const COMMON = {
   h: size({ min: 48, max: 1080, step: 1 }),
   grow: bool(),
   fill: bool(),
-  overflow: oneOf('visible', 'clip'),
-  measure: oneOf('body', 'title', 'none'),
+  overflow: { ...oneOf('visible', 'clip'), default: 'visible' },
+  measure: { ...oneOf('body', 'title', 'none'), default: 'none' },
 };
 for (const [tag, def] of Object.entries(TAGS)) {
   if (INLINE.has(tag) || CUSTOM.has(tag)) continue;
@@ -938,7 +897,7 @@ for (const [tag, def] of Object.entries(TAGS)) {
 delete TAGS['vk-rule'].attrs.h;
 
 const EXTRA = {
-  'vk-box': { surface: oneOf('none', 'paper', 'soft', 'ink') },
+  'vk-box': { surface: oneOf('none', 'paper', 'soft') },
   'vk-text': { ink: oneOf('primary', 'secondary', 'tertiary', 'muted') },
   'vk-icon': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
@@ -965,6 +924,7 @@ const EXTRA = {
   'vk-callout': { density: oneOf('compact', 'normal', 'loose') },
   'vk-steps': {
     density: oneOf('compact', 'normal', 'loose'),
+    orientation: oneOf('horizontal', 'vertical'),
   },
   'vk-cells': {
     stride: oneOf('1', '2', '4', '8'),
@@ -995,7 +955,6 @@ const EXTRA = {
     'label-dy': num({ min: -200, max: 200, step: 1 }),
     via: text(),
   },
-  'vk-annotate': { w: num({ min: 200, max: 800, step: 1 }) },
   'vk-page': {},
   'vk-grid': {
     cols: text(),
@@ -1017,6 +976,18 @@ for (const [tag, attrs] of Object.entries(EXTRA)) {
 
 export const TAG_NAMES = Object.keys(TAGS);
 
+/**
+ * 结构化子节点 <i> 的合法属性：父标签 → 允许的名字。
+ * 它们不是宿主属性，但仍然要被构建期校验；拼错会静默不生效。
+ */
+export const CHILD_ATTRS = {
+  'vk-timeline': ['date', 'label', 'lane', 'at', 'span', 'tone', 'mark'],
+  'vk-bits': ['label', 'value', 'mark'],
+  'vk-bars': ['label', 'value'],
+  'vk-list': [],
+  'vk-steps': [],
+};
+
 /** 同名属性在不同标签上含义不同时，在这里覆盖。 */
 const ATTR_META_BY_TAG = {
   'vk-bytes': {
@@ -1026,8 +997,15 @@ const ATTR_META_BY_TAG = {
     pad: { label: '填充格', group: 'appearance' },
     mark: { label: '高亮格（序号，0 起）', group: 'state' },
   },
+  'vk-bits': {
+    width: { label: '位宽', group: 'layout' },
+    fields: { label: '字段区间', content: true },
+    bytes: { label: '字节界', group: 'appearance' },
+    index: { label: '位序号', group: 'appearance' },
+  },
   'vk-figure': {
     crop: { label: '裁切框', group: 'appearance' },
+    'crop-label': { label: '裁切标签', group: 'appearance' },
   },
 };
 

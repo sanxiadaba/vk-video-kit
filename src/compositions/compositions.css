@@ -4,16 +4,12 @@
    ========================================================================== */
 
 /* --------------------------------------------------------------- vk-page */
-/* 画布工具：安全区 + 整页缩放。不是模板——页眉页脚都是可选的。 */
+/* 画布工具：只有 1920×1080 与安全区。页眉页脚不属这一层，也没有隐藏槽。 */
 
 vk-page {
   display: block;
   box-sizing: border-box;
   width: 100%;
-}
-
-vk-page {
-  display: block;
   min-width: 0;
   max-width: 100%;
 }
@@ -30,17 +26,8 @@ vk-page {
   font-family: var(--vk-font-sans);
   -webkit-font-smoothing: antialiased;
 }
-.vk-page[data-surface='ink'] {
-  background: var(--vk-ink-1);
-  color: var(--vk-surface-1);
-}
-.vk-page[data-surface='ink'] .vk-page-hd,
-.vk-page[data-surface='ink'] .vk-page-ft {
-  color: rgba(255, 255, 255, 0.62);
-  border-top-color: rgba(255, 255, 255, 0.16);
-}
 
-/* 安全区的上下 96 是页眉/页脚的家：正文永远是 888，不被页眉页脚压缩。 */
+/* 安全区的上下 96 是给"帧边留白"的：正文永远是 888，不再被页眉页脚压缩。 */
 .vk-page-inner {
   display: grid;
   grid-template-rows: var(--vk-safe-y) minmax(0, 1fr) var(--vk-safe-y);
@@ -57,39 +44,6 @@ vk-page {
 .vk-page-bd > * { min-height: 0; }
 .vk-page[data-align='center'] .vk-page-bd { justify-content: center; }
 
-.vk-page-hd,
-.vk-page-ft {
-  display: flex;
-  align-items: center;
-  gap: var(--vk-s3);
-  line-height: var(--vk-lh-snug);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-6);
-  letter-spacing: var(--vk-ls-wide);
-  color: var(--vk-ink-4);
-}
-.vk-page-hd { grid-row: 1; align-self: center; }
-.vk-page-ft {
-  grid-row: 3;
-  align-self: center;
-  border-top: var(--vk-line-w) solid var(--vk-line-3);
-  padding-top: var(--vk-s2);
-}
-.vk-page-div {
-  flex: 1 1 auto;
-  height: 2px;
-  background: var(--vk-line-2);
-  text-decoration: none;
-}
-/* 槽模式：页眉/页脚里放的是组件，不是字符串。 */
-.vk-page-hd.is-slot > *,
-.vk-page-ft.is-slot > * {
-  flex: 1 1 auto;
-  min-width: 0;
-}
-.vk-page-hd.is-slot,
-.vk-page-ft.is-slot { color: var(--vk-ink-2); }
-
 /* ----------------------------------------------------------- vk-annotate */
 /*
    行旁批注：批注绑定一行，按行心对齐，贴在该行右侧。
@@ -101,7 +55,7 @@ vk-annotate {
   position: relative;
   display: grid;
   grid-template-columns: minmax(0, 1fr) var(--vk-anno-w, 600px);
-  column-gap: var(--vk-s6);
+  column-gap: var(--vk-s5);
   align-items: start;
   box-sizing: border-box;
   width: 100%;
@@ -114,13 +68,16 @@ vk-annotate > vk-code {
   min-width: 0;
   max-width: 100%;
 }
+/* 行尾留出编号徽标的位置，正文不会被压住。 */
+vk-annotate > vk-code .vk-line,
+vk-annotate > vk-code .vk-src { padding-right: 48px; }
 
 /* 批注列是网格里的第二列，不再用 padding-right 假占位。 */
 .vk-anno-notes {
   position: relative;
   grid-column: 2;
   width: auto;
-  z-index: 1;
+  z-index: 3;
 }
 .vk-anno-notes > vk-note {
   position: absolute;
@@ -137,16 +94,21 @@ vk-annotate > vk-code {
 
 /* n 只在作者真的要"第几步"时出现，默认不出现。 */
 .vk-anno-n {
-  display: inline-block;
-  min-width: 40px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
   margin-right: var(--vk-s2);
-  padding: 0 8px;
-  border-radius: 4px;
-  background: var(--vk-focus-soft);
+  padding: 0;
+  border-radius: 50%;
+  background: var(--vk-focus);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-5);
+  font-size: var(--vk-t-micro);
   font-weight: var(--vk-w-med);
-  color: var(--vk-ink-1);
+  line-height: 1;
+  color: #fff;
+  vertical-align: -0.1em;
 }
 
 /* 被下推的批注：行号钉。它只在对齐失效时出现。 */
@@ -172,7 +134,7 @@ vk-annotate > vk-code {
   height: 100%;
   overflow: visible;
   pointer-events: none;
-  z-index: 0;
+  z-index: 2;
 }
 .vk-anno-path {
   fill: none;
@@ -182,6 +144,14 @@ vk-annotate > vk-code {
   stroke-linejoin: round;
 }
 .vk-anno-dot { fill: var(--vk-ink-3); stroke: none; }
+.vk-anno-tag-dot { fill: var(--vk-focus); stroke: var(--vk-surface-1); stroke-width: 4px; }
+.vk-anno-tag-n {
+  fill: #fff;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-micro);
+  font-weight: var(--vk-w-bold);
+  pointer-events: none;
+}
 
 /* --------------------------------------------------------------- vk-note */
 
@@ -214,24 +184,22 @@ vk-note[size='label'] .vk-note { font-size: var(--vk-t-5); }
 vk-note[size='heading'] .vk-note { font-size: var(--vk-t-3); }
 vk-note[ink='secondary'] .vk-note { color: var(--vk-ink-2); }
 vk-note[ink='tertiary'] .vk-note { color: var(--vk-ink-3); }
-vk-note[ink='muted'] .vk-note { color: var(--vk-ink-4); }
-vk-note[ink='muted'] .vk-note:not([data-surface='ink']) { color: var(--vk-ink-3); }
+vk-note[ink='muted'] .vk-note { color: var(--vk-ink-3); }
 
-/* tone 是整条的底色 + 左边线；在 annotate 里退回只留这一笔。 */
-.vk-note[data-surface='ink'] { --vk-note-line: var(--vk-ink-1); background: var(--vk-ink-1); color: var(--vk-surface-1); }
+/* tone 是整条的底色 + 左边线；emphasis 只改"这一条有多重"，不改色相。 */
 .vk-note[data-tone='accent'] { --vk-note-line: var(--vk-focus-line); background: var(--vk-focus-soft); }
 .vk-note[data-tone='ok'] { --vk-note-line: var(--vk-ok); background: var(--vk-ok-weak); }
 .vk-note[data-tone='err'] { --vk-note-line: var(--vk-err); background: var(--vk-err-weak); }
-.vk-note[data-surface='ink'] em { background: rgba(255, 255, 255, 0.16); }
+.vk-note[data-tone='warn'] { --vk-note-line: var(--vk-warn); background: var(--vk-warn-weak); }
 
 /* 行旁批注保持无底色：它贴在代码边，不能变成一列色块。 */
-.vk-anno-notes .vk-note {
+.vk-anno-notes .vk-note,
+.vk-anno-notes .vk-note[data-emphasis] {
   padding: 0 0 0 24px;
   border-radius: 0;
   background: transparent;
   color: var(--vk-ink-1);
 }
-.vk-anno-notes .vk-note[data-surface='ink'] { background: transparent; color: var(--vk-ink-1); }
 
 .vk-note em {
   font-family: var(--vk-font-mono);
@@ -240,12 +208,7 @@ vk-note[ink='muted'] .vk-note:not([data-surface='ink']) { color: var(--vk-ink-3)
   padding: 0 0.06em;
 }
 
-/* 强度与材质：note 的三档底色；ink 换材质。 */
+/* 强度三档：solid = 同色淡底（默认），soft = 中性灰底，ghost = 只留左线。 */
 .vk-note[data-emphasis='solid'] { background: var(--vk-focus-soft); }
 .vk-note[data-emphasis='soft'] { background: var(--vk-surface-2); }
 .vk-note[data-emphasis='ghost'] { background: transparent; box-shadow: none; }
-.vk-note[data-surface='ink'] { background: var(--vk-ink-1); color: var(--vk-surface-1); }
-.vk-note[data-surface='ink'] .vk-note-b { color: var(--vk-surface-1); }
-.vk-note[data-surface='ink'] .vk-note-b, .vk-note[data-surface='ink'] .vk-note-b * { color: var(--vk-surface-1); }
-/* ink 材质要压过语义底色：材质优先于语义。 */
-.vk-note[data-surface='ink'][data-tone] { background: var(--vk-ink-1); color: var(--vk-surface-1); }

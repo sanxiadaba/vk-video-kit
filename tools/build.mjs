@@ -12,12 +12,47 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { build } from 'esbuild';
 import { writeIfChanged, checkMode, removeIfExists } from './lib/io.mjs';
 import { computeBuildId, computeServerId } from '../cli/lib/build-id.mjs';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const check = checkMode();
+const FORCE = process.argv.includes('--force');
+const STAMP = '.vk-cache/package-build.stamp';
+
+const hashFile = (h, file) => {
+  h.update(file);
+  h.update('\0');
+  if (fs.existsSync(file)) h.update(fs.readFileSync(file));
+};
+const hashDir = (h, dir) => {
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+    const abs = path.join(dir, ent.name);
+    if (ent.isDirectory()) hashDir(h, abs);
+    else if (ent.isFile()) hashFile(h, abs);
+  }
+};
+const sourceKey = () => {
+  const h = crypto.createHash('sha1');
+  for (const dir of ['src/tokens', 'src/elements', 'src/layout', 'src/components', 'src/compositions', 'src/runtime', 'src/shared']) hashDir(h, dir);
+  for (const file of ['src/registry.mjs', 'src/entry.mjs', 'src/icons.generated.mjs', 'src/icons.core.generated.mjs', 'vk/katex.css', 'package.json', 'tools/build.mjs']) hashFile(h, file);
+  return h.digest('hex');
+};
+const key = sourceKey();
+const cached =
+  !check &&
+  !FORCE &&
+  fs.existsSync(STAMP) &&
+  fs.readFileSync(STAMP, 'utf8').trim() === key &&
+  fs.existsSync('dist/vk.js') &&
+  fs.existsSync('dist/vk.esm.js') &&
+  fs.existsSync('vk/vk.css');
+if (cached) {
+  console.log('build: 已是最新（跳过 CSS 拼接与 esbuild）');
+  process.exit(0);
+}
 
 const LAYERS = [
   ['vendor', 'KaTeX 结构'],
@@ -117,3 +152,5 @@ console.log('\nJS');
 console.log(`  dist/vk.js       ${kb(iife)}`);
 console.log(`  dist/vk.esm.js   ${kb(esm)}`);
 console.log(`  dist/build.json  ${buildInfo.id}`);
+fs.mkdirSync(path.dirname(STAMP), { recursive: true });
+fs.writeFileSync(STAMP, key + '\n');

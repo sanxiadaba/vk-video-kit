@@ -178,34 +178,36 @@ test('终端 src：从真实 transcript 文件读，不在 HTML 里手写', asyn
   assert.match(text, /hi/);
 });
 
-test('终端 chrome=none 仍保留深色面板，只去标题栏', async () => {
-  await reset('<vk-term chrome="none" surface="ink">$ echo hi\nhi</vk-term>');
+test('终端 chrome=none 只去标题栏，窗体仍是白纸', async () => {
+  await reset('<vk-term chrome="none">$ echo hi\nhi</vk-term>');
   const r = await page.evaluate(() => {
     const e = document.querySelector('vk-term .vk-win');
     return { bg: getComputedStyle(e).backgroundColor, hd: !!e.querySelector('.vk-hd') };
   });
   assert.equal(r.hd, false);
-  assert.notEqual(r.bg, 'rgba(0, 0, 0, 0)');
+  assert.equal(r.bg, 'rgb(255, 255, 255)');
 });
 
 test('page 重渲染保留槽内焦点，不搬走作者节点', async () => {
   await reset('<vk-page><input id="f" /></vk-page>');
   await page.focus('#f');
-  await page.evaluate(() => document.querySelector('vk-page').setAttribute('footer', 'x | y'));
+  await page.evaluate(() => document.querySelector('vk-page').setAttribute('align', 'center'));
   await sleep(60);
   const id = await page.evaluate(() => document.activeElement?.id || '');
   assert.equal(id, 'f');
 });
 
-test('ink 面里的 L3 文字继承浅色，不再和底色同色', async () => {
-  await reset('<vk-box surface="ink" pad="md"><vk-list><li>one</li><li>two</li></vk-list></vk-box>');
+test('全库只有白纸：浅灰面上的 L3 文字仍是墨色', async () => {
+  await reset('<vk-box surface="soft" pad="md"><vk-list><li>one</li><li>two</li></vk-list></vk-box>');
   const r = await page.evaluate(() => {
     const bg = getComputedStyle(document.querySelector('vk-box')).backgroundColor;
     const fg = getComputedStyle(document.querySelector('.vk-li-b')).color;
-    return { bg, fg };
+    const ink = getComputedStyle(document.documentElement).getPropertyValue('--vk-ink-surface-1').trim();
+    return { bg, fg, ink };
   });
   assert.notEqual(r.fg, r.bg);
-  assert.equal(r.fg, 'rgb(230, 236, 245)');
+  assert.equal(r.fg, 'rgb(11, 15, 20)');
+  assert.equal(r.ink, '', '深色面 token 应该已经删除');
 });
 
 test('diff 并排模式：两个窗、空行对齐、左右标签', async () => {
@@ -298,6 +300,28 @@ test('tree 折叠的是子列表，数量来自未过滤的真实条目', async 
   }));
   assert.match(r.text, /2 项已收起/);
   assert.equal(r.child, 0);
+});
+
+test('7.0 深挖：bits 32 位字段、asm 顺序屏障', async () => {
+  await page.goto(`${base}/specimens/vk-asm.html`, { waitUntil: 'load' });
+  await page.evaluate(() => window.vk.ready());
+  const asm = await page.evaluate(() => ({
+    orders: document.querySelectorAll('.vk-asm-order').length,
+    fence: document.querySelector('.vk-asm-fence')?.textContent || '',
+  }));
+  assert.ok(asm.orders > 0);
+  assert.match(asm.fence, /屏障/);
+
+  await reset(`<vk-stack gap="md">
+    <vk-bits id="bits" w="1600" value="10111111110000000000000000000000"
+             width="32" bytes sign fields="31:符号|30-23:指数|22-0:尾数"></vk-bits>
+  </vk-stack>`);
+  const r = await page.evaluate(() => ({
+    bits: document.querySelectorAll('#bits .vk-bit').length,
+    fields: document.querySelectorAll('#bits .vk-bit-field').length,
+  }));
+  assert.equal(r.bits, 32);
+  assert.equal(r.fields, 3);
 });
 
 after(async () => {

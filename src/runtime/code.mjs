@@ -73,8 +73,7 @@ export class VkCode extends VkElement {
     const srcPath = this.getAttribute('src') || '';
     const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '');
     const chrome = this.getAttribute('chrome') || 'min';
-    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
-    const density = ['large', 'compact'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
+    const density = ['compact', 'loose'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
     const showNums = this.getAttribute('numbers') !== 'none';
     const marks = (this.getAttribute('mark') || '').split(',').map((s) => s.trim()).filter(Boolean);
 
@@ -155,7 +154,6 @@ export class VkCode extends VkElement {
 
     this.innerHTML =
       win({
-        surface,
         chrome,
         cls: 'vk-code',
         attrs: ` data-density="${density}"`,
@@ -184,7 +182,7 @@ export class VkCode extends VkElement {
       wrapCharRange(lineEl.querySelector('.vk-src'), Number(m[2]), Number(m[3]), 'vk-char', `c${lineNo}:${m[2]}-${m[3]}`);
     }
 
-    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
+    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
     this.style.width = Number.isFinite(w) ? w + 'px' : '';
 
     // 长行不静默裁切：量一次，clip 时给右缘渐隐；wrap/scroll 是作者显式选择。
@@ -285,7 +283,7 @@ export class VkTerm extends VkElement {
       : dedent(this._src || '');
     const prompt = this.getAttribute('prompt') || '$';
     const title = this.getAttribute('title') || '';
-    const density = ['large', 'compact'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
+    const density = ['compact', 'loose'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
 
     const rows = source
       .split('\n')
@@ -322,10 +320,8 @@ export class VkTerm extends VkElement {
       .join('');
 
     const chrome = this.getAttribute('chrome') || 'min';
-    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
 
     this.innerHTML = win({
-      surface,
       chrome,
       cls: 'vk-term',
       attrs: ` data-density="${density}"`,
@@ -333,7 +329,7 @@ export class VkTerm extends VkElement {
       inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });
 
-    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
+    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
     this.style.width = Number.isFinite(w) ? w + 'px' : '';
   }
 }

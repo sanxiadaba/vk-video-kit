@@ -2,12 +2,13 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TAGS } from '../src/registry.mjs';
+import { TAGS, CHILD_ATTRS } from '../src/registry.mjs';
 
 const registryAttrs = new Set();
 for (const def of Object.values(TAGS)) for (const name of Object.keys(def.attrs || {})) registryAttrs.add(name);
+for (const list of Object.values(CHILD_ATTRS)) for (const name of list) registryAttrs.add(name);
 
-const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at']);
+const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text']);
 const IGNORE = (name) => name.startsWith('data-') || name.startsWith('aria-') || ALLOW.has(name);
 
 function walk(dir, out = []) {

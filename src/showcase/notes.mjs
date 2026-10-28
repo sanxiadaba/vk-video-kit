@@ -75,9 +75,7 @@ export const PARTNERS = {
 export const VALUE_LABELS = {
   compact: '紧凑',
   normal: '标准',
-  large: '大',
   paper: '纸面',
-  ink: '深色',
   min: '窗头',
   none: '无',
   all: '全部',

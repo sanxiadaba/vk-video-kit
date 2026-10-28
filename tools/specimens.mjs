@@ -34,8 +34,9 @@ const RESET = `html,body{margin:0;padding:0;background:#eef2f7;color:#0b0f14}
 body{display:flex;justify-content:center;min-height:100vh}
 a{color:inherit;text-decoration:none}
 a:hover{color:#1b3fd6}
-.spec-scale{width:1479px}
-.spec-scale > *{zoom:.77}`;
+.spec-scale{width:1400px}
+.spec-scale > *{zoom:.73}
+.spec-card-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.06em}`;
 
 function shell(title, body, depth = 1) {
   // depth：索引在站点根，规格页在 specimen/ 下一层；两者的相对路径前缀不同。
@@ -84,9 +85,10 @@ function specPage(tag, no) {
   // 高个组件（代码窗、表格、内存图…）在 888 安全区里放不下一行预设说明；
   // 预设仍列在 reference.md 与变体里，这里不为了"凑一行"去缩字或裁切。
   const TALL = new Set([
-    'vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-table', 'vk-frames',
-    'vk-bytes', 'vk-tree', 'vk-memory', 'vk-timeline', 'vk-figure',
+    'vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-table',
+    'vk-bytes', 'vk-tree', 'vk-timeline', 'vk-figure',
     'vk-cells', 'vk-list', 'vk-math', 'vk-page',
+    'vk-bits',
   ]);
   const footer = TALL.has(tag)
     ? ''
@@ -95,7 +97,7 @@ function specPage(tag, no) {
       <vk-text size="micro" mono ink="muted" data-meta>属性表：docs/reference.md</vk-text>
     </vk-row>
 `;
-  const page = `<vk-page align="top" surface="paper">
+  const page = `<vk-page align="top">
   <vk-stack gap="2xs">
     <vk-row justify="between" align="baseline">
       <vk-row gap="xs" align="baseline">
@@ -119,20 +121,20 @@ ${footer}  </vk-stack>
 
 function card(tag, no) {
   const def = TAGS[tag];
-  return `<a href="specimen/${tag}.html"><vk-box surface="paper" border="hair" radius="md" pad="2xs" h="136" overflow="clip">
+  return `<a href="specimen/${tag}.html"><vk-box surface="paper" border="hair" radius="md" pad="2xs" h="148" overflow="clip">
   <vk-stack gap="2xs">
     <vk-text size="meta">${esc(def.name)}</vk-text>
-    <vk-text size="micro" mono ink="muted" data-meta>${esc(tag.replace(/^vk-/, ""))}</vk-text>
+    <vk-text class="spec-card-tag" size="micro" mono ink="muted" data-meta>${esc(tag.replace(/^vk-/, ""))}</vk-text>
   </vk-stack>
 </vk-box></a>`;
 }
 
 function indexPage() {
   const cards = ORDER.map((tag, i) => card(tag, i + 1)).join('\n');
-  const page = `<vk-page align="top" surface="paper">
+  const page = `<vk-page align="top">
   <vk-stack gap="xs">
     <vk-row justify="between" align="baseline">
-      <vk-text size="label">40 个组件</vk-text>
+      <vk-text size="label">${ORDER.length} 个组件</vk-text>
       <vk-text size="micro" mono ink="muted" data-meta>${ORDER.length} tags · 5 layers · 1920×1080 · 44px 地板</vk-text>
     </vk-row>
     <vk-rule></vk-rule>
@@ -164,9 +166,11 @@ let stale = 0;
 for (const [file, html] of files) {
   const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
   if (before === html) continue;
+  const want = html.match(/<!-- vk:spec:([0-9a-f]+) -->/)?.[1];
+  const got = before?.match(/<!-- vk:spec:([0-9a-f]+) -->/)?.[1];
+  // 预编译过的页与原始场景不同；只要规格指纹没变，就别用未编译的原文盖掉它。
+  if (want && got && want === got && /data-vk-(?:icons|math|hl|hl-diff|src|asm|tree|frames|bytes)\b/.test(before)) continue;
   if (check) {
-    const want = html.match(/<!-- vk:spec:([0-9a-f]+) -->/)?.[1];
-    const got = before?.match(/<!-- vk:spec:([0-9a-f]+) -->/)?.[1];
     if (want && got && want === got) continue;
     stale++;
     console.error(`✗ ${file}`);

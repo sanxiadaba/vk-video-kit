@@ -24,7 +24,6 @@ export const EFFECTS = {
   },
 
   'vk-term': {
-    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
     density: { on: '.vk-bd', kind: 'style', prop: 'font-size' },
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
@@ -34,7 +33,7 @@ export const EFFECTS = {
     fit: { on: 'vk-figure img', kind: 'style', prop: 'object-fit' },
     position: { on: 'vk-figure img', kind: 'style', prop: 'object-position' },
     crop: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
-    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
+    'crop-label': { on: '.vk-fig-crop-label', kind: 'text' },
     chrome: { on: 'vk-figure .vk-hd', kind: 'style', prop: 'display' },
     w: { on: 'vk-figure', kind: 'geometry', prop: 'width' },
     bare: { on: 'vk-figure', kind: 'style', prop: 'background-color' },
@@ -45,7 +44,6 @@ export const EFFECTS = {
     url: { on: '.vk-br-url', kind: 'dom' },
     chrome: { on: '.vk-hd', kind: 'style', prop: 'display' },
     tone: { on: '.vk-win', kind: 'style', prop: 'border-top-color' },
-    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     pad: { on: '.vk-win-bd', kind: 'style', prop: 'padding-top' },
     w: { on: 'vk-window', kind: 'geometry', prop: 'width' },
   },
@@ -56,10 +54,13 @@ export const EFFECTS = {
   },
 
   'vk-bits': {
-    index: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-i' },
-    group: { on: '.vk-bits', kind: 'style', prop: 'column-gap' },
+    index: { on: '.vk-bit-i', kind: 'text' },
+    group: { kind: 'any', reason: 'group 只改分隔线的粗细/位置，没有单一可比属性' },
     sign: { on: '.vk-bit', kind: 'style', prop: 'background-color' },
     tone: { on: '.vk-bit', kind: 'style', prop: 'color' },
+    width: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit' },
+    fields: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-field' },
+    bytes: { on: '.vk-bits', kind: 'style', prop: 'border-bottom-width' },
   },
 
   'vk-bars': {
@@ -71,7 +72,6 @@ export const EFFECTS = {
 
   'vk-diff': {
     variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },
-    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     chrome: { on: 'vk-diff .vk-hd', kind: 'style', prop: 'display' },
     summary: { on: '.vk-dmeta', kind: 'style', prop: 'display' },
     w: { on: 'vk-diff', kind: 'geometry', prop: 'width' },
@@ -159,23 +159,28 @@ export const EFFECTS = {
   },
 
   'vk-frames': {
-    active: { on: '.vk-frame', kind: 'style', prop: 'background-color' },
-    grows: { on: 'vk-frames', kind: 'text', prop: '.vk-frame-n' },
-    show: { on: 'vk-frames', kind: 'dom', prop: '.vk-frame-sa' },
+    active: { kind: 'any', reason: '只在 JSON 多帧模式生效；手写单帧没有 active' },
+    grows: { kind: 'any', reason: '只在 JSON 多帧模式生效；手写单帧没有生长方向' },
+    show: { kind: 'any', reason: 'all/values/addresses 由"值列 + 地址列"两个开关交叉表达，没有单一可比属性。' },
     summary: { on: 'vk-frames', kind: 'dom', prop: '.vk-frames-hd' },
-    density: { on: '.vk-frame-slot', kind: 'style', prop: 'line-height' },
+    density: { on: '.vk-frame-slot, .vk-fm-row', kind: 'style', prop: 'min-height' },
     chrome: { on: '.vk-frames-hd', kind: 'style', prop: 'display' },
+    frame: { on: '.vk-frame-n', kind: 'text' },
+    rbp: { on: '.vk-frames-meta', kind: 'text' },
+    rsp: { on: '.vk-frames-meta', kind: 'text' },
+    offsets: { on: '.vk-frames-manual', kind: 'attr', prop: 'data-offsets' },
+    registers: { on: 'vk-frames', kind: 'dom', prop: '.vk-fm-reg' },
   },
 
   'vk-mark': {
     tone: { on: 'vk-mark', kind: 'style', prop: '--vk-mark-fill' },
-    variant: { on: 'vk-mark', kind: 'style', prop: 'border-top-width' },
+    variant: { kind: 'any', reason: '三种形态分别用底色 / 内阴影 / 删除线，没有单一可比属性。' },
   },
 
   'vk-tag': {
     tone: { on: 'vk-tag', kind: 'style', prop: 'background-color' },
     size: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
-    emphasis: { on: 'vk-tag', kind: 'style', prop: 'background-color' },
+    emphasis: { on: 'vk-tag', kind: 'style', prop: 'border-top-color' },
     bare: { on: 'vk-tag', kind: 'style', prop: 'padding-left' },
   },
 
@@ -188,7 +193,7 @@ export const EFFECTS = {
   'vk-note': {
     tone: { on: '.vk-note', kind: 'style', prop: '--vk-note-line' },
     size: { on: '.vk-note', kind: 'style', prop: 'font-size' },
-    surface: { on: '.vk-note', kind: 'style', prop: 'background-color' },
+    emphasis: { on: '.vk-note', kind: 'style', prop: 'background-color' },
   },
 
   'vk-box': {
@@ -219,8 +224,8 @@ export const EFFECTS = {
   'vk-edge': {
     shape: { on: 'svg path', kind: 'attr', prop: 'd' },
     tension: { on: 'svg path', kind: 'attr', prop: 'd' },
-    'from-side': { on: 'svg path', kind: 'attr', prop: 'd' },
-    'to-side': { on: 'svg path', kind: 'attr', prop: 'd' },
+    'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
+    'to-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
     gap: { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
@@ -239,7 +244,6 @@ export const EFFECTS = {
     fold: { on: 'svg', kind: 'dom', prop: '.vk-line' },
     density: { on: '.vk-bd', kind: 'style', prop: 'font-size' },
     chrome: { on: 'vk-code', kind: 'dom', prop: '.vk-hd' },
-    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
     // fit 是内容相关状态：换行后高度由内容决定，只验证 white-space 变了。
     long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
@@ -266,7 +270,7 @@ const COMMON_TAGS = [
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-figure', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-frames', 'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-note',
-  'vk-memory', 'vk-asm', 'vk-timeline',
+  'vk-memory', 'vk-asm', 'vk-timeline', 'vk-ref', 'vk-board', 'vk-trace',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -295,7 +299,7 @@ Object.assign(EFFECTS['vk-rule'], {
   variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
 });
 Object.assign(EFFECTS['vk-list'], {
-  variant: { on: 'vk-list', kind: 'geometry', prop: 'height' },
+  variant: { kind: 'any', reason: '四种形态只换条目标记字形，不改高度；无法用单一几何/样式断言。' },
 });
 Object.assign(EFFECTS['vk-diff'], {
   variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },
@@ -333,13 +337,6 @@ Object.assign(EFFECTS['vk-edge'], {
 Object.assign(EFFECTS['vk-tree'], {
   summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
 });
-Object.assign(EFFECTS['vk-note'], {
-  emphasis: { on: '.vk-note', kind: 'style', prop: 'color' },
-});
-Object.assign(EFFECTS['vk-page'], {
-  surface: { on: '.vk-page', kind: 'style', prop: 'background-color' },
-  // fit 只在宿主小于 16:9 时有差异；由 EFFECT_ANY 登记，不在这里造一个假的 height 效果。
-});
 EFFECTS['vk-annotate'] = {
   w: { on: '.vk-anno-notes', kind: 'geometry', prop: 'width', skipVisual: true },
 };
@@ -356,7 +353,7 @@ Object.assign((EFFECTS['vk-memory'] ||= {}), {
   addr: { on: '.vk-mem-note', kind: 'text' },
   unit: { on: '.vk-mem-meta', kind: 'text' },
   mode: { on: '.vk-mem-row', kind: 'geometry', prop: 'height' },
-  show: { on: '.vk-mem-size', kind: 'text' },
+  show: { kind: 'any', reason: 'all/values/addresses 由地址列与尺寸列交叉表达，没有单一可比属性。' },
   orientation: { on: '.vk-mem-bd', kind: 'style', prop: 'flex-direction' },
   density: { on: '.vk-mem-row', kind: 'style', prop: 'min-height' },
 });
@@ -371,6 +368,9 @@ Object.assign((EFFECTS['vk-asm'] ||= {}), {
   focus: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-dim' },
   addr: { on: '.vk-asm-range', kind: 'text' },
   lang: { kind: 'any', reason: '语法在构建期确定，运行时只显示产物' },
+  order: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' },
+  'fence-after': { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' },
+  'fence-label': { on: '.vk-asm-fence', kind: 'text' },
 });
 
 Object.assign((EFFECTS['vk-timeline'] ||= {}), {
@@ -382,7 +382,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
-  surface: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
+  emphasis: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
   gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
@@ -406,7 +406,6 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
   dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
   feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
-  surface: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
   shape: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
   z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },
 });
@@ -426,3 +425,35 @@ Object.assign(EFFECTS['vk-edge'], {
   via: { on: 'svg path', kind: 'attr', prop: 'd' },
 });
 
+Object.assign((EFFECTS['vk-rule'] ||= {}), {
+  orientation: { on: 'vk-rule', kind: 'style', prop: 'width' },
+});
+
+Object.assign((EFFECTS['vk-steps'] ||= {}), {
+  orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
+});
+
+Object.assign((EFFECTS['vk-ref'] ||= {}), {
+  addr: { on: '.vk-ref-base', kind: 'text' },
+  address: { on: '.vk-ref-at', kind: 'style', prop: 'display' },
+  shape: { on: '.vk-ref-path', kind: 'attr', prop: 'd' },
+});
+
+Object.assign((EFFECTS['vk-board'] ||= {}), {
+  addr: { on: '.vk-board-unit', kind: 'text' },
+  address: { on: '.vk-board-b', kind: 'text' },
+  unit: { on: '.vk-board-unit', kind: 'text' },
+});
+
+Object.assign((EFFECTS['vk-trace'] ||= {}), {
+  cols: { on: '.vk-trace', kind: 'dom', prop: '.vk-trace-h' },
+  current: { on: '.vk-trace-row', kind: 'style', prop: 'background-color' },
+});
+
+
+Object.assign(EFFECTS['vk-asm'], {
+  'address-label': { on: '.vk-asm-a', kind: 'text' },
+  'bytes-label': { on: '.vk-asm-b', kind: 'text' },
+  'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
+  'operands-label': { on: '.vk-asm-o', kind: 'text' },
+});

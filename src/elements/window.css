@@ -4,7 +4,7 @@
    全库唯一的窗口壳。code / term / diff / figure / browser 只往窗里填内容，
    不各自再画一遍边框、三点、标题栏。
 
-   一块「窗」的全部颜色在 .vk-win 上定；data-surface="ink" 只换这一组变量。
+   一块「窗」的全部颜色只在 .vk-win 上定；全库没有第二种窗材质。
    ========================================================================== */
 
 .vk-win {
@@ -53,42 +53,6 @@
   box-shadow: none;
 }
 
-/* --------------------------------------------------------------- 深色 */
-
-.vk-win[data-surface='ink'] {
-  --vk-win-bg: var(--vk-ink-surface-1);
-  --vk-win-soft: var(--vk-ink-surface-2);
-  --vk-win-fg: var(--vk-ink-text-1);
-  --vk-win-fg-2: var(--vk-ink-text-2);
-  --vk-win-meta: var(--vk-ink-text-3);
-  --vk-win-meta-2: var(--vk-ink-text-4);
-  --vk-win-rule: var(--vk-ink-line);
-  --vk-win-edge: var(--vk-ink-edge);
-  --vk-win-tab-line: var(--vk-ink-tab-line);
-
-  --vk-win-hl-bg: rgba(27, 63, 214, 0.24);
-  --vk-win-hl-line: #6f8cff;
-
-  --vk-win-k: var(--vk-syn-keyword-ink);
-  --vk-win-f: var(--vk-syn-function-ink);
-  --vk-win-s: var(--vk-syn-string-ink);
-  --vk-win-n: var(--vk-syn-number-ink);
-  --vk-win-b: var(--vk-syn-builtin-ink);
-  --vk-win-o: var(--vk-ink-text-2);
-  --vk-win-p: var(--vk-ink-text-3);
-  --vk-win-c: var(--vk-syn-comment-ink);
-
-  --vk-win-add-line: #59d99a;
-  --vk-win-del: rgba(179, 38, 30, 0.24);
-  --vk-win-del-line: #ff8f8a;
-  --vk-win-ok: var(--vk-ok-ink);
-  --vk-win-ok-bg: rgba(127, 214, 196, 0.16);
-  --vk-win-err: var(--vk-err-ink);
-  --vk-win-err-bg: rgba(255, 167, 161, 0.16);
-  --vk-win-warn: var(--vk-warn-ink);
-  --vk-win-warn-bg: rgba(233, 179, 106, 0.16);
-}
-
 /* --------------------------------------------------------------- 标题栏 */
 
 .vk-hd {
@@ -128,7 +92,7 @@
   box-sizing: border-box;
   min-width: 0;
   height: 48px;
-  padding: 2px 14px 2px 4px;
+  padding: 0 14px 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 1px solid var(--vk-win-tab-line);
@@ -137,7 +101,7 @@
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-sub);
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 1;
   letter-spacing: -0.01em;
   color: var(--vk-win-fg);
 }

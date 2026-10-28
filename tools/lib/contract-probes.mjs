@@ -100,6 +100,11 @@ export const PROBES = {
       effect: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
       why: '裁切框是 .vk-fig-crop 覆盖层；标本已经有框，换个矩形就是 left/top/width/height 的变化。',
     },
+    'crop-label': {
+      values: ['s[5]'],
+      effect: { on: '.vk-fig-crop-label', kind: 'text' },
+      why: '标签是裁切框里的一个覆盖元素；没有标签时整块不渲染。',
+    },
   },
   'vk-cells': {
     spans: {
@@ -117,6 +122,29 @@ export const PROBES = {
       effect: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
       why: '高亮格底和边一起亮；断边框色，才是在断"框"。',
     },
+    cols: {
+      values: ['1', '2'],
+      effect: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
+      why: '标本只有 3 格，超过 3 列会被夹紧。',
+    },
+  },
+  'vk-box': {
+    'pad-x': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-left' }, why: '横向内距只看 left 变化。' },
+    'pad-y': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-top' }, why: '纵向内距只看 top 变化。' },
+  },
+  'vk-tree': {
+    depth: { values: ['1'], effect: { on: 'vk-tree', kind: 'geometry', prop: 'height' }, why: '标本只有两层，depth=2 与 4 画面上相同。' },
+  },
+  'vk-asm': {
+    highlight: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'background-color' }, why: '高亮行必须有背景色差。' },
+    focus: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'opacity' }, why: '聚光让非目标行透明度下降。' },
+    order: { values: ['1,2,3'], effect: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' }, why: '顺序徽标个数跟着 order 变。' },
+    'fence-after': { values: ['7'], effect: { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' }, why: '屏障行跟着 fence-after 换位置。' },
+    'fence-label': { values: ['屏障'], effect: { on: '.vk-asm-fence', kind: 'text' }, why: '屏障文字在 .vk-asm-fence。' },
+    'address-label': { values: ['ADDR'], effect: { on: '.vk-asm-a', kind: 'text' }, why: '列头文字由属性覆盖。' },
+    'bytes-label': { values: ['BYTES'], effect: { on: '.vk-asm-b', kind: 'text' }, why: '列头文字由属性覆盖。' },
+    'mnemonic-label': { values: ['OP'], effect: { on: '.vk-asm-m', kind: 'text' }, why: '列头文字由属性覆盖。' },
+    'operands-label': { values: ['ARGS'], effect: { on: '.vk-asm-o', kind: 'text' }, why: '列头文字由属性覆盖。' },
   },
 };
 
@@ -131,7 +159,6 @@ export const EFFECT_OVERRIDES = {
 export const VISUAL_EXEMPT = {
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
-  'vk-annotate.w': '只改批注栏宽这一条几何，不产生新文字/颜色。',
   'vk-canvas.inset': '画布内缩只改子节点坐标，不产生新文字/颜色。',
   'vk-canvas.overflow': '裁切是作者显式选择；画布内容的安全区由真实帧负责。',
   'vk-grid.cols': '列数变化只改几何；子节点本身的视觉在默认态已检查。',
@@ -149,7 +176,22 @@ export const EFFECT_ANY = [
   {
     tag: 'vk-mark',
     attr: 'variant',
-    reason: 'variant 与 type 共用同一组 CSS；type 已有 border-top-width 断言。',
+    reason: 'variant 与 type 共用同一组 CSS；三种形态分别用底色/内阴影/删除线，没有单一可比属性。',
+  },
+  {
+    tag: 'vk-list',
+    attr: 'variant',
+    reason: '四种形态只换条目标记字形，不改高度；文字变化无法用单一几何/样式断言。',
+  },
+  {
+    tag: 'vk-edge',
+    attr: 'from-side',
+    reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。',
+  },
+  {
+    tag: 'vk-edge',
+    attr: 'to-side',
+    reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。',
   },
   {
     tag: 'vk-code',
@@ -162,7 +204,7 @@ export const EFFECT_ANY = [
     reason: '文件树标本只有一个根，limit 的 1/500 都只显示这一个根；顶层截断由「只看顶层」预设覆盖。',
   },
 ];
-export const EFFECT_ANY_BUDGET = 10;
+export const EFFECT_ANY_BUDGET = 12;
 
 /** registry 把 w/h 声明成 text（可写数字也可写 fit/full）；给契约一个安全数字。 */
 export const SHARED_VALUES = {

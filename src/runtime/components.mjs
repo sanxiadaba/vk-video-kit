@@ -213,14 +213,12 @@ export class VkFigure extends VkElement {
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
     const chrome = this.getAttribute('chrome') || 'min';
     const bare = this.hasAttribute('bare');
-    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
 
     if (!this._shell) {
       this._captionSlot = this.querySelector(':scope > figcaption');
       this._captionSlot?.remove();
       const body = takeSlot(this);
       this.innerHTML = win({
-        surface,
         chrome: 'min',
         cls: 'vk-fig-win',
         attrs: ' role="figure"',
@@ -239,9 +237,6 @@ export class VkFigure extends VkElement {
     }
 
     this._shell.dataset.chrome = bare ? 'none' : chrome;
-    this._shell.dataset.material = surface;
-    if (surface === 'ink') this._shell.dataset.surface = 'ink';
-    else delete this._shell.dataset.surface;
     if (bare) this._shell.dataset.bare = '';
     else delete this._shell.dataset.bare;
 
@@ -284,8 +279,17 @@ export class VkFigure extends VkElement {
       this._crop = document.createElement('span');
       this._crop.className = 'vk-fig-crop';
       this._crop.setAttribute('aria-hidden', 'true');
+      this._cropLabel = document.createElement('span');
+      this._cropLabel.className = 'vk-fig-crop-label';
+      this._cropLabel.setAttribute('data-meta', '');
       this._body.appendChild(this._crop);
     }
+    if (this._cropLabel && this._cropLabel.parentNode !== this._hd) {
+      this._fig.after(this._cropLabel);
+    }
+    const cropLabel = this.getAttribute('crop-label') || '';
+    this._cropLabel.textContent = cropLabel;
+    this._cropLabel.style.display = cropLabel && this.getAttribute('crop') ? '' : 'none';
     this._placeCrop();
 
     if (url) {
@@ -391,7 +395,7 @@ export class VkFigure extends VkElement {
 
 /* ---------------------------------------------------------------- window */
 
-const WIN_CHROME = new Set(['min', 'none', 'browser', 'dialog']);
+const WIN_CHROME = new Set(['min', 'none', 'browser']);
 const WIN_PAD = new Set(['none', 'sm', 'md', 'lg']);
 const WIN_TONES = new Set(['accent', 'ok', 'warn', 'err']);
 
@@ -409,7 +413,6 @@ export class VkWindow extends VkElement {
 
   render() {
     const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
-    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
     const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'md';
     const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
     const title = this.getAttribute('title') || '';
@@ -418,7 +421,6 @@ export class VkWindow extends VkElement {
     if (!this._shell) {
       const body = takeSlot(this);
       this.innerHTML = win({
-        surface,
         chrome: 'min',
         cls: 'vk-win-tag',
         head: '<span class="vk-file" data-meta></span><span class="vk-br-url" data-meta><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
@@ -434,10 +436,7 @@ export class VkWindow extends VkElement {
     }
 
     this._shell.dataset.chrome = chrome;
-    this._shell.dataset.material = surface;
     this._shell.dataset.pad = pad;
-    if (surface === 'ink') this._shell.dataset.surface = 'ink';
-    else delete this._shell.dataset.surface;
     if (tone) this._shell.dataset.tone = tone;
     else delete this._shell.dataset.tone;
 
@@ -745,7 +744,6 @@ export class VkBytes extends VkElement {
     }
     const rowsHtml = rows.join('');
     this.innerHTML = win({
-      surface: 'paper',
       chrome: this.getAttribute('chrome') === 'none' ? 'none' : 'min',
       head: fileHead(file, 'bytes', range),
       inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}" data-word="${word}" data-endian="${endian}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
@@ -754,70 +752,6 @@ export class VkBytes extends VkElement {
 }
 
 /* ----------------------------------------------------------------- frames */
-
-export class VkFrames extends VkElement {
-  static watchSource = true;
-  static renderedRoot = '.vk-frames';
-
-  capture() {
-    const data = this.querySelector(':scope > script[data-vk-frames]');
-    this._data = null;
-    if (data) {
-      try {
-        const d = JSON.parse(data.textContent);
-        if (d && Array.isArray(d.frames)) this._data = d;
-      } catch {
-        /* 损坏的栈数据按缺失处理 */
-      }
-    }
-    if (this.getAttribute('src') && !this._data) this.stale('缺少预编译栈帧数据');
-  }
-
-  render() {
-    const d = this._data;
-    if (!d) {
-      this.innerHTML = '<div class="vk-frames" data-empty>缺少预编译栈帧数据</div>';
-      return;
-    }
-    const active = parseInt(this.getAttribute('active'), 10) || 0;
-    const grows = this.getAttribute('grows') || 'down';
-    const show = this.getAttribute('show') || 'all';
-    const density = this.getAttribute('density') || 'normal';
-    const title = this.getAttribute('title') || d.title || '调用栈';
-    const values = show !== 'addresses';
-    const addresses = show !== 'values';
-    const frames = grows === 'up' ? [...d.frames].reverse() : d.frames;
-    const body = frames
-      .map((f) => {
-        const index = d.frames.indexOf(f) + 1;
-        const slots = (f.slots || [])
-          .map(
-            (s, si) => `<div class="vk-frame-slot" data-vk-part="slot" data-slot="${index}:${si}">
-              ${values ? `<span class="vk-frame-l">${esc(s.label ?? '')}</span>` : ''}
-              ${values ? `<span class="vk-frame-v">${esc(s.value ?? '')}</span>` : ''}
-              ${addresses ? `<span class="vk-frame-sa" data-meta>${esc(s.addr ?? '')}</span>` : ''}
-            </div>`
-          )
-          .join('');
-        return `<section class="vk-frame" data-vk-part="frame" data-frame="${index}" data-active="${index === active ? '1' : '0'}" data-index="${index}">
-          <header class="vk-frame-hd">
-            <span class="vk-frame-n">${esc(f.name ?? 'frame')}</span>
-            ${addresses ? `<span class="vk-frame-fa" data-meta>${esc(f.addr ?? '')}</span>` : ''}
-          </header>
-          <div class="vk-frame-bd">${slots}</div>
-        </section>`;
-      })
-      .join('');
-    const head =
-      this.getAttribute('summary') === 'none'
-        ? ''
-        : `<div class="vk-frames-hd" data-vk-part="hd"><span class="vk-frames-title">${esc(title)}</span><span class="vk-frames-meta">${d.frames.length} 帧 · ${grows === 'up' ? '向上' : '向下'}生长</span></div>`;
-    this.innerHTML = `<div class="vk-frames" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}" data-grows="${esc(grows)}" data-show="${esc(show)}" data-density="${esc(density)}" data-summary="${esc(this.getAttribute('summary') || 'all')}">
-      ${head}
-      <div class="vk-frames-bd" data-vk-part="bd">${body}</div>
-    </div>`;
-  }
-}
 
 /* ------------------------------------------------------------------ keys */
 
@@ -1010,17 +944,17 @@ export class VkSteps extends VkElement {
 
   render() {
     const items = this._items || [];
-    let current = parseInt(this.getAttribute('current') || '1', 10);
-    if (!Number.isFinite(current) || current < 1) current = 1;
-    if (items.length && current > items.length) {
-      this._warnOnce('current', `的 current="${current}" 超过 ${items.length} 步，按最后一步处理`);
-      current = items.length;
+    let current = parseInt(this.getAttribute('current') ?? '0', 10);
+    if (!Number.isFinite(current) || current < 0) current = 0;
+    if (items.length && current > items.length - 1) {
+      this._warnOnce('current', `的 current="${current}" 超过 ${items.length - 1}，按最后一步处理`);
+      current = items.length - 1;
     }
     const root = document.createElement('ol');
     root.className = 'vk-steps';
     items.forEach((it, i) => {
       const n = i + 1;
-      const state = n < current ? 'done' : n === current ? 'current' : 'todo';
+      const state = i < current ? 'done' : i === current ? 'current' : 'todo';
       const step = document.createElement('li');
       step.className = 'vk-step';
       step.dataset.step = String(i);
@@ -1103,23 +1037,102 @@ export class VkBits extends VkElement {
     const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
     const tone = this.getAttribute('tone') === 'accent' ? 'accent' : 'neutral';
+    const bytes = this.hasAttribute('bytes');
+    const group = ['1', '4', '8'].includes(this.getAttribute('group')) ? Number(this.getAttribute('group')) : 4;
+
+    const widthAttr = Number(this.getAttribute('width'));
+    const width = [8, 16, 32, 64].includes(widthAttr) ? widthAttr : 0;
+    const fieldSpecs = String(this.getAttribute('fields') || '')
+      .split('|')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((s, i) => {
+        const m = s.match(/^(\d+)(?:\s*-\s*(\d+))?\s*:\s*(.+)$/);
+        if (!m) return null;
+        const hi = Number(m[1]);
+        const lo = m[2] ? Number(m[2]) : hi;
+        return { i, hi: Math.max(hi, lo), lo: Math.min(hi, lo), label: m[3].trim() };
+      })
+      .filter(Boolean);
+    const useFields = fieldSpecs.length && rows.length === 1 && (!width || width <= 32);
+    const hasLabel = rows.some((r) => r.label);
+    const fieldN = width || (rows[0]?.value.replace(/\s+/g, '').length || 32);
+    const fieldStarts = new Set(fieldSpecs.map((f) => f.hi));
+
+    const chunksOf = (raw) => {
+      const bits = String(raw || '').replace(/\s+/g, '').split('').filter((c) => c === '0' || c === '1');
+      const bitStr = bits.join('');
+      const total = width || bitStr.length;
+      if (!total) return [];
+      let padded = bitStr;
+      if (width) {
+        if (bitStr.length > width) padded = bitStr.slice(bitStr.length - width);
+        else padded = '0'.repeat(width - bitStr.length) + bitStr;
+      }
+      if (total > 32) return [padded.slice(0, 32), padded.slice(32)].filter((c) => c.length);
+      return [padded];
+    };
+
+    const fieldLegend = useFields
+      ? `<div class="vk-bit-legend" data-meta style="--n:${fieldN}">${fieldSpecs
+          .map((f) => {
+            const start = Math.max(0, fieldN - 1 - f.hi);
+            const span = Math.min(fieldN - start, f.hi - f.lo + 1);
+            return `<span class="vk-bit-legend-f" data-field-label="${f.i}" style="grid-column:${start + 1} / span ${span}" title="${esc(f.label)} · ${f.hi - f.lo + 1} 位"><b>${esc(f.label)}</b>${span >= 2 ? `<i>${f.hi - f.lo + 1} 位</i>` : ''}</span>`;
+          })
+          .join('')}</div>`
+      : '';
+
     const multi = rows.length > 1;
+    const rendered = rows
+      .map((row, r) => {
+        const chunks = chunksOf(row.value);
+        if (!chunks.length) return '';
+        const bitRow = multi ? r : 0;
+        const parts = chunks
+          .map((chunk, ci) => {
+            const hi = width ? width - 1 - ci * 32 : chunk.length - 1;
+            const lo = hi - (chunk.length - 1);
+            const cols = chunk
+              .split('')
+              .map((b, i) => {
+                const abs = hi - i;
+                const n = index === 'none' ? null : index === '0-7' ? lo + i : abs;
+                const isSign = sign && r === 0 && ci === 0 && i === 0;
+                const byteGap = bytes && abs % 8 === 0 && abs !== 0;
+                const groupGap = group > 1 && abs % group === 0 && abs !== 0;
+                const fieldStart = useFields && fieldStarts.has(abs);
+                const bitId = multi || chunks.length > 1 ? `${bitRow}:${abs}` : String(abs);
+                return `<div class="vk-bit-col"${byteGap || groupGap ? ' data-gap' : ''}${byteGap ? ' data-byte' : ''}${fieldStart ? ' data-field-start' : ''}>${n === null ? '' : `<span class="vk-bit-i" data-meta>${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}" data-bit="${bitId}">${b}</span></div>`;
+              })
+              .join('');
 
-    const rendered = rows.map((row, r) => {
-      const bits = String(row.value || '').replace(/\s+/g, '').split('').filter((c) => c === '0' || c === '1');
-      if (!bits.length) return '';
-      const cols = bits
-        .map((b, i) => {
-          const n = index === 'none' ? null : index === '0-7' ? i : bits.length - 1 - i;
-          const isSign = sign && i === 0;
-          const bitId = multi ? `${r}:${i}` : String(i);
-          return `<div class="vk-bit-col">${n === null ? '' : `<span class="vk-bit-i" data-meta>${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}" data-bit="${bitId}">${b}</span></div>`;
-        })
-        .join('');
-      return `<div class="vk-bit-row" data-row="${r}"${row.mark ? ' data-mark' : ''}>${row.label ? `<span class="vk-bit-label" data-meta>${esc(row.label)}</span>` : ''}<div class="vk-bits">${cols}</div></div>`;
-    }).join('');
+            let brackets = '';
+            if (useFields) {
+              const segs = fieldSpecs
+                .map((f) => {
+                  const from = Math.max(f.lo, lo);
+                  const to = Math.min(f.hi, hi);
+                  if (from > to) return '';
+                  const start = hi - to;
+                  const span = to - from + 1;
+                  return `<span class="vk-bit-field" data-field="${f.i}" style="grid-column:${start + 1} / span ${span}" title="${esc(f.label)}"></span>`;
+                })
+                .join('');
+              if (segs) brackets = `<div class="vk-bit-brackets" style="--n:${chunk.length}">${segs}</div>`;
+            }
 
-    this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}">${rendered || '<div class="vk-bits"><span class="vk-bit">?</span></div>'}</div>`;
+            return `<div class="vk-bit-chunk">
+              ${brackets}
+              <div class="vk-bits" data-group="${group}" style="--n:${chunk.length}">${cols}</div>
+            </div>`;
+          })
+          .join('');
+        return `<div class="vk-bit-row" data-row="${r}"${row.mark ? ' data-mark' : ''}>${row.label ? `<span class="vk-bit-label" data-meta>${esc(row.label)}</span>` : ''}<div class="vk-bit-chunks">${parts}</div></div>`;
+      })
+      .join('');
+
+    this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}"${bytes ? ' data-bytes' : ''}${hasLabel ? ' data-label="1"' : ''}${useFields ? ' data-fields="1"' : ''}>${fieldLegend}${rendered || '<div class="vk-bits"><span class="vk-bit">?</span></div>'}</div>`;
   }
 }
 
@@ -1173,7 +1186,6 @@ export function defineComponents() {
   define('vk-math', VkMath);
   define('vk-cells', VkCells);
   define('vk-bytes', VkBytes);
-  define('vk-frames', VkFrames);
   define('vk-steps', VkSteps);
   define('vk-quote', VkQuote);
   define('vk-bits', VkBits);

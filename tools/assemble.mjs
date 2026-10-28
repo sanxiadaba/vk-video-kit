@@ -27,7 +27,14 @@ function mirrorDir(src, dest, { filter = () => true } = {}) {
   for (const rel of filesUnder(src)) {
     if (!filter(rel)) continue;
     wanted.add(rel);
-    writeIfChanged(path.join(dest, rel), fs.readFileSync(path.join(src, rel)), check);
+    const s = path.join(src, rel);
+    const d = path.join(dest, rel);
+    if (!check && fs.existsSync(d)) {
+      const ss = fs.statSync(s);
+      const ds = fs.statSync(d);
+      if (ss.size === ds.size && ds.mtimeMs >= ss.mtimeMs) continue;
+    }
+    writeIfChanged(d, fs.readFileSync(s), check);
   }
   // 删掉源目录里已经不存在的旧文件，避免 _site 越来越脏。
   for (const rel of filesUnder(dest)) {
@@ -42,6 +49,11 @@ function mirrorDir(src, dest, { filter = () => true } = {}) {
 }
 
 function mirrorFile(src, dest) {
+  if (!check && fs.existsSync(dest)) {
+    const ss = fs.statSync(src);
+    const ds = fs.statSync(dest);
+    if (ss.size === ds.size && ds.mtimeMs >= ss.mtimeMs) return;
+  }
   writeIfChanged(dest, fs.readFileSync(src), check);
 }
 

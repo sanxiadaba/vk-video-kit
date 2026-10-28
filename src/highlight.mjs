@@ -20,7 +20,7 @@ import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
-import { TAGS } from './registry.mjs';
+import { TAGS, CHILD_ATTRS } from './registry.mjs';
 
 /* ------------------------------------------------------------------ 主题 */
 
@@ -192,15 +192,19 @@ const ANCHORS = {
   'vk-asm': ['line', 'addr'],
   'vk-cells': ['cell', 'byte'],
   'vk-bytes': ['byte'],
-  'vk-bits': ['bit'],
+  'vk-bits': ['bit', 'field'],
   'vk-table': ['row', 'cell'],
   'vk-tree': ['node'],
   'vk-steps': ['step'],
   'vk-list': ['item'],
-  'vk-memory': ['seg'],
+  'vk-memory': ['seg', 'block'],
   'vk-timeline': ['event', 'lane'],
   'vk-frames': ['slot', 'frame'],
+  'vk-board': ['field', 'byte'],
+  'vk-trace': ['step', 'cell'],
 };
+
+/** 子节点 <i> 的合法属性由 registry 的 CHILD_ATTRS 统一声明。 */
 const INDEX_PART = new Set(['cell', 'byte', 'bit', 'slot', 'seg', 'event', 'row', 'step', 'item']);
 
 const countTag = (node, tag) => {
@@ -285,8 +289,10 @@ function anchorCapacity(node) {
 function validateRefs(doc, file, errors) {
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
   const ids = new Map();
+  const classes = new Set();
   walkTpl(doc, (node, inTpl) => {
     if (inTpl || !node.tagName) return;
+    for (const c of String(attr(node, 'class') || '').split(/\s+/).filter(Boolean)) classes.add(c);
     const id = attr(node, 'id');
     if (!id) return;
     if (!ids.has(id)) ids.set(id, []);
@@ -313,7 +319,15 @@ function validateRefs(doc, file, errors) {
       if (!raw) continue;
       const v = String(raw).trim();
       const m = v.match(/^#([^@\s]+?)(?:@([a-z]+)(?::(.+))?)?$/);
-      if (!m) continue;
+      if (!m) {
+        const where = `${file}:${lineOf(node)} <${tag}> 的 ${name}="${v}"`;
+        if (/^#[A-Za-z][\w-]*$/.test(v) && !ids.has(v.slice(1))) {
+          errors.push(`${where}：找不到 ${v}${idNames.length ? `（可用：${idNames.slice(0, 8).join(', ')}）` : '（页面里没有任何 id）'}`);
+        } else if (/^\.[A-Za-z][\w-]*$/.test(v) && !classes.has(v.slice(1))) {
+          errors.push(`${where}：页面里没有 ${v} 这个 class`);
+        }
+        continue;
+      }
       const [, id, part, argRaw] = m;
       const where = `${file}:${lineOf(node)} <${tag}> 的 ${name}="${v}"`;
       if (!ids.has(id)) {
@@ -351,38 +365,6 @@ function validateRefs(doc, file, errors) {
         if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
           errors.push(`${where}：${part} 的可选范围是 ${cap.from}–${cap.to}，${argRaw} 越界（下标从 0 起）`);
         }
-      }
-    }
-
-    // 3) vk-note 的 line / span
-    if (tag === 'vk-note') {
-      const lineAttr = attr(node, 'line');
-      if (lineAttr) {
-        // line 的正常写法是"代码块的兄弟"，不是它的后代：先找容器，再在容器里找代码。
-        const host = ancestors(node).find((p) => ['vk-annotate', 'vk-canvas', 'vk-page'].includes(p.tagName));
-        const findCode = (n) => {
-          if (!n) return null;
-          if (n.tagName === 'vk-code' || n.tagName === 'vk-diff' || n.tagName === 'vk-asm') return n;
-          for (const c of [...(n.childNodes || []), ...(n.content?.childNodes || [])]) {
-            const hit = findCode(c);
-            if (hit) return hit;
-          }
-          return null;
-        };
-        const code = findCode(host) || ancestors(node).find((p) => p.tagName === 'vk-code' || p.tagName === 'vk-diff');
-        const cap = code ? anchorCapacity(code) : null;
-        const n = parseInt(lineAttr, 10);
-        if (cap && (!Number.isFinite(n) || n < cap.from || n > cap.to)) {
-          errors.push(`${file}:${lineOf(node)} <vk-note> 的 line="${lineAttr}" 超出上面代码的 ${cap.from}–${cap.to}`);
-        }
-      }
-      const span = attr(node, 'span');
-      if (span) {
-        const mm = String(span).match(/^(\d+)-(\d+)$/);
-        if (!mm || Number(mm[1]) >= Number(mm[2])) {
-          errors.push(`${file}:${lineOf(node)} <vk-note> 的 span="${span}" 不是 起-止，且起 < 止`);
-        }
-        if (!lineAttr) errors.push(`${file}:${lineOf(node)} <vk-note> 写了 span 却没写 line，不知道是哪一行`);
       }
     }
 
@@ -430,6 +412,21 @@ function validateAuthorHtml(doc, file) {
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
   walk(doc, (node) => {
     const tag = node.tagName;
+    if (tag === 'i' && node.parentNode) {
+      const parent = node.parentNode.tagName;
+      const allowed = CHILD_ATTRS[parent];
+      if (allowed) {
+        for (const { name, value: raw } of node.attrs || []) {
+          if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) continue;
+          if (!allowed.includes(name)) {
+            errors.push(
+              `${file}:${lineOf(node)} <${parent}> 的子节点不认识 ${name}="${raw}"；可用：${allowed.join(', ')}`
+            );
+          }
+        }
+      }
+      return;
+    }
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
@@ -465,7 +462,7 @@ function validateAuthorHtml(doc, file) {
         }
       }
       if (spec.type === 'size') {
-        const special = raw === 'fit' || raw === 'full' || raw === 'auto';
+        const special = raw === 'fit' || raw === 'full';
         if (!special) {
           const n = Number(raw);
           if (!Number.isFinite(n)) {
@@ -532,7 +529,25 @@ function validateAuthorHtml(doc, file) {
     }
   });
   validateRefs(doc, file, errors);
+  validateImages(doc, file, errors);
   return errors;
+}
+
+/** 本地图片不存在时构建期就报错；远程 / data: / 绝对路径交给运行时占位。 */
+function validateImages(doc, file, errors) {
+  const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
+  walk(doc, (node) => {
+    const tag = node.tagName;
+    if (tag !== 'vk-img' && tag !== 'vk-figure') return;
+    const src = attr(node, 'src');
+    if (!src) return;
+    if (/^(?:[a-z]+:|\/|#)/i.test(src) || src.startsWith('//')) return;
+    const clean = src.split(/[?#]/)[0];
+    const abs = path.resolve(path.dirname(file), clean);
+    if (!fs.existsSync(abs)) {
+      errors.push(`${file}:${lineOf(node)} <${tag}> 找不到图片 ${src}`);
+    }
+  });
 }
 
 /** 收集元素内的纯文本；跳过上一次构建写进去的 <script data-vk-hl…> */

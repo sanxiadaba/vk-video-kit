@@ -79,47 +79,10 @@ try {
   fs.mkdirSync(path.dirname(out), { recursive: true });
 
   /**
-   * 渲染自检：截图之外，把"画面上看不出来但确实是坏了"的事说清楚。
-   * 只看三件作者最容易踩的：重叠、被裁、溢出；外加 0 尺寸锚点。
+   * 渲染自检：与 `vk check` 共用 VK.auditPage()。
+   * 覆盖层（edge/pin/ring/spotlight）不算重叠，避免每页都误报。
    */
-  const report = await tab.evaluate(() => {
-    const out = { overlap: [], clipped: [], overflow: [], zero: [] };
-    const root = document.querySelector('.vk-page-bd') || document.body;
-    const rect = (el) => el.getBoundingClientRect();
-    const name = (el) => {
-      const id = el.id ? `#${el.id}` : '';
-      return `<${el.tagName.toLowerCase()}${id}>`;
-    };
-    // 1. 顶层块之间的重叠（同一容器里两个组件压在一起）
-    const kids = [...root.children].filter((el) => el.getClientRects().length);
-    for (let i = 0; i < kids.length; i++) {
-      for (let j = i + 1; j < kids.length; j++) {
-        const a = rect(kids[i]);
-        const b = rect(kids[j]);
-        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-        if (w > 2 && h > 2) out.overlap.push(`${name(kids[i])} × ${name(kids[j])} 重叠 ${w.toFixed(0)}×${h.toFixed(0)}`);
-      }
-    }
-    // 2. 被裁：内容比盒子大、又设了 overflow
-    for (const el of document.querySelectorAll('[class^="vk-"], [class*=" vk-"]')) {
-      const cs = getComputedStyle(el);
-      if (cs.overflow === 'visible') continue;
-      if (el.scrollWidth > el.clientWidth + 2 || el.scrollHeight > el.clientHeight + 2) {
-        out.clipped.push(`${name(el)}.${el.className.split(' ')[0]} 内容 ${el.scrollWidth}×${el.scrollHeight} > 盒 ${el.clientWidth}×${el.clientHeight}`);
-      }
-    }
-    // 3. 组件级溢出（运行时自己扫的那套）
-    if (window.vk?.auditOverflow) {
-      for (const o of window.vk.auditOverflow(root)) out.overflow.push(`${o.tag}${o.cls ? '.' + o.cls : ''} ${o.sw}×${o.sh} > ${o.cw}×${o.ch}`);
-    }
-    // 4. 0 尺寸锚点：有 id、但量出来是空的（连线/批注会指向空气）
-    for (const el of document.querySelectorAll('[id]')) {
-      const r = rect(el);
-      if (r.width < 1 || r.height < 1) out.zero.push(`#${el.id} 尺寸 ${r.width.toFixed(0)}×${r.height.toFixed(0)}`);
-    }
-    return out;
-  });
+  const report = await tab.evaluate(() => window.vk?.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] });
 
   await tab.screenshot({
     path: out,
@@ -129,20 +92,24 @@ try {
   const kb = (fs.statSync(out).size / 1024).toFixed(0);
   console.log(`✓ ${path.relative(process.cwd(), out)}  ${width}×${height}${crop ? '（crop）' : ''}  ${kb} KB`);
 
-  const groups = [
-    ['重叠', report.overlap],
-    ['被裁', report.clipped.slice(0, 12)],
-    ['溢出', report.overflow.slice(0, 12)],
-    ['0 尺寸锚点', report.zero.slice(0, 12)],
-  ];
-  const total = groups.reduce((n, [, list]) => n + list.length, 0);
-  if (total) {
+  const lines = [];
+  for (const it of report.issues || []) {
+    if (it.type === 'font') lines.push(`字号 ${it.fs} < 44：${it.what}`);
+    else if (it.type === 'contrast') lines.push(`对比度 ${it.cr} < ${it.need}：${it.what}`);
+    else if (it.type === 'safe') lines.push(`超出安全区：${it.what}`);
+    else if (it.type === 'overflow') lines.push(`超出画布：${it.what}`);
+    else if (it.type === 'clip') lines.push(`横向被裁：${it.what}（${it.sw} > ${it.cw}）`);
+    else if (it.type === 'clip-y') lines.push(`纵向被裁：${it.what}（${it.sh} > ${it.ch}）`);
+    else if (it.type === 'overlap') lines.push(`重叠 ${it.size?.join('×') || ''}：${it.what}`);
+    else if (it.type === 'zero') lines.push(`空锚点：${it.what}`);
+    else if (it.type === 'ln-overlap') lines.push(`行号压住代码：${it.what}（+${it.gap}px）`);
+    else lines.push(`${it.type}：${it.what || ''}`);
+  }
+  for (const s of report.special || []) lines.push(s);
+
+  if (lines.length) {
     console.log('自检：');
-    for (const [label, list] of groups) {
-      if (!list.length) continue;
-      console.log(`  ${label} ${list.length}`);
-      for (const line of list) console.log(`    · ${line}`);
-    }
+    for (const line of lines.slice(0, 16)) console.log(`  · ${line}`);
     if (flag('--check')) process.exitCode = 1;
   } else {
     console.log('自检：干净（无重叠 / 无裁切 / 无溢出 / 无空锚点）');

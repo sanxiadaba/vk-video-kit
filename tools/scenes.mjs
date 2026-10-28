@@ -117,11 +117,14 @@ body {
 }
 .vk-stage {
   display: grid;
-  place-items: center;
+  justify-items: stretch;
+  align-items: center;
   gap: var(--vk-s3);
   width: 1680px;
   max-height: 888px;
 }
+.vk-stage > * { width: 100%; }
+.vk-stage > .spec-scale { width: 1479px; }
 `,
   check
 );

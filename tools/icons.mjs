@@ -8,8 +8,28 @@
  * 输出 src/icons.generated.mjs（提交进仓库），构建时不再依赖 lucide。
  */
 import fs from 'node:fs';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import * as lucide from 'lucide';
+
+const STAMP = '.vk-cache/icons.stamp';
+const lucideVersion = () => {
+  try {
+    return JSON.parse(fs.readFileSync('node_modules/lucide/package.json', 'utf8')).version;
+  } catch {
+    return 'missing';
+  }
+};
+const key = crypto
+  .createHash('sha1')
+  .update(fs.readFileSync(new URL(import.meta.url), 'utf8'))
+  .update(lucideVersion())
+  .digest('hex');
+if (fs.existsSync(STAMP) && fs.readFileSync(STAMP, 'utf8').trim() === key && fs.existsSync('src/icons.generated.mjs') && fs.existsSync('icons.json')) {
+  console.log('icons: 已是最新（跳过 lucide 扫描）');
+  process.exit(0);
+}
+
+const lucide = await import('lucide');
 
 /** PascalCase → lucide 的 kebab-case（ALargeSmall → a-large-small） */
 function kebab(name) {
@@ -122,6 +142,8 @@ export function generateIcons() {
   console.log(`icons: ${icons.size} 个 -> ${file} (${(code.length / 1024).toFixed(0)}kb)`);
   console.log(`icons: ${icons.size} 个 -> ${manifestFile} (${(manifest.length / 1024).toFixed(0)}kb)`);
   console.log(`icons: ${CORE.length} 个 -> ${coreFile} (${(coreCode.length / 1024).toFixed(0)}kb)`);
+  fs.mkdirSync('.vk-cache', { recursive: true });
+  fs.writeFileSync(STAMP, key + '\n');
   return icons.size;
 }
 

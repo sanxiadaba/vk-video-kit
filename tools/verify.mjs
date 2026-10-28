@@ -14,8 +14,8 @@ const steps = [
   ['css / js', ['tools/build.mjs', '--check']],
   ['specimen hosts', ['tools/scenes.mjs', '--check']],
   ['site assets', ['tools/assemble.mjs', '--check']],
-  ['precompiled hosts', ['cli/build.mjs', '--check', '_site/specimens']],
   ['specimen pages', ['tools/specimens.mjs', '--check']],
+  ['precompiled hosts', ['cli/build.mjs', '--check', '_site/specimens']],
   ['precompiled site', ['cli/build.mjs', '--check', '_site/specimen', '_site/index.html']],
 ];
 

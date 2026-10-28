@@ -63,7 +63,7 @@ export class VkTimeline extends VkElement {
       .sort((a, b) => (num(a.it.date) ?? 0) - (num(b.it.date) ?? 0));
     const rows = sorted
       .map(
-        ({ it, i }) => `<li class="vk-tl-item" data-vk-part="event" data-event="${i}"${it.mark ? ' data-mark' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
+        ({ it }, si) => `<li class="vk-tl-item" data-vk-part="event" data-event="${si}"${it.mark ? ' data-mark' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
           <span class="vk-tl-date" data-meta>${esc(it.date)}</span>
           <span class="vk-tl-dot" aria-hidden="true"></span>
           <span class="vk-tl-body">
@@ -91,7 +91,7 @@ export class VkTimeline extends VkElement {
     );
     const head = `<div class="vk-tl-lane-hd" aria-hidden="true"></div><div class="vk-tl-step-hd" aria-hidden="true">${Array.from(
       { length: stepCount },
-      (_, i) => `<span data-meta>${i + 1}</span>`
+      (_, i) => `<span data-meta>${i}</span>`
     ).join('')}</div>`;
 
     const rows = lanes

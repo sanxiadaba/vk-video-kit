@@ -127,14 +127,10 @@ test('图标构建期内联，未知图标仍然报错', async () => {
   assert.ok(out.html.includes('<svg'));
 });
 
-test('tree current 必须存在；note 的 line 需要代码上下文', async () => {
+test('tree current 必须存在', async () => {
   await assert.rejects(
     () => transformHtml('<vk-tree src="app" active="nope.py"></vk-tree>', { file: path.join(dir, 'page.html'), highlighter: hl }),
     /active="nope.py"/
-  );
-  await assert.rejects(
-    () => transformHtml('<vk-note line="1">x</vk-note>', { file: 'note.html', highlighter: hl }),
-    /需要放在 vk-annotate/
   );
 });
 
@@ -162,12 +158,11 @@ test('源码里的 < 未转义时明确报错，不静默吞掉', async () => {
 test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套都在构建期报错', async () => {
   const cases = [
     ['<vk-nope></vk-nope>', /未知标签 <vk-nope>/],
-    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#nope">x</vk-note></vk-annotate>', /找不到 #nope/],
-    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:9">x</vk-note></vk-annotate>', /越界/],
-    ['<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@line:1">x</vk-note></vk-annotate>', /不支持 @line/],
+    ['<vk-cells id="c" values="1|2"></vk-cells><vk-note for="#nope">x</vk-note>', /找不到 #nope/],
+    ['<vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:9">x</vk-note>', /越界/],
+    ['<vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@line:1">x</vk-note>', /不支持 @line/],
     ['<vk-window><vk-code chrome="min">x</vk-code></vk-window>', /两条窗头/],
     ['<vk-bars><i label="a"></i></vk-bars>', /缺数字 value/],
-    ['<vk-code lang="c">int x;</vk-code><vk-note line="9">x</vk-note>', /需要放在 vk-annotate/],
   ];
   for (const [html, re] of cases) {
     await assert.rejects(() => transformHtml(html, { file: 'refs.html', highlighter: hl }), re);
@@ -176,7 +171,7 @@ test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套�
 
 test('引用关系：合法锚点不报错', async () => {
   const html =
-    '<vk-annotate><vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:1">x</vk-note></vk-annotate>';
+    '<vk-cells id="c" values="1|2"></vk-cells><vk-note for="#c@cell:1">x</vk-note>';
   const out = await transformHtml(html, { file: 'refs-ok.html', highlighter: hl });
   assert.ok(out.html.includes('id="c"'));
 });

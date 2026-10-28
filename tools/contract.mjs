@@ -449,6 +449,11 @@ try {
       if (skipVisual && !VISUAL_EXEMPT[key]) failures.push(`${key}: effect.skipVisual 未登记 VISUAL_EXEMPT 白名单`);
 
       const beforeCount = eff.kind === 'dom' ? await countSel(tag, eff.prop) : 0;
+      const misses = [];
+      const origVal = original.find(([k]) => k === name)?.[1];
+      // 逐值断言只对"枚举 / 探针给定值"生效；w/h 这类连续几何仍按最接近值验收，
+      // 否则会拿"1500 = 当前宽度"这种几何巧合当 no-op。
+      const strict = !!spec.values || !!probe?.values?.length;
       let best = null;
       for (const raw of values) {
         if (spec.when) {
@@ -458,16 +463,17 @@ try {
         }
         const has = original.some(([k]) => k === name);
         const value = raw === '__toggle__' ? (has ? null : '') : raw;
+        if (value === origVal || (origVal == null && String(value) === String(spec.default))) continue;
         await setAttr(tag, name, value);
         const snap = await page.evaluate(snapshotInPage, { tag, props });
         const diffs = diffSnap(baseSnap, snap);
         const visual = exempt ? [] : await page.evaluate(visualInPage, tag);
         const afterCount = eff.kind === 'dom' ? await countSel(tag, eff.prop) : 0;
         const hit = effectHit(eff, diffs, beforeCount, afterCount, targetPaths);
-        // dom 类效果不一定产生快照 diff；优先保留命中的那一档。
         if (!best || (hit.ok && !best.hit.ok) || (hit.ok === best.hit.ok && diffs.length > best.diffs.length)) {
           best = { value, diffs, visual, hit };
         }
+        if (strict && !hit.ok) misses.push({ value, detail: hit.detail });
         if (visual.length) {
           const vk = JSON.stringify(visual.slice(0, 3));
           if (!visualSeen.has(vk)) {
@@ -481,9 +487,13 @@ try {
       checked.push({ tag, name });
       if (eff.kind === 'any') {
         console.log(`  · ${key} effect:any（${eff.reason}）`);
-      } else if (!best.diffs.length) {
+      } else if (strict && misses.length) {
+        failures.push(
+          `${key}: ${misses.length}/${values.length} 个取值没命中（${misses.map((m) => `${m.value}=${m.detail}`).slice(0, 3).join('；')}）`
+        );
+      } else if (!strict && best && !best.diffs.length) {
         failures.push(`${key}: 所有取值都没有变化（no-op）`);
-      } else if (!best.hit.ok) {
+      } else if (!strict && best && !best.hit.ok) {
         failures.push(`${key}: 没命中声明效果 ${best.hit.detail}`);
       }
     }

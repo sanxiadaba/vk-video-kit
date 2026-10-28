@@ -14,37 +14,27 @@ export const SCENES = [
   {
     tag: 'vk-code',
     body: s`
-<vk-code w="1360" lang="c" file="hello.c" src="../code/hello.c" lines="1-8" highlight="4" density="loose"></vk-code>`,
+<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" highlight="4" density="loose"></vk-code>`,
   },
 
   {
     tag: 'vk-term',
     body: s`
-<vk-term w="1500" title="zsh" prompt="$" src="../code/hello.term"></vk-term>`,
+<vk-term title="zsh" prompt="$" src="../code/hello.term"></vk-term>`,
   },
 
-  {
-    tag: 'vk-annotate',
-    body: s`
-<vk-annotate w="327">
-  <vk-code id="arr" lang="c" file="array.c" src="../code/array.c" lines="4-6" highlight="5"></vk-code>
-  <vk-note line="4">下标 0–2。</vk-note>
-  <vk-note line="5">i&lt;=3 越界。</vk-note>
-  <vk-note line="6">i=3 越界。</vk-note>
-</vk-annotate>`,
-  },
 
   {
     tag: 'vk-diff',
     body: s`
-<vk-diff w="1280" lang="c" file="bounds.c" src="../code/real.diff"></vk-diff>`,
+<vk-diff lang="c" file="bounds.c" src="../code/real.diff"></vk-diff>`,
   },
 
   {
     tag: 'vk-title',
     body: s`
 <vk-box w="1400" surface="none">
-  <vk-title index="01" eyebrow="字符串 · 内存" size="title" sub="改一个字符，改的是内存里的一个字节。">字符串不是值，是<em>一块内存</em></vk-title>
+  <vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">示例标题</vk-title>
 </vk-box>`,
   },
 
@@ -52,7 +42,7 @@ export const SCENES = [
     tag: 'vk-text',
     body: s`
 <vk-box w="1120" surface="none">
-  <vk-text size="body" measure="body">数组名在大多数表达式里会退化成指向首元素的指针。它<em>不携带长度</em>，也不记得自己有多大。函数收到的只是一个地址。</vk-text>
+  <vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>
 </vk-box>`,
   },
 
@@ -61,10 +51,10 @@ export const SCENES = [
     body: s`
 <vk-box w="1200" surface="none">
   <vk-list gap="sm">
-    <li><b>char</b> 是 1 个字节</li>
-    <li><b>int</b> 通常是 <b>4</b> 个字节</li>
-    <li><b>unsigned</b> 只是换一种解释</li>
-    <li><b>长度</b> = 元素个数 × 元素大小</li>
+    <li>条目一</li>
+    <li>条目二</li>
+    <li>条目三</li>
+    <li>条目四</li>
   </vk-list>
 </vk-box>`,
   },
@@ -73,8 +63,8 @@ export const SCENES = [
     tag: 'vk-callout',
     body: s`
 <vk-box w="1360" surface="none">
-  <vk-callout tone="warn" title="越界不会报错" size="body">
-    写进去，程序可能继续跑——写的是别人的内存。
+  <vk-callout tone="warn" title="提示框标题" size="body">
+    提示框内容，只做占位。
   </vk-callout>
 </vk-box>`,
   },
@@ -83,8 +73,8 @@ export const SCENES = [
     tag: 'vk-box',
     body: s`
 <vk-box border="hair" radius="xl" pad="lg" w="1200" h="560" surface="paper">
-  <vk-text size="body">数组不是指针。它是一块连续的内存，名字只是这块内存的入口。</vk-text>
-  <vk-text size="body" ink="secondary">名字不是值；改一个字符，改的是内存里的一个字节。</vk-text>
+  <vk-text size="body">示例内容。这里只放一段中性占位文字。</vk-text>
+  <vk-text size="body" ink="secondary">名字不是值；副标题只做占位。</vk-text>
 </vk-box>`,
   },
 
@@ -102,7 +92,7 @@ export const SCENES = [
 <vk-row gap="sm" align="center">
   <vk-tag tone="ok">通过</vk-tag>
   <vk-tag tone="warn">警告</vk-tag>
-  <vk-tag tone="err">越界</vk-tag>
+  <vk-tag tone="err">错误</vk-tag>
 </vk-row>
 </vk-stack>`,
   },
@@ -131,7 +121,7 @@ export const SCENES = [
   {
     tag: 'vk-math',
     body: s`
-<vk-math display size="heading" w="1400" src="../code/formula.tex"></vk-math>`,
+<vk-math display size="heading" src="../code/formula.tex"></vk-math>`,
   },
 
   {
@@ -180,13 +170,13 @@ export const SCENES = [
     body: s`
 <vk-stack gap="sm">
   <vk-box border="hair" radius="lg" pad="md" w="600" surface="paper">
-    <vk-text size="body">第一步：写代码</vk-text>
+    <vk-text size="body">01</vk-text>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" w="1000" surface="paper">
-    <vk-text size="body">第二步：编译</vk-text>
+    <vk-text size="body">02</vk-text>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" w="1000" surface="paper">
-    <vk-text size="body">第三步：运行</vk-text>
+    <vk-text size="body">03</vk-text>
   </vk-box>
 </vk-stack>`,
   },
@@ -197,19 +187,19 @@ export const SCENES = [
 <vk-box w="1680" surface="none">
   <vk-row gap="md">
     <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
-      <vk-text size="body" align="center">词法</vk-text>
+      <vk-text size="body" align="center">01</vk-text>
     </vk-box>
     <vk-box radius="pill" pad-x="md" pad-y="xs" w="160" surface="soft">
-      <vk-text size="body" align="center">语法</vk-text>
+      <vk-text size="body" align="center">02</vk-text>
     </vk-box>
     <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
-      <vk-text size="body" align="center">语义</vk-text>
+      <vk-text size="body" align="center">03</vk-text>
     </vk-box>
     <vk-box radius="pill" pad-x="md" pad-y="xs" w="160" surface="soft">
-      <vk-text size="body" align="center">中间码</vk-text>
+      <vk-text size="body" align="center">04</vk-text>
     </vk-box>
     <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
-      <vk-text size="body" align="center">优化</vk-text>
+      <vk-text size="body" align="center">05</vk-text>
     </vk-box>
   </vk-row>
 </vk-box>`,
@@ -251,16 +241,16 @@ export const SCENES = [
   {
     tag: 'vk-figure',
     body: s`
-<vk-figure w="1200" fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure>`,
+<vk-figure w="1100" fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure>`,
   },
 
   {
     tag: 'vk-window',
     body: s`
-<vk-window w="1200" chrome="browser" url="http://127.0.0.1:5000/hello">
+<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">
   <vk-stack gap="sm">
-    <vk-text size="heading" weight="bold">Hello, C</vk-text>
-    <vk-text size="label" ink="secondary">路由函数返回什么，浏览器就显示什么。</vk-text>
+    <vk-text size="heading" weight="bold">示例内容</vk-text>
+    <vk-text size="label" ink="secondary">示例文字。</vk-text>
     <vk-row gap="sm" align="center">
       <vk-tag tone="ok">200 OK</vk-tag>
       <vk-text size="meta" mono ink="muted">text/html · 12 B</vk-text>
@@ -280,13 +270,11 @@ export const SCENES = [
       errors.py
       lexer.py
       * parser.py
-      a_very_long_module_name_for_testing.py
     tests/
       fixtures/
         basic.tokens
       test_lexer.py
     + main.py
-    README.md
   </vk-tree>
 </vk-box>`,
   },
@@ -353,17 +341,17 @@ export const SCENES = [
     tag: 'vk-mark',
     body: s`
 <vk-box w="1120" surface="none">
-  <vk-text size="body" measure="body">数组名<vk-mark variant="highlight">不是指针</vk-mark>，但传参时会<vk-mark variant="underline">退化</vk-mark>成指针。函数里的 <vk-mark variant="circle">sizeof</vk-mark> 只有 8。</vk-text>
+  <vk-text size="body" measure="body">示例文字：<vk-mark variant="highlight">高亮</vk-mark>、<vk-mark variant="underline">下划线</vk-mark>、<vk-mark variant="circle">圈选</vk-mark>。</vk-text>
 </vk-box>`,
   },
 
   {
     tag: 'vk-rule',
     body: s`
-<vk-stack gap="md">
-  <vk-text size="body">编译成功只说明语法过关。</vk-text>
+<vk-stack gap="lg">
   <vk-rule></vk-rule>
-  <vk-text size="body" ink="secondary">警告说的是：这里你可能写错了。</vk-text>
+  <vk-rule variant="strong"></vk-rule>
+  <vk-row justify="center"><vk-rule orientation="vertical" style="height:240px"></vk-rule></vk-row>
 </vk-stack>`,
   },
 
@@ -371,27 +359,27 @@ export const SCENES = [
     tag: 'vk-note',
     body: s`
 <vk-stack gap="md">
-  <vk-note tone="accent" size="body">传参时退化，这条要记住。</vk-note>
-  <vk-note surface="ink" size="body">函数里的 sizeof(a) 是 8。</vk-note>
-  <vk-note tone="err" size="body">错：以为 a 在函数里还是数组。</vk-note>
-  <vk-note tone="ok" size="body">对：长度和指针一起传。</vk-note>
+  <vk-note tone="accent" size="body">示例说明一。</vk-note>
+  <vk-note emphasis="soft" size="body">示例说明二。</vk-note>
+  <vk-note tone="err" size="body">示例说明三。</vk-note>
+  <vk-note tone="ok" size="body">示例说明四。</vk-note>
 </vk-stack>`,
   },
 
   {
     tag: 'vk-cells',
     body: s`
-<vk-cells w="1360" values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets></vk-cells>`,
+<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets></vk-cells>`,
   },
 
   {
     tag: 'vk-steps',
     body: s`
 <vk-box w="1200" surface="none">
-  <vk-steps current="2">
-    <li>写代码</li>
-    <li>编译</li>
-    <li>运行</li>
+  <vk-steps current="1">
+    <li>步骤一</li>
+    <li>步骤二</li>
+    <li>步骤三</li>
   </vk-steps>
 </vk-box>`,
   },
@@ -399,58 +387,41 @@ export const SCENES = [
   {
     tag: 'vk-bytes',
     body: s`
-<vk-bytes w="1360" src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5"></vk-bytes>`,
+<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5"></vk-bytes>`,
   },
 
-  {
-    tag: 'vk-frames',
-    body: s`
-<vk-frames w="1400" src="../code/stack.json" active="3" density="compact"></vk-frames>`,
-  },
 
   {
     tag: 'vk-quote',
     body: s`
-<vk-quote w="1280" source="C11 §6.7.3" author="ISO/IEC 9899">
-  任何修改 const 变量的行为，都是未定义的。
+<vk-quote source="示例出处">
+  示例引文。
 </vk-quote>`,
   },
 
   {
     tag: 'vk-bits',
     body: s`
-<vk-bits w="1240" group="4" sign>
-  <i label="位模式" value="1111 1111 0001"></i>
-  <i label="有符号" value="1111 1111 0001"></i>
-</vk-bits>`,
+<vk-bits value="1 01111111 10000000000000000000000" width="32" sign
+         fields="31:符号|30-23:指数|22-0:尾数"></vk-bits>`,
   },
 
   {
     tag: 'vk-bars',
     body: s`
-<vk-bars w="1280" max="1000000" mode="log" unit="ns">
+<vk-bars max="1000000" mode="log" unit="ns">
   <i value="1" label="CPU"></i>
   <i value="120" label="内存"></i>
   <i value="1000000" label="磁盘"></i>
 </vk-bars>`,
   },
 
-  {
-    tag: 'vk-memory',
-    body: s`
-<vk-memory w="1280" addr="0x7fff_ffff" unit="B" title="进程地址空间">
-  <i label="stack" size="8 MB" grows="down" mark>局部变量 / 返回地址</i>
-  <i label="heap" grows="up">malloc / free</i>
-  <i label=".bss" size="4 KB">未初始化全局</i>
-  <i label=".data" size="4 KB">已初始化全局</i>
-  <i label=".text" size="16 KB">机器码</i>
-</vk-memory>`,
-  },
 
   {
     tag: 'vk-asm',
     body: s`
-<vk-asm w="1360" title="main.s" lines="1-13" highlight="6" bytes>
+<vk-asm title="main.s" lines="1-13" highlight="6" bytes
+        order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">
   <script type="text/plain" data-vk-source>
 0000000000401136 <main>:
   401136: 55                    push   %rbp
@@ -469,12 +440,12 @@ export const SCENES = [
   {
     tag: 'vk-timeline',
     body: s`
-<vk-timeline w="1500" start="1972" end="2018" lanes="A,B" title="C 的五十年">
-  <i date="1972" lane="A" at="0" label="C 诞生">Dennis Ritchie，Bell Labs</i>
-  <i date="1989" lane="A" at="1" label="C89">ANSI X3.159-1989</i>
-  <i date="1999" lane="B" at="2" label="C99">// 注释、变长数组</i>
-  <i date="2011" lane="A" at="3" label="C11">_Generic、原子操作</i>
-  <i date="2018" lane="B" at="4" label="C17">只修缺陷，不加新特性</i>
+<vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线">
+  <i date="1972" lane="A" at="0" label="事件一">说明一</i>
+  <i date="1989" lane="A" at="1" label="事件二">说明二</i>
+  <i date="1999" lane="B" at="2" label="事件三">说明三</i>
+  <i date="2011" lane="A" at="3" label="事件四">说明四</i>
+  <i date="2018" lane="B" at="4" label="事件五">说明五</i>
 </vk-timeline>`,
   },
 
@@ -485,7 +456,7 @@ export const SCENES = [
   <vk-box id="pin-target" x="120" y="150" w="440" h="200" surface="soft" border="hair" radius="lg">
     <vk-text size="heading" mono>s[5]</vk-text>
   </vk-box>
-  <vk-pin for="#pin-target" side="right" tone="err" n="1">越界写入</vk-pin>
+  <vk-pin for="#pin-target" side="right" tone="err" n="1">说明</vk-pin>
 </vk-canvas>`,
   },
 
@@ -496,7 +467,7 @@ export const SCENES = [
   <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="heading" mono>0x2a</vk-text>
   </vk-box>
-  <vk-ring for="#ring-target" shape="ellipse" tone="err" pad="16" dash></vk-ring>
+  <vk-ring for="#ring-target" shape="ellipse" tone="accent" pad="16" dash></vk-ring>
 </vk-canvas>`,
   },
 
@@ -505,25 +476,28 @@ export const SCENES = [
     body: s`
 <vk-canvas w="1360" h="520">
   <vk-box x="80" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="label">不看的行</vk-text>
+    <vk-text size="label">非目标</vk-text>
   </vk-box>
   <vk-box id="spot-target" x="520" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="label" mono>0x2a</vk-text>
   </vk-box>
   <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="label">不看的行</vk-text>
+    <vk-text size="label">非目标</vk-text>
   </vk-box>
   <vk-spotlight for="#spot-target" dim="0.72" feather="24"></vk-spotlight>
 </vk-canvas>`,
   },
+
+
+
 
   {
     tag: 'vk-page',
     body: s`
 <vk-page>
   <vk-stack gap="lg">
-    <vk-title index="01" eyebrow="m.c" size="title">一页只讲<em>一个概念</em>。</vk-title>
-    <vk-text size="body" measure="body">坐标原点在左上，安全区 120 / 96；正文恒为 1680 × 888，缩放交给预览器。</vk-text>
+    <vk-title index="01" eyebrow="m.c" size="title">示例页面</vk-title>
+    <vk-text size="body" measure="body">页面只提供 1920×1080 画布与安全区。</vk-text>
   </vk-stack>
 </vk-page>`,
   },

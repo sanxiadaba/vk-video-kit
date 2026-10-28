@@ -90,7 +90,7 @@ export class VkImg extends VkElement {
         continue;
       }
       if (this.hasAttribute(attr)) {
-        this.style[prop] = numAttr(this, attr, { min: attr === 'h' ? 32 : 48, max: attr === 'h' ? 888 : 1680, fallback: attr === 'h' ? 32 : 48 }) + 'px';
+        this.style[prop] = numAttr(this, attr, { min: attr === 'h' ? 32 : 48, max: attr === 'h' ? 1080 : 1920, fallback: attr === 'h' ? 32 : 48 }) + 'px';
         this._geo.add(prop);
       } else if (this._geo.has(prop)) {
         this.style[prop] = '';

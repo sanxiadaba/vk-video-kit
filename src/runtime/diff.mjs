@@ -101,7 +101,7 @@ export class VkDiff extends VkElement {
       const sign = kind === 'del' ? '−' : kind === 'add' ? '+' : '';
       const sr = kind === 'del' ? '删除' : kind === 'add' ? '新增' : '';
       const ln = showNums ? `<span class="vk-ln" data-vk-part="ln" aria-hidden="true">${n}</span>` : '';
-      return `<div class="vk-dline is-${kind}" data-row="${row}" data-line="${n}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${ln}<span class="vk-dsrc">${html || ' '}</span></div>`;
+      return `<div class="vk-dline is-${kind}" data-vk-part="line" data-row="${row}" data-line="${n}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${ln}<span class="vk-dsrc">${html || ' '}</span></div>`;
     };
     // 统一视图：旧/新双行号；空号保留列位，读改前改后不会错位。
     const ucell = ({ kind, oldN, newN, html, row }) => {
@@ -110,7 +110,7 @@ export class VkDiff extends VkElement {
       const nums = showNums
         ? `<span class="vk-dnums" aria-hidden="true"><span class="vk-ln" data-vk-part="ln">${oldN || ''}</span><span class="vk-ln" data-vk-part="ln">${newN || ''}</span></span>`
         : '';
-      return `<div class="vk-dline is-${kind}" data-row="${row}" data-line="${newN || oldN}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${nums}<span class="vk-dsrc">${html || ' '}</span></div>`;
+      return `<div class="vk-dline is-${kind}" data-vk-part="line" data-row="${row}" data-line="${newN || oldN}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${nums}<span class="vk-dsrc">${html || ' '}</span></div>`;
     };
     const empty = (row) => `<div class="vk-dline is-empty" data-row="${row}" data-side="empty" aria-hidden="true"></div>`;
 
@@ -173,26 +173,23 @@ export class VkDiff extends VkElement {
     const changes = Math.max(adds, dels);
     const dnum = String(Math.max(lnL, lnR, 1)).length;
     this.style.setProperty('--vk-dnum-w', `calc(${dnum} * 1ch + var(--vk-s3))`);
-    const surface = this.getAttribute('surface') === 'ink' ? 'ink' : 'paper';
-    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
+    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
 
     if (mode === 'split') {
       const pane = (label, body) =>
         win({
-          surface,
           chrome,
           cls: 'vk-diff-pane',
           attrs: ` data-label="${esc(label)}" role="group" aria-label="${esc(label)}"`,
           head: `${fileHead(file, '', this.getAttribute('lines') || '')}<span class="vk-dsplit-tag">${label}</span>`,
           inner: `<div class="vk-dbd">${body.join('')}</div>`,
         });
-      this.innerHTML = `<div class="vk-diff-split" data-surface="${surface}" data-chrome="${esc(chrome)}" role="group" aria-label="代码对比">${
+      this.innerHTML = `<div class="vk-diff-split" data-chrome="${esc(chrome)}" role="group" aria-label="代码对比">${
         nosum ? '' : `<div class="vk-dmeta">${changes} 行改动</div>`
       }<div class="vk-dsplit">${pane('改前', left)}${pane('改后', right)}</div></div>`;
       this.style.width = Number.isFinite(w) ? w + 'px' : '1680px';
     } else {
       this.innerHTML = win({
-        surface,
         chrome,
         cls: 'vk-diff',
         head: fileHead(file, 'Diff', this.getAttribute('lines') || ''),

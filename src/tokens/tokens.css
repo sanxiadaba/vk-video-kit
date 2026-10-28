@@ -7,7 +7,8 @@
    观看条件：1920×1080 出片，手机横屏播放时约 1/3。
    字号不是"能在 1920 上放下"，而是"在 640×360 上读得动"。
 
-   两条铁律：
+   三条铁律：
+   · 只有白纸：没有深色主题，没有深色代码窗，没有反色卡片。
    · 焦点只有一个颜色：冷钴蓝。代码关键字回到墨色，靠字重区分。
    · 语义色只出现在"色条 / 底色 / 图标"上，不用彩色正文。
    ========================================================================== */
@@ -20,87 +21,53 @@
   --vk-safe-y: 96px;
   --vk-safe-x: 120px;
 
-  /* ---------------------------------------------------------------- 墨（原始值） */
-  /* 浅色材质（paper）的原始值；ink 作用域只换别名，不动这里。 */
+  /* ---------------------------------------------------------------- 墨 */
   --vk-paper-ink-1: #0b0f14; /* 18.9:1 主叙述 */
   --vk-paper-ink-2: #333d4b; /* 10.7:1 次要 */
   --vk-paper-ink-3: #4b5563; /*  7.6:1 元信息 */
   --vk-paper-ink-4: #5c6674; /*  5.6:1 弱化，仍是可读的字 */
 
-  --vk-ink-text-1: #e6ecf5; /* 16.2 主叙述 */
-  --vk-ink-text-2: #aab6c6; /*  9.5 次要 */
-  --vk-ink-text-3: #8794a6; /*  6.1 元信息 */
-  --vk-ink-text-4: #76839a; /*  5.0 角标 */
-
-  /* ---------------------------------------------------------------- 面（原始值） */
+  /* ---------------------------------------------------------------- 面 */
   --vk-paper-surface-1: #ffffff;
   --vk-paper-surface-2: #f6f8fb;
   --vk-paper-surface-3: #eef2f7;
 
-  --vk-ink-surface-1: #0b0f14;
-  --vk-ink-surface-2: #141a22;
-  --vk-ink-surface-3: #141a22;
-
-  /* ---------------------------------------------------------------- 线（原始值） */
+  /* ---------------------------------------------------------------- 线 */
   --vk-paper-line-1: #e3e9f1; /* 分区 */
   --vk-paper-line-2: #edf2f8; /* 更弱的分区 */
   --vk-paper-line-3: #c7d2df; /* 看得见的发丝线 */
   --vk-paper-line-strong: #8b97a8; /* 结构线 */
 
-  --vk-ink-line: #1f2937;
-  --vk-ink-edge: #243042;
-  --vk-ink-tab-line: #3b4a5e;
-
-  /* ---------------------------------------------------------------- 焦点（原始值） */
+  /* ---------------------------------------------------------------- 焦点 */
   --vk-paper-focus: #1b3fd6;
   --vk-paper-focus-soft: rgba(27, 63, 214, 0.16);
   --vk-paper-focus-mark: rgba(27, 63, 214, 0.24);
 
-  --vk-ink-focus: #6f8cff;
-  --vk-ink-focus-soft: rgba(111, 140, 255, 0.18);
-  --vk-ink-focus-mark: rgba(111, 140, 255, 0.28);
-
-  /* ---------------------------------------------------------------- 语义（原始值） */
+  /* ---------------------------------------------------------------- 语义 */
   --vk-ok-paper: #0a6b57;
   --vk-ok-paper-weak: rgba(10, 107, 87, 0.08);
   --vk-ok-paper-mark: rgba(10, 107, 87, 0.22);
-  --vk-ok-ink: #7fd6c4;
-  --vk-ok-ink-weak: rgba(127, 214, 196, 0.16);
-  --vk-ok-ink-mark: rgba(127, 214, 196, 0.28);
 
   --vk-err-paper: #b3261e;
   --vk-err-paper-weak: rgba(179, 38, 30, 0.08);
   --vk-err-paper-mark: rgba(179, 38, 30, 0.2);
-  --vk-err-ink: #ffa7a1;
-  --vk-err-ink-weak: rgba(255, 167, 161, 0.16);
-  --vk-err-ink-mark: rgba(255, 167, 161, 0.28);
 
   --vk-warn-paper: #8a4b00;
   --vk-warn-paper-weak: rgba(138, 75, 0, 0.08);
   --vk-warn-paper-mark: rgba(138, 75, 0, 0.22);
-  --vk-warn-ink: #e9b36a;
-  --vk-warn-ink-weak: rgba(233, 179, 106, 0.16);
-  --vk-warn-ink-mark: rgba(233, 179, 106, 0.28);
 
   /* 修订：只给 diff / 文件树，不参与"对错" */
   --vk-add-paper: #0f7a3d;
   --vk-add-paper-weak: rgba(15, 122, 61, 0.1);
   --vk-add-paper-mark: rgba(15, 122, 61, 0.22);
-  --vk-add-ink: #59d99a;
-  --vk-add-ink-weak: rgba(89, 217, 154, 0.2);
-  --vk-add-ink-mark: rgba(89, 217, 154, 0.3);
 
   --vk-del-paper: #b3261e;
   --vk-del-paper-weak: rgba(179, 38, 30, 0.09);
   --vk-del-paper-mark: rgba(179, 38, 30, 0.2);
-  --vk-del-ink: #ff8f8a;
-  --vk-del-ink-weak: rgba(255, 143, 138, 0.2);
-  --vk-del-ink-mark: rgba(255, 143, 138, 0.3);
 
   --vk-mod-paper: #8a5a00;
   --vk-mod-paper-weak: rgba(138, 90, 0, 0.1);
-  --vk-mod-ink: #e9b36a;
-  --vk-mod-ink-weak: rgba(233, 179, 106, 0.16);
+  --vk-mod-paper-mark: rgba(138, 90, 0, 0.22);
 
   /* ---------------------------------------------------------------- 语法 */
   /* B · 钴蓝关键字：关键字品牌蓝 + 600，函数墨色 + 600，字符串绿，数字琥珀；焦点蓝仍是当前行。 */
@@ -112,13 +79,6 @@
   --vk-syn-operator: #475467;
   --vk-syn-punct: #475467;
   --vk-syn-comment: #667085;
-
-  --vk-syn-keyword-ink: #e6ecf5;
-  --vk-syn-string-ink: #7fd6c4;
-  --vk-syn-number-ink: #e9b36a;
-  --vk-syn-function-ink: #c4b5fd;
-  --vk-syn-builtin-ink: #67c8d8;
-  --vk-syn-comment-ink: #8b9ab0;
 
   /* 窗口三点：红 / 黄 / 绿，观众一眼认出"这是窗口"。 */
   --vk-dot-red: #ff5f57;
@@ -148,8 +108,8 @@
   --vk-t-5: 48px; /* 标签 / 表头 / 次级 */
   --vk-t-6: 44px; /* 元信息：正文里的次级文字，地板 */
   --vk-t-sub: 40px; /* 索引卡名 / 侧栏组名 */
-  --vk-t-caption: 32px; /* 图注 / 工具栏 / 面包屑 */
-  --vk-t-micro: 28px; /* 编号 / 层 / 计数 */
+  --vk-t-caption: 36px; /* 图注 / 工具栏 / 面包屑 */
+  --vk-t-micro: 36px; /* 编号 / 层 / 计数 */
   --vk-t-gutter: 36px; /* 代码行号 */
   --vk-t-code: 48px;
   --vk-t-code-lg: 56px;
@@ -195,11 +155,8 @@
   --vk-win-border: 1px;
   --vk-win-hd: 56px;
 
-  /* ---------------------------------------------------------------- 动 */
-    
-  /* ---------------------------------------------------------------- 材质：paper（默认）
-     只有一个材质开关。paper/soft 是浅色；ink 是深色。
-     tone 只产 wash/tone，不重置材质。 */
+  /* ---------------------------------------------------------------- 材质：只有 paper
+     白纸是唯一材质。soft 是同一张纸上的极浅灰，用来分区，不是第二种主题。 */
   --vk-ink-1: var(--vk-paper-ink-1);
   --vk-ink-2: var(--vk-paper-ink-2);
   --vk-ink-3: var(--vk-paper-ink-3);
@@ -238,107 +195,9 @@
   --vk-del-mark: var(--vk-del-paper-mark);
   --vk-mod: var(--vk-mod-paper);
   --vk-mod-weak: var(--vk-mod-paper-weak);
+  --vk-mod-mark: var(--vk-mod-paper-mark);
 
-
-
-}
-
-/* ---------------------------------------------------------------- 材质：ink
-   一个开关换整组：字 / 面 / 线 / 焦点 / 语义 / 修订。
-   嵌套 paper 见下。tone 不在这里。 */
-:is([data-material='ink'], .vk-win[data-surface='ink'], vk-box[surface='ink'], vk-box[surface='inverse']) {
-  --vk-ink-1: var(--vk-ink-text-1);
-  --vk-ink-2: var(--vk-ink-text-2);
-  --vk-ink-3: var(--vk-ink-text-3);
-  --vk-ink-4: var(--vk-ink-text-4);
-
-  --vk-surface-1: var(--vk-ink-surface-1);
-  --vk-surface-2: var(--vk-ink-surface-2);
-  --vk-surface-3: var(--vk-ink-surface-3);
-
-  --vk-line-1: var(--vk-ink-line);
-  --vk-line-2: var(--vk-ink-line);
-  --vk-line-3: #2a3646;
-  --vk-line-strong: var(--vk-ink-tab-line);
-
-  --vk-focus: var(--vk-ink-focus);
-  --vk-focus-soft: var(--vk-ink-focus-soft);
-  --vk-focus-mark: var(--vk-ink-focus-mark);
-  --vk-focus-line: var(--vk-ink-focus);
-
-  --vk-ok: var(--vk-ok-ink);
-  --vk-ok-weak: var(--vk-ok-ink-weak);
-  --vk-ok-mark: var(--vk-ok-ink-mark);
-  --vk-err: var(--vk-err-ink);
-  --vk-err-weak: var(--vk-err-ink-weak);
-  --vk-err-mark: var(--vk-err-ink-mark);
-  --vk-warn: var(--vk-warn-ink);
-  --vk-warn-weak: var(--vk-warn-ink-weak);
-  --vk-warn-mark: var(--vk-warn-ink-mark);
-  --vk-add: var(--vk-add-ink);
-  --vk-add-weak: var(--vk-add-ink-weak);
-  --vk-add-mark: var(--vk-add-ink-mark);
-  --vk-del: var(--vk-del-ink);
-  --vk-del-weak: var(--vk-del-ink-weak);
-  --vk-del-mark: var(--vk-del-ink-mark);
-  --vk-mod: var(--vk-mod-ink);
-  --vk-mod-weak: var(--vk-mod-ink-weak);
-
-
-
-}
-
-/* ---------------------------------------------------------------- 材质：显式 paper
-   嵌套在 ink 里的 paper/soft 面、浅色窗、以及自己画浅色面的组件。
-   这是“显式材质”，不是“复活名单”：没有 tone。 */
-:is(
-  [data-material='paper'],
-  .vk-win[data-surface='paper'],
-  vk-box[surface='paper'],
-  vk-box[surface='soft'],
-  vk-page,
-  .vk-page,
-  .vk-cells,
-  .vk-keys,
-  .vk-steps
-) {
-  --vk-ink-1: var(--vk-paper-ink-1);
-  --vk-ink-2: var(--vk-paper-ink-2);
-  --vk-ink-3: var(--vk-paper-ink-3);
-  --vk-ink-4: var(--vk-paper-ink-4);
-
-  --vk-surface-1: var(--vk-paper-surface-1);
-  --vk-surface-2: var(--vk-paper-surface-2);
-  --vk-surface-3: var(--vk-paper-surface-3);
-
-  --vk-line-1: var(--vk-paper-line-1);
-  --vk-line-2: var(--vk-paper-line-2);
-  --vk-line-3: var(--vk-paper-line-3);
-  --vk-line-strong: var(--vk-paper-line-strong);
-
-  --vk-focus: var(--vk-paper-focus);
-  --vk-focus-soft: var(--vk-paper-focus-soft);
-  --vk-focus-mark: var(--vk-paper-focus-mark);
-  --vk-focus-line: var(--vk-paper-focus);
-
-  --vk-ok: var(--vk-ok-paper);
-  --vk-ok-weak: var(--vk-ok-paper-weak);
-  --vk-ok-mark: var(--vk-ok-paper-mark);
-  --vk-err: var(--vk-err-paper);
-  --vk-err-weak: var(--vk-err-paper-weak);
-  --vk-err-mark: var(--vk-err-paper-mark);
-  --vk-warn: var(--vk-warn-paper);
-  --vk-warn-weak: var(--vk-warn-paper-weak);
-  --vk-warn-mark: var(--vk-warn-paper-mark);
-  --vk-add: var(--vk-add-paper);
-  --vk-add-weak: var(--vk-add-paper-weak);
-  --vk-add-mark: var(--vk-add-paper-mark);
-  --vk-del: var(--vk-del-paper);
-  --vk-del-weak: var(--vk-del-paper-weak);
-  --vk-del-mark: var(--vk-del-paper-mark);
-  --vk-mod: var(--vk-mod-paper);
-  --vk-mod-weak: var(--vk-mod-paper-weak);
-
-
-
+  /* diff 的整行底色：之前引用了两个不存在的 token，行底色一直是空的。 */
+  --vk-add-row: var(--vk-add-paper-weak);
+  --vk-del-row: var(--vk-del-paper-weak);
 }

@@ -516,6 +516,16 @@
       showLens(hash || 'plate', false);
     }
 
+    window.addEventListener('hashchange', () => {
+      const hash = location.hash.replace(/^#/, '');
+      if (docPages().length) {
+        const m = hash.match(/^p(\d+)$/);
+        showDocPage(m ? Number(m[1]) - 1 : 0, false);
+      } else {
+        showLens(hash || 'plate', false);
+      }
+    });
+
     document.addEventListener('click', (e) => {
       const lensLink = e.target.closest('[data-lens-link]');
       if (lensLink) {

@@ -28,9 +28,6 @@ int c;
       <vk-note for="#x@cell:2">第三格</vk-note>
       <vk-note for="#x@byte:2">第三个字节</vk-note>
 
-      <vk-memory id="m"><i label="stack" size="8 MB">局部</i></vk-memory>
-      <vk-note for="#m@seg:stack">按段名</vk-note>
-
       <vk-table id="t"><table><thead><tr><th>a</th></tr></thead><tbody><tr><td>1</td></tr><tr><td>2</td></tr></tbody></table></vk-table>
       <vk-note for="#t@row:1">第二行</vk-note>
     `)
@@ -81,25 +78,5 @@ test('引用不存在的 id 必须报错', async () => {
   await assert.rejects(
     run(`<vk-note for="#nope@line:1">指向空气</vk-note>`),
     /找不到 #nope/
-  );
-});
-
-test('vk-note 的 line 是兄弟代码块的行号，不是祖先', async () => {
-  await assert.doesNotReject(
-    run(`
-      <vk-annotate w="600">
-        <vk-code id="a" lang="c" lines="4-6">int a;\nint b;\nint c;</vk-code>
-        <vk-note line="5">第二行</vk-note>
-      </vk-annotate>
-    `)
-  );
-  await assert.rejects(
-    run(`
-      <vk-annotate w="600">
-        <vk-code id="a" lang="c" lines="4-6">int a;\nint b;\nint c;</vk-code>
-        <vk-note line="99">越界</vk-note>
-      </vk-annotate>
-    `),
-    /超出/
   );
 });

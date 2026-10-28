@@ -78,16 +78,9 @@ vk-box[radius='xl'] { border-radius: var(--vk-r-4); }
 vk-box[radius='pill'] { border-radius: var(--vk-r-pill); }
 vk-box[radius='none'] { border-radius: 0; }
 
-/* 表面：只表示材质 */
+/* 表面：只有一种材质。paper 是白，soft 是同一张纸上的极浅灰。 */
 vk-box[surface='paper'] { --vk-box-bg: var(--vk-surface-1); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
 vk-box[surface='soft'] { --vk-box-bg: var(--vk-surface-3); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
-vk-box[surface='inverse'],
-vk-box[surface='ink'] {
-  --vk-box-bg: var(--vk-ink-surface-1);
-  --vk-box-line: var(--vk-ink-edge);
-  --vk-box-bw: 2px;
-  color: var(--vk-ink-text-1);
-}
 /* 描边只管粗细；线色归 tone——所以"彩色描边卡"是 tone + border 的组合。 */
 vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
 vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
@@ -130,13 +123,9 @@ vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
 vk-text[weight='bold'] { font-weight: var(--vk-w-bold); }
 
-vk-text[tone='primary'],
 vk-text[ink='primary'] { color: var(--vk-ink-1); }
-vk-text[tone='secondary'],
 vk-text[ink='secondary'] { color: var(--vk-ink-2); }
-vk-text[tone='tertiary'],
 vk-text[ink='tertiary'] { color: var(--vk-ink-3); }
-vk-text[ink='muted'],
 vk-text[ink='muted'] { color: var(--vk-ink-4); }
 
 vk-text[align='center'] { text-align: center; }
@@ -170,15 +159,10 @@ vk-icon {
   vertical-align: -0.14em;
   font-size: var(--vk-icon-size, 64px);
 }
-vk-icon[size='sm'],
 vk-icon[scale='sm'] { --vk-icon-size: 48px; }
-vk-icon[size='md'],
 vk-icon[scale='md'] { --vk-icon-size: 64px; }
-vk-icon[size='lg'],
 vk-icon[scale='lg'] { --vk-icon-size: 80px; }
-vk-icon[size='xl'],
 vk-icon[scale='xl'] { --vk-icon-size: 96px; }
-vk-icon[size='inherit'],
 vk-icon[scale='inherit'] { --vk-icon-size: 1em; }
 
 vk-icon .vk-icon {
@@ -196,13 +180,9 @@ vk-icon .vk-icon svg {
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-vk-icon[tone='primary'],
 vk-icon[ink='primary'] .vk-icon { color: var(--vk-ink-1); }
-vk-icon[tone='secondary'],
 vk-icon[ink='secondary'] .vk-icon { color: var(--vk-ink-2); }
-vk-icon[tone='tertiary'],
 vk-icon[ink='tertiary'] .vk-icon { color: var(--vk-ink-3); }
-vk-icon[ink='muted'],
 vk-icon[ink='muted'] .vk-icon { color: var(--vk-ink-4); }
 vk-icon[tone='accent'] .vk-icon { color: var(--vk-focus); }
 vk-icon[tone='ok'] .vk-icon { color: var(--vk-ok); }
@@ -261,11 +241,8 @@ vk-rule {
   background: var(--vk-line-3);
   border: 0;
 }
-vk-rule[weight='thin'],
 vk-rule[variant='thin'] { background: var(--vk-line-3); height: var(--vk-line-w); }
-vk-rule[weight='strong'],
 vk-rule[variant='strong'] { background: var(--vk-line-strong); height: var(--vk-line-w-strong); }
-vk-rule[weight='accent'],
 vk-rule[variant='accent'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
 
 /* -------------------------------------------------------------- vk-mark */

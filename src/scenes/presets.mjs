@@ -11,7 +11,6 @@
 export const PRESETS = {
   'vk-box': [
     { label: '灰面', attrs: { surface: 'soft' } },
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '强调', attrs: { tone: 'accent' } },
     { label: '强边', attrs: { border: 'strong', radius: 'md' } },
     { label: '横向内距', attrs: { 'pad-x': 'xl' } },
@@ -103,7 +102,6 @@ export const PRESETS = {
     { label: '主镜头', attrs: { density: 'loose', chrome: 'none' } },
     { label: '聚光', attrs: { focus: '4', highlight: '4' } },
     { label: '缺口', attrs: { fold: '4' } },
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
     { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
@@ -111,12 +109,10 @@ export const PRESETS = {
   ],
   'vk-term': [
     { label: '大号', attrs: { density: 'loose' } },
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '无头', attrs: { chrome: 'none' } },
   ],
   'vk-diff': [
     { label: '并排', attrs: { variant: 'split', w: '1680' } },
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '无头', attrs: { chrome: 'none' } },
     { label: '无摘要', attrs: { summary: 'none' } },
     { label: '无行号', attrs: { numbers: 'none' } },
@@ -139,13 +135,11 @@ export const PRESETS = {
     { label: '4:3', attrs: { ratio: '4 / 3' } },
     { label: '无头', attrs: { chrome: 'none' } },
     { label: '无壳', attrs: { bare: '' } },
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '带来源', attrs: { url: 'zh.wikipedia.org' } },
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
   ],
   'vk-window': [
-    { label: '深色', attrs: { surface: 'ink' } },
     { label: '无窗头', attrs: { chrome: 'none' } },
     { label: '宽内距', attrs: { pad: 'lg' } },
   ],
@@ -164,14 +158,7 @@ export const PRESETS = {
     { label: '不要 ASCII', attrs: { ascii: 'none' } },
     { label: '不要地址', attrs: { address: 'none' } },
     { label: '紧凑', attrs: { density: 'compact' } },
-  ],
-  'vk-frames': [
-    { label: '第 1 帧', attrs: { active: '1' } },
-    { label: '第 2 帧', attrs: { active: '2' } },
-    { label: '只看值', attrs: { show: 'values' } },
-    { label: '只看地址', attrs: { show: 'addresses' } },
-    { label: '向上生长', attrs: { grows: 'up' } },
-  ],
+  ],
   'vk-keys': [],
   'vk-cells': [
     { label: '高亮第 1 格', attrs: { marked: '0' } },
@@ -181,19 +168,15 @@ export const PRESETS = {
     { label: '大端视角', attrs: { offsets: '', direction: 'rtl' } },
   ],
   'vk-steps': [
-    { label: '第一步', attrs: { current: '1' } },
-    { label: '第三步', attrs: { current: '3' } },
-  ],
-  'vk-annotate': [
-    { label: '窄批注', attrs: { w: '320' } },
-    { label: '宽批注', attrs: { w: '440' } },
-  ],
+    { label: '第一步', attrs: { current: '0' } },
+    { label: '第三步', attrs: { current: '2' } },
+  ],
   'vk-note': [
     { label: '大号', attrs: { size: 'heading' } },
     { label: '编号', attrs: { n: '1' } },
   ],
   'vk-page': [
-  ],
+  ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
     { label: '小标题阶', attrs: { size: 'heading' } },
@@ -204,23 +187,21 @@ export const PRESETS = {
     { label: '无索引', attrs: { index: 'none' } },
     { label: '逐位分开', attrs: { group: '1' } },
     { label: '强调色', attrs: { tone: 'accent' } },
+    { label: '16 位', attrs: { width: '16', value: '1111 1111 0000 0001', fields: null } },
+    { label: '字节界', attrs: { bytes: '' } },
   ],
   'vk-bars': [
     { label: '强调当前', attrs: { tone: 'accent' } },
     { label: '紧凑', attrs: { density: 'compact' } },
     { label: '线性刻度', attrs: { mode: 'linear' } },
-  ],
-  'vk-memory': [
-    { label: '只看地址', attrs: { show: 'addresses' } },
-    { label: '横向分区', attrs: { orientation: 'horizontal' } },
-    { label: '按大小', attrs: { mode: 'linear' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
-  ],
+  ],
   'vk-asm': [
     { label: '无机器码', attrs: { bytes: null } },
     { label: '无地址列', attrs: { address: 'none' } },
     { label: '紧凑', attrs: { density: 'compact' } },
     { label: '去窗头', attrs: { chrome: 'none' } },
+    { label: '无顺序', attrs: { order: null } },
+    { label: '无屏障', attrs: { 'fence-after': null } },
   ],
   'vk-timeline': [
     { label: '泳道', attrs: { variant: 'lanes' } },

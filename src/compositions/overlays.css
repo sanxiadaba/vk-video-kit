@@ -38,8 +38,8 @@ vk-pin {
 .vk-ov-svg[data-dash] .vk-ring-shape { stroke-dasharray: 16 12; }
 
 /* ------------------------------------------------------------ spotlight */
-
-.vk-ov-svg[data-surface='paper'] { color: var(--vk-ink-1); }
+.vk-spotlight-ring rect,
+.vk-spotlight-ring ellipse { fill: none; stroke: var(--vk-focus); stroke-width: 4px; }
 
 /* ------------------------------------------------------------------ pin */
 
@@ -60,11 +60,6 @@ vk-pin {
 .vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-pin-bd[data-tone='warn'] { border-left-color: var(--vk-warn); }
 .vk-pin-bd[data-tone='neutral'] { border-left-color: var(--vk-ink-1); }
-.vk-pin-bd[data-surface='ink'] {
-  background: var(--vk-ink-1);
-  color: var(--vk-surface-1);
-  border-color: var(--vk-ink-1);
-}
 .vk-pin-bd[data-size='label'] { font-size: var(--vk-t-6); padding: var(--vk-s1) var(--vk-s2); }
 .vk-pin-n {
   display: inline-flex;
@@ -93,9 +88,7 @@ vk-pin {
 }
 .vk-pin-dot { fill: var(--vk-focus); }
 
-/* 强度与材质：pin 的气泡 */
+/* 强度三档：pin 的气泡 */
 .vk-pin-bd[data-emphasis='soft'] { background: var(--vk-surface-2); }
 .vk-pin-bd[data-emphasis='solid'] { background: var(--vk-focus-soft); }
 .vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
-.vk-pin-bd[data-surface='ink'] { background: var(--vk-ink-1); color: var(--vk-surface-1); }
-.vk-pin-bd[data-surface='ink'][data-tone] { background: var(--vk-ink-1); color: var(--vk-surface-1); }
