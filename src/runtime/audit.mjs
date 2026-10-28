@@ -83,7 +83,6 @@ export function auditPage(root = document) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inAnnoLines = !!el.closest('.vk-anno-lines');
     const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-spotlight');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
@@ -103,7 +102,7 @@ export function auditPage(root = document) {
     }
 
     if (!inSideNav && !inOverlay && (r.left < -4 || r.top < -4 || r.right > pageRect.right + 4 || r.bottom > pageRect.bottom + 4)) {
-      if (!inAnnoLines && !covered(el, overSeen)) {
+      if (!covered(el, overSeen)) {
         overSeen.add(el);
         out.push({
           type: 'overflow',
@@ -113,7 +112,7 @@ export function auditPage(root = document) {
       }
     }
 
-    if (safeRect && !inAnnoLines && !inOverlay && !inSideNav && !inPageChrome && !pageScaffold) {
+    if (safeRect && !inOverlay && !inSideNav && !inPageChrome && !pageScaffold) {
       if (
         (r.left < safeRect.left - 2 ||
           r.right > safeRect.right + 2 ||
@@ -153,26 +152,31 @@ export function auditPage(root = document) {
     }
   }
 
-  // 顶层块重叠：覆盖层（edge/pin/ring/spotlight）与绝对定位元素是显式覆盖，不算。
+  // 同级块重叠：覆盖层（edge/pin/ring/spotlight）是显式覆盖，不算；
+  // 手摆的绝对定位块也算——canvas 里的坐标是作者写的，重叠要报。
   const box = safe || stage;
-  const kids = [...box.children].filter((el) => {
-    if (OVERLAYS.has(el.tagName.toLowerCase())) return false;
-    if (el.getClientRects().length === 0) return false;
-    const p = getComputedStyle(el).position;
-    return p !== 'absolute' && p !== 'fixed';
-  });
-  for (let i = 0; i < kids.length; i++) {
-    for (let j = i + 1; j < kids.length; j++) {
-      const a = kids[i].getBoundingClientRect();
-      const b = kids[j].getBoundingClientRect();
-      const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
-      const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
-      if (w > 4 && h > 4) {
-        out.push({
-          type: 'overlap',
-          what: `${clip(kids[i].className || kids[i].tagName)} × ${clip(kids[j].className || kids[j].tagName)}`,
-          size: [Math.round(w), Math.round(h)],
-        });
+  const containers = [box, ...box.querySelectorAll('vk-canvas')];
+  for (const container of containers) {
+    const kids = [...container.children].filter((el) => {
+      if (OVERLAYS.has(el.tagName.toLowerCase())) return false;
+      if (el.hasAttribute('data-vk-overlay')) return false;
+      if (el.getClientRects().length === 0) return false;
+      if (getComputedStyle(el).display === 'none') return false;
+      return true;
+    });
+    for (let i = 0; i < kids.length; i++) {
+      for (let j = i + 1; j < kids.length; j++) {
+        const a = kids[i].getBoundingClientRect();
+        const b = kids[j].getBoundingClientRect();
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w > 4 && h > 4) {
+          out.push({
+            type: 'overlap',
+            what: `${clip(kids[i].className || kids[i].tagName)} × ${clip(kids[j].className || kids[j].tagName)}`,
+            size: [Math.round(w), Math.round(h)],
+          });
+        }
       }
     }
   }
@@ -191,13 +195,6 @@ export function auditPage(root = document) {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const want = Number(raw);
-    if (el.tagName.toLowerCase() === 'vk-annotate') {
-      const notes = el.querySelector('.vk-anno-notes');
-      const got = notes?.offsetWidth || 0;
-      if (got < 1) continue;
-      if (Math.abs(got - want) > 1.5) out.push({ type: 'w', what: 'VK-ANNOTATE notes', want, got, tag: 'vk-annotate' });
-      continue;
-    }
     const got = el.offsetWidth;
     if (got < 1) continue;
     if (Math.abs(got - want) > 1.5) out.push({ type: 'w', what: clip(el.className || el.tagName), want, got, tag: el.tagName.toLowerCase() });

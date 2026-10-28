@@ -55,7 +55,7 @@ npm i /path/to/vk-video-kit
 <vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" highlight="0-5"></vk-bytes>
 ```
 
-- `vk-cells` 的 `flag`、`marked`、`pad` 都是 0 起；`spans` 是字段跨几格。
+- `vk-cells` 的 `flag`、`marked`、`filled` 都是 0 起；`spans` 是字段跨几格。
 - `vk-bytes` 的 `highlight` 是 0 起的字节段；`word` / `endian` 支持 1/2/4/8 与 little/big。
 
 ## 5 · 页面
@@ -83,7 +83,7 @@ npx vk check page.html    # 结构自检；有错退出码 1
 npx vk check a.html b.html # 多页共用一个浏览器
 npx vk shot page.html     # 截图：默认 1920×1080；--phone / --crop x,y,w,h
 npx vk serve 8099         # 开发服务器
-npx vk tags               # 37 个标签
+npx vk tags               # 36 个标签
 npx vk doc vk-code        # 某个标签的属性
 npx vk icons arrow        # 搜图标名
 ```
@@ -112,13 +112,19 @@ npx vk icons arrow        # 搜图标名
 `for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
 
 ```html
-<vk-note for="#arr@line:4">第 4 行</vk-note>
-<vk-note for="#cells@cell:3">第 3 格</vk-note>
-<vk-edge from="#c@line:4" to="#a@addr:0x401136"></vk-edge>
+<vk-pin for="#arr@line:4">第 4 行</vk-pin>
+<vk-pin for="#cells@cell:3">第 3 格</vk-pin>
+<vk-pin for="#cells@region:10%,0%,40%,100%">这四个字节</vk-pin>
+<vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
 ```
+
+**几何锚点**：`point:x%,y%`、`side:top|right|bottom|left`、`region:x%,y%,w%,h%`，百分比相对目标自己的盒子；任何有盒子的标签都能被点到。
 
 | part | 用在 | 编号 |
 |---|---|---|
+| `point` | 任意标签 | `x%,y%`，左上角是 0,0 |
+| `side` | 任意标签 | `top` / `right` / `bottom` / `left` |
+| `region` | 任意标签 | `x%,y%,w%,h%` |
 | `line` / `char` | `vk-code` / `vk-diff` / `vk-asm` | 源文件行号；字符列从 0 起 |
 | `cell` | `vk-cells` / `vk-table` | 下标或 `行,列`，从 0 起 |
 | `byte` | `vk-cells` / `vk-bytes` | 偏移从 0 起 |
@@ -132,7 +138,7 @@ npx vk icons arrow        # 搜图标名
 
 规格页不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **索引**：37 格总览，8 列 × 5 行，一屏装得下。
+- **索引**：36 个组件，8 列 × 5 行，一屏装得下。
 - **一页一个组件**：一行元信息 + 标准形态，**单镜头**。
 - **属性表**：`docs/reference.md`，由 registry 生成。
 - **变体**：不进页面；每个组件的预设由门禁逐条施加并比对像素。

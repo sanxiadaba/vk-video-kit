@@ -18,7 +18,7 @@ import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
-import { dedent, expandLeadingTabs, hash32, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
+import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
 import { TAGS, CHILD_ATTRS } from './registry.mjs';
 
@@ -184,7 +184,7 @@ const GLOBAL_ATTRS = new Set([
 ]);
 
 /** 具名窗体的组件：它们自己带窗头，嵌进 vk-window 时必须 chrome="none"。 */
-const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes', 'vk-frames', 'vk-window']);
+const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes', 'vk-window']);
 /** 每个组件支持的内部锚点（与运行时 resolveTarget 同一份约定）。 */
 const ANCHORS = {
   'vk-code': ['line', 'char'],
@@ -197,15 +197,13 @@ const ANCHORS = {
   'vk-tree': ['node'],
   'vk-steps': ['step'],
   'vk-list': ['item'],
-  'vk-memory': ['seg', 'block'],
   'vk-timeline': ['event', 'lane'],
-  'vk-frames': ['slot', 'frame'],
-  'vk-board': ['field', 'byte'],
-  'vk-trace': ['step', 'cell'],
 };
 
 /** 子节点 <i> 的合法属性由 registry 的 CHILD_ATTRS 统一声明。 */
-const INDEX_PART = new Set(['cell', 'byte', 'bit', 'slot', 'seg', 'event', 'row', 'step', 'item']);
+const INDEX_PART = new Set(['cell', 'byte', 'bit', 'event', 'row', 'step', 'item']);
+/** 允许自由坐标的三个覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
+const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight']);
 
 const countTag = (node, tag) => {
   let n = 0;
@@ -267,7 +265,7 @@ function anchorCapacity(node) {
     const n = countTag(node, 'li');
     return n ? { from: 0, to: n - 1 } : null;
   }
-  if (tag === 'vk-memory' || tag === 'vk-timeline') {
+  if (tag === 'vk-timeline') {
     const n = countTag(node, 'i');
     return n ? { from: 0, to: n - 1 } : null;
   }
@@ -336,6 +334,21 @@ function validateRefs(doc, file, errors) {
       }
       if (!part) continue;
       const host = ids.get(id)[0];
+      // 几何锚点：任何有盒子的标签都能被点到 / 圈到 / 连到，不查 ANCHORS。
+      if (part === 'point' || part === 'side' || part === 'region') {
+        if (part === 'side') {
+          if (!['top', 'right', 'bottom', 'left'].includes(String(argRaw || '').trim())) {
+            errors.push(`${where}：@side 只能是 top / right / bottom / left`);
+          }
+        } else {
+          const want = part === 'point' ? 2 : 4;
+          const nums = String(argRaw || '').split(',').map((s) => parseFloat(s));
+          if (nums.length !== want || nums.some((n) => !Number.isFinite(n) || n < 0 || n > 100)) {
+            errors.push(`${where}：@${part} 需要 ${want} 个 0–100 的百分比（写 ${want} 个逗号分隔的数字，可带 %）`);
+          }
+        }
+        continue;
+      }
       const allowed = ANCHORS[host.tagName] || [];
       if (!allowed.includes(part)) {
         errors.push(`${where}：#${id} 是 <${host.tagName}>，不支持 @${part}${allowed.length ? `；支持 ${allowed.join(' / ')}` : '；没有内部锚点'}`);
@@ -360,8 +373,8 @@ function validateRefs(doc, file, errors) {
         }
       } else if (INDEX_PART.has(part)) {
         const n = parseInt(argRaw, 10);
-        // @seg:stack / @lane:主线程 是名字锚点，不是下标；数值型才校验范围。
-        if (!Number.isFinite(n) && (part === 'seg' || part === 'lane')) continue;
+        // @lane:主线程 是名字锚点，不是下标；数值型才校验范围。
+        if (!Number.isFinite(n) && part === 'lane') continue;
         if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
           errors.push(`${where}：${part} 的可选范围是 ${cap.from}–${cap.to}，${argRaw} 越界（下标从 0 起）`);
         }
@@ -430,6 +443,10 @@ function validateAuthorHtml(doc, file) {
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
+    // x/y 只在坐标空间里成立：canvas 的子节点，或本身是覆盖层的三种关系件。
+    if ((attrs.has('x') || attrs.has('y')) && !XY_OVERLAY.has(tag) && node.parentNode?.tagName !== 'vk-canvas') {
+      errors.push(`${file}:${lineOf(node)} <${tag}> 的 x/y 只能写在 vk-canvas 子节点或覆盖层上；其它位置用 vk-stack / vk-row / vk-grid 排版`);
+    }
     for (const [name, raw] of attrs) {
       if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) {
         if (name === 'slot') {
@@ -473,17 +490,8 @@ function validateAuthorHtml(doc, file) {
         }
       }
       if (spec.type === 'lines') {
-        const bad = raw
-          .split(',')
-          .map((s) => s.trim())
-          .filter(Boolean)
-          .some((part) => {
-            const m = part.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-            if (!m) return true;
-            const a = Number(m[1]);
-            const b = m[2] ? Number(m[2]) : a;
-            return a < 1 || b < a;
-          });
+        const bad =
+          !isIndexList(raw) || indexRanges(raw).some(({ from, to }) => from < 1 || to < from);
         if (bad) errors.push(`${where} ${name}="${raw}" 不是合法行段（1、1-8、1,3-5）`);
       }
     }
@@ -510,15 +518,6 @@ function validateAuthorHtml(doc, file) {
       const caps = (node.childNodes || []).filter((c) => c.tagName === 'figcaption').length;
       if (caps > 1) errors.push(`${file}:${lineOf(node)} <vk-figure> 只能有一个 figcaption`);
       if (caps && attrs.has('caption')) errors.push(`${file}:${lineOf(node)} <vk-figure> 的 figcaption 和 caption 不能同时写`);
-    }
-    if (tag === 'vk-note' && attrs.has('line')) {
-      let p = node.parentNode;
-      let hasContext = false;
-      while (p) {
-        if (p.tagName === 'vk-code' || p.tagName === 'vk-diff' || p.tagName === 'vk-annotate') hasContext = true;
-        p = p.parentNode;
-      }
-      if (!hasContext) errors.push(`${file}:${lineOf(node)} <vk-note> 的 line 需要放在 vk-annotate / 代码旁边（或用 for 指向元素）`);
     }
     if (tag === 'vk-icon') {
       const name = attrs.get('name');
@@ -569,8 +568,7 @@ function collectText(node) {
           hasAttr(n, 'data-vk-source') ||
           hasAttr(n, 'data-vk-asm') ||
           hasAttr(n, 'data-vk-tree') ||
-          hasAttr(n, 'data-vk-bytes') ||
-          hasAttr(n, 'data-vk-frames'))
+          hasAttr(n, 'data-vk-bytes'))
       )
         return;
       hasElement = true;
@@ -696,7 +694,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   const terms = [];
   const trees = [];
   const bytesNodes = [];
-  const frameNodes = [];
   const asmNodes = [];
   const iconNames = new Set();
   const iconNodes = [];
@@ -707,7 +704,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (node.tagName === 'vk-term') terms.push(node);
     if (node.tagName === 'vk-tree') trees.push(node);
     if (node.tagName === 'vk-bytes') bytesNodes.push(node);
-    if (node.tagName === 'vk-frames') frameNodes.push(node);
     if (node.tagName === 'vk-asm') asmNodes.push(node);
     if (node.tagName === 'vk-icon') iconNodes.push(node);
   });
@@ -756,13 +752,9 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const base = Number((attr(node, 'lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const hi = base + total - 1;
     for (const name of ['highlight', 'focus', 'fold']) {
-      for (const part of (attr(node, name) || '').split(',')) {
-        const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-        if (!m) continue;
-        const a = parseInt(m[1], 10);
-        const b = parseInt(m[2] || m[1], 10);
-        if (a < base || a > hi || b > hi) {
-          errors.push(`${file}:${line} <${tag}> 的 ${name}="${part.trim()}" 超出 ${base}–${hi} 行（源文件行号）`);
+      for (const { from, to } of indexRanges(attr(node, name))) {
+        if (from < base || from > hi || to > hi) {
+          errors.push(`${file}:${line} <${tag}> 的 ${name}="${from}${to === from ? '' : '-' + to}" 超出 ${base}–${hi} 行（源文件行号）`);
         }
       }
     }
@@ -913,12 +905,8 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const addrText = attr(node, 'addr') || '0x0000';
     const base = /^0x[0-9a-f]+$/i.test(addrText) ? parseInt(addrText, 16) : parseInt(addrText, 10) || 0;
     const hl = new Set();
-    for (const part of (attr(node, 'highlight') || '').split(',')) {
-      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-      if (!m) continue;
-      const a = parseInt(m[1], 10);
-      const b = parseInt(m[2] || m[1], 10);
-      for (let i = a; i <= b; i++) hl.add(start + i);
+    for (const { from, to } of indexRanges(attr(node, 'highlight'))) {
+      for (let i = from; i <= to; i++) hl.add(start + i);
     }
     const bytes = [...buf.subarray(start, end)];
     const payload = {
@@ -934,52 +922,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       start: loc.startTag.endOffset,
       end: loc.endTag.startOffset,
       inner: `\n<script type="application/json" data-vk-bytes>${json}</script>\n`,
-    });
-  }
-
-  // 栈帧：src 指向真实 JSON；只摆数据，不猜结构。
-  for (const node of frameNodes) {
-    const loc = locOf(node);
-    const line = lineOf(node);
-    if (!loc.startTag || !loc.endTag) {
-      throw new Error(`${file}:${line} <vk-frames> 缺少结束标签，无法预编译。`);
-    }
-    const src = attr(node, 'src');
-    const inline = inlineSourceText(node);
-    if (!src && inline == null) continue;
-    sourceConflict(node, 'vk-frames', file, line);
-    let data;
-    if (src) {
-      const abs = path.resolve(path.dirname(file), src);
-      if (!fs.existsSync(abs)) {
-        throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
-      }
-      try {
-        data = JSON.parse(fs.readFileSync(abs, 'utf8'));
-      } catch (e) {
-        throw new Error(`${file}:${line} <vk-frames> 的 ${src} 不是合法 JSON：${e.message}`);
-      }
-      deps.push(abs);
-    } else {
-      try {
-        data = JSON.parse(inline);
-      } catch (e) {
-        throw new Error(`${file}:${line} <vk-frames> 的内联 JSON 不合法：${e.message}`);
-      }
-    }
-    const payload = Array.isArray(data) ? { frames: data } : data;
-    if (!payload || !Array.isArray(payload.frames)) {
-      errors.push(`${file}:${line} <vk-frames> 需要 { frames: [...] }`);
-      continue;
-    }
-    if (payload.frames.some((f) => !f || typeof f !== 'object' || !Array.isArray(f.slots))) {
-      errors.push(`${file}:${line} <vk-frames> 的每一帧都需要 slots 数组`);
-    }
-    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
-    edits.push({
-      start: loc.startTag.endOffset,
-      end: loc.endTag.startOffset,
-      inner: `\n<script type="application/json" data-vk-frames>${json}</script>\n`,
     });
   }
 
@@ -1015,12 +957,8 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       errors.push(`${file}:${line} <vk-asm> 的 lines="${attr(node, 'lines') || ''}" 没有命中任何行`);
     }
     const hl = new Set();
-    for (const part of (attr(node, 'highlight') || '').split(',')) {
-      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-      if (!m) continue;
-      const a = parseInt(m[1], 10);
-      const b = parseInt(m[2] || m[1], 10);
-      for (let i = a; i <= b; i++) hl.add(i);
+    for (const { from, to } of indexRanges(attr(node, 'highlight'))) {
+      for (let i = from; i <= to; i++) hl.add(i);
     }
     const painted = [];
     for (const row of selected) {

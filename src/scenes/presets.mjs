@@ -24,9 +24,9 @@ export const PRESETS = {
     { label: '加粗', attrs: { weight: 'bold' } },
   ],
   'vk-icon': [
-    { label: '小', attrs: { scale: 'sm' } },
-    { label: '中', attrs: { scale: 'md' } },
-    { label: '特大', attrs: { scale: 'xl' } },
+    { label: '小', attrs: { size: 'sm' } },
+    { label: '中', attrs: { size: 'md' } },
+    { label: '特大', attrs: { size: 'xl' } },
     { label: '强调色', attrs: { tone: 'accent' } },
   ],
   'vk-img': [
@@ -65,16 +65,16 @@ export const PRESETS = {
     { label: '错误色', attrs: { tone: 'err' } },
   ],
   'vk-edge': [
-    { label: '曲线', attrs: { shape: 'curve' } },
-    { label: '直线', attrs: { shape: 'line' } },
+    { label: '曲线', attrs: { variant: 'curve' } },
+    { label: '直线', attrs: { variant: 'line' } },
     { label: '虚线', attrs: { dash: '', tone: 'accent' } },
     { label: '双向', attrs: { arrow: 'both', tone: 'accent' } },
     { label: '圆点', attrs: { cap: 'dot', tone: 'accent' } },
-    { label: '留缝', attrs: { clearance: '32' } },
+    { label: '留缝', attrs: { 'gap-px': '32' } },
     { label: '拐点', attrs: { bend: '80' } },
   ],
   'vk-canvas': [
-    { label: '内缩', attrs: { inset: '48' } },
+    { label: '内缩', attrs: { 'pad-px': '48' } },
   ],
   'vk-title': [
     { label: '更大', attrs: { size: 'display' } },
@@ -134,7 +134,6 @@ export const PRESETS = {
     { label: '方图', attrs: { ratio: '1 / 1' } },
     { label: '4:3', attrs: { ratio: '4 / 3' } },
     { label: '无头', attrs: { chrome: 'none' } },
-    { label: '无壳', attrs: { bare: '' } },
     { label: '带来源', attrs: { url: 'zh.wikipedia.org' } },
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
@@ -158,25 +157,21 @@ export const PRESETS = {
     { label: '不要 ASCII', attrs: { ascii: 'none' } },
     { label: '不要地址', attrs: { address: 'none' } },
     { label: '紧凑', attrs: { density: 'compact' } },
-  ],
+  ],
   'vk-keys': [],
   'vk-cells': [
     { label: '高亮第 1 格', attrs: { marked: '0' } },
-    { label: '去掉填充标记', attrs: { pad: null } },
+    { label: '去掉填充标记', attrs: { filled: null } },
     { label: '三等分', attrs: { spans: '1|1|1' } },
-    { label: '字节尺', attrs: { offsets: '', align: '' } },
+    { label: '字节尺', attrs: { offsets: '', ruler: '' } },
     { label: '大端视角', attrs: { offsets: '', direction: 'rtl' } },
   ],
   'vk-steps': [
     { label: '第一步', attrs: { current: '0' } },
     { label: '第三步', attrs: { current: '2' } },
-  ],
-  'vk-note': [
-    { label: '大号', attrs: { size: 'heading' } },
-    { label: '编号', attrs: { n: '1' } },
   ],
   'vk-page': [
-  ],
+  ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
     { label: '小标题阶', attrs: { size: 'heading' } },
@@ -193,8 +188,8 @@ export const PRESETS = {
   'vk-bars': [
     { label: '强调当前', attrs: { tone: 'accent' } },
     { label: '紧凑', attrs: { density: 'compact' } },
-    { label: '线性刻度', attrs: { mode: 'linear' } },
-  ],
+    { label: '线性刻度', attrs: { scale: 'linear' } },
+  ],
   'vk-asm': [
     { label: '无机器码', attrs: { bytes: null } },
     { label: '无地址列', attrs: { address: 'none' } },
@@ -215,13 +210,13 @@ export const PRESETS = {
     { label: '编号 3', attrs: { n: '3' } },
   ],
   'vk-ring': [
-    { label: '矩形', attrs: { shape: 'rect' } },
-    { label: '下划线', attrs: { shape: 'underline' } },
+    { label: '矩形', attrs: { variant: 'rect' } },
+    { label: '下划线', attrs: { variant: 'underline' } },
     { label: '实线', attrs: { dash: null } },
-    { label: '大留白', attrs: { pad: '28' } },
+    { label: '大留白', attrs: { 'pad-px': '28' } },
   ],
   'vk-spotlight': [
-    { label: '椭圆', attrs: { shape: 'ellipse' } },
+    { label: '椭圆', attrs: { variant: 'ellipse' } },
     { label: '更暗', attrs: { dim: '0.9' } },
     { label: '硬边', attrs: { feather: '0' } },
   ],

@@ -42,13 +42,17 @@ export function autoSide(a, b) {
 }
 
 const horiz = (s) => s === 'left' || s === 'right';
-const PAD = 28; // 锚点离盒子圆角的最小距离
+const PAD = 28; // 自动选边时，锚点离盒子圆角的最小距离
+/** 零尺寸盒子 = 作者用 @point / @side 写死的落点：不参与自动偏移，也不许被钳。 */
+const isPoint = (b) => b.w <= 0.5 && b.h <= 0.5;
 
 /**
  * 锚点偏移：竖向连线要对齐到同一个 x，横向连线对齐到同一个 y。
  * 之前两端都用「自己的中心」，导致 b 的下锚点落在 obj-1 的中心顶（差 300px）。
+ * 显式落点（@point / @side）不偏移：作者写在哪就是哪。
  */
 function anchorOffsets(a, b, s1, s2) {
+  if (isPoint(a) || isPoint(b)) return [0, 0];
   const clampOff = (v, half) => Math.max(-half + PAD, Math.min(half - PAD, v));
   if (!horiz(s1) && !horiz(s2)) {
     const x = Math.max(b.x + PAD, Math.min(b.x + b.w - PAD, a.cx));

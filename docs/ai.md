@@ -32,11 +32,21 @@
 | 内联源码 | `<script type="text/plain" data-vk-source>…</script>` |
 | 结构化子节点 | `<li>` / `<i value label>` / `<table><tr>` |
 
-`src` 与内联块只能有一个。`vk-note` 只做关系覆盖层，用 `for="#id@part:arg"` 指目标；不再有行内自动排版。
+`src` 与内联块只能有一个。批注与圈选只做覆盖层，用 `for="#id@part:arg"` 指目标。
 
 ## 4 · 锚点
 
-`for` / `from` / `to` 支持 CSS 选择器，或 `#id@part:arg`：
+`for` / `from` / `to` 支持 CSS 选择器，或 `#id@part:arg`。
+
+**几何锚点**（任何有盒子的标签都能用，百分比相对目标自己的盒子）：
+
+| part | arg | 例 |
+|---|---|---|
+| `point` | `x%,y%` | `#code@point:100%,50%`（右边缘中点） |
+| `side` | `top` / `right` / `bottom` / `left` | `#buf@side:right` |
+| `region` | `x%,y%,w%,h%` | `#cells@region:10%,0%,40%,100%` |
+
+**数据锚点**（由组件内容决定，0 起，源码行除外）：
 
 | part | 用在 | arg |
 |---|---|---|
@@ -49,7 +59,24 @@
 | `step` | `steps` | 从 0 起 |
 | `event` / `lane` | `timeline` | 排序后事件下标（0 起）/ 泳道名 |
 
+多个目标用分号隔开（`for="#a@side:right;#b@point:0%,50%"`），因为 region 的参数自己用逗号。
+
+几何锚点写在哪就是哪：`vk-edge` 不再把端点从圆角附近推开，`@side` 还会替连线决定出线方向。
+
 写错会在 `vk build` 报错。
+
+### 关系件各回答一个问题
+
+**能由组件内置状态说清的，不用覆盖层。** `highlight` / `flag` / `marked` / `current` 已经是"这里"的答案；覆盖层只补组件没有的东西。
+
+| 件 | 它回答 | 不该用来 |
+|---|---|---|
+| `vk-edge` | 两个**物件**之间有关系（指针 → 内存） | 表达"这行写了那格"——那是叙述，口播或字幕就够了 |
+| `vk-ring` | 组件没有内置状态，但你要指一片区域 | 组件已经 `flag` / `marked` 时再圈一遍 |
+| `vk-spotlight` | 这一屏只留一个目标 | 当"强调"用；强调是 `tone` 和字号的事 |
+| `vk-pin` | 一句话钉在一个点上 | 复述标题或副题；一句话一个点 |
+
+一个信号只用一种机制。两个叠在一起，观众要判断"它们是不是在说同一件事"，这个判断本身与讲解无关。
 
 ## 5 · 命令
 
@@ -59,7 +86,7 @@ npx vk build . --force      # 忽略缓存
 npx vk check page.html      # 结构自检；有错退出码 1
 npx vk check a.html b.html  # 多页共用一个浏览器
 npx vk shot page.html       # 1920×1080 截图
-npx vk tags                 # 37 个标签
+npx vk tags                 # 36 个标签
 npx vk doc vk-code          # 属性 / 枚举 / 默认值
 npx vk icons arrow          # 搜图标名
 ```
@@ -76,8 +103,7 @@ npx vk icons arrow          # 搜图标名
 
 - `vk-bits` 的位序号与字段说明；
 - `vk-figure` 的裁切标签；
-- `vk-note` 的编号（写 `n` 才有）；
-- `vk-ring` / `vk-spotlight` 的形态（作者写 `shape` / `tone` 决定）；
+- `vk-ring` / `vk-spotlight` 的形态（作者写 `variant` / `tone` 决定）；
 - `vk-asm` 的执行顺序 / 屏障（写 `order` / `fence-after` 才有）。
 
 ---
@@ -94,8 +120,8 @@ npx vk icons arrow          # 搜图标名
   - 属性：`size` · `weight` · `mono` · `align` · `measure` · `w` · `h` · `grow` · `fill` · `overflow` · `ink`
   - 例：`<vk-text size="body" measure="body">`
 - **`vk-icon`** · 图标 — 一个符号。全量 Lucide 名字；四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
-  - 属性：`name` · `tone` · `label` · `ink` · `scale`
-  - 例：`<vk-icon name="terminal" scale="lg">`
+  - 属性：`name` · `tone` · `label` · `ink` · `size`
+  - 例：`<vk-icon name="terminal" size="lg">`
 - **`vk-img`** · 图片 — 一张图：比例、填充方式、焦点。加载失败有可见占位。
   - 属性：`src` · `alt` · `ratio` · `fit` · `radius` · `w` · `h` · `position` · `border`
   - 例：`<vk-img w="1200" h="675" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl">`
@@ -124,7 +150,7 @@ npx vk icons arrow          # 搜图标名
   - 属性：`cols` · `gap` · `gap-x` · `gap-y` · `align` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
-  - 属性：`w` · `h` · `pad` · `grid` · `inset` · `overflow`
+  - 属性：`w` · `h` · `pad-px` · `grid` · `overflow`
   - 例：`<vk-canvas w="1200" h="420">`
 
 ### L3 器械 · 渲染一种编程数据的形状
@@ -157,14 +183,14 @@ npx vk icons arrow          # 搜图标名
   - 属性：`src` · `display` · `size` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
   - 例：`<vk-math display size="heading" src="../code/formula.tex">`
 - **`vk-figure`** · 图窗 — 画框里的图：标题栏、比例、说明、来源。
-  - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `bare` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `position`
+  - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `position`
   - 例：`<vk-figure w="1100" fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
-  - 属性：`src` · `title` · `active` · `collapsed` · `limit` · `summary` · `depth` · `hidden` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 属性：`src` · `title` · `active` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
   - 例：`<vk-tree title="app" active="src/parser.py" depth="4">`
 - **`vk-cells`** · 内存格 — 一行连续的内存格：标签、值、地址；flag 标出越界的那一格。
-  - 属性：`values` · `labels` · `spans` · `pad` · `marked` · `addr` · `cols` · `flag` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `stride` · `offsets` · `direction` · `align`
-  - 例：`<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets>`
+  - 属性：`values` · `labels` · `spans` · `filled` · `marked` · `addr` · `cols` · `flag` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `stride` · `offsets` · `direction` · `ruler`
+  - 例：`<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" filled="2" addr="0x7ffc" offsets>`
 - **`vk-bytes`** · 字节 — 字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，highlight 标出一段字节。
   - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `highlight` · `density` · `chrome` · `w` · `h` · `grow` · `fill` · `overflow` · `measure` · `word` · `endian`
   - 例：`<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5">`
@@ -179,8 +205,8 @@ npx vk icons arrow          # 搜图标名
   - 例：`<vk-bits value="1 01111111 10000000000000000000000" width="32" sign
          fields="31:符号|30-23:指数|22-0:尾数">`
 - **`vk-bars`** · 条 — 一组横向条：标签、数值条、单位。子节点写成 <i value label>。
-  - 属性：`max` · `mode` · `unit` · `density` · `tone` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
-  - 例：`<vk-bars max="1000000" mode="log" unit="ns">`
+  - 属性：`max` · `scale` · `unit` · `density` · `tone` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
+  - 例：`<vk-bars max="1000000" scale="log" unit="ns">`
 - **`vk-asm`** · 汇编 — 汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。
   - 属性：`lang` · `src` · `lines` · `file` · `highlight` · `focus` · `addr` · `title` · `bytes` · `address` · `density` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `address-label` · `bytes-label` · `mnemonic-label` · `operands-label` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
   - 例：`<vk-asm title="main.s" lines="1-13" highlight="6" bytes
@@ -192,19 +218,16 @@ npx vk icons arrow          # 搜图标名
 ### L4 关系 · 两点之间的关系与批注
 
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
-  - 属性：`from` · `to` · `from-side` · `to-side` · `shape` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap` · `bend` · `cap` · `clearance` · `label-size` · `label-dx` · `label-dy` · `via`
-  - 例：`<vk-edge from="#buf" to="#mem" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
-- **`vk-note`** · 讲解条 — 一条讲解：for 指向任意元素，可独立使用。
-  - 属性：`n` · `tone` · `emphasis` · `size` · `for` · `w` · `h` · `grow` · `fill` · `overflow` · `measure`
-  - 例：`<vk-note tone="accent" size="body">`
+  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `label-size` · `label-dx` · `label-dy` · `via`
+  - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
-  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `emphasis` · `leader` · `gap` · `w` · `size` · `z`
+  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z`
   - 例：`<vk-pin for="#pin-target" side="right" tone="err" n="1">`
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
-  - 属性：`for` · `shape` · `pad` · `tone` · `dash` · `width` · `z`
-  - 例：`<vk-ring for="#ring-target" shape="ellipse" tone="accent" pad="16" dash>`
+  - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `width` · `z`
+  - 例：`<vk-ring for="#ring-target@region:20%,20%,60%,60%" variant="ellipse" tone="accent" pad-px="16" dash>`
 - **`vk-spotlight`** · 聚光 — 聚光：除目标外整体压暗，可多目标；放在 canvas 或 page 里。
-  - 属性：`for` · `dim` · `feather` · `shape` · `z`
+  - 属性：`for` · `dim` · `feather` · `variant` · `z`
   - 例：`<vk-spotlight for="#spot-target" dim="0.72" feather="24">`
 
 ### L5 页面 · 一整张 1920×1080 的画布

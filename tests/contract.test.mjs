@@ -44,6 +44,22 @@ test('CSS 选择器里的属性都在 registry 里', () => {
   assert.deepEqual(bad, [], `未在 registry 声明的 CSS 属性：\n${bad.join('\n')}`);
 });
 
+test('CSS 里的 vk-tag[attr] 必须属于那个标签', () => {
+  const bad = [];
+  for (const file of walk('src').filter((f) => f.endsWith('.css'))) {
+    const text = fs.readFileSync(file, 'utf8');
+    for (const m of text.matchAll(/(?<![.\w-])(vk-[a-z0-9-]+)\[([a-zA-Z][\w-]*)/g)) {
+      const [, tag, name] = m;
+      if (!TAGS[tag]) {
+        bad.push(`${file}: 选择器引用了不存在的 <${tag}>`);
+        continue;
+      }
+      if (!TAGS[tag].attrs?.[name] && !IGNORE(name)) bad.push(`${file}: <${tag}> 没有属性 ${name}`);
+    }
+  }
+  assert.deepEqual(bad, [], `标签写错属性：\n${bad.join('\n')}`);
+});
+
 test('registry 的默认值都在枚举里（validate 的强化版）', () => {
   for (const [tag, def] of Object.entries(TAGS)) {
     for (const [name, spec] of Object.entries(def.attrs || {})) {
@@ -52,4 +68,15 @@ test('registry 的默认值都在枚举里（validate 的强化版）', () => {
       }
     }
   }
+});
+
+test('build 只标在真正的构建期属性上', () => {
+  const allowed = new Set(['src', 'lines', 'addr', 'offset', 'length', 'file']);
+  const bad = [];
+  for (const [tag, def] of Object.entries(TAGS)) {
+    for (const [name, spec] of Object.entries(def.attrs || {})) {
+      if (spec.build && !allowed.has(name)) bad.push(`${tag}.${name}`);
+    }
+  }
+  assert.deepEqual(bad, [], `可疑的构建期标记：${bad.join(', ')}`);
 });

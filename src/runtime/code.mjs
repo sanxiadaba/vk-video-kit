@@ -2,7 +2,7 @@ import {
   esc, dedent, warnIfParsed, fetchSource, hash32, langKey, langLabel, lineSet,
   precompiledSource, numAttr, VkElement, define,
 } from './base.mjs';
-import { sliceLines } from '../shared/code.mjs';
+import { indexRanges, sliceLines } from '../shared/code.mjs';
 import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
 

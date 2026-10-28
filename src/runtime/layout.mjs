@@ -1,4 +1,4 @@
-import { VK, EDGES, numAttr, VkElement, define, plain, resolveTarget } from './base.mjs';
+import { VK, EDGES, numAttr, VkElement, define, plain, resolveAnchor } from './base.mjs';
 import { autoSide, connectorGeometry, labelSpot, pathLength, roundedPath, tipOpenPath, tipPath, visualToLocal } from './geometry.mjs';
 
 /* ------------------------------------------------------------------ 摆位 */
@@ -54,8 +54,8 @@ export class VkCanvas extends VkElement {
       box.h = Math.max(box.h, y + s.h);
     }
 
-    // pad：子节点是绝对定位的，padding 不会自动内缩；手动平移，宽度再补回两侧。
-    const pad = numAttr(this, this.hasAttribute('inset') ? 'inset' : 'pad', { min: 0, max: 200, fallback: 0 });
+    // pad-px：子节点是绝对定位的，padding 不会自动内缩；手动平移，宽度再补回两侧。
+    const pad = numAttr(this, 'pad-px', { min: 0, max: 200, fallback: 0 });
     if (pad) {
       for (const el of nodes) {
         el.style.left = (parseFloat(el.style.left) || 0) + pad + 'px';
@@ -138,47 +138,49 @@ export class VkEdge extends VkElement {
     if (this._cap) this._cap.style.display = 'none';
     if (this._label) this._label.textContent = this.getAttribute('label') || '';
 
-    const host = this.closest('vk-canvas, vk-annotate, vk-page, [data-vk-frame]') || this.parentElement;
+    const host = this.closest('vk-canvas, vk-page, [data-vk-frame]') || this.parentElement;
     if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
     if (!host) return;
 
     // 隐藏的镜头/模板不参与布局：没有盒子就不画，也不报警。
     if (!host.getClientRects().length) return;
 
-    const fromEl = resolveTarget(host, this.getAttribute('from'), this);
-    const toEl = resolveTarget(host, this.getAttribute('to'), this);
-    if (!fromEl || !toEl) {
+    const fromA = resolveAnchor(host, this.getAttribute('from'), this);
+    const toA = resolveAnchor(host, this.getAttribute('to'), this);
+    if (!fromA || !toA) {
       if (host.getClientRects().length) this._warnOnce('endpoint', '找不到 from/to 目标，连线已清空');
       return;
     }
-    if (!fromEl.getClientRects().length || !toEl.getClientRects().length) return;
+    if (!fromA.el.getClientRects().length || !toA.el.getClientRects().length) return;
 
     // 坐标基准必须是 canvas 自己：SVG 是 inset:0 铺在 canvas 上的，
     // 用 offsetParent 会把 canvas 在页面里的偏移整段加进路径。
     const hr = host.getBoundingClientRect();
     if (hr.width < 1 || hr.height < 1) return;
-    const toLocal = (el) => {
-      const r = el.getBoundingClientRect();
+    const toLocal = (r) => {
       const p = visualToLocal(r, hr, host.offsetWidth);
       return { x: p.x, y: p.y, w: p.w, h: p.h, cx: p.x + p.w / 2, cy: p.y + p.h / 2 };
     };
-    const a = toLocal(fromEl);
-    const b = toLocal(toEl);
+    const a = toLocal(fromA.rect);
+    const b = toLocal(toA.rect);
 
     // edge 的 svg 覆盖整个包含块
     this.style.position = 'absolute';
     this.style.inset = '0';
     this.style.pointerEvents = 'none';
+    this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 20 }));
 
     const cs0 = getComputedStyle(this);
     const numOf = (name, fallback) => parseFloat(cs0.getPropertyValue(name)) || fallback;
-    const gap = numAttr(this, this.hasAttribute('clearance') ? 'clearance' : 'gap', { min: 0, max: 200, fallback: numOf('--vk-edge-gap', 32) });
+    const gap = numAttr(this, 'gap-px', { min: 0, max: 200, fallback: numOf('--vk-edge-gap', 32) });
     const bend = numAttr(this, 'bend', { min: -200, max: 200, fallback: 0 });
     const r = numOf('--vk-edge-r', 16);
-    const shape = this.getAttribute('shape') || 'ortho';
+    const shape = this.getAttribute('variant') || 'ortho';
     const tension = numAttr(this, 'tension', { min: 5, max: 120, fallback: 42 }) / 100;
 
     let [s1, s2] = autoSide(a, b);
+    if (fromA.side) s1 = fromA.side;
+    if (toA.side) s2 = toA.side;
     const fs = this.getAttribute('from-side');
     const ts = this.getAttribute('to-side');
     let forced = false;

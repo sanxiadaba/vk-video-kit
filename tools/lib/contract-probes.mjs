@@ -64,6 +64,16 @@ export const PROBES = {
       effect: { on: 'vk-code', kind: 'dom', prop: '.vk-line.is-fold' },
       why: '真折叠会多出一条 .is-fold 行；行数不变，不能只数 .vk-line。',
     },
+    span: {
+      values: ['4:0-1'],
+      effect: { on: 'vk-code', kind: 'dom', prop: '.vk-char' },
+      why: 'span 只在合法行:列区间上包出字符 span；断 .vk-char 的个数。',
+    },
+    mark: {
+      values: ['s'],
+      effect: { on: 'vk-code', kind: 'dom', prop: '.vk-tok' },
+      why: 'mark 是代码里真实存在的标识符；断高亮出来的 token 数。',
+    },
   },
   'vk-bytes': {
     highlight: {
@@ -106,13 +116,20 @@ export const PROBES = {
       why: '标签是裁切框里的一个覆盖元素；没有标签时整块不渲染。',
     },
   },
+  'vk-bits': {
+    fields: {
+      values: ['7:4'],
+      effect: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-field' },
+      why: 'fields 把 hi:lo 区间包成字段；断字段元素。',
+    },
+  },
   'vk-cells': {
     spans: {
       values: ['1|1|1'],
       effect: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
       why: '跨格通过 grid-column: span 改变格子宽度，断宽度而不是断 data-*。',
     },
-    pad: {
+    filled: {
       values: ['0'],
       effect: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
       why: '填充格是斜纹底图，断 background-image。',
@@ -134,6 +151,11 @@ export const PROBES = {
   },
   'vk-tree': {
     depth: { values: ['1'], effect: { on: 'vk-tree', kind: 'geometry', prop: 'height' }, why: '标本只有两层，depth=2 与 4 画面上相同。' },
+    collapsed: {
+      values: ['src'],
+      effect: { on: 'vk-tree', kind: 'dom', prop: '.vk-tree-row' },
+      why: '收起一个真实存在的目录；断行数。',
+    },
   },
   'vk-asm': {
     highlight: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'background-color' }, why: '高亮行必须有背景色差。' },
@@ -159,12 +181,11 @@ export const EFFECT_OVERRIDES = {
 export const VISUAL_EXEMPT = {
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
-  'vk-canvas.inset': '画布内缩只改子节点坐标，不产生新文字/颜色。',
+  'vk-canvas.pad-px': '画布内缩只改子节点坐标，不产生新文字/颜色。',
   'vk-canvas.overflow': '裁切是作者显式选择；画布内容的安全区由真实帧负责。',
   'vk-grid.cols': '列数变化只改几何；子节点本身的视觉在默认态已检查。',
   'vk-canvas.w': '坐标画布只改几何，不产生新文字/颜色。',
   'vk-canvas.h': '坐标画布只改几何，不产生新文字/颜色。',
-  'vk-canvas.pad': '画布内缩只改子节点坐标，不产生新文字/颜色。',
   'vk-box.h': '硬高是作者显式选择的裁切；内容溢出不算 h 属性的错。',
 };
 
@@ -173,6 +194,9 @@ export const VISUAL_EXEMPT = {
  * 当前 3 条。
  */
 export const EFFECT_ANY = [
+  { tag: 'vk-window', attr: 'url', reason: 'url 只在 chrome="browser" / "dialog" 时出现；单场景无法同时改两个属性。' },
+  { tag: 'vk-timeline', attr: 'lanes', reason: 'lanes 只在 variant="lanes" 时生效；单场景无法同时改两个属性。' },
+  { tag: 'vk-code', attr: 'fold-note', reason: 'fold-note 只在 fold 存在时出现；单场景无法同时改两个属性。' },
   {
     tag: 'vk-mark',
     attr: 'variant',
@@ -211,6 +235,10 @@ export const SHARED_VALUES = {
   w: ['1200', '1000'],
   h: ['400'],
   cols: ['4'],
+  title: ['VKPROBE'],
+  url: ['VKPROBE'],
+  label: ['VKPROBE'],
+  addr: ['0x500000'],
 };
 
 /**

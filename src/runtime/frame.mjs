@@ -86,7 +86,7 @@ const OVERFLOW_SELECTORS = [
 export function auditOverflow(root = document) {
   const out = [];
   if (!root?.querySelectorAll) return out;
-  for (const host of root.querySelectorAll('vk-code, vk-term, vk-diff, vk-table, vk-browser, vk-figure, vk-tree, vk-bytes, vk-frames, vk-callout, vk-title, vk-list, vk-note')) {
+  for (const host of root.querySelectorAll('vk-code, vk-term, vk-diff, vk-table, vk-figure, vk-tree, vk-bytes, vk-callout, vk-title, vk-list')) {
     // 表格自己就是滚动盒：先看宿主。
     if (host.tagName === 'VK-TABLE' && host.scrollWidth > host.clientWidth + 1) {
       out.push({ tag: 'vk-table', cls: 'host', sel: 'vk-table', sw: host.scrollWidth, cw: host.clientWidth, sh: host.scrollHeight, ch: host.clientHeight });

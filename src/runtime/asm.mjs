@@ -4,7 +4,7 @@
  * 构建期把 objdump -d 或普通 .s 解析成 data-vk-asm；运行时只摆行。
  * 每行同时带 data-line（源行）与 data-addr（指令地址），两种锚点都能指。
  */
-import { VkElement, define, esc } from './base.mjs';
+import { VkElement, define, esc, lineSet } from './base.mjs';
 import { splitInsn } from '../shared/asm.mjs';
 
 /** 操作数：逗号后留空格；寄存器加重、立即数降一阶，括号保持墨色。 */
@@ -52,22 +52,8 @@ export class VkAsm extends VkElement {
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const density = this.getAttribute('density') || 'normal';
     const title = this.getAttribute('title') || d.file || '';
-    const hl = new Set();
-    for (const part of (this.getAttribute('highlight') || '').split(',')) {
-      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-      if (!m) continue;
-      const a = parseInt(m[1], 10);
-      const b = parseInt(m[2] || m[1], 10);
-      for (let i = a; i <= b; i++) hl.add(i);
-    }
-    const focus = new Set();
-    for (const part of (this.getAttribute('focus') || '').split(',')) {
-      const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-      if (!m) continue;
-      const a = parseInt(m[1], 10);
-      const b = parseInt(m[2] || m[1], 10);
-      for (let i = a; i <= b; i++) focus.add(i);
-    }
+    const hl = lineSet(this.getAttribute('highlight'));
+    const focus = lineSet(this.getAttribute('focus'));
     const orderList = (this.getAttribute('order') || '')
       .split(',')
       .map((s) => s.trim())

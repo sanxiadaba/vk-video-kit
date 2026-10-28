@@ -32,7 +32,7 @@ const attrType = (spec, tag, name) => {
 const iface = (tag) => {
   const def = TAGS[tag];
   const rows = Object.entries(def.attrs || {}).map(([name, spec]) => {
-    const doc = spec.values ? `${name}: ${spec.values.join(' / ')}` : `${name}${spec.default !== undefined ? `（默认 ${spec.default}）` : ''}`;
+    const doc = `${spec.values ? `${name}: ${spec.values.join(' / ')}` : `${name}${spec.default !== undefined ? `（默认 ${spec.default}）` : ''}`}${spec.build ? ' · 构建期' : ''}`;
     return `  /** ${doc} */\n  '${name}'?: ${attrType(spec, tag, name)};`;
   });
   return `export interface ${pascal(tag)}Attributes {\n${rows.join('\n')}\n}`;
@@ -165,7 +165,7 @@ const card = (tag) => {
     .map(([name, spec]) => {
       const v = spec.values ? spec.values.map((x) => `\`${x}\``).join(' · ') : spec.type;
       const d = spec.default === undefined ? '—' : `\`${spec.default}\``;
-      return `| \`${name}\` | ${v} | ${d} |`;
+      return `| \`${name}\` | ${v} | ${d} | ${spec.build ? '构建期' : '运行'} |`;
     })
     .join('\n');
   const slotText = def.slots?.length
@@ -175,7 +175,7 @@ const card = (tag) => {
 
 ${def.summary}
 ${slotText}
-${rows ? `| 属性 | 值 | 默认 |\n|---|---|---|\n${rows}` : '_无属性_'}
+${rows ? `| 属性 | 值 | 默认 | 生效 |\n|---|---|---|---|\n${rows}` : '_无属性_'}
 `;
 };
 

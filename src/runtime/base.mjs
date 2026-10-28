@@ -11,11 +11,11 @@
    ========================================================================== */
 
 import { TAGS, TAG_NAMES, observedOf } from '../registry.mjs';
-import { dedent, expandLeadingTabs, hash32, lineSet, langKey, langLabel } from '../shared/code.mjs';
+import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
 import { wrapCharRange } from './code-utils.mjs';
 
-export { TAGS, TAG_NAMES, dedent, expandLeadingTabs, hash32, lineSet, langKey, langLabel };
+export { TAGS, TAG_NAMES, dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel };
 
 const ROOT = typeof window !== 'undefined' ? window : globalThis;
 const HAS_DOM = typeof document !== 'undefined';
@@ -128,14 +128,10 @@ const ANCHOR_ATTR = {
   cell: 'data-cell',
   byte: 'data-byte',
   bit: 'data-bit',
-  slot: 'data-slot',
-  seg: 'data-seg',
-  block: 'data-block',
   field: 'data-field',
   addr: 'data-addr',
   event: 'data-event',
   lane: 'data-lane',
-  frame: 'data-frame',
   row: 'data-row',
   node: 'data-node-path',
   step: 'data-step',
@@ -186,9 +182,7 @@ export function resolveTarget(root, expr, owner) {
       return null;
     }
     const want = args.join(':');
-    const el =
-      (part === 'seg' ? host.querySelector(`[data-seg-name="${cssEscape(want)}"]`) : null) ||
-      host.querySelector(`[${attr}="${cssEscape(want)}"]`);
+    const el = host.querySelector(`[${attr}="${cssEscape(want)}"]`);
     if (!el) {
       owner?._warnOnce?.(`target:${id}:${part}:${want}`, `#${id} 没有 ${part}="${want}"`);
       return null;
@@ -196,6 +190,68 @@ export function resolveTarget(root, expr, owner) {
     return el;
   }
   return safeQuery(root, raw, owner);
+}
+
+/* --------------------------------------------------------- 几何锚点（P2） */
+
+const SIDES = new Set(['top', 'right', 'bottom', 'left']);
+const clampPct = (n) => Math.max(0, Math.min(100, n));
+
+/**
+ * 关系锚点：`#id@point:x%,y%` / `#id@side:top` / `#id@region:x%,y%,w%,h%`，
+ * 或原有的 `#id@part:arg` 与 CSS 选择器。
+ *
+ * 返回 `{ el, rect, side }`：rect 是视觉坐标里的 DOMRect 形状，side 是显式指定的贴边。
+ * 百分比一律相对目标自己的盒子：盒子改了尺寸，锚点跟着走。
+ */
+export function resolveAnchor(root, expr, owner) {
+  const raw = String(expr || '').trim();
+  const at = raw.indexOf('@');
+  if (raw.startsWith('#') && at > 1) {
+    const part = raw.slice(at + 1).split(':')[0];
+    if (part === 'point' || part === 'side' || part === 'region') {
+      const id = raw.slice(1, at);
+      const host = safeQuery(root, `#${cssEscape(id)}`, owner);
+      if (!host) {
+        owner?._warnOnce?.(`target:${id}`, `找不到 #${id}`);
+        return null;
+      }
+      const r = host.getBoundingClientRect();
+      const args = raw.slice(at + part.length + 2);
+      if (part === 'side') {
+        const side = args.trim();
+        if (!SIDES.has(side)) {
+          owner?._warnOnce?.(`target:${id}:side`, `#${id} 的 @side 只能是 top / right / bottom / left`);
+          return null;
+        }
+        const rect = { left: r.left, top: r.top, width: 0, height: 0 };
+        if (side === 'right') rect.left = r.right;
+        if (side === 'bottom') rect.top = r.bottom;
+        if (side === 'left' || side === 'right') rect.top = r.top + r.height / 2;
+        else rect.left = r.left + r.width / 2;
+        return { el: host, rect, side };
+      }
+      const nums = args.split(',').map((s) => parseFloat(s));
+      const want = part === 'point' ? 2 : 4;
+      if (nums.length !== want || nums.some((n) => !Number.isFinite(n))) {
+        owner?._warnOnce?.(`target:${id}:${part}`, `#${id} 的 @${part} 需要 ${want} 个数字（0–100，可带 %）`);
+        return null;
+      }
+      const [x, y, w = 0, h = 0] = nums.map(clampPct);
+      const rect =
+        part === 'point'
+          ? { left: r.left + (r.width * x) / 100, top: r.top + (r.height * y) / 100, width: 0, height: 0 }
+          : {
+              left: r.left + (r.width * x) / 100,
+              top: r.top + (r.height * y) / 100,
+              width: (r.width * w) / 100,
+              height: (r.height * h) / 100,
+            };
+      return { el: host, rect, side: null };
+    }
+  }
+  const el = resolveTarget(root, raw, owner);
+  return el ? { el, rect: el.getBoundingClientRect(), side: null } : null;
 }
 
 /* ---------------------------------------------------------------- 读取源码 */
@@ -625,7 +681,7 @@ export function define(tag, ctor) {
 }
 
 /** 给测试与调试用 */
-VK._internals = { dedent, hash32, lineSet, expandLeadingTabs };
+VK._internals = { dedent, hash32, indexSet, lineSet, expandLeadingTabs };
 
 /* ------------------------------------------------------------------ 插槽 */
 

@@ -270,7 +270,6 @@ async function inspect() {
         const r = el.getBoundingClientRect();
         if (r.width < 1 || r.height < 1) continue;
         if (el.closest('svg') || el.closest('.vk-sr')) continue;
-        const inAnnoLines = !!el.closest('.vk-anno-lines');
         const inSideNav = !!el.closest('[data-side-nav]');
         const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
         const pageScaffold = el.matches('.vk-page-inner, .vk-page-bd, .vk-page-hd, .vk-page-ft');
@@ -289,7 +288,7 @@ async function inspect() {
         }
 
         if (!inSideNav && (r.left < -4 || r.top < -4 || r.right > 1924 || r.bottom > 1084)) {
-          if (!inAnnoLines && !covered(el, overSeen)) {
+          if (!covered(el, overSeen)) {
             overSeen.add(el);
             out.push({
               type: 'overflow',
@@ -300,7 +299,7 @@ async function inspect() {
         }
 
         // 安全区只约束正文；页眉/页脚住在安全区上下 96 的轨道里，页面骨架本身是整页。
-        if (safeRect && !inAnnoLines && !inSideNav && !inPageChrome && !pageScaffold) {
+        if (safeRect && !inSideNav && !inPageChrome && !pageScaffold) {
           if (
             (r.left < safeRect.left - 2 ||
               r.right > safeRect.right + 2 ||
@@ -347,14 +346,6 @@ async function inspect() {
         const cs = getComputedStyle(el);
         if (cs.display === 'none' || cs.visibility === 'hidden') continue;
         const want = Number(raw);
-        // annotate 的 w 是批注栏宽，不是宿主宽；量 notes 列。
-        if (el.tagName.toLowerCase() === 'vk-annotate') {
-          const notes = el.querySelector('.vk-anno-notes');
-          const got = notes?.offsetWidth || 0;
-          if (got < 1) continue;
-          if (Math.abs(got - want) > 1.5) out.push({ type: 'w', what: 'VK-ANNOTATE notes', want, got, tag: 'vk-annotate' });
-          continue;
-        }
         const got = el.offsetWidth;
         if (got < 1) continue;
         if (Math.abs(got - want) > 1.5) {

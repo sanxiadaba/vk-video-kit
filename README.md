@@ -3,9 +3,9 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 5-layer visual language of 37 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only, and the visual system is desktop-only with a 44px minimum type size. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 5-layer visual language of 36 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only, and the visual system is desktop-only with a 44px minimum type size. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**37 个标签、5 层、1920×1080，桌面 only，只有白纸。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**36 个标签、5 层、1920×1080，桌面 only，只有白纸。**
 
 ![vk 代码窗](docs/cover.png)
 
@@ -13,9 +13,9 @@
 
 - **分则独立。** 每个标签离开兄弟节点也能成立：不伪造内容，不依赖父级上下文，不要求作者补一次性 CSS。
 - **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条 44px 字号地板。
-- **真实文件是唯一真相。** 代码、终端、diff、树、字节、栈帧、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
+- **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有时间轴、没有动效。输出就是一张静帧，动效在剪辑层做。
-- **文档也是库。** 37 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
+- **文档也是库。** 36 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
 
 ## 五层
 
@@ -24,16 +24,16 @@
 | L1 原子 | 8 | `vk-box` `vk-text` `vk-icon` `vk-img` `vk-rule` `vk-mark` `vk-window` `vk-keys` |
 | L2 排布 | 4 | `vk-stack` `vk-row` `vk-grid` `vk-canvas` |
 | L3 器械 | 19 | `vk-title` `vk-list` `vk-tag` `vk-callout` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-figure` `vk-tree` `vk-cells` `vk-bytes` `vk-steps` `vk-quote` `vk-bits` `vk-bars` `vk-asm` `vk-timeline` |
-| L4 关系 | 5 | `vk-edge` `vk-note` `vk-pin` `vk-ring` `vk-spotlight` |
+| L4 关系 | 4 | `vk-edge` `vk-pin` `vk-ring` `vk-spotlight` |
 | L5 页面 | 1 | `vk-page` |
 
-L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、表格、公式、树、内存格、字节、栈帧、地址空间、汇编、时间线、引用图、字节布局板、执行轨迹。时间轴和叙事仍然不进库，用 canvas + box + edge 组合。
+L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、表格、公式、树、内存格、字节、汇编、时间线、字节布局板。时间轴和叙事仍然不进库，用 canvas + box + edge 组合。
 
 ## 规格页
 
-`npm run build` 生成的不是组件文档，而是 37 张规格页：
+`npm run build` 生成的不是组件文档，而是 36 张规格页：
 
-- **索引**：37 格总览（层 / 名字 / 标签），8 列 × 5 行；一屏装得下，不滚动。
+- **索引**：36 个组件，8 列 × 5 行；一屏装得下，不滚动（末排留 4 格）。
 - **每个组件一页**：一行元信息（层 · 标签 · 名字 · 上下页 · 序号）+ 该组件的标准形态；**单镜头**，没有成品、没有用法、没有解剖。
 - 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`。
 - 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
@@ -68,7 +68,7 @@ npx vk build page.html   # 读取 src 或内联源码块，把高亮/公式/字�
 npx vk check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 npx vk shot page.html    # 出一张 1920×1080
 npx vk serve 8099        # 开发服务器；改 .c 刷新即见
-npx vk tags              # 37 个标签
+npx vk tags              # 36 个标签
 npx vk doc vk-code       # 某个标签的属性
 npx vk icons arrow       # 搜图标名
 ```
@@ -128,7 +128,7 @@ npm run shot -- _site/specimen/vk-code.html
 npx vk shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
 ```
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 37 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 36 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 

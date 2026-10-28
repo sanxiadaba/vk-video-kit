@@ -1,4 +1,4 @@
-import { esc, dedent, textSource, precompiledSource, numAttr, hash32, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead } from './window.mjs';
 
@@ -212,7 +212,6 @@ export class VkFigure extends VkElement {
     const fit = this.getAttribute('fit') || 'cover';
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
     const chrome = this.getAttribute('chrome') || 'min';
-    const bare = this.hasAttribute('bare');
 
     if (!this._shell) {
       this._captionSlot = this.querySelector(':scope > figcaption');
@@ -236,9 +235,7 @@ export class VkFigure extends VkElement {
       fillSlot(this._slot, body);
     }
 
-    this._shell.dataset.chrome = bare ? 'none' : chrome;
-    if (bare) this._shell.dataset.bare = '';
-    else delete this._shell.dataset.bare;
+    this._shell.dataset.chrome = chrome;
 
     this._fig.textContent = fig ? `FIG ${fig}` : '';
     this._fig.style.display = fig ? '' : 'none';
@@ -704,16 +701,7 @@ export class VkBytes extends VkElement {
     const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
     const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
     const live = this.getAttribute('highlight');
-    const liveHl = new Set();
-    if (live != null) {
-      for (const part of live.split(',')) {
-        const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-        if (!m) continue;
-        const a = parseInt(m[1], 10);
-        const b = parseInt(m[2] || m[1], 10);
-        for (let i = a; i <= b; i++) liveHl.add(d.start + i);
-      }
-    }
+    const liveHl = live == null ? new Set() : new Set([...indexSet(live)].map((i) => d.start + i));
     const rows = [];
     for (let at = 0; at < d.bytes.length; at += cols) {
       const chunk = d.bytes.slice(at, at + cols);
@@ -842,18 +830,8 @@ export class VkCells extends VkElement {
       return Number.isFinite(n) && n >= 1 && n <= 8 ? n : 1;
     });
     const total = spans.reduce((a, b) => a + b, 0);
-    const idxSet = (name) => {
-      const out = new Set();
-      for (const part of (this.getAttribute(name) || '').split(',')) {
-        const m = part.trim().match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-        if (!m) continue;
-        const a = parseInt(m[1], 10);
-        const b = m[2] ? parseInt(m[2], 10) : a;
-        for (let i = a; i <= b; i++) if (i >= 0 && i < values.length) out.add(i);
-      }
-      return out;
-    };
-    const padSet = idxSet('pad');
+    const idxSet = (name) => new Set([...indexSet(this.getAttribute(name))].filter((i) => i < values.length));
+    const filledSet = idxSet('filled');
     const markSet = idxSet('marked');
     const addr = this.getAttribute('addr') || '';
     let flag = parseInt(this.getAttribute('flag') || '-1', 10);
@@ -888,7 +866,7 @@ export class VkCells extends VkElement {
     const base = addr ? parseInt(addr, 16) : NaN;
     const pad = addr && addr.startsWith('0x') ? Math.max(4, addr.length - 2) : 0;
     const fmtAddr = (n) => (Number.isFinite(n) ? '0x' + n.toString(16).padStart(pad, '0') : '');
-    const byteMode = this.hasAttribute('offsets') || this.hasAttribute('align') || this.getAttribute('direction') === 'rtl';
+    const byteMode = this.hasAttribute('offsets') || this.hasAttribute('ruler') || this.getAttribute('direction') === 'rtl';
     const direction = this.getAttribute('direction') === 'rtl' ? 'rtl' : 'ltr';
 
     // 地址按"这个字段从第几个字节开始"算：跨格字段后面的字段要跳过它占的宽度。
@@ -903,7 +881,7 @@ export class VkCells extends VkElement {
         const isFlag = flag === i;
         const label = isFlag ? `${labels[i] || `[${i}]`} · 越界` : labels[i];
         const span = spans[i];
-        const marks = `${isFlag ? ' data-flag="1"' : ''}${padSet.has(i) ? ' data-pad="1"' : ''}${markSet.has(i) ? ' data-mark="1"' : ''}`;
+        const marks = `${isFlag ? ' data-flag="1"' : ''}${filledSet.has(i) ? ' data-filled="1"' : ''}${markSet.has(i) ? ' data-mark="1"' : ''}`;
         const startOff = offsets[i] * stride;
         const ruler = byteMode
           ? `<span class="vk-cell-bytes" aria-hidden="true">${Array.from({ length: span }, (_, k) => {
@@ -912,7 +890,7 @@ export class VkCells extends VkElement {
               return `<span class="vk-cell-byte" data-byte="${byteOff}" data-meta>${addr ? fmtAddr(base + byteOff) : `+${byteOff}`}</span>`;
             }).join('')}</span>`
           : '';
-        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('align') ? ' data-align="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
+        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('ruler') ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(v)}</span>
           ${ruler}
@@ -1162,7 +1140,7 @@ export class VkBars extends VkElement {
     const attrMax = Number(this.getAttribute('max'));
     const max = Number.isFinite(attrMax) && attrMax > 0 ? attrMax : Math.max(...rows.map((r) => r.value), 1);
     const unit = this.getAttribute('unit') || '';
-    const log = this.getAttribute('mode') === 'log';
+    const log = this.getAttribute('scale') === 'log';
     const denom = log ? Math.log1p(max) : max;
     const items = rows
       .map((r) => {

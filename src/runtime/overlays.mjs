@@ -9,7 +9,7 @@
  * 放进 vk-canvas 或 vk-page 正文；目标用 #id@part:arg 寻址。
  * 隐藏的镜头没有盒子，直接不画——和 vk-edge 一样。
  */
-import { VK, EDGES, VkElement, define, numAttr, resolveTarget, takeSlot, fillSlot } from './base.mjs';
+import { VK, EDGES, VkElement, define, numAttr, resolveAnchor, takeSlot, fillSlot } from './base.mjs';
 import { visualToLocal } from './geometry.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
@@ -19,12 +19,12 @@ const tag = (name, attrs = {}) => {
   return n;
 };
 
-function targetsOf(el, host) {
+function anchorsOf(el, host) {
   return (el.getAttribute('for') || '')
-    .split(',')
+    .split(';')
     .map((s) => s.trim())
     .filter(Boolean)
-    .map((expr) => resolveTarget(host, expr, el))
+    .map((expr) => resolveAnchor(host, expr, el))
     .filter(Boolean);
 }
 
@@ -79,8 +79,8 @@ class VkOverlay extends VkElement {
     return { host, hr, w, h };
   }
 
-  _box(el, host, hr) {
-    const b = visualToLocal(el.getBoundingClientRect(), hr, host.offsetWidth);
+  _box(rect, host, hr) {
+    const b = visualToLocal(rect, hr, host.offsetWidth);
     return { ...b, cx: b.x + b.w / 2, cy: b.y + b.h / 2 };
   }
 
@@ -100,22 +100,22 @@ export class VkRing extends VkOverlay {
     const f = this._frame();
     if (!f || !this._svg) return;
     this._svg.replaceChildren();
-    const targets = targetsOf(this, f.host);
+    const targets = anchorsOf(this, f.host);
     if (!targets.length) {
       this._warnOnce('target', '找不到 for 目标，圈选没有画');
       return;
     }
     this._svg.dataset.tone = this._tone();
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 40 }));
-    const pad = numAttr(this, 'pad', { min: 0, max: 80, fallback: 8 });
+    const pad = numAttr(this, 'pad-px', { min: 0, max: 80, fallback: 8 });
     const width = numAttr(this, 'width', { min: 1, max: 12, fallback: 4 });
     this._svg.style.setProperty('--vk-ring-w', width + 'px');
     if (this.hasAttribute('dash')) this._svg.dataset.dash = '1';
     else delete this._svg.dataset.dash;
-    const shape = this.getAttribute('shape') || 'ellipse';
+    const shape = this.getAttribute('variant') || 'ellipse';
 
-    for (const el of targets) {
-      const b = this._box(el, f.host, f.hr);
+    for (const a of targets) {
+      const b = this._box(a.rect, f.host, f.hr);
       if (shape === 'rect') {
         this._svg.append(
           tag('rect', {
@@ -168,7 +168,7 @@ export class VkSpotlight extends VkOverlay {
     const f = this._frame();
     if (!f || !this._svg) return;
     this._svg.replaceChildren();
-    const targets = targetsOf(this, f.host);
+    const targets = anchorsOf(this, f.host);
     if (!targets.length) {
       this._warnOnce('target', '找不到 for 目标，聚光没有画');
       return;
@@ -176,7 +176,7 @@ export class VkSpotlight extends VkOverlay {
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 30 }));
     const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.72 });
     const feather = numAttr(this, 'feather', { min: 0, max: 120, fallback: 24 });
-    const shape = this.getAttribute('shape') === 'ellipse' ? 'ellipse' : 'rect';
+    const shape = this.getAttribute('variant') === 'ellipse' ? 'ellipse' : 'rect';
     const maskId = `${this._uid}-m`;
     const filterId = `${this._uid}-f`;
     const defs = tag('defs');
@@ -188,8 +188,8 @@ export class VkSpotlight extends VkOverlay {
     const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: f.w, height: f.h });
     mask.append(tag('rect', { x: 0, y: 0, width: f.w, height: f.h, fill: 'white' }));
     const holes = tag('g', feather > 0 ? { filter: `url(#${filterId})` } : {});
-    for (const el of targets) {
-      const b = this._box(el, f.host, f.hr);
+    for (const a of targets) {
+      const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
       if (shape === 'ellipse') {
         holes.append(tag('ellipse', { cx: b.cx, cy: b.cy, rx: b.w / 2 + pad, ry: b.h / 2 + pad, fill: 'black' }));
@@ -201,8 +201,8 @@ export class VkSpotlight extends VkOverlay {
     defs.append(mask);
     this._svg.append(defs);
     const outline = tag('g', { class: 'vk-spotlight-ring' });
-    for (const el of targets) {
-      const b = this._box(el, f.host, f.hr);
+    for (const a of targets) {
+      const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
       if (shape === 'ellipse') {
         outline.append(tag('ellipse', { cx: b.cx, cy: b.cy, rx: b.w / 2 + pad, ry: b.h / 2 + pad }));
@@ -284,14 +284,14 @@ export class VkPin extends VkOverlay {
     bd.style.left = bd.style.top = '';
     const bw = bd.offsetWidth || 360;
     const bh = bd.offsetHeight || 120;
-    const gap = numAttr(this, 'gap', { min: 0, max: 240, fallback: 24 });
-    const target = resolveTarget(f.host, this.getAttribute('for') || '', this);
+    const gap = numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 });
+    const target = resolveAnchor(f.host, this.getAttribute('for') || '', this);
     let left = numAttr(this, 'x', { min: -4000, max: 4000, fallback: NaN });
     let top = numAttr(this, 'y', { min: -4000, max: 4000, fallback: NaN });
     let anchor = null;
 
     if (target) {
-      anchor = this._box(target, f.host, f.hr);
+      anchor = this._box(target.rect, f.host, f.hr);
       if (!Number.isFinite(left) || !Number.isFinite(top)) {
         let side = this.getAttribute('side') || 'auto';
         if (side === 'auto') {

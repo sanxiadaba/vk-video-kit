@@ -12,8 +12,8 @@
    组件吐出来的 <p>/<ul>/<figure> 不许带 UA 外边距：
    纵向节奏只能来自布局 gap 或组件显式声明的 margin。 */
 :where(vk-title, vk-text, vk-list, vk-tag, vk-callout, vk-code, vk-term, vk-diff,
-  vk-table, vk-math, vk-figure, vk-window, vk-tree, vk-keys, vk-note,
-  vk-cells, vk-bytes, vk-frames, vk-steps, vk-mark, vk-quote, vk-bits, vk-bars)
+  vk-table, vk-math, vk-figure, vk-window, vk-tree, vk-keys,
+  vk-cells, vk-bytes, vk-steps, vk-mark, vk-quote, vk-bits, vk-bars)
   :where(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, figure, blockquote, pre) {
   margin-block: 0;
 }
@@ -159,11 +159,11 @@ vk-icon {
   vertical-align: -0.14em;
   font-size: var(--vk-icon-size, 64px);
 }
-vk-icon[scale='sm'] { --vk-icon-size: 48px; }
-vk-icon[scale='md'] { --vk-icon-size: 64px; }
-vk-icon[scale='lg'] { --vk-icon-size: 80px; }
-vk-icon[scale='xl'] { --vk-icon-size: 96px; }
-vk-icon[scale='inherit'] { --vk-icon-size: 1em; }
+vk-icon[size='sm'] { --vk-icon-size: 48px; }
+vk-icon[size='md'] { --vk-icon-size: 64px; }
+vk-icon[size='lg'] { --vk-icon-size: 80px; }
+vk-icon[size='xl'] { --vk-icon-size: 96px; }
+vk-icon[size='inherit'] { --vk-icon-size: 1em; }
 
 vk-icon .vk-icon {
   display: inline-flex;

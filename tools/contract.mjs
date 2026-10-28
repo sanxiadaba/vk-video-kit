@@ -12,7 +12,7 @@ import fs from 'node:fs';
 import { chromium } from 'playwright-core';
 import { startServer } from '../cli/serve.mjs';
 import { SITE } from './lib/paths.mjs';
-import { TAGS, TAG_NAMES, isContent, isHidden } from '../src/registry.mjs';
+import { TAGS, TAG_NAMES, isHidden } from '../src/registry.mjs';
 import { EFFECTS } from '../src/effects.mjs';
 import { diffSnap, effectHit, valuesFor } from './lib/contract-core.mjs';
 import { PROBES, EFFECT_OVERRIDES, VISUAL_EXEMPT, EFFECT_ANY, EFFECT_ANY_BUDGET, SHARED_VALUES, visualExemptReason } from './lib/contract-probes.mjs';
@@ -130,7 +130,7 @@ function snapshotInPage({ tag, props }) {
     'grid-template-columns', 'row-gap', 'column-gap', 'list-style-type',
     'flex-wrap', 'align-items', 'align-self', 'justify-content', 'justify-items', 'flex-direction', 'flex-grow', 'grid-template-rows',
     'overflow', 'overflow-x', 'overflow-y', 'left', 'top', 'background-image', 'background-size',
-    '--vk-note-line', '--vk-box-line', '--vk-box-bg', '--vk-mark-fill', '--vk-icon-size',
+    '--vk-box-line', '--vk-box-bg', '--vk-mark-fill', '--vk-icon-size',
   ];
   const pathOf = (el, root) => {
     const parts = [];
@@ -248,10 +248,10 @@ function visualInPage(tag) {
   const sr = stage.getBoundingClientRect();
   const out = [];
   for (const el of root.querySelectorAll('*')) {
-    if (el.closest('svg') || el.closest('.katex') || el.closest('.vk-sr') || el.closest('.vk-anno-lines')) continue;
+    if (el.closest('svg') || el.closest('.katex') || el.closest('.vk-sr')) continue;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-    const inChrome = !!el.closest('.vk-hd, .vk-anno-notes');
+    const inChrome = !!el.closest('.vk-hd');
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
@@ -379,6 +379,23 @@ async function countSel(tag, sel) {
 
 /** 每个标签只看它自己声明的属性：55 个属性 × 整棵子树是这里最贵的一步。 */
 const BASE_PROPS = ['display', 'visibility', 'opacity'];
+
+/** 内容属性的探针值：只求“改得动”，不求语义正确。 */
+function contentProbeValue(spec) {
+  if (spec.values) {
+    const alt = spec.values.filter((v) => v !== spec.default);
+    return alt.length ? alt[alt.length - 1] : spec.values[0];
+  }
+  if (spec.type === 'int' || spec.type === 'num') {
+    const base = Number(spec.default ?? 0) || 0;
+    const step = Number(spec.step) || 1;
+    const v = spec.min !== undefined && Number(spec.min) !== base ? Number(spec.min) : base + step;
+    return String(v);
+  }
+  if (spec.type === 'selector') return 'vk-text';
+  if (spec.type === 'lines') return '1-2';
+  return 'VKPROBE';
+}
 function stylePropsFor(tag) {
   const set = new Set(BASE_PROPS);
   const add = (eff) => {
@@ -408,17 +425,32 @@ try {
     if (baseVisual.length) failures.push(`${tag}: 默认态画面问题 ${JSON.stringify(baseVisual.slice(0, 3))}`);
     const visualSeen = new Set(baseVisual.length ? [JSON.stringify(baseVisual.slice(0, 3))] : []);
 
-    const missingEffect = [];
+    const buildOnly = [];
     let attrChecked = 0;
 
     for (const [name, spec] of Object.entries(attrs)) {
-      if (isContent(tag, name) || isHidden(tag, name)) continue;
+      if (isHidden(tag, name)) continue;
       const key = `${tag}.${name}`;
+      if (spec.build) {
+        buildOnly.push(name);
+        continue;
+      }
       const probe = PROBES[tag]?.[name];
       const effect = EFFECT_OVERRIDES[key] || probe?.effect || EFFECTS[tag]?.[name];
       const any = EFFECT_ANY.find((e) => e.tag === tag && e.attr === name);
       if (!effect && !any) {
-        missingEffect.push(name);
+        // 内容属性：没登记选择器，但必须真的被渲染出来——改一个探针值，子树得变。
+        const before = await page.evaluate((t) => document.querySelector(t)?.innerHTML || '', tag);
+        const has = original.some(([k]) => k === name);
+        const value = spec.type === 'bool' ? (has ? null : '') : contentProbeValue(spec);
+        await setAttr(tag, name, value);
+        const after = await page.evaluate((t) => document.querySelector(t)?.innerHTML || '', tag);
+        await restore(tag, original);
+        if (before === after) failures.push(`${key}: 改了 ${JSON.stringify(value)} 但子树没有变化（若只在构建期生效，标 build: true）`);
+        else {
+          attrChecked++;
+          checked.push({ tag, name });
+        }
         continue;
       }
       const eff = effect || { kind: 'any', reason: any.reason };
@@ -498,10 +530,9 @@ try {
       }
     }
 
-    if (missingEffect.length) {
-      failures.push(`${tag}: ${missingEffect.length} 个公开属性缺 effect（${missingEffect.join(', ')}）`);
-    }
-    console.log(`${missingEffect.length ? '✗' : '✓'} ${tag}  ${attrChecked}/${Object.keys(attrs).length} 个公开属性有声明`);
+    console.log(
+      `${failures.length === failedBefore ? '✓' : '✗'} ${tag}  ${attrChecked}/${Object.keys(attrs).length} 个公开属性有声明${buildOnly.length ? `（${buildOnly.length} 个构建期属性）` : ''}`
+    );
 
     for (const s of TAGS[tag].states || []) {
       await setAttr(tag, 'state', s);

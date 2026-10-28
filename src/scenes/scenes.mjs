@@ -161,7 +161,7 @@ export const SCENES = [
   <vk-box id="mem" x="700" y="280" w="480" border="strong" radius="lg" pad-y="sm" surface="paper">
     <vk-text size="heading" mono align="center">一块内存</vk-text>
   </vk-box>
-  <vk-edge from="#buf" to="#mem" label="指向" tension="42" arrow-style="solid" arrow-size="36"></vk-edge>
+  <vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36"></vk-edge>
 </vk-canvas>`,
   },
 
@@ -299,33 +299,33 @@ export const SCENES = [
     body: s`
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
-    <vk-icon name="terminal" scale="lg"></vk-icon>
+    <vk-icon name="terminal" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">终端</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
-    <vk-icon name="code" scale="lg"></vk-icon>
+    <vk-icon name="code" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">源码</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
-    <vk-icon name="circle-x" scale="lg" tone="err"></vk-icon>
+    <vk-icon name="circle-x" size="lg" tone="err"></vk-icon>
     <vk-text size="label" mono ink="tertiary">错误</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
-    <vk-icon name="rocket" scale="lg"></vk-icon>
+    <vk-icon name="rocket" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">运行</vk-text>
   </vk-stack>
 </vk-row>
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
-    <vk-icon name="database" scale="lg"></vk-icon>
+    <vk-icon name="database" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">数据</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
-    <vk-icon name="git-branch" scale="lg"></vk-icon>
+    <vk-icon name="git-branch" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">分支</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
-    <vk-icon name="settings" scale="lg"></vk-icon>
+    <vk-icon name="settings" size="lg"></vk-icon>
     <vk-text size="label" mono ink="tertiary">设置</vk-text>
   </vk-stack>
 </vk-row>`,
@@ -356,20 +356,9 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-note',
-    body: s`
-<vk-stack gap="md">
-  <vk-note tone="accent" size="body">示例说明一。</vk-note>
-  <vk-note emphasis="soft" size="body">示例说明二。</vk-note>
-  <vk-note tone="err" size="body">示例说明三。</vk-note>
-  <vk-note tone="ok" size="body">示例说明四。</vk-note>
-</vk-stack>`,
-  },
-
-  {
     tag: 'vk-cells',
     body: s`
-<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" pad="2" addr="0x7ffc" stride="1" offsets></vk-cells>`,
+<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" filled="2" addr="0x7ffc" offsets></vk-cells>`,
   },
 
   {
@@ -409,7 +398,7 @@ export const SCENES = [
   {
     tag: 'vk-bars',
     body: s`
-<vk-bars max="1000000" mode="log" unit="ns">
+<vk-bars max="1000000" scale="log" unit="ns">
   <i value="1" label="CPU"></i>
   <i value="120" label="内存"></i>
   <i value="1000000" label="磁盘"></i>
@@ -467,7 +456,7 @@ export const SCENES = [
   <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="heading" mono>0x2a</vk-text>
   </vk-box>
-  <vk-ring for="#ring-target" shape="ellipse" tone="accent" pad="16" dash></vk-ring>
+  <vk-ring for="#ring-target@region:20%,20%,60%,60%" variant="ellipse" tone="accent" pad-px="16" dash></vk-ring>
 </vk-canvas>`,
   },
 

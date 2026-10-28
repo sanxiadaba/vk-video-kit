@@ -19,7 +19,7 @@ export const EFFECTS = {
     cols: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
     flag: { on: 'vk-cells', kind: 'style', prop: 'background-color' },
     spans: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
-    pad: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
+    filled: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
     marked: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
   },
 
@@ -36,12 +36,10 @@ export const EFFECTS = {
     'crop-label': { on: '.vk-fig-crop-label', kind: 'text' },
     chrome: { on: 'vk-figure .vk-hd', kind: 'style', prop: 'display' },
     w: { on: 'vk-figure', kind: 'geometry', prop: 'width' },
-    bare: { on: 'vk-figure', kind: 'style', prop: 'background-color' },
   },
 
   'vk-window': {
     title: { on: '.vk-file', kind: 'text' },
-    url: { on: '.vk-br-url', kind: 'dom' },
     chrome: { on: '.vk-hd', kind: 'style', prop: 'display' },
     tone: { on: '.vk-win', kind: 'style', prop: 'border-top-color' },
     pad: { on: '.vk-win-bd', kind: 'style', prop: 'padding-top' },
@@ -65,7 +63,7 @@ export const EFFECTS = {
 
   'vk-bars': {
     max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
-    mode: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     density: { on: '.vk-bar', kind: 'style', prop: 'line-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
   },
@@ -107,7 +105,7 @@ export const EFFECTS = {
   'vk-canvas': {
     w: { on: 'vk-canvas', kind: 'geometry', prop: 'width', skipVisual: true },
     h: { on: 'vk-canvas', kind: 'geometry', prop: 'height', skipVisual: true },
-    pad: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
+    'pad-px': { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   },
 
   'vk-page': {
@@ -126,7 +124,7 @@ export const EFFECTS = {
   'vk-icon': {
     tone: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
     ink: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-    scale: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
+    size: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
   },
 
   'vk-img': {
@@ -158,20 +156,6 @@ export const EFFECTS = {
     chrome: { on: 'vk-bytes', kind: 'dom', prop: '.vk-hd' },
   },
 
-  'vk-frames': {
-    active: { kind: 'any', reason: '只在 JSON 多帧模式生效；手写单帧没有 active' },
-    grows: { kind: 'any', reason: '只在 JSON 多帧模式生效；手写单帧没有生长方向' },
-    show: { kind: 'any', reason: 'all/values/addresses 由"值列 + 地址列"两个开关交叉表达，没有单一可比属性。' },
-    summary: { on: 'vk-frames', kind: 'dom', prop: '.vk-frames-hd' },
-    density: { on: '.vk-frame-slot, .vk-fm-row', kind: 'style', prop: 'min-height' },
-    chrome: { on: '.vk-frames-hd', kind: 'style', prop: 'display' },
-    frame: { on: '.vk-frame-n', kind: 'text' },
-    rbp: { on: '.vk-frames-meta', kind: 'text' },
-    rsp: { on: '.vk-frames-meta', kind: 'text' },
-    offsets: { on: '.vk-frames-manual', kind: 'attr', prop: 'data-offsets' },
-    registers: { on: 'vk-frames', kind: 'dom', prop: '.vk-fm-reg' },
-  },
-
   'vk-mark': {
     tone: { on: 'vk-mark', kind: 'style', prop: '--vk-mark-fill' },
     variant: { kind: 'any', reason: '三种形态分别用底色 / 内阴影 / 删除线，没有单一可比属性。' },
@@ -188,12 +172,6 @@ export const EFFECTS = {
     tone: { on: '.vk-callout', kind: 'style', prop: 'border-left-color' },
     size: { on: 'vk-callout', kind: 'style', prop: 'font-size' },
     flat: { on: '.vk-callout', kind: 'style', prop: 'background-color' },
-  },
-
-  'vk-note': {
-    tone: { on: '.vk-note', kind: 'style', prop: '--vk-note-line' },
-    size: { on: '.vk-note', kind: 'style', prop: 'font-size' },
-    emphasis: { on: '.vk-note', kind: 'style', prop: 'background-color' },
   },
 
   'vk-box': {
@@ -222,11 +200,11 @@ export const EFFECTS = {
   },
 
   'vk-edge': {
-    shape: { on: 'svg path', kind: 'attr', prop: 'd' },
+    variant: { on: 'svg path', kind: 'attr', prop: 'd' },
     tension: { on: 'svg path', kind: 'attr', prop: 'd' },
     'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
     'to-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
-    gap: { on: 'svg path', kind: 'attr', prop: 'd' },
+    'gap-px': { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
     emphasis: { kind: 'any', reason: 'solid 等于默认态；ghost 改用细线，没有可比的单一属性' },
@@ -236,6 +214,7 @@ export const EFFECTS = {
     dash: { on: 'svg path', kind: 'style', prop: 'stroke-dasharray' },
     label: { on: '.vk-edge-label', kind: 'text' },
     cap: { on: 'svg circle', kind: 'style', prop: 'display' },
+    z: { on: 'vk-edge', kind: 'style', prop: 'z-index' },
   },
 
   'vk-code': {
@@ -269,8 +248,7 @@ const COMMON_TAGS = [
   'vk-box', 'vk-text', 'vk-stack', 'vk-row', 'vk-grid', 'vk-rule', 'vk-title',
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-figure', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
-  'vk-frames', 'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-note',
-  'vk-memory', 'vk-asm', 'vk-timeline', 'vk-ref', 'vk-board', 'vk-trace',
+  'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -287,7 +265,7 @@ Object.assign(EFFECTS['vk-text'], {
 });
 Object.assign(EFFECTS['vk-icon'], {
   emphasis: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-  scale: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
+  size: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
 });
 Object.assign(EFFECTS['vk-img'], {
   border: { on: 'vk-img .vk-img', kind: 'style', prop: 'border-top-width' },
@@ -329,7 +307,6 @@ Object.assign(EFFECTS['vk-grid'], {
   justify: { on: 'vk-grid', kind: 'style', prop: 'justify-items' },
 });
 Object.assign(EFFECTS['vk-edge'], {
-  clearance: { on: 'svg path', kind: 'attr', prop: 'd' },
   'label-size': { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
   'label-dx': { on: '.vk-edge-label', kind: 'style', prop: 'left' },
   'label-dy': { on: '.vk-edge-label', kind: 'style', prop: 'top' },
@@ -337,26 +314,12 @@ Object.assign(EFFECTS['vk-edge'], {
 Object.assign(EFFECTS['vk-tree'], {
   summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
 });
-EFFECTS['vk-annotate'] = {
-  w: { on: '.vk-anno-notes', kind: 'geometry', prop: 'width', skipVisual: true },
-};
 Object.assign(EFFECTS['vk-canvas'], {
-  inset: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   overflow: { on: 'vk-canvas', kind: 'style', prop: 'overflow-x', skipVisual: true },
   grid: { on: 'vk-canvas', kind: 'style', prop: 'background-image' },
 });
 
 /* ---------------------------------------------------------- 5.0 新件 / 升级 */
-
-Object.assign((EFFECTS['vk-memory'] ||= {}), {
-  title: { on: '.vk-mem-title', kind: 'text' },
-  addr: { on: '.vk-mem-note', kind: 'text' },
-  unit: { on: '.vk-mem-meta', kind: 'text' },
-  mode: { on: '.vk-mem-row', kind: 'geometry', prop: 'height' },
-  show: { kind: 'any', reason: 'all/values/addresses 由地址列与尺寸列交叉表达，没有单一可比属性。' },
-  orientation: { on: '.vk-mem-bd', kind: 'style', prop: 'flex-direction' },
-  density: { on: '.vk-mem-row', kind: 'style', prop: 'min-height' },
-});
 
 Object.assign((EFFECTS['vk-asm'] ||= {}), {
   title: { on: '.vk-asm-file', kind: 'text' },
@@ -383,10 +346,10 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
   emphasis: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
-  gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
+  'gap-px': { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
-  n: { on: 'vk-pin', kind: 'dom', prop: '.vk-pin-n:not([hidden])' },
+  n: { on: '.vk-pin-n', kind: 'text' },
   z: { on: 'vk-pin', kind: 'style', prop: 'z-index' },
   leader: { kind: 'any', reason: '引线有无/形状都改 path' },
   side: { kind: 'any', reason: '自动贴边，位置随目标变化' },
@@ -395,8 +358,8 @@ Object.assign((EFFECTS['vk-pin'] ||= {}), {
 });
 
 Object.assign((EFFECTS['vk-ring'] ||= {}), {
-  shape: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
-  pad: { on: '.vk-ring-shape', kind: 'geometry', prop: 'width' },
+  variant: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
+  'pad-px': { on: '.vk-ring-shape', kind: 'geometry', prop: 'width' },
   tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
   dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray' },
   width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
@@ -406,14 +369,14 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
   dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
   feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
-  shape: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
+  variant: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
   z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },
 });
 
 Object.assign(EFFECTS['vk-cells'], {
   offsets: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell-byte' },
   direction: { kind: 'any', reason: '只在字节模式下改变字节尺方向' },
-  align: { kind: 'any', reason: '只在字节模式下画对齐括号' },
+  ruler: { kind: 'any', reason: '只在字节模式下画对齐括号' },
 });
 
 Object.assign(EFFECTS['vk-bytes'], {
@@ -432,24 +395,6 @@ Object.assign((EFFECTS['vk-rule'] ||= {}), {
 Object.assign((EFFECTS['vk-steps'] ||= {}), {
   orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
 });
-
-Object.assign((EFFECTS['vk-ref'] ||= {}), {
-  addr: { on: '.vk-ref-base', kind: 'text' },
-  address: { on: '.vk-ref-at', kind: 'style', prop: 'display' },
-  shape: { on: '.vk-ref-path', kind: 'attr', prop: 'd' },
-});
-
-Object.assign((EFFECTS['vk-board'] ||= {}), {
-  addr: { on: '.vk-board-unit', kind: 'text' },
-  address: { on: '.vk-board-b', kind: 'text' },
-  unit: { on: '.vk-board-unit', kind: 'text' },
-});
-
-Object.assign((EFFECTS['vk-trace'] ||= {}), {
-  cols: { on: '.vk-trace', kind: 'dom', prop: '.vk-trace-h' },
-  current: { on: '.vk-trace-row', kind: 'style', prop: 'background-color' },
-});
-
 
 Object.assign(EFFECTS['vk-asm'], {
   'address-label': { on: '.vk-asm-a', kind: 'text' },
