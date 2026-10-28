@@ -241,10 +241,11 @@ function anchorCapacity(node) {
     return r ? { from: r[0], to: r[1] } : null;
   }
   if (tag === 'vk-cells') {
-    const n = (attr(node, 'values') || '').split('|').filter((s) => s.trim()).length;
-    const spans = (attr(node, 'spans') || '')
-      .split('|')
-      .map((s) => parseInt(s.trim(), 10))
+    // 一格一个 <i>：格数 = 子节点数，字节数 = 各格 span 之和。
+    const items = (node.childNodes || []).filter((n) => n.tagName === 'i');
+    const n = items.length;
+    const spans = items
+      .map((el) => parseInt((el.attrs || []).find((a) => a.name === 'span')?.value || '1', 10))
       .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
     const total = spans.reduce((a, b) => a + b, 0);
     // @cell 指字段；@byte 指字节，只有开了字节尺（offsets/align/direction）才存在。
@@ -420,6 +421,36 @@ function validateRefs(doc, file, errors) {
 }
 
 /** 构建期校验：作者页面的枚举/范围/布尔/图标名必须在 registry 内，不能静默。 */
+function editDistance(a, b) {
+  const m = a.length;
+  const n = b.length;
+  if (!m) return n;
+  if (!n) return m;
+  let prev = Array.from({ length: n + 1 }, (_, i) => i);
+  for (let i = 1; i <= m; i++) {
+    const cur = [i];
+    for (let j = 1; j <= n; j++) {
+      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
+    }
+    prev = cur;
+  }
+  return prev[n];
+}
+
+/** 拼错时给最接近的合法值；差太远就不猜，免得误导。 */
+function closestOf(word, list) {
+  let best = null;
+  let bestD = Infinity;
+  for (const w of list) {
+    const d = editDistance(String(word).toLowerCase(), String(w).toLowerCase());
+    if (d < bestD) {
+      bestD = d;
+      best = w;
+    }
+  }
+  return bestD <= Math.max(2, Math.floor(String(word).length / 2)) ? best : null;
+}
+
 function validateAuthorHtml(doc, file) {
   const errors = [];
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
@@ -459,7 +490,10 @@ function validateAuthorHtml(doc, file) {
       const spec = def.attrs?.[name];
       const where = `${file}:${lineOf(node)} <${tag}>`;
       if (!spec) {
-        errors.push(`${where} 未知属性 ${name}="${raw}"；可用：${Object.keys(def.attrs || {}).join(', ') || '无'}`);
+        const hit = closestOf(name, Object.keys(def.attrs || {}));
+        errors.push(
+          `${where} 未知属性 ${name}="${raw}"${hit ? `；你是想写 ${hit} 吗` : ''}；可用：${Object.keys(def.attrs || {}).join(', ') || '无'}`
+        );
         continue;
       }
       if (spec.type === 'bool') {
@@ -467,7 +501,8 @@ function validateAuthorHtml(doc, file) {
         continue;
       }
       if (spec.values && !spec.values.includes(raw)) {
-        errors.push(`${where} ${name}="${raw}" 不在 ${spec.values.join(' / ')} 内`);
+        const hit = closestOf(raw, spec.values);
+        errors.push(`${where} ${name}="${raw}" 不在 ${spec.values.join(' / ')} 内${hit ? `；你是想写 ${hit} 吗` : ''}`);
         continue;
       }
       if (spec.type === 'num' || spec.type === 'int') {

@@ -17,15 +17,11 @@ export const EFFECTS = {
 
   'vk-cells': {
     cols: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
-    flag: { on: 'vk-cells', kind: 'style', prop: 'background-color' },
-    spans: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
-    filled: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
-    marked: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
   },
 
   'vk-term': {
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
-    density: { on: '.vk-bd', kind: 'style', prop: 'font-size' },
+    density: { on: '.vk-line', kind: 'style', prop: 'min-height' },
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
   },
 
@@ -57,14 +53,13 @@ export const EFFECTS = {
     sign: { on: '.vk-bit', kind: 'style', prop: 'background-color' },
     tone: { on: '.vk-bit', kind: 'style', prop: 'color' },
     width: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit' },
-    fields: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-field' },
     bytes: { on: '.vk-bits', kind: 'style', prop: 'border-bottom-width' },
   },
 
   'vk-bars': {
     max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
-    density: { on: '.vk-bar', kind: 'style', prop: 'line-height' },
+    density: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
   },
 
@@ -138,6 +133,7 @@ export const EFFECTS = {
 
   'vk-rule': {
     variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
+    tone: { on: 'vk-rule', kind: 'style', prop: 'background-color' },
   },
 
   'vk-tree': {
@@ -221,7 +217,7 @@ export const EFFECTS = {
     highlight: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     focus: { on: '.vk-line', kind: 'style', prop: 'opacity' },
     fold: { on: 'svg', kind: 'dom', prop: '.vk-line' },
-    density: { on: '.vk-bd', kind: 'style', prop: 'font-size' },
+    density: { on: '.vk-line', kind: 'style', prop: 'min-height' },
     chrome: { on: 'vk-code', kind: 'dom', prop: '.vk-hd' },
     numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
     // fit 是内容相关状态：换行后高度由内容决定，只验证 white-space 变了。
@@ -325,7 +321,7 @@ Object.assign((EFFECTS['vk-asm'] ||= {}), {
   title: { on: '.vk-asm-file', kind: 'text' },
   bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b' },
   address: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-a' },
-  density: { on: '.vk-asm-row', kind: 'style', prop: 'font-size' },
+  density: { on: '.vk-asm-row', kind: 'style', prop: 'min-height' },
   chrome: { on: '.vk-asm-hd', kind: 'style', prop: 'display' },
   highlight: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-hl' },
   focus: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-dim' },
@@ -340,7 +336,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   title: { on: '.vk-tl-title', kind: 'text' },
   variant: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-lanes' },
   steps: { kind: 'any', reason: '只在 lanes 模式下改变步数' },
-  density: { on: '.vk-tl-date', kind: 'style', prop: 'height' },
+  density: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {

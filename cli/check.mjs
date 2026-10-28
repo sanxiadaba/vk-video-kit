@@ -64,7 +64,8 @@ try {
   const linesFor = (it) => {
     const lines = [];
     for (const x of it.issues) {
-      if (x.type === 'font') lines.push(`字号 ${x.fs} < 44：${x.what}`);
+      if (x.type === 'font') lines.push(`字号 ${x.fs} < 40：${x.what}`);
+      else if (x.type === 'font-content') lines.push(`正文落在 ${x.fs}（应 ≥52）：${x.what}`);
       else if (x.type === 'contrast') lines.push(`对比度 ${x.cr} < ${x.need}：${x.what}`);
       else if (x.type === 'safe') lines.push(`超出安全区：${x.what} ${x.box?.join(',') || ''}`);
       else if (x.type === 'overflow') lines.push(`超出画布：${x.what} ${x.box?.join(',') || ''}`);

@@ -108,7 +108,7 @@ export class VkRing extends VkOverlay {
     this._svg.dataset.tone = this._tone();
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 40 }));
     const pad = numAttr(this, 'pad-px', { min: 0, max: 80, fallback: 8 });
-    const width = numAttr(this, 'width', { min: 1, max: 12, fallback: 4 });
+    const width = numAttr(this, 'stroke', { min: 1, max: 12, fallback: 4 });
     this._svg.style.setProperty('--vk-ring-w', width + 'px');
     if (this.hasAttribute('dash')) this._svg.dataset.dash = '1';
     else delete this._svg.dataset.dash;

@@ -14,7 +14,7 @@ export const SCENES = [
   {
     tag: 'vk-code',
     body: s`
-<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" highlight="4" density="loose"></vk-code>`,
+<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" density="loose"></vk-code>`,
   },
 
   {
@@ -131,19 +131,19 @@ export const SCENES = [
   <vk-box id="name-a" x="0" y="120" w="240" radius="pill" pad-y="xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">a</vk-text>
   </vk-box>
-  <vk-box id="obj-1" x="560" y="120" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-1" x="560" y="120" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
-      <vk-text size="label" mono ink="muted">0x7f2a</vk-text>
+      <vk-text size="body" mono ink="muted">0x7f2a</vk-text>
     </vk-row>
   </vk-box>
   <vk-box id="name-b" x="0" y="300" w="240" radius="pill" pad-y="xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">b</vk-text>
   </vk-box>
-  <vk-box id="obj-2" x="560" y="300" w="560" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-2" x="560" y="300" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
     <vk-row gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
-      <vk-text size="label" mono ink="muted">0x7f2e</vk-text>
+      <vk-text size="body" mono ink="muted">0x7f2e</vk-text>
     </vk-row>
   </vk-box>
   <vk-edge from="#name-a" to="#obj-1" label="引用"></vk-edge>
@@ -250,7 +250,7 @@ export const SCENES = [
 <vk-window chrome="browser" url="http://127.0.0.1:5000/hello">
   <vk-stack gap="sm">
     <vk-text size="heading" weight="bold">示例内容</vk-text>
-    <vk-text size="label" ink="secondary">示例文字。</vk-text>
+    <vk-text size="body" ink="secondary">示例文字。</vk-text>
     <vk-row gap="sm" align="center">
       <vk-tag tone="ok">200 OK</vk-tag>
       <vk-text size="meta" mono ink="muted">text/html · 12 B</vk-text>
@@ -263,7 +263,7 @@ export const SCENES = [
     tag: 'vk-tree',
     body: s`
 <vk-box w="1200" surface="none">
-  <vk-tree title="app" active="src/parser.py" depth="4">
+  <vk-tree title="app" current="src/parser.py" depth="4">
     src/
       __init__.py
       ast.py
@@ -300,33 +300,33 @@ export const SCENES = [
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="terminal" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">终端</vk-text>
+    <vk-text size="body" mono ink="tertiary">终端</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="code" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">源码</vk-text>
+    <vk-text size="body" mono ink="tertiary">源码</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="circle-x" size="lg" tone="err"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">错误</vk-text>
+    <vk-text size="body" mono ink="tertiary">错误</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="rocket" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">运行</vk-text>
+    <vk-text size="body" mono ink="tertiary">运行</vk-text>
   </vk-stack>
 </vk-row>
 <vk-row gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="database" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">数据</vk-text>
+    <vk-text size="body" mono ink="tertiary">数据</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="git-branch" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">分支</vk-text>
+    <vk-text size="body" mono ink="tertiary">分支</vk-text>
   </vk-stack>
   <vk-stack gap="xs" align="center">
     <vk-icon name="settings" size="lg"></vk-icon>
-    <vk-text size="label" mono ink="tertiary">设置</vk-text>
+    <vk-text size="body" mono ink="tertiary">设置</vk-text>
   </vk-stack>
 </vk-row>`,
   },
@@ -358,7 +358,18 @@ export const SCENES = [
   {
     tag: 'vk-cells',
     body: s`
-<vk-cells values="0x2a|'h'|…" labels="int x|y|填充 3 字节" spans="4|1|3" filled="2" addr="0x7ffc" offsets></vk-cells>`,
+<vk-cells cols="6" addr="0x7ffc" offsets>
+  <i value="'h'" label="s[0]"></i>
+  <i value="'e'" label="s[1]"></i>
+  <i value="'l'" label="s[2]" mark></i>
+  <i value="'l'" label="s[3]"></i>
+  <i value="'o'" label="s[4]"></i>
+  <i value="\0" label="s[5]" filled></i>
+  <i value="0x2a" label="int x" span="4"></i>
+  <i value="'h'" label="char 1 字节"></i>
+  <i value="…" label="填充 3 字节" span="3" filled></i>
+  <i value="0xff" label="y" bad></i>
+</vk-cells>`,
   },
 
   {
@@ -376,7 +387,7 @@ export const SCENES = [
   {
     tag: 'vk-bytes',
     body: s`
-<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" highlight="0-5"></vk-bytes>`,
+<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" current="0-5"></vk-bytes>`,
   },
 
 
@@ -391,8 +402,11 @@ export const SCENES = [
   {
     tag: 'vk-bits',
     body: s`
-<vk-bits value="1 01111111 10000000000000000000000" width="32" sign
-         fields="31:符号|30-23:指数|22-0:尾数"></vk-bits>`,
+<vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign>
+  <i from="31" label="符号"></i>
+  <i from="30" to="23" label="指数"></i>
+  <i from="22" to="0" label="尾数"></i>
+</vk-bits>`,
   },
 
   {
@@ -409,7 +423,7 @@ export const SCENES = [
   {
     tag: 'vk-asm',
     body: s`
-<vk-asm title="main.s" lines="1-13" highlight="6" bytes
+<vk-asm title="main.s" lines="1-13" current="6" bytes
         order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">
   <script type="text/plain" data-vk-source>
 0000000000401136 <main>:
@@ -465,13 +479,13 @@ export const SCENES = [
     body: s`
 <vk-canvas w="1360" h="520">
   <vk-box x="80" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="label">非目标</vk-text>
+    <vk-text size="body">非目标</vk-text>
   </vk-box>
   <vk-box id="spot-target" x="520" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="label" mono>0x2a</vk-text>
+    <vk-text size="body" mono>0x2a</vk-text>
   </vk-box>
   <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="label">非目标</vk-text>
+    <vk-text size="body">非目标</vk-text>
   </vk-box>
   <vk-spotlight for="#spot-target" dim="0.72" feather="24"></vk-spotlight>
 </vk-canvas>`,

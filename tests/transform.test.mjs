@@ -158,12 +158,12 @@ test('源码里的 < 未转义时明确报错，不静默吞掉', async () => {
 test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套都在构建期报错', async () => {
   const cases = [
     ['<vk-nope></vk-nope>', /未知标签 <vk-nope>/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#nope">x</vk-pin>', /找不到 #nope/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@cell:9">x</vk-pin>', /越界/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@line:1">x</vk-pin>', /不支持 @line/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@point:120,50">x</vk-pin>', /0–100/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@side:middle">x</vk-pin>', /@side/],
-    ['<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@region:10,10,20">x</vk-pin>', /@region/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#nope">x</vk-pin>', /找不到 #nope/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@cell:9">x</vk-pin>', /越界/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@line:1">x</vk-pin>', /不支持 @line/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@point:120,50">x</vk-pin>', /0–100/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@side:middle">x</vk-pin>', /@side/],
+    ['<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@region:10,10,20">x</vk-pin>', /@region/],
     ['<vk-window><vk-code chrome="min">x</vk-code></vk-window>', /两条窗头/],
     ['<vk-bars><i label="a"></i></vk-bars>', /缺数字 value/],
   ];
@@ -174,7 +174,7 @@ test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套�
 
 test('引用关系：合法锚点不报错', async () => {
   const html =
-    '<vk-cells id="c" values="1|2"></vk-cells><vk-pin for="#c@cell:1">x</vk-pin>' +
+    '<vk-cells id="c"><i value="1"></i><i value="2"></i></vk-cells><vk-pin for="#c@cell:1">x</vk-pin>' +
     '<vk-pin for="#c@point:50%,100%">y</vk-pin>' +
     '<vk-pin for="#c@side:right">z</vk-pin>' +
     '<vk-pin for="#c@region:10%,10%,40%,40%">w</vk-pin>';

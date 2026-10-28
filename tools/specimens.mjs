@@ -36,7 +36,14 @@ a{color:inherit;text-decoration:none}
 a:hover{color:#1b3fd6}
 .spec-scale{width:1400px}
 .spec-scale > *{zoom:.73}
-.spec-card-tag{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;letter-spacing:-.06em}`;
+.spec-card-tag{white-space:nowrap;letter-spacing:-.06em}
+/* 索引卡：名字单行，行高按版式收紧。 */
+.spec-card-name,.spec-card-tag,.spec-card-name *,.spec-card-tag *{line-height:1!important;white-space:nowrap}
+/* 缩略图：vk-img 不受 w/h 约束，用 CSS 定高；cover 裁成等高的一条。 */
+vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:296px!important}
+
+
+`;
 
 function shell(title, body, depth = 1) {
   // depth：索引在站点根，规格页在 specimen/ 下一层；两者的相对路径前缀不同。
@@ -67,7 +74,7 @@ function nav(no, tag) {
   const prev = ORDER[i - 1];
   const next = ORDER[i + 1];
   const link = (t, label) =>
-    t ? `<a href="${t}.html"><vk-text size="micro" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
+    t ? `<a href="${t}.html"><vk-text size="meta" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
   return `<vk-row gap="sm" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
     next,
     (next || '') + ' →'
@@ -93,27 +100,28 @@ function specPage(tag, no) {
   const footer = TALL.has(tag)
     ? ''
     : `    <vk-row justify="between" align="baseline">
-      <vk-text size="micro" mono ink="muted" data-meta>${esc(presetText)}</vk-text>
-      <vk-text size="micro" mono ink="muted" data-meta>属性表：docs/reference.md</vk-text>
+      <vk-text size="meta" mono ink="muted" data-meta>${esc(presetText)}</vk-text>
+      <vk-text size="meta" mono ink="muted" data-meta>属性表：docs/reference.md</vk-text>
     </vk-row>
 `;
   const page = `<vk-page align="top">
   <vk-stack gap="2xs">
     <vk-row justify="between" align="baseline">
       <vk-row gap="xs" align="baseline">
-        <vk-text size="micro" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
-        <vk-text size="micro" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="micro" mono ink="muted" data-meta>${esc(tag)}</vk-text>
-        <vk-text size="micro" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="micro" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
+        <a href="../index.html"><vk-text size="meta" mono ink="muted" data-meta>← 索引</vk-text></a>
+        <vk-text size="meta" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>·</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>${esc(tag)}</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>·</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
       </vk-row>
       <vk-row gap="md" align="baseline">
         ${nav(no, tag)}
-        <vk-text size="micro" mono ink="muted" data-meta>${meta}</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>${meta}</vk-text>
       </vk-row>
     </vk-row>
     <vk-rule></vk-rule>
-${tag === "vk-page" ? `<div class="spec-scale">${rawBody}</div>` : rawBody}
+<div class="spec-body">${tag === "vk-page" ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
 ${footer}  </vk-stack>
 </vk-page>`;
   return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${page}`);
@@ -121,34 +129,51 @@ ${footer}  </vk-stack>
 
 function card(tag, no) {
   const def = TAGS[tag];
-  return `<a href="specimen/${tag}.html"><vk-box surface="paper" border="hair" radius="md" pad="2xs" h="148" overflow="clip">
-  <vk-stack gap="2xs">
-    <vk-text size="meta">${esc(def.name)}</vk-text>
-    <vk-text class="spec-card-tag" size="micro" mono ink="muted" data-meta>${esc(tag.replace(/^vk-/, ""))}</vk-text>
-  </vk-stack>
-</vk-box></a>`;
+  // 索引 = 缩略图 + 名字。缩略图取组件本体（不裁切），卡片端 contain 完整显示。
+  return `<a href="specimen/${tag}.html"><vk-stack gap="2xs" h="352" overflow="clip">
+  <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="cover"></vk-img>
+  <vk-text class="spec-card-name" size="meta">${esc(def.name)}</vk-text>
+</vk-stack></a>`;
 }
 
-function indexPage() {
-  const cards = ORDER.map((tag, i) => card(tag, i + 1)).join('\n');
+/** 一页 12 格（4 列 × 3 行）。36 格一页时每格只有 273×82，组件认不出来；
+ *  12 格一页能做到 414×177（面积 3.3 倍），完整显示、不裁切。 */
+const PER_PAGE = 6;
+const PAGES = Math.ceil(ORDER.length / PER_PAGE);
+const pageHref = (n) => (n === 1 ? 'index.html' : `index-${n}.html`);
+
+function indexPage(n) {
+  const slice = ORDER.slice((n - 1) * PER_PAGE, n * PER_PAGE);
+  const cards = slice.map((tag, i) => card(tag, i + 1)).join('\n');
+  const prev =
+    n > 1
+      ? `<a href="${pageHref(n - 1)}"><vk-text size="meta" mono ink="muted" data-meta>← 上一页</vk-text></a>`
+      : `<vk-text size="meta" mono ink="muted" data-meta>← 上一页</vk-text>`;
+  const next =
+    n < PAGES
+      ? `<a href="${pageHref(n + 1)}"><vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text></a>`
+      : `<vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text>`;
   const page = `<vk-page align="top">
-  <vk-stack gap="xs">
+  <vk-stack gap="sm">
     <vk-row justify="between" align="baseline">
-      <vk-text size="label">${ORDER.length} 个组件</vk-text>
-      <vk-text size="micro" mono ink="muted" data-meta>${ORDER.length} tags · 5 layers · 1920×1080 · 44px 地板</vk-text>
+      <vk-row gap="md" align="baseline">
+        <vk-text class="spec-card-name" size="meta">${ORDER.length} 个组件</vk-text>
+        <vk-text size="meta" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
+      </vk-row>
+      <vk-row gap="md" align="baseline">${prev}${next}</vk-row>
     </vk-row>
-    <vk-rule></vk-rule>
-    <vk-grid cols="repeat(8, minmax(0, 1fr))" gap="2xs">
+    <vk-rule variant="strong"></vk-rule>
+    <vk-grid cols="repeat(3, minmax(0, 1fr))" gap-x="sm" gap-y="sm">
 ${cards}
     </vk-grid>
   </vk-stack>
 </vk-page>`;
-  return shell('vk · 组件索引', `<!-- vk:spec:${hash32(JSON.stringify(ORDER))} -->\n${page}`, 0);
+  return shell(`vk · 组件索引 ${n}/${PAGES}`, `<!-- vk:spec:${hash32(JSON.stringify([hash32(card.toString()), hash32(RESET), n, slice]))} -->\n${page}`, 0);
 }
 
 const files = new Map();
 ORDER.forEach((tag, i) => files.set(`${SITE}/specimen/${tag}.html`, specPage(tag, i + 1)));
-files.set(`${SITE}/index.html`, indexPage());
+for (let n = 1; n <= PAGES; n++) files.set(`${SITE}/${pageHref(n)}`, indexPage(n));
 
 /**
  * 规格页会被 `cli/build` 二次加工（内联源码、高亮 token、图标），所以不能逐字比。
@@ -156,7 +181,17 @@ files.set(`${SITE}/index.html`, indexPage());
  */
 function specHash(tag, rawBody, presets) {
   return hash32(
-    JSON.stringify([tag, TAGS[tag].summary, TAGS[tag].name, TAGS[tag].layer, rawBody, presets.map((p) => p.label)])
+    JSON.stringify([
+      // 模板也是输入：改了 shell 就必须重写，否则生成物永远停在旧版。
+      hash32(shell.toString()),hash32(RESET),
+      hash32(specPage.toString()),
+      tag,
+      TAGS[tag].summary,
+      TAGS[tag].name,
+      TAGS[tag].layer,
+      rawBody,
+      presets.map((p) => p.label),
+    ])
   );
 }
 

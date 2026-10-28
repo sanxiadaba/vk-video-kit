@@ -154,7 +154,7 @@ export class VkCallout extends VkElement {
     }
     const tone = this.getAttribute('tone') || 'accent';
     const title = this.getAttribute('title') || '';
-    const flat = this.hasAttribute('flat');
+    const flat = this.hasAttribute('bare');
 
     if (!this._shell) {
       this._titleSlot = this.querySelector(':scope > [slot="title"]');
@@ -393,7 +393,7 @@ export class VkFigure extends VkElement {
 /* ---------------------------------------------------------------- window */
 
 const WIN_CHROME = new Set(['min', 'none', 'browser']);
-const WIN_PAD = new Set(['none', 'sm', 'md', 'lg']);
+const WIN_PAD = new Set(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
 const WIN_TONES = new Set(['accent', 'ok', 'warn', 'err']);
 
 /**
@@ -410,7 +410,7 @@ export class VkWindow extends VkElement {
 
   render() {
     const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
-    const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'md';
+    const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'lg';
     const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
     const title = this.getAttribute('title') || '';
     const url = this.getAttribute('url') || '';
@@ -562,7 +562,7 @@ export class VkTree extends VkElement {
   render() {
     const tree = this._raw;
     const title = this.getAttribute('title') || '';
-    const current = this.getAttribute('active') || '';
+    const currentSet = new Set((this.getAttribute('current') || '').split(',').map((s) => s.trim()).filter(Boolean));
     const maxDepth = this.hasAttribute('depth')
       ? Math.min(8, Math.max(0, parseInt(this.getAttribute('depth'), 10) || 0))
       : 4;
@@ -588,10 +588,16 @@ export class VkTree extends VkElement {
     const limit = this.hasAttribute('limit') ? Math.min(500, Math.max(1, parseInt(this.getAttribute('limit'), 10) || 1)) : 14;
     const top = entries.filter((e) => e.depth === 0);
     let shownTop = top.slice(0, limit);
-    if (current) {
-      const hit = entries.find((e) => e.path === current || e.name === current);
-      const hitTop = hit ? top.find((t) => hit.path === t.path || hit.path.startsWith(t.path + '/')) : null;
-      if (hitTop && !shownTop.includes(hitTop)) shownTop = [...shownTop.slice(0, Math.max(0, limit - 1)), hitTop];
+    if (currentSet.size) {
+      // 多选也要保证"当前"那一支不被 limit 截掉。
+      const hits = entries.filter((e) => currentSet.has(e.path) || currentSet.has(e.name));
+      const hitTops = hits
+        .map((hit) => top.find((t) => hit.path === t.path || hit.path.startsWith(t.path + '/')))
+        .filter(Boolean);
+      for (const hitTop of hitTops) {
+        if (shownTop.includes(hitTop)) continue;
+        shownTop = [...shownTop.slice(0, Math.max(0, limit - 1)), hitTop];
+      }
     }
     const shown = entries.filter((e) => shownTop.some((t) => e === t || e.path.startsWith(t.path + '/')));
     const hidden = entries.length - shown.length + (truncated ? 1 : 0);
@@ -619,7 +625,7 @@ export class VkTree extends VkElement {
       const name = entry.name;
       const icon = isDir ? 'folder' : Object.hasOwn(FILE_ICON, entry.ext) ? FILE_ICON[entry.ext] : 'file';
       const flag = entry.flag || '';
-      const now = current && (entry.path === current || entry.name === current);
+      const now = currentSet.has(entry.path) || currentSet.has(entry.name);
       const collapsed = isBranch && fold.has(entry.path);
       const allDesc = isBranch ? allEntries.filter((e) => e.path.startsWith(entry.path + '/')).length : 0;
       const hasChild = node.children.length > 0;
@@ -700,7 +706,7 @@ export class VkBytes extends VkElement {
     const density = this.getAttribute('density') || 'normal';
     const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
     const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
-    const live = this.getAttribute('highlight');
+    const live = this.getAttribute('current');
     const liveHl = live == null ? new Set() : new Set([...indexSet(live)].map((i) => d.start + i));
     const rows = [];
     for (let at = 0; at < d.bytes.length; at += cols) {
@@ -800,46 +806,42 @@ export class VkMath extends VkElement {
 /* ----------------------------------------------------------------- cells */
 
 /**
- * 内存格：一行连续的格子，每个格子有标签、值、地址。
- *   <vk-cells values="h|e|l|l|o|\0" labels="s[0]|s[1]|s[2]|s[3]|s[4]|\\0"
- *             addr="0x7ffc" flag="6"></vk-cells>
- * 越界的那一格用 flag（格序号，0 起）+ 红色"越界"角标；mark 同样是格序号，不是字节偏移。
+ * 内存格：一格一个 <i>，属性只描述"这一行怎么排"，内容全在子节点里。
+ *   <vk-cells cols="4" addr="0x7ffc">
+ *     <i value="'h'" label="s[0]"></i>
+ *     <i value="'e'" label="s[1]" mark></i>
+ *     <i value="'l'" label="s[2]"></i>
+ *     <i value="'l'" label="s[3]" bad></i>
+ *   </vk-cells>
+ * 多行：子节点超过 cols 就换行（cols 最多 8）。状态是每格自己的：bad / mark / filled。
  */
 export class VkCells extends VkElement {
-  static watchSource = true;
+  static watchSource = false;
   static renderedRoot = '.vk-cells';
 
   capture() {
-    this._src = dedent(textSource(this));
+    this._items = [...this.querySelectorAll(':scope > i')].map((el) => {
+      const span = parseInt(el.getAttribute('span') || '1', 10);
+      return {
+        value: el.getAttribute('value') ?? (el.textContent || '').trim(),
+        label: el.getAttribute('label') || '',
+        span: Number.isFinite(span) && span >= 1 && span <= 8 ? span : 1,
+        bad: el.hasAttribute('bad'),
+        mark: el.hasAttribute('mark'),
+        filled: el.hasAttribute('filled'),
+      };
+    });
   }
 
   render() {
-    const parse = (name) =>
-      (this.getAttribute(name) || '')
-        .split('|')
-        .map((s) => s.trim());
-
-    let values = parse('values');
-    if (!values.length || values.join('') === '') {
-      values = (this._src || '').split(/\s+/).filter(Boolean);
+    const items = this._items || [];
+    if (!items.length) {
+      this.innerHTML = '';
+      return;
     }
-    const labels = parse('labels');
-    const spansRaw = parse('spans');
-    const spans = values.map((_, i) => {
-      const n = parseInt(spansRaw[i], 10);
-      return Number.isFinite(n) && n >= 1 && n <= 8 ? n : 1;
-    });
+    const spans = items.map((it) => it.span);
     const total = spans.reduce((a, b) => a + b, 0);
-    const idxSet = (name) => new Set([...indexSet(this.getAttribute(name))].filter((i) => i < values.length));
-    const filledSet = idxSet('filled');
-    const markSet = idxSet('marked');
     const addr = this.getAttribute('addr') || '';
-    let flag = parseInt(this.getAttribute('flag') || '-1', 10);
-    if (!Number.isFinite(flag) || flag < 0) flag = -1;
-    else if (flag >= values.length) {
-      this._warnOnce('flag', `的 flag="${flag}" 超过 ${values.length - 1}，按最后一格处理`);
-      flag = values.length - 1;
-    }
     const maxSpan = Math.max(...spans);
     let cols = parseInt(this.getAttribute('cols') || String(total), 10);
     if (!Number.isFinite(cols) || cols < 1) cols = total;
@@ -872,16 +874,15 @@ export class VkCells extends VkElement {
     // 地址按"这个字段从第几个字节开始"算：跨格字段后面的字段要跳过它占的宽度。
     const offsets = [];
     let acc = 0;
-    for (let i = 0; i < values.length; i++) {
+    for (let i = 0; i < items.length; i++) {
       offsets.push(acc);
       acc += spans[i];
     }
-    const cells = values
-      .map((v, i) => {
-        const isFlag = flag === i;
-        const label = isFlag ? `${labels[i] || `[${i}]`} · 越界` : labels[i];
+    const cells = items
+      .map((it, i) => {
+        const label = it.bad ? `${it.label || `[${i}]`} · 越界` : it.label;
         const span = spans[i];
-        const marks = `${isFlag ? ' data-flag="1"' : ''}${filledSet.has(i) ? ' data-filled="1"' : ''}${markSet.has(i) ? ' data-mark="1"' : ''}`;
+        const marks = `${it.bad ? ' data-flag="1"' : ''}${it.filled ? ' data-filled="1"' : ''}${it.mark ? ' data-mark="1"' : ''}`;
         const startOff = offsets[i] * stride;
         const ruler = byteMode
           ? `<span class="vk-cell-bytes" aria-hidden="true">${Array.from({ length: span }, (_, k) => {
@@ -892,7 +893,7 @@ export class VkCells extends VkElement {
           : '';
         return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('ruler') ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
-          <span class="vk-cell-v">${esc(v)}</span>
+          <span class="vk-cell-v">${esc(it.value)}</span>
           ${ruler}
           ${addr && !byteMode ? `<span class="vk-cell-a" data-meta data-ellipsis>${fmtAddr(base + startOff)}</span>` : ""}
         </div>`;
@@ -1001,11 +1002,31 @@ export class VkBits extends VkElement {
   static renderedRoot = '.vk-bits-wrap';
 
   capture() {
-    this._rows = [...this.querySelectorAll(':scope > i')].map((el) => ({
-      label: el.getAttribute('label') || '',
-      value: el.getAttribute('value') || el.textContent.trim(),
-      mark: el.hasAttribute('mark'),
-    }));
+    // 同一层 <i> 有两种角色：带 from 的是"字段"，其余是"一行位串"。
+    const nodes = [...this.querySelectorAll(':scope > i')];
+    this._fields = nodes
+      .filter((el) => el.hasAttribute('from'))
+      .map((el, i) => {
+        const hiRaw = el.getAttribute('from');
+        const loRaw = el.getAttribute('to');
+        const hi = Number(hiRaw);
+        const lo = loRaw === null ? hi : Number(loRaw);
+        if (!Number.isFinite(hi)) return null;
+        return {
+          i,
+          hi: Math.max(hi, Number.isFinite(lo) ? lo : hi),
+          lo: Math.min(hi, Number.isFinite(lo) ? lo : hi),
+          label: el.getAttribute('label') || (el.textContent || '').trim(),
+        };
+      })
+      .filter(Boolean);
+    this._rows = nodes
+      .filter((el) => !el.hasAttribute('from'))
+      .map((el) => ({
+        label: el.getAttribute('label') || '',
+        value: el.getAttribute('value') || el.textContent.trim(),
+        mark: el.hasAttribute('mark'),
+      }));
   }
 
   render() {
@@ -1018,18 +1039,18 @@ export class VkBits extends VkElement {
     const bytes = this.hasAttribute('bytes');
     const group = ['1', '4', '8'].includes(this.getAttribute('group')) ? Number(this.getAttribute('group')) : 4;
 
-    const widthAttr = Number(this.getAttribute('width'));
+    const widthAttr = Number(this.getAttribute('bit-width'));
     const width = [8, 16, 32, 64].includes(widthAttr) ? widthAttr : 0;
-    const fieldSpecs = String(this.getAttribute('fields') || '')
-      .split('|')
-      .map((s) => s.trim())
-      .filter(Boolean)
-      .map((s, i) => {
-        const m = s.match(/^(\d+)(?:\s*-\s*(\d+))?\s*:\s*(.+)$/);
-        if (!m) return null;
-        const hi = Number(m[1]);
-        const lo = m[2] ? Number(m[2]) : hi;
-        return { i, hi: Math.max(hi, lo), lo: Math.min(hi, lo), label: m[3].trim() };
+    // 字段写成子节点：<i from="30" to="23" label="指数"></i>。一个字段一段，可单独锚定。
+    const fieldSpecs = this._fields || []
+      .map((el, i) => {
+        const hiRaw = el.getAttribute('from');
+        const loRaw = el.getAttribute('to');
+        const hi = Number(hiRaw);
+        const lo = loRaw === null ? hi : Number(loRaw);
+        if (!Number.isFinite(hi)) return null;
+        const label = el.getAttribute('label') || (el.textContent || '').trim();
+        return { i, hi: Math.max(hi, Number.isFinite(lo) ? lo : hi), lo: Math.min(hi, Number.isFinite(lo) ? lo : hi), label };
       })
       .filter(Boolean);
     const useFields = fieldSpecs.length && rows.length === 1 && (!width || width <= 32);
@@ -1137,19 +1158,41 @@ export class VkBars extends VkElement {
       this.innerHTML = '<div class="vk-bars"><span class="vk-bar-l">（没有条目）</span></div>';
       return;
     }
-    const attrMax = Number(this.getAttribute('max'));
-    const max = Number.isFinite(attrMax) && attrMax > 0 ? attrMax : Math.max(...rows.map((r) => r.value), 1);
     const unit = this.getAttribute('unit') || '';
     const log = this.getAttribute('scale') === 'log';
-    const denom = log ? Math.log1p(max) : max;
+    const hasNegative = rows.some((r) => r.value < 0);
+    if (hasNegative && log) {
+      this._warnOnce('scale', '的对数刻度不支持负值：负值按 0 画，改用 scale="linear" 才能画在零线左边');
+    }
+    const attrMax = Number(this.getAttribute('max'));
+    // 有负值时值域自动包含 0，零线才有地方放。
+    const dataMax = Math.max(...rows.map((r) => r.value), 0);
+    const dataMin = Math.min(...rows.map((r) => r.value), 0);
+    const max = Number.isFinite(attrMax) && attrMax > 0 ? attrMax : dataMax || 1;
+    const min = hasNegative && !log ? dataMin : 0;
+    const range = max - min || 1;
+    const zeroPct = ((0 - min) / range) * 100;
+    const denom = log ? Math.log1p(Math.max(0, max)) : max;
+    const split = hasNegative && !log;
     const items = rows
       .map((r) => {
-        const raw = log ? Math.log1p(Math.max(0, r.value)) : Math.max(0, r.value);
-        const pct = denom > 0 ? Math.max(0, Math.min(1, raw / denom)) * 100 : 0;
-        return `<div class="vk-bar"><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t"><span class="vk-bar-fill" style="width:${pct.toFixed(2)}%"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
+        let pct;
+        if (log) {
+          const raw = Math.log1p(Math.max(0, r.value));
+          pct = denom > 0 ? Math.max(0, Math.min(1, raw / denom)) * 100 : 0;
+        } else {
+          pct = Math.max(0, Math.min(100, ((r.value - min) / range) * 100));
+        }
+        const neg = split && r.value < 0;
+        // 有负值时用"零线两侧"的绝对定位；没有负值就保持从左往右长。
+        const style = split
+          ? `left:${Math.min(pct, zeroPct).toFixed(2)}%;width:${Math.abs(pct - zeroPct).toFixed(2)}%`
+          : `width:${pct.toFixed(2)}%`;
+        const zero = split ? `<span class="vk-bar-zero" style="left:${zeroPct.toFixed(2)}%"></span>` : '';
+        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
       })
       .join('');
-    this.innerHTML = `<div class="vk-bars">${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;
+    this.innerHTML = `<div class="vk-bars"${split ? ' data-has-negative="1"' : ''}>${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;
   }
 }
 

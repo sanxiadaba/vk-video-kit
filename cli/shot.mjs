@@ -94,7 +94,8 @@ try {
 
   const lines = [];
   for (const it of report.issues || []) {
-    if (it.type === 'font') lines.push(`字号 ${it.fs} < 44：${it.what}`);
+    if (it.type === 'font') lines.push(`字号 ${it.fs} < 40：${it.what}`);
+    else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥52）：${it.what}`);
     else if (it.type === 'contrast') lines.push(`对比度 ${it.cr} < ${it.need}：${it.what}`);
     else if (it.type === 'safe') lines.push(`超出安全区：${it.what}`);
     else if (it.type === 'overflow') lines.push(`超出画布：${it.what}`);

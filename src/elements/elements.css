@@ -102,22 +102,19 @@ vk-text {
   display: block;
   margin: 0;
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-4);
+  font-size: var(--vk-t-body);
   line-height: var(--vk-lh-body);
   color: inherit;
   text-wrap: pretty;
   overflow-wrap: anywhere;
 }
 
-vk-text[size='display'] { font-size: var(--vk-t-1); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
-vk-text[size='title'] { font-size: var(--vk-t-2); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
-vk-text[size='heading'] { font-size: var(--vk-t-3); line-height: var(--vk-lh-snug); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); }
-vk-text[size='body'] { font-size: var(--vk-t-4); }
-vk-text[size='label'] { font-size: var(--vk-t-5); line-height: var(--vk-lh-body); }
-vk-text[size='meta'] { font-size: var(--vk-t-6); line-height: var(--vk-lh-body); }
-vk-text[size='sub'] { font-size: var(--vk-t-sub); line-height: var(--vk-lh-snug); }
-vk-text[size='caption'] { font-size: var(--vk-t-caption); line-height: var(--vk-lh-snug); }
-vk-text[size='micro'] { font-size: var(--vk-t-micro); line-height: var(--vk-lh-snug); }
+vk-text[size='display'] { font-size: var(--vk-t-display); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
+vk-text[size='title'] { font-size: var(--vk-t-title); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
+vk-text[size='heading'] { font-size: var(--vk-t-heading); line-height: var(--vk-lh-snug); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); }
+vk-text[size='body'] { font-size: var(--vk-t-body); }
+vk-text[size='label'] { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
+vk-text[size='meta'] { font-size: var(--vk-t-meta); line-height: var(--vk-lh-body); }
 
 vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
@@ -218,7 +215,7 @@ vk-img .vk-img-ph {
   inset: 0;
   align-items: center;
   justify-content: center;
-  font-size: var(--vk-t-5);
+  font-size: var(--vk-t-body);
   color: var(--vk-ink-4);
   background: var(--vk-surface-2);
 }
@@ -243,7 +240,7 @@ vk-rule {
 }
 vk-rule[variant='thin'] { background: var(--vk-line-3); height: var(--vk-line-w); }
 vk-rule[variant='strong'] { background: var(--vk-line-strong); height: var(--vk-line-w-strong); }
-vk-rule[variant='accent'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
+vk-rule[tone='accent'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
 
 /* -------------------------------------------------------------- vk-mark */
 

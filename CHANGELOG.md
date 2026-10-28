@@ -1,5 +1,43 @@
 # Changelog
 
+## 9.0.0
+
+一页一件的画面语言，收成五个决定。破坏性版本。
+
+### 字阶
+
+- **五档取代九档**：`display 120` / `title 88` / `heading 64` / `body 52` / `meta 40`。删掉 48 / 44 / 36 与 `sub` / `caption` / `micro` 三个重复名。
+- **"44px 地板"改写**：内容 52、元数据/标签/密集 ASCII 数据 40。门禁阈值 44 → 40，并新增一条"一整句中文落在 40 就报 `font-content`"。
+- **代码回归字阶**：代码正文 52、行号 40；`density` 从此只改行高与留白，不再偷偷改字号（asm / bytes / bits 这类等宽数据件用 40）。
+
+### 颜色
+
+- **钴蓝只表示"当前"**：当前行改为 16% 蓝底 + 4px 实心条；关键字与数字回墨色 600，语法色只剩字符串的绿。三种棕并成一种。
+
+### 词表
+
+- `highlight` → `current`（code / asm / bytes）；`marked` → `mark`（cells）；`flag` → `bad`（cells）；`active` → `current`（tree）。
+- `flat` → `bare`；`width` → `bit-width`（bits）/ `stroke`（ring）；`vk-rule` 的 `variant="accent"` 改走 `tone`。
+- `vk-window` 的 `pad` 统一到 8 档（`2xs`…`3xl`），默认 `lg`。
+
+### 内容模型
+
+- **`vk-cells` 一格一个 `<i value label>`**，状态写在格子上（`bad` / `mark` / `filled`），`span` 跨格；超过 `cols` 自动换行——**多行数组不再需要手工对齐**。删 `values` / `labels` / `spans` / `filled` / `mark` / `bad` 六个属性。
+- **`vk-bits` 字段写成子节点**：`<i from="30" to="23" label="指数">`，取代 `fields` 字符串。
+
+### 做深
+
+- `vk-bars` 支持负值：值域自动含 0，零线居中，正条向右、负条向左；对数刻度遇负值明确警告。
+- `vk-term` 新增 `marks="PASS|WARN|FAIL"`，结果符号可配。
+- `vk-tree` 的 `current` 支持逗号多选。
+- `vk-table` 的合并单元格用原生 `colspan` / `rowspan`（渲染器不重建表格，已写入文档）。
+
+### 校验与工具
+
+- 构建期校验给"最近的合法值"：`tone="acents"` → 提示 `accent`；未知属性给最接近的名字。
+- 索引改成 **6 页 × 6 格**：每格是整张标本页的等比缩略图 + 名字，预览即点进去那一页；页头有页码与上一页/下一页，标本页页头新增「← 索引」。
+- 新增 `tools/thumbs.mjs`：缩略图从标本页直截，按内容哈希缓存、6 路并行（189s → 冷跑 21s / 命中 0.7s）。
+- 修 `vk-img` 在 `ratio` 下不撑满比例框的问题；修标本页指纹缓存漏掉模板常量的问题。
 ## 8.0.0
 
 收敛回通用组件库。破坏性版本。

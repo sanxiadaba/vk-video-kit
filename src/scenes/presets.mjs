@@ -40,7 +40,7 @@ export const PRESETS = {
   ],
   'vk-rule': [
     { label: '强线', attrs: { variant: 'strong' } },
-    { label: '强调线', attrs: { variant: 'accent' } },
+    { label: '强调线', attrs: { tone: 'accent' } },
   ],
   'vk-stack': [
     { label: '紧', attrs: { gap: '2xs' } },
@@ -96,11 +96,11 @@ export const PRESETS = {
     { label: '说明', attrs: { tone: 'accent' } },
     { label: '正确', attrs: { tone: 'ok' } },
     { label: '错误', attrs: { tone: 'err' } },
-    { label: '无底', attrs: { flat: '' } },
+    { label: '无底', attrs: { bare: '' } },
   ],
   'vk-code': [
     { label: '主镜头', attrs: { density: 'loose', chrome: 'none' } },
-    { label: '聚光', attrs: { focus: '4', highlight: '4' } },
+    { label: '聚光', attrs: { focus: '4', current: '4' } },
     { label: '缺口', attrs: { fold: '4' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
@@ -125,7 +125,7 @@ export const PRESETS = {
     { label: '等宽', attrs: { mono: '' } },
   ],
   'vk-math': [
-    { label: '更小', attrs: { size: 'label' } },
+    { label: '更小', attrs: { size: 'meta' } },
     { label: '行内', attrs: { display: null } },
   ],
   'vk-figure': [
@@ -140,7 +140,7 @@ export const PRESETS = {
   ],
   'vk-window': [
     { label: '无窗头', attrs: { chrome: 'none' } },
-    { label: '宽内距', attrs: { pad: 'lg' } },
+    { label: '宽内距', attrs: { pad: '2xl' } },
   ],
   'vk-tree': [
     { label: '收起 tests', attrs: { collapsed: 'tests' } },
@@ -160,9 +160,8 @@ export const PRESETS = {
   ],
   'vk-keys': [],
   'vk-cells': [
-    { label: '高亮第 1 格', attrs: { marked: '0' } },
-    { label: '去掉填充标记', attrs: { filled: null } },
-    { label: '三等分', attrs: { spans: '1|1|1' } },
+    { label: '四列', attrs: { cols: '4' } },
+    { label: '八列', attrs: { cols: '8' } },
     { label: '字节尺', attrs: { offsets: '', ruler: '' } },
     { label: '大端视角', attrs: { offsets: '', direction: 'rtl' } },
   ],
@@ -171,7 +170,7 @@ export const PRESETS = {
     { label: '第三步', attrs: { current: '2' } },
   ],
   'vk-page': [
-  ],
+  ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
     { label: '小标题阶', attrs: { size: 'heading' } },
@@ -182,7 +181,7 @@ export const PRESETS = {
     { label: '无索引', attrs: { index: 'none' } },
     { label: '逐位分开', attrs: { group: '1' } },
     { label: '强调色', attrs: { tone: 'accent' } },
-    { label: '16 位', attrs: { width: '16', value: '1111 1111 0000 0001', fields: null } },
+    { label: '16 位', attrs: { 'bit-width': '16', value: '1111 1111 0000 0001' } },
     { label: '字节界', attrs: { bytes: '' } },
   ],
   'vk-bars': [
@@ -206,7 +205,7 @@ export const PRESETS = {
   'vk-pin': [
     { label: '左侧', attrs: { side: 'left' } },
     { label: '无引线', attrs: { leader: 'none' } },
-    { label: '小字', attrs: { size: 'label' } },
+    { label: '小字', attrs: { size: 'meta' } },
     { label: '编号 3', attrs: { n: '3' } },
   ],
   'vk-ring': [

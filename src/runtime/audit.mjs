@@ -5,7 +5,14 @@
  * 不是"像素基线"，也不需要截图；CLI 的 `vk check`、`vk shot` 自检都调它。
  */
 
-const MIN_FONT = 44;
+/**
+ * 五档字阶的两个门槛：
+ * - 40 是硬地板（元数据 / 标签 / 密集 ASCII 数据都在这一档）。
+ * - 52 是"要读懂的内容"的门槛：一整句中文如果落在 40，就是排错了。
+ *   用"含汉字 + 长于 12 字"判定"一整句"，短标签不算。
+ */
+const MIN_FONT = 40;
+const CONTENT_FONT = 52;
 const MIN_RATIO = 4.5;
 const LARGE_RATIO = 3;
 const LARGE_FONT = 72;
@@ -93,6 +100,11 @@ export function auditPage(root = document) {
     if (hasText && opaque(el)) {
       const fs = parseFloat(cs.fontSize);
       if (!isMeta && fs < MIN_FONT) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
+      if (!isMeta && fs < CONTENT_FONT) {
+        const text = (el.textContent || '').replace(/\s+/g, '');
+        const isSentence = /[\u4e00-\u9fff]/.test(text) && text.length > 12;
+        if (isSentence) out.push({ type: 'font-content', what: clip(text.slice(0, 18)), fs });
+      }
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));

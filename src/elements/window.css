@@ -99,7 +99,7 @@
   border-radius: 6px;
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-sub);
+  font-size: var(--vk-t-meta);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -109,7 +109,7 @@
 .vk-range {
   flex: 0 0 auto;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-micro);
+  font-size: var(--vk-t-meta);
   font-weight: 400;
   line-height: 1;
   color: var(--vk-win-meta-2);
@@ -123,7 +123,7 @@
   border: 1px solid var(--vk-win-tab-line);
   border-radius: 4px;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-micro);
+  font-size: var(--vk-t-meta);
   font-weight: var(--vk-w-med);
   letter-spacing: 0.04em;
   color: var(--vk-win-meta-2);
@@ -141,7 +141,7 @@
   padding: 0 var(--vk-s4);
   border-top: var(--vk-line-w) solid var(--vk-win-rule);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-6);
+  font-size: var(--vk-t-meta);
   color: var(--vk-win-meta-2);
   background: var(--vk-win-soft);
 }
@@ -183,9 +183,15 @@ vk-window { display: block; }
 .vk-win-tag[data-tone='err'] { border-top-color: var(--vk-err); }
 
 .vk-win-tag .vk-win-bd { padding: var(--vk-s5); }
-.vk-win-tag[data-pad='none'] .vk-win-bd { padding: 0; }
+/* 内距与 pad 属性共用同一套 8 档 token：2xs=8 … 3xl=128。 */
+.vk-win-tag[data-pad='2xs'] .vk-win-bd { padding: var(--vk-s1); }
+.vk-win-tag[data-pad='xs'] .vk-win-bd { padding: var(--vk-s2); }
 .vk-win-tag[data-pad='sm'] .vk-win-bd { padding: var(--vk-s3); }
-.vk-win-tag[data-pad='lg'] .vk-win-bd { padding: var(--vk-s7); }
+.vk-win-tag[data-pad='md'] .vk-win-bd { padding: var(--vk-s4); }
+.vk-win-tag[data-pad='lg'] .vk-win-bd { padding: var(--vk-s5); }
+.vk-win-tag[data-pad='xl'] .vk-win-bd { padding: var(--vk-s6); }
+.vk-win-tag[data-pad='2xl'] .vk-win-bd { padding: var(--vk-s7); }
+.vk-win-tag[data-pad='3xl'] .vk-win-bd { padding: var(--vk-s8); }
 
 /* 窗头按 chrome 变形：min / dialog 显示标题，browser 显示地址栏。 */
 .vk-win-tag[data-chrome='browser'] > .vk-hd .vk-file { display: none; }

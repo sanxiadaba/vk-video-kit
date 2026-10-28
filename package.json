@@ -1,12 +1,12 @@
 {
   "name": "vk-video-kit",
-  "version": "8.0.0",
+  "version": "9.0.0",
   "description": "把内容做成画面单元：36 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
   "types": "types/index.d.ts",
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen _site/index.html",
+    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen _site/index.html && node tools/thumbs.mjs",
     "build:pkg": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs",
     "gen": "node tools/gen.mjs",
     "ai": "node tools/ai-doc.mjs",

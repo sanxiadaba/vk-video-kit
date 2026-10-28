@@ -24,7 +24,7 @@ int c;
       <vk-pin for="#c@line:3">这一行</vk-pin>
       <vk-pin for="#c@char:3:0-3">这三个字符</vk-pin>
 
-      <vk-cells id="x" values="1|2|3" addr="0x10" offsets></vk-cells>
+      <vk-cells id="x" addr="0x10" offsets><i value="1"></i><i value="2"></i><i value="3"></i></vk-cells>
       <vk-pin for="#x@cell:2">第三格</vk-pin>
       <vk-pin for="#x@byte:2">第三个字节</vk-pin>
 
@@ -57,7 +57,7 @@ test('不支持该 part：vk-code 没有 cell 锚点', async () => {
 test('cell 越界：只有 3 格时 cell:5 必须报错', async () => {
   await assert.rejects(
     run(`
-      <vk-cells id="x" values="1|2|3"></vk-cells>
+      <vk-cells id="x"><i value="1"></i><i value="2"></i><i value="3"></i></vk-cells>
       <vk-pin for="#x@cell:5">越界</vk-pin>
     `),
     /字节尺|可选范围|越界/
@@ -67,7 +67,7 @@ test('cell 越界：只有 3 格时 cell:5 必须报错', async () => {
 test('byte 只有开了字节尺才存在', async () => {
   await assert.rejects(
     run(`
-      <vk-cells id="x" values="1|2|3"></vk-cells>
+      <vk-cells id="x"><i value="1"></i><i value="2"></i><i value="3"></i></vk-cells>
       <vk-pin for="#x@byte:1">没有字节尺</vk-pin>
     `),
     /字节尺|可选范围|越界/

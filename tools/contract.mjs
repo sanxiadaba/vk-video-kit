@@ -1,6 +1,6 @@
 /**
  * 契约门禁：每个公开属性必须产生「声明过的效果」，并且所有取值下都过
- * 44px / 对比度 / 安全区。
+ * 40px 地板 / 对比度 / 安全区。
  *
  *   node tools/contract.mjs                # 全部 30 个标签
  *   node tools/contract.mjs vk-code        # 单件
@@ -257,8 +257,8 @@ function visualInPage(tag) {
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText && opaque(el)) {
       const fs = parseFloat(cs.fontSize);
-      const meta = el.closest?.('[data-meta],[size="micro"],[size="caption"],[size="sub"]');
-      if (!meta && fs < 43.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
+      const meta = el.closest?.('[data-meta]');
+      if (!meta && fs < 39.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));

@@ -98,7 +98,7 @@ export class VkCode extends VkElement {
     const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const toSlice = (set) =>
       new Set([...set].map((v) => v - startNo + 1).filter((v) => v >= 1 && v <= lines.length));
-    const hl = toSlice(lineSet(this.getAttribute('highlight')));
+    const hl = toSlice(lineSet(this.getAttribute('current')));
     const focus = toSlice(lineSet(this.getAttribute('focus')));
     // 真折叠：区间内的行不渲染；只在区间开头留一条"几行已折叠"。
     const foldSet = new Set();
@@ -298,9 +298,19 @@ export class VkTerm extends VkElement {
           const cmd = line === prompt ? '' : line.slice(prompt.length + 1);
           return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd };
         }
-        const m = line.match(/^(✓|!|✗)\s+(.*)$/);
+        // 结果符号可配：marks="PASS|WARN|FAIL"。默认 ✓ / ! / ✗。
+        const marksAttr = String(this.getAttribute('marks') || '')
+          .split('|')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const okMark = marksAttr[0] || '✓';
+        const warnMark = marksAttr[1] || '!';
+        const errMark = marksAttr[2] || '✗';
+        const rxEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const resultRx = new RegExp(`^(${[okMark, warnMark, errMark].map(rxEscape).join('|')})\\s+(.*)$`);
+        const m = line.match(resultRx);
         if (m) {
-          const kind = m[1] === '✓' ? 'ok' : m[1] === '!' ? 'warn' : 'err';
+          const kind = m[1] === okMark ? 'ok' : m[1] === warnMark ? 'warn' : 'err';
           return { kind, sign: m[1], text: esc(m[2]) };
         }
         return { kind: 'out', text: esc(line) || ' ' };

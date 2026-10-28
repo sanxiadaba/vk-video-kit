@@ -65,16 +65,18 @@
   --vk-del-paper-weak: rgba(179, 38, 30, 0.09);
   --vk-del-paper-mark: rgba(179, 38, 30, 0.2);
 
-  --vk-mod-paper: #8a5a00;
+  /* 三种棕并成一种：warn 与 mod 同值。数字已回墨阶，琥珀只表示"注意"。 */
+  --vk-mod-paper: #8a4b00;
   --vk-mod-paper-weak: rgba(138, 90, 0, 0.1);
   --vk-mod-paper-mark: rgba(138, 90, 0, 0.22);
 
   /* ---------------------------------------------------------------- 语法 */
-  /* B · 钴蓝关键字：关键字品牌蓝 + 600，函数墨色 + 600，字符串绿，数字琥珀；焦点蓝仍是当前行。 */
-  --vk-syn-keyword: #1d4ed8;
+  /* 钴蓝不参与语法。关键字与函数靠字重（600）区分，数字退到墨阶；
+     蓝只出现在"当前行 / 当前格 / 当前这一块"，全库只有一个含义：正在讲这里。 */
+  --vk-syn-keyword: #0b0f14;
   --vk-syn-string: #0b6b4f;
-  --vk-syn-number: #7a4a00;
-  --vk-syn-function: #1d2939;
+  --vk-syn-number: #333d4b;
+  --vk-syn-function: #0b0f14;
   --vk-syn-builtin: #344054;
   --vk-syn-operator: #475467;
   --vk-syn-punct: #475467;
@@ -100,19 +102,14 @@
   --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "SFMono-Regular", Consolas,
     "Liberation Mono", monospace;
 
-  /* 六档 + 代码 / 讲解 / 标注三个专用角色。44 是地板：手机横屏约 1/3 时约 14.7px。 */
-  --vk-t-1: 120px; /* 金句 */
-  --vk-t-2: 88px; /* 页标题 */
-  --vk-t-3: 64px; /* 小标题 */
-  --vk-t-4: 52px; /* 正文 / 讲解：要读懂的字 */
-  --vk-t-5: 48px; /* 标签 / 表头 / 次级 */
-  --vk-t-6: 44px; /* 元信息：正文里的次级文字，地板 */
-  --vk-t-sub: 40px; /* 索引卡名 / 侧栏组名 */
-  --vk-t-caption: 36px; /* 图注 / 工具栏 / 面包屑 */
-  --vk-t-micro: 36px; /* 编号 / 层 / 计数 */
-  --vk-t-gutter: 36px; /* 代码行号 */
-  --vk-t-code: 48px;
-  --vk-t-code-lg: 56px;
+  /* 五档。规则只有一条：
+     要读懂的内容 ≥52（手机横屏 1/3 时 17.3px），元数据/标签/密集 ASCII 数据 40（13.3px）。
+     等宽 ASCII 的 x-height 比汉字大，40 的可读性约等于汉字的 52。 */
+  --vk-t-display: 120px; /* 金句 */
+  --vk-t-title: 88px; /* 页标题 */
+  --vk-t-heading: 64px; /* 小标题 */
+  --vk-t-body: 52px; /* 正文 / 代码 / 要读懂的字 */
+  --vk-t-meta: 40px; /* 元数据 / 标签 / 密集数据 */
 
   --vk-w-reg: 400;
   --vk-w-med: 500;

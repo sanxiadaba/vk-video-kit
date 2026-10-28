@@ -116,33 +116,28 @@ export const PROBES = {
       why: '标签是裁切框里的一个覆盖元素；没有标签时整块不渲染。',
     },
   },
-  'vk-bits': {
-    fields: {
-      values: ['7:4'],
-      effect: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit-field' },
-      why: 'fields 把 hi:lo 区间包成字段；断字段元素。',
+  'vk-bits': {},
+  'vk-tag': {
+    // meta 就是默认态；只断 body 这一个非默认值。
+    size: {
+      values: ['body'],
+      effect: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
+      why: '默认 meta 是 40，body 是 52。',
+    },
+  },
+  'vk-rule': {
+    // neutral 就是默认态；只断 accent 这一个非默认值。
+    tone: {
+      values: ['accent'],
+      effect: { on: 'vk-rule', kind: 'style', prop: 'background-color' },
+      why: 'neutral 与默认态相同，断 accent 即可。',
     },
   },
   'vk-cells': {
-    spans: {
-      values: ['1|1|1'],
-      effect: { on: '.vk-cell', kind: 'geometry', prop: 'width' },
-      why: '跨格通过 grid-column: span 改变格子宽度，断宽度而不是断 data-*。',
-    },
-    filled: {
-      values: ['0'],
-      effect: { on: '.vk-cell', kind: 'style', prop: 'background-image' },
-      why: '填充格是斜纹底图，断 background-image。',
-    },
-    marked: {
-      values: ['1'],
-      effect: { on: '.vk-cell', kind: 'style', prop: 'border-top-color' },
-      why: '高亮格底和边一起亮；断边框色，才是在断"框"。',
-    },
     cols: {
-      values: ['1', '2'],
+      values: ['5'],
       effect: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
-      why: '标本只有 3 格，超过 3 列会被夹紧。',
+      why: '标本 10 格、cols=6；只测 5，避免列数太小把帧撑破。',
     },
   },
   'vk-box': {

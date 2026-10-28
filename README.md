@@ -3,7 +3,7 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 5-layer visual language of 36 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only, and the visual system is desktop-only with a 44px minimum type size. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 5-layer visual language of 36 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only, and the visual system is desktop-only with a two-step type system: 52 for content, 40 for metadata. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
 写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**36 个标签、5 层、1920×1080，桌面 only，只有白纸。**
 
@@ -12,7 +12,7 @@
 ## 五个原则
 
 - **分则独立。** 每个标签离开兄弟节点也能成立：不伪造内容，不依赖父级上下文，不要求作者补一次性 CSS。
-- **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条 44px 字号地板。
+- **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：内容 52 / 元数据 40。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有时间轴、没有动效。输出就是一张静帧，动效在剪辑层做。
 - **文档也是库。** 36 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
@@ -33,7 +33,7 @@ L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、�
 
 `npm run build` 生成的不是组件文档，而是 36 张规格页：
 
-- **索引**：36 个组件，8 列 × 5 行；一屏装得下，不滚动（末排留 4 格）。
+- **索引**：6 页 × 6 格（3 列 × 2 行）。每格是**整张标本页**的等比缩略图 + 名字——索引里看到的，就是点进去的那一页；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
 - **每个组件一页**：一行元信息（层 · 标签 · 名字 · 上下页 · 序号）+ 该组件的标准形态；**单镜头**，没有成品、没有用法、没有解剖。
 - 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`。
 - 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
@@ -58,7 +58,7 @@ npm i /path/to/vk-video-kit
     <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">
       字符串不是值，是<em>一块内存</em>
     </vk-title>
-    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" highlight="4"></vk-code>
+    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
   </vk-stack>
 </vk-page>
 ```
@@ -102,10 +102,10 @@ int main(void) { return 0; }
 
 ## 两条视觉规则
 
-1. **焦点只有一个颜色：冷钴蓝。** 它做当前行底，也做关键字（600）；函数用墨色 600，不再加第二个前景色。
+1. **钴蓝只做一件事：标出"正在讲这里"。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。
 2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
 
-**内容字不小于 44 设计像素**（1920 画布；手机横屏约 1/3 时 ≈14.7px）；行号、文件名、索引编号、层、图注等元数据用 36–40。门禁/契约对 `[data-meta]` 放行，公式上下标仍是排版例外。
+**字阶只有五档：120 / 88 / 64 / 52 / 40。** 要读懂的内容用 52（手机横屏约 1/3 时 17.3px）；行号、文件名、列头、图注等元数据与密集 ASCII 数据用 40（13.3px），靠 `data-meta` 显式标记，且不得再低。公式上下标仍是排版例外。
 
 ## 命令
 
@@ -119,7 +119,7 @@ npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
 npm test            # 全量（约 30s；首次 contract/gate 冷跑，暖缓存更快）
 npm test -- --fast  # 只跑静态检查（不起浏览器）
 npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
-npm run gate        # 44px / 对比度 / 安全区 / 裁切 / console / 溢出
+npm run gate        # 40px 地板 / 对比度 / 安全区 / 裁切 / console / 溢出
 npm run gate:full   # 38 页全查（暖缓存约 2s；--force 冷跑约 9s）
 npm run gate:visual # 每个预设的像素差
 npm run links       # 站内链接门禁

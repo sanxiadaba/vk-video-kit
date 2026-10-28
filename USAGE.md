@@ -19,15 +19,15 @@ npm i /path/to/vk-video-kit
 ## 2 · 写一个代码窗
 
 ```html
-<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" highlight="4" density="loose"></vk-code>
+<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4" density="loose"></vk-code>
 ```
 
 - `src` 指向真实源文件，`lines="1-8"` 选片段；行号默认按**源文件**行号（4-6 就是 4/5/6），`numbering="slice"` 才从 1 起。
 - `src` 相对当前 HTML 文件；文件不存在时 `npx vk build` 会直接报错。
-- `highlight="4"` 高亮源文件第 4 行；`focus="4"` 让其余行退到 0.28。
+- `current="4"` 标出源文件第 4 行（也可以写 `current="4-6"` 标一段）；`focus="4"` 让其余行退到 0.28。
 - `fold="4"` 在第 4 行后插一条“中间省略”，被折叠的行真的不渲染。
 - `long="clip"`（默认）长行直接裁并给右缘渐隐；`long="wrap"` 才换行。
-- `density="compact" | "normal" | "loose"` 是 44 / 48 / 56 三档。
+- `density="compact" | "normal" | "loose"` 只改行高与上下留白，**不改字号**。
 - `chrome="none"` 去窗头；`numbers="none"` 单独控制行号。
 - 全库没有深色窗：`surface` 已移除。
 
@@ -45,18 +45,23 @@ npm i /path/to/vk-video-kit
 <vk-diff w="1280" lang="c" file="bounds.c" src="code/real.diff"></vk-diff>
 ```
 
-默认上下对照；`variant="split"` 换成左右两窗并排；`summary="none"` 关计数；`chrome="none"` 去窗头。`highlight` / `focus` 仍按片段行；`@line` 现在真的能锚定到 diff 行。
+默认上下对照；`variant="split"` 换成左右两窗并排；`summary="none"` 关计数；`chrome="none"` 去窗头。`current` / `focus` 仍按片段行；`@line` 现在真的能锚定到 diff 行。
 
 ## 4 · 内存格与字节
 
 ```html
-<vk-cells values="1|2|3|0" labels="a[0]|a[1]|a[2]|a[3]" addr="0x7ffc" stride="4" flag="3"></vk-cells>
+<vk-cells cols="4" addr="0x7ffc" stride="4">
+  <i value="1" label="a[0]"></i>
+  <i value="2" label="a[1]"></i>
+  <i value="3" label="a[2]"></i>
+  <i value="0" label="a[3]" bad></i>
+</vk-cells>
 
-<vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" highlight="0-5"></vk-bytes>
+<vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" current="0-5"></vk-bytes>
 ```
 
-- `vk-cells` 的 `flag`、`marked`、`filled` 都是 0 起；`spans` 是字段跨几格。
-- `vk-bytes` 的 `highlight` 是 0 起的字节段；`word` / `endian` 支持 1/2/4/8 与 little/big。
+- `vk-cells` 一格一个 `<i>`：`bad` / `mark` / `filled` 写在格子上，`span` 表示跨几格；超过 `cols` 自动换行。
+- `vk-bytes` 的 `current` 是 0 起的字节段；`word` / `endian` 支持 1/2/4/8 与 little/big。
 
 ## 5 · 页面
 
@@ -66,7 +71,7 @@ npm i /path/to/vk-video-kit
 <vk-page align="center">
   <vk-stack gap="lg">
     <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">字符串不是值，是<em>一块内存</em></vk-title>
-    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" highlight="4"></vk-code>
+    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
   </vk-stack>
 </vk-page>
 ```
@@ -88,7 +93,7 @@ npx vk doc vk-code        # 某个标签的属性
 npx vk icons arrow        # 搜图标名
 ```
 
-`vk check` 查 44px 地板、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
+`vk check` 查 40px 地板、正文是否落在 52、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
 
 没有构建时：`vk-code` / `vk-diff` 在 HTTP 下会退化成纯文本并警告；`file://` 下 `src` 取不到，请先 `npx vk serve` 或 `npx vk build`。
 
@@ -97,7 +102,7 @@ npx vk icons arrow        # 搜图标名
 字体随包：Inter / JetBrains Mono / Noto Sans SC 子集，`vk/fonts.css` 一个文件。
 
 - **只有白纸**：没有深色主题、深色代码窗、反色卡片。
-- **内容字不小于 44**；行号、文件名、索引编号、图注等元数据 36–40，门禁对 `[data-meta]` 放行。
+- **字阶只有五档**：120 / 88 / 64 / 52 / 40。要读懂的内容 52，元数据/标签/密集 ASCII 数据 40（`data-meta`），不得再低。
 - **焦点**用 `--vk-focus`（冷钴蓝）做底，不要拿它写正文。
 - **语义**（`--vk-ok` / `--vk-err` / `--vk-warn`）只做色条、底色、图标。
 - **语法**（`--vk-syn-*`）只出现在代码和终端里。
@@ -138,7 +143,7 @@ npx vk icons arrow        # 搜图标名
 
 规格页不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **索引**：36 个组件，8 列 × 5 行，一屏装得下。
+- **索引**：6 页 × 6 格（3 列 × 2 行）。每格是整张标本页的等比缩略图 + 名字，和点进去看到的一致。
 - **一页一个组件**：一行元信息 + 标准形态，**单镜头**。
 - **属性表**：`docs/reference.md`，由 registry 生成。
 - **变体**：不进页面；每个组件的预设由门禁逐条施加并比对像素。

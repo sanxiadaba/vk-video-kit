@@ -52,7 +52,7 @@ export class VkAsm extends VkElement {
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const density = this.getAttribute('density') || 'normal';
     const title = this.getAttribute('title') || d.file || '';
-    const hl = lineSet(this.getAttribute('highlight'));
+    const hl = lineSet(this.getAttribute('current'));
     const focus = lineSet(this.getAttribute('focus'));
     const orderList = (this.getAttribute('order') || '')
       .split(',')
