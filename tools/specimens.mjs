@@ -37,7 +37,9 @@ a:hover{color:#1b3fd6}
 .spec-scale{width:1479px}
 .spec-scale > *{zoom:.77}`;
 
-function shell(title, body) {
+function shell(title, body, depth = 1) {
+  // depth：索引在站点根，规格页在 specimen/ 下一层；两者的相对路径前缀不同。
+  const up = depth ? '../'.repeat(depth) : '';
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
@@ -45,15 +47,15 @@ function shell(title, body) {
 <meta name="viewport" content="width=1920">
 <link rel="icon" href="data:,">
 <title>${esc(title)}</title>
-<link rel="stylesheet" href="../vk/fonts.css">
-<link rel="stylesheet" href="../vk/vk.css">
+<link rel="stylesheet" href="${up}vk/fonts.css">
+<link rel="stylesheet" href="${up}vk/vk.css">
 <style>${RESET}
 .vk-page{margin:0 auto}
 </style>
 </head>
 <body>
 ${body}
-<script src="../dist/vk.js"></script>
+<script src="${up}dist/vk.js"></script>
 </body>
 </html>
 `;
@@ -139,7 +141,7 @@ ${cards}
     </vk-grid>
   </vk-stack>
 </vk-page>`;
-  return shell('vk · 组件索引', `<!-- vk:spec:${hash32(JSON.stringify(ORDER))} -->\n${page}`);
+  return shell('vk · 组件索引', `<!-- vk:spec:${hash32(JSON.stringify(ORDER))} -->\n${page}`, 0);
 }
 
 const files = new Map();

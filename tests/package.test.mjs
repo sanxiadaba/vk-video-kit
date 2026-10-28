@@ -87,3 +87,14 @@ test('CI 只要求 chromium，不要求 msedge', () => {
   assert.match(ci, /npm run build/);
   assert.match(ci, /npm test/);
 });
+
+test('站点根与子目录的相对路径各就各位（GitHub Pages 子路径部署）', () => {
+  const root = fs.readFileSync('_site/index.html', 'utf8');
+  assert.ok(root.includes('href="vk/vk.css"'), '索引在站点根，样式必须是 vk/vk.css');
+  assert.ok(root.includes('src="dist/vk.js"'), '索引在站点根，脚本必须是 dist/vk.js');
+  assert.ok(!root.includes('"../vk/'), '索引不能上跳一层：Pages 子路径下会 404');
+
+  const inner = fs.readFileSync('_site/specimen/vk-box.html', 'utf8');
+  assert.ok(inner.includes('href="../vk/vk.css"'), '规格页在 specimen/ 下，要上跳一层');
+  assert.ok(inner.includes('src="../dist/vk.js"'), '规格页在 specimen/ 下，要上跳一层');
+});
