@@ -35,6 +35,20 @@ body{display:flex;justify-content:center;min-height:100vh}
 a{color:inherit;text-decoration:none}
 a:hover{color:#1b3fd6}
 .spec-scale{width:1400px}
+/* 标本页的宽度是版面意图，用作者 CSS 表达——组件不再接受像素 w/h。 */
+.spec-w{width:1400px}
+.spec-w1680{width:1680px}
+.spec-w1360{width:1360px}
+.spec-w1200{width:1200px}
+.spec-w1120{width:1120px}
+.spec-w1100{width:1100px}
+.spec-w1000{width:1000px}
+.spec-w600{width:600px}
+.spec-h560{height:560px}
+.spec-h240{display:flex;height:240px}
+.spec-pill{width:160px}
+/* 索引卡高度也是版式意图，落在作者 CSS 上。 */
+.spec-card{display:flex;flex-direction:column;height:352px}
 .spec-scale > *{zoom:.73}
 .spec-card-tag{white-space:nowrap;letter-spacing:-.06em}
 /* 索引卡：名字单行，行高按版式收紧。 */
@@ -130,7 +144,7 @@ ${footer}  </vk-stack>
 function card(tag, no) {
   const def = TAGS[tag];
   // 索引 = 缩略图 + 名字。缩略图取组件本体（不裁切），卡片端 contain 完整显示。
-  return `<a href="specimen/${tag}.html"><vk-stack gap="2xs" h="352" overflow="clip">
+  return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
   <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="cover"></vk-img>
   <vk-text class="spec-card-name" size="meta">${esc(def.name)}</vk-text>
 </vk-stack></a>`;

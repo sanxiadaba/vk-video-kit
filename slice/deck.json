@@ -1,0 +1,21 @@
+{
+  "deck": "slice-01",
+  "title": "字符串不是值，是一块内存",
+  "frame": { "w": 1920, "h": 1080, "safeX": 120, "safeY": 96 },
+  "frames": [
+    { "id": "07", "role": "claim", "file": "frames/07.html" },
+    { "id": "08", "role": "compare", "file": "frames/08.html" },
+    {
+      "id": "09",
+      "role": "detail",
+      "file": "frames/09a.html",
+      "candidates": ["frames/09a.html", "frames/09b.html"],
+      "variants": {
+        "frames/09a.html": "作者意图：2 栏并排，代码 1 份 + 要点 1 份",
+        "frames/09b.html": "备选：1 栏上下，代码满宽 + 要点满宽"
+      }
+    },
+    { "id": "10", "role": "auto-fix", "file": "frames/10.html", "note": "作者把 span=1 塞进 2 栏：窄栏把五条事实折成十行，交给求解器改 cols" },
+    { "id": "11", "role": "split-only", "file": "frames/11.html", "note": "九条事实：cols 怎么改都装不下，只能拆帧" }
+  ]
+}

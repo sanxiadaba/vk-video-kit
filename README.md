@@ -63,6 +63,17 @@ npm i /path/to/vk-video-kit
 </vk-page>
 ```
 
+排版只有一种写法：**分份**。容器给份（`cols` / `rows`），子项占份（`span`），撑满用 `fill`：
+
+```html
+<vk-grid cols="3" gap="lg" fill>
+  <vk-code span="2" src="hello.c" lines="4-9"></vk-code>
+  <vk-stack span="1" gap="md">…</vk-stack>
+</vk-grid>
+```
+
+像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，`style` 不被接受——布局要能算、能验，不能靠手摆。容量也是算出来的：一帧 888px 高，正文 52×1.5 一行，**11 行**。
+
 ```bash
 npx vk build page.html   # 读取 src 或内联源码块，把高亮/公式/字节/树写进 HTML
 npx vk check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
@@ -113,6 +124,8 @@ int main(void) { return 0; }
 npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata
 npm run dev         # build + watch 重建 + dev server（8099）
 npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（约 8s）
+npm run plan -- slice/deck.json  # 容量表 + 自动求解（改 cols 并写回）+ 跨帧建议
+npm run box -- slice/frames/07.html  # 打印一帧的盒子树
 npm run specimens   # 只重生成标本册
 npm run verify      # 只读校验：生成物与源码不一致就失败
 npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）

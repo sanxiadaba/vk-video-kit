@@ -123,8 +123,21 @@ body {
   width: 1680px;
   max-height: 888px;
 }
+/* 标本宽度是版面意图，走作者 CSS——组件不再接受像素 w/h。
+   必须写在 .vk-stage > * 之后：同权重时后写的赢，否则宽度会被 100% 覆盖。 */
 .vk-stage > * { width: 100%; }
 .vk-stage > .spec-scale { width: 1479px; }
+.spec-w{width:1400px}
+.spec-w1680{width:1680px}
+.spec-w1360{width:1360px}
+.spec-w1200{width:1200px}
+.spec-w1120{width:1120px}
+.spec-w1100{width:1100px}
+.spec-w1000{width:1000px}
+.spec-w600{width:600px}
+.spec-h560{height:560px}
+.spec-h240{display:flex;height:240px}
+.spec-pill{width:160px}
 `,
   check
 );

@@ -73,6 +73,10 @@ vk-row > [grow] { flex: 1 1 auto; min-width: 0; }
 /* Frame 的公共属性：grow 主轴、fill 交叉轴、measure 测量宽、overflow 裁切 */
 [grow] { flex: 1 1 auto; min-width: 0; }
 [fill] { align-self: stretch; }
+/* fill 在竖排/分份容器里是"吃掉剩余高度"，不是"按内容高"。
+   少了这两行，grid 会被内容撑出帧外——切片里实测到的 56px 溢出就是这个。 */
+vk-stack[fill],
+vk-grid[fill] { flex: 1 1 auto; min-height: 0; }
 [measure='body'] { max-width: var(--vk-measure-body); }
 [measure='title'] { max-width: var(--vk-measure-title); }
 [overflow='clip'] { overflow: hidden; }
@@ -92,6 +96,32 @@ vk-grid[cols='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 vk-grid[cols='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 vk-grid[cols='5'] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 vk-grid[cols='6'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+
+/* 分份：容器切份，子项占份。离散的份数是求解器可判定的前提——
+   写不出 37%，只可能在 n 等分里选。 */
+vk-grid[rows='1'] { grid-template-rows: minmax(0, 1fr); }
+vk-grid[rows='2'] { grid-template-rows: repeat(2, minmax(0, 1fr)); }
+vk-grid[rows='3'] { grid-template-rows: repeat(3, minmax(0, 1fr)); }
+vk-grid[rows='4'] { grid-template-rows: repeat(4, minmax(0, 1fr)); }
+vk-grid[rows='5'] { grid-template-rows: repeat(5, minmax(0, 1fr)); }
+vk-grid[rows='6'] { grid-template-rows: repeat(6, minmax(0, 1fr)); }
+
+/* rows 的语义是"把高度等分"。没有确定高度时 1fr 会塌成内容高，
+   等分就退化成"看起来没生效"——所以写了 rows 就默认吃掉剩余高度。 */
+vk-grid[rows] { flex: 1 1 auto; min-height: 0; }
+
+vk-grid > [span='2'] { grid-column: span 2; }
+vk-grid > [span='3'] { grid-column: span 3; }
+vk-grid > [span='4'] { grid-column: span 4; }
+vk-grid > [span='5'] { grid-column: span 5; }
+vk-grid > [span='6'] { grid-column: span 6; }
+
+/* 第二轴：跨行。分份是二维的，只给列不给行，跨行就只能靠嵌套。 */
+vk-grid > [row-span='2'] { grid-row: span 2; }
+vk-grid > [row-span='3'] { grid-row: span 3; }
+vk-grid > [row-span='4'] { grid-row: span 4; }
+vk-grid > [row-span='5'] { grid-row: span 5; }
+vk-grid > [row-span='6'] { grid-row: span 6; }
 
 vk-grid[gap='2xs'] { gap: var(--vk-s1); }
 vk-grid[gap='xs'] { gap: var(--vk-s2); }

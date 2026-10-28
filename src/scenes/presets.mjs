@@ -30,10 +30,12 @@ export const PRESETS = {
     { label: '强调色', attrs: { tone: 'accent' } },
   ],
   'vk-img': [
-    { label: '小图', attrs: { w: '720' } },
-    { label: '大图', attrs: { w: '1600' } },
-    { label: '方图', attrs: { w: '800', ratio: '1 / 1' } },
-    { label: '定高', attrs: { h: '600' } },
+    /* 图片的尺寸由容器决定（frame=false，w/h 从来就没生效过）。
+       预设改成真正影响画面的四个维度：比例、填充、焦点、圆角。 */
+    { label: '宽幅', attrs: { ratio: '16 / 9' } },
+    { label: '竖幅', attrs: { ratio: '3 / 4' } },
+    { label: '方图', attrs: { ratio: '1 / 1' } },
+    { label: '完整', attrs: { fit: 'contain' } },
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
     { label: '圆图', attrs: { ratio: '1 / 1', radius: 'pill' } },
@@ -170,7 +172,7 @@ export const PRESETS = {
     { label: '第三步', attrs: { current: '2' } },
   ],
   'vk-page': [
-  ],
+  ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
     { label: '小标题阶', attrs: { size: 'heading' } },

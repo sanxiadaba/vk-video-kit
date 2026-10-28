@@ -15,6 +15,9 @@ vscode-html-data.json
 web-types.json
 src/icons.generated.mjs
 src/icons.core.generated.mjs
+# 求解器产物：npm run slice 随时重建（plan 里有时间戳，截图是渲染结果）
+slice/plan.json
+slice/shots/
 
 # 本地日志 / 临时目录
 .tmp/

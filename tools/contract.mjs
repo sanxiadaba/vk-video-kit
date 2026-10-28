@@ -430,6 +430,9 @@ try {
 
     for (const [name, spec] of Object.entries(attrs)) {
       if (isHidden(tag, name)) continue;
+      // 语境属性（span / rows）：只在特定上下文里有效——span 要有 vk-grid 父级，
+      // rows 要有确定高度。它们由构建期校验和 slice 的求解器覆盖，不在这里逐条探针。
+      if (spec.context) continue;
       const key = `${tag}.${name}`;
       if (spec.build) {
         buildOnly.push(name);

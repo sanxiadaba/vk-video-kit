@@ -166,17 +166,18 @@ export class VkCode extends VkElement {
       bodyEl.querySelectorAll('.vk-src').forEach((el) => markTerms(el, marks));
     }
 
-    // 行内字符区间：span="4:9-12" 指第 4 行第 9–12 个字符（列从 0 起）。
-    for (const part of (this.getAttribute('span') || '').split(',')) {
+    // 行内字符区间：omit="4:9-12" 指第 4 行第 9–12 个字符（列从 0 起）。
+    // 属性叫 omit 而不是 span：span 已经归布局（占几份），一个概念只能有一个名字。
+    for (const part of (this.getAttribute('omit') || '').split(',')) {
       const m = part.trim().match(/^(\d+)\s*:\s*(\d+)\s*-\s*(\d+)$/);
       if (!m) {
-        if (part.trim()) this._warnOnce('span', `的 span="${part.trim()}" 不是 行:起-止，已忽略`);
+        if (part.trim()) this._warnOnce('omit', `的 omit="${part.trim()}" 不是 行:起-止，已忽略`);
         continue;
       }
       const lineNo = Number(m[1]);
       const lineEl = this.querySelector(`.vk-line[data-line="${lineNo}"]`);
       if (!lineEl) {
-        this._warnOnce(`span:${lineNo}`, `的 span 指向第 ${lineNo} 行，但这段里没有这一行`);
+        this._warnOnce(`omit:${lineNo}`, `的 omit 指向第 ${lineNo} 行，但这段里没有这一行`);
         continue;
       }
       wrapCharRange(lineEl.querySelector('.vk-src'), Number(m[2]), Number(m[3]), 'vk-char', `c${lineNo}:${m[2]}-${m[3]}`);

@@ -64,10 +64,10 @@ export const PROBES = {
       effect: { on: 'vk-code', kind: 'dom', prop: '.vk-line.is-fold' },
       why: '真折叠会多出一条 .is-fold 行；行数不变，不能只数 .vk-line。',
     },
-    span: {
+    omit: {
       values: ['4:0-1'],
       effect: { on: 'vk-code', kind: 'dom', prop: '.vk-char' },
-      why: 'span 只在合法行:列区间上包出字符 span；断 .vk-char 的个数。',
+      why: 'omit（原 span）只在合法行:列区间上包出字符 span；断 .vk-char 的个数。',
     },
     mark: {
       values: ['s'],

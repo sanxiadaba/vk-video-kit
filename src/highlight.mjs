@@ -20,6 +20,7 @@ import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
+import { diag } from './shared/diag.mjs';
 import { TAGS, CHILD_ATTRS } from './registry.mjs';
 
 /* ------------------------------------------------------------------ 主题 */
@@ -179,9 +180,15 @@ function walk(node, fn) {
 }
 
 const GLOBAL_ATTRS = new Set([
-  'id', 'class', 'className', 'style', 'title', 'role', 'tabindex', 'slot', 'part',
+  'id', 'class', 'className', 'title', 'role', 'tabindex', 'slot', 'part',
   'x', 'y', 'lang', 'dir', 'hidden', 'aria-hidden', 'aria-label', 'aria-labelledby',
 ]);
+
+/** 严格模式：像素摆位与后门直接报错。默认开——新帧只能用意图表达布局。 */
+let STRICT = true;
+export function setStrict(v) {
+  STRICT = !!v;
+}
 
 /** 具名窗体的组件：它们自己带窗头，嵌进 vk-window 时必须 chrome="none"。 */
 const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes', 'vk-window']);
@@ -382,14 +389,14 @@ function validateRefs(doc, file, errors) {
       }
     }
 
-    // 4) vk-code 的 span="行:起-止"
+    // 4) vk-code 的 omit="行:起-止"（属性叫 omit，span 归布局用）
     if (tag === 'vk-code') {
-      for (const part of String(attr(node, 'span') || '').split(',')) {
+      for (const part of String(attr(node, 'omit') || '').split(',')) {
         const s = part.trim();
         if (!s) continue;
         const mm = s.match(/^(\d+):(\d+)-(\d+)$/);
         if (!mm || Number(mm[2]) >= Number(mm[3])) {
-          errors.push(`${file}:${lineOf(node)} <vk-code> 的 span="${s}" 不是 行:起-止，且起 < 止`);
+          errors.push(`${file}:${lineOf(node)} <vk-code> 的 omit="${s}" 不是 行:起-止，且起 < 止`);
         }
       }
     }
@@ -453,6 +460,9 @@ function closestOf(word, list) {
 
 function validateAuthorHtml(doc, file) {
   const errors = [];
+  const warnings = [];
+  /** 新规矩：严格模式下是错误，默认只提醒——旧页要慢慢迁（清单见 docs/layout-plan.md）。 */
+  const strictness = (msg) => (STRICT ? errors : warnings).push(msg);
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
   walk(doc, (node) => {
     const tag = node.tagName;
@@ -474,9 +484,52 @@ function validateAuthorHtml(doc, file) {
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
+
     // x/y 只在坐标空间里成立：canvas 的子节点，或本身是覆盖层的三种关系件。
     if ((attrs.has('x') || attrs.has('y')) && !XY_OVERLAY.has(tag) && node.parentNode?.tagName !== 'vk-canvas') {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 的 x/y 只能写在 vk-canvas 子节点或覆盖层上；其它位置用 vk-stack / vk-row / vk-grid 排版`);
+      errors.push(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: '的 x/y 只有坐标空间认',
+          wrote: [...attrs].filter(([n]) => n === 'x' || n === 'y').map(([n, v]) => `${n}="${v}"`).join(' '),
+          should: '放进 <vk-canvas>，或用 <vk-stack> / <vk-row> / <vk-grid> 配 gap 排版',
+          why: 'x/y 是绝对坐标：改一个字就要重算像素，布局也就不可求解了',
+        })
+      );
+    }
+    // w/h 是像素摆位，同样只在坐标空间里成立。
+    if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && node.parentNode?.tagName !== 'vk-canvas') {
+      strictness(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: '的 w/h 是像素摆位',
+          wrote: [...attrs].filter(([n]) => n === 'w' || n === 'h').map(([n, v]) => `${n}="${v}"`).join(' '),
+          should: '要分栏用 <vk-grid cols="3"> 配子项 span="2"；要撑满用 fill',
+          why: '像素值进不了容量检查，也进不了求解器——它只是把"摆不下"推迟到肉眼发现',
+        })
+      );
+    }
+    // span / row-span 只在分份容器里有意义：父级必须是 vk-grid。
+    // 浏览器会忽略错误位置的 grid-column / grid-row，所以这条必须在构建期拦住。
+    for (const name of ['span', 'row-span']) {
+      if (!attrs.has(name)) continue;
+      if (node.parentNode?.tagName === 'vk-grid') continue;
+      const axis = name === 'span' ? '列' : '行';
+      errors.push(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: `的 ${name} 放错了地方`,
+          wrote: `${name}="${attrs.get(name)}"`,
+          should: `让父级是 <vk-grid>（跨${axis}的份数由父级声明），或删掉 ${name}（当前父级是 <${node.parentNode?.tagName || '无'}>）`,
+          why: 'span 的意思是"占几份"，份数必须由父级声明；放错位置时浏览器会静默忽略',
+        })
+      );
     }
     for (const [name, raw] of attrs) {
       if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) {
@@ -488,46 +541,83 @@ function validateAuthorHtml(doc, file) {
         continue;
       }
       const spec = def.attrs?.[name];
-      const where = `${file}:${lineOf(node)} <${tag}>`;
+      const where = { file, line: lineOf(node), tag };
       if (!spec) {
-        const hit = closestOf(name, Object.keys(def.attrs || {}));
+        const usable = Object.keys(def.attrs || {});
+        const hit = closestOf(name, usable);
         errors.push(
-          `${where} 未知属性 ${name}="${raw}"${hit ? `；你是想写 ${hit} 吗` : ''}；可用：${Object.keys(def.attrs || {}).join(', ') || '无'}`
+          diag({
+            ...where,
+            what: `未知属性 ${name}`,
+            wrote: `${name}="${raw}"`,
+            should: hit ? `你是想写 ${hit}？可用：${usable.join(', ')}` : `可用：${usable.join(', ') || '无'}`,
+            why: '未知属性不会静默失效就算了——它会在运行时变成没效果的空写',
+          })
         );
         continue;
       }
       if (spec.type === 'bool') {
-        if (raw !== '' && raw !== 'true') errors.push(`${where} 布尔属性 ${name} 只写名字（现在 ${name}="${raw}" 仍会被当成真）`);
+        if (raw !== '' && raw !== 'true')
+          errors.push(
+            diag({
+              ...where,
+              what: `的 ${name} 是布尔属性`,
+              wrote: `${name}="${raw}"`,
+              should: `只写 ${name}`,
+              why: '给了值也只会被当成真：看着像能关掉，实际关不掉',
+            })
+          );
         continue;
       }
       if (spec.values && !spec.values.includes(raw)) {
         const hit = closestOf(raw, spec.values);
-        errors.push(`${where} ${name}="${raw}" 不在 ${spec.values.join(' / ')} 内${hit ? `；你是想写 ${hit} 吗` : ''}`);
+        errors.push(
+          diag({
+            ...where,
+            what: `的 ${name} 不在词表里`,
+            wrote: `${name}="${raw}"`,
+            should: `${spec.values.join(' / ')}${hit ? `（你是想写 ${hit}？）` : ''}`,
+            why: '词表是闭集：只允许"选"，不允许"调"',
+          })
+        );
         continue;
       }
       if (spec.type === 'num' || spec.type === 'int') {
         const n = Number(raw);
+        const range = `${spec.min ?? '−∞'}…${spec.max ?? '∞'}`;
         if (!Number.isFinite(n)) {
-          errors.push(`${where} ${name}="${raw}" 不是数字`);
+          errors.push(
+            diag({ ...where, what: `的 ${name} 不是数字`, wrote: `${name}="${raw}"`, should: '一个数字', why: 'NaN 会一路传进布局，比在入口报错难查得多' })
+          );
         } else if ((spec.min !== undefined && n < spec.min) || (spec.max !== undefined && n > spec.max)) {
-          errors.push(`${where} ${name}="${raw}" 超出 ${spec.min ?? '−∞'}…${spec.max ?? '∞'}`);
+          errors.push(
+            diag({ ...where, what: `的 ${name} 超出范围`, wrote: `${name}="${raw}"`, should: range, why: '越界值会被悄悄裁到边界，画面和你想的不一样' })
+          );
         }
       }
       if (spec.type === 'size') {
         const special = raw === 'fit' || raw === 'full';
         if (!special) {
           const n = Number(raw);
+          const range = `${spec.min ?? '−∞'}…${spec.max ?? '∞'}`;
           if (!Number.isFinite(n)) {
-            errors.push(`${where} ${name}="${raw}" 不是数字，也不是 fit / full`);
+            errors.push(
+              diag({ ...where, what: `的 ${name} 既不是数字也不是关键字`, wrote: `${name}="${raw}"`, should: `一个数字，或 fit / full`, why: '尺寸只有两种写法：像素档或撑满' })
+            );
           } else if ((spec.min !== undefined && n < spec.min) || (spec.max !== undefined && n > spec.max)) {
-            errors.push(`${where} ${name}="${raw}" 超出 ${spec.min ?? '−∞'}…${spec.max ?? '∞'}`);
+            errors.push(
+              diag({ ...where, what: `的 ${name} 超出范围`, wrote: `${name}="${raw}"`, should: range, why: '越界值会被悄悄裁到边界，画面和你想的不一样' })
+            );
           }
         }
       }
       if (spec.type === 'lines') {
         const bad =
           !isIndexList(raw) || indexRanges(raw).some(({ from, to }) => from < 1 || to < from);
-        if (bad) errors.push(`${where} ${name}="${raw}" 不是合法行段（1、1-8、1,3-5）`);
+        if (bad)
+          errors.push(
+            diag({ ...where, what: `的 ${name} 不是行段`, wrote: `${name}="${raw}"`, should: '1、1-8、1,3-5 这类写法', why: '行段从 1 起；写错的行段会让整个高亮错位' })
+          );
       }
     }
     const slotDefs = def.slots || [];
@@ -564,7 +654,7 @@ function validateAuthorHtml(doc, file) {
   });
   validateRefs(doc, file, errors);
   validateImages(doc, file, errors);
-  return errors;
+  return { errors, warnings };
 }
 
 /** 本地图片不存在时构建期就报错；远程 / data: / 绝对路径交给运行时占位。 */
@@ -723,7 +813,10 @@ function applyIcons(html, names) {
  */
 export async function transformHtml(html, { file = '<memory>', highlighter } = {}) {
   const doc = parse(html, { sourceCodeLocationInfo: true });
-  const errors = validateAuthorHtml(doc, file);
+  const { errors, warnings } = validateAuthorHtml(doc, file);
+  if (warnings.length) {
+    console.warn(`[vk] ${file}：${warnings.length} 处旧写法（首处 ${warnings[0].split(': ').pop().slice(0, 90)}）`);
+  }
   const blocks = [];
   const maths = [];
   const terms = [];

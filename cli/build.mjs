@@ -14,7 +14,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
-import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
+import { createVkHighlighter, transformHtml, setStrict } from '../src/highlight.mjs';
 
 const CACHE = '.vk-cache/precompile.json';
 const stripGenerated = (html) =>
@@ -55,7 +55,11 @@ export async function main() {
   const args = process.argv.slice(2);
   const check = args.includes('--check');
   const force = args.includes('--force');
-  const inputs = args.filter((a) => a !== '--check' && a !== '--force');
+  const strict = args.includes('--strict');
+  const loose = args.includes('--loose');
+  const inputs = args.filter((a) => !a.startsWith('--'));
+  if (loose) setStrict(false);
+  else if (strict) setStrict(true);
   const files = [];
 
   // 不带参数时：仓库里默认 _site/specimens，别的地方默认当前目录

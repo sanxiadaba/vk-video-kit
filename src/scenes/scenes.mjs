@@ -33,7 +33,7 @@ export const SCENES = [
   {
     tag: 'vk-title',
     body: s`
-<vk-box w="1400" surface="none">
+<vk-box class="spec-w" surface="none">
   <vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">示例标题</vk-title>
 </vk-box>`,
   },
@@ -41,7 +41,7 @@ export const SCENES = [
   {
     tag: 'vk-text',
     body: s`
-<vk-box w="1120" surface="none">
+<vk-box class="spec-w1120" surface="none">
   <vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>
 </vk-box>`,
   },
@@ -49,7 +49,7 @@ export const SCENES = [
   {
     tag: 'vk-list',
     body: s`
-<vk-box w="1200" surface="none">
+<vk-box class="spec-w1200" surface="none">
   <vk-list gap="sm">
     <li>条目一</li>
     <li>条目二</li>
@@ -62,7 +62,7 @@ export const SCENES = [
   {
     tag: 'vk-callout',
     body: s`
-<vk-box w="1360" surface="none">
+<vk-box class="spec-w1360" surface="none">
   <vk-callout tone="warn" title="提示框标题" size="body">
     提示框内容，只做占位。
   </vk-callout>
@@ -72,7 +72,7 @@ export const SCENES = [
   {
     tag: 'vk-box',
     body: s`
-<vk-box border="hair" radius="xl" pad="lg" w="1200" h="560" surface="paper">
+<vk-box border="hair" radius="xl" pad="lg" class="spec-w1200 spec-h560" surface="paper">
   <vk-text size="body">示例内容。这里只放一段中性占位文字。</vk-text>
   <vk-text size="body" ink="secondary">名字不是值；副标题只做占位。</vk-text>
 </vk-box>`,
@@ -100,7 +100,7 @@ export const SCENES = [
   {
     tag: 'vk-table',
     body: s`
-<vk-box w="1200" surface="none">
+<vk-box class="spec-w1200" surface="none">
   <vk-table variant="ledger">
     <table>
       <thead>
@@ -169,13 +169,13 @@ export const SCENES = [
     tag: 'vk-stack',
     body: s`
 <vk-stack gap="sm">
-  <vk-box border="hair" radius="lg" pad="md" w="600" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w600" surface="paper">
     <vk-text size="body">01</vk-text>
   </vk-box>
-  <vk-box border="hair" radius="lg" pad="md" w="1000" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w1000" surface="paper">
     <vk-text size="body">02</vk-text>
   </vk-box>
-  <vk-box border="hair" radius="lg" pad="md" w="1000" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w1000" surface="paper">
     <vk-text size="body">03</vk-text>
   </vk-box>
 </vk-stack>`,
@@ -184,21 +184,21 @@ export const SCENES = [
   {
     tag: 'vk-row',
     body: s`
-<vk-box w="1680" surface="none">
+<vk-box class="spec-w1680" surface="none">
   <vk-row gap="md">
-    <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
+    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
       <vk-text size="body" align="center">01</vk-text>
     </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="xs" w="160" surface="soft">
+    <vk-box radius="pill" pad-x="md" pad-y="xs" class="spec-pill" surface="soft">
       <vk-text size="body" align="center">02</vk-text>
     </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
+    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
       <vk-text size="body" align="center">03</vk-text>
     </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="xs" w="160" surface="soft">
+    <vk-box radius="pill" pad-x="md" pad-y="xs" class="spec-pill" surface="soft">
       <vk-text size="body" align="center">04</vk-text>
     </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="md" w="160" surface="soft">
+    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
       <vk-text size="body" align="center">05</vk-text>
     </vk-box>
   </vk-row>
@@ -208,7 +208,7 @@ export const SCENES = [
   {
     tag: 'vk-grid',
     body: s`
-<vk-box w="1400" surface="none">
+<vk-box class="spec-w" surface="none">
 <vk-grid cols="3" gap="sm">
   <vk-box border="hair" radius="lg" pad="xl" surface="paper">
     <vk-stack gap="2xs">
@@ -241,7 +241,7 @@ export const SCENES = [
   {
     tag: 'vk-figure',
     body: s`
-<vk-figure w="1100" fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure>`,
+<div class="spec-w1100"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
   },
 
   {
@@ -262,7 +262,7 @@ export const SCENES = [
   {
     tag: 'vk-tree',
     body: s`
-<vk-box w="1200" surface="none">
+<vk-box class="spec-w1200" surface="none">
   <vk-tree title="app" current="src/parser.py" depth="4">
     src/
       __init__.py
@@ -334,13 +334,13 @@ export const SCENES = [
   {
     tag: 'vk-img',
     body: s`
-<vk-img w="1200" h="675" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl"></vk-img>`,
+<vk-img class="spec-w1200" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl"></vk-img>`,
   },
 
   {
     tag: 'vk-mark',
     body: s`
-<vk-box w="1120" surface="none">
+<vk-box class="spec-w1120" surface="none">
   <vk-text size="body" measure="body">示例文字：<vk-mark variant="highlight">高亮</vk-mark>、<vk-mark variant="underline">下划线</vk-mark>、<vk-mark variant="circle">圈选</vk-mark>。</vk-text>
 </vk-box>`,
   },
@@ -351,7 +351,7 @@ export const SCENES = [
 <vk-stack gap="lg">
   <vk-rule></vk-rule>
   <vk-rule variant="strong"></vk-rule>
-  <vk-row justify="center"><vk-rule orientation="vertical" style="height:240px"></vk-rule></vk-row>
+  <div class="spec-h240"><vk-row justify="center"><vk-rule orientation="vertical" fill></vk-rule></vk-row></div>
 </vk-stack>`,
   },
 
@@ -375,7 +375,7 @@ export const SCENES = [
   {
     tag: 'vk-steps',
     body: s`
-<vk-box w="1200" surface="none">
+<vk-box class="spec-w1200" surface="none">
   <vk-steps current="1">
     <li>步骤一</li>
     <li>步骤二</li>

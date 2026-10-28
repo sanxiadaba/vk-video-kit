@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<link rel="icon" href="data:,">
+<title>slice · 07 · 字符串不是值</title>
+<link rel="stylesheet" href="../../vk/fonts.css">
+<link rel="stylesheet" href="../../vk/vk.css">
+<style>html,body{margin:0;padding:0;background:#eef2f7}</style>
+</head>
+<body>
+<vk-page align="top">
+  <vk-stack gap="lg" fill>
+    <vk-title size="title" sub="改一个字节，动的是整块内存。">字符串不是值，是<em>一块内存</em></vk-title>
+    <vk-grid cols="3" gap="lg" fill>
+      <vk-code span="2" lang="c" file="hello.c" current="1">
+char *s = "hello";
+s[0]='H'; /* 崩 */
+printf("%s\n", s);
+<script type="text/plain" data-vk-hl data-vk-hash="937e70" data-vk-lang="c">["<span class=\"vk-k\">char</span> <span class=\"vk-o\">*</span>s <span class=\"vk-o\">=</span> <span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-s\" data-tok=\"s\">hello</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-p\">;</span>","s<span class=\"vk-p\">[</span><span class=\"vk-n\">0</span><span class=\"vk-p\">]</span><span class=\"vk-o\">=</span><span class=\"vk-p\" data-tok=\"s\">&#39;</span><span class=\"vk-s\" data-tok=\"s\">H</span><span class=\"vk-p\" data-tok=\"s\">&#39;</span><span class=\"vk-p\">;</span><span class=\"vk-c vk-it\" data-tok=\"c\"> /* 崩 */</span>","<span class=\"vk-f\">printf</span><span class=\"vk-p\">(</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-s\" data-tok=\"s\">%s</span><span class=\"vk-n\" data-tok=\"s\">\\n</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-p\">,</span> s<span class=\"vk-p\">);</span>"]</script>
+</vk-code>
+      <vk-stack span="1" gap="md">
+        <vk-list variant="check" gap="sm">
+          <li>字面量在只读段</li>
+          <li>数组在栈上</li>
+          <li>指针只存地址</li>
+        </vk-list>
+        <vk-callout tone="warn" title="注意">读 ≠ 写。</vk-callout>
+      </vk-stack>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+<script src="../../dist/vk.js"></script>
+</body>
+</html>

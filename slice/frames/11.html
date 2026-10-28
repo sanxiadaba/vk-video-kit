@@ -1,0 +1,33 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<link rel="icon" href="data:,">
+<title>slice · 11 · 只能拆帧</title>
+<link rel="stylesheet" href="../../vk/fonts.css">
+<link rel="stylesheet" href="../../vk/vk.css">
+<style>html,body{margin:0;padding:0;background:#eef2f7}</style>
+</head>
+<body>
+<vk-page align="top">
+  <vk-stack gap="lg" fill>
+    <vk-title size="heading" sub="九条事实，怎么排版都装不下。">它到底住在哪</vk-title>
+    <vk-grid cols="2" gap="lg" fill>
+      <vk-list span="1" variant="check" gap="md">
+        <li>字面量存放在只读数据段里，写入会立刻触发段错误</li>
+        <li>字符数组在栈上分配，每个元素都可以随意改写</li>
+        <li>指针变量只保存首字节的地址，它并不拥有那块内容</li>
+        <li>const 只是给编译器看的约定，不是内存里的事实</li>
+        <li>字符串长度不计结尾的零字节，长度必须自己算</li>
+        <li>越界的写入不会报错，它只会悄悄踩坏隔壁的变量</li>
+        <li>释放之后指针仍然指向原处，再用就是悬垂引用</li>
+        <li>同一块内存被两处持有，谁先释放谁说了算</li>
+        <li>拷贝只复制指针时，两个变量共享同一份字节</li>
+      </vk-list>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+<script src="../../dist/vk.js"></script>
+</body>
+</html>

@@ -76,7 +76,8 @@ const ATTR_META = {
   bad: { label: '错误格', group: 'state' },
   focus: { label: '聚光行', group: 'state' },
   fold: { label: '折叠行', group: 'state' },
-  span: { label: '字符区间', content: true },
+  span: { label: '占几份', group: 'layout' },
+  omit: { label: '字符区间', content: true },
   value: { label: '数值', content: true },
   unit: { label: '单位', content: true },
   max: { label: '最大值', group: 'appearance' },
@@ -268,8 +269,6 @@ export const TAGS = {
       'ratio': text(),
       'fit': oneOf('cover', 'contain'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
-      'w': num({ min: 48, max: 1920, step: 1 }),
-      'h': num({ min: 48, max: 1080, step: 1 }),
     },
   },
   'vk-rule': {
@@ -331,9 +330,10 @@ export const TAGS = {
   'vk-grid': {
     name: '网格',
     layer: 'layout',
-    summary: '二维网格。列数固定，行高按内容。',
+    summary: '分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。',
     attrs: {
       'cols': oneOf('1', '2', '3', '4', '5', '6'),
+      'rows': { ...oneOf('1', '2', '3', '4', '5', '6'), context: 'bounded-height' },
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'gap-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'gap-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -469,7 +469,7 @@ export const TAGS = {
       'current': lines(),
       'focus': lines(),
       'fold': lines(),
-      'span': text(),
+      'omit': text(),
       'fold-note': text(),
       'chrome': oneOf('min', 'none'),
       'mark': text(),
@@ -859,6 +859,8 @@ const CUSTOM = new Set([
 const COMMON = {
   w: size({ min: 48, max: 1920, step: 1 }),
   h: size({ min: 48, max: 1080, step: 1 }),
+  span: { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
+  'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
   grow: bool(),
   fill: bool(),
   overflow: { ...oneOf('visible', 'clip'), default: 'visible' },
@@ -869,8 +871,7 @@ for (const [tag, def] of Object.entries(TAGS)) {
   def.attrs = def.attrs || {};
   Object.assign(def.attrs, COMMON);
 }
-/* 线不是面：h 对它会变成一块色条，直接从它的 API 面里删掉。 */
-delete TAGS['vk-rule'].attrs.h;
+/* 竖线要长度：vk-rule 保留 COMMON 的 h；横线的 h 组件自己忽略（线不是面）。 */
 
 const EXTRA = {
   'vk-box': { surface: oneOf('none', 'paper', 'soft') },
