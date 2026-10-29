@@ -60,12 +60,14 @@ if (cropRaw && !crop) {
 
 const phone = flag('--phone');
 const keep = flag('--keep');
+const scaleRaw = Number(valueOf('--scale') || 1);
+const scale = Number.isFinite(scaleRaw) && scaleRaw >= 1 && scaleRaw <= 4 ? scaleRaw : 1;
 const width = phone ? 640 : 1920;
 const height = phone ? 360 : 1080;
 
 const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
 try {
-  const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
+  const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: scale });
   const tab = await ctx.newPage();
   const runtimeErrors = [];
   tab.on('console', (m) => {
@@ -99,7 +101,9 @@ try {
   });
 
   const kb = (fs.statSync(out).size / 1024).toFixed(0);
-  console.log(`✓ ${path.relative(process.cwd(), out)}  ${width}×${height}${crop ? '（crop）' : ''}  ${kb} KB`);
+  console.log(
+    `✓ ${path.relative(process.cwd(), out)}  ${width * scale}×${height * scale}${crop ? '（crop）' : ''}  ${kb} KB`
+  );
   if (metrics && !crop) {
     const { contentTop, contentBottom, contentLeft, contentRight, focus } = metrics;
     console.log(`  度量：内容 y ${contentTop}–${contentBottom}（底距 ${1080 - 96 - (contentBottom ?? 0)}）· x ${contentLeft}–${contentRight} · 焦点 ${focus}`);
