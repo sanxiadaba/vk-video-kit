@@ -104,7 +104,20 @@ export class VkAsm extends VkElement {
         : `<div class="vk-asm-hd">${DOTS}<span class="vk-asm-file" data-meta>${esc(title)}</span><span class="vk-asm-range" data-meta>${esc(
             [this.getAttribute('lines') || '', d.base || ''].filter(Boolean).join(' · ')
           )}</span><span class="vk-asm-lang" data-meta>asm</span></div>`;
-    this.innerHTML = `<div class="vk-asm" data-density="${esc(density)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
+    /**
+     * 列模板由「实际输出的列」推出来，不由 CSS 里的开关组合硬编码。
+     * 地址列给 max-content：8 位 0x 地址在 40px 等宽下装不进 180px。
+     */
+    const gridCols = [
+      showOrder ? '84px' : '',
+      showAddr ? 'minmax(180px, max-content)' : '',
+      showBytes ? '500px' : '',
+      '160px',
+      'minmax(0, 1fr)',
+    ]
+      .filter(Boolean)
+      .join(' ');
+    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-density="${esc(density)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
   }

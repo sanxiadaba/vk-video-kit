@@ -66,7 +66,7 @@ for (const f of LATIN) {
   font-family: '${f.family}';
   font-style: normal;
   font-weight: ${w};
-  font-display: block;
+  font-display: swap;
   src: url('../${dest.replace(/\\/g, '/')}') format('woff2');
 }`);
   }
@@ -76,7 +76,7 @@ for (const f of LATIN) {
 
 /**
  * fontsource 的 400/500/700.css 是按 unicode-range 切好的上百个 @font-face。
- * 只做三件事：换成自托管路径、去掉用不到的 woff 回退、font-display 改成 block
+ * 只做三件事：换成自托管路径、去掉用不到的 woff 回退、font-display 保持 swap
  * （block 保证截帧时不会先闪一下系统字体）。
  *
  * 500 必须真的发：中文标签用 --vk-w-med，缺 500 会静默落到 400，
@@ -103,8 +103,7 @@ for (const w of [400, 500, 700]) {
   const rewritten = css
     .replace(/, url\(\.\/files\/[^)]+\.woff\) format\('woff'\)/g, '')
     .replace(/url\(\.\/files\/([^)]+)\)/g, "url('../assets/fonts/noto/$1')")
-    .replace(/font-display: swap;/g, 'font-display: block;');
-
+  
   blocks.push(rewritten.trim());
 }
 

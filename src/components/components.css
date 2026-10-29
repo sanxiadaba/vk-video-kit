@@ -963,6 +963,7 @@ vk-tree { display: block; }
   display: flex;
   align-items: center;
   height: 52px;
+  line-height: 52px;
   padding-left: 24px;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
@@ -1357,6 +1358,7 @@ vk-steps[density='compact'] .vk-step { gap: var(--vk-s1); }
 /* --------------------------------------------------------------- vk-quote */
 vk-quote { display: block; }
 .vk-quote {
+  margin: 0;
   position: relative;
   padding: var(--vk-s1) 0 var(--vk-s1) var(--vk-s4);
   border-left: 4px solid var(--vk-ink-1);
@@ -1512,7 +1514,7 @@ vk-bars { display: block; }
 .vk-bars { display: flex; flex-direction: column; gap: var(--vk-s3); padding-right: var(--vk-s2); }
 .vk-bar {
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) max-content;
+  grid-template-columns: 220px minmax(0, 1fr) minmax(176px, max-content);
   align-items: center;
   gap: var(--vk-s3);
   font-size: var(--vk-t-body);
@@ -1601,3 +1603,9 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
   font-weight: var(--vk-w-med);
   line-height: 1;
 }
+
+/* 值列与地址列到底：没有 label 的格子不会把 value 顶到第一行 */
+.vk-cell > .vk-cell-a { margin-top: auto; }
+.vk-cell > .vk-cell-v { margin-bottom: auto; }
+/* compact 必须真的压行高：48.6*1.45=75.4 > 64 时 min-height 永远不生效 */
+.vk-term[data-density='compact'] .vk-line { line-height: 1.25; min-height: 56px; }

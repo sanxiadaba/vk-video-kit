@@ -42,7 +42,7 @@ export class VkPage extends VkElement {
 
   connectedCallback() {
     super.connectedCallback?.();
-    if (this._done) this._watch();
+    this._watch();
   }
 
   _watch() {

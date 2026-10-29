@@ -55,7 +55,22 @@ try {
       if (window.vk?.ready) await window.vk.ready();
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
-    const report = await tab.evaluate(() => window.vk?.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] });
+    const report = await tab.evaluate(() => {
+      if (!window.vk) return { issues: [], special: ['缺少 vk.auditPage'] };
+      if (window.vk.auditPages) {
+        const r = window.vk.auditPages();
+        if (r.pages.length > 1) {
+          return {
+            issues: r.issues.map((x) => ({
+              ...x,
+              what: `第 ${x.page + 1} 页${x.pageId ? ' #' + x.pageId : ''}：${x.what}`,
+            })),
+            special: r.special,
+          };
+        }
+      }
+      return window.vk.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] };
+    });
     item.issues = report.issues || [];
     item.special = report.special || [];
     results.push(item);

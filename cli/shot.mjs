@@ -59,6 +59,7 @@ if (cropRaw && !crop) {
 }
 
 const phone = flag('--phone');
+const keep = flag('--keep');
 const width = phone ? 640 : 1920;
 const height = phone ? 360 : 1080;
 
@@ -66,12 +67,18 @@ const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromiu
 try {
   const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
   const tab = await ctx.newPage();
+  const runtimeErrors = [];
+  tab.on('console', (m) => {
+    if (m.type() === 'error') runtimeErrors.push(`console: ${m.text()}`);
+  });
+  tab.on('pageerror', (e) => runtimeErrors.push(`pageerror: ${e.message}`));
   const url = pathToFileURL(abs).href;
   await tab.goto(url, { waitUntil: 'load' });
   // vk.ready() 等字体、图片、布局、连线；没有它就退化成等一帧。
-  await tab.evaluate(async () => {
+  const ready = await tab.evaluate(async () => {
     if (window.vk?.ready) await window.vk.ready();
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    return document.documentElement.getAttribute('data-vk-ready');
   });
 
   const out = valueOf('--out')
@@ -97,7 +104,8 @@ try {
   const warns = new Set(['orphan', 'blue', 'pin-overlap']);
   let errors = 0;
   for (const it of report.issues || []) {
-    if (it.type === 'font') lines.push(`字号 ${it.fs} < 40：${it.what}`);
+    if (it.type === 'no-payload') lines.push(`缺预编译数据：${it.what}`);
+    else if (it.type === 'font') lines.push(`字号 ${it.fs} < 40：${it.what}`);
     else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥52）：${it.what}`);
     else if (it.type === 'contrast') lines.push(`对比度 ${it.cr} < ${it.need}：${it.what}`);
     else if (it.type === 'safe') lines.push(`超出安全区：${it.what}`);
@@ -117,15 +125,18 @@ try {
     if (!warns.has(it.type)) errors++;
   }
   for (const s of report.special || []) lines.push(s);
+  if (ready === 'timeout') lines.push('渲染未就绪：vk.ready() 超时');
+  for (const e of runtimeErrors.slice(0, 6)) lines.push(e);
+  if (ready === 'timeout' || runtimeErrors.length) errors++;
 
   if (lines.length) {
     console.log(errors || report.special?.length ? '自检（有 error）：' : '自检（只有提醒）：');
     for (const line of lines.slice(0, 16)) console.log(`  · ${line}`);
     const bad = !!(errors || report.special?.length);
     if (bad && !phone && !crop) process.exitCode = 1;
-    if (bad && strict) {
+    if (bad && (strict || !keep)) {
       fs.rmSync(out, { force: true });
-      console.log('[vk] --strict：自检有 error，已删除截图（用不带 --strict 的命令看坏图）');
+      console.log('[vk] 自检有 error，已删除截图；加 --keep 可以保留坏图排查');
       process.exitCode = 1;
     }
   } else {

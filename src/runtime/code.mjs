@@ -83,6 +83,7 @@ export class VkCode extends VkElement {
     const valid = this._hl && this._hlHash === hash && this._hl.length === parsed.length && langOk;
 
     if (valid) delete this.dataset.vkStale;
+    else if (!this._hl) this.stale('缺少预编译数据（先跑 vk build）');
     else if (lang !== 'text') {
       this.stale(
         this._hl

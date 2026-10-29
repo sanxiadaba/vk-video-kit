@@ -156,9 +156,13 @@ export function auditPage(root = document) {
       out.push({ type: 'clip-y', el, what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
     }
     // 组件宿主的内容溢出：即使 overflow 是 visible，也意味着"盒子被压扁、内容被盖住"。
+    //
+    // 但字形墨迹天然比行盒高一点点（120px 字 132 盒 / 138 墨迹），那不是被压扁。
+    // 只有"溢出超过盒高 20% 且至少 6px"才算真的塞不下。
     const isHost = el.tagName.startsWith('VK-') && !OVERLAYS.has(el.tagName.toLowerCase());
     const explicitClip = el.getAttribute('overflow') === 'clip' || el.hasAttribute('data-allow-overflow');
-    if (isHost && !inOverlay && !inBleed && !explicitClip && cs.overflowY === 'visible' && el.scrollHeight > el.clientHeight + 3) {
+    const slack = Math.max(6, el.clientHeight * 0.2);
+    if (isHost && !inOverlay && !inBleed && !explicitClip && cs.overflowY === 'visible' && el.scrollHeight - el.clientHeight > slack) {
       out.push({ type: 'content-clip', el, what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
     }
   }
@@ -335,10 +339,31 @@ function fixFor(x, safeRect) {
   return null;
 }
 
+/**
+ * 多页审计：一个文档里有 N 张 vk-page 时逐页查。
+ *
+ * `auditPage` 只看第一张 page —— 审阅页（16 帧拼一页）因此只测了第 1 帧。
+ * 这里给每页带 index / id，CLI 才能把问题归因到具体帧。
+ */
+export function auditPages(root = document) {
+  const stages = [...(root.querySelectorAll?.('.vk-page, .vk-stage') || [])];
+  if (!stages.length) return { pages: [], issues: [], special: [] };
+  const pages = stages.map((stage, i) => {
+    const r = auditPage(stage);
+    return { index: i, id: stage.id || '', issues: r.issues, special: r.special };
+  });
+  return {
+    pages,
+    issues: pages.flatMap((p) => p.issues.map((x) => ({ ...x, page: p.index, pageId: p.id }))),
+    special: pages.flatMap((p) => p.special.map((s) => `#${p.index + 1} ${p.id ? '#' + p.id + ' ' : ''}${s}`)),
+  };
+}
+
 function safeBox(stage) {
   return stage.querySelector?.('.vk-page-bd') || stage.querySelector?.('.vk-stage') || stage;
 }
 
 export function installAudit(VK) {
   VK.auditPage = auditPage;
+  VK.auditPages = auditPages;
 }

@@ -84,10 +84,12 @@ export class VkDiff extends VkElement {
       this._hl.length === rows.length &&
       (!this._hlLang || this._hlLang === langKey(lang));
 
-    if (!valid && lang !== 'text') {
-      this.stale(this._hl ? '的 diff 数据已过期（源码改过但没重新构建）' : '缺少预编译 diff 数据');
-    } else if (valid) {
+    if (valid) {
       delete this.dataset.vkStale;
+    } else if (!this._hl) {
+      this.stale('缺少预编译数据（先跑 vk build）');
+    } else if (lang !== 'text') {
+      this.stale('的 diff 数据已过期（源码改过但没重新构建）');
     }
 
     let adds = 0;

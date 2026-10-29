@@ -7,7 +7,8 @@
  * 不猜语义：能认出地址就填地址，认不出就留空；标签单独成行。
  */
 
-const OBJDUMP = /^\s*([0-9a-f]{4,16}):\s*((?:[0-9a-f]{2}\s+)+)\s*(.*)$/i;
+// 机器码段可以为空：`objdump --no-show-raw-insn` 与部分反汇编器只给地址。
+const OBJDUMP = /^\s*([0-9a-f]{4,16}):\s*((?:[0-9a-f]{2}\s+)*)\s*(.+)$/i;
 const LABEL_ADDR = /^\s*([0-9a-f]{4,16})\s+<([^>]+)>:\s*$/i;
 const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
 
@@ -57,7 +58,8 @@ export function parseAsm(text) {
 /** 把一条指令拆成助记符与操作数；只是显示辅助，不改变原文。 */
 export function splitInsn(text) {
   const t = String(text || '').trim();
-  const m = t.match(/^([a-z][\w.]*)\s+(.*)$/i);
+  // 助记符后可以没有空白（`movl$LC0,28(%esp)`），也可以带前导点（`.file`）。
+  const m = t.match(/^([a-z.][\w.]*)\s*(.*)$/i);
   if (m) return { mnemonic: m[1], operands: m[2] };
   return { mnemonic: t, operands: '' };
 }
