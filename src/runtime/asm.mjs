@@ -69,7 +69,7 @@ export class VkAsm extends VkElement {
           return `<div class="vk-asm-label" data-vk-part="line" data-line="${r.line}" data-addr="${esc(r.addr || '')}">${esc(r.label || r.text || '')}:</div>`;
         }
         if (!r.text) return `<div class="vk-asm-row is-blank" data-line="${r.line}"></div>`;
-        const isHl = hl.size ? hl.has(r.line) : !!r.hl;
+        const isHl = hl.has(r.line);
         const isDim = focus.size && !focus.has(r.line);
         const parts = r.m || r.o ? { mnemonic: r.m || '', operands: r.o || '' } : splitInsn(r.text);
         const ord = orderList[insn++];

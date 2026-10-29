@@ -344,3 +344,59 @@ test('锚点真的能解析到运行时元素（cell / line），不是只过构
   }));
   assert.deepEqual(found, { cell: true, line: true });
 });
+
+test('vk-page 内的 ring 与目标同坐标', async () => {
+  await reset(
+    '<vk-page align="top"><vk-stack><vk-box id="t" border="hair" pad="lg"><vk-text size="body">x</vk-text></vk-box></vk-stack>' +
+      '<vk-ring for="#t@side:right"></vk-ring></vk-page>'
+  );
+  await sleep(60);
+  const r = await page.evaluate(() => {
+    const t = document.querySelector('#t').getBoundingClientRect();
+    const s = document.querySelector('vk-ring .vk-ring-shape').getBoundingClientRect();
+    return {
+      dx: Math.abs(s.left + s.width / 2 - t.right),
+      dy: Math.abs(s.top + s.height / 2 - (t.top + t.height / 2)),
+    };
+  });
+  assert.ok(r.dx <= 9 && r.dy <= 9, JSON.stringify(r));
+});
+
+test('隐藏目标不画 ring', async () => {
+  await reset('<vk-page><div id="h" hidden>x</div><vk-ring for="#h@point:50%,50%"></vk-ring></vk-page>');
+  await sleep(60);
+  assert.equal(await page.$$eval('vk-ring .vk-ring-shape', (els) => els.length), 0);
+});
+
+test('bits 64 位：索引 63..0，不重复', async () => {
+  await reset('<vk-bits value="' + '1'.repeat(64) + '"></vk-bits>');
+  const bits = await page.$$eval('vk-bits .vk-bit', (els) => els.map((e) => e.dataset.bit));
+  assert.equal(bits.length, 64);
+  assert.equal(new Set(bits).size, 64);
+  assert.equal(bits[0].split(':').pop(), '63');
+});
+
+test('vk-img 失败时有可见占位，无 ratio 也不塌', async () => {
+  await reset('<vk-img src="/nope.png" alt="坏图"></vk-img>');
+  await sleep(300);
+  const h = await page.evaluate(() => document.querySelector('vk-img .vk-img')?.getBoundingClientRect().height || 0);
+  assert.ok(h >= 100, 'placeholder height ' + h);
+});
+
+test('vk-canvas 接受 1920×1080 与 1800 的 x', async () => {
+  await reset('<vk-canvas w="1920" h="1080"><vk-box x="1800" y="0" w="100" h="50"></vk-box></vk-canvas>');
+  const r = await page.evaluate(() => {
+    const c = document.querySelector('vk-canvas');
+    const b = document.querySelector('vk-canvas vk-box');
+    return { w: c.offsetWidth, h: c.offsetHeight, left: b.offsetLeft };
+  });
+  assert.deepEqual(r, { w: 1920, h: 1080, left: 1800 });
+});
+
+test('未构建的 inline math 会标 stale，不静默显示 TeX', async () => {
+  await reset('<vk-text size="body">复杂度 <vk-inline variant="math">O(\\log n)</vk-inline></vk-text>');
+  const stale = await page.evaluate(() =>
+    document.querySelector('vk-inline[variant="math"]')?.hasAttribute('data-vk-stale')
+  );
+  assert.equal(stale, true);
+});

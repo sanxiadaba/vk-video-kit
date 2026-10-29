@@ -18,7 +18,7 @@ import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
-import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
+import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
 import { diag } from './shared/diag.mjs';
 import { TAGS, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
@@ -273,8 +273,10 @@ function anchorCapacity(node, file) {
       .map((el) => parseInt((el.attrs || []).find((a) => a.name === 'span')?.value || '1', 10))
       .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
     const total = spans.reduce((a, b) => a + b, 0);
-    // @cell 指字段；@byte 指字节，只有开了字节尺（offsets/align/direction）才存在。
-    const byteMode = ['offsets', 'align', 'direction'].some((a) => node.attrs?.some((x) => x.name === a));
+    // @cell 指字段；@byte 指字节，只有开了字节尺（offsets / ruler / direction=rtl）才存在。
+    const byteMode = node.attrs?.some(
+      (x) => x.name === 'offsets' || x.name === 'ruler' || (x.name === 'direction' && x.value === 'rtl')
+    );
     const cellCap = Math.max(n, spans.length) - 1;
     const max = byteMode ? Math.max(cellCap, total - 1) : cellCap;
     return max >= 0 ? { from: 0, to: max } : null;
@@ -341,9 +343,16 @@ function validateRefs(doc, file, errors) {
     for (const name of ['for', 'from', 'to']) {
       const raw = attr(node, name);
       if (!raw) continue;
-      const v = String(raw).trim();
-      const m = v.match(/^#([^@\s]+?)(?:@([a-z]+)(?::(.+))?)?$/);
-      if (!m) {
+      const refs =
+        name === 'for'
+          ? String(raw)
+              .split(';')
+              .map((s) => s.trim())
+              .filter(Boolean)
+          : [String(raw).trim()];
+      for (const v of refs) {
+        const m = v.match(/^#([^@\s]+?)(?:@([a-z]+)(?::(.+))?)?$/);
+        if (!m) {
         const where = `${file}:${lineOf(node)} <${tag}> 的 ${name}="${v}"`;
         if (/^#[A-Za-z][\w-]*$/.test(v) && !ids.has(v.slice(1))) {
           errors.push(`${where}：找不到 ${v}${idNames.length ? `（可用：${idNames.slice(0, 8).join(', ')}）` : '（页面里没有任何 id）'}`);
@@ -380,8 +389,10 @@ function validateRefs(doc, file, errors) {
         errors.push(`${where}：#${id} 是 <${host.tagName}>，不支持 @${part}${allowed.length ? `；支持 ${allowed.join(' / ')}` : '；没有内部锚点'}`);
         continue;
       }
-      if (part === 'byte' && host.tagName === 'vk-cells' && !['offsets', 'align', 'direction'].some((a) => host.attrs?.some((x) => x.name === a))) {
-        errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 offsets / align / direction`);
+      if (part === 'byte' && host.tagName === 'vk-cells' && !host.attrs?.some(
+        (x) => x.name === 'offsets' || x.name === 'ruler' || (x.name === 'direction' && x.value === 'rtl')
+      )) {
+        errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 offsets / ruler / direction="rtl"`);
         continue;
       }
       const cap = anchorCapacity(host, file);
@@ -404,6 +415,7 @@ function validateRefs(doc, file, errors) {
         if (!Number.isFinite(n) || n < cap.from || n > cap.to) {
           errors.push(`${where}：${part} 的可选范围是 ${cap.from}–${cap.to}，${argRaw} 越界（下标从 0 起）`);
         }
+      }
       }
     }
 
@@ -646,20 +658,32 @@ function validateAuthorHtml(doc, file) {
     }
     // span / row-span 只在分份容器里有意义：父级必须是 vk-grid。
     // 浏览器会忽略错误位置的 grid-column / grid-row，所以这条必须在构建期拦住。
-    for (const name of ['span', 'row-span']) {      if (!attrs.has(name)) continue;
-      if (node.parentNode?.tagName === 'vk-grid') continue;
-      const axis = name === 'span' ? '列' : '行';
-      errors.push(
-        diag({
-          file,
-          line: lineOf(node),
-          tag,
-          what: `的 ${name} 放错了地方`,
-          wrote: `${name}="${attrs.get(name)}"`,
-          should: `让父级是 <vk-grid>（跨${axis}的份数由父级声明），或删掉 ${name}（当前父级是 <${node.parentNode?.tagName || '无'}>）`,
-          why: 'span 的意思是"占几份"，份数必须由父级声明；放错位置时浏览器会静默忽略',
-        })
-      );
+    for (const name of ['span', 'row-span']) {
+      if (!attrs.has(name)) continue;
+      if (node.parentNode?.tagName !== 'vk-grid') {
+        const axis = name === 'span' ? '列' : '行';
+        errors.push(
+          diag({
+            file,
+            line: lineOf(node),
+            tag,
+            what: `的 ${name} 放错了地方`,
+            wrote: `${name}="${attrs.get(name)}"`,
+            should: `让父级是 <vk-grid>（跨${axis}的份数由父级声明），或删掉 ${name}（当前父级是 <${node.parentNode?.tagName || '无'}>）`,
+            why: 'span 的意思是"占几份"，份数必须由父级声明；放错位置时浏览器会静默忽略',
+          })
+        );
+        continue;
+      }
+      const capAttr = name === 'span' ? 'cols' : 'rows';
+      const capRaw = attr(node.parentNode, capAttr);
+      // 没有 rows 时是自动行高，row-span 交给浏览器；cols 的默认是 2。
+      if (name === 'row-span' && capRaw == null) continue;
+      const cap = Number(capRaw ?? '2');
+      const got = Number(attrs.get(name));
+      if (Number.isFinite(got) && Number.isFinite(cap) && got > cap) {
+        errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${got}" 超过父级 ${capAttr}="${cap}"；浏览器会多出一列并挤坏兄弟项`);
+      }
     }
     for (const [name, raw] of attrs) {
       if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) {
@@ -779,6 +803,28 @@ function validateAuthorHtml(doc, file) {
       if (name && !ICONS[name]) {
         const near = Object.keys(ICONS).filter((n) => n.includes(name) || name.includes(n)).slice(0, 3);
         errors.push(`${file}:${lineOf(node)} <vk-icon> 没有图标 "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
+      }
+    }
+    if (tag === 'vk-steps' && attrs.has('current')) {
+      const items = (node.childNodes || []).filter((c) => c.tagName === 'li').length;
+      const n = Number(attrs.get('current'));
+      if (items > 0 && Number.isFinite(n) && n >= items) {
+        errors.push(`${file}:${lineOf(node)} <vk-steps> 的 current="${n}" 超出 0–${items - 1}（共 ${items} 步）`);
+      }
+    }
+    if (tag === 'vk-timeline' && attrs.has('lanes')) {
+      const declared = String(attrs.get('lanes') || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      for (const child of node.childNodes || []) {
+        if (child.tagName !== 'li') continue;
+        const lane = ((child.attrs || []).find((a) => a.name === 'lane')?.value || '').trim();
+        if (!lane) {
+          errors.push(`${file}:${lineOf(child)} <vk-timeline> 的条目缺 lane；lanes 声明了 ${declared.join(' / ')}`);
+        } else if (!declared.includes(lane)) {
+          errors.push(`${file}:${lineOf(child)} <vk-timeline> 的 lane="${lane}" 不在 lanes 里（${declared.join(' / ')}）`);
+        }
       }
     }
   });
@@ -981,6 +1027,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const line = lineOf(node);
     const src = attr(node, 'src');
     const rawLang = attr(node, 'lang');
+    const linesAttr = attr(node, 'lines');
 
     if (!loc.startTag || !loc.endTag) {
       throw new Error(`${file}:${line} <${tag}> 缺少结束标签，无法预编译。`);
@@ -996,10 +1043,10 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
       }
       const raw = fs.readFileSync(abs, 'utf8');
-      source = dedent(attr(node, 'lines') ? sliceLines(raw, attr(node, 'lines')) : raw);
+      source = dedent(linesAttr ? sliceLines(raw, linesAttr) : raw);
       deps.push(abs);
     } else if (inline != null) {
-      source = dedent(inline);
+      source = dedent(linesAttr ? sliceLines(inline, linesAttr) : inline);
     } else {
       if (hasElement) {
         throw new Error(
@@ -1007,20 +1054,40 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
             `或者把代码放进 <script type="text/plain" data-vk-source>，也可以改用 src。`
         );
       }
-      source = dedent(text);
+      source = dedent(linesAttr ? sliceLines(text, linesAttr) : text);
     }
 
     const lang = resolveLang(rawLang || inferLang(src) || 'text');
     const hash = hash32(source);
     const total = source.split('\n').length;
-    // lines="4-6" 时，source 已经是切片；但 highlight/focus/fold 写的是源文件行号。
+    // lines="4-6" 时，source 已经是切片；但 current/focus/fold 写的是源文件行号。
+    // 越界不能静默：写错的行段只会让"重点"消失，画面看起来仍然正常。
     const base = Number((attr(node, 'lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const hi = base + total - 1;
-    for (const name of ['highlight', 'focus', 'fold']) {
+    for (const name of ['current', 'focus', 'fold']) {
       for (const { from, to } of indexRanges(attr(node, name))) {
         if (from < base || from > hi || to > hi) {
-          errors.push(`${file}:${line} <${tag}> 的 ${name}="${from}${to === from ? '' : '-' + to}" 超出 ${base}–${hi} 行（源文件行号）`);
+          errors.push(
+            `${file}:${line} <${tag}> 的 ${name}="${from}${to === from ? '' : '-' + to}" 超出 ${base}–${hi} 行（源文件行号）；` +
+              `片段从 ${base} 起，写成 ${base}${hi > base ? `–${hi}` : ''} 范围内的行号`
+          );
         }
+      }
+    }
+    const foldRanges = indexRanges(attr(node, 'fold'));
+    for (const name of ['current', 'focus']) {
+      for (const { from, to } of indexRanges(attr(node, name))) {
+        if (foldRanges.some((f) => from <= f.to && to >= f.from)) {
+          errors.push(`${file}:${line} <${tag}> 的 ${name}="${from}${to === from ? '' : '-' + to}" 落在 fold 区间内，折叠后不会显示`);
+        }
+      }
+    }
+    const currentSet = lineSet(attr(node, 'current'));
+    const focusSet = lineSet(attr(node, 'focus'));
+    if (currentSet.size && focusSet.size) {
+      const outside = [...currentSet].filter((n) => !focusSet.has(n));
+      if (outside.length) {
+        errors.push(`${file}:${line} <${tag}> 的 current="${outside.join(',')}" 不在 focus 内；聚光会把当前行一起压暗`);
       }
     }
     let data;
@@ -1074,6 +1141,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const inline = inlineSourceText(node);
     if (!src && inline == null) continue;
     sourceConflict(node, 'vk-term', file, line);
+    const linesAttr = attr(node, 'lines');
     let source;
     if (src) {
       const abs = path.resolve(path.dirname(file), src);
@@ -1081,10 +1149,10 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         throw new Error(`${file}:${line} 找不到 ${src}（相对 ${path.dirname(file)}）。`);
       }
       const raw = fs.readFileSync(abs, 'utf8');
-      source = dedent(attr(node, 'lines') ? sliceLines(raw, attr(node, 'lines')) : raw);
+      source = dedent(linesAttr ? sliceLines(raw, linesAttr) : raw);
       deps.push(abs);
     } else {
-      source = dedent(inline);
+      source = dedent(linesAttr ? sliceLines(inline, linesAttr) : inline);
     }
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${srcScript(source)}\n` });
   }
@@ -1169,18 +1237,22 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const end = Math.min(buf.length, start + want);
     const addrText = attr(node, 'addr') || '0x0000';
     const base = /^0x[0-9a-f]+$/i.test(addrText) ? parseInt(addrText, 16) : parseInt(addrText, 10) || 0;
-    const hl = new Set();
-    for (const { from, to } of indexRanges(attr(node, 'highlight'))) {
-      for (let i = from; i <= to; i++) hl.add(start + i);
-    }
     const bytes = [...buf.subarray(start, end)];
+    for (const { from, to } of indexRanges(attr(node, 'current'))) {
+      if (!bytes.length) {
+        errors.push(`${file}:${line} <vk-bytes> 的 current="${from}" 无法定位：这段片段没有字节`);
+      } else if (from < 0 || from >= bytes.length || to >= bytes.length) {
+        errors.push(
+          `${file}:${line} <vk-bytes> 的 current="${from}${to === from ? '' : '-' + to}" 超出 0–${bytes.length - 1}（相对片段的字节偏移）`
+        );
+      }
+    }
     const payload = {
       file: fileName,
       start,
       end: end > start ? end - 1 : start,
       base,
       bytes: bytes.map((b) => b.toString(16).padStart(2, '0')),
-      hl: bytes.map((_, i) => hl.has(start + i)),
     };
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
@@ -1221,9 +1293,16 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (!selected.length) {
       errors.push(`${file}:${line} <vk-asm> 的 lines="${attr(node, 'lines') || ''}" 没有命中任何行`);
     }
-    const hl = new Set();
-    for (const { from, to } of indexRanges(attr(node, 'highlight'))) {
-      for (let i = from; i <= to; i++) hl.add(i);
+    const first = selected[0]?.line;
+    const last = selected[selected.length - 1]?.line;
+    for (const name of ['current', 'focus']) {
+      for (const { from, to } of indexRanges(attr(node, name))) {
+        if (first == null || from < first || to > last) {
+          errors.push(
+            `${file}:${line} <vk-asm> 的 ${name}="${from}${to === from ? '' : '-' + to}" 超出 ${first ?? '—'}–${last ?? '—'}（源文件行号）`
+          );
+        }
+      }
     }
     const painted = [];
     for (const row of selected) {
@@ -1241,7 +1320,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         m: row.kind === 'insn' ? splitInsn(row.text).mnemonic : '',
         o: row.kind === 'insn' ? splitInsn(row.text).operands : '',
         h,
-        hl: hl.has(row.line),
       });
     }
     const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang };

@@ -7,7 +7,7 @@
  *   vk shot <page>        出一张 1920×1080
  *   vk serve [port]       开发服务器，改文件刷新即见
  *   vk tags               列出 37 个标签
- *   vk doc <tag>          看某个标签的属性与默认值
+ *   vk doc <tag>          看某个标签的属性、内容与默认值
  *   vk icons [query]      搜 Lucide 图标名
  */
 import fs from 'node:fs';
@@ -105,6 +105,12 @@ if (cmd === 'build' || cmd === 'check-build') {
       }
       console.log('');
     }
+    const content = TAGS[tag].content;
+    if (content?.fields?.length) {
+      console.log('内容：');
+      for (const f of content.fields) console.log(`  ${f.name.padEnd(14)} ${f.type || 'text'}  ${f.label || ''}`);
+      console.log('');
+    }
     const model = CHILDREN[tag];
     if (model) {
       const desc =
@@ -159,9 +165,9 @@ vk —— 把内容做成画面单元
   vk shot <page>        截一张 1920×1080（--phone / --crop x,y,w,h）
   vk serve [port]       开发服务器（默认 8099）
   vk tags               列出 37 个标签（--json）
-  vk doc <tag>          看某个标签的属性与默认值
+  vk doc <tag>          看某个标签的属性、内容与默认值
   vk icons [query]      搜 Lucide 图标名（--json）
 
-用法与属性见包内的 README.md / USAGE.md，给 AI 的入口是 docs/ai.md。
+用法与属性见包内的 README.md 与 docs/reference.md，给 AI 的入口是 docs/ai.md。
 `);
 }

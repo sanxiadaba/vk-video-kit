@@ -168,15 +168,17 @@ vk-inline[variant='link'] {
   text-underline-offset: 0.12em;
 }
 
-/* em 只有一个意思：作者想让观众看这里。它属于标注，用梅紫。 */
+/* em 只有一个意思：作者想让观众看这里。它属于标注，用梅紫。
+   但它不能比"当前行"更响：只给一条梅紫下划线，整块底留给 vk-mark。 */
 vk-text em,
 vk-title em {
   font-style: normal;
-  background: var(--vk-info-mark);
-  padding: 0 0.06em;
+  background: none;
+  box-shadow: inset 0 -0.08em 0 var(--vk-info);
+  padding: 0;
 }
 
-/* muted 正文里的 em 改用下划线标记：底太浅仍只有 4.45，不如换一种标注标记。 */
+/* muted 正文里的 em 改用更淡的下划线：底太浅仍只有 4.45，不如换一种标注标记。 */
 vk-text[ink='muted'] em {
   background: none;
   box-shadow: inset 0 -0.12em 0 var(--vk-info-soft);
@@ -253,6 +255,7 @@ vk-img .vk-img-ph {
   color: var(--vk-ink-4);
   background: var(--vk-surface-2);
 }
+vk-img[data-error] .vk-img { min-height: 240px; }
 vk-img[data-error] .vk-img-ph { display: flex; }
 vk-img[data-error] img { display: none; }
 vk-img .vk-img[data-radius='sm'] { border-radius: var(--vk-r-1); }

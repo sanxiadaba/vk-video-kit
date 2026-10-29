@@ -177,7 +177,7 @@ vk-list[gap='3xl'] .vk-list { --vk-list-gap: var(--vk-s8); }
   background: none;
   border-radius: 0;
   font-size: var(--vk-t-body);
-  line-height: 1.95;
+  line-height: 1.5;
   color: var(--vk-ok);
 }
 .vk-list[data-mode='check'] > li[data-state='err']::before { content: '✗'; color: var(--vk-err); }
@@ -749,7 +749,7 @@ vk-math[display] { text-align: center; }
 .vk-math { font-size: var(--vk-t-body); color: var(--vk-ink-1); }
 .vk-math .katex { font-size: 1em; }
 vk-math[size='heading'] .vk-math { font-size: var(--vk-t-heading); }
-vk-math[size='label'] .vk-math { font-size: var(--vk-t-body); }
+vk-math[size='meta'] .vk-math { font-size: var(--vk-t-meta); }
 .vk-math[data-display] { display: block; }
 .vk-math[data-raw] {
   font-family: var(--vk-font-mono);
@@ -1452,7 +1452,11 @@ vk-bits { display: block; }
 .vk-bit-legend-f[data-state='current'] { background: var(--vk-focus-soft); box-shadow: inset 0 -3px 0 var(--vk-focus); }
 .vk-bit-legend-f[data-state='err'] { background: var(--vk-err-weak); box-shadow: inset 0 -3px 0 var(--vk-err); }
 .vk-bit-row[data-state='current'] .vk-bit { outline: 2px solid var(--vk-focus); outline-offset: -2px; }
+.vk-bit-row[data-state='ok'] .vk-bit { outline: 2px solid var(--vk-ok); outline-offset: -2px; }
+.vk-bit-row[data-state='warn'] .vk-bit { outline: 2px solid var(--vk-warn); outline-offset: -2px; }
 .vk-bit-row[data-state='err'] .vk-bit { outline: 2px solid var(--vk-err); outline-offset: -2px; }
+.vk-bit-legend-f[data-state='ok'] { background: var(--vk-ok-weak); box-shadow: inset 0 -3px 0 var(--vk-ok); }
+.vk-bit-legend-f[data-state='warn'] { background: var(--vk-warn-weak); box-shadow: inset 0 -3px 0 var(--vk-warn); }
 .vk-bit-brackets { height: 14px; align-items: stretch; }
 .vk-bit-field {
   border-top: 2px solid var(--vk-line-strong);

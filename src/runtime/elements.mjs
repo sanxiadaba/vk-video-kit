@@ -139,6 +139,8 @@ export class VkInline extends VkElement {
         const html = data.textContent;
         data.remove();
         this.innerHTML = `<span class="vk-inline-math">${html}</span>`;
+      } else {
+        this.stale('缺少预编译公式');
       }
     }
     if (variant === 'link' && !this._hrefBound) {
@@ -146,10 +148,18 @@ export class VkInline extends VkElement {
       const href = this.getAttribute('href');
       if (href) {
         this.setAttribute('role', 'link');
+        this.setAttribute('tabindex', '0');
         this.style.cursor = 'pointer';
-        this.addEventListener('click', () => {
+        const go = () => {
           const h = this.getAttribute('href');
           if (h) location.href = h;
+        };
+        this.addEventListener('click', go);
+        this.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            go();
+          }
         });
       }
     }

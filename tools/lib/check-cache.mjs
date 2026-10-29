@@ -55,8 +55,6 @@ export function sharedHash(site) {
     ...walk(path.join(site, 'vk')),
     ...walk(path.join(site, 'dist')),
     ...walk(path.join(site, 'assets')),
-    path.join(site, 'showcase.css'),
-    path.join(site, 'showcase.js'),
     ...walk(path.join(ROOT, 'tools/lib')),
     path.join(ROOT, 'tools/gate.mjs'),
     path.join(ROOT, 'tools/contract.mjs'),

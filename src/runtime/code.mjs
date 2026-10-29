@@ -263,6 +263,7 @@ export class VkTerm extends VkElement {
     if (!this._src.trim() && this._preSrc != null) this._src = this._preSrc;
     this._raw = null;
     if (!this._src.trim() && this.getAttribute('src')) fetchSource(this);
+    if (this.getAttribute('src') && !this._preSrc && !this._src.trim()) this.stale('缺少预编译终端数据');
   }
 
   onAttr(name) {
@@ -276,6 +277,7 @@ export class VkTerm extends VkElement {
   onFetched(text) {
     this._raw = text;
     this._src = text;
+    delete this.dataset.vkStale;
   }
 
   render() {

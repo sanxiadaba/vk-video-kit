@@ -25,14 +25,17 @@ try {
 }
 
 const sha1 = (s) => crypto.createHash('sha1').update(s).digest('hex').slice(0, 16);
-const cssVersion = (() => {
-  try {
-    const st = fs.statSync('vk/vk.css');
-    return `${st.size}:${Math.round(st.mtimeMs)}`;
-  } catch {
-    return 'none';
-  }
-})();
+// 页面、CSS、运行时、构建标识都是输入；只哈希 vk.css 会让运行时改动后的缩略图永远停在旧版。
+const assetVersion = ['vk/vk.css', 'vk/fonts.css', 'dist/vk.js', 'dist/build.json']
+  .map((f) => {
+    try {
+      const st = fs.statSync(f);
+      return `${f}:${st.size}:${Math.round(st.mtimeMs)}`;
+    } catch {
+      return `${f}:none`;
+    }
+  })
+  .join('|');
 
 fs.mkdirSync(OUT, { recursive: true });
 fs.mkdirSync('.vk-cache', { recursive: true });
@@ -44,7 +47,7 @@ for (const tag of TAG_NAMES) {
   const file = path.join(SITE, 'specimen', `${tag}.html`);
   if (!fs.existsSync(file)) continue;
   // 缩略图是整个标本页，所以缓存键必须是页面本身：页头/页脚变了也要跟着重截。
-  const hash = sha1(fs.readFileSync(file, 'utf8') + cssVersion + 'page');
+  const hash = sha1(fs.readFileSync(file, 'utf8') + assetVersion + 'page');
   next[tag] = hash;
   const out = path.join(OUT, `${tag}.png`);
   if (cache[tag] === hash && fs.existsSync(out)) continue;

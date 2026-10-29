@@ -50,6 +50,10 @@ const cached =
   fs.existsSync('dist/vk.esm.js') &&
   fs.existsSync('vk/vk.css');
 if (cached) {
+  // CSS/JS 可以跳过，但 build.json 的 server 指纹会因为构建期代码（highlight.mjs 等）变化；
+  // 不刷新它，verify 会把“已是最新”当成漂移。
+  const info = { id: computeBuildId(), server: computeServerId(), version: pkg.version };
+  writeIfChanged('dist/build.json', JSON.stringify(info, null, 2) + '\n', false);
   console.log('build: 已是最新（跳过 CSS 拼接与 esbuild）');
   process.exit(0);
 }

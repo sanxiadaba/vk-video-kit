@@ -25,11 +25,16 @@ function anchorsOf(el, host) {
     .map((s) => s.trim())
     .filter(Boolean)
     .map((expr) => resolveAnchor(host, expr, el))
-    .filter(Boolean);
+    // 隐藏 / 零尺寸的目标没有可画的盒子；不要把它画到 (0,0)。
+    .filter((a) => a && a.el && a.el.getClientRects().length);
 }
 
 function rootOf(el) {
-  return el.closest('vk-canvas, vk-page, [data-vk-frame]') || el.parentElement;
+  // 覆盖层是 position:absolute；它的包含块是最近的定位祖先，
+  // 不是语义上的 vk-page / vk-canvas 宿主（后者可能含 120px 安全区）。
+  let p = el.parentElement;
+  while (p && getComputedStyle(p).position === 'static') p = p.parentElement;
+  return p || document.body;
 }
 
 class VkOverlay extends VkElement {

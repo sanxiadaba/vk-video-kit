@@ -77,6 +77,7 @@ try {
       else if (x.type === 'ln-overlap') lines.push(`行号压住代码：${x.what}（+${x.gap}px）`);
       else if (x.type === 'missing') lines.push(`找不到文件：${x.what}`);
       else lines.push(`${x.type}：${x.what || ''}`);
+      if (x.fix) lines.push(`  ↳ ${x.fix}`);
     }
     for (const s of it.special) lines.push(s);
     for (const s of it.console) lines.push(`控制台：${s}`);

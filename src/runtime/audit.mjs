@@ -122,6 +122,7 @@ export function auditPage(root = document) {
         overSeen.add(el);
         out.push({
           type: 'overflow',
+          el,
           what: clip(el.className || el.tagName),
           box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
         });
@@ -139,6 +140,7 @@ export function auditPage(root = document) {
         safeSeen.add(el);
         out.push({
           type: 'safe',
+          el,
           what: clip(el.className || el.tagName),
           box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
         });
@@ -148,16 +150,16 @@ export function auditPage(root = document) {
     const ox = !inOverlay && !inBleed && (cs.overflowX === 'hidden' || cs.overflowX === 'clip');
     const oy = !inOverlay && !inBleed && (cs.overflowY === 'hidden' || cs.overflowY === 'clip');
     if (ox && el.scrollWidth > el.clientWidth + 3) {
-      out.push({ type: 'clip', what: clip(el.className || el.tagName), sw: el.scrollWidth, cw: el.clientWidth });
+      out.push({ type: 'clip', el, what: clip(el.className || el.tagName), sw: el.scrollWidth, cw: el.clientWidth });
     }
     if (oy && el.scrollHeight > el.clientHeight + 3) {
-      out.push({ type: 'clip-y', what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
+      out.push({ type: 'clip-y', el, what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
     }
     // 组件宿主的内容溢出：即使 overflow 是 visible，也意味着"盒子被压扁、内容被盖住"。
     const isHost = el.tagName.startsWith('VK-') && !OVERLAYS.has(el.tagName.toLowerCase());
     const explicitClip = el.getAttribute('overflow') === 'clip' || el.hasAttribute('data-allow-overflow');
     if (isHost && !inOverlay && !inBleed && !explicitClip && cs.overflowY === 'visible' && el.scrollHeight > el.clientHeight + 3) {
-      out.push({ type: 'content-clip', what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
+      out.push({ type: 'content-clip', el, what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
     }
   }
 
@@ -206,7 +208,13 @@ export function auditPage(root = document) {
   // 组件级溢出（Frame 原语）：内容比盒子宽/高。
   if (typeof window !== 'undefined' && typeof window.vk?.auditOverflow === 'function') {
     for (const a of window.vk.auditOverflow(stage)) {
-      out.push({ type: 'audit-overflow', what: `${a.tag} ${a.sel}`, sw: a.sw, cw: a.cw, sh: a.sh, ch: a.ch });
+      let host = null;
+      try {
+        host = a.sel ? stage.querySelector(a.sel) : null;
+      } catch {
+        /* 选择器可能只是描述性的 */
+      }
+      out.push({ type: 'audit-overflow', el: host, what: `${a.tag} ${a.sel}`, sw: a.sw, cw: a.cw, sh: a.sh, ch: a.ch });
     }
   }
 
@@ -294,7 +302,37 @@ export function auditPage(root = document) {
   if (stage.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
   if (stage.querySelector('vk-img[data-error], vk-figure[data-error], .vk-fig-win[data-error]')) special.push('图片加载失败');
 
-  return { issues: out, special };
+  // 容量类问题：父级的 safe / overflow 往往只是子级裁切连带出来的。
+  // 只报最里层根因，并给一个可执行的改法；不要让人先去修一个不存在的裁切。
+  const CAP = new Set(['safe', 'overflow', 'clip', 'clip-y', 'content-clip', 'audit-overflow']);
+  const capIssues = out.filter((x) => x.el && CAP.has(x.type));
+  for (const x of capIssues) {
+    const child = capIssues.find((y) => y !== x && x.el !== y.el && x.el.contains(y.el));
+    if (child) x.cascadeOf = child.what || child.type;
+  }
+  const issues = out
+    .filter((x) => !x.cascadeOf)
+    .map(({ el, ...rest }) => {
+      const fix = fixFor(rest, safeRect);
+      return fix ? { ...rest, fix } : rest;
+    });
+
+  return { issues, special };
+}
+
+/** 容量问题的下一步：只给可执行的旋钮，不替作者做审美判断。 */
+function fixFor(x, safeRect) {
+  if (x.type === 'content-clip') return `差 ${x.sh - x.ch}px：先试 gap 降一档 / density="compact" / 删 1 条`;
+  if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / density="compact"`;
+  if (x.type === 'clip') return `差 ${x.sw - x.cw}px：先试 long="wrap" / 删字符`;
+  if (x.type === 'audit-overflow') return `差 ${Math.max(x.sw - x.cw, x.sh - x.ch)}px：先试 long="wrap" / density="compact" / 删 1 行`;
+  if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
+  if (x.type === 'safe' && x.box && safeRect) {
+    const [l, t, r, b] = x.box;
+    const over = Math.max(safeRect.left - l, t - safeRect.top, r - safeRect.right, b - safeRect.bottom);
+    return `超出 ${Math.round(over)}px：先试 title 降一档 / gap 降一档 / 删 1 行`;
+  }
+  return null;
 }
 
 function safeBox(stage) {

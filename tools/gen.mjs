@@ -249,21 +249,6 @@ ${LAYERS.filter((l) => byLayer(l.id).length)
 fs.mkdirSync('docs', { recursive: true });
 writeIfChanged('docs/reference.md', md, check);
 
-const choosing = `# 选组件
-
-> 由 \`tools/gen.mjs\` 从 registry 生成。先按"要做什么"选，再去看属性。
-
-${LAYERS.filter((l) => byLayer(l.id).length)
-  .map(
-    (l) =>
-      `## ${l.label}\n\n| 标签 | 做什么 |\n|---|---|\n${byLayer(l.id)
-        .map((tag) => `| \`${tag}\` | ${TAGS[tag].summary} |`)
-        .join('\n')}`
-  )
-  .join('\n\n')}
-`;
-writeIfChanged('docs/choosing.md', choosing, check);
-
 
 console.log(`registry ok：${TAG_NAMES.length} 个标签`);
 for (const l of LAYERS) {

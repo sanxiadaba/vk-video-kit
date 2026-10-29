@@ -203,4 +203,91 @@ test('asm：lang 仍是合法入口，addr 进入机器数据', async () => {
   assert.ok(out.html.includes('"base":"0x401136"'));
 });
 
+test('current/focus/fold：越出片段直接报错，不静默丢失高亮', async () => {
+  const file = path.join(dir, 'page.html');
+  for (const name of ['current', 'focus', 'fold']) {
+    await assert.rejects(
+      () =>
+        transformHtml(`<vk-code lang="c" src="hello.c" lines="2-2" ${name}="1"></vk-code>`, {
+          file,
+          highlighter: hl,
+        }),
+      new RegExp(`${name}="1" 超出 2–2 行`)
+    );
+  }
+  const ok = await transformHtml('<vk-code lang="c" src="hello.c" lines="2-2" current="2"></vk-code>', {
+    file,
+    highlighter: hl,
+  });
+  assert.ok(ok.html.includes('data-vk-hl'));
+  await assert.rejects(
+    () => transformHtml('<vk-code lang="c" current="2" fold="2">a\nb\nc</vk-code>', { file, highlighter: hl }),
+    /current="2" 落在 fold 区间内/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-code lang="c" current="2" focus="3">a\nb\nc</vk-code>', { file, highlighter: hl }),
+    /current="2" 不在 focus 内/
+  );
+});
+
+test('current 越界：bytes / asm / steps 都在构建期硬拦', async () => {
+  await assert.rejects(
+    () =>
+      transformHtml(
+        '<vk-bytes current="9"><script type="text/plain" data-vk-source>00 01 02 03</script></vk-bytes>',
+        { file: 'bytes.html', highlighter: hl }
+      ),
+    /vk-bytes> 的 current="9" 超出 0–3/
+  );
+  await assert.rejects(
+    () =>
+      transformHtml(
+        '<vk-asm lang="asm" current="9"><script type="text/plain" data-vk-source>\nmain:\n  nop\n</script></vk-asm>',
+        { file: 'asm.html', highlighter: hl }
+      ),
+    /vk-asm> 的 current="9" 超出/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-steps current="9"><li>一步</li><li>两步</li></vk-steps>', { file: 'steps.html', highlighter: hl }),
+    /vk-steps> 的 current="9" 超出 0–1/
+  );
+});
+
+test('inline lines：内联源码也按 lines 切', async () => {
+  const out = await transformHtml('<vk-code lang="c" lines="2-2">alpha\nbeta\ngamma</vk-code>', {
+    file: 'inline-lines.html',
+    highlighter: hl,
+  });
+  assert.ok(out.html.includes('beta'));
+  assert.ok(!out.html.includes('alpha'));
+  assert.ok(!out.html.includes('gamma'));
+});
+
+test('for 多目标：分号分隔，逐个校验', async () => {
+  const html =
+    '<vk-cells id="c"><li value="1"></li></vk-cells><vk-text id="t">x</vk-text>' +
+    '<vk-ring for="#c@side:right;#t@point:50%,50%"></vk-ring>';
+  const out = await transformHtml(html, { file: 'multi-for.html', highlighter: hl });
+  assert.ok(out.html.includes('vk-ring'));
+});
+
+test('timeline lanes：lane 不在声明里直接报错', async () => {
+  await assert.rejects(
+    () =>
+      transformHtml('<vk-timeline variant="lanes" lanes="A,B"><li lane="C" label="x">y</li></vk-timeline>', {
+        file: 'timeline.html',
+        highlighter: hl,
+      }),
+    /lane="C" 不在 lanes 里/
+  );
+});
+
+test('vk-img 进入布局协议：span 可用', async () => {
+  const out = await transformHtml('<vk-grid cols="3"><vk-img span="2"></vk-img></vk-grid>', {
+    file: 'img.html',
+    highlighter: hl,
+  });
+  assert.ok(out.html.includes('span="2"'));
+});
+
 after(() => fs.rmSync(dir, { recursive: true, force: true }));

@@ -712,7 +712,7 @@ export class VkBytes extends VkElement {
     const rows = [];
     for (let at = 0; at < d.bytes.length; at += cols) {
       const chunk = d.bytes.slice(at, at + cols);
-      const flags = (live != null ? Array.from({ length: cols }, (_, i) => liveHl.has(d.start + at + i)) : (d.hl || [])).slice(0, chunk.length);
+      const flags = (live != null ? Array.from({ length: cols }, (_, i) => liveHl.has(d.start + at + i)) : []).slice(0, chunk.length);
       const addr = '0x' + (d.base + d.start + at).toString(16).padStart(4, '0');
       const units = chunk.map((b, i) => ({ b, i, flag: flags[i] }));
       const ordered = [];
@@ -1101,10 +1101,11 @@ export class VkBits extends VkElement {
       .map((row, r) => {
         const chunks = chunksOf(row.value);
         if (!chunks.length) return '';
+        const totalBits = width || chunks.reduce((n, c) => n + c.length, 0);
         const bitRow = multi ? r : 0;
         const parts = chunks
           .map((chunk, ci) => {
-            const hi = width ? width - 1 - ci * 32 : chunk.length - 1;
+            const hi = totalBits - 1 - ci * 32;
             const lo = hi - (chunk.length - 1);
             const cols = chunk
               .split('')

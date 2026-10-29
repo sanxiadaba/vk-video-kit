@@ -10,11 +10,11 @@
 ## 1 · 组件自己成立
 
 ```html
-<vk-code src="code/hello.c" lines="4-6" current="2"></vk-code>
+<vk-code src="code/hello.c" lines="4-6" current="5"></vk-code>
 ```
 
 - 从任意一个标签开始，不需要先搭 `vk-page`。
-- 块级组件默认填满父容器；`w` / `h` 可选。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
+- 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 52→1040），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
 - **全库只有白纸**：没有深色主题、深色代码窗、反色卡片。
 - 没有播放器、时间轴、逐行淡入；静止帧就是成品。
 
@@ -123,31 +123,31 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 - **`vk-box`** · 面 — 一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。
   - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border`
-  - 例：`<vk-box border="hair" radius="xl" pad="lg" class="spec-w1200 spec-h560" surface="paper">`
+  - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
   - 属性：`size` · `weight` · `mono` · `align` · `ink`
-  - 例：`<vk-text size="body" measure="body">`
+  - 例：`<vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
-  - 例：`<vk-inline variant="code">`
+  - 例：`<vk-inline variant="code">s[0]</vk-inline>`
 - **`vk-icon`** · 图标 — 一个符号。全量 Lucide 名字；四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
   - 属性：`name` · `tone` · `label` · `src` · `ink` · `size`
   - 例：`<vk-icon name="terminal" size="lg">`
 - **`vk-img`** · 图片 — 一张图：比例、填充方式、焦点。加载失败有可见占位。
   - 属性：`src` · `alt` · `ratio` · `fit` · `radius` · `border` · `position`
-  - 例：`<vk-img class="spec-w1200" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl">`
+  - 例：`<vk-img fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl">`
 - **`vk-rule`** · 分隔线 — 一根线。线宽三档；纯装饰或语义分隔。
   - 属性：`orientation` · `variant` · `tone` · `dash`
   - 例：`<vk-rule>`
 - **`vk-mark`** · 标记 — 行内标注：高亮、下划线、删除线、圈。只包文字，不改布局。
   - 属性：`tone` · `variant`
-  - 例：`<vk-mark variant="highlight">`
+  - 例：`<vk-mark variant="highlight">高亮</vk-mark>`
 - **`vk-window`** · 窗 — 一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。
   - 属性：`title` · `url` · `chrome` · `tone` · `pad`
   - 例：`<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">`
 - **`vk-keys`** · 键位 — 键位：把 A + B 写成两枚键帽。
   - 属性：（无）
-  - 例：`<vk-keys>`
+  - 例：`<vk-keys>Ctrl + C</vk-keys>`
 
 ### L2 排布 · 只决定在哪、多大
 
@@ -168,7 +168,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 - **`vk-title`** · 标题 — 标题：一句话主张 + 可选副题。
   - 属性：`index` · `eyebrow` · `sub` · `level` · `size` · `align`
-  - 例：`<vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">`
+  - 例：`<vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">示例标题</vk-title>`
 - **`vk-list`** · 列表 — 列表。要点 / 清单 / 定义；条目写成 <li>。步骤用 vk-steps。
   - 属性：`rule` · `bare` · `gap` · `variant`
   - 子节点：条目写成 `<li>`
@@ -176,10 +176,10 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-list gap="sm">`
 - **`vk-tag`** · 标签 — 一个小标签：状态、分类、元信息。两档尺寸，可带图标。
   - 属性：`tone` · `size` · `emphasis` · `bare`
-  - 例：`<vk-tag>`
+  - 例：`<vk-tag>int</vk-tag>`
 - **`vk-callout`** · 提示框 — 提示块：说明、正确、注意、错误。色条 + 淡底 + 图标，正文仍是墨色。
   - 属性：`tone` · `title` · `size` · `bare` · `density`
-  - 例：`<vk-callout tone="warn" title="提示框标题" size="body">`
+  - 例：`<vk-callout tone="warn" title="提示框标题" size="body">提示框内容，只做占位。</vk-callout>`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。
   - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `long` · `numbers` · `numbering` · `density`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
@@ -207,7 +207,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
-  - 例：`<vk-tree title="app" current="src/parser.py" depth="4">`
+  - 例：`<vk-tree title="app" current="src/parser.py" depth="4">src/ __init__.py ast.py errors.py lexer.py * parser.py tests/ fixtures/ basic.tokens test_lexer.py + main.py</vk-tree>`
 - **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，超过 cols 自动换行。
   - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler`
   - 子节点：条目写成 `<li>`
@@ -223,11 +223,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-steps current="1">`
 - **`vk-quote`** · 引文 — 一段引文：出处、作者；左侧竖线或压角引号。
   - 属性：`source` · `author` · `variant` · `size`
-  - 例：`<vk-quote source="示例出处">`
+  - 例：`<vk-quote source="示例出处">示例引文。</vk-quote>`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
   - 属性：`value` · `index` · `group` · `sign` · `label` · `tone` · `bit-width` · `bytes`
   - 子节点：条目写成 `<li>`
-  - 状态：`state="mark|ok|warn|err"`（item）
+  - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign>`
 - **`vk-bars`** · 条 — 一组横向条：标签、数值条、单位。子节点写成 <li value label>。
   - 属性：`max` · `scale` · `unit` · `density` · `tone`
@@ -252,7 +252,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
   - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z`
-  - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">`
+  - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`

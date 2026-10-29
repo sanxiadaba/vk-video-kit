@@ -46,8 +46,8 @@ export class VkCanvas extends VkElement {
     // 只保留 free：子节点自己声明坐标。
     for (const el of nodes) {
       const s = sizes.get(el);
-      const x = numAttr(el, 'x', { min: -1680, max: 1680, fallback: 0 });
-      const y = numAttr(el, 'y', { min: -1680, max: 1680, fallback: 0 });
+      const x = numAttr(el, 'x', { min: -1920, max: 1920, fallback: 0 });
+      const y = numAttr(el, 'y', { min: -1080, max: 1080, fallback: 0 });
       el.style.left = x + 'px';
       el.style.top = y + 'px';
       box.w = Math.max(box.w, x + s.w);
@@ -66,8 +66,8 @@ export class VkCanvas extends VkElement {
 
     const hasW = this.hasAttribute('w');
     const hasH = this.hasAttribute('h');
-    const wAttr = hasW ? numAttr(this, 'w', { min: 48, max: 1680, fallback: 0 }) : 0;
-    const hAttr = hasH ? numAttr(this, 'h', { min: 48, max: 888, fallback: 0 }) : 0;
+    const wAttr = hasW ? numAttr(this, 'w', { min: 48, max: 1920, fallback: 0 }) : 0;
+    const hAttr = hasH ? numAttr(this, 'h', { min: 48, max: 1080, fallback: 0 }) : 0;
     const contentW = Math.max(48, Math.ceil(box.w) + pad * 2);
     const contentH = Math.max(48, Math.ceil(box.h) + pad * 2);
     this.style.width = (hasW ? wAttr : contentW) + 'px';
@@ -138,9 +138,12 @@ export class VkEdge extends VkElement {
     if (this._cap) this._cap.style.display = 'none';
     if (this._label) this._label.textContent = this.getAttribute('label') || '';
 
-    const host = this.closest('vk-canvas, vk-page, [data-vk-frame]') || this.parentElement;
-    if (host && getComputedStyle(host).position === 'static') host.style.position = 'relative';
-    if (!host) return;
+    // 覆盖层是 position:absolute；坐标基准是最近的定位祖先，
+    // 不是语义宿主（vk-page 的正文在 1680px 的 .vk-page-inner 里）。
+    let host = this.parentElement;
+    while (host && getComputedStyle(host).position === 'static') host = host.parentElement;
+    if (!host) host = document.body;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
 
     // 隐藏的镜头/模板不参与布局：没有盒子就不画，也不报警。
     if (!host.getClientRects().length) return;

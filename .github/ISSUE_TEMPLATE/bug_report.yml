@@ -22,7 +22,7 @@ body:
     id: repro
     attributes:
       label: 最小复现
-      description: 一段 HTML，或“打开 _site/components/vk-xxx.html → 改某属性”
+      description: 一段 HTML，或“打开 _site/specimen/vk-xxx.html → 改某属性”
       render: html
     validations:
       required: true

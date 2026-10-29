@@ -155,7 +155,7 @@ const ATTR_META = {
 /** 组件默认值：属性参考与组件页的“默认”列都读它。 */
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
-  'vk-text': { size: 'body', weight: 'regular', align: 'left', measure: 'none', ink: 'primary' },
+  'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'circle-help', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
@@ -233,7 +233,7 @@ export const TAGS = {
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
-      'measure': oneOf('body', 'title', 'none'),
+      'measure': { ...oneOf('body', 'title', 'none'), layout: true },
     },
   },
   'vk-inline': {
@@ -285,6 +285,10 @@ export const TAGS = {
       'fit': oneOf('cover', 'contain'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
+      'w': { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
+      'h': { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child', layout: true },
+      'span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
+      'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
     },
   },
   'vk-rule': {
@@ -882,7 +886,6 @@ const COMMON = {
   grow: { ...bool(), layout: true },
   fill: { ...bool(), layout: true },
   overflow: { ...oneOf('visible', 'clip'), default: 'visible', layout: true },
-  measure: { ...oneOf('body', 'title', 'none'), default: 'none', layout: true },
 };
 /** 布局协议：由 Frame 基类统一实现，不属于组件自己的 API；`vk doc` 默认折叠。 */
 export const LAYOUT_ATTRS = new Set(Object.keys(COMMON));
@@ -1011,7 +1014,7 @@ export const CHILDREN = {
 export const STATES = {
   'vk-cells': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
   'vk-bars': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
-  'vk-bits': { where: ['item'], values: ['mark', 'ok', 'warn', 'err'] },
+  'vk-bits': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
   'vk-timeline': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
   'vk-list': { where: ['item'], values: ['ok', 'warn', 'err'] },
   'vk-table': { where: ['row', 'cell'], values: ['current', 'mark', 'ok', 'warn', 'err'] },

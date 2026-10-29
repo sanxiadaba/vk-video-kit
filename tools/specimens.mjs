@@ -118,6 +118,11 @@ function applyPreset(body, tag, attrs = {}) {
   let mm;
   while ((mm = attrRe.exec(m[1]))) parsed.push([mm[1], mm[2] ?? mm[3] ?? mm[4] ?? '']);
   const map = new Map(parsed);
+  // 折叠后的行不渲染：current / focus 落在 fold 区间里是死属性，预设不该带进画面。
+  if (attrs.fold != null) {
+    map.delete('current');
+    map.delete('focus');
+  }
   for (const [k, v] of Object.entries(attrs)) {
     if (v === null) map.delete(k);
     else map.set(k, String(v));
@@ -294,6 +299,7 @@ function specHash(tag, rawBody, presets) {
       // 模板也是输入：改了 shell 就必须重写，否则生成物永远停在旧版。
       hash32(shell.toString()),hash32(RESET),
       hash32(specPage.toString()),
+      hash32(applyPreset.toString()),hash32(stripDefaults.toString()),hash32(unwrapSpec.toString()),hash32(scopeIds.toString()),
       tag,
       TAGS[tag].summary,
       TAGS[tag].name,

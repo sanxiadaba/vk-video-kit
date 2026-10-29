@@ -64,7 +64,7 @@ if (check && !fs.existsSync(SITE)) {
 
 // 旧展示站：components/、frames/、docs.html、site.css/js 等全部退役。
 if (!check) {
-  for (const rel of ['components', 'frames', 'shots', 'docs.html', 'examples.html', 'search-index.js', 'site.css', 'site.js', 'frames.source.json']) {
+  for (const rel of ['components', 'frames', 'shots', 'docs.html', 'examples.html', 'search-index.js', 'site.css', 'site.js', 'showcase.css', 'showcase.js', 'frames.source.json']) {
     fs.rmSync(path.join(SITE, rel), { recursive: true, force: true });
   }
 }
@@ -73,8 +73,6 @@ mirrorDir('vk', path.join(SITE, 'vk'));
 mirrorDir('dist', path.join(SITE, 'dist'));
 mirrorDir('assets', path.join(SITE, 'assets'));
 mirrorDir('code', path.join(SITE, 'code'));
-mirrorFile('site/showcase.css', path.join(SITE, 'showcase.css'));
-mirrorFile('site/showcase.js', path.join(SITE, 'showcase.js'));
 mirrorFile('LICENSE', path.join(SITE, 'LICENSE'));
 
 console.log(`assemble: ${SITE}/ ready`);

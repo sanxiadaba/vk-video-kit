@@ -18,10 +18,22 @@ const file = path.join('docs', 'ai.md');
 const check = process.argv.includes('--check');
 
 const sceneOf = new Map(SCENES.map((s) => [s.tag, s.body]));
-const openTag = (tag) => {
+// 示例必须能直接粘进任意一帧：剥掉规格页专用的 spec-* 类。
+// 那些类只存在于标本页的内联 <style>，抄进帧里是静默失效的空写。
+const stripSpec = (tagHtml) =>
+  tagHtml.replace(/\s+class="([^"]*)"/g, (all, cls) => {
+    const kept = cls.split(/\s+/).filter((c) => c && !c.startsWith('spec-'));
+    return kept.length ? ` class="${kept.join(' ')}"` : '';
+  });
+const exampleTag = (tag) => {
   const body = sceneOf.get(tag) || '';
-  const m = body.match(new RegExp(`<${tag}\\b[^>]*>`));
-  return m ? m[0] : `<${tag}>`;
+  const m = body.match(new RegExp(`<${tag}\\b[^>]*>([\\s\\S]*?)</${tag}>`));
+  if (!m) return `<${tag}>`;
+  const open = m[0].match(new RegExp(`<${tag}\\b[^>]*>`))?.[0] || `<${tag}>`;
+  const inner = m[1].trim();
+  // 只有裸文本才把内容带进示例；有子元素的交给 CHILDREN 说明。
+  if (inner && !inner.includes('<')) return `${stripSpec(open)}${inner.replace(/\s+/g, ' ')}</${tag}>`;
+  return stripSpec(open);
 };
 
 const lines = [];
@@ -50,7 +62,7 @@ for (const layer of LAYERS) {
       lines.push(`  - 子节点：${c}`);
     }
     if (STATES[tag]) lines.push(`  - 状态：\`state="${STATES[tag].values.join('|')}"\`（${STATES[tag].where.join(' / ')}）`);
-    lines.push(`  - 例：\`${openTag(tag)}\``);
+    lines.push(`  - 例：\`${exampleTag(tag)}\``);
   }
   lines.push('');
 }
