@@ -20,6 +20,9 @@ const pascal = (tag) => tag.replace(/^vk-/, '').replace(/(^|-)([a-z])/g, (_, __,
 
 /* ---------------------------------------------------------------- types */
 
+const ctxOf = (spec) =>
+  spec.context === 'canvas-child' ? '仅 canvas 子节点' : spec.context === 'grid-child' ? '仅 grid 子项' : '';
+
 const attrType = (spec, tag, name) => {
   if (tag === 'vk-icon' && name === 'name') return 'IconName';
   if (spec.values) return spec.values.map((v) => `'${v}'`).join(' | ');
@@ -32,7 +35,7 @@ const attrType = (spec, tag, name) => {
 const iface = (tag) => {
   const def = TAGS[tag];
   const rows = Object.entries(def.attrs || {}).map(([name, spec]) => {
-    const doc = `${spec.values ? `${name}: ${spec.values.join(' / ')}` : `${name}${spec.default !== undefined ? `（默认 ${spec.default}）` : ''}`}${spec.build ? ' · 构建期' : ''}`;
+    const doc = `${spec.values ? `${name}: ${spec.values.join(' / ')}` : `${name}${spec.default !== undefined ? `（默认 ${spec.default}）` : ''}`}${spec.build ? ' · 构建期' : ''}${spec.context ? ` · ${ctxOf(spec)}` : ''}`;
     return `  /** ${doc} */\n  '${name}'?: ${attrType(spec, tag, name)};`;
   });
   return `export interface ${pascal(tag)}Attributes {\n${rows.join('\n')}\n}`;
@@ -135,20 +138,22 @@ const cem = {
           name: `${pascal(tag)}Element`,
           tagName: tag,
           description: `${def.summary}（${def.name}）`,
-          attributes: Object.entries(def.attrs || {}).map(([name, spec]) => ({
-            name,
-            description: spec.label || name,
-            default: spec.default ?? undefined,
-            type: {
-              text: spec.values
-                ? spec.values.map((v) => `'${v}'`).join(' | ')
-                : spec.type === 'num' || spec.type === 'int' || spec.type === 'size'
-                  ? 'number | string'
-                  : spec.type === 'bool'
-                    ? 'boolean'
-                    : 'string',
-            },
-          })),
+          attributes: Object.entries(def.attrs || {})
+            .filter(([, spec]) => spec.context !== 'canvas-child')
+            .map(([name, spec]) => ({
+              name,
+              description: spec.label || name,
+              default: spec.default ?? undefined,
+              type: {
+                text: spec.values
+                  ? spec.values.map((v) => `'${v}'`).join(' | ')
+                  : spec.type === 'num' || spec.type === 'int' || spec.type === 'size'
+                    ? 'number | string'
+                    : spec.type === 'bool'
+                      ? 'boolean'
+                      : 'string',
+              },
+            })),
           slots: def.slots || [],
         };
       }),
@@ -165,7 +170,8 @@ const card = (tag) => {
     .map(([name, spec]) => {
       const v = spec.values ? spec.values.map((x) => `\`${x}\``).join(' · ') : spec.type;
       const d = spec.default === undefined ? '—' : `\`${spec.default}\``;
-      return `| \`${name}\` | ${v} | ${d} | ${spec.build ? '构建期' : '运行'} |`;
+      const ctx = ctxOf(spec);
+      return `| \`${name}\` | ${v} | ${d} | ${spec.build ? '构建期' : '运行'}${ctx ? ` · ${ctx}` : ''} |`;
     })
     .join('\n');
   const slotText = def.slots?.length
@@ -199,11 +205,13 @@ const vscode = {
   tags: TAG_NAMES.map((tag) => ({
     name: tag,
     description: `${TAGS[tag].summary}（${tag}）`,
-    attributes: Object.entries(TAGS[tag].attrs || {}).map(([name, spec]) => ({
-      name,
-      description: spec.label || name,
-      ...(spec.values ? { values: spec.values.map((value) => ({ name: value })) } : {}),
-    })),
+    attributes: Object.entries(TAGS[tag].attrs || {})
+      .filter(([, spec]) => spec.context !== 'canvas-child')
+      .map(([name, spec]) => ({
+        name,
+        description: `${spec.label || name}${spec.context ? `（${ctxOf(spec)}）` : ''}`,
+        ...(spec.values ? { values: spec.values.map((value) => ({ name: value })) } : {}),
+      })),
   })),
 };
 writeIfChanged('vscode-html-data.json', JSON.stringify(vscode, null, 2) + '\n', check);
@@ -218,12 +226,14 @@ const webTypes = {
       tags: TAG_NAMES.map((tag) => ({
         name: tag,
         description: TAGS[tag].summary,
-        attributes: Object.entries(TAGS[tag].attrs || {}).map(([name, spec]) => ({
-          name,
-          description: spec.label || name,
-          ...(spec.values ? { value: spec.values } : {}),
-          ...(spec.default !== undefined ? { default: spec.default } : {}),
-        })),
+        attributes: Object.entries(TAGS[tag].attrs || {})
+          .filter(([, spec]) => spec.context !== 'canvas-child')
+          .map(([name, spec]) => ({
+            name,
+            description: `${spec.label || name}${spec.context ? `（${ctxOf(spec)}）` : ''}`,
+            ...(spec.values ? { value: spec.values } : {}),
+            ...(spec.default !== undefined ? { default: spec.default } : {}),
+          })),
       })),
     },
   },

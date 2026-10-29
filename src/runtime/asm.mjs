@@ -6,6 +6,7 @@
  */
 import { VkElement, define, esc, lineSet } from './base.mjs';
 import { splitInsn } from '../shared/asm.mjs';
+import { DOTS } from './window.mjs';
 
 /** 操作数：逗号后留空格；寄存器加重、立即数降一阶，括号保持墨色。 */
 function operandHtml(text) {
@@ -100,10 +101,10 @@ export class VkAsm extends VkElement {
     const head =
       this.getAttribute('chrome') === 'none'
         ? ''
-        : `<div class="vk-asm-hd"><span class="vk-asm-file" data-meta>${esc(title)}</span><span class="vk-asm-range" data-meta>${esc(
+        : `<div class="vk-asm-hd">${DOTS}<span class="vk-asm-file" data-meta>${esc(title)}</span><span class="vk-asm-range" data-meta>${esc(
             [this.getAttribute('lines') || '', d.base || ''].filter(Boolean).join(' · ')
           )}</span><span class="vk-asm-lang" data-meta>asm</span></div>`;
-    this.innerHTML = `<div class="vk-asm" data-density="${esc(density)}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
+    this.innerHTML = `<div class="vk-asm" data-density="${esc(density)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
   }

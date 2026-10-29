@@ -67,6 +67,12 @@ export function applyFrame(el) {
     el.style.position = '';
     el._frameAbs = false;
   }
+
+  // z 只在坐标空间（canvas 子节点）与覆盖层成立；构建期会拦住别处的写法。
+  const z = el.getAttribute('z');
+  const zn = num(z);
+  if (zn != null) set('zIndex', String(Math.trunc(zn)));
+  else set('zIndex', null);
 }
 
 /** 需要检查溢出的内部盒子。选择器是“内容容器”，不是宿主。 */

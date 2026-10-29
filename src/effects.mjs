@@ -271,6 +271,7 @@ Object.assign(EFFECTS['vk-mark'], {
 });
 Object.assign(EFFECTS['vk-rule'], {
   variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
+  dash: { on: 'vk-rule', kind: 'style', prop: 'background-image' },
 });
 Object.assign(EFFECTS['vk-list'], {
   variant: { kind: 'any', reason: '四种形态只换条目标记字形，不改高度；无法用单一几何/样式断言。' },

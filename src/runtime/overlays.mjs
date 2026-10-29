@@ -85,7 +85,7 @@ class VkOverlay extends VkElement {
   }
 
   _tone() {
-    return this.getAttribute('tone') || 'accent';
+    return this.getAttribute('tone') || 'info';
   }
 
   draw() {
@@ -112,7 +112,7 @@ export class VkRing extends VkOverlay {
     this._svg.style.setProperty('--vk-ring-w', width + 'px');
     if (this.hasAttribute('dash')) this._svg.dataset.dash = '1';
     else delete this._svg.dataset.dash;
-    const shape = this.getAttribute('variant') || 'ellipse';
+    const shape = this.getAttribute('variant') || 'rect';
 
     for (const a of targets) {
       const b = this._box(a.rect, f.host, f.hr);
@@ -174,7 +174,7 @@ export class VkSpotlight extends VkOverlay {
       return;
     }
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 30 }));
-    const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.72 });
+    const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.6 });
     const feather = numAttr(this, 'feather', { min: 0, max: 120, fallback: 24 });
     const shape = this.getAttribute('variant') === 'ellipse' ? 'ellipse' : 'rect';
     const maskId = `${this._uid}-m`;
@@ -264,8 +264,10 @@ export class VkPin extends VkOverlay {
     this._mount();
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }));
     this._bd.dataset.tone = this._tone();
+    this._bd.dataset.variant = this.getAttribute('variant') === 'dot' ? 'dot' : 'bubble';
     this._bd.dataset.emphasis = this.getAttribute('emphasis') || 'soft';
     this._bd.dataset.size = this.getAttribute('size') || 'body';
+    this._svg.dataset.tone = this._tone();
     const w = numAttr(this, 'w', { min: 160, max: 900, fallback: 360 });
     this._bd.style.width = w + 'px';
     const n = parseInt(this.getAttribute('n') || '0', 10);

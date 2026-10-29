@@ -55,6 +55,10 @@ a:hover{color:#1b3fd6}
 .spec-card-name,.spec-card-tag,.spec-card-name *,.spec-card-tag *{line-height:1!important;white-space:nowrap}
 /* 缩略图：vk-img 不受 w/h 约束，用 CSS 定高；cover 裁成等高的一条。 */
 vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:296px!important}
+/* 最后一页只有一张卡：放大成专题，不再是一张孤零零的小卡。 */
+.spec-lone{display:flex;justify-content:center;padding-top:24px}
+.spec-lone .spec-card{width:1120px;height:700px}
+.spec-lone .spec-thumb,.spec-lone .spec-thumb .vk-img{height:620px!important}
 
 
 `;
@@ -146,7 +150,7 @@ function card(tag, no) {
   // 索引 = 缩略图 + 名字。缩略图取组件本体（不裁切），卡片端 contain 完整显示。
   return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
   <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="cover"></vk-img>
-  <vk-text class="spec-card-name" size="meta">${esc(def.name)}</vk-text>
+  <vk-row class="spec-card-name" gap="xs" align="baseline"><vk-text size="meta">${esc(def.name)}</vk-text><vk-text size="meta" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-row>
 </vk-stack></a>`;
 }
 
@@ -177,12 +181,10 @@ function indexPage(n) {
       <vk-row gap="md" align="baseline">${prev}${next}</vk-row>
     </vk-row>
     <vk-rule variant="strong"></vk-rule>
-    <vk-grid cols="repeat(3, minmax(0, 1fr))" gap-x="sm" gap-y="sm">
-${cards}
-    </vk-grid>
+${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
   </vk-stack>
 </vk-page>`;
-  return shell(`vk · 组件索引 ${n}/${PAGES}`, `<!-- vk:spec:${hash32(JSON.stringify([hash32(card.toString()), hash32(RESET), n, slice]))} -->\n${page}`, 0);
+  return shell(`vk · 组件索引 ${n}/${PAGES}`, `<!-- vk:spec:${hash32(JSON.stringify([hash32(card.toString()), hash32(indexPage.toString()), hash32(RESET), n, slice]))} -->\n${page}`, 0);
 }
 
 const files = new Map();
@@ -203,6 +205,7 @@ function specHash(tag, rawBody, presets) {
       TAGS[tag].summary,
       TAGS[tag].name,
       TAGS[tag].layer,
+      ORDER.length,
       rawBody,
       presets.map((p) => p.label),
     ])

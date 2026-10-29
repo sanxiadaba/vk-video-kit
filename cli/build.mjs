@@ -101,7 +101,7 @@ export async function main() {
     const abs = path.resolve(file);
     const original = fs.readFileSync(file, 'utf8');
     const key = fileKey(file, original);
-    const needs = /<vk-(?:code|term|diff|asm|math|tree|bytes|frames|icon)\b/.test(original);
+    const needs = /<vk-(?:code|term|diff|asm|math|tree|bytes|frames|icon|inline)\b/.test(original);
     const generated = /data-vk-(?:icons|math|hl|hl-diff|src|asm|tree|frames|bytes)\b/.test(original);
     if (!check && !force && cache[abs] === key && (!needs || generated)) {
       skipped++;

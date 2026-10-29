@@ -47,6 +47,14 @@ export const SCENES = [
   },
 
   {
+    tag: 'vk-inline',
+    body: s`
+<vk-box class="spec-w1680" surface="none">
+  <vk-text size="body" measure="none">句子里可以放 <vk-inline variant="code">s[0]</vk-inline>、<vk-inline variant="math">O(\log n)</vk-inline>、<vk-inline variant="sup">2</vk-inline> 与 <vk-inline variant="sub">i</vk-inline>，也可以放 <vk-inline variant="link" href="../index.html">一个链接</vk-inline>。字号跟随所在行，不破坏字阶。</vk-text>
+</vk-box>`,
+  },
+
+  {
     tag: 'vk-list',
     body: s`
 <vk-box class="spec-w1200" surface="none">
@@ -84,7 +92,7 @@ export const SCENES = [
 <vk-stack gap="sm" align="start">
 <vk-row gap="sm" align="center">
   <vk-tag>int</vk-tag>
-  <vk-tag tone="accent">char</vk-tag>
+  <vk-tag tone="info">char</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">4 B</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">指针</vk-tag>
   <vk-tag tone="neutral" emphasis="soft" size="meta">0x10</vk-tag>
@@ -423,7 +431,7 @@ export const SCENES = [
   {
     tag: 'vk-asm',
     body: s`
-<vk-asm title="main.s" lines="1-13" current="6" bytes
+<vk-asm title="main.s" lines="1-13" current="6" bytes long="wrap"
         order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">
   <script type="text/plain" data-vk-source>
 0000000000401136 <main>:
@@ -459,7 +467,7 @@ export const SCENES = [
   <vk-box id="pin-target" x="120" y="150" w="440" h="200" surface="soft" border="hair" radius="lg">
     <vk-text size="heading" mono>s[5]</vk-text>
   </vk-box>
-  <vk-pin for="#pin-target" side="right" tone="err" n="1">说明</vk-pin>
+  <vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>
 </vk-canvas>`,
   },
 
@@ -470,7 +478,7 @@ export const SCENES = [
   <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="heading" mono>0x2a</vk-text>
   </vk-box>
-  <vk-ring for="#ring-target@region:20%,20%,60%,60%" variant="ellipse" tone="accent" pad-px="16" dash></vk-ring>
+  <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash></vk-ring>
 </vk-canvas>`,
   },
 
@@ -487,7 +495,7 @@ export const SCENES = [
   <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="body">非目标</vk-text>
   </vk-box>
-  <vk-spotlight for="#spot-target" dim="0.72" feather="24"></vk-spotlight>
+  <vk-spotlight for="#spot-target" dim="0.6" feather="24"></vk-spotlight>
 </vk-canvas>`,
   },
 

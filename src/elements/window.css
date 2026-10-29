@@ -177,7 +177,8 @@ vk-window { display: block; }
 
 .vk-win-tag { overflow: hidden; border-top: 0 solid transparent; }
 .vk-win-tag[data-tone] { border-top-width: 4px; }
-.vk-win-tag[data-tone='accent'] { border-top-color: var(--vk-focus); }
+.vk-win-tag[data-tone='info'] { border-top-color: var(--vk-info); }
+.vk-win-tag[data-tone='focus'] { border-top-color: var(--vk-focus); }
 .vk-win-tag[data-tone='ok'] { border-top-color: var(--vk-ok); }
 .vk-win-tag[data-tone='warn'] { border-top-color: var(--vk-warn); }
 .vk-win-tag[data-tone='err'] { border-top-color: var(--vk-err); }

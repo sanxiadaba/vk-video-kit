@@ -29,6 +29,8 @@ vk-page {
 
 /* 安全区的上下 96 是给"帧边留白"的：正文永远是 888，不再被页眉页脚压缩。 */
 .vk-page-inner {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-rows: var(--vk-safe-y) minmax(0, 1fr) var(--vk-safe-y);
   height: 100%;
@@ -43,3 +45,19 @@ vk-page {
 }
 .vk-page-bd > * { min-height: 0; }
 .vk-page[data-align='center'] .vk-page-bd { justify-content: center; }
+.vk-page[data-align='bottom'] .vk-page-bd { justify-content: flex-end; }
+
+/* 出血层：铺满 1920×1080，只在图/面需要到边时开启；正文仍在安全区。 */
+.vk-page-bleed {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.vk-page-bleed > * {
+  position: absolute;
+  inset: 0;
+  width: 1920px;
+  height: 1080px;
+}

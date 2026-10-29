@@ -8,7 +8,7 @@ const registryAttrs = new Set();
 for (const def of Object.values(TAGS)) for (const name of Object.keys(def.attrs || {})) registryAttrs.add(name);
 for (const list of Object.values(CHILD_ATTRS)) for (const name of list) registryAttrs.add(name);
 
-const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text']);
+const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text', 'bleed']);
 const IGNORE = (name) => name.startsWith('data-') || name.startsWith('aria-') || ALLOW.has(name);
 
 function walk(dir, out = []) {

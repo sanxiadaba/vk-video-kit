@@ -47,19 +47,19 @@ vk-asm { display: block; }
 .vk-asm-cols,
 .vk-asm-row {
   display: grid;
-  grid-template-columns: 84px 180px 460px 160px minmax(0, 1fr);
+  grid-template-columns: 84px 180px 500px 160px minmax(0, 1fr);
   column-gap: var(--vk-s2);
   align-items: center;
   padding: 0 var(--vk-s3);
 }
 .vk-asm[data-show-order='0'] .vk-asm-cols,
-.vk-asm[data-show-order='0'] .vk-asm-row { grid-template-columns: 180px 460px 160px minmax(0, 1fr); }
+.vk-asm[data-show-order='0'] .vk-asm-row { grid-template-columns: 180px 500px 160px minmax(0, 1fr); }
 .vk-asm[data-show-bytes='0'] .vk-asm-cols,
 .vk-asm[data-show-bytes='0'] .vk-asm-row { grid-template-columns: 84px 180px 160px minmax(0, 1fr); }
 .vk-asm[data-show-order='0'][data-show-bytes='0'] .vk-asm-cols,
 .vk-asm[data-show-order='0'][data-show-bytes='0'] .vk-asm-row { grid-template-columns: 180px 160px minmax(0, 1fr); }
 .vk-asm[data-show-addr='0'] .vk-asm-cols,
-.vk-asm[data-show-addr='0'] .vk-asm-row { grid-template-columns: 84px 460px 160px minmax(0, 1fr); }
+.vk-asm[data-show-addr='0'] .vk-asm-row { grid-template-columns: 84px 500px 160px minmax(0, 1fr); }
 .vk-asm[data-show-addr='0'][data-show-bytes='0'] .vk-asm-cols,
 .vk-asm[data-show-addr='0'][data-show-bytes='0'] .vk-asm-row { grid-template-columns: 84px 160px minmax(0, 1fr); }
 
@@ -102,6 +102,9 @@ vk-asm { display: block; }
   white-space: nowrap;
 }
 .vk-asm-a { justify-self: end; }
+/* 机器码列放不下时的三档：默认 fail（由门禁报），wrap 换行，clip 渐隐。 */
+.vk-asm[data-long='wrap'] .vk-asm-b { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
+.vk-asm[data-long='clip'] .vk-asm-b { overflow: hidden; text-overflow: ellipsis; }
 .vk-asm-m {
   font-size: 1em;
   font-weight: var(--vk-w-bold);
@@ -116,12 +119,12 @@ vk-asm { display: block; }
   width: 38px;
   height: 38px;
   border-radius: 50%;
-  background: var(--vk-focus);
+  background: var(--vk-surface-3);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
   font-weight: var(--vk-w-bold);
   line-height: 1;
-  color: #fff;
+  color: var(--vk-ink-2);
 }
 .vk-asm-fence {
   display: flex;
@@ -146,14 +149,14 @@ vk-asm { display: block; }
   color: var(--vk-ink-2);
   white-space: pre;
 }
-.vk-op-reg { color: var(--vk-focus); font-weight: var(--vk-w-med); }
+.vk-op-reg { color: var(--vk-ink-2); font-weight: var(--vk-w-med); }
 .vk-op-imm { color: var(--vk-ink-3); }
 .vk-asm-row.is-hl {
   background: var(--vk-focus-soft);
   box-shadow: inset 4px 0 0 var(--vk-focus);
 }
 .vk-asm-row.is-hl .vk-asm-a { color: var(--vk-focus); font-weight: var(--vk-w-med); }
-.vk-asm-row.is-hl .vk-asm-order { background: var(--vk-focus); box-shadow: 0 0 0 4px var(--vk-surface-1); }
+.vk-asm-row.is-hl .vk-asm-order { background: var(--vk-focus); color: #fff; box-shadow: 0 0 0 4px var(--vk-surface-1); }
 .vk-asm-row.is-dim { opacity: var(--vk-dim); }
 .vk-asm[data-density='compact'] .vk-asm-row { min-height: 48px; }
 .vk-asm[data-density='compact'] .vk-asm-cols-hd { min-height: 36px; }
@@ -198,8 +201,8 @@ vk-timeline { display: block; }
   align-items: start;
   padding: 14px 0;
 }
-.vk-tl-item[data-mark] { background: var(--vk-focus-soft); }
-.vk-tl-item[data-tone='accent'] .vk-tl-name { color: var(--vk-focus); }
+.vk-tl-item[data-mark] { background: var(--vk-info-soft); }
+.vk-tl-item[data-tone='info'] .vk-tl-name { color: var(--vk-info); }
 .vk-tl-date {
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
@@ -214,7 +217,7 @@ vk-timeline { display: block; }
   height: 18px;
   margin: 10px auto 0;
   border-radius: 50%;
-  background: var(--vk-focus);
+  background: var(--vk-ink-3);
   box-shadow: 0 0 0 7px var(--vk-surface-1);
   position: relative;
   z-index: 1;
@@ -288,11 +291,12 @@ vk-timeline { display: block; }
 .vk-tl-chip {
   min-width: 0;
   padding: var(--vk-s1) var(--vk-s2);
-  border-left: 4px solid var(--vk-focus);
+  border-left: 4px solid var(--vk-line-strong);
   border-radius: var(--vk-r-1);
   background: var(--vk-surface-2);
 }
-.vk-tl-chip[data-mark] { background: var(--vk-focus-soft); }
+.vk-tl-chip[data-mark] { background: var(--vk-info-soft); }
+.vk-tl-chip[data-tone='info'] { border-left-color: var(--vk-info); }
 .vk-tl-chip[data-tone='err'] { border-left-color: var(--vk-err); }
 .vk-tl-chip[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-tl-chip[data-tone='warn'] { border-left-color: var(--vk-warn); }

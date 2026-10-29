@@ -181,7 +181,7 @@ function walk(node, fn) {
 
 const GLOBAL_ATTRS = new Set([
   'id', 'class', 'className', 'title', 'role', 'tabindex', 'slot', 'part',
-  'x', 'y', 'lang', 'dir', 'hidden', 'aria-hidden', 'aria-label', 'aria-labelledby',
+  'x', 'y', 'lang', 'dir', 'hidden', 'aria-hidden', 'aria-label', 'aria-labelledby', 'bleed',
 ]);
 
 /** 严格模式：像素摆位与后门直接报错。默认开——新帧只能用意图表达布局。 */
@@ -211,6 +211,7 @@ const ANCHORS = {
 const INDEX_PART = new Set(['cell', 'byte', 'bit', 'event', 'row', 'step', 'item']);
 /** 允许自由坐标的三个覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
 const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight']);
+const Z_OK = new Set([...XY_OVERLAY, 'vk-edge']);
 
 const countTag = (node, tag) => {
   let n = 0;
@@ -513,10 +514,51 @@ function validateAuthorHtml(doc, file) {
         })
       );
     }
+    // z 只在坐标空间成立：canvas 的子节点，或覆盖层/连线。
+    if (attrs.has('z') && !Z_OK.has(tag) && node.parentNode?.tagName !== 'vk-canvas') {
+      errors.push(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: '的 z 只有在坐标空间里成立',
+          wrote: `z="${attrs.get('z')}"`,
+          should: '放进 <vk-canvas>，或改用覆盖层 / 连线',
+          why: 'z 只在画布内比较；页面上随意叠层会盖住标注',
+        })
+      );
+    }
+    // bleed 只写在 vk-page 的直接子节点上；它铺满整帧、排在内容层后面。
+    if (attrs.has('bleed') && node.parentNode?.tagName !== 'vk-page') {
+      errors.push(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: '的 bleed 只属于 page 的直接子节点',
+          wrote: `bleed`,
+          should: '把 <vk-img bleed> / <vk-box bleed> 放进 <vk-page>',
+          why: 'bleed 是"这一层不守安全区"的布局意图，放在别的容器里没有语义',
+        })
+      );
+    }
+    // pin 只钉一个点；分号是给 ring / spotlight 的多目标语法。
+    if (tag === 'vk-pin' && (attrs.get('for') || '').includes(';')) {
+      errors.push(
+        diag({
+          file,
+          line: lineOf(node),
+          tag,
+          what: '的 for 只能有一个目标',
+          wrote: `for="${attrs.get('for')}"`,
+          should: '拆成多个 <vk-pin>，或改用 <vk-ring> / <vk-spotlight>',
+          why: '气泡只有一条引线；多目标会让气泡位置失去意义',
+        })
+      );
+    }
     // span / row-span 只在分份容器里有意义：父级必须是 vk-grid。
     // 浏览器会忽略错误位置的 grid-column / grid-row，所以这条必须在构建期拦住。
-    for (const name of ['span', 'row-span']) {
-      if (!attrs.has(name)) continue;
+    for (const name of ['span', 'row-span']) {      if (!attrs.has(name)) continue;
       if (node.parentNode?.tagName === 'vk-grid') continue;
       const axis = name === 'span' ? '列' : '行';
       errors.push(
@@ -819,6 +861,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   }
   const blocks = [];
   const maths = [];
+  const inlineMaths = [];
   const terms = [];
   const trees = [];
   const bytesNodes = [];
@@ -829,6 +872,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   walk(doc, (node) => {
     if (node.tagName === 'vk-code' || node.tagName === 'vk-diff') blocks.push(node);
     if (node.tagName === 'vk-math') maths.push(node);
+    if (node.tagName === 'vk-inline' && attr(node, 'variant') === 'math') inlineMaths.push(node);
     if (node.tagName === 'vk-term') terms.push(node);
     if (node.tagName === 'vk-tree') trees.push(node);
     if (node.tagName === 'vk-bytes') bytesNodes.push(node);
@@ -1156,15 +1200,56 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }
 
+  // 行内公式：子节点就是 TeX；构建期渲染，原始 TeX 存进 script 供增量重建。
+  for (const node of inlineMaths) {
+    const loc = locOf(node);
+    const line = lineOf(node);
+    if (!loc.startTag || !loc.endTag) throw new Error(`${file}:${line} <vk-inline variant="math"> 缺少结束标签。`);
+    const { text, hasElement } = collectText(node);
+    if (hasElement) throw new Error(`${file}:${line} <vk-inline> 公式里有元素；TeX 里的 "<" 要写成 "&lt;"。`);
+    const tex = dedent(text).trim();
+    if (!tex) continue;
+    let rendered = '';
+    try {
+      rendered = katex.renderToString(tex, { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' });
+    } catch (e) {
+      throw new Error(`${file}:${line} 行内公式 KaTeX 渲染失败：${e.message}`);
+    }
+    const hash = hash32(tex);
+    const body = `<script type="text/vk-math" data-vk-math="${hash}" data-vk-tex="${esc(tex)}">${rendered}</script>`;
+    edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${escText(tex)}${body}\n` });
+  }
+
   // 图标：构建期把静态 <vk-icon> 内联成 SVG；运行时看到标记直接复用，不闪。
   for (const node of iconNodes) {
     const loc = locOf(node);
     if (!loc.startTag || !loc.endTag) continue;
-    const name = attr(node, 'name') || 'circle-help';
     const label = attr(node, 'label') || '';
+    const aria = label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"';
+    const src = attr(node, 'src');
+    if (src) {
+      const abs = path.resolve(path.dirname(file), src);
+      const line = lineOf(node);
+      if (!fs.existsSync(abs)) {
+        errors.push(`${file}:${line} <vk-icon> 找不到 ${src}`);
+        continue;
+      }
+      deps.push(abs);
+      const raw = fs.readFileSync(abs, 'utf8');
+      const m = raw.match(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/i);
+      if (!m) {
+        errors.push(`${file}:${line} <vk-icon src="${src}"> 不是 SVG`);
+        continue;
+      }
+      const vb = (m[1].match(/viewBox\s*=\s*"([^"]+)"/i) || [])[1] || '0 0 24 24';
+      const body = m[2].replace(/<script\b[\s\S]*?<\/script>/gi, '').replace(/<style\b[\s\S]*?<\/style>/gi, '');
+      const inner = `<span class="vk-icon" data-vk-inline data-vk-src="${esc(src)}"${aria}><svg viewBox="${esc(vb)}">${body}</svg></span>`;
+      edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
+      continue;
+    }
+    const name = attr(node, 'name') || 'circle-help';
     if (ICONS[name]) iconNames.add(name);
     const body = ICONS[name] || ICONS['circle-help'];
-    const aria = label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"';
     const inner = `<span class="vk-icon" data-vk-inline data-vk-name="${esc(name)}"${aria}><svg viewBox="0 0 24 24">${body}</svg></span>`;
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }

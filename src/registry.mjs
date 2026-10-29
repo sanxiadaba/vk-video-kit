@@ -157,10 +157,11 @@ const ATTR_META = {
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   'vk-text': { size: 'body', weight: 'regular', align: 'left', measure: 'none', ink: 'primary' },
+  'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'circle-help', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
-  'vk-mark': { variant: 'highlight', tone: 'accent' },
+  'vk-mark': { variant: 'highlight', tone: 'info' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start' },
   'vk-row': { gap: 'sm', align: 'stretch', justify: 'start' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
@@ -169,13 +170,13 @@ const DEFAULTS = {
   'vk-title': { size: 'title', align: 'left', level: '2' },
   'vk-list': { variant: 'bullet', gap: 'sm' },
   'vk-tag': { tone: 'neutral', size: 'meta', emphasis: 'solid' },
-  'vk-callout': { tone: 'accent', size: 'body', density: 'normal' },
+  'vk-callout': { tone: 'info', size: 'body', density: 'normal' },
   'vk-code': { chrome: 'min', density: 'normal', numbers: 'all' },
-  'vk-asm': { bytes: '', address: 'all', density: 'normal', chrome: 'min' },
+  'vk-asm': { bytes: '', address: 'all', density: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', density: 'normal' },
-  'vk-pin': { side: 'auto', leader: 'elbow', tone: 'accent', size: 'body', emphasis: 'soft', z: 60 },
-  'vk-ring': { variant: 'ellipse', tone: 'accent', 'pad-px': 8, stroke: 4, z: 40 },
-  'vk-spotlight': { dim: 0.72, feather: 24, variant: 'rect', z: 30 },
+  'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
+  'vk-ring': { variant: 'rect', tone: 'info', 'pad-px': 8, stroke: 4, z: 40 },
+  'vk-spotlight': { dim: 0.6, feather: 24, variant: 'rect', z: 30 },
   'vk-term': { prompt: '$', chrome: 'min', density: 'normal' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all' },
   'vk-table': { variant: 'ledger', density: 'normal' },
@@ -207,7 +208,7 @@ export const TAGS = {
     summary: '一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。',
     attrs: {
       'surface': oneOf('none', 'paper', 'soft'),
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -236,6 +237,20 @@ export const TAGS = {
       'measure': oneOf('body', 'title', 'none'),
     },
   },
+  'vk-inline': {
+    name: '行内',
+    layer: 'elements',
+    summary: '行内文字：代码、公式、上下标、链接。字号跟随所在文本行。',
+    content: {
+      kind: 'text',
+      target: 'vk-inline',
+      fields: [{ name: 'text', label: '文字 / TeX', type: 'textarea', text: true }],
+    },
+    attrs: {
+      'variant': oneOf('code', 'math', 'sup', 'sub', 'link'),
+      'href': text(),
+    },
+  },
   'vk-icon': {
     name: '图标',
     layer: 'elements',
@@ -247,8 +262,9 @@ export const TAGS = {
     },
     attrs: {
       'name': text(),
-      'tone': oneOf('accent', 'ok', 'err', 'warn'),
+      'tone': oneOf('info', 'focus', 'ok', 'err', 'warn'),
       'label': text(),
+      'src': { ...text(), build: true },
     },
   },
   'vk-img': {
@@ -269,6 +285,7 @@ export const TAGS = {
       'ratio': text(),
       'fit': oneOf('cover', 'contain'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
+      'border': oneOf('none', 'hair', 'strong'),
     },
   },
   'vk-rule': {
@@ -289,7 +306,7 @@ export const TAGS = {
       fields: [{ name: 'text', label: '标记文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'tone': oneOf('accent', 'ok', 'err', 'warn'),
+      'tone': oneOf('info', 'ok', 'err', 'warn'),
     },
   },
   'vk-window': {
@@ -300,7 +317,7 @@ export const TAGS = {
       'title': text(),
       'url': text(),
       'chrome': oneOf('min', 'none', 'browser'),
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
     },
   },
@@ -363,7 +380,7 @@ export const TAGS = {
       'variant': { ...oneOf('ortho', 'curve', 'line'), default: 'ortho' },
       'tension': num({ min: 5, max: 120, step: 1, when: { variant: ['curve'] } }),
       'label': text(),
-      'tone': oneOf('neutral', 'accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('neutral', 'info', 'focus'),
       'emphasis': oneOf('solid', 'ghost'),
       'arrow': oneOf('end', 'start', 'both', 'none'),
       'arrow-style': oneOf('solid', 'open', 'thin'),
@@ -427,7 +444,7 @@ export const TAGS = {
       fields: [{ name: 'text', label: '标签文字', type: 'text', text: true }],
     },
     attrs: {
-      'tone': oneOf('neutral', 'accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
       'size': oneOf('body', 'meta'),
       'emphasis': oneOf('solid', 'soft', 'ghost'),
       'bare': bool(),
@@ -447,7 +464,7 @@ export const TAGS = {
       ],
     },
     attrs: {
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('info', 'ok', 'warn', 'err'),
       'title': text(),
       'size': oneOf('heading', 'body', 'meta'),
       'bare': bool(),
@@ -508,7 +525,7 @@ export const TAGS = {
     },
     attrs: {
       'lang': text(),
-      'src': text(),
+      'src': { ...text(), build: true },
       'lines': text(),
       'file': text(),
       'chrome': oneOf('min', 'none'),
@@ -706,7 +723,7 @@ export const TAGS = {
       'group': oneOf('1', '4', '8'),
       'sign': bool(),
       'label': text(),
-      'tone': oneOf('neutral', 'accent'),
+      'tone': oneOf('neutral', 'info'),
       'bit-width': oneOf('8', '16', '32', '64'),
       'bytes': bool(),
     },
@@ -725,7 +742,7 @@ export const TAGS = {
       'scale': oneOf('linear', 'log'),
       'unit': text(),
       'density': oneOf('compact', 'normal', 'loose'),
-      'tone': oneOf('neutral', 'accent'),
+      'tone': oneOf('neutral', 'info'),
     },
   },
 
@@ -749,6 +766,7 @@ export const TAGS = {
       'bytes': bool(),
       'address': oneOf('all', 'none'),
       'density': oneOf('compact', 'normal'),
+      'long': oneOf('fail', 'wrap', 'clip'),
       'chrome': oneOf('min', 'none'),
       'order': text(),
       'fence-after': text(),
@@ -784,7 +802,7 @@ export const TAGS = {
     layer: 'page',
     summary: '坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。',
     attrs: {
-      'align': oneOf('top', 'center'),
+      'align': oneOf('top', 'center', 'bottom'),
     },
   },
   'vk-pin': {
@@ -805,7 +823,8 @@ export const TAGS = {
       'x': num({ min: -4000, max: 4000, step: 1 }),
       'y': num({ min: -4000, max: 4000, step: 1 }),
       'n': int({ min: 1, max: 99, step: 1 }),
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
+      'variant': oneOf('bubble', 'dot'),
       'emphasis': oneOf('solid', 'soft', 'ghost'),
       'leader': oneOf('elbow', 'straight', 'none'),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
@@ -822,7 +841,7 @@ export const TAGS = {
       'for': sel(),
       'variant': oneOf('ellipse', 'rect', 'underline', 'bracket'),
       'pad-px': num({ min: 0, max: 80, step: 1 }),
-      'tone': oneOf('accent', 'ok', 'warn', 'err'),
+      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
       'dash': bool(),
       'stroke': num({ min: 1, max: 12, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
@@ -846,7 +865,7 @@ export const TAGS = {
    块级组件统一拿 Frame 的 w/h/grow/fill/overflow/measure；
    行内组件（icon/tag/mark/keys）不拿 w；
    自定义几何（page/annotate/edge/canvas/img）自己声明。 */
-const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys']);
+const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys', 'vk-inline']);
 const CUSTOM = new Set([
   'vk-page',
   'vk-edge',
@@ -857,10 +876,11 @@ const CUSTOM = new Set([
   'vk-spotlight',
 ]);
 const COMMON = {
-  w: size({ min: 48, max: 1920, step: 1 }),
-  h: size({ min: 48, max: 1080, step: 1 }),
+  w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child' },
+  h: { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child' },
   span: { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
   'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
+  z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child' },
   grow: bool(),
   fill: bool(),
   overflow: { ...oneOf('visible', 'clip'), default: 'visible' },
@@ -887,7 +907,7 @@ const EXTRA = {
     summary: oneOf('all', 'none'),
   },
   'vk-mark': { variant: oneOf('highlight', 'underline', 'strike', 'circle') },
-  'vk-rule': { variant: oneOf('thin', 'strong'), tone: oneOf('neutral', 'accent') },
+  'vk-rule': { variant: oneOf('thin', 'strong'), tone: oneOf('neutral', 'info', 'focus'), dash: bool() },
   'vk-code': {
     long: oneOf('clip', 'wrap'),
     numbers: oneOf('all', 'none'),
@@ -932,7 +952,6 @@ const EXTRA = {
   },
   'vk-page': {},
   'vk-grid': {
-    cols: text(),
     justify: oneOf('start', 'center', 'end', 'stretch'),
   },
   'vk-canvas': {

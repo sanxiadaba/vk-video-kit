@@ -307,10 +307,8 @@ export class VkGrid extends VkElement {
   static watchSource = false;
 
   render() {
-    const cols = this.getAttribute('cols');
-    // 1–6 由 CSS 处理；其他值（如 "280 1fr"）直接写模板。
-    if (cols && !/^[1-6]$/.test(cols)) this.style.gridTemplateColumns = cols;
-    else if (this.style.gridTemplateColumns) this.style.gridTemplateColumns = '';
+    // 分份只认 1–6：离散份数是求解器可判定的前提，任意 track list 会在构建期被拦。
+    if (this.style.gridTemplateColumns) this.style.gridTemplateColumns = '';
   }
 }
 

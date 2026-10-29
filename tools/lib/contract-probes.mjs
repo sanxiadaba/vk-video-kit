@@ -126,11 +126,18 @@ export const PROBES = {
     },
   },
   'vk-rule': {
-    // neutral 就是默认态；只断 accent 这一个非默认值。
+    // neutral 就是默认态；只断 info / focus 这两个非默认值。
     tone: {
-      values: ['accent'],
+      values: ['info', 'focus'],
       effect: { on: 'vk-rule', kind: 'style', prop: 'background-color' },
-      why: 'neutral 与默认态相同，断 accent 即可。',
+      why: 'neutral 与默认态相同，断 info/focus 即可。',
+    },
+  },
+  'vk-inline': {
+    variant: {
+      values: ['sup'],
+      effect: { on: 'vk-inline', kind: 'style', prop: 'font-size' },
+      why: 'code 是 1em；sup 缩到 0.7em，字号一定变。其余形态由标本页看着验。',
     },
   },
   'vk-cells': {
@@ -221,6 +228,11 @@ export const EFFECT_ANY = [
     tag: 'vk-tree',
     attr: 'limit',
     reason: '文件树标本只有一个根，limit 的 1/500 都只显示这一个根；顶层截断由「只看顶层」预设覆盖。',
+  },
+  {
+    tag: 'vk-inline',
+    attr: 'href',
+    reason: 'href 只在点击时导航；静态帧没有视觉变化。',
   },
 ];
 export const EFFECT_ANY_BUDGET = 12;

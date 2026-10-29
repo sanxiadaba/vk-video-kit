@@ -93,6 +93,8 @@ try {
   console.log(`✓ ${path.relative(process.cwd(), out)}  ${width}×${height}${crop ? '（crop）' : ''}  ${kb} KB`);
 
   const lines = [];
+  const warns = new Set(['orphan', 'blue', 'pin-overlap']);
+  let errors = 0;
   for (const it of report.issues || []) {
     if (it.type === 'font') lines.push(`字号 ${it.fs} < 40：${it.what}`);
     else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥52）：${it.what}`);
@@ -104,14 +106,20 @@ try {
     else if (it.type === 'overlap') lines.push(`重叠 ${it.size?.join('×') || ''}：${it.what}`);
     else if (it.type === 'zero') lines.push(`空锚点：${it.what}`);
     else if (it.type === 'ln-overlap') lines.push(`行号压住代码：${it.what}（+${it.gap}px）`);
+    else if (it.type === 'bleed-text') lines.push(`出血层里不能放正文：${it.what}`);
+    else if (it.type === 'collision') lines.push(`文本超出单元格：${it.what}（${it.sw} > ${it.cw}）`);
+    else if (it.type === 'orphan') lines.push(`提醒·孤行 ${it.chars} 字：${it.what}`);
+    else if (it.type === 'blue') lines.push(`提醒·${it.count} 处焦点蓝：${it.what}`);
+    else if (it.type === 'pin-overlap') lines.push(`提醒·${it.what}`);
     else lines.push(`${it.type}：${it.what || ''}`);
+    if (!warns.has(it.type)) errors++;
   }
   for (const s of report.special || []) lines.push(s);
 
   if (lines.length) {
-    console.log('自检：');
+    console.log(errors || report.special?.length ? '自检（有 error）：' : '自检（只有提醒）：');
     for (const line of lines.slice(0, 16)) console.log(`  · ${line}`);
-    if (flag('--check')) process.exitCode = 1;
+    if ((errors || report.special?.length) && !phone && !crop) process.exitCode = 1;
   } else {
     console.log('自检：干净（无重叠 / 无裁切 / 无溢出 / 无空锚点）');
   }

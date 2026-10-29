@@ -1,5 +1,40 @@
 # Changelog
 
+## 11.0.0
+
+一帧三种信号：蓝=当前、紫=标注、墨=内容/结构。破坏性版本。
+
+### 颜色
+
+- **两色分工**：焦点蓝 `#1b3fd6` 只给"正在讲这里"；梅紫 `#86198f` 只给作者标注（`em`、callout、tag、ring、pin）。
+- `tone` 改为 `info | focus | ok | warn | err | neutral`，删除 `accent`；`vk-mark` 默认紫，`vk-box` 只留语义色。
+- 状态矩阵：current/step/tree 选中=蓝；table `data-em`、bits `data-mark`、bars/bits 的 info、cells `mark`=紫；asm 寄存器/执行序号、timeline 圆点、文件类型回墨；一帧多处焦点蓝给 warning。
+- `vk-tag` 的 solid 不再一律蓝，按 tone 取实心色。
+
+### 窗
+
+- 所有文件窗补齐三点；窗头保持原来的文件名胶囊 + 行段 + 语言角标。
+
+### 布局
+
+- `cols` 只接受 1..6；`w/h` 只在 `vk-canvas` 子节点合法，registry 标 `context`；
+- `vk-page` 新增 `align="bottom"` 与 `bleed`（只收图/面，正文进出血层直接报）；
+- canvas 子节点新增 `z`（画布内 stacking context）；`vk-rule` 新增 `dash`。
+
+### 文字
+
+- measure 跟字号走：52→1040、40→1200、88→900、64→760、120→640；散文自动、容器不参与；`vk-title` 副题改用 body 档。
+- 新增 `vk-inline`：`code | math | sup | sub | link` 五态，1em 跟随所在行；math 构建期 KaTeX；上下标 0.7em 例外；link 墨色下划线。标签数 36→37。
+
+### 关系件
+
+- pin/ring 默认紫、edge 默认墨、spotlight 固定蓝；`vk-pin` 新增 `variant="dot"`，单目标；`side="auto"` 只选边，重叠给 warning。
+- ring 默认 `rect`，spotlight 默认 `dim=0.6`。
+
+### 门禁
+
+- error / warning 两级；`vk shot` 不再对 error 沉默；新增文本超出单元格、孤行、一帧多处蓝、pin 重叠检测；`vk-asm` 新增 `long="fail|wrap|clip"`，默认 fail。
+
 ## 9.0.0
 
 一页一件的画面语言，收成五个决定。破坏性版本。

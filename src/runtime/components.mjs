@@ -135,7 +135,7 @@ export class VkList extends VkElement {
 
 /* -------------------------------------------------------------- callout */
 
-const CALLOUT_ICON = { accent: 'info', ok: 'circle-check', warn: 'triangle-alert', err: 'circle-x' };
+const CALLOUT_ICON = { info: 'info', ok: 'circle-check', warn: 'triangle-alert', err: 'circle-x' };
 
 export class VkCallout extends VkElement {
   static watchSource = true;
@@ -152,7 +152,7 @@ export class VkCallout extends VkElement {
       this.innerHTML = '';
       return;
     }
-    const tone = this.getAttribute('tone') || 'accent';
+    const tone = this.getAttribute('tone') || 'info';
     const title = this.getAttribute('title') || '';
     const flat = this.hasAttribute('bare');
 
@@ -160,7 +160,7 @@ export class VkCallout extends VkElement {
       this._titleSlot = this.querySelector(':scope > [slot="title"]');
       this._titleSlot?.remove();
       const body = takeSlot(this);
-      this.innerHTML = `<div class="vk-callout" data-tone="accent">
+      this.innerHTML = `<div class="vk-callout" data-tone="info">
         <div class="vk-callout-hd">
           <svg class="vk-ic" viewBox="0 0 24 24" aria-hidden="true"></svg>
           <span class="vk-callout-t"></span>
@@ -394,7 +394,7 @@ export class VkFigure extends VkElement {
 
 const WIN_CHROME = new Set(['min', 'none', 'browser']);
 const WIN_PAD = new Set(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
-const WIN_TONES = new Set(['accent', 'ok', 'warn', 'err']);
+const WIN_TONES = new Set(['info', 'focus', 'ok', 'warn', 'err']);
 
 /**
  * 窗：L1 原子。三点窗头 + 标题 / 地址栏 / 对话框，内容由作者放。
@@ -1035,7 +1035,7 @@ export class VkBits extends VkElement {
       : [{ label: this.getAttribute('label') || '', value: this.getAttribute('value') || '', mark: false }];
     const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
-    const tone = this.getAttribute('tone') === 'accent' ? 'accent' : 'neutral';
+    const tone = this.getAttribute('tone') === 'info' ? 'info' : 'neutral';
     const bytes = this.hasAttribute('bytes');
     const group = ['1', '4', '8'].includes(this.getAttribute('group')) ? Number(this.getAttribute('group')) : 4;
 

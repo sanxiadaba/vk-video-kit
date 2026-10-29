@@ -39,10 +39,25 @@ npm i /path/to/vk-video-kit
 
 `code/hello.term` 是一段真实终端记录：命令行以 `$` 开头，结果行用 `✓` / `!` / `✗` 前缀。`!` 是作者标注，不是工具输出。
 
+### 行内
+
+句子里的代码、公式、上下标、链接用 `vk-inline`，字号 `1em` 跟随所在行：
+
+```html
+<vk-text size="body">
+  把 <vk-inline variant="code">s[0]</vk-inline> 改成 <vk-inline variant="code">'H'</vk-inline>，
+  复杂度是 <vk-inline variant="math">O(\log n)</vk-inline>，
+  地址是 a<vk-inline variant="sub">i</vk-inline>，见 <vk-inline variant="link" href="https://example.com">文档</vk-inline>。
+</vk-text>
+```
+
+- `code` 是等宽 + 浅底胶囊；`math` 的子节点就是 TeX，构建期 KaTeX 渲染；`sup` / `sub` 缩到 0.7em（唯一的字号例外）；`link` 是墨色下划线，不占蓝/紫。
+- `href` 只在文档里可点；视频帧里它只是一个“这是地址”的形。
+
 ## 3 · 对比
 
 ```html
-<vk-diff w="1280" lang="c" file="bounds.c" src="code/real.diff"></vk-diff>
+<vk-diff lang="c" file="bounds.c" src="code/real.diff"></vk-diff>
 ```
 
 默认上下对照；`variant="split"` 换成左右两窗并排；`summary="none"` 关计数；`chrome="none"` 去窗头。`current` / `focus` 仍按片段行；`@line` 现在真的能锚定到 diff 行。
@@ -65,10 +80,13 @@ npm i /path/to/vk-video-kit
 
 ## 5 · 页面
 
-`vk-page` 是画布工具：固定 1920×1080、安全区 96 / 120、可选 `align="top|center"`。**不缩放**，出片尺寸就是设计尺寸；预览缩放属于播放器。
+`vk-page` 是画布工具：固定 1920×1080、安全区 96 / 120、可选 `align="top|center|bottom"`。**不缩放**，出片尺寸就是设计尺寸；预览缩放属于播放器。
+
+需要全幅图/色带到 1920 边时，给 page 的直接子节点写 `bleed`：它铺满整帧、排在内容层后面；出血层只收图/面，正文仍守安全区（`vk check` 会拦住出血层里的文字）。
 
 ```html
 <vk-page align="center">
+  <vk-img bleed src="assets/cover.jpg" alt="" fit="cover"></vk-img>
   <vk-stack gap="lg">
     <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">字符串不是值，是<em>一块内存</em></vk-title>
     <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
@@ -88,7 +106,7 @@ npx vk check page.html    # 结构自检；有错退出码 1
 npx vk check a.html b.html # 多页共用一个浏览器
 npx vk shot page.html     # 截图：默认 1920×1080；--phone / --crop x,y,w,h
 npx vk serve 8099         # 开发服务器
-npx vk tags               # 36 个标签
+npx vk tags               # 37 个标签
 npx vk doc vk-code        # 某个标签的属性
 npx vk icons arrow        # 搜图标名
 ```
@@ -101,9 +119,10 @@ npx vk icons arrow        # 搜图标名
 
 字体随包：Inter / JetBrains Mono / Noto Sans SC 子集，`vk/fonts.css` 一个文件。
 
-- **只有白纸**：没有深色主题、深色代码窗、反色卡片。
+- **只有白纸**：没有深色主题、深色代码窗、反色卡片；窗头三点与出血图是显式例外。
 - **字阶只有五档**：120 / 88 / 64 / 52 / 40。要读懂的内容 52，元数据/标签/密集 ASCII 数据 40（`data-meta`），不得再低。
-- **焦点**用 `--vk-focus`（冷钴蓝）做底，不要拿它写正文。
+- **焦点**用 `--vk-focus`（冷钴蓝）做底，只表示“现在讲到这里”，不要拿它写正文。
+- **标注**用 `--vk-info`（梅紫）：`em`、callout、tag、ring、pin；结构件（asm 寄存器、时间线圆点、文件类型）回墨。
 - **语义**（`--vk-ok` / `--vk-err` / `--vk-warn`）只做色条、底色、图标。
 - **语法**（`--vk-syn-*`）只出现在代码和终端里。
 
@@ -122,6 +141,8 @@ npx vk icons arrow        # 搜图标名
 <vk-pin for="#cells@region:10%,0%,40%,100%">这四个字节</vk-pin>
 <vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
 ```
+
+`vk-pin` 只钉一个目标；要同时圈/照亮多处，用 `vk-ring` / `vk-spotlight`（它们的 `for` 用分号分隔多个目标）。
 
 **几何锚点**：`point:x%,y%`、`side:top|right|bottom|left`、`region:x%,y%,w%,h%`，百分比相对目标自己的盒子；任何有盒子的标签都能被点到。
 
@@ -143,7 +164,7 @@ npx vk icons arrow        # 搜图标名
 
 规格页不随 npm 包发布；在仓库里跑 `npm run build` 后打开 `_site/index.html`：
 
-- **索引**：6 页 × 6 格（3 列 × 2 行）。每格是整张标本页的等比缩略图 + 名字，和点进去看到的一致。
+- **索引**：7 页（前 6 页每页 6 格，最后一页 1 格）。每格是整张标本页的等比缩略图 + 名字 + `vk-*` 标签名，和点进去看到的一致。
 - **一页一个组件**：一行元信息 + 标准形态，**单镜头**。
 - **属性表**：`docs/reference.md`，由 registry 生成。
 - **变体**：不进页面；每个组件的预设由门禁逐条施加并比对像素。

@@ -15,17 +15,24 @@ export class VkPage extends VkElement {
   render() {
     const w = 1920;
     const h = 1080;
-    const align = this.getAttribute('align') === 'center' ? 'center' : 'top';
+    const rawAlign = this.getAttribute('align');
+    const align = rawAlign === 'center' || rawAlign === 'bottom' ? rawAlign : 'top';
 
     if (!this._shell) {
       const body = takeSlot(this);
+      // 出血层：page 的直接子节点写 bleed，就铺满整帧、排在内容层后面。
+      const bleed = body.filter((n) => n.nodeType === 1 && n.hasAttribute('bleed'));
+      const rest = body.filter((n) => !bleed.includes(n));
       // 坐标系根：只有 1920×1080 与安全区。全库只有白纸一种材质。
       this.innerHTML = `<div class="vk-page" data-align="top" style="--pw:${w}px;--ph:${h}px">
+        <div class="vk-page-bleed" aria-hidden="true"></div>
         <div class="vk-page-inner"><div class="vk-page-bd" data-vk-part="bd"></div></div>
       </div>`;
       this._shell = this.querySelector('.vk-page');
       this._bd = this.querySelector('.vk-page-bd');
-      fillSlot(this._bd, body);
+      this._bleed = this.querySelector('.vk-page-bleed');
+      fillSlot(this._bleed, bleed);
+      fillSlot(this._bd, rest);
       this.dataset.vkPlace = '';
     }
 

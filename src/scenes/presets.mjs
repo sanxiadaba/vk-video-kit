@@ -11,7 +11,7 @@
 export const PRESETS = {
   'vk-box': [
     { label: '灰面', attrs: { surface: 'soft' } },
-    { label: '强调', attrs: { tone: 'accent' } },
+    { label: '正确面', attrs: { tone: 'ok' } },
     { label: '强边', attrs: { border: 'strong', radius: 'md' } },
     { label: '横向内距', attrs: { 'pad-x': 'xl' } },
     { label: '纵向内距', attrs: { 'pad-y': 'xl' } },
@@ -27,7 +27,7 @@ export const PRESETS = {
     { label: '小', attrs: { size: 'sm' } },
     { label: '中', attrs: { size: 'md' } },
     { label: '特大', attrs: { size: 'xl' } },
-    { label: '强调色', attrs: { tone: 'accent' } },
+    { label: '强调色', attrs: { tone: 'info' } },
   ],
   'vk-img': [
     /* 图片的尺寸由容器决定（frame=false，w/h 从来就没生效过）。
@@ -42,7 +42,7 @@ export const PRESETS = {
   ],
   'vk-rule': [
     { label: '强线', attrs: { variant: 'strong' } },
-    { label: '强调线', attrs: { tone: 'accent' } },
+    { label: '强调线', attrs: { tone: 'info' } },
   ],
   'vk-stack': [
     { label: '紧', attrs: { gap: '2xs' } },
@@ -69,9 +69,9 @@ export const PRESETS = {
   'vk-edge': [
     { label: '曲线', attrs: { variant: 'curve' } },
     { label: '直线', attrs: { variant: 'line' } },
-    { label: '虚线', attrs: { dash: '', tone: 'accent' } },
-    { label: '双向', attrs: { arrow: 'both', tone: 'accent' } },
-    { label: '圆点', attrs: { cap: 'dot', tone: 'accent' } },
+    { label: '虚线', attrs: { dash: '', tone: 'info' } },
+    { label: '双向', attrs: { arrow: 'both', tone: 'info' } },
+    { label: '圆点', attrs: { cap: 'dot', tone: 'info' } },
     { label: '留缝', attrs: { 'gap-px': '32' } },
     { label: '拐点', attrs: { bend: '80' } },
   ],
@@ -95,7 +95,7 @@ export const PRESETS = {
     { label: '无边框', attrs: { bare: '' } },
   ],
   'vk-callout': [
-    { label: '说明', attrs: { tone: 'accent' } },
+    { label: '说明', attrs: { tone: 'info' } },
     { label: '正确', attrs: { tone: 'ok' } },
     { label: '错误', attrs: { tone: 'err' } },
     { label: '无底', attrs: { bare: '' } },
@@ -107,14 +107,13 @@ export const PRESETS = {
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
     { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
-    { label: '窄窗折行', attrs: { w: '720', long: 'wrap' } },
   ],
   'vk-term': [
     { label: '大号', attrs: { density: 'loose' } },
     { label: '无头', attrs: { chrome: 'none' } },
   ],
   'vk-diff': [
-    { label: '并排', attrs: { variant: 'split', w: '1680' } },
+    { label: '并排', attrs: { variant: 'split' } },
     { label: '无头', attrs: { chrome: 'none' } },
     { label: '无摘要', attrs: { summary: 'none' } },
     { label: '无行号', attrs: { numbers: 'none' } },
@@ -182,12 +181,12 @@ export const PRESETS = {
     { label: '索引反向', attrs: { index: '0-7' } },
     { label: '无索引', attrs: { index: 'none' } },
     { label: '逐位分开', attrs: { group: '1' } },
-    { label: '强调色', attrs: { tone: 'accent' } },
+    { label: '强调色', attrs: { tone: 'info' } },
     { label: '16 位', attrs: { 'bit-width': '16', value: '1111 1111 0000 0001' } },
     { label: '字节界', attrs: { bytes: '' } },
   ],
   'vk-bars': [
-    { label: '强调当前', attrs: { tone: 'accent' } },
+    { label: '强调当前', attrs: { tone: 'info' } },
     { label: '紧凑', attrs: { density: 'compact' } },
     { label: '线性刻度', attrs: { scale: 'linear' } },
   ],
@@ -209,9 +208,10 @@ export const PRESETS = {
     { label: '无引线', attrs: { leader: 'none' } },
     { label: '小字', attrs: { size: 'meta' } },
     { label: '编号 3', attrs: { n: '3' } },
+    { label: '圆点', attrs: { variant: 'dot' } },
   ],
   'vk-ring': [
-    { label: '矩形', attrs: { variant: 'rect' } },
+    { label: '椭圆', attrs: { variant: 'ellipse' } },
     { label: '下划线', attrs: { variant: 'underline' } },
     { label: '实线', attrs: { dash: null } },
     { label: '大留白', attrs: { 'pad-px': '28' } },

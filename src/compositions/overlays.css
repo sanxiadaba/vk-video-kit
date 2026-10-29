@@ -25,12 +25,14 @@ vk-pin {
 
 .vk-ring-shape {
   fill: none;
-  stroke: var(--vk-focus);
+  stroke: var(--vk-info);
   stroke-width: var(--vk-ring-w, 4px);
   stroke-linecap: round;
   stroke-linejoin: round;
   vector-effect: non-scaling-stroke;
 }
+.vk-ov-svg[data-tone='info'] .vk-ring-shape { stroke: var(--vk-info); }
+.vk-ov-svg[data-tone='focus'] .vk-ring-shape { stroke: var(--vk-focus); }
 .vk-ov-svg[data-tone='err'] .vk-ring-shape { stroke: var(--vk-err); }
 .vk-ov-svg[data-tone='ok'] .vk-ring-shape { stroke: var(--vk-ok); }
 .vk-ov-svg[data-tone='warn'] .vk-ring-shape { stroke: var(--vk-warn); }
@@ -48,7 +50,7 @@ vk-pin {
   box-sizing: border-box;
   padding: var(--vk-s2) var(--vk-s3);
   border: 1px solid var(--vk-line-3);
-  border-left: 4px solid var(--vk-focus);
+  border-left: 4px solid var(--vk-info);
   border-radius: var(--vk-r-3);
   background: var(--vk-surface-1);
   color: var(--vk-ink-1);
@@ -56,6 +58,8 @@ vk-pin {
   font-size: var(--vk-t-body);
   line-height: 1.35;
 }
+.vk-pin-bd[data-tone='info'] { border-left-color: var(--vk-info); }
+.vk-pin-bd[data-tone='focus'] { border-left-color: var(--vk-focus); }
 .vk-pin-bd[data-tone='err'] { border-left-color: var(--vk-err); }
 .vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-pin-bd[data-tone='warn'] { border-left-color: var(--vk-warn); }
@@ -70,25 +74,68 @@ vk-pin {
   margin-right: var(--vk-s1);
   padding: 0 10px;
   border-radius: var(--vk-r-pill);
-  background: var(--vk-focus);
+  background: var(--vk-info);
   color: var(--vk-paper-surface-1);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
   font-weight: var(--vk-w-bold);
   vertical-align: 4px;
 }
+.vk-pin-bd[data-tone='focus'] .vk-pin-n { background: var(--vk-focus); }
+.vk-pin-bd[data-tone='err'] .vk-pin-n { background: var(--vk-err); }
+.vk-pin-bd[data-tone='ok'] .vk-pin-n { background: var(--vk-ok); }
+.vk-pin-bd[data-tone='warn'] .vk-pin-n { background: var(--vk-warn); }
 .vk-pin-t { display: inline; }
 .vk-pin-leader {
-  stroke: var(--vk-focus);
+  stroke: var(--vk-info);
   stroke-width: 4px;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
   vector-effect: non-scaling-stroke;
 }
-.vk-pin-dot { fill: var(--vk-focus); }
+.vk-pin-dot { fill: var(--vk-info); }
+.vk-ov-svg[data-tone='focus'] .vk-pin-leader { stroke: var(--vk-focus); }
+.vk-ov-svg[data-tone='focus'] .vk-pin-dot { fill: var(--vk-focus); }
+.vk-ov-svg[data-tone='err'] .vk-pin-leader { stroke: var(--vk-err); }
+.vk-ov-svg[data-tone='err'] .vk-pin-dot { fill: var(--vk-err); }
+.vk-ov-svg[data-tone='ok'] .vk-pin-leader { stroke: var(--vk-ok); }
+.vk-ov-svg[data-tone='ok'] .vk-pin-dot { fill: var(--vk-ok); }
+.vk-ov-svg[data-tone='warn'] .vk-pin-leader { stroke: var(--vk-warn); }
+.vk-ov-svg[data-tone='warn'] .vk-pin-dot { fill: var(--vk-warn); }
+
+/* dot 变体：只留编号圆点，没有气泡；引线仍在。 */
+.vk-pin-bd[data-variant='dot'] {
+  width: 40px !important;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 50%;
+}
+.vk-pin-bd[data-variant='dot'] .vk-pin-t { display: none; }
+.vk-pin-bd[data-variant='dot'] .vk-pin-n {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+}
+.vk-pin-bd[data-variant='dot']:not(:has(.vk-pin-n:not([hidden])))::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 12px;
+  border-radius: 50%;
+  background: var(--vk-info);
+}
 
 /* 强度三档：pin 的气泡 */
 .vk-pin-bd[data-emphasis='soft'] { background: var(--vk-surface-2); }
-.vk-pin-bd[data-emphasis='solid'] { background: var(--vk-focus-soft); }
+.vk-pin-bd[data-emphasis='solid'] { background: var(--vk-info-soft); }
+.vk-pin-bd[data-tone='focus'][data-emphasis='solid'] { background: var(--vk-focus-soft); }
 .vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }

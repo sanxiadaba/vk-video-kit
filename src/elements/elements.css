@@ -86,8 +86,7 @@ vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
 vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
 vk-box[border='none'] { --vk-box-bw: 0px; --vk-box-line: transparent; }
 
-/* 语义色只叠加在表面上，不承担材质。 */
-vk-box[tone='accent'] { --vk-box-bg: var(--vk-focus-soft); --vk-box-line: var(--vk-focus-line); }
+/* 语义色只叠加在表面上，不承担材质；面不是标注，所以没有 info/focus。 */
 vk-box[tone='ok'] { --vk-box-bg: var(--vk-ok-weak); --vk-box-line: var(--vk-ok); }
 vk-box[tone='err'] { --vk-box-bg: var(--vk-err-weak); --vk-box-line: var(--vk-err); }
 vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-warn); }
@@ -125,28 +124,62 @@ vk-text[ink='secondary'] { color: var(--vk-ink-2); }
 vk-text[ink='tertiary'] { color: var(--vk-ink-3); }
 vk-text[ink='muted'] { color: var(--vk-ink-4); }
 
-vk-text[align='center'] { text-align: center; }
-vk-text[align='right'] { text-align: right; }
-vk-text[measure][align='center'] { margin-inline: auto; }
-vk-text[measure][align='right'] { margin-inline: auto 0; }
+vk-text[align='center'] { text-align: center; margin-inline: auto; }
+vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
+/* 散文默认按字号取行宽：52→1040、40→1200、88→900…；容器不参与。 */
+vk-text { max-width: var(--vk-measure-body); }
+vk-text[size='display'] { max-width: var(--vk-measure-display); }
+vk-text[size='title'] { max-width: var(--vk-measure-title); }
+vk-text[size='heading'] { max-width: var(--vk-measure-heading); }
+vk-text[size='meta'] { max-width: var(--vk-measure-meta); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
 vk-text[measure='title'] { max-width: var(--vk-measure-title); }
+vk-text[measure='none'] { max-width: none; }
 
-/* em 只有一个意思：作者想让观众看这里。
-   焦点色只做"底"，不用另一个前景色。 */
+/* ------------------------------------------------------------ vk-inline */
+
+vk-inline { display: inline; font: inherit; }
+/* 行内代码：1em、浅底、胶囊；跨行时两边都有底。 */
+vk-inline[variant='code'] {
+  padding: 0 6px;
+  border-radius: 2px;
+  background: var(--vk-surface-2);
+  font-family: var(--vk-font-mono);
+  font-size: 1em;
+  overflow-wrap: anywhere;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+/* 行内公式：KaTeX 行内模式，主体跟正文 1em。 */
+vk-inline[variant='math'] .katex { font-size: 1em; }
+vk-inline[variant='sup'],
+vk-inline[variant='sub'] {
+  font-size: 0.7em;
+  line-height: 0;
+}
+vk-inline[variant='sup'] { vertical-align: super; }
+vk-inline[variant='sub'] { vertical-align: sub; }
+/* 链接：墨色下划线，不占蓝/紫。 */
+vk-inline[variant='link'] {
+  color: var(--vk-ink-2);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.12em;
+}
+
+/* em 只有一个意思：作者想让观众看这里。它属于标注，用梅紫。 */
 vk-text em,
 vk-title em {
   font-style: normal;
-  background: var(--vk-focus-mark);
+  background: var(--vk-info-mark);
   padding: 0 0.06em;
 }
 
-/* muted 正文里的 em 改用下划线标记：底太浅仍只有 4.45，不如换一种焦点标记。 */
-vk-text[ink='muted'] em,
+/* muted 正文里的 em 改用下划线标记：底太浅仍只有 4.45，不如换一种标注标记。 */
 vk-text[ink='muted'] em {
   background: none;
-  box-shadow: inset 0 -0.12em 0 var(--vk-focus-soft);
+  box-shadow: inset 0 -0.12em 0 var(--vk-info-soft);
 }
 
 /* -------------------------------------------------------------- vk-icon */
@@ -181,7 +214,8 @@ vk-icon[ink='primary'] .vk-icon { color: var(--vk-ink-1); }
 vk-icon[ink='secondary'] .vk-icon { color: var(--vk-ink-2); }
 vk-icon[ink='tertiary'] .vk-icon { color: var(--vk-ink-3); }
 vk-icon[ink='muted'] .vk-icon { color: var(--vk-ink-4); }
-vk-icon[tone='accent'] .vk-icon { color: var(--vk-focus); }
+vk-icon[tone='info'] .vk-icon { color: var(--vk-info); }
+vk-icon[tone='focus'] .vk-icon { color: var(--vk-focus); }
 vk-icon[tone='ok'] .vk-icon { color: var(--vk-ok); }
 vk-icon[tone='err'] .vk-icon { color: var(--vk-err); }
 vk-icon[tone='warn'] .vk-icon { color: var(--vk-warn); }
@@ -240,13 +274,38 @@ vk-rule {
 }
 vk-rule[variant='thin'] { background: var(--vk-line-3); height: var(--vk-line-w); }
 vk-rule[variant='strong'] { background: var(--vk-line-strong); height: var(--vk-line-w-strong); }
-vk-rule[tone='accent'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
+vk-rule[tone='info'] { background: var(--vk-info-line); height: var(--vk-line-w-strong); }
+vk-rule[tone='focus'] { background: var(--vk-focus-line); height: var(--vk-line-w-strong); }
+/* 虚线：和 edge / ring 的 dash 同一套节奏；用 repeating gradient，竖向换方向。 */
+vk-rule[dash]:not([orientation='vertical']) {
+  height: 4px;
+  background: repeating-linear-gradient(90deg, var(--vk-line-strong) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][orientation='vertical'] {
+  width: 4px;
+  background: repeating-linear-gradient(180deg, var(--vk-line-strong) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][variant='strong']:not([orientation='vertical']) {
+  background-image: repeating-linear-gradient(90deg, var(--vk-line-strong) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][tone='info']:not([orientation='vertical']) {
+  background-image: repeating-linear-gradient(90deg, var(--vk-info-line) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][tone='info'][orientation='vertical'] {
+  background-image: repeating-linear-gradient(180deg, var(--vk-info-line) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][tone='focus']:not([orientation='vertical']) {
+  background-image: repeating-linear-gradient(90deg, var(--vk-focus-line) 0 20px, transparent 20px 34px);
+}
+vk-rule[dash][tone='focus'][orientation='vertical'] {
+  background-image: repeating-linear-gradient(180deg, var(--vk-focus-line) 0 20px, transparent 20px 34px);
+}
 
 /* -------------------------------------------------------------- vk-mark */
 
 vk-mark {
-  --vk-mark-fill: var(--vk-focus-mark);
-  --vk-mark-rule: var(--vk-focus-line);
+  --vk-mark-fill: var(--vk-info-mark);
+  --vk-mark-rule: var(--vk-info-line);
 
   display: inline;
   background: var(--vk-mark-fill);

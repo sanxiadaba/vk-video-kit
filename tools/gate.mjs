@@ -486,6 +486,11 @@ for (const target of list) {
     if (e.type === 'zero') fail(target.label, `0 尺寸锚点：${e.what}`);
     if (e.type === 'overlap') fail(target.label, `顶层重叠 ${(e.size || []).join('×')}：${e.what}`);
     if (e.type === 'w') fail(target.label, `w="${e.want}" 实际 ${e.got}px：${e.what}`);
+    if (e.type === 'bleed-text') fail(target.label, `出血层里不能放正文：${e.what}`);
+    if (e.type === 'collision') fail(target.label, `文本超出单元格：${e.what} (${e.sw} > ${e.cw})`);
+    if (e.type === 'orphan') warn(target.label, `孤行 ${e.chars} 字：${e.what}`);
+    if (e.type === 'blue') warn(target.label, `${e.count} 处焦点蓝：${e.what}`);
+    if (e.type === 'pin-overlap') warn(target.label, e.what);
     if (e.type === 'audit-overflow') {
       const parts = [];
       if (e.sw > e.cw + 1) parts.push(`宽 ${e.sw}>${e.cw}`);

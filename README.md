@@ -3,11 +3,11 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 5-layer visual language of 36 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only, and the visual system is desktop-only with a two-step type system: 52 for content, 40 for metadata. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 5-layer visual language of 37 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only with one focus blue and one annotation plum, and the visual system is desktop-only with a two-step type system: 52 for content, 40 for metadata. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**36 个标签、5 层、1920×1080，桌面 only，只有白纸。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**37 个标签、5 层、1920×1080，桌面 only，只有白纸。**
 
-![vk 代码窗](docs/cover.png)
+![vk 标本册索引](docs/cover.png)
 
 ## 五个原则
 
@@ -15,13 +15,13 @@
 - **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：内容 52 / 元数据 40。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有时间轴、没有动效。输出就是一张静帧，动效在剪辑层做。
-- **文档也是库。** 36 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
+- **文档也是库。** 37 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
 
 ## 五层
 
 | 层 | 数量 | 标签 |
 |---|---|---|
-| L1 原子 | 8 | `vk-box` `vk-text` `vk-icon` `vk-img` `vk-rule` `vk-mark` `vk-window` `vk-keys` |
+| L1 原子 | 9 | `vk-box` `vk-text` `vk-inline` `vk-icon` `vk-img` `vk-rule` `vk-mark` `vk-window` `vk-keys` |
 | L2 排布 | 4 | `vk-stack` `vk-row` `vk-grid` `vk-canvas` |
 | L3 器械 | 19 | `vk-title` `vk-list` `vk-tag` `vk-callout` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-figure` `vk-tree` `vk-cells` `vk-bytes` `vk-steps` `vk-quote` `vk-bits` `vk-bars` `vk-asm` `vk-timeline` |
 | L4 关系 | 4 | `vk-edge` `vk-pin` `vk-ring` `vk-spotlight` |
@@ -31,9 +31,9 @@ L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、�
 
 ## 规格页
 
-`npm run build` 生成的不是组件文档，而是 36 张规格页：
+`npm run build` 生成的不是组件文档，而是 37 张规格页：
 
-- **索引**：6 页 × 6 格（3 列 × 2 行）。每格是**整张标本页**的等比缩略图 + 名字——索引里看到的，就是点进去的那一页；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
+- **索引**：7 页（前 6 页每页 6 格，最后一页 1 格）。每格是**整张标本页**的等比缩略图 + 名字 + `vk-*` 标签名——索引里看到的，就是点进去的那一页；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
 - **每个组件一页**：一行元信息（层 · 标签 · 名字 · 上下页 · 序号）+ 该组件的标准形态；**单镜头**，没有成品、没有用法、没有解剖。
 - 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`。
 - 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
@@ -79,7 +79,7 @@ npx vk build page.html   # 读取 src 或内联源码块，把高亮/公式/字�
 npx vk check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 npx vk shot page.html    # 出一张 1920×1080
 npx vk serve 8099        # 开发服务器；改 .c 刷新即见
-npx vk tags              # 36 个标签
+npx vk tags              # 37 个标签
 npx vk doc vk-code       # 某个标签的属性
 npx vk icons arrow       # 搜图标名
 ```
@@ -113,7 +113,7 @@ int main(void) { return 0; }
 
 ## 两条视觉规则
 
-1. **钴蓝只做一件事：标出"正在讲这里"。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。
+1. **钴蓝只做一件事：标出"正在讲这里"。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / pin）用梅紫；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
 2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
 
 **字阶只有五档：120 / 88 / 64 / 52 / 40。** 要读懂的内容用 52（手机横屏约 1/3 时 17.3px）；行号、文件名、列头、图注等元数据与密集 ASCII 数据用 40（13.3px），靠 `data-meta` 显式标记，且不得再低。公式上下标仍是排版例外。
@@ -141,7 +141,7 @@ npm run shot -- _site/specimen/vk-code.html
 npx vk shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
 ```
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 36 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 37 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 

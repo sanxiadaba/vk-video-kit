@@ -17,6 +17,8 @@ export class VkIcon extends VkElement {
   }
 
   render() {
+    // src 的自定义 SVG 由构建期内联；运行时保留构建产物，不再覆盖。
+    if (this.hasAttribute('src')) return;
     const inline = this.querySelector(':scope > .vk-icon[data-vk-inline]');
     if (inline && inline.dataset.vkName === (this.getAttribute('name') || 'circle-help')) return;
     const raw = (this.getAttribute('name') || 'circle-help').trim();
@@ -120,6 +122,40 @@ export class VkText extends VkElement {
   render() {}
 }
 
+/**
+ * 行内文字：code / math / sup / sub / link。
+ * 字号跟所在文本行（1em），不写死；math 由构建期把 KaTeX 产物放进 script。
+ */
+export class VkInline extends VkElement {
+  static watchSource = false;
+  static frame = false;
+
+  render() {
+    const variant = this.getAttribute('variant') || 'code';
+    if (variant === 'math' && !this._mathDone) {
+      const data = this.querySelector(':scope > script[data-vk-math]');
+      if (data) {
+        this._mathDone = true;
+        const html = data.textContent;
+        data.remove();
+        this.innerHTML = `<span class="vk-inline-math">${html}</span>`;
+      }
+    }
+    if (variant === 'link' && !this._hrefBound) {
+      this._hrefBound = true;
+      const href = this.getAttribute('href');
+      if (href) {
+        this.setAttribute('role', 'link');
+        this.style.cursor = 'pointer';
+        this.addEventListener('click', () => {
+          const h = this.getAttribute('href');
+          if (h) location.href = h;
+        });
+      }
+    }
+  }
+}
+
 /** 分隔线：Frame 只负责 w；线宽/颜色走 CSS。 */
 export class VkRule extends VkElement {
   static watchSource = false;
@@ -131,6 +167,7 @@ export function defineElements() {
   define('vk-img', VkImg);
   define('vk-box', VkBox);
   define('vk-text', VkText);
+  define('vk-inline', VkInline);
   define('vk-rule', VkRule);
   define('vk-mark', plain());
 }
