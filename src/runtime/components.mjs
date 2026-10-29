@@ -104,6 +104,7 @@ export class VkList extends VkElement {
           /* 非法属性名不阻塞整块渲染 */
         }
       }
+      if (li.hasAttribute('state')) li.dataset.state = li.getAttribute('state');
       if (mode === 'define') {
         const nodes = it.nodes || [];
         const termIdx = nodes.findIndex((n) => n.nodeType === 1 && n.tagName === 'B');
@@ -726,14 +727,17 @@ export class VkBytes extends VkElement {
           .map((u) => `<i${group > 1 && u.i % group === 0 ? ' class="is-group"' : ''} data-byte="${at + u.i}" data-hl="${u.flag ? '1' : '0'}">${esc(u.b)}</i>`)
           .join('')}</span>`);
       }
-      const text = chunk.map((h) => {
-        const n = parseInt(h, 16);
-        return n >= 32 && n < 127 ? String.fromCharCode(n) : '.';
-      }).join('');
+      const text = chunk
+        .map((h, i) => {
+          const n = parseInt(h, 16);
+          const ch = n >= 32 && n < 127 ? String.fromCharCode(n) : '.';
+          return `<i class="vk-byte-c"${flags[i] ? ' data-hl="1"' : ''}>${esc(ch)}</i>`;
+        })
+        .join('');
       rows.push(`<div class="vk-bytes-row">
         ${address ? `<span class="vk-bytes-a">${addr}</span>` : ''}
         <span class="vk-bytes-x" data-group="${group}" data-word="${word}" data-endian="${endian}">${words.join('')}</span>
-        ${ascii ? `<span class="vk-bytes-c">${esc(text)}</span>` : ''}
+        ${ascii ? `<span class="vk-bytes-c">${text}</span>` : ''}
       </div>`);
     }
     const rowsHtml = rows.join('');
@@ -806,28 +810,32 @@ export class VkMath extends VkElement {
 /* ----------------------------------------------------------------- cells */
 
 /**
- * 内存格：一格一个 <i>，属性只描述"这一行怎么排"，内容全在子节点里。
+ * 内存格：一格一个 <li>，属性只描述"这一行怎么排"，内容全在子节点里。
  *   <vk-cells cols="4" addr="0x7ffc">
- *     <i value="'h'" label="s[0]"></i>
- *     <i value="'e'" label="s[1]" mark></i>
- *     <i value="'l'" label="s[2]"></i>
- *     <i value="'l'" label="s[3]" bad></i>
+ *     <li value="'h'" label="s[0]"></li>
+ *     <li value="'e'" label="s[1]" state="mark"></li>
+ *     <li value="'l'" label="s[2]"></li>
+ *     <li value="'l'" label="s[3]" state="err"></li>
  *   </vk-cells>
- * 多行：子节点超过 cols 就换行（cols 最多 8）。状态是每格自己的：bad / mark / filled。
+ * 多行：子节点超过 cols 就换行（cols 最多 8）。状态是每格自己的：state / filled。
  */
 export class VkCells extends VkElement {
   static watchSource = false;
   static renderedRoot = '.vk-cells';
 
   capture() {
-    this._items = [...this.querySelectorAll(':scope > i')].map((el) => {
+    this._items = [...this.querySelectorAll(':scope > li, :scope > i')].map((el) => {
       const span = parseInt(el.getAttribute('span') || '1', 10);
+      const state = el.getAttribute('state') || '';
+      const bad = state === 'err';
+      const mark = state === 'mark';
       return {
         value: el.getAttribute('value') ?? (el.textContent || '').trim(),
         label: el.getAttribute('label') || '',
         span: Number.isFinite(span) && span >= 1 && span <= 8 ? span : 1,
-        bad: el.hasAttribute('bad'),
-        mark: el.hasAttribute('mark'),
+        state: state || (bad ? 'err' : mark ? 'mark' : ''),
+        bad,
+        mark,
         filled: el.hasAttribute('filled'),
       };
     });
@@ -882,7 +890,8 @@ export class VkCells extends VkElement {
       .map((it, i) => {
         const label = it.bad ? `${it.label || `[${i}]`} · 越界` : it.label;
         const span = spans[i];
-        const marks = `${it.bad ? ' data-flag="1"' : ''}${it.filled ? ' data-filled="1"' : ''}${it.mark ? ' data-mark="1"' : ''}`;
+        const stateAttr = it.state ? ` data-state="${it.state}"` : '';
+        const marks = `${it.bad ? ' data-flag="1"' : ''}${it.filled ? ' data-filled="1"' : ''}${it.mark ? ' data-mark="1"' : ''}${stateAttr}`;
         const startOff = offsets[i] * stride;
         const ruler = byteMode
           ? `<span class="vk-cell-bytes" aria-hidden="true">${Array.from({ length: span }, (_, k) => {
@@ -1003,7 +1012,7 @@ export class VkBits extends VkElement {
 
   capture() {
     // 同一层 <i> 有两种角色：带 from 的是"字段"，其余是"一行位串"。
-    const nodes = [...this.querySelectorAll(':scope > i')];
+    const nodes = [...this.querySelectorAll(':scope > li, :scope > i')];
     this._fields = nodes
       .filter((el) => el.hasAttribute('from'))
       .map((el, i) => {
@@ -1017,16 +1026,21 @@ export class VkBits extends VkElement {
           hi: Math.max(hi, Number.isFinite(lo) ? lo : hi),
           lo: Math.min(hi, Number.isFinite(lo) ? lo : hi),
           label: el.getAttribute('label') || (el.textContent || '').trim(),
+          state: el.getAttribute('state') || '',
         };
       })
       .filter(Boolean);
     this._rows = nodes
       .filter((el) => !el.hasAttribute('from'))
-      .map((el) => ({
-        label: el.getAttribute('label') || '',
-        value: el.getAttribute('value') || el.textContent.trim(),
-        mark: el.hasAttribute('mark'),
-      }));
+      .map((el) => {
+        const state = el.getAttribute('state') || '';
+        return {
+          label: el.getAttribute('label') || '',
+          value: el.getAttribute('value') || el.textContent.trim(),
+          state,
+          mark: state === 'mark',
+        };
+      });
   }
 
   render() {
@@ -1041,7 +1055,7 @@ export class VkBits extends VkElement {
 
     const widthAttr = Number(this.getAttribute('bit-width'));
     const width = [8, 16, 32, 64].includes(widthAttr) ? widthAttr : 0;
-    // 字段写成子节点：<i from="30" to="23" label="指数"></i>。一个字段一段，可单独锚定。
+    // 字段写成子节点：<li from="30" to="23" label="指数"></li>。一个字段一段，可单独锚定。
     const fieldSpecs = this._fields || []
       .map((el, i) => {
         const hiRaw = el.getAttribute('from');
@@ -1077,7 +1091,7 @@ export class VkBits extends VkElement {
           .map((f) => {
             const start = Math.max(0, fieldN - 1 - f.hi);
             const span = Math.min(fieldN - start, f.hi - f.lo + 1);
-            return `<span class="vk-bit-legend-f" data-field-label="${f.i}" style="grid-column:${start + 1} / span ${span}" title="${esc(f.label)} · ${f.hi - f.lo + 1} 位"><b>${esc(f.label)}</b>${span >= 2 ? `<i>${f.hi - f.lo + 1} 位</i>` : ''}</span>`;
+            return `<span class="vk-bit-legend-f" data-field-label="${f.i}"${f.state ? ' data-state="' + esc(f.state) + '"' : ''} style="grid-column:${start + 1} / span ${span}" title="${esc(f.label)} · ${f.hi - f.lo + 1} 位"><b>${esc(f.label)}</b>${span >= 2 ? `<i>${f.hi - f.lo + 1} 位</i>` : ''}</span>`;
           })
           .join('')}</div>`
       : '';
@@ -1127,7 +1141,7 @@ export class VkBits extends VkElement {
             </div>`;
           })
           .join('');
-        return `<div class="vk-bit-row" data-row="${r}"${row.mark ? ' data-mark' : ''}>${row.label ? `<span class="vk-bit-label" data-meta>${esc(row.label)}</span>` : ''}<div class="vk-bit-chunks">${parts}</div></div>`;
+        return `<div class="vk-bit-row" data-row="${r}"${row.mark ? ' data-mark' : ''}${row.state ? ` data-state="${row.state}"` : ''}>${row.label ? `<span class="vk-bit-label" data-meta>${esc(row.label)}</span>` : ''}<div class="vk-bit-chunks">${parts}</div></div>`;
       })
       .join('');
 
@@ -1142,9 +1156,10 @@ export class VkBars extends VkElement {
   static renderedRoot = '.vk-bars';
 
   capture() {
-    this._rows = [...this.querySelectorAll(':scope > i')].map((el) => ({
+    this._rows = [...this.querySelectorAll(':scope > li, :scope > i')].map((el) => ({
       label: el.getAttribute('label') || el.textContent.trim(),
       value: Number(el.getAttribute('value') ?? el.textContent.trim()),
+      state: el.getAttribute('state') || '',
     }));
     if (this._rows.some((r) => !Number.isFinite(r.value))) {
       this._warnOnce('value', '子节点 <i> 的 value 必须是数字');
@@ -1189,7 +1204,7 @@ export class VkBars extends VkElement {
           ? `left:${Math.min(pct, zeroPct).toFixed(2)}%;width:${Math.abs(pct - zeroPct).toFixed(2)}%`
           : `width:${pct.toFixed(2)}%`;
         const zero = split ? `<span class="vk-bar-zero" style="left:${zeroPct.toFixed(2)}%"></span>` : '';
-        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
+        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
       })
       .join('');
     this.innerHTML = `<div class="vk-bars"${split ? ' data-has-negative="1"' : ''}>${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;

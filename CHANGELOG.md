@@ -1,5 +1,43 @@
 # Changelog
 
+## 12.0.0
+
+一帧一套契约：子节点、状态、锚点、溢出都只有一种写法，写错在 build 报。破坏性版本。
+
+### 契约
+
+- **子节点统一 `<li>`**：cells / bars / bits / timeline / list / steps 的条目都写成 `<li value label …>`；`<i>` 在 build 报迁移提示。
+- **table 必须包 `<table>`**：裸 `<tr>` / `<td>` 会被浏览器丢掉，现在由 build 拦住，不再静默变成一段字。
+- **状态统一 `state`**：`state="current|mark|ok|warn|err"`；`bad`→`state="err"`，`data-em` / `data-mark`→`state`；table 的 `tr` / `td` / `th` 也接 `state`。
+- **布局协议**：`w/h/span/row-span/z/grow/fill/overflow/measure` 标记为 layout，不再算组件自有 API；`vk doc` 默认折叠，`--all` 才显示。
+- **锚点提前到 build**：`for/from/to` 的存在与范围在 build 校验；越界/缺失直接报；运行时不再回退到 0,0，也不再抛 TypeError。
+- **构建期一次报全**：属性 / 子节点 / 锚点错误在文件读写之前聚合，不再被一个缺失的 `src` 盖住。
+
+### 布局
+
+- **硬失败**：帧内竖排子项默认 `flex-shrink: 0`；装不下就溢出画布，由 `vk check` 拦住。要压必须显式 `grow` / `fill`。
+- **内容裁切检测**：所有 `vk-*` 宿主都查 `scrollHeight > clientHeight`，并豁免显式 `overflow="clip"` / `long="clip"` / 覆盖层 / bleed。
+- **`vk shot`**：坏页仍出诊断图并 `exit 1`；`--strict` 才删图，供录制/门禁使用。
+
+### 组件
+
+- **callout**：改两栏（图标一列，标题/正文同左缘）；标题 = 正文升一档（meta 40→52、body 52→64、heading 64→88）；图标与标题首行对齐。
+- **steps**：✓ 不再浮在编号框角上，改成标签行尾的小图标。
+- **bytes**：current 同时标 hex 与 ASCII。
+- **table**：新增 `variant="matrix"`（等宽列、居中数字）；`tr` / `td` / `th` 的 `state` 有统一视觉。
+- **list**：`state="ok|warn|err"` 驱动 ✓ / ! / ✗。
+
+### 文档与标本册
+
+- **`spec.json`**：registry 生成的唯一契约（属性 / 默认 / 枚举 / 子节点 / 状态 / 示例）；`vk brief` 打印 37 行摘要。
+- **`vk doc`**：按内容 / 外观 / 状态 / 布局分组，带默认值与中文标签；`--json` 给 AI。
+- **标本页 = 纸 + 帧板**：上方 1920×1080 帧板，下方状态带（复用 `PRESETS` + 手写 state 例子）与最小 HTML；索引缩略图只裁帧板。
+- **手写文档同源**：`ai.md` / `design.md` / `USAGE.md` 的 `<i>`、`bad`、`data-em`、6%/2px 旧值同步改成 `<li>`、`state`、16%/4px。
+
+### 私有化
+
+- README / USAGE 改成仓库内 `node bin/vk.mjs`，不再写 npm 安装；`vk brief` 作为 AI 的第一入口。
+
 ## 11.0.0
 
 一帧三种信号：蓝=当前、紫=标注、墨=内容/结构。破坏性版本。

@@ -1,20 +1,18 @@
 # 使用
 
+> 本地仓库里，下文的 `npx vk` 都写成 `node bin/vk.mjs`；不发布 npm。
+
 ## 1 · 装
 
-包尚未发布到 npm；先从本地路径安装：
-
-```bash
-npm i /path/to/vk-video-kit
-```
+这是私有工具，不发布 npm；在仓库里直接跑 `node bin/vk.mjs`。
 
 ```html
-<link rel="stylesheet" href="node_modules/vk-video-kit/vk/fonts.css">
-<link rel="stylesheet" href="node_modules/vk-video-kit/vk/vk.css">
-<script src="node_modules/vk-video-kit/dist/vk.js"></script>
+<link rel="stylesheet" href="vk/fonts.css">
+<link rel="stylesheet" href="vk/vk.css">
+<script src="dist/vk.js"></script>
 ```
 
-`dist/vk.js` 是运行时（IIFE，约 150KB，零依赖）。全量 Lucide 图标不进运行时：`npx vk build` 只把本页 `<vk-icon>` 用到的 SVG 注入页面。
+`dist/vk.js` 是运行时（IIFE，约 136KB，零依赖）。全量 Lucide 图标不进运行时：`node bin/vk.mjs build` 只把本页 `<vk-icon>` 用到的 SVG 注入页面。
 
 ## 2 · 写一个代码窗
 
@@ -66,16 +64,16 @@ npm i /path/to/vk-video-kit
 
 ```html
 <vk-cells cols="4" addr="0x7ffc" stride="4">
-  <i value="1" label="a[0]"></i>
-  <i value="2" label="a[1]"></i>
-  <i value="3" label="a[2]"></i>
-  <i value="0" label="a[3]" bad></i>
+  <li value="1" label="a[0]"></li>
+  <li value="2" label="a[1]"></li>
+  <li value="3" label="a[2]"></li>
+  <li value="0" label="a[3]" state="err"></li>
 </vk-cells>
 
 <vk-bytes src="code/hello.bin" addr="0x7ffc" length="48" current="0-5"></vk-bytes>
 ```
 
-- `vk-cells` 一格一个 `<i>`：`bad` / `mark` / `filled` 写在格子上，`span` 表示跨几格；超过 `cols` 自动换行。
+- `vk-cells` 一格一个 `<li>`：`state="err"` / `state="mark"` / `filled` 写在格子上，`span` 表示跨几格；超过 `cols` 自动换行。
 - `vk-bytes` 的 `current` 是 0 起的字节段；`word` / `endian` 支持 1/2/4/8 与 little/big。
 
 ## 5 · 页面

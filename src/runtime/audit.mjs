@@ -101,7 +101,7 @@ export function auditPage(root = document) {
     if (hasText && inBleed) out.push({ type: 'bleed-text', what: clip(el.textContent || el.tagName) });
     const isMeta = !!(el.closest && el.closest('[data-meta]'));
     const isSup = !!(el.closest && el.closest('vk-inline[variant="sup"], vk-inline[variant="sub"]'));
-    if (hasText && opaque(el) && !isSup) {
+    if (hasText && opaque(el) && !isSup && !inOverlay) {
       const fs = parseFloat(cs.fontSize);
       if (!isMeta && fs < MIN_FONT) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
       if (!isMeta && fs < CONTENT_FONT) {
@@ -152,6 +152,12 @@ export function auditPage(root = document) {
     }
     if (oy && el.scrollHeight > el.clientHeight + 3) {
       out.push({ type: 'clip-y', what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
+    }
+    // 组件宿主的内容溢出：即使 overflow 是 visible，也意味着"盒子被压扁、内容被盖住"。
+    const isHost = el.tagName.startsWith('VK-') && !OVERLAYS.has(el.tagName.toLowerCase());
+    const explicitClip = el.getAttribute('overflow') === 'clip' || el.hasAttribute('data-allow-overflow');
+    if (isHost && !inOverlay && !inBleed && !explicitClip && cs.overflowY === 'visible' && el.scrollHeight > el.clientHeight + 3) {
+      out.push({ type: 'content-clip', what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
     }
   }
 

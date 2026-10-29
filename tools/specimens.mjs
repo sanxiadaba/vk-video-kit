@@ -29,11 +29,21 @@ const LAYER_SHORT = { tokens: '值', elements: '原子', layout: '排布', compo
 const ORDER = [];
 for (const layer of LAYERS) for (const tag of byLayer(layer.id)) ORDER.push(tag);
 const sceneOf = new Map(SCENES.map((s) => [s.tag, s.body.trim()]));
+const stripOf = new Map(SCENES.map((s) => [s.tag, (s.strip || s.body).trim()]));
 
 const RESET = `html,body{margin:0;padding:0;background:#eef2f7;color:#0b0f14}
-body{display:flex;justify-content:center;min-height:100vh}
+body{display:block;min-height:100vh}
 a{color:inherit;text-decoration:none}
 a:hover{color:#1b3fd6}
+.vk-page{width:1920px;margin:0 auto}
+/* 标本页 = 纸 + 帧板：帧板 1080 在上，状态带与最小写法在下。 */
+.vk-sheet{width:1680px;margin:48px auto 96px}
+.vk-sheet-hd{display:flex;justify-content:space-between;align-items:baseline;margin-top:48px;padding:16px 0;border-top:2px solid var(--vk-line-strong)}
+.vk-states{display:flex;flex-direction:column;gap:40px;margin-top:8px}
+.vk-state{border-top:1px solid var(--vk-line-1);padding-top:16px}
+.vk-state-meta{font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.4;color:var(--vk-ink-3);margin-bottom:16px}
+.vk-state-body{width:100%}
+.vk-snippet{margin:8px 0 0;padding:24px 32px;border:1px solid var(--vk-line-1);border-radius:8px;background:#fff;font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.5;color:var(--vk-ink-1);white-space:pre-wrap;word-break:break-word}
 .spec-scale{width:1400px}
 /* 标本页的宽度是版面意图，用作者 CSS 表达——组件不再接受像素 w/h。 */
 .spec-w{width:1400px}
@@ -99,30 +109,82 @@ function nav(no, tag) {
   )}</vk-row>`;
 }
 
+function applyPreset(body, tag, attrs = {}) {
+  const re = new RegExp(`<${tag}\\b([^>]*)>`);
+  const m = body.match(re);
+  if (!m) return body;
+  const parsed = [];
+  const attrRe = /([a-zA-Z0-9:-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+  let mm;
+  while ((mm = attrRe.exec(m[1]))) parsed.push([mm[1], mm[2] ?? mm[3] ?? mm[4] ?? '']);
+  const map = new Map(parsed);
+  for (const [k, v] of Object.entries(attrs)) {
+    if (v === null) map.delete(k);
+    else map.set(k, String(v));
+  }
+  const next = [...map].map(([k, v]) => (v === '' ? k : `${k}="${v}"`)).join(' ');
+  return body.replace(re, `<${tag}${next ? ' ' + next : ''}>`);
+}
+
+function unwrapSpec(html) {
+  let s = html.trim();
+  const div = s.match(/^<div class="spec-[^"]*">([\s\S]*)<\/div>$/);
+  if (div) s = div[1].trim();
+  const box = s.match(/^<vk-box class="spec-[^"]*"[^>]*>([\s\S]*)<\/vk-box>$/);
+  if (box) s = box[1].trim();
+  return s;
+}
+
+function stripDefaults(html, tag) {
+  const def = TAGS[tag];
+  return html.replace(new RegExp(`<${tag}\\b([^>]*)>`), (m, raw) => {
+    const parsed = [];
+    const attrRe = /([a-zA-Z0-9:-]+)(?:=(?:"([^"]*)"|'([^']*)'|([^\s>]+)))?/g;
+    let mm;
+    while ((mm = attrRe.exec(raw))) parsed.push([mm[1], mm[2] ?? mm[3] ?? mm[4] ?? '']);
+    const keep = parsed.filter(([k, v]) => {
+      const spec = def.attrs?.[k];
+      return !(spec && spec.default !== undefined && String(spec.default) === v);
+    });
+    const next = keep.map(([k, v]) => (v === '' ? k : `${k}="${v}"`)).join(' ');
+    return `<${tag}${next ? ' ' + next : ''}>`;
+  });
+}
+
+function snippetOf(rawBody, tag) {
+  const body = stripDefaults(unwrapSpec(rawBody), tag);
+  return esc(
+    body
+      .replace(/ class="spec-[^"]*"/g, '')
+      .replace(/(src|href)="\.\.\//g, '$1="')
+      .replace(/\n{3,}/g, '\n\n')
+      .trim()
+  );
+}
+
+function scopeIds(html, prefix) {
+  const ids = new Set([...html.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]));
+  if (!ids.size) return html;
+  for (const id of ids) html = html.split(`id="${id}"`).join(`id="${prefix}${id}"`);
+  return html.replace(/\b(for|from|to)="([^"]*)"/g, (m, attr, value) =>
+    `${attr}="${value.replace(/#([\w-]+)/g, (all, id) => (ids.has(id) ? `#${prefix}${id}` : all))}"`
+  );
+}
+
+const STATE_STRIP = {
+  'vk-cells': `<vk-cells cols="4"><li value="1" label="a[0]" state="current"></li><li value="2" label="a[1]" state="mark"></li><li value="3" label="a[2]" state="err"></li><li value="0" label="a[3]" state="ok"></li></vk-cells>`,
+  'vk-table': `<vk-table variant="matrix"><table><thead><tr><th>i\\j</th><th>0</th><th>1</th></tr></thead><tbody><tr><th>0</th><td state="current">1</td><td state="mark">2</td></tr><tr><th>1</th><td>3</td><td state="err">4</td></tr></tbody></table></vk-table>`,
+  'vk-list': `<vk-list variant="check"><li state="ok">这一条成立</li><li state="warn">这一条要再看</li><li state="err">这一条不成立</li></vk-list>`,
+  'vk-timeline': `<vk-timeline start="1972" end="2018"><li date="1972" label="当前节点" state="current">说明一</li><li date="1999" label="标注节点" state="mark">说明二</li><li date="2018" label="普通节点">说明三</li></vk-timeline>`,
+};
+
 function specPage(tag, no) {
   const def = TAGS[tag];
   const rawBody = sceneOf.get(tag) || `<vk-text size="body">（没有标准形态）</vk-text>`;
+  const stripBody = stripOf.get(tag) || rawBody;
   const presets = PRESETS[tag] || [];
-  const presetText = presets.length
-    ? '预设：' + presets.map((p) => p.label).join(' · ')
-    : '没有外观预设：它的形状由内容决定。';
   const meta = `${String(no).padStart(3, '0')} / ${String(ORDER.length).padStart(3, '0')}`;
-  // 高个组件（代码窗、表格、内存图…）在 888 安全区里放不下一行预设说明；
-  // 预设仍列在 reference.md 与变体里，这里不为了"凑一行"去缩字或裁切。
-  const TALL = new Set([
-    'vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-table',
-    'vk-bytes', 'vk-tree', 'vk-timeline', 'vk-figure',
-    'vk-cells', 'vk-list', 'vk-math', 'vk-page',
-    'vk-bits',
-  ]);
-  const footer = TALL.has(tag)
-    ? ''
-    : `    <vk-row justify="between" align="baseline">
-      <vk-text size="meta" mono ink="muted" data-meta>${esc(presetText)}</vk-text>
-      <vk-text size="meta" mono ink="muted" data-meta>属性表：docs/reference.md</vk-text>
-    </vk-row>
-`;
-  const page = `<vk-page align="top">
+  const plate = `<vk-page align="top">
   <vk-stack gap="2xs">
     <vk-row justify="between" align="baseline">
       <vk-row gap="xs" align="baseline">
@@ -139,10 +201,41 @@ function specPage(tag, no) {
       </vk-row>
     </vk-row>
     <vk-rule></vk-rule>
-<div class="spec-body">${tag === "vk-page" ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
-${footer}  </vk-stack>
+<div class="spec-body">${tag === 'vk-page' ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
+  </vk-stack>
 </vk-page>`;
-  return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${page}`);
+
+  const stateCount = presets.length + (STATE_STRIP[tag] ? 1 : 0);
+  const stateExample = STATE_STRIP[tag]
+    ? `<div class="vk-state">
+  <div class="vk-state-meta">状态 · state="current|mark|ok|warn|err"（作者手写条目）</div>
+  <div class="vk-state-body">${STATE_STRIP[tag]}</div>
+</div>`
+    : '';
+  const states = `${stateExample}${presets.length
+    ? presets
+        .map((p, si) => {
+          const values = Object.entries(p.attrs || {})
+            .map(([k, v]) => (v === null ? `−${k}` : `${k}="${v}"`))
+            .join(' · ');
+          return `<div class="vk-state">
+  <div class="vk-state-meta">预设 · ${esc(p.label)}${values ? `　${esc(values)}` : ''}</div>
+  <div class="vk-state-body">${scopeIds(applyPreset(stripBody, tag, p.attrs || {}), `s${si}-`)}</div>
+</div>`;
+        })
+        .join('\n')
+    : STATE_STRIP[tag]
+      ? ''
+      : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`}`;
+
+  const sheet = `<section class="vk-sheet">
+  <div class="vk-sheet-hd"><vk-text size="meta" mono data-meta>状态</vk-text><vk-text size="meta" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档` : '无'}</vk-text></div>
+  <div class="vk-states">${states}</div>
+  <div class="vk-sheet-hd"><vk-text size="meta" mono data-meta>最小写法</vk-text><vk-text size="meta" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
+  <pre class="vk-snippet">${snippetOf(rawBody, tag)}</pre>
+</section>`;
+
+  return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${plate}\n${sheet}`);
 }
 
 function card(tag, no) {
@@ -207,6 +300,7 @@ function specHash(tag, rawBody, presets) {
       TAGS[tag].layer,
       ORDER.length,
       rawBody,
+      stripOf.get(tag) || '',
       presets.map((p) => p.label),
     ])
   );

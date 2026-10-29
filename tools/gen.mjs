@@ -3,7 +3,8 @@
  * 示例不在这里：示例只有一份，在 src/scenes/ 里，主页和 specimen 都从它生成。
  */
 import fs from 'node:fs';
-import { TAGS, LAYERS, TAG_NAMES, byLayer, validate } from '../src/registry.mjs';
+import { TAGS, LAYERS, TAG_NAMES, byLayer, validate, CHILDREN, STATES } from '../src/registry.mjs';
+import { SCENES } from '../src/scenes/scenes.mjs';
 import { ICONS } from '../src/icons.generated.mjs';
 import { writeIfChanged, checkMode } from './lib/io.mjs';
 
@@ -162,6 +163,56 @@ const cem = {
 };
 writeIfChanged('custom-elements.json', JSON.stringify(cem, null, 2) + '\n', check);
 
+/* ------------------------------------------------ AI 契约（唯一入口） */
+
+const sceneOf = new Map(SCENES.map((s) => [s.tag, s.body]));
+const openTagOf = (tag) => {
+  const m = String(sceneOf.get(tag) || '').match(new RegExp(`<${tag}\\b[^>]*>`));
+  return m ? m[0] : `<${tag}>`;
+};
+const spec = {
+  name: 'vk',
+  version: 12,
+  note: '由 src/registry.mjs 生成；AI 的唯一契约。属性分组：content / appearance / state / layout（layout 是协议，不属于组件 API）。',
+  layers: LAYERS,
+  tags: Object.fromEntries(
+    TAG_NAMES.map((tag) => {
+      const def = TAGS[tag];
+      return [
+        tag,
+        {
+          name: def.name,
+          layer: def.layer,
+          summary: def.summary,
+          attrs: Object.fromEntries(
+            Object.entries(def.attrs || {}).map(([name, s]) => [
+              name,
+              {
+                type: s.values ? 'enum' : s.type || 'text',
+                ...(s.values ? { values: s.values } : {}),
+                ...(s.default !== undefined ? { default: s.default } : {}),
+                ...(s.label ? { label: s.label } : {}),
+                ...(s.effect ? { effect: s.effect } : {}),
+                ...(s.content ? { content: true } : {}),
+                ...(s.group ? { group: s.group } : {}),
+                ...(s.context ? { context: s.context } : {}),
+                ...(s.layout ? { layout: true } : {}),
+                ...(s.build ? { build: true } : {}),
+              },
+            ])
+          ),
+          ...(CHILDREN[tag] ? { children: CHILDREN[tag] } : {}),
+          ...(STATES[tag] ? { states: STATES[tag] } : {}),
+          ...(def.slots ? { slots: def.slots } : {}),
+          example: openTagOf(tag),
+        },
+      ];
+    })
+  ),
+};
+fs.mkdirSync('docs', { recursive: true });
+writeIfChanged('spec.json', JSON.stringify(spec, null, 2) + '\n', check);
+
 /* ------------------------------------------------------------- reference */
 
 const card = (tag) => {
@@ -197,48 +248,6 @@ ${LAYERS.filter((l) => byLayer(l.id).length)
 
 fs.mkdirSync('docs', { recursive: true });
 writeIfChanged('docs/reference.md', md, check);
-
-/* --------------------------------------------------- 编辑器 / 选择清单 */
-
-const vscode = {
-  version: 1.1,
-  tags: TAG_NAMES.map((tag) => ({
-    name: tag,
-    description: `${TAGS[tag].summary}（${tag}）`,
-    attributes: Object.entries(TAGS[tag].attrs || {})
-      .filter(([, spec]) => spec.context !== 'canvas-child')
-      .map(([name, spec]) => ({
-        name,
-        description: `${spec.label || name}${spec.context ? `（${ctxOf(spec)}）` : ''}`,
-        ...(spec.values ? { values: spec.values.map((value) => ({ name: value })) } : {}),
-      })),
-  })),
-};
-writeIfChanged('vscode-html-data.json', JSON.stringify(vscode, null, 2) + '\n', check);
-
-const webTypes = {
-  $schema: 'https://json.schemastore.org/web-types',
-  name: 'vk-video-kit',
-  version: JSON.parse(fs.readFileSync('package.json', 'utf8')).version,
-  'description-markup': 'markdown',
-  contributions: {
-    html: {
-      tags: TAG_NAMES.map((tag) => ({
-        name: tag,
-        description: TAGS[tag].summary,
-        attributes: Object.entries(TAGS[tag].attrs || {})
-          .filter(([, spec]) => spec.context !== 'canvas-child')
-          .map(([name, spec]) => ({
-            name,
-            description: `${spec.label || name}${spec.context ? `（${ctxOf(spec)}）` : ''}`,
-            ...(spec.values ? { value: spec.values } : {}),
-            ...(spec.default !== undefined ? { default: spec.default } : {}),
-          })),
-      })),
-    },
-  },
-};
-writeIfChanged('web-types.json', JSON.stringify(webTypes, null, 2) + '\n', check);
 
 const choosing = `# 选组件
 

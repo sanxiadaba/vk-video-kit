@@ -15,6 +15,8 @@ export const SCENES = [
     tag: 'vk-code',
     body: s`
 <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" density="loose"></vk-code>`,
+    strip: s`
+<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-7" current="4" density="loose"></vk-code>`,
   },
 
   {
@@ -118,7 +120,7 @@ export const SCENES = [
         <tr><td>char</td><td align="right">1</td><td align="right">-128 … 127</td></tr>
         <tr><td>short</td><td align="right">2</td><td align="right">-32768 … 32767</td></tr>
         <tr><td>int</td><td align="right">4</td><td align="right">-21 亿 … 21 亿</td></tr>
-        <tr data-em><td>unsigned</td><td align="right">4</td><td align="right">0 … 42 亿</td></tr>
+        <tr state="mark"><td>unsigned</td><td align="right">4</td><td align="right">0 … 42 亿</td></tr>
         <tr><td>long</td><td align="right">8</td><td align="right">-9.2e18 … 9.2e18</td></tr>
       </tbody>
     </table>
@@ -250,6 +252,8 @@ export const SCENES = [
     tag: 'vk-figure',
     body: s`
 <div class="spec-w1100"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
+    strip: s`
+<div class="spec-w600"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
   },
 
   {
@@ -367,16 +371,16 @@ export const SCENES = [
     tag: 'vk-cells',
     body: s`
 <vk-cells cols="6" addr="0x7ffc" offsets>
-  <i value="'h'" label="s[0]"></i>
-  <i value="'e'" label="s[1]"></i>
-  <i value="'l'" label="s[2]" mark></i>
-  <i value="'l'" label="s[3]"></i>
-  <i value="'o'" label="s[4]"></i>
-  <i value="\0" label="s[5]" filled></i>
-  <i value="0x2a" label="int x" span="4"></i>
-  <i value="'h'" label="char 1 字节"></i>
-  <i value="…" label="填充 3 字节" span="3" filled></i>
-  <i value="0xff" label="y" bad></i>
+  <li value="'h'" label="s[0]"></li>
+  <li value="'e'" label="s[1]"></li>
+  <li value="'l'" label="s[2]" state="mark"></li>
+  <li value="'l'" label="s[3]"></li>
+  <li value="'o'" label="s[4]"></li>
+  <li value="\0" label="s[5]" filled></li>
+  <li value="0x2a" label="int x" span="4"></li>
+  <li value="'h'" label="char 1 字节"></li>
+  <li value="…" label="填充 3 字节" span="3" filled></li>
+  <li value="0xff" label="y" state="err"></li>
 </vk-cells>`,
   },
 
@@ -396,6 +400,8 @@ export const SCENES = [
     tag: 'vk-bytes',
     body: s`
 <vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" current="0-5"></vk-bytes>`,
+    strip: s`
+<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="16" current="0-3"></vk-bytes>`,
   },
 
 
@@ -411,9 +417,9 @@ export const SCENES = [
     tag: 'vk-bits',
     body: s`
 <vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign>
-  <i from="31" label="符号"></i>
-  <i from="30" to="23" label="指数"></i>
-  <i from="22" to="0" label="尾数"></i>
+  <li from="31" label="符号"></li>
+  <li from="30" to="23" label="指数"></li>
+  <li from="22" to="0" label="尾数"></li>
 </vk-bits>`,
   },
 
@@ -421,9 +427,9 @@ export const SCENES = [
     tag: 'vk-bars',
     body: s`
 <vk-bars max="1000000" scale="log" unit="ns">
-  <i value="1" label="CPU"></i>
-  <i value="120" label="内存"></i>
-  <i value="1000000" label="磁盘"></i>
+  <li value="1" label="CPU"></li>
+  <li value="120" label="内存"></li>
+  <li value="1000000" label="磁盘"></li>
 </vk-bars>`,
   },
 
@@ -452,11 +458,11 @@ export const SCENES = [
     tag: 'vk-timeline',
     body: s`
 <vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线">
-  <i date="1972" lane="A" at="0" label="事件一">说明一</i>
-  <i date="1989" lane="A" at="1" label="事件二">说明二</i>
-  <i date="1999" lane="B" at="2" label="事件三">说明三</i>
-  <i date="2011" lane="A" at="3" label="事件四">说明四</i>
-  <i date="2018" lane="B" at="4" label="事件五">说明五</i>
+  <li date="1972" lane="A" at="0" label="事件一">说明一</li>
+  <li date="1989" lane="A" at="1" label="事件二">说明二</li>
+  <li date="1999" lane="B" at="2" label="事件三">说明三</li>
+  <li date="2011" lane="A" at="3" label="事件四">说明四</li>
+  <li date="2018" lane="B" at="4" label="事件五">说明五</li>
 </vk-timeline>`,
   },
 

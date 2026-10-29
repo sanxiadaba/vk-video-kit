@@ -1,13 +1,12 @@
 {
   "name": "vk-video-kit",
-  "version": "11.0.0",
+  "version": "12.0.0",
   "description": "把内容做成画面单元：37 个 HTML 标签、5 层、1920×1080，桌面 only；展示站是一本自举的标本册。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
   "types": "types/index.d.ts",
   "scripts": {
     "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen && node tools/thumbs.mjs && node cli/build.mjs _site/index.html",
-    "build:pkg": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs",
     "gen": "node tools/gen.mjs",
     "ai": "node tools/ai-doc.mjs",
     "links": "node tools/links.mjs",
@@ -30,7 +29,6 @@
     "gate:one": "node tools/gate.mjs",
     "verify": "node tools/verify.mjs",
     "check": "node tools/verify.mjs",
-    "pack:check": "node tools/pack-check.mjs",
     "lint": "node tools/lint.mjs",
     "format": "prettier --write \"tools/**/*.mjs\" \"tests/**/*.mjs\" \"package.json\" \".github/**/*.yml\"",
     "format:check": "prettier --check \"tools/**/*.mjs\" \"tests/**/*.mjs\" \"package.json\" \".github/**/*.yml\"",
@@ -57,72 +55,11 @@
   },
   "license": "MIT",
   "author": "jun",
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/sanxiadaba/vk-video-kit.git"
-  },
-  "homepage": "https://github.com/sanxiadaba/vk-video-kit",
-  "bugs": {
-    "url": "https://github.com/sanxiadaba/vk-video-kit/issues"
-  },
   "type": "module",
   "bin": {
     "vk": "bin/vk.mjs"
   },
-  "exports": {
-    ".": {
-      "types": "./types/index.d.ts",
-      "import": "./dist/vk.esm.js",
-      "default": "./dist/vk.esm.js"
-    },
-    "./vk.css": "./vk/vk.css",
-    "./style.css": "./vk/vk.css",
-    "./fonts.css": "./vk/fonts.css",
-    "./dist/vk.js": "./dist/vk.js",
-    "./icons.json": "./icons.json",
-    "./custom-elements.json": "./custom-elements.json",
-    "./vscode-html-data.json": "./vscode-html-data.json",
-    "./web-types.json": "./web-types.json",
-    "./package.json": "./package.json"
-  },
-  "files": [
-    "dist",
-    "!dist/build.json",
-    "vk",
-    "!vk/katex.css",
-    "assets/fonts",
-    "types",
-    "icons.json",
-    "custom-elements.json",
-    "vscode-html-data.json",
-    "web-types.json",
-    "bin",
-    "cli",
-    "src/highlight.mjs",
-    "src/registry.mjs",
-    "src/shared/code.mjs",
-    "src/runtime/code-utils.mjs",
-    "src/icons.generated.mjs",
-    "src/icons.core.generated.mjs",
-    "README.md",
-    "USAGE.md",
-    "docs/ai.md",
-    "docs/reference.md",
-    "docs/choosing.md",
-    "CHANGELOG.md",
-    "LICENSE",
-    "THIRD-PARTY-NOTICES.md"
-  ],
   "engines": {
     "node": ">=20"
-  },
-  "prepack": "npm run build:pkg",
-  "prepublishOnly": "npm test",
-  "keywords": [
-    "video",
-    "slides",
-    "components",
-    "web-components",
-    "1920x1080"
-  ]
+  }
 }

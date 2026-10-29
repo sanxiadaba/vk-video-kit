@@ -2,13 +2,13 @@
  * 时间线：一条年份轴，或按步展开的多泳道。
  *
  *   <vk-timeline start="1972" end="2024">
- *     <i date="1972" label="C 诞生">Dennis Ritchie，Bell Labs</i>
- *     <i date="1989" label="C89">ANSI X3.159-1989</i>
+ *     <li date="1972" label="C 诞生">Dennis Ritchie，Bell Labs</li>
+ *     <li date="1989" label="C89">ANSI X3.159-1989</li>
  *   </vk-timeline>
  *
  *   <vk-timeline variant="lanes" steps="6" lanes="主线程,中断">
- *     <i lane="主线程" at="0" span="2" label="读 x">x = 1</i>
- *     <i lane="中断" at="2" label="写 x">x = 0</i>
+ *     <li lane="主线程" at="0" span="2" label="读 x">x = 1</li>
+ *     <li lane="中断" at="2" label="写 x">x = 0</li>
  *   </vk-timeline>
  *
  * 轴模式按日期比例摆点；卡片分上下两层，避免挤在一起。
@@ -26,16 +26,20 @@ export class VkTimeline extends VkElement {
   static renderedRoot = '.vk-timeline';
 
   capture() {
-    this._items = [...this.querySelectorAll(':scope > i')].map((el) => ({
-      date: el.getAttribute('date') || '',
-      label: el.getAttribute('label') || '',
-      lane: el.getAttribute('lane') || '',
-      at: el.getAttribute('at') || '',
-      span: el.getAttribute('span') || '',
-      tone: el.getAttribute('tone') || '',
-      mark: el.hasAttribute('mark'),
-      text: el.textContent.trim(),
-    }));
+    this._items = [...this.querySelectorAll(':scope > li, :scope > i')].map((el) => {
+      const state = el.getAttribute('state') || '';
+      return {
+        date: el.getAttribute('date') || '',
+        label: el.getAttribute('label') || '',
+        lane: el.getAttribute('lane') || '',
+        at: el.getAttribute('at') || '',
+        span: el.getAttribute('span') || '',
+        tone: el.getAttribute('tone') || '',
+        state,
+        mark: state === 'mark',
+        text: el.textContent.trim(),
+      };
+    });
   }
 
   render() {
@@ -63,7 +67,7 @@ export class VkTimeline extends VkElement {
       .sort((a, b) => (num(a.it.date) ?? 0) - (num(b.it.date) ?? 0));
     const rows = sorted
       .map(
-        ({ it }, si) => `<li class="vk-tl-item" data-vk-part="event" data-event="${si}"${it.mark ? ' data-mark' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
+        ({ it }, si) => `<li class="vk-tl-item" data-vk-part="event" data-event="${si}"${it.mark ? ' data-mark' : ''}${it.state ? ' data-state="' + esc(it.state) + '"' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
           <span class="vk-tl-date" data-meta>${esc(it.date)}</span>
           <span class="vk-tl-dot" aria-hidden="true"></span>
           <span class="vk-tl-body">
@@ -102,7 +106,7 @@ export class VkTimeline extends VkElement {
           .map(({ it, i }) => {
             const at = Math.max(0, Math.min(stepCount - 1, parseInt(it.at || '0', 10) || 0));
             const span = Math.max(1, Math.min(stepCount - at, parseInt(it.span || '1', 10) || 1));
-            return `<li class="vk-tl-chip" data-vk-part="event" data-event="${i}" data-lane="${esc(lane)}" style="grid-column:${at + 1} / span ${span}"${it.mark ? ' data-mark' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
+            return `<li class="vk-tl-chip" data-vk-part="event" data-event="${i}" data-lane="${esc(lane)}" style="grid-column:${at + 1} / span ${span}"${it.mark ? ' data-mark' : ''}${it.state ? ' data-state="' + esc(it.state) + '"' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
               ${it.label ? `<span class="vk-tl-name">${esc(it.label)}</span>` : ''}
               ${it.text ? `<span class="vk-tl-desc">${esc(it.text)}</span>` : ''}
             </li>`;

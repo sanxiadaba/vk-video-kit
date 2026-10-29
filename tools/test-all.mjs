@@ -2,7 +2,7 @@
  * 统一测试编排。
  *
  *   node tools/test-all.mjs          # 全量：build → 静态 → 契约/复制 → 门禁/自检 → 浏览器回归 → 纯函数单测
- *   node tools/test-all.mjs --fast   # 快检：verify + links + pack + 纯函数单测（不 build）
+ *   node tools/test-all.mjs --fast   # 快检：verify + links + 纯函数单测（不 build）
  *
  * 三条硬规则：
  * 1. 全量先 build；CI 已经 build 过时可设 VK_SKIP_BUILD=1（或 --no-build）跳过重复构建。
@@ -118,12 +118,11 @@ const browserEnv = {
 };
 
 if (fast) {
-  // 快检不启动浏览器：生成物、链接、包体、纯函数。
+  // 快检不启动浏览器：生成物、链接、纯函数。
   const staticFailed = await pool(
     [
       () => run('verify', [process.execPath, 'tools/verify.mjs'], { timeoutMs: 120000 }),
       () => run('links', [process.execPath, 'tools/links.mjs'], { timeoutMs: 120000 }),
-      () => run('pack', [process.execPath, 'tools/pack-check.mjs'], { timeoutMs: 120000 }),
     ],
     2
   );
@@ -147,7 +146,6 @@ if (fast) {
       [
         () => run('verify', [process.execPath, 'tools/verify.mjs'], { timeoutMs: 180000 }),
         () => run('links', [process.execPath, 'tools/links.mjs'], { timeoutMs: 180000 }),
-        () => run('pack', [process.execPath, 'tools/pack-check.mjs'], { timeoutMs: 180000 }),
       ],
       2
     );

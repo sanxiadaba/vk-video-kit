@@ -17,6 +17,7 @@ import { pathToFileURL } from 'node:url';
 const args = process.argv.slice(2);
 const page = args.find((a) => !a.startsWith('-') && !/^\d+,\d+,\d+,\d+$/.test(a));
 const flag = (name) => args.includes(name);
+const strict = flag('--strict');
 const valueOf = (name) => {
   const i = args.indexOf(name);
   return i >= 0 ? args[i + 1] : null;
@@ -103,6 +104,7 @@ try {
     else if (it.type === 'overflow') lines.push(`超出画布：${it.what}`);
     else if (it.type === 'clip') lines.push(`横向被裁：${it.what}（${it.sw} > ${it.cw}）`);
     else if (it.type === 'clip-y') lines.push(`纵向被裁：${it.what}（${it.sh} > ${it.ch}）`);
+    else if (it.type === 'content-clip') lines.push(`内容被裁：${it.what}（内容 ${it.sh} > 盒子 ${it.ch}）`);
     else if (it.type === 'overlap') lines.push(`重叠 ${it.size?.join('×') || ''}：${it.what}`);
     else if (it.type === 'zero') lines.push(`空锚点：${it.what}`);
     else if (it.type === 'ln-overlap') lines.push(`行号压住代码：${it.what}（+${it.gap}px）`);
@@ -119,7 +121,13 @@ try {
   if (lines.length) {
     console.log(errors || report.special?.length ? '自检（有 error）：' : '自检（只有提醒）：');
     for (const line of lines.slice(0, 16)) console.log(`  · ${line}`);
-    if ((errors || report.special?.length) && !phone && !crop) process.exitCode = 1;
+    const bad = !!(errors || report.special?.length);
+    if (bad && !phone && !crop) process.exitCode = 1;
+    if (bad && strict) {
+      fs.rmSync(out, { force: true });
+      console.log('[vk] --strict：自检有 error，已删除截图（用不带 --strict 的命令看坏图）');
+      process.exitCode = 1;
+    }
   } else {
     console.log('自检：干净（无重叠 / 无裁切 / 无溢出 / 无空锚点）');
   }

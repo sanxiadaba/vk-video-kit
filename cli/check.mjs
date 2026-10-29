@@ -71,6 +71,7 @@ try {
       else if (x.type === 'overflow') lines.push(`超出画布：${x.what} ${x.box?.join(',') || ''}`);
       else if (x.type === 'clip') lines.push(`横向被裁：${x.what}（${x.sw} > ${x.cw}）`);
       else if (x.type === 'clip-y') lines.push(`纵向被裁：${x.what}（${x.sh} > ${x.ch}）`);
+      else if (x.type === 'content-clip') lines.push(`内容被裁：${x.what}（内容 ${x.sh} > 盒子 ${x.ch}）`);
       else if (x.type === 'overlap') lines.push(`重叠 ${x.size?.join('×') || ''}：${x.what}`);
       else if (x.type === 'zero') lines.push(`空锚点：${x.what}`);
       else if (x.type === 'ln-overlap') lines.push(`行号压住代码：${x.what}（+${x.gap}px）`);

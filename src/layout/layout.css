@@ -77,6 +77,11 @@ vk-row > [grow] { flex: 1 1 auto; min-width: 0; }
    少了这两行，grid 会被内容撑出帧外——切片里实测到的 56px 溢出就是这个。 */
 vk-stack[fill],
 vk-grid[fill] { flex: 1 1 auto; min-height: 0; }
+
+/* v12 硬失败：帧内竖排子项默认不可压扁。装不下就溢出到画布外，
+   由 vk check 拦住；要压必须显式写 grow / fill。 */
+vk-stack > :not([grow]):not([fill]) { flex-shrink: 0; }
+.vk-page-bd > :not([grow]):not([fill]) { flex-shrink: 0; }
 [measure='body'] { max-width: var(--vk-measure-body); }
 [measure='title'] { max-width: var(--vk-measure-title); }
 [overflow='clip'] { overflow: hidden; }

@@ -21,7 +21,7 @@ import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
 import { diag } from './shared/diag.mjs';
-import { TAGS, CHILD_ATTRS } from './registry.mjs';
+import { TAGS, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
 
 /* ------------------------------------------------------------------ 主题 */
 
@@ -242,15 +242,32 @@ function lineRange(node) {
 }
 
 /** 这个宿主能容纳的锚点范围；null = 静态算不出，跳过。 */
-function anchorCapacity(node) {
+function anchorCapacity(node, file) {
   const tag = node.tagName;
   if (tag === 'vk-code' || tag === 'vk-diff') {
     const r = lineRange(node);
-    return r ? { from: r[0], to: r[1] } : null;
+    if (r) return { from: r[0], to: r[1] };
+    // 没写 lines：范围就是源码本身的行数（src 文件或内联块）。
+    const inline = inlineSourceText(node);
+    if (inline != null) {
+      const n = inline.split('\n').length;
+      return n ? { from: 1, to: n } : null;
+    }
+    const src = attr(node, 'src');
+    if (src) {
+      try {
+        const raw = fs.readFileSync(path.resolve(path.dirname(file), src), 'utf8');
+        const n = raw.split('\n').length;
+        return n ? { from: 1, to: n } : null;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
   if (tag === 'vk-cells') {
     // 一格一个 <i>：格数 = 子节点数，字节数 = 各格 span 之和。
-    const items = (node.childNodes || []).filter((n) => n.tagName === 'i');
+    const items = (node.childNodes || []).filter((n) => n.tagName === 'li' || n.tagName === 'i');
     const n = items.length;
     const spans = items
       .map((el) => parseInt((el.attrs || []).find((a) => a.name === 'span')?.value || '1', 10))
@@ -275,7 +292,7 @@ function anchorCapacity(node) {
     return n ? { from: 0, to: n - 1 } : null;
   }
   if (tag === 'vk-timeline') {
-    const n = countTag(node, 'i');
+    const n = countTag(node, 'li') || countTag(node, 'i');
     return n ? { from: 0, to: n - 1 } : null;
   }
   if (tag === 'vk-bits') {
@@ -367,7 +384,7 @@ function validateRefs(doc, file, errors) {
         errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 offsets / align / direction`);
         continue;
       }
-      const cap = anchorCapacity(host);
+      const cap = anchorCapacity(host, file);
       if (!cap) continue;
       if (part === 'line' || part === 'char') {
         const n = parseInt((argRaw || '').split(':')[0], 10);
@@ -402,17 +419,17 @@ function validateRefs(doc, file, errors) {
       }
     }
 
-    // 5) vk-bars 的行必须是 <i value label>
+    // 5) vk-bars 的行必须是 <li value label>
     if (tag === 'vk-bars') {
       for (const child of node.childNodes || []) {
         if (!child.tagName) continue;
-        if (child.tagName !== 'i') {
-          errors.push(`${file}:${lineOf(child)} <vk-bars> 只收 <i value="…" label="…">，现在收到 <${child.tagName}>`);
+        if (child.tagName !== 'li' && child.tagName !== 'i') {
+          errors.push(`${file}:${lineOf(child)} <vk-bars> 的条目只收 <li value="…" label="…">，现在收到 <${child.tagName}>`);
           continue;
         }
-        if (!attr(child, 'label')) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <i> 缺 label`);
+        if (!attr(child, 'label')) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <${child.tagName}> 缺 label`);
         const v = attr(child, 'value');
-        if (v == null || !Number.isFinite(Number(v))) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <i> 缺数字 value`);
+        if (v == null || !Number.isFinite(Number(v))) errors.push(`${file}:${lineOf(child)} <vk-bars> 的 <${child.tagName}> 缺数字 value`);
       }
     }
 
@@ -467,12 +484,31 @@ function validateAuthorHtml(doc, file) {
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
   walk(doc, (node) => {
     const tag = node.tagName;
-    if (tag === 'i' && node.parentNode) {
+    if ((tag === 'i' || tag === 'li') && node.parentNode) {
       const parent = node.parentNode.tagName;
       const allowed = CHILD_ATTRS[parent];
       if (allowed) {
+        if (tag === 'i' && CHILDREN[parent]?.item === 'li') {
+          (STRICT ? errors : warnings).push(
+            `${file}:${lineOf(node)} <${parent}> 的条目还是 <i>；v12 统一成 <li>（改标签名即可）`
+          );
+        }
         for (const { name, value: raw } of node.attrs || []) {
           if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) continue;
+          if (name === 'bad') {
+            (STRICT ? errors : warnings).push(`${file}:${lineOf(node)} <${parent}> 的 bad 已改名为 state="err"`);
+            continue;
+          }
+          if (name === 'mark') {
+            (STRICT ? errors : warnings).push(`${file}:${lineOf(node)} <${parent}> 的 mark 已改名为 state="mark"`);
+            continue;
+          }
+          if (name === 'state') {
+            if (!STATE_VALUES.includes(raw)) {
+              errors.push(`${file}:${lineOf(node)} <${parent}> 的 state="${raw}" 不在词表里；可用：${STATE_VALUES.join(' / ')}`);
+            }
+            continue;
+          }
           if (!allowed.includes(name)) {
             errors.push(
               `${file}:${lineOf(node)} <${parent}> 的子节点不认识 ${name}="${raw}"；可用：${allowed.join(', ')}`
@@ -485,6 +521,58 @@ function validateAuthorHtml(doc, file) {
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
+
+    // 子节点契约：条目只能 <li>；table 必须包 <table>；源码件只能 src / 内联块。
+    const model = CHILDREN[tag];
+    if (model) {
+      const elementChildren = (node.childNodes || []).filter((c) => c.tagName);
+      if (model.kind === 'wrapper') {
+        const hasWrapper = elementChildren.some((c) => c.tagName === model.wrapper);
+        if (!hasWrapper && (node.childNodes || []).some((c) => c.nodeType === 3 && c.value.trim())) {
+          errors.push(
+            diag({
+              file,
+              line: lineOf(node),
+              tag,
+              what: '的内容没有包在 <table> 里',
+              wrote: (node.childNodes || []).find((c) => c.nodeType === 3 && c.value.trim())?.value.trim().slice(0, 40),
+              should: '写成 <vk-table><table><thead>…</thead><tbody>…</tbody></table></vk-table>',
+              why: '裸 <tr>/<td> 会被浏览器丢掉，整张表会静默变成一段连着的字',
+            })
+          );
+        }
+      } else if (model.kind === 'item') {
+        const badKids = elementChildren.filter((c) => c.tagName !== model.item && c.tagName !== 'i');
+        if (badKids.length) {
+          errors.push(
+            `${file}:${lineOf(node)} <${tag}> 的条目只能是 <${model.item}>；发现 <${badKids.map((c) => c.tagName).join('>, <')}>`
+          );
+        }
+      } else if (model.kind === 'source') {
+        const hasSrc = attrs.has('src');
+        const hasInline = elementChildren.some((c) => c.tagName === 'script' && (c.attrs || []).some((a) => a.name === 'data-vk-source'));
+        if (hasSrc && hasInline) {
+          errors.push(`${file}:${lineOf(node)} <${tag}> 同时写了 src 与内联源码；只能有一个入口`);
+        }
+      }
+    }
+    if (tag === 'vk-table') {
+      walk(node, (n) => {
+        if (!['tr', 'td', 'th'].includes(n.tagName)) return;
+        const rowAttrs = n.attrs || [];
+        if (rowAttrs.some((a) => a.name === 'data-em')) {
+          (STRICT ? errors : warnings).push(
+            `${file}:${lineOf(n)} <table> 的行标记 data-em 已改名为 state="mark"（列/格同）`
+          );
+        }
+        const st = rowAttrs.find((a) => a.name === 'state');
+        if (st && !STATE_VALUES.includes(st.value)) {
+          errors.push(
+            `${file}:${lineOf(n)} <${n.tagName}> 的 state="${st.value}" 不在词表里；可用：${STATE_VALUES.join(' / ')}`
+          );
+        }
+      });
+    }
 
     // x/y 只在坐标空间里成立：canvas 的子节点，或本身是覆盖层的三种关系件。
     if ((attrs.has('x') || attrs.has('y')) && !XY_OVERLAY.has(tag) && node.parentNode?.tagName !== 'vk-canvas') {
@@ -856,6 +944,11 @@ function applyIcons(html, names) {
 export async function transformHtml(html, { file = '<memory>', highlighter } = {}) {
   const doc = parse(html, { sourceCodeLocationInfo: true });
   const { errors, warnings } = validateAuthorHtml(doc, file);
+  if (errors.length) {
+    throw new Error(
+      `vk 校验失败（${errors.length} 条）：\n${errors.slice(0, 30).join('\n')}${errors.length > 30 ? `\n…还有 ${errors.length - 30} 条` : ''}`
+    );
+  }
   if (warnings.length) {
     console.warn(`[vk] ${file}：${warnings.length} 处旧写法（首处 ${warnings[0].split(': ').pop().slice(0, 90)}）`);
   }

@@ -181,6 +181,7 @@ vk-list[gap='3xl'] .vk-list { --vk-list-gap: var(--vk-s8); }
   color: var(--vk-ok);
 }
 .vk-list[data-mode='check'] > li[data-state='err']::before { content: '✗'; color: var(--vk-err); }
+.vk-list[data-mode='check'] > li[data-state='warn']::before { content: '!'; color: var(--vk-warn); }
 
 /* 定义：术语 + 释义两栏。第一个 <b> 是术语，其余节点整段进右栏，
    不能把整条 .vk-li-b 设成 display:contents，否则正文里的 <b> 会拆行。 */
@@ -278,6 +279,7 @@ vk-callout { display: block; }
 .vk-callout {
   --vk-co-line: var(--vk-ink-3);
   --vk-co-bg: var(--vk-surface-2);
+  --vk-co-icon: 64px;
 
   box-sizing: border-box;
   padding: var(--vk-s3) var(--vk-s4);
@@ -290,39 +292,48 @@ vk-callout { display: block; }
 .vk-callout[data-tone='warn'] { --vk-co-line: var(--vk-warn); --vk-co-bg: var(--vk-warn-weak); }
 .vk-callout[data-tone='err'] { --vk-co-line: var(--vk-err); --vk-co-bg: var(--vk-err-weak); }
 .vk-callout[data-flat] { background: none; }
-vk-callout[density='compact'] .vk-callout { padding: var(--vk-s2) var(--vk-s3); }
-vk-callout[density='compact'] .vk-callout-hd .vk-ic { width: 48px; height: 48px; }
+vk-callout[density='compact'] .vk-callout { --vk-co-icon: 48px; padding: var(--vk-s2) var(--vk-s3); }
 
+/* 两栏：图标一列，标题与正文同处右栏；图标与标题首行对齐，不随换行居中。 */
 .vk-callout-hd {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--vk-s2);
   min-height: 40px;
+  font-size: var(--vk-t-heading);
 }
 .vk-callout[data-title='none'] .vk-callout-hd { display: none; }
 
 .vk-callout-hd .vk-ic {
-  width: 64px;
-  height: 64px;
+  width: var(--vk-co-icon);
+  height: var(--vk-co-icon);
   flex: 0 0 auto;
+  margin-top: 0.1em;
   color: var(--vk-co-line);
 }
 .vk-callout-t {
-  font-size: var(--vk-t-heading);
+  font-size: inherit;
   font-weight: var(--vk-w-bold);
   line-height: 1.2;
   color: var(--vk-ink-1);
 }
 .vk-callout-bd {
   margin-top: var(--vk-s1);
+  margin-left: calc(var(--vk-co-icon) + var(--vk-s2));
   font-size: var(--vk-t-body);
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-1);
 }
+.vk-callout[data-title='none'] .vk-callout-bd,
 .vk-callout-bd:first-child { margin-top: 0; }
-vk-callout[size='heading'] .vk-callout-bd { font-size: var(--vk-t-heading); }
+.vk-callout[data-title='none'] .vk-callout-bd { margin-left: 0; }
+/* 标题 = 正文升一档：meta 40→52、body 52→64、heading 64→88。 */
+vk-callout[size='meta'] .vk-callout { --vk-co-icon: 52px; }
+vk-callout[size='meta'] .vk-callout-hd { font-size: var(--vk-t-body); }
 vk-callout[size='meta'] .vk-callout-bd { font-size: var(--vk-t-meta); }
-/* size 只缩正文；标题固定 64，保持层级。 */
+vk-callout[size='heading'] .vk-callout { --vk-co-icon: 88px; }
+vk-callout[size='heading'] .vk-callout-hd { font-size: var(--vk-t-title); }
+vk-callout[size='heading'] .vk-callout-bd { font-size: var(--vk-t-heading); }
 
 /* --------------------------------------------------------------- vk-code */
 
@@ -688,6 +699,28 @@ vk-table[variant='spec'] td { padding: var(--vk-s1) var(--vk-s3); border-bottom:
 vk-table[variant='compare'] td { border-bottom: 0; padding: var(--vk-s4) var(--vk-s3); }
 vk-table[variant='compare'] th { border-bottom: 4px solid var(--vk-ink-1); }
 vk-table[variant='compare'] tbody td:first-child { font-weight: var(--vk-w-med); }
+
+/* 矩阵 / DP 表：等宽列、居中数字；状态写在 tr / td 上。 */
+vk-table[variant='matrix'] table { table-layout: fixed; }
+vk-table[variant='matrix'] th,
+vk-table[variant='matrix'] td { text-align: center; padding: var(--vk-s2) var(--vk-s2); }
+vk-table[variant='matrix'] td { font-variant-numeric: tabular-nums; }
+
+/* 统一 state：行与格共用一套视觉；正文仍回墨色。 */
+vk-table tr[state='mark'] td,
+vk-table tr[data-em] td { background: var(--vk-info-soft); }
+vk-table tr[state='mark'] td:first-child,
+vk-table tr[data-em] td:first-child { box-shadow: inset 4px 0 0 var(--vk-info-line); }
+vk-table tr[state='current'] td { background: var(--vk-focus-soft); }
+vk-table tr[state='current'] td:first-child { box-shadow: inset 4px 0 0 var(--vk-focus); }
+vk-table tr[state='ok'] td { background: var(--vk-ok-weak); }
+vk-table tr[state='warn'] td { background: var(--vk-warn-weak); }
+vk-table tr[state='err'] td { background: var(--vk-err-weak); }
+vk-table td[state='current'] { background: var(--vk-focus-soft); box-shadow: inset 0 0 0 2px var(--vk-focus); }
+vk-table td[state='mark'] { background: var(--vk-info-soft); box-shadow: inset 0 0 0 2px var(--vk-info-line); }
+vk-table td[state='ok'] { background: var(--vk-ok-weak); }
+vk-table td[state='warn'] { background: var(--vk-warn-weak); }
+vk-table td[state='err'] { background: var(--vk-err-weak); box-shadow: inset 0 0 0 2px var(--vk-err); }
 
 /* 预编译数据过期：不能只在 console 里说。 */
 [data-vk-stale] { position: relative; }
@@ -1077,6 +1110,12 @@ vk-bytes { display: block; }
   box-shadow: inset 0 -4px 0 var(--vk-focus-line);
   color: var(--vk-ink-1);
 }
+.vk-bytes-c i { font-style: normal; }
+.vk-bytes-c i[data-hl='1'] {
+  background: var(--vk-focus-soft);
+  box-shadow: inset 0 -4px 0 var(--vk-focus-line);
+  color: var(--vk-ink-1);
+}
 .vk-bytes-c {
   color: var(--vk-ink-2);
   white-space: pre;
@@ -1213,6 +1252,11 @@ vk-cells { display: block; }
 .vk-cell[data-mark] .vk-cell-l,
 .vk-cell[data-mark] .vk-cell-a { color: var(--vk-ink-3); }
 
+/* 统一 state：current / ok / warn 也走同一套底与边，正文仍是墨色。 */
+.vk-cell[data-state='current'] { background: var(--vk-focus-soft); border-color: var(--vk-focus); }
+.vk-cell[data-state='ok'] { background: var(--vk-ok-weak); border-color: var(--vk-ok); }
+.vk-cell[data-state='warn'] { background: var(--vk-warn-weak); border-color: var(--vk-warn); }
+
 /* -------------------------------------------------------------- vk-steps */
 
 vk-steps { display: block; }
@@ -1260,21 +1304,11 @@ vk-steps { display: block; }
   background: var(--vk-ok-weak);
   color: var(--vk-ok);
 }
-.vk-step[data-state='done'] .vk-step-n::after {
+.vk-step[data-state='done'] .vk-step-t::after {
   content: '✓';
-  position: absolute;
-  top: -18px;
-  right: -18px;
-  display: grid;
-  place-items: center;
-  width: 32px;
-  height: 32px;
-  border: 4px solid var(--vk-surface-1);
-  border-radius: 50%;
-  background: var(--vk-ok);
-  color: #fff;
-  font-size: 20px;
-  line-height: 1;
+  margin-left: var(--vk-s1);
+  color: var(--vk-ok);
+  font-weight: var(--vk-w-bold);
 }
 .vk-step[data-state='done'] .vk-step-t { color: var(--vk-ink-1); }
 .vk-step[data-state='done'] + .vk-step-line { background: var(--vk-ok); }
@@ -1414,6 +1448,11 @@ vk-bits { display: block; }
 .vk-bit.is-sign { background: var(--vk-surface-3); box-shadow: inset 0 -4px 0 var(--vk-line-strong); }
 .vk-bits-wrap[data-tone='info'] .vk-bit { color: var(--vk-info); }
 .vk-bit-row[data-mark] .vk-bit { outline: 2px solid var(--vk-info-line); outline-offset: -2px; }
+.vk-bit-legend-f[data-state='mark'] { background: var(--vk-info-soft); box-shadow: inset 0 -3px 0 var(--vk-info-line); }
+.vk-bit-legend-f[data-state='current'] { background: var(--vk-focus-soft); box-shadow: inset 0 -3px 0 var(--vk-focus); }
+.vk-bit-legend-f[data-state='err'] { background: var(--vk-err-weak); box-shadow: inset 0 -3px 0 var(--vk-err); }
+.vk-bit-row[data-state='current'] .vk-bit { outline: 2px solid var(--vk-focus); outline-offset: -2px; }
+.vk-bit-row[data-state='err'] .vk-bit { outline: 2px solid var(--vk-err); outline-offset: -2px; }
 .vk-bit-brackets { height: 14px; align-items: stretch; }
 .vk-bit-field {
   border-top: 2px solid var(--vk-line-strong);
@@ -1507,6 +1546,11 @@ vk-bars { display: block; }
 }
 .vk-bars[data-has-negative] .vk-bar-t { overflow: visible; }
 vk-bars[tone='info'] .vk-bar-fill { background: var(--vk-info); }
+.vk-bar[data-state='current'] .vk-bar-fill { background: var(--vk-focus); }
+.vk-bar[data-state='mark'] .vk-bar-fill { background: var(--vk-info); }
+.vk-bar[data-state='ok'] .vk-bar-fill { background: var(--vk-ok); }
+.vk-bar[data-state='warn'] .vk-bar-fill { background: var(--vk-warn); }
+.vk-bar[data-state='err'] .vk-bar-fill { background: var(--vk-err); }
 .vk-bar-v {
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);

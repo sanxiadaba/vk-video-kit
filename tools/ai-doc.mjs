@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { TAGS, LAYERS, byLayer } from '../src/registry.mjs';
+import { TAGS, LAYERS, byLayer, CHILDREN, STATES } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 
 const START = '<!-- vk:tags:start -->';
@@ -32,9 +32,24 @@ for (const layer of LAYERS) {
   lines.push('');
   for (const tag of tags) {
     const def = TAGS[tag];
-    const attrs = Object.keys(def.attrs || {});
+    const attrs = Object.entries(def.attrs || {})
+      .filter(([, s]) => !s.layout && !s.hidden)
+      .map(([a]) => a);
     lines.push(`- **\`${tag}\`** · ${def.name} — ${def.summary}`);
     lines.push(`  - 属性：${attrs.length ? attrs.map((a) => `\`${a}\``).join(' · ') : '（无）'}`);
+    const model = CHILDREN[tag];
+    if (model) {
+      const c =
+        model.kind === 'item'
+          ? `条目写成 \`<${model.item}>\``
+          : model.kind === 'wrapper'
+            ? `内容包在 \`<${model.wrapper}>\` 里`
+            : model.kind === 'source'
+              ? '内容来自 `src` 或 `<script data-vk-source>`（二选一）'
+              : '裸文本';
+      lines.push(`  - 子节点：${c}`);
+    }
+    if (STATES[tag]) lines.push(`  - 状态：\`state="${STATES[tag].values.join('|')}"\`（${STATES[tag].where.join(' / ')}）`);
     lines.push(`  - 例：\`${openTag(tag)}\``);
   }
   lines.push('');

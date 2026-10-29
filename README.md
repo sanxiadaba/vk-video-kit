@@ -33,8 +33,9 @@ L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、�
 
 `npm run build` 生成的不是组件文档，而是 37 张规格页：
 
-- **索引**：7 页（前 6 页每页 6 格，最后一页 1 格）。每格是**整张标本页**的等比缩略图 + 名字 + `vk-*` 标签名——索引里看到的，就是点进去的那一页；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
-- **每个组件一页**：一行元信息（层 · 标签 · 名字 · 上下页 · 序号）+ 该组件的标准形态；**单镜头**，没有成品、没有用法、没有解剖。
+- **索引**：7 页（前 6 页每页 6 格，最后一页 1 格）。每格是**帧板**的等比缩略图 + 名字 + `vk-*` 标签名——索引里看到的，就是点进去的帧板；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
+- **每个组件一页 = 纸 + 帧板**：上方一块 1920×1080 帧板（一行元信息 + 标准形态），下方是状态带（`PRESETS` 逐档）与最小 HTML；帧板仍是单镜头，没有成品、没有用法、没有解剖。
+- 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；状态带与最小写法在帧板外。
 - 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`。
 - 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
 
@@ -42,16 +43,12 @@ L3 只渲染一种**编程数据的形状**：源码、终端会话、差异、�
 
 ## 快速开始
 
-包尚未发布到 npm；先从本地路径安装：
-
-```bash
-npm i /path/to/vk-video-kit
-```
+这是私有工具，不发布 npm；在仓库里直接用 `node bin/vk.mjs`：
 
 ```html
-<link rel="stylesheet" href="node_modules/vk-video-kit/vk/fonts.css">
-<link rel="stylesheet" href="node_modules/vk-video-kit/vk/vk.css">
-<script src="node_modules/vk-video-kit/dist/vk.js"></script>
+<link rel="stylesheet" href="vk/fonts.css">
+<link rel="stylesheet" href="vk/vk.css">
+<script src="dist/vk.js"></script>
 
 <vk-page align="center">
   <vk-stack gap="lg">
@@ -75,13 +72,14 @@ npm i /path/to/vk-video-kit
 像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，`style` 不被接受——布局要能算、能验，不能靠手摆。容量也是算出来的：一帧 888px 高，正文 52×1.5 一行，**11 行**。
 
 ```bash
-npx vk build page.html   # 读取 src 或内联源码块，把高亮/公式/字节/树写进 HTML
-npx vk check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
-npx vk shot page.html    # 出一张 1920×1080
-npx vk serve 8099        # 开发服务器；改 .c 刷新即见
-npx vk tags              # 37 个标签
-npx vk doc vk-code       # 某个标签的属性
-npx vk icons arrow       # 搜图标名
+node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/公式/字节/树写进 HTML
+node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
+node bin/vk.mjs shot page.html    # 出一张 1920×1080
+node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
+node bin/vk.mjs tags              # 37 个标签
+node bin/vk.mjs doc vk-code       # 某个标签的属性
+node bin/vk.mjs brief             # 37 行契约摘要（AI 入口）
+node bin/vk.mjs icons arrow       # 搜图标名
 ```
 
 短代码也可以不落盘，直接放进内联源码块（`<` 不用转义）：
@@ -136,18 +134,17 @@ npm run gate        # 40px 地板 / 对比度 / 安全区 / 裁切 / console / �
 npm run gate:full   # 38 页全查（暖缓存约 2s；--force 冷跑约 9s）
 npm run gate:visual # 每个预设的像素差
 npm run links       # 站内链接门禁
-npm run pack:check  # 包体文件数 / 体积 / 白名单
 npm run shot -- _site/specimen/vk-code.html
-npx vk shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
+node bin/vk.mjs shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
 ```
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 37 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是包产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 37 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是本地页面引用的构建产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 
 ```
 src/      运行时 + CSS 层 + registry + 标本数据（唯一真源）
-cli/      随包发布的 CLI：build / serve
+cli/      本地 CLI：build / serve / check / shot
 tools/    仅开发：registry 生成、scenes、标本册、契约、门禁
 site/     灯箱与显示引擎（showcase.css / showcase.js）
 code/     真实示例文件（含 .bin / .json）
@@ -158,7 +155,7 @@ _site/    构建产物（gitignore）
 
 ## 包
 
-`npm pack` 只带运行时、字体、CLI 与 editor metadata，不含标本册、门禁、截图、示例。`npm run pack:check` 会守住白名单与体积上限。
+私有工具，不发布 npm；`dist/` 与 `vk/` 只供本地页面引用，CLI 用 `node bin/vk.mjs`。
 
 ## 浏览器
 

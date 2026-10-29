@@ -62,6 +62,7 @@ class VkOverlay extends VkElement {
   }
 
   _frame() {
+    if (!this._svg) return null;
     const host = rootOf(this);
     if (!host) return null;
     // 契约宿主 / 普通页面里，包含块不一定是定位元素；补一个 relative，绝对坐标才有基准。
@@ -283,6 +284,7 @@ export class VkPin extends VkOverlay {
     if (!f || !this._bd) return;
     this._svg.replaceChildren();
     const bd = this._bd;
+    bd.style.display = '';
     bd.style.left = bd.style.top = '';
     const bw = bd.offsetWidth || 360;
     const bh = bd.offsetHeight || 120;
@@ -320,9 +322,9 @@ export class VkPin extends VkOverlay {
         }
       }
     } else if (!Number.isFinite(left) || !Number.isFinite(top)) {
-      this._warnOnce('target', '没有 for 目标，也没有 x/y 坐标，批注停在左上角');
-      left = 8;
-      top = 8;
+      this._warnOnce('target', '没有 for 目标，也没有 x/y 坐标，批注不画');
+      bd.style.display = 'none';
+      return;
     }
 
     left = Math.max(8, Math.min(f.w - bw - 8, left));

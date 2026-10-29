@@ -315,9 +315,9 @@ test('7.0 深挖：bits 32 位字段、asm 顺序屏障', async () => {
   await reset(`<vk-stack gap="md">
     <vk-bits id="bits" w="1600" value="10111111110000000000000000000000"
              bit-width="32" bytes sign>
-      <i from="31" label="符号"></i>
-      <i from="30" to="23" label="指数"></i>
-      <i from="22" to="0" label="尾数"></i>
+      <li from="31" label="符号"></li>
+      <li from="30" to="23" label="指数"></li>
+      <li from="22" to="0" label="尾数"></li>
     </vk-bits>
   </vk-stack>`);
   const r = await page.evaluate(() => ({
@@ -335,7 +335,7 @@ after(async () => {
 
 test('锚点真的能解析到运行时元素（cell / line），不是只过构建', async () => {
   await reset(
-    '<vk-page><vk-stack gap="sm"><vk-cells id="x"><i value="1"></i><i value="2"></i><i value="3"></i></vk-cells><vk-code id="c" lang="c">int a;' +
+    '<vk-page><vk-stack gap="sm"><vk-cells id="x"><li value="1"></li><li value="2"></li><li value="3"></li></vk-cells><vk-code id="c" lang="c">int a;' +
       '\nint b;</vk-code></vk-stack></vk-page>'
   );
   const found = await page.evaluate(() => ({

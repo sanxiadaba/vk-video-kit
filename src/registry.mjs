@@ -73,7 +73,6 @@ const ATTR_META = {
   arrow: { label: '箭头', group: 'appearance' },
   cap: { label: '端点', group: 'appearance' },
   current: { label: '当前', group: 'state' },
-  bad: { label: '错误格', group: 'state' },
   focus: { label: '聚光行', group: 'state' },
   fold: { label: '折叠行', group: 'state' },
   span: { label: '占几份', group: 'layout' },
@@ -534,7 +533,7 @@ export const TAGS = {
   'vk-table': {
     name: '表格',
     layer: 'components',
-    summary: '表格：账本 / 对照 / 规格三种形态，表头与数字列对齐。行可用 <tr data-em> 标出重点。',
+    summary: '表格：账本 / 对照 / 规格三种形态，表头与数字列对齐。行可用 <tr state="mark"> 标出重点。',
     content: {
       kind: 'rows',
       target: 'table',
@@ -544,7 +543,7 @@ export const TAGS = {
       ],
     },
     attrs: {
-      'variant': oneOf('ledger', 'compare', 'spec'),
+      'variant': oneOf('ledger', 'compare', 'spec', 'matrix'),
       'stripe': bool(),
       'mono': bool(),
       'density': oneOf('compact', 'normal', 'loose'),
@@ -630,17 +629,16 @@ export const TAGS = {
   'vk-cells': {
     name: '内存格',
     layer: 'components',
-    summary: '一格一个 <i>：标签、值、地址；bad 标出越界的那一格，超过 cols 自动换行。',
+    summary: '一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，超过 cols 自动换行。',
     content: {
       kind: 'children',
       target: 'vk-cells',
-      item: 'i',
+      item: 'li',
       fields: [
         { name: 'value', label: '值', type: 'text', attr: 'value' },
         { name: 'label', label: '标签', type: 'text', attr: 'label' },
         { name: 'span', label: '跨几格', type: 'int', attr: 'span' },
-        { name: 'bad', label: '越界格', type: 'bool', attr: 'bad' },
-        { name: 'mark', label: '标记', type: 'bool', attr: 'mark' },
+        { name: 'state', label: '状态', type: 'text', attr: 'state' },
         { name: 'filled', label: '填充格', type: 'bool', attr: 'filled' },
       ],
     },
@@ -731,7 +729,7 @@ export const TAGS = {
   'vk-bars': {
     name: '条',
     layer: 'components',
-    summary: '一组横向条：标签、数值条、单位。子节点写成 <i value label>。',
+    summary: '一组横向条：标签、数值条、单位。子节点写成 <li value label>。',
     content: {
       kind: 'items',
       target: 'vk-bars',
@@ -781,7 +779,7 @@ export const TAGS = {
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <i>。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -876,16 +874,18 @@ const CUSTOM = new Set([
   'vk-spotlight',
 ]);
 const COMMON = {
-  w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child' },
-  h: { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child' },
-  span: { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
-  'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child' },
-  z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child' },
-  grow: bool(),
-  fill: bool(),
-  overflow: { ...oneOf('visible', 'clip'), default: 'visible' },
-  measure: { ...oneOf('body', 'title', 'none'), default: 'none' },
+  w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
+  h: { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child', layout: true },
+  span: { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
+  'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
+  z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child', layout: true },
+  grow: { ...bool(), layout: true },
+  fill: { ...bool(), layout: true },
+  overflow: { ...oneOf('visible', 'clip'), default: 'visible', layout: true },
+  measure: { ...oneOf('body', 'title', 'none'), default: 'none', layout: true },
 };
+/** 布局协议：由 Frame 基类统一实现，不属于组件自己的 API；`vk doc` 默认折叠。 */
+export const LAYOUT_ATTRS = new Set(Object.keys(COMMON));
 for (const [tag, def] of Object.entries(TAGS)) {
   if (INLINE.has(tag) || CUSTOM.has(tag)) continue;
   def.attrs = def.attrs || {};
@@ -969,17 +969,54 @@ for (const [tag, attrs] of Object.entries(EXTRA)) {
 export const TAG_NAMES = Object.keys(TAGS);
 
 /**
- * 结构化子节点 <i> 的合法属性：父标签 → 允许的名字。
+ * 结构化子节点 <li> 的合法属性：父标签 → 允许的名字。
  * 它们不是宿主属性，但仍然要被构建期校验；拼错会静默不生效。
  */
 export const CHILD_ATTRS = {
-  'vk-timeline': ['date', 'label', 'lane', 'at', 'span', 'tone', 'mark'],
-  'vk-bits': ['label', 'value', 'mark', 'from', 'to'],
-  'vk-cells': ['value', 'label', 'span', 'bad', 'mark', 'filled'],
-  'vk-bars': ['label', 'value'],
-  'vk-list': [],
+  'vk-timeline': ['date', 'label', 'lane', 'at', 'span', 'tone', 'state'],
+  'vk-bits': ['label', 'value', 'from', 'to', 'state'],
+  'vk-cells': ['value', 'label', 'span', 'state', 'filled'],
+  'vk-bars': ['label', 'value', 'state'],
+  'vk-list': ['state'],
   'vk-steps': [],
+  'vk-table': [],
 };
+
+/**
+ * 子节点契约：每个组件允许的子节点形态。
+ * - item：条目写成 <li>
+ * - wrapper：必须包一层（table）
+ * - source：内容来自 src / <script data-vk-source>，不写元素子节点
+ * - text：裸文本 / 嵌套结构由组件自己解析
+ * 由 src/highlight.mjs 在构建期校验。
+ */
+export const CHILDREN = {
+  'vk-list': { kind: 'item', item: 'li' },
+  'vk-steps': { kind: 'item', item: 'li' },
+  'vk-cells': { kind: 'item', item: 'li' },
+  'vk-bars': { kind: 'item', item: 'li' },
+  'vk-bits': { kind: 'item', item: 'li' },
+  'vk-timeline': { kind: 'item', item: 'li' },
+  'vk-table': { kind: 'wrapper', wrapper: 'table' },
+  'vk-code': { kind: 'source' },
+  'vk-diff': { kind: 'source' },
+  'vk-term': { kind: 'source' },
+  'vk-math': { kind: 'source' },
+  'vk-bytes': { kind: 'source' },
+  'vk-asm': { kind: 'source' },
+  'vk-tree': { kind: 'source', inline: 'text/JSON', item: 'li' },
+};
+
+/** 作者手写条目的 state 词汇；生成行（code/asm/bytes/tree）仍用 current 选择器。 */
+export const STATES = {
+  'vk-cells': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
+  'vk-bars': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
+  'vk-bits': { where: ['item'], values: ['mark', 'ok', 'warn', 'err'] },
+  'vk-timeline': { where: ['item'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
+  'vk-list': { where: ['item'], values: ['ok', 'warn', 'err'] },
+  'vk-table': { where: ['row', 'cell'], values: ['current', 'mark', 'ok', 'warn', 'err'] },
+};
+export const STATE_VALUES = ['current', 'mark', 'ok', 'warn', 'err'];
 
 /** 同名属性在不同标签上含义不同时，在这里覆盖。 */
 const ATTR_META_BY_TAG = {
@@ -1031,6 +1068,15 @@ export function validate() {
         errors.push(`${tag}.${name}: 默认值 ${spec.default} 不在枚举里`);
       }
     }
+  }
+  for (const [tag, spec] of Object.entries(CHILDREN)) {
+    if (!TAGS[tag]) errors.push(`CHILDREN.${tag}: 标签不存在`);
+    if (!['item', 'wrapper', 'source', 'text'].includes(spec.kind)) errors.push(`CHILDREN.${tag}: 未知 kind ${spec.kind}`);
+  }
+  for (const [tag, spec] of Object.entries(STATES)) {
+    if (!TAGS[tag]) errors.push(`STATES.${tag}: 标签不存在`);
+    for (const v of spec.values) if (!STATE_VALUES.includes(v)) errors.push(`STATES.${tag}: 未知 state ${v}`);
+    for (const w of spec.where) if (!['item', 'row', 'cell'].includes(w)) errors.push(`STATES.${tag}: 未知位置 ${w}`);
   }
   return errors;
 }
