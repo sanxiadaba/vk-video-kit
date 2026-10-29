@@ -359,6 +359,52 @@ export function auditPages(root = document) {
   };
 }
 
+/**
+ * 镜头度量：给「这一帧作为一张图是否成立」提供数字。
+ *
+ * 只测量、不判定 —— 阈值要等一整集/一整册的分布出来再定。
+ *   contentTop    第一块内容（标题块之后）的 ink 顶
+ *   contentBottom 内容 ink 底
+ *   focus         焦点元素数（钴蓝/聚光/当前行）
+ *   inkRatio      非白像素占比（需要截图，这里给不到，由 CLI 补）
+ */
+export function metrics(root = document) {
+  const stages = [...(root.querySelectorAll?.('.vk-page, .vk-stage') || [])];
+  return stages.map((stage, i) => {
+    const safe = safeBox(stage);
+    const sr = safe.getBoundingClientRect();
+    const kids = [...(safe.children || [])].filter((el) => el.getBoundingClientRect().height > 0);
+    // 内容 = 标题块之后的第一个可见块（标题块通常在 vk-stack 里）
+    const title = safe.querySelector('vk-title');
+    let first = null;
+    if (title) {
+      let n = title.nextElementSibling;
+      while (n && !n.getBoundingClientRect().height) n = n.nextElementSibling;
+      first = n;
+    }
+    if (!first) first = kids.find((el) => !el.matches?.('vk-title')) || kids[0];
+    const fr = first?.getBoundingClientRect();
+    const rects = [...safe.querySelectorAll('*')]
+      .map((el) => el.getBoundingClientRect())
+      .filter((r) => r.height > 0 && r.width > 0);
+    const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
+    const maxRight = rects.length ? Math.max(...rects.map((r) => r.right)) : sr.right;
+    const focus = stage.querySelectorAll(
+      '.vk-line.is-hl, .vk-asm-row.is-hl, .vk-byte.is-hl, .vk-cell.is-hl, .vk-step[data-state="current"], .vk-tree-row[data-current], .vk-spotlight-ring, [tone="focus"]'
+    ).length;
+    return {
+      index: i,
+      id: stage.id || '',
+      contentTop: fr ? Math.round(fr.top - sr.top) : null,
+      contentBottom: Math.round(maxBottom - sr.top),
+      contentLeft: fr ? Math.round(fr.left - sr.left) : null,
+      contentRight: Math.round(maxRight - sr.left),
+      focus,
+      blocks: kids.length,
+    };
+  });
+}
+
 function safeBox(stage) {
   return stage.querySelector?.('.vk-page-bd') || stage.querySelector?.('.vk-stage') || stage;
 }
@@ -366,4 +412,5 @@ function safeBox(stage) {
 export function installAudit(VK) {
   VK.auditPage = auditPage;
   VK.auditPages = auditPages;
+  VK.metrics = metrics;
 }

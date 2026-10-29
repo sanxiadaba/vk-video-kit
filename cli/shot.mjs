@@ -91,6 +91,7 @@ try {
    * 覆盖层（edge/pin/ring/spotlight）不算重叠，避免每页都误报。
    */
   const report = await tab.evaluate(() => window.vk?.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] });
+  const metrics = await tab.evaluate(() => window.vk?.metrics?.()?.[0] || null);
 
   await tab.screenshot({
     path: out,
@@ -99,6 +100,10 @@ try {
 
   const kb = (fs.statSync(out).size / 1024).toFixed(0);
   console.log(`✓ ${path.relative(process.cwd(), out)}  ${width}×${height}${crop ? '（crop）' : ''}  ${kb} KB`);
+  if (metrics && !crop) {
+    const { contentTop, contentBottom, contentLeft, contentRight, focus } = metrics;
+    console.log(`  度量：内容 y ${contentTop}–${contentBottom}（底距 ${1080 - 96 - (contentBottom ?? 0)}）· x ${contentLeft}–${contentRight} · 焦点 ${focus}`);
+  }
 
   const lines = [];
   const warns = new Set(['orphan', 'blue', 'pin-overlap']);

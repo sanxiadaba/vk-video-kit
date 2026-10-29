@@ -266,3 +266,25 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`align`
   - 例：`<vk-page>`
 <!-- vk:tags:end -->
+
+---
+
+## 9 · 已经踩过的坑
+
+写页面之前先读一遍，这些都不会报错，只会画错。
+
+- **`vk-bytes` 的地址是算出来的**：`offset` 是文件偏移，`addr` 是窗口第 0 字节的地址，屏幕上是 `addr + offset + i`；`current` 又是片段内 0 基。想让窗口从 `0x404064` 开始，写 `addr="0x404000" offset="0x2064"`。
+- **`span` 只属于 `vk-grid`**：`vk-figure`、`vk-code` 放在 page 直系时 `span` 无效（构建期会报）。全宽 16:9 的图会算出 945px 高、顶出 1080——要么包一层 `vk-grid` 给它 `span`，要么换更宽的 `ratio`。
+- **`vk-pin` 的 `side` 是强制边，不是偏好**：钉在整行宽的组件（tree 的一行、code 的整行）上时，气泡会被夹到画布边缘并压住内容。整行目标改用 `side="auto"` 或显式 `x` / `y`。
+- **`vk-cells` 的 `cols` 上限是 8**；8 列时地址会省略号截断，想要完整地址就减列或缩短地址。
+- **多行 `current`（`current="4-6"`）算一处焦点**：不要在一个组件里既写 `current` 又写 `focus`，那才是"两处"。
+- **带 `src` 的组件必须 `vk build`**：没预编译会 `stale`（`vk check` / `vk shot` 会红）。审阅页里出现空白帧，先怀疑这一条。
+- **`vk check` 逐页审计**：一个文档里有多张 `vk-page` 时，问题会带 `第 N 页`；不要以为"只查了第一页"。
+- **`vk shot` 默认删坏图**：有 error 时截图会被删掉，`--keep` 才保留——看不到图不一定是没生成。
+
+---
+
+## 10 · 一帧的度量
+
+`vk.metrics()`（`vk shot` 会打印一行）给出 `contentTop / contentBottom / contentLeft / contentRight / focus`。
+它只测量、不判定：一集里同一档帧型的 `contentTop` 应该相等，`focus` 应该恰好是 1。偏差超过 8px 或焦点为 0，多半是这一帧缺了主角。

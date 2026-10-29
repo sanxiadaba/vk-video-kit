@@ -1,5 +1,32 @@
 # Changelog
 
+## 12.1.0（未发布）
+
+「门禁可信」与「渲染对齐」：`vk check` 开始逐页审计，`vk shot` 不再放过白帧；九个组件的几何错误被修正。
+
+### 门禁
+
+- **逐页审计**：`auditPages()` 遍历文档里每一张 `vk-page`，问题带 `第 N 页` 归因；多帧审阅页不再是只查第 1 帧的盲区。
+- **`vk shot` 变严**：接 `console` / `pageerror`，校验 `vk.ready()` 的 `data-vk-ready`；有 error 时默认删除截图，`--keep` 才保留坏图。
+- **`content-clip` 容差按盒高**：`溢出 > max(6px, 盒高 20%)` 才算被压扁，120/88 档的字形墨迹不再误报。
+- **`vk.ready()` 之前不画**：字体 `font-display` 从 `block` 改为 `swap`，首帧不再白屏。
+
+### 组件
+
+- **`vk-code` / `vk-diff`**：缺预编译数据一律 `stale`，不再被 `lang="text"` 吞掉；`vk-diff` 少了 `lang` 也会报。
+- **`vk-asm`**：列模板由实际输出的列生成（`--vk-asm-cols`）；`address="none"` 与 `bytes` 的任意组合不再撞列；地址列改 `minmax(180px, max-content)`。
+- **`vk-asm` 解析器**：支持 `--no-show-raw-insn` 的反汇编与裸 `.s`（机器码段可为空、助记符后可不带空白）。
+- **`vk-bars`**：值列 `minmax(176px, max-content)`，所有条共用同一条 100% 基线。
+- **`vk-cells`**：值从第一行起排，地址贴底；无 `label` 的格子不再错位。
+- **`vk-quote`**：清掉 `blockquote` 的 UA `margin-inline: 40px`，左缘回到安全区。
+- **`vk-tree`**：`.vk-tree-more` 补 `line-height`，`limit` 截断时不再溢出 2px。
+- **`vk-term`**：`density="compact"` 真的压行高。
+- **`vk-steps`**：连线 `align-self: center`，跟随方框高度。
+- **线的对比度**：`--vk-paper-line-1` `#e3e9f1 → #d8e2ee`，`--vk-paper-line-3` `#c7d2df → #b9c7d7`；1/3 缩放下不再直接消失。
+
+### 新增
+
+- **`VK.metrics()`**：返回每帧的 `contentTop / contentBottom / contentLeft / contentRight / focus`，`vk shot` 顺带打印。只测量、不判定。
 ## 12.0.0
 
 一帧一套契约：子节点、状态、锚点、溢出都只有一种写法，写错在 build 报。破坏性版本。
