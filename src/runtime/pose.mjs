@@ -9,7 +9,10 @@
  * 但会被翻译成同一套数据属性——这样库里只有一条注意力路径。
  */
 
+// 元素上能用的只有三个动作；trace / badge / compare 是关系组件自带的（见 registry）。
 const ACTS = new Set(['focus', 'context', 'mark', 'trace', 'badge', 'compare']);
+/** 关系组件自带的动作：线 / 批注 / 对照。它们不参与元素姿态，只把自己的 act 写进 DOM 供审计读。 */
+const RELATION = { 'vk-edge': 'trace', 'vk-pin': 'badge', 'vk-diff': 'compare' };
 const STRENGTHS = new Set(['solid', 'soft', 'ghost']);
 
 /** 行/格这类「叶子」：focus 落成 data-state="current"，沿用已有的行配方。 */
@@ -37,6 +40,12 @@ function dimSiblings(el, amount) {
 }
 
 function apply(el) {
+  // 关系组件：把自带动作标进 DOM，作者写的词就能被一次说清。
+  const rel = RELATION[el.tagName?.toLowerCase()];
+  if (rel) {
+    el.dataset.act = el.getAttribute('act') || rel;
+    return;
+  }
   const act = el.getAttribute('act');
   if (!act || !ACTS.has(act)) return;
   const strength = STRENGTHS.has(el.getAttribute('strength')) ? el.getAttribute('strength') : 'solid';
@@ -49,7 +58,12 @@ function apply(el) {
     if (el.matches(ROWISH)) {
       if (!el.hasAttribute('state')) el.dataset.state = 'current';
     } else if (el.matches(BLOCKISH)) {
-      if (!el.hasAttribute('tone')) el.setAttribute('tone', 'focus');
+      // 块上的 focus 落成 tone：有渲染层的组件镜像到 .vk-xxx 的 data-tone，
+      // vk-text 没有渲染层，只能靠宿主上的 data-tone 命中——两边都写。
+      if (!el.hasAttribute('tone')) {
+        el.setAttribute('tone', 'focus');
+        el.dataset.tone = 'focus';
+      }
     }
   }
 
@@ -60,7 +74,8 @@ function apply(el) {
 }
 
 export function poseAll(root = document) {
-  for (const el of root.querySelectorAll('[act]')) apply(el);
+  // 元素看 act；关系组件没有 act 也要标，所以一起扫。
+  for (const el of root.querySelectorAll('[act], vk-edge, vk-pin, vk-diff')) apply(el);
 }
 
 export function installPose(VK) {
@@ -95,5 +110,10 @@ export function installPose(VK) {
     poseAll(root);
   };
 }
+
+
+
+
+
 
 

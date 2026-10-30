@@ -1806,6 +1806,33 @@ vk-stat { display: block; }
 .vk-stat[data-tone='focus'] .vk-stat-v,
 .vk-stat[data-tone='focus'] .vk-stat-m { color: var(--vk-focus); }
 .vk-stat[data-tone='focus'] .vk-stat-m { background: var(--vk-focus); }
+
+/* 块级焦点：数字、标题、正文、引文、提示框都只写 act="focus"，颜色按形状分派。
+   strength 只改响度：solid 是钴蓝本体，soft 淡化，ghost 退回墨色只留一道左条。
+   选择器挂在宿主元素上（标签名 + [data-act]），因为 data-act 是运行期写在宿主上的。 */
+vk-stat[data-act='focus'] .vk-stat-v,
+vk-title[data-act='focus'] .vk-title-main,
+vk-text[data-act='focus'],
+vk-quote[data-act='focus'] .vk-quote,
+vk-callout[data-act='focus'] .vk-callout-hd { color: var(--vk-focus); }
+
+vk-stat[data-act='focus'][data-strength='soft'] .vk-stat-v,
+vk-title[data-act='focus'][data-strength='soft'] .vk-title-main,
+vk-text[data-act='focus'][data-strength='soft'],
+vk-quote[data-act='focus'][data-strength='soft'] .vk-quote,
+vk-callout[data-act='focus'][data-strength='soft'] .vk-callout-hd {
+  color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
+}
+
+vk-stat[data-act='focus'][data-strength='ghost'] .vk-stat-v,
+vk-title[data-act='focus'][data-strength='ghost'] .vk-title-main,
+vk-text[data-act='focus'][data-strength='ghost'],
+vk-quote[data-act='focus'][data-strength='ghost'] .vk-quote,
+vk-callout[data-act='focus'][data-strength='ghost'] .vk-callout-hd {
+  color: var(--vk-ink-1);
+  box-shadow: inset 4px 0 0 var(--vk-focus);
+  padding-left: var(--vk-s2);
+}
 .vk-stat[data-tone='info'] .vk-stat-v { color: var(--vk-info); }
 .vk-stat[data-tone='info'] .vk-stat-m { background: var(--vk-info); }
 .vk-stat[data-tone='ok'] .vk-stat-v { color: var(--vk-ok); }
@@ -1870,6 +1897,8 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
+
 
 
 

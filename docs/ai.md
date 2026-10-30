@@ -21,9 +21,23 @@
 ## 2 · 字号与颜色
 
 1. 字阶七档：`label 36` · `data 40` · `body 48` · `subhead 96` · `title 144` · `hero 224` · `mega 320`。`hero`/`mega` 是「一个数字/一个词当家」的档，一帧最多一个，不要拿来当标题。旧名（display-2xl / display-xl / display / heading / meta）是别名，构建期会提示改名。
-2. 要读懂的内容用 52；元数据、标签、密集 ASCII 数据用 40（`data-meta` 标记），任何可读文字不低于 40。
+2. 要读懂的内容用 48；元数据、标签、密集 ASCII 数据用 36–40（`data-meta` 标记），任何可读文字不低于 36。
 3. 钴蓝只有一个含义：**正在讲这里**。它不做语法色——关键字与数字都是墨色 600，字符串是绿的。
 4. 语义色（对 / 错 / 注意）只出现在色条、底色、图标上，不写正文。
+5. 注意力只有一套词：`act` × `strength`。
+
+   | act | 写在哪 | 效果 |
+   |---|---|---|
+   | `focus` | 行 / 格子 / 块 | 行：16% 钴蓝底 + 4px 左条；块（数字、标题、正文、引文）：钴蓝 ink |
+   | `context` | 容器 | 兄弟退后（`dim` 默认 0.28），不画白幕、不画描边 |
+   | `mark` | 行 / 格子 | 石墨底 + 石墨左条——标注，不是「正在讲」 |
+   | `trace` | `<vk-edge>` | 关系线，可带箭头 |
+   | `badge` | `<vk-pin>` | 编号批注 + 引线 |
+   | `compare` | `<vk-diff>` | 对照 |
+
+   `strength` 只改响度：`solid`（默认）/ `soft` / `ghost`。
+   元素上只能写 `focus` / `context` / `mark`——`trace` / `badge` / `compare` 是关系组件自带的动作，
+   写在 `<li>` 或 `<vk-text>` 上构建期会报错并告诉你该用哪个组件。
 
 ## 3 · 内容入口
 
@@ -254,10 +268,10 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L4 关系 · 两点之间的关系与批注
 
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
-  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `at` · `dur` · `enter` · `ease` · `label-size` · `label-dx` · `label-dy` · `via`
+  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `act` · `at` · `dur` · `enter` · `ease` · `label-size` · `label-dx` · `label-dy` · `via`
   - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
-  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z` · `at` · `dur` · `enter` · `ease`
+  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z` · `act` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
@@ -304,3 +318,4 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-grid tracks`**：真轨道。`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，**px 会在构建期报错**（会让安全区与溢出检查失真）。等分仍用 `cols="1..6"`，两条路互斥。
 
 > `elevation` 声明的重叠会被审计放行，但每次放行都会打印一行「已豁免：A 压在 B 上」。看到这行就说明有人主动叠了层。
+

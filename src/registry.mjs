@@ -937,7 +937,7 @@ const COMMON = {
   stagger: { ...num({ min: 0, max: 2, step: 0.01 }), motion: true },
   /* L5 姿态层：act 是「做什么动作」，strength 是「多响」。两者都由运行期一遍写成
      data-act / data-strength，不改变子树结构，所以不进契约的子树探针，由 pose 测试覆盖。 */
-  act: { ...oneOf('focus', 'context', 'mark', 'trace', 'badge', 'compare'), pose: true },
+  act: { ...oneOf('focus', 'context', 'mark'), pose: true },
   strength: { ...oneOf('solid', 'soft', 'ghost'), default: 'solid', pose: true },
 };
 /** 布局协议：由 Frame 基类统一实现，不属于组件自己的 API；`vk doc` 默认折叠。 */
@@ -1021,6 +1021,11 @@ const MOTION_ATTRS = {
   enter: { ...oneOf('fade', 'wipe', 'none'), default: 'none', motion: true },
   ease: { ...oneOf('linear', 'out-cubic', 'out-quint', 'out-expo', 'in-cubic', 'in-out-sine'), motion: true },
 };
+/* 关系类各自只有一个动作：线是 trace、批注是 badge、对照是 compare。
+   它们是组件，不是元素上的形容词——所以 act 的词表在这里只开一个值。 */
+for (const [tag, value] of [['vk-edge', 'trace'], ['vk-pin', 'badge'], ['vk-diff', 'compare']]) {
+  if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), act: { ...oneOf(value), default: value, pose: true } };
+}
 for (const tag of ['vk-ring', 'vk-spotlight', 'vk-pin', 'vk-edge']) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), ...MOTION_ATTRS };
 }
@@ -1146,6 +1151,7 @@ export function validate() {
   }
   return errors;
 }
+
 
 
 

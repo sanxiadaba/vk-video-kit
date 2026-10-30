@@ -751,6 +751,14 @@ function validateAuthorHtml(doc, file) {
           );
         continue;
       }
+      // 关系不是形容词：trace / badge / compare 各有自己的组件，元素上写它们没有意义。
+      if (name === 'act' && (raw === 'trace' || raw === 'badge' || raw === 'compare')) {
+        const tool = { trace: 'vk-edge', badge: 'vk-pin', compare: 'vk-diff' }[raw];
+        errors.push(
+          `${file}:${lineOf(node)} <${node.tagName}> 的 act="${raw}" 不是元素动作；关系用 <${tool}>（它是组件，不是形容词）。元素上可写：focus / context / mark`
+        );
+        continue;
+      }
       if (spec.values && !spec.values.includes(raw)) {
         // 13.0 改过档位名：旧名一版内仍然生效（运行期会折成新名），所以只提示、不拦构建。
         if (name === 'size' && TIER_ALIAS[raw]) {
