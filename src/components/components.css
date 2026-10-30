@@ -386,7 +386,7 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after { top: 0; }
   flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s1));
   padding-right: var(--vk-s1);
   margin-right: var(--vk-s1);
-  border-right: 1px solid var(--vk-win-rule);
+  border-right: 2px solid var(--vk-win-rule);
   background: transparent;
   box-shadow: none;
   text-shadow: none;
@@ -854,7 +854,7 @@ vk-figure:has(vk-img[data-error]) .vk-fig-img { visibility: hidden; }
   height: 48px;
   line-height: 1.2;
   padding: 0 var(--vk-s3);
-  border: 1px solid var(--vk-win-rule);
+  border: 2px solid var(--vk-win-rule);
   border-radius: var(--vk-r-pill);
   background: var(--vk-win-bg);
   font-family: var(--vk-font-mono);
@@ -925,7 +925,7 @@ vk-tree { display: block; }
   height: 56px;
   padding-left: calc(var(--depth, 0) * 40px + 4px);
   padding-right: var(--vk-s2);
-  border-bottom: 1px solid var(--vk-line-2);
+  border-bottom: 2px solid var(--vk-line-2);
 }
 .vk-tree-name {
   flex: 1 1 auto;
@@ -970,7 +970,7 @@ vk-tree { display: block; }
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
   color: var(--vk-ink-4);
-  border-bottom: 1px solid var(--vk-line-2);
+  border-bottom: 2px solid var(--vk-line-2);
 }
 /* 文件类型是结构，不是标注：图标统一墨阶，靠形状而不是色相区分。 */
 .vk-tree-row[data-ext='py'] .vk-ic,
@@ -1220,7 +1220,7 @@ vk-cells { display: block; }
   min-width: 0;
   height: 50px;
   padding-top: 4px;
-  border-top: 1px solid var(--vk-line-1);
+  border-top: 2px solid var(--vk-line-1);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);
   line-height: 1;

@@ -10,7 +10,7 @@
 
 vk-asm { display: block; }
 .vk-asm {
-  border: 1px solid var(--vk-line-3);
+  border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-win-radius);
   background: var(--vk-surface-1);
   color: var(--vk-ink-1);
@@ -24,7 +24,7 @@ vk-asm { display: block; }
   gap: var(--vk-s2);
   height: var(--vk-win-hd);
   padding: 0 var(--vk-s3);
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
   background: var(--vk-surface-2);
 }
 .vk-asm-file {
@@ -38,7 +38,7 @@ vk-asm { display: block; }
   margin-left: auto;
   font-size: var(--vk-t-meta);
   color: var(--vk-ink-4);
-  border: 1px solid var(--vk-line-3);
+  border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-r-1);
   padding: 0 10px;
   line-height: 36px;
@@ -55,7 +55,7 @@ vk-asm { display: block; }
 
 .vk-asm-cols-hd {
   min-height: 44px;
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
   color: var(--vk-ink-4);
   font-family: var(--vk-font-sans);
   font-size: var(--vk-t-meta);
@@ -74,7 +74,7 @@ vk-asm { display: block; }
   min-height: 52px;
   font-size: var(--vk-t-meta);
   line-height: 1.2;
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
   white-space: pre;
 }
 .vk-asm-row:last-child { border-bottom: 0; }
@@ -161,7 +161,7 @@ vk-timeline { display: block; }
   justify-content: space-between;
   gap: var(--vk-s3);
   padding-bottom: var(--vk-s2);
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
 }
 .vk-tl-title { font-size: var(--vk-t-body); font-weight: var(--vk-w-med); }
 .vk-tl-meta { font-size: var(--vk-t-meta); color: var(--vk-ink-3); font-family: var(--vk-font-mono); }
@@ -242,11 +242,11 @@ vk-timeline { display: block; }
   display: grid;
   grid-template-columns: minmax(140px, 0.8fr) minmax(0, 3.2fr);
   margin-top: var(--vk-s4);
-  border-top: 1px solid var(--vk-line-1);
+  border-top: 2px solid var(--vk-line-1);
 }
 .vk-tl-lane-hd,
 .vk-tl-step-hd {
-  border-bottom: 1px solid var(--vk-line-3);
+  border-bottom: 2px solid var(--vk-line-3);
 }
 .vk-tl-step-hd {
   display: grid;
@@ -264,14 +264,14 @@ vk-timeline { display: block; }
   display: flex;
   align-items: center;
   padding: var(--vk-s2) var(--vk-s3) var(--vk-s2) 0;
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
   font-size: var(--vk-t-body);
   font-weight: var(--vk-w-med);
   font-family: var(--vk-font-mono);
   white-space: nowrap;
 }
 .vk-tl-track {
-  border-bottom: 1px solid var(--vk-line-1);
+  border-bottom: 2px solid var(--vk-line-1);
   padding: var(--vk-s1) 0;
 }
 .vk-tl-chips {

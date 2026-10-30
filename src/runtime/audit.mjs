@@ -6,16 +6,18 @@
  */
 
 /**
- * 五档字阶的两个门槛：
- * - 40 是硬地板（元数据 / 标签 / 密集 ASCII 数据都在这一档）。
- * - 52 是"要读懂的内容"的门槛：一整句中文如果落在 40，就是排错了。
+ * 13.0 尺度梯的两个门槛（观看条件：手机横屏 0.38×）：
+ * - 36 是硬地板（行号 / 单位 / 刻度 / 出处），0.38× 下 13.7px。
+ * - 48 是"要读懂的内容"的门槛：一整句中文落在 36 或 40，就是排错了。
  *   用"含汉字 + 长于 12 字"判定"一整句"，短标签不算。
+ * - 等宽数据（代码 / 表格数字 / 地址）走 40，x-height 比汉字大，可读性接近 48。
  */
-const MIN_FONT = 40;
-const CONTENT_FONT = 52;
+const MIN_FONT = 36;
+const CONTENT_FONT = 48;
 const MIN_RATIO = 4.5;
 const LARGE_RATIO = 3;
-const LARGE_FONT = 72;
+const LARGE_FONT = 96;
+const DATA_FONT = 40;
 const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-spotlight']);
 
 export function auditPage(root = document) {

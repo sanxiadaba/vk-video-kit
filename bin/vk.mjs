@@ -5,6 +5,7 @@
  *   vk build [files...]   把 <vk-code src> 与 <vk-math> 预编译成自包含 HTML
  *   vk check <page>       结构自检（字号/对比度/安全区/溢出/重叠/空锚点）
  *   vk shot <page>        出一张 1920×1080
+ *   vk series             跨帧量一集：体量 / 骨架 / 字阶 / 焦点 / 白占比
  *   vk serve [port]       开发服务器，改文件刷新即见
  *   vk tags               列出 37 个标签
  *   vk doc <tag>          看某个标签的属性、内容与默认值
@@ -49,6 +50,11 @@ if (cmd === 'build' || cmd === 'check-build') {
   const m = await need('playwright-core', '截图');
   await m;
   await import('../cli/shot.mjs');
+} else if (cmd === 'series') {
+  process.argv = [process.argv[0], 'series', ...rest];
+  const m = await need('playwright-core', '跨帧度量');
+  await m;
+  await import('../cli/series.mjs');
 } else if (cmd === 'tags') {
   const { TAGS, TAG_NAMES, LAYERS } = await import('../src/registry.mjs');
   if (rest.includes('--json')) {

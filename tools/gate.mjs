@@ -29,7 +29,7 @@ import { SITE } from './lib/paths.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { TAGS } from '../src/registry.mjs';
 
-const MIN_FONT = 44; // 44 design px，不是 43.5
+const MIN_FONT = 36; // 13.0 地板：36 design px = 手机 13.7px
 const MIN_RATIO = 4.5;
 const LARGE_RATIO = 3;
 const LARGE_FONT = 72;
@@ -552,3 +552,4 @@ if (!checked) {
     `\n门禁全绿（${seen}/${total} 个检查对象${cacheHits ? `，${cacheHits} 个缓存命中` : ''}，预设像素差${checkPresets ? '已跑' : '已跳过'}）。`
   );
 }
+

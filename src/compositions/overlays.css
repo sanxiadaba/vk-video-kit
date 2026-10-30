@@ -49,7 +49,7 @@ vk-pin {
   position: absolute;
   box-sizing: border-box;
   padding: var(--vk-s2) var(--vk-s3);
-  border: 1px solid var(--vk-line-3);
+  border: 2px solid var(--vk-line-3);
   border-left: 4px solid var(--vk-info);
   border-radius: var(--vk-r-3);
   background: var(--vk-surface-1);

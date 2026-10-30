@@ -1,0 +1,268 @@
+#!/usr/bin/env node
+/**
+ * vk series —— 一集的横尺子。
+ *
+ *   node cli/series.mjs --pages frames/*.html --shots shots/*.png
+ *   node cli/series.mjs --pages ... --shots ... --json
+ *
+ * 为什么要有它：`vk check` 逐页看，看不见"12 帧连起来像不像一个视频"。
+ * 那件事只能跨帧量：体量曲线、骨架重复、字阶分布、墨量与白占比、焦点面积。
+ *
+ * 两类输出，语气不同：
+ *   ✗ 本层语义（可硬失败）：焦点不唯一 / 无焦点 / 焦点面积出界 / 字阶档数超限
+ *   △ 编排判断（只报告）：主角过小 / 断层不足 / 连续同骨架 / 白过多 / 重心偏上
+ */
+import fs from 'node:fs';
+import path from 'node:path';
+import { pathToFileURL } from 'node:url';
+import { PNG } from 'pngjs';
+
+const args = process.argv.slice(2);
+const json = args.includes('--json');
+const val = (name) => {
+  const i = args.indexOf(name);
+  return i >= 0 ? args[i + 1] : null;
+};
+const list = (name) => {
+  const v = val(name);
+  return v ? v.split(',').filter(Boolean) : [];
+};
+const pages = list('--pages');
+const shots = list('--shots');
+const PAGE_W = 1920;
+const SAFE = { x: 120, y: 96, w: 1680, h: 888 };
+const GOLDEN = 1080 / 1.618033988749895;
+
+/* ------------------------------------------------------------------ 像素 */
+
+const L = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
+
+function pixels(file) {
+  const png = PNG.sync.read(fs.readFileSync(file));
+  const { width, height, data } = png;
+  let ink = 0;
+  let solid = 0;
+  let white = 0;
+  let sum = 0;
+  let wy = 0;
+  let minX = width;
+  let minY = height;
+  let maxX = 0;
+  let maxY = 0;
+  // 2× 降采样网格，用来找最大连通块
+  const dw = Math.ceil(width / 2);
+  const dh = Math.ceil(height / 2);
+  const grid = new Uint8Array(dw * dh);
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      const l = L(data[i], data[i + 1], data[i + 2]);
+      const w = 255 - l;
+      if (l >= 250) {
+        white++;
+        continue;
+      }
+      ink++;
+      sum += w;
+      wy += w * y;
+      if (l < 170) solid++;
+      if (x < minX) minX = x;
+      if (x > maxX) maxX = x;
+      if (y < minY) minY = y;
+      if (y > maxY) maxY = y;
+      if (l < 170) {
+        const gx = x >> 1;
+        const gy = y >> 1;
+        grid[gy * dw + gx] = 1;
+      }
+    }
+  }
+  const mass = biggestBlob(grid, dw, dh) * 4; // 每个降采格 = 4 像素
+  return {
+    ink: ink / (width * height),
+    solid: solid / (width * height),
+    white: white / (width * height),
+    centroidY: sum ? wy / sum : 0,
+    bbox: [minX, minY, maxX, maxY],
+    mass: mass / (SAFE.w * SAFE.h),
+  };
+}
+
+/** 8 连通域里最大的一块（降采样网格上数格子） */
+function biggestBlob(grid, w, h) {
+  const seen = new Uint8Array(w * h);
+  let best = 0;
+  const stack = [];
+  for (let i = 0; i < grid.length; i++) {
+    if (!grid[i] || seen[i]) continue;
+    let n = 0;
+    stack.push(i);
+    seen[i] = 1;
+    while (stack.length) {
+      const p = stack.pop();
+      n++;
+      const x = p % w;
+      const y = (p - x) / w;
+      for (let dy = -1; dy <= 1; dy++) {
+        for (let dx = -1; dx <= 1; dx++) {
+          const nx = x + dx;
+          const ny = y + dy;
+          if (nx < 0 || ny < 0 || nx >= w || ny >= h) continue;
+          const q = ny * w + nx;
+          if (!grid[q] || seen[q]) continue;
+          seen[q] = 1;
+          stack.push(q);
+        }
+      }
+    }
+    if (n > best) best = n;
+  }
+  return best;
+}
+
+/* -------------------------------------------------------------------- DOM */
+
+async function domFacts(browser, file) {
+  const tab = await browser.newPage({ viewport: { width: PAGE_W, height: 1080 }, deviceScaleFactor: 1 });
+  try {
+    await tab.goto(pathToFileURL(path.resolve(file)).href, { waitUntil: 'load' });
+    await tab.evaluate(async () => {
+      await window.vk?.ready?.();
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    });
+    return await tab.evaluate(() => {
+      const stage = document.querySelector('.vk-page, .vk-stage') || document.body;
+      const safe = stage.querySelector('.vk-page-bd') || stage;
+      const sr = safe.getBoundingClientRect();
+      const tiers = new Map();
+      let focus = 0;
+      let focusArea = 0;
+      let blocks = 0;
+      let maxBottom = 0;
+      let contentTop = null;
+      for (const el of safe.querySelectorAll('*')) {
+        const r = el.getBoundingClientRect();
+        const cs = getComputedStyle(el);
+        if (cs.display === 'none' || r.width < 1 || r.height < 1) continue;
+        if (el.closest('svg')) continue;
+        const own = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
+        if (own) {
+          const fs = Math.round(parseFloat(cs.fontSize));
+          tiers.set(fs, (tiers.get(fs) || 0) + 1);
+        }
+        if (el.matches('[data-vk-focus], .is-hl, [data-state="current"], [data-current], .vk-spotlight-ring')) {
+          focus++;
+          focusArea += r.width * r.height;
+        }
+        if (el.matches('vk-stack, vk-grid, vk-row, vk-canvas')) blocks++;
+        if (r.bottom - sr.top > maxBottom) maxBottom = r.bottom - sr.top;
+        if (contentTop === null && el.matches('vk-title, .vk-title')) contentTop = r.top - sr.top;
+      }
+      const sizes = [...tiers.entries()].sort((a, b) => b[0] - a[0]);
+      const maxType = sizes.length ? sizes[0][0] : 0;
+      const bodyType = sizes.find(([s]) => s <= 48)?.[0] || 48;
+      return {
+        tiers: sizes.map(([s, n]) => `${s}×${n}`),
+        tierCount: sizes.length,
+        maxType,
+        bodyType,
+        focus,
+        focusArea: Math.round((focusArea / (sr.width * sr.height)) * 1000) / 10,
+        blocks,
+        contentTop: contentTop === null ? null : Math.round(contentTop),
+        contentBottom: Math.round(maxBottom),
+        align: stage.getAttribute('align') || stage.dataset.align || 'top',
+        bleed: !!stage.querySelector('.vk-page-bleed > *'),
+      };
+    });
+  } finally {
+    await tab.close();
+  }
+}
+
+/* ------------------------------------------------------------------- run */
+
+let chromium;
+try {
+  ({ chromium } = await import('playwright'));
+} catch {
+  ({ chromium } = await import('playwright-core'));
+}
+const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+
+const byName = new Map(
+  shots.map((s) => [
+    path.basename(s).replace(/^new/, '').replace(/\.png$/, ''),
+    s,
+  ])
+);
+
+const rows = [];
+for (const page of pages) {
+  const id = path.basename(page).replace(/\.html$/, '');
+  const shot = byName.get(id);
+  const dom = await domFacts(browser, page);
+  const px = shot ? pixels(shot) : null;
+  const skeleton = [Math.round((dom.contentTop ?? 0) / 24), Math.round(dom.contentBottom / 48), dom.blocks, dom.maxType, dom.align].join('/');
+  rows.push({ id, ...dom, px, skeleton });
+}
+await browser.close();
+
+/* ----------------------------------------------------------------- 判定 */
+
+const flags = [];
+for (const r of rows) {
+  if (r.focus === 0) flags.push({ id: r.id, level: 'warn', what: '没有焦点：这一帧没有"正在讲这里"' });
+  if (r.focus > 1) flags.push({ id: r.id, level: 'fail', what: `${r.focus} 处焦点（应恰好 1 处 region）` });
+  if (r.focusArea > 6) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 6%（高亮比内容还重）` });
+  if (r.tierCount > 3) flags.push({ id: r.id, level: 'warn', what: `${r.tierCount} 档字号（一帧 ≤3 档）` });
+  if (r.maxType / r.bodyType < 1.8) flags.push({ id: r.id, level: 'warn', what: `断层 ${(r.maxType / r.bodyType).toFixed(2)}× < 1.8×` });
+  if (r.px) {
+    if (r.px.mass < 0.12) flags.push({ id: r.id, level: 'warn', what: `主角 ${(r.px.mass * 100).toFixed(1)}% < 12%（最大实块压不住纸）` });
+    if (r.px.white > 0.92) flags.push({ id: r.id, level: 'warn', what: `白 ${(r.px.white * 100).toFixed(1)}%（近空页）` });
+    const d = r.px.centroidY - GOLDEN;
+    if (d < -180) flags.push({ id: r.id, level: 'warn', what: `重心 y=${Math.round(r.px.centroidY)}，比黄金线高 ${Math.round(-d)}px` });
+  }
+}
+for (let i = 1; i < rows.length; i++) {
+  if (rows[i].skeleton === rows[i - 1].skeleton) {
+    flags.push({ id: `${rows[i - 1].id}→${rows[i].id}`, level: 'warn', what: '相邻两帧同一骨架' });
+  }
+}
+
+if (json) {
+  console.log(JSON.stringify({ rows, flags }, null, 2));
+} else {
+  const head = ['帧', '字阶', '最大/正文', '焦点', '焦点%', '主角%', '墨%', '白%', '重心', '骨架'];
+  const body = rows.map((r) => [
+    r.id,
+    String(r.tierCount),
+    `${r.maxType}/${r.bodyType}`,
+    String(r.focus),
+    r.focusArea.toFixed(1),
+    r.px ? (r.px.mass * 100).toFixed(1) : '—',
+    r.px ? (r.px.ink * 100).toFixed(1) : '—',
+    r.px ? (r.px.white * 100).toFixed(1) : '—',
+    r.px ? String(Math.round(r.px.centroidY)) : '—',
+    r.skeleton,
+  ]);
+  const w = head.map((h, i) => Math.max(width(h), ...body.map((b) => width(b[i]))));
+  const pad = (s, i) => s + ' '.repeat(w[i] - width(s));
+  console.log(head.map(pad).join('  '));
+  console.log(w.map((n) => '─'.repeat(n)).join('  '));
+  for (const b of body) console.log(b.map(pad).join('  '));
+  const bad = flags.filter((f) => f.level === 'fail').length;
+  const warn = flags.filter((f) => f.level === 'warn').length;
+  if (flags.length) {
+    console.log('');
+    for (const f of flags) console.log(`  ${f.level === 'fail' ? '✗' : '△'} ${f.id}  ${f.what}`);
+  }
+  console.log(`\n${rows.length} 帧 · ${bad} 条硬伤 · ${warn} 条提醒`);
+  process.exitCode = bad ? 1 : 0;
+}
+
+function width(s) {
+  let n = 0;
+  for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
+  return n;
+}

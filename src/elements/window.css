@@ -95,7 +95,7 @@
   padding: 0 14px 0 4px;
   overflow: hidden;
   text-overflow: ellipsis;
-  border: 1px solid var(--vk-win-tab-line);
+  border: 2px solid var(--vk-win-tab-line);
   border-radius: 6px;
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
@@ -120,7 +120,7 @@
   margin-left: auto;
   flex: 0 0 auto;
   padding: 2px 8px;
-  border: 1px solid var(--vk-win-tab-line);
+  border: 2px solid var(--vk-win-tab-line);
   border-radius: 4px;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-meta);

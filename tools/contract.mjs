@@ -258,11 +258,11 @@ function visualInPage(tag) {
     if (hasText && opaque(el)) {
       const fs = parseFloat(cs.fontSize);
       const meta = el.closest?.('[data-meta]');
-      if (!meta && fs < 39.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
+      if (!meta && fs < 35.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));
-        const need = fs >= 72 ? 3 : 4.5;
+        const need = fs >= 96 ? 3 : 4.5;
         if (cr < need) out.push({ type: 'contrast', what: (el.className || el.tagName).toString().slice(0, 50), cr: +cr.toFixed(2), need });
       }
     }
@@ -568,3 +568,4 @@ if (failures.length) {
     `\n契约通过：${checked.length} 个属性 / state，${tags.length + cacheHits}/${totalTags} 个标签${cacheHits ? `（${cacheHits} 个缓存命中）` : ''}。`
   );
 }
+
