@@ -254,16 +254,16 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L4 关系 · 两点之间的关系与批注
 
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
-  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `label-size` · `label-dx` · `label-dy` · `via`
+  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `at` · `dur` · `enter` · `ease` · `label-size` · `label-dx` · `label-dy` · `via`
   - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
-  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z`
+  - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
-  - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z`
+  - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`
 - **`vk-spotlight`** · 聚光 — 聚光：目标保持原样，其余逐层退后。不画遮罩、不画描边；可多目标，keep 里的东西不退。
-  - 属性：`for` · `dim` · `keep` · `z`
+  - 属性：`for` · `dim` · `keep` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-spotlight for="#spot-target" dim="0.45">`
 
 ### L5 页面 · 一整张 1920×1080 的画布

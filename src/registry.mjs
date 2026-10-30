@@ -1003,6 +1003,16 @@ const EXTRA = {
     overflow: oneOf('visible', 'clip'),
   },
 };
+/* 关系覆盖层也要能被编排：at / enter 同样作用于 ring / spotlight / pin / edge。 */
+const MOTION_ATTRS = {
+  at: { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
+  dur: { ...num({ min: 0, max: 60, step: 0.01 }), motion: true },
+  enter: { ...oneOf('fade', 'wipe', 'none'), default: 'none', motion: true },
+  ease: { ...oneOf('linear', 'out-cubic', 'out-quint', 'out-expo', 'in-cubic', 'in-out-sine'), motion: true },
+};
+for (const tag of ['vk-ring', 'vk-spotlight', 'vk-pin', 'vk-edge']) {
+  if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), ...MOTION_ATTRS };
+}
 for (const [tag, attrs] of Object.entries(EXTRA)) {
   const def = TAGS[tag];
   if (!def) continue;
@@ -1125,6 +1135,7 @@ export function validate() {
   }
   return errors;
 }
+
 
 
 

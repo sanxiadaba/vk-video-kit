@@ -78,7 +78,7 @@ export function plan(root = document) {
 
   // 容器上的 stagger：直接子元素依次入场
   for (const host of scene.querySelectorAll('[stagger]')) {
-    if (inTimeline(host) || host.closest('[data-vk-overlay]')) continue;
+    if (inTimeline(host) || host.parentElement?.closest('[data-vk-overlay]')) continue;
     const step = num(host.getAttribute('stagger'), 0.06);
     const base = num(host.getAttribute('at'), 0);
     const enter = host.getAttribute('enter') || 'rise';
@@ -99,7 +99,7 @@ export function plan(root = document) {
 
   // 单个元素上的 at/enter
   for (const el of scene.querySelectorAll('[at], [enter]')) {
-    if (inTimeline(el) || el.closest('[data-vk-overlay]')) continue;
+    if (inTimeline(el) || el.parentElement?.closest('[data-vk-overlay]')) continue;
     if (el.hasAttribute('stagger')) continue; // 容器自己已经展开
     push(el, num(el.getAttribute('at'), 0), {});
   }
@@ -199,6 +199,7 @@ export function installDirector(VK) {
     return current;
   };
 }
+
 
 
 
