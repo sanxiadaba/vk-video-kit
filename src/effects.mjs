@@ -33,6 +33,8 @@ export const EFFECTS = {
     crop: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
     'crop-label': { on: '.vk-fig-crop-label', kind: 'text' },
     chrome: { on: 'vk-figure .vk-hd', kind: 'style', prop: 'display' },
+    shadow: { on: '.vk-fig-win', kind: 'style', prop: 'box-shadow' },
+    bleed: { on: 'vk-figure', kind: 'attr', prop: 'data-bleed', skipVisual: true },
     w: { on: 'vk-figure', kind: 'geometry', prop: 'width' },
   },
 
@@ -429,6 +431,8 @@ Object.assign(EFFECTS['vk-asm'], {
   'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
   'operands-label': { on: '.vk-asm-o', kind: 'text' },
 });
+
+
 
 
 

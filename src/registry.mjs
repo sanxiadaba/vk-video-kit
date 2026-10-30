@@ -180,7 +180,7 @@ const DEFAULTS = {
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all' },
   'vk-table': { variant: 'ledger', density: 'normal', size: 'normal' },
   'vk-math': { size: 'body' },
-  'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'min' },
+  'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'none', shadow: 'none', bleed: 'none' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min' },
   'vk-window': { chrome: 'min', pad: 'lg' },
   'vk-quote': { variant: 'rule', size: 'body' },
@@ -333,7 +333,7 @@ export const TAGS = {
     layer: 'layout',
     summary: '纵向节奏。只给间距和对齐，不画任何东西。',
     attrs: {
-      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
+      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
       'align': oneOf('start', 'center', 'end', 'stretch'),
       'justify': oneOf('start', 'center', 'end', 'between'),
       'grow': { ...bool(), hidden: true },
@@ -344,7 +344,7 @@ export const TAGS = {
     layer: 'layout',
     summary: '横向排列。可换行、可两端推开。',
     attrs: {
-      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
+      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
       'align': oneOf('top', 'center', 'bottom', 'stretch', 'baseline'),
       'justify': oneOf('start', 'center', 'end', 'between'),
       'wrap': bool(),
@@ -358,7 +358,7 @@ export const TAGS = {
       'cols': oneOf('1', '2', '3', '4', '5', '6'),
       'tracks': text(),
       'rows': { ...oneOf('1', '2', '3', '4', '5', '6'), context: 'bounded-height' },
-      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
+      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
       'gap-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'gap-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'align': oneOf('start', 'center', 'end', 'stretch'),
@@ -438,7 +438,7 @@ export const TAGS = {
     attrs: {
       'rule': bool(),
       'bare': bool(),
-          'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
+          'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
     },
   },
   'vk-tag': {
@@ -598,9 +598,11 @@ export const TAGS = {
       'ratio': text(),
       'crop': text(),
       'crop-label': text(),
-      'fit': oneOf('cover', 'contain'),
-      'chrome': oneOf('min', 'none'),
-        },
+      'fit': oneOf('cover', 'contain', 'none'),
+      'chrome': oneOf('none', 'min', 'plain'),
+      'shadow': oneOf('none', 'sm', 'md', 'lg'),
+      'bleed': oneOf('none', 'left', 'right', 'full', 'y'),
+    },
   },
   'vk-tree': {
     name: '文件树',
@@ -1140,6 +1142,8 @@ export function validate() {
   }
   return errors;
 }
+
+
 
 
 

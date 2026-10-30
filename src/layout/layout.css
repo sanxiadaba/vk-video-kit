@@ -14,6 +14,9 @@ vk-stack {
   min-width: 0;
 }
 vk-stack[gap='2xs'] { gap: var(--vk-s1); }
+vk-stack[gap='group'] { gap: var(--vk-gap-group); }
+vk-stack[gap='section'] { gap: var(--vk-gap-section); }
+vk-stack[gap='plate'] { gap: var(--vk-gap-plate); }
 vk-stack[gap='xs'] { gap: var(--vk-s2); }
 vk-stack[gap='sm'] { gap: var(--vk-s3); }
 vk-stack[gap='md'] { gap: var(--vk-s4); }
@@ -44,6 +47,9 @@ vk-row {
   min-width: 0;
 }
 vk-row[gap='2xs'] { gap: var(--vk-s1); }
+vk-row[gap='group'] { gap: var(--vk-gap-group); }
+vk-row[gap='section'] { gap: var(--vk-gap-section); }
+vk-row[gap='plate'] { gap: var(--vk-gap-plate); }
 vk-row[gap='xs'] { gap: var(--vk-s2); }
 vk-row[gap='sm'] { gap: var(--vk-s3); }
 vk-row[gap='md'] { gap: var(--vk-s4); }
@@ -129,6 +135,9 @@ vk-grid > [row-span='5'] { grid-row: span 5; }
 vk-grid > [row-span='6'] { grid-row: span 6; }
 
 vk-grid[gap='2xs'] { gap: var(--vk-s1); }
+vk-grid[gap='group'] { gap: var(--vk-gap-group); }
+vk-grid[gap='section'] { gap: var(--vk-gap-section); }
+vk-grid[gap='plate'] { gap: var(--vk-gap-plate); }
 vk-grid[gap='xs'] { gap: var(--vk-s2); }
 vk-grid[gap='sm'] { gap: var(--vk-s3); }
 vk-grid[gap='md'] { gap: var(--vk-s4); }
@@ -284,4 +293,5 @@ vk-edge[label-size='meta'] .vk-edge-label { font-size: var(--vk-t-meta); }
 /* `align` 与 HTML 遗留提示 [align=center]{text-align:center} 撞名：
    布局原语必须自己把文字对齐复位，否则整个子树的文字会被居中。 */
 vk-stack, vk-row, vk-grid, vk-canvas { text-align: start; }
+
 

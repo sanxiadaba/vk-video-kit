@@ -119,6 +119,9 @@ vk-list[gap='xs'] .vk-list { --vk-list-gap: var(--vk-s2); }
 vk-list[gap='sm'] .vk-list { --vk-list-gap: var(--vk-s3); }
 vk-list[gap='md'] .vk-list { --vk-list-gap: var(--vk-s4); }
 vk-list[gap='lg'] .vk-list { --vk-list-gap: var(--vk-s5); }
+vk-list[gap='group'] .vk-list { --vk-list-gap: var(--vk-gap-group); }
+vk-list[gap='section'] .vk-list { --vk-list-gap: var(--vk-gap-section); }
+vk-list[gap='plate'] .vk-list { --vk-list-gap: var(--vk-gap-plate); }
 vk-list[gap='xl'] .vk-list { --vk-list-gap: var(--vk-s6); }
 vk-list[gap='2xl'] .vk-list { --vk-list-gap: var(--vk-s7); }
 vk-list[gap='3xl'] .vk-list { --vk-list-gap: var(--vk-s8); }
@@ -816,6 +819,27 @@ vk-math[size='meta'] .vk-math { font-size: var(--vk-t-meta); }
   width: 100%;
   height: 100%;
 }
+
+/* 场与层：图版的三件事——投影、出血、像素对齐。
+   1px 的边框在手机 0.38× 下等于没有，所以层次只能靠投影（永远不用纯黑）。 */
+.vk-fig-win[data-shadow='sm'] { box-shadow: var(--vk-elev-1); }
+.vk-fig-win[data-shadow='md'] { box-shadow: 0 8px 24px -12px rgba(11, 15, 20, 0.18), 0 0 0 2px rgba(11, 15, 20, 0.04); }
+.vk-fig-win[data-shadow='lg'] { box-shadow: 0 32px 80px -40px rgba(11, 15, 20, 0.35), 0 0 0 2px rgba(11, 15, 20, 0.05); }
+.vk-fig-win[data-fit='none'] .vk-fig-img { object-fit: none; }
+.vk-fig-win[data-fit='contain'] .vk-fig-img { object-fit: contain; }
+
+/* 出血：往纸边上顶。负内距抵消 .vk-page 的 120/96，只允许物证类物件这么干。 */
+vk-figure[bleed='left'] { margin-left: calc(-1 * var(--vk-safe-x)); }
+vk-figure[bleed='right'] { margin-right: calc(-1 * var(--vk-safe-x)); }
+vk-figure[bleed='full'] {
+  margin-left: calc(-1 * var(--vk-safe-x));
+  margin-right: calc(-1 * var(--vk-safe-x));
+}
+vk-figure[bleed='y'] { margin-bottom: calc(-1 * var(--vk-safe-y)); }
+vk-figure[bleed='full'] .vk-fig-win,
+vk-figure[bleed='left'] .vk-fig-win,
+vk-figure[bleed='right'] .vk-fig-win { border-radius: 0; }
+
 .vk-fig-ph {
   position: absolute;
   inset: 0;

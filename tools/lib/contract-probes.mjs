@@ -226,6 +226,7 @@ export const VISUAL_EXEMPT = {
   'vk-cells.size': 'hero 档把格子撑到 300px，标本台装不下；只断言 min-height 变了。',
   'vk-term.size': 'hero 档把终端撑到整帧，标本台装不下；只断言行高变了。',
   'vk-table.size': 'hero 档加内距会把表格撑出标本台；只断言内距变了。',
+  'vk-figure.bleed': '出血是负边距，只改几何不改墨；越界由真实帧负责。',
 };
 
 /**
@@ -305,4 +306,5 @@ export function visualExemptReason(key) {
   for (const p of VISUAL_PATTERNS) if (p.match.test(key)) return p.reason;
   return null;
 }
+
 

@@ -211,11 +211,16 @@ export class VkFigure extends VkElement {
     const url = this.getAttribute('url') || '';
     const ratioRaw = this.getAttribute('ratio') || '16 / 9';
     const rm = ratioRaw.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
-    const ratio = rm && Number(rm[1]) / Number(rm[2]) >= 0.4 && Number(rm[1]) / Number(rm[2]) <= 4 ? ratioRaw : '16 / 9';
+    // 终端截图可以很宽（4–6:1），海报可以很高；只拦明显写错的。
+    const ratio = rm && Number(rm[1]) / Number(rm[2]) >= 0.25 && Number(rm[1]) / Number(rm[2]) <= 8 ? ratioRaw : '16 / 9';
     if (ratio !== ratioRaw) this._warnOnce('ratio', `的 ratio="${ratioRaw}" 不合法，按 16 / 9 处理`);
     const fit = this.getAttribute('fit') || 'cover';
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
-    const chrome = this.getAttribute('chrome') || 'min';
+    // 13.0：默认不套窗头。真实截图自带浏览器/终端外壳，再套一层假三点，
+    // 观众会先看到"这图贴歪了"。要窗头自己写 chrome="min"。
+    const chrome = this.getAttribute('chrome') || 'none';
+    const shadow = this.getAttribute('shadow') || 'none';
+    const bleed = this.getAttribute('bleed') || 'none';
 
     if (!this._shell) {
       this._captionSlot = this.querySelector(':scope > figcaption');
@@ -240,6 +245,9 @@ export class VkFigure extends VkElement {
     }
 
     this._shell.dataset.chrome = chrome;
+    this._shell.dataset.shadow = shadow;
+    this._shell.dataset.fit = fit;
+    this.dataset.bleed = bleed;
 
     this._fig.textContent = fig ? `FIG ${fig}` : '';
     this._fig.style.display = fig ? '' : 'none';
@@ -1379,3 +1387,4 @@ export class VkTable extends VkElement {
     });
   }
 }
+

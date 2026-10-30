@@ -208,7 +208,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="heading" src="../code/formula.tex">`
 - **`vk-figure`** · 图窗 — 画框里的图：标题栏、比例、说明、来源。
-  - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `position`
+  - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `shadow` · `bleed` · `at` · `dur` · `enter` · `ease` · `stagger` · `position`
   - 例：`<vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger`
