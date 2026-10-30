@@ -12,6 +12,18 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-compare': {
+    ratio: {
+      values: ['4 / 3'],
+      effect: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
+      why: '比例直接写在 .vk-cmp 的 aspect-ratio 上。',
+    },
+    position: {
+      values: ['0% 0%'],
+      effect: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
+      why: '两张图共用同一个 object-position。',
+    },
+  },
   'vk-loupe': {
     point: {
       values: ['10%,10%', '80%,80%'],

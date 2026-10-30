@@ -1341,6 +1341,67 @@ function statValue(raw, format) {
   return raw;
 }
 
+
+/* ----------------------------------------------------------------- compare */
+
+/**
+ * 前后对照：两张图叠在同一个框里，上面那张按 split 裁掉一部分。
+ * 静态就是「改到一半」的那一帧；要动起来就交给导演层（enter="wipe" 正好是划开）。
+ * 增删只用语义色：divider 与角标只用石墨，不抢注意力。
+ */
+export class VkCompare extends VkElement {
+  static watchSource = false;
+
+  render() {
+    const a = this.getAttribute('a') || '';
+    const b = this.getAttribute('b') || '';
+    const ratioRaw = this.getAttribute('ratio') || '16 / 9';
+    const rm = ratioRaw.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
+    const ratio = rm && Number(rm[1]) / Number(rm[2]) >= 0.25 && Number(rm[1]) / Number(rm[2]) <= 8 ? ratioRaw : '16 / 9';
+    // split 允许写 "42%" 或 42；numAttr 只认纯数字，所以先剥掉百分号。
+    const splitNum = parseFloat(String(this.getAttribute('split') ?? '').replace('%', ''));
+    const split = Math.min(100, Math.max(0, Number.isFinite(splitNum) ? splitNum : 50));
+    const la = this.getAttribute('label-a') || '';
+    const lb = this.getAttribute('label-b') || '';
+    const fit = this.getAttribute('fit') || 'cover';
+    const pos = safePosition(this.getAttribute('position') || '50% 50%');
+
+    if (!this._shell) {
+      this.innerHTML = `<div class="vk-cmp" role="img">
+        <img class="vk-cmp-b" alt="">
+        <img class="vk-cmp-a" alt="">
+        <div class="vk-cmp-div" aria-hidden="true"></div>
+        <span class="vk-cmp-la"></span>
+        <span class="vk-cmp-lb"></span>
+      </div>`;
+      this._shell = this.querySelector('.vk-cmp');
+      this._imgA = this.querySelector('.vk-cmp-a');
+      this._imgB = this.querySelector('.vk-cmp-b');
+      this._div = this.querySelector('.vk-cmp-div');
+      this._la = this.querySelector('.vk-cmp-la');
+      this._lb = this.querySelector('.vk-cmp-lb');
+    }
+
+    const alt = this.getAttribute('alt') || this.getAttribute('label') || '';
+    this._shell.style.aspectRatio = ratio;
+    this._shell.dataset.fit = fit;
+    for (const [img, src] of [[this._imgB, b], [this._imgA, a]]) {
+      if (img.getAttribute('src') !== src) img.setAttribute('src', src);
+      img.style.objectPosition = pos;
+      img.alt = alt;
+    }
+    this._imgA.style.clipPath = `inset(0 0 0 ${split}%)`;
+    this._div.style.left = split + '%';
+
+    const show = (el, text) => {
+      el.textContent = text;
+      el.style.display = text ? '' : 'none';
+    };
+    show(this._la, la);
+    show(this._lb, lb);
+  }
+}
+
 export function defineComponents() {
   define('vk-panel', VkPanel);
   define('vk-stat', VkStat);
@@ -1360,6 +1421,7 @@ export function defineComponents() {
   define('vk-bars', VkBars);
   define('vk-tag', VkTag);
   define('vk-table', VkTable);
+  define('vk-compare', VkCompare);
 }
 
 /** 标签：把裸文本包进 span，才能真的 ellipsis；图标保持固定宽。 */

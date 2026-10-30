@@ -143,6 +143,26 @@ test('vk-loupe 放大的就是我们指定的那一点', async () => {
   assert.ok(Math.abs(r.py - (r.size / 2 - 0.4 * r.bh)) < 2, `y 偏移不对：${r.py}`);
 });
 
+
+test('vk-compare 的 split 决定裁掉多少', async () => {
+  await page.setContent(
+    SHELL(`<vk-page><vk-grid cols="3">
+      <vk-compare span="2" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="4 / 3" split="30"></vk-compare>
+    </vk-grid></vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const r = await page.evaluate(() => {
+    const a = document.querySelector('.vk-cmp-a');
+    const div = document.querySelector('.vk-cmp-div');
+    const box = document.querySelector('.vk-cmp');
+    return { clip: a.style.clipPath, divLeft: div.style.left, ratio: getComputedStyle(box).aspectRatio };
+  });
+  assert.equal(r.clip, 'inset(0px 0px 0px 30%)', `裁切位置应该跟 split 一致：${r.clip}`);
+  assert.equal(r.divLeft, '30%');
+  assert.ok(r.ratio.startsWith('4 / 3'), `比例应该写进 aspect-ratio：${r.ratio}`);
+});
+
 after(async () => {
   await browser.close();
   await close();

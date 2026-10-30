@@ -1951,3 +1951,54 @@ vk-stat[wrap='nowrap'] .vk-stat-v { text-wrap: nowrap; }
 /* callout 与 stat 也有默认行宽：不写 measure 时按正文行宽收，measure=none 才铺满。 */
 vk-callout { max-width: var(--vk-measure-body); }
 vk-stat { max-width: var(--vk-measure-body); }
+
+/* --------------------------------------------------------------- compare */
+/* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
+   对照的注意力应该落在差异上，而不是落在控件上。 */
+vk-compare { display: block; }
+.vk-cmp {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--vk-r-2);
+  border: var(--vk-line-w) solid var(--vk-line-2);
+  background: var(--vk-surface-2);
+}
+.vk-cmp > img {
+  display: block;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+.vk-cmp[data-fit='cover'] > img { object-fit: cover; }
+.vk-cmp[data-fit='contain'] > img { object-fit: contain; }
+.vk-cmp-a { z-index: 1; }
+.vk-cmp-div {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-strong);
+  transform: translateX(-50%);
+  background: var(--vk-surface-1);
+  box-shadow: 0 0 0 2px rgba(11, 15, 20, 0.12);
+  z-index: 2;
+}
+.vk-cmp-la,
+.vk-cmp-lb {
+  position: absolute;
+  bottom: var(--vk-s2);
+  padding: 2px var(--vk-s2);
+  border-radius: var(--vk-r-1);
+  background: color-mix(in srgb, var(--vk-surface-1) 92%, transparent);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  line-height: var(--vk-lh-label);
+  color: var(--vk-ink-2);
+  white-space: nowrap;
+  z-index: 3;
+}
+.vk-cmp-la { left: var(--vk-s2); }
+.vk-cmp-lb { right: var(--vk-s2); }

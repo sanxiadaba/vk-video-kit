@@ -278,7 +278,7 @@ const COMMON = {
 const COMMON_TAGS = [
   'vk-box', 'vk-text', 'vk-stack', 'vk-row', 'vk-grid', 'vk-rule', 'vk-title',
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
-  'vk-math', 'vk-figure', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
+  'vk-math', 'vk-figure', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',
 ];
 for (const tag of COMMON_TAGS) {
@@ -381,6 +381,12 @@ Object.assign((EFFECTS['vk-loupe'] ||= {}), {
   // 面板落在目标的哪一侧；窄舞台里几条边会被夹到同一处，没有单一可比属性。
   side: { kind: 'any', reason: '位置由目标与舞台边界共同决定，窄舞台里几条边会被夹到同一处' },
   zoom: { on: '.vk-loupe', kind: 'style', prop: 'background-size' },
+});
+
+Object.assign((EFFECTS['vk-compare'] ||= {}), {
+  position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
+  split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path' },
+  ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {

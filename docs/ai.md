@@ -221,6 +221,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
+- **`vk-compare`** · 对照 — 前后对照：两张图叠在同一个框里，上面那张按 split 裁掉一部分；静态就是「改到一半」的那一帧。
+  - 属性：`a` · `b` · `alt` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 例：`<vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后">`
 - **`vk-figure`** · 图窗 — 画框里的图：标题栏、比例、说明、来源。
   - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `shadow` · `bleed` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `position`
   - 例：`<vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图">`

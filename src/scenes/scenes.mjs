@@ -249,6 +249,13 @@ export const SCENES = [
   },
 
   {
+    tag: 'vk-compare',
+    body: s`
+<vk-grid cols="3">
+  <vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后"></vk-compare>
+</vk-grid>`,
+  },
+  {
     tag: 'vk-figure',
     body: s`
 <div class="spec-w1100"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
@@ -546,6 +553,10 @@ export const SCENES = [
 </vk-page>`,
   },
 ];
+
+
+
+
 
 
 
