@@ -38,6 +38,13 @@ export const PROBES = {
       why: '单位写进 .vk-stat-u。',
     },
   },
+  'vk-bars': {
+    format: {
+      values: ['none'],
+      effect: { on: '.vk-bar-v', kind: 'text' },
+      why: '数值列的写法（千分位 / 原样）；数字本身不变。',
+    },
+  },
   'vk-edge': {
     via: {
       values: ['100,100;300,100'],

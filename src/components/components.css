@@ -1170,7 +1170,10 @@ vk-cells { display: block; }
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  /* 值列齐底：一格有 label、一格没有，数字也要落在同一条线上。
+     （旧的是 space-between + 值上 margin-bottom:auto，没 label 的格子会把
+     数字顶到第一行，看着像"这格忘填了"。） */
+  justify-content: flex-end;
   box-sizing: border-box;
   min-width: 0;
   min-height: 168px;
@@ -1181,6 +1184,7 @@ vk-cells { display: block; }
   font-family: var(--vk-font-mono);
 }
 .vk-cell-l {
+  margin-bottom: auto;
   font-size: var(--vk-t-meta);
   line-height: 1.2;
   color: var(--vk-ink-4);
@@ -1607,9 +1611,8 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
   line-height: 1;
 }
 
-/* 值列与地址列到底：没有 label 的格子不会把 value 顶到第一行 */
-.vk-cell > .vk-cell-a { margin-top: auto; }
-.vk-cell > .vk-cell-v { margin-bottom: auto; }
+/* 值列与地址列到底：由 .vk-cell 的 flex-end + label 的 margin-bottom:auto 负责，
+   不再给值列加 margin-bottom:auto —— 那是把值顶到第一行的原因。 */
 /* compact 必须真的压行高：48.6*1.45=75.4 > 64 时 min-height 永远不生效 */
 .vk-term[data-density='compact'] .vk-line { line-height: 1.25; min-height: 56px; }
 

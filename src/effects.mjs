@@ -82,6 +82,7 @@ export const EFFECTS = {
     scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     density: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
+    format: { on: '.vk-bar-v', kind: 'text' },
   },
 
   'vk-diff': {
@@ -387,6 +388,7 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
 
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
   dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
+  mode: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
   feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
   variant: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
   z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },

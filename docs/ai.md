@@ -236,7 +236,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign>`
 - **`vk-bars`** · 条 — 一组横向条：标签、数值条、单位。子节点写成 <li value label>。
-  - 属性：`max` · `scale` · `unit` · `density` · `tone`
+  - 属性：`max` · `scale` · `unit` · `format` · `density` · `tone`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bars max="1000000" scale="log" unit="ns">`
@@ -262,8 +262,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`
-- **`vk-spotlight`** · 聚光 — 聚光：除目标外整体压暗，可多目标；放在 canvas 或 page 里。
-  - 属性：`for` · `dim` · `feather` · `variant` · `z`
+- **`vk-spotlight`** · 聚光 — 聚光：除目标外整体退到背景，可多目标；放在 canvas 或 page 里。
+  - 属性：`for` · `dim` · `feather` · `mode` · `variant` · `z`
   - 例：`<vk-spotlight for="#spot-target" dim="0.6" feather="24">`
 
 ### L5 页面 · 一整张 1920×1080 的画布

@@ -105,8 +105,8 @@ try {
     `✓ ${path.relative(process.cwd(), out)}  ${width * scale}×${height * scale}${crop ? '（crop）' : ''}  ${kb} KB`
   );
   if (metrics && !crop) {
-    const { contentTop, contentBottom, contentLeft, contentRight, focus } = metrics;
-    console.log(`  度量：内容 y ${contentTop}–${contentBottom}（底距 ${1080 - 96 - (contentBottom ?? 0)}）· x ${contentLeft}–${contentRight} · 焦点 ${focus}`);
+    const { contentTop, contentBottom, contentLeft, contentRight, focus, safeH } = metrics;
+    console.log(`  度量：内容 y ${contentTop}–${contentBottom}（底距 ${(safeH ?? 888) - (contentBottom ?? 0)}）· x ${contentLeft}–${contentRight} · 焦点 ${focus}`);
   }
 
   const lines = [];
@@ -154,3 +154,4 @@ try {
 } finally {
   await browser.close();
 }
+

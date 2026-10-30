@@ -1178,6 +1178,9 @@ export class VkBars extends VkElement {
       return;
     }
     const unit = this.getAttribute('unit') || '';
+    // 数值列的写法和 vk-stat 同一套：默认千分位，format="none" 才是原样。
+    // 同一帧里 52,980（大数字）和 52980（条尾）并排，观众会以为是两个数。
+    const format = this.getAttribute('format') || 'thousands';
     const log = this.getAttribute('scale') === 'log';
     const hasNegative = rows.some((r) => r.value < 0);
     if (hasNegative && log) {
@@ -1208,7 +1211,7 @@ export class VkBars extends VkElement {
           ? `left:${Math.min(pct, zeroPct).toFixed(2)}%;width:${Math.abs(pct - zeroPct).toFixed(2)}%`
           : `width:${pct.toFixed(2)}%`;
         const zero = split ? `<span class="vk-bar-zero" style="left:${zeroPct.toFixed(2)}%"></span>` : '';
-        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(String(r.value))}</span></div>`;
+        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(statValue(String(r.value), format))}</span></div>`;
       })
       .join('');
     this.innerHTML = `<div class="vk-bars"${split ? ' data-has-negative="1"' : ''}>${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;

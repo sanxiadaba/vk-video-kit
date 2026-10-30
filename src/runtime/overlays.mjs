@@ -29,12 +29,30 @@ function anchorsOf(el, host) {
     .filter((a) => a && a.el && a.el.getClientRects().length);
 }
 
-function rootOf(el) {
-  // 覆盖层是 position:absolute；它的包含块是最近的定位祖先，
-  // 不是语义上的 vk-page / vk-canvas 宿主（后者可能含 120px 安全区）。
+function positioned(el) {
+  // 覆盖层是 position:absolute；包含块是最近的定位祖先。
   let p = el.parentElement;
   while (p && getComputedStyle(p).position === 'static') p = p.parentElement;
   return p || document.body;
+}
+
+/**
+ * 覆盖层挂在谁身上 —— 坐标系只有两个正确答案。
+ *
+ *   vk-canvas 里：画布就是坐标系。它有 transform/overflow，覆盖层必须跟着它一起动。
+ *   纸里：整张纸才是坐标系。不能挂在 .vk-page-inner 上 —— 那一层只有 1680 宽，
+ *         遮罩的 viewBox 会跟着一起缩，结果只盖住内容区，两侧 120 安全区留白
+ *         （旧实现正是这样，实测第 9 帧的遮罩是一条灰带而不是整页压暗）。
+ *         所以纸里的覆盖层直接挪成 .vk-page 的子节点，坐标就是 0..1920 / 0..1080。
+ */
+function hostOf(el) {
+  if (el.parentElement?.closest?.('vk-canvas')) return positioned(el);
+  const page = el.parentElement?.closest?.('.vk-page');
+  if (page) {
+    if (el.parentElement !== page) page.appendChild(el);
+    return page;
+  }
+  return positioned(el);
 }
 
 class VkOverlay extends VkElement {
@@ -68,7 +86,7 @@ class VkOverlay extends VkElement {
 
   _frame() {
     if (!this._svg) return null;
-    const host = rootOf(this);
+    const host = hostOf(this);
     if (!host) return null;
     // 契约宿主 / 普通页面里，包含块不一定是定位元素；补一个 relative，绝对坐标才有基准。
     if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
@@ -183,6 +201,10 @@ export class VkSpotlight extends VkOverlay {
     const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.6 });
     const feather = numAttr(this, 'feather', { min: 0, max: 120, fallback: 24 });
     const shape = this.getAttribute('variant') === 'ellipse' ? 'ellipse' : 'rect';
+    // 白纸上压暗会把整张纸变成一块灰板；mode="fade" 改成"往纸里退"——
+    // 其余部分被纸色冲淡，只有目标还是满墨。同一条 mask，换的只是那层颜色。
+    const fade = this.getAttribute('mode') === 'fade';
+    this._svg.dataset.mode = fade ? 'fade' : 'dim';
     const maskId = `${this._uid}-m`;
     const filterId = `${this._uid}-f`;
     const defs = tag('defs');
@@ -191,19 +213,12 @@ export class VkSpotlight extends VkOverlay {
       filter.append(tag('feGaussianBlur', { stdDeviation: feather / 2 }));
       defs.append(filter);
     }
-    // 遮罩要盖住整张纸（含 120/96 的页边），否则四边会留白框。
-    const page = f.host.closest?.('.vk-page');
-    let px = 0;
-    let py = 0;
-    if (page) {
-      const cs = getComputedStyle(page);
-      px = parseFloat(cs.paddingLeft) || 0;
-      py = parseFloat(cs.paddingTop) || 0;
-    }
-    const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: -px, y: -py, width: f.w + px * 2, height: f.h + py * 2 });
-    mask.append(tag('rect', { x: -px, y: -py, width: f.w + px * 2, height: f.h + py * 2, fill: 'white' }));
+    // 遮罩盖的就是整张纸。宿主已经是 .vk-page（见 hostOf），所以 0..w / 0..h
+    // 就是 1920×1080，不再需要拿页面 padding 去补 viewBox —— 那是旧实现
+    // 挂在 .vk-page-inner 上时的补丁，补出来还会被 1680 的盒子缩回去。
+    const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: f.w, height: f.h });
+    mask.append(tag('rect', { x: 0, y: 0, width: f.w, height: f.h, fill: 'white' }));
     const holes = tag('g', feather > 0 ? { filter: `url(#${filterId})` } : {});
-    holes.setAttribute('transform', `translate(${px},${py})`);
     for (const a of targets) {
       const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
@@ -217,7 +232,6 @@ export class VkSpotlight extends VkOverlay {
     defs.append(mask);
     this._svg.append(defs);
     const outline = tag('g', { class: 'vk-spotlight-ring' });
-    outline.setAttribute('transform', `translate(${px},${py})`);
     for (const a of targets) {
       const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
@@ -228,17 +242,18 @@ export class VkSpotlight extends VkOverlay {
       }
     }
     this._svg.style.overflow = 'visible';
-    // viewBox 从 -pad 起，遮罩才能盖到纸边；洞与描边用 translate 保持宿主坐标。
-    this._svg.setAttribute('viewBox', `${-px} ${-py} ${f.w + px * 2} ${f.h + py * 2}`);
+    this._svg.setAttribute('viewBox', `0 0 ${f.w} ${f.h}`);
     this._svg.append(
       tag('rect', {
-        x: -px,
-        y: -py,
-        width: f.w + px * 2,
-        height: f.h + py * 2,
-        // 遮罩必须是"比纸更暗"的颜色：白纸上的白色遮罩等于没画（旧实现 fill:#ffffff，实测 0 像素）。
-        fill: '#0b0f14',
-        opacity: Math.min(0.5, dim * 0.35),
+        x: 0,
+        y: 0,
+        width: f.w,
+        height: f.h,
+        // dim 就是"退到背景多少"：0.2 = 20%。以前写成 dim*0.35，写 0.25 只得到 9%，
+        // 在投影和录屏压缩下等于没画，作者永远猜不到要写多大。
+        // dim  → 墨色遮罩（暗处聚光）；fade → 纸色遮罩（白纸上的"淡出"，不弄脏纸）。
+        fill: fade ? '#ffffff' : '#0b0f14',
+        opacity: Math.min(fade ? 0.85 : 0.62, dim),
         mask: `url(#${maskId})`,
       })
     );
