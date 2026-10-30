@@ -14,6 +14,8 @@ import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
 const json = args.includes('--json');
+// 提醒类：放行但记账。layer = 声明了 elevation 的叠层；void = 安全区里的大块留白。
+const WARN_ALL = new Set(['layer', 'void']);
 const pages = args.filter((a) => !a.startsWith('-'));
 if (!pages.length) {
   console.error('用法：node cli/check.mjs <page.html> [more.html...] [--json]');
@@ -91,6 +93,8 @@ try {
       else if (x.type === 'zero') lines.push(`空锚点：${x.what}`);
       else if (x.type === 'ln-overlap') lines.push(`行号压住代码：${x.what}（+${x.gap}px）`);
       else if (x.type === 'missing') lines.push(`找不到文件：${x.what}`);
+      else if (x.type === 'layer') lines.push(`${x.what}`);
+      else if (x.type === 'void') lines.push(`留白：${x.what}`);
       else lines.push(`${x.type}：${x.what || ''}`);
       if (x.fix) lines.push(`  ↳ ${x.fix}`);
     }
@@ -102,7 +106,7 @@ try {
   if (json) {
     console.log(JSON.stringify(results.map((it) => ({ ...it, lines: linesFor(it) })), null, 2));
   } else {
-    const WARN = new Set(['layer']);
+    const WARN = WARN_ALL;
     const fatal = (it) => it.issues.filter((x) => !WARN.has(x.type)).length > 0 || it.special.length > 0;
     for (const it of results) {
       const lines = linesFor(it);
@@ -115,7 +119,7 @@ try {
     const bad = results.filter((it) => fatal(it)).length;
     if (pages.length > 1) console.log(`\n${pages.length} 页 · ${bad} 页有问题`);
   }
-  process.exitCode = results.some((it) => it.issues.filter((x) => x.type !== 'layer').length > 0 || it.special.length > 0) ? 1 : 0;
+  process.exitCode = results.some((it) => it.issues.filter((x) => !WARN_ALL.has(x.type)).length > 0 || it.special.length > 0) ? 1 : 0;
 } finally {
   await browser.close();
 }

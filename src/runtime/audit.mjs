@@ -221,6 +221,28 @@ export function auditPage(root = document) {
     }
   }
 
+  // 底部空带：这一页下半空了多少。
+  //
+  // 只测量，不判定：一整集里"每帧下半空一半"是分镜问题，不是组件问题，
+  // 但作者需要一个数字才会去改。量的是「最低的一点墨到安全区底边」，
+  // 不是"最大空块"——标题右侧的空白也会算成空块，那是正常版面，
+  // 而这里要回答的是一个具体问题：内容到底沉到多高就没东西了。
+  //
+  // 跳过的两种页：vk-stage（组件标本台，只摆一个元件）与
+  // 标了 data-allow-void 的纸（文献页/图版，空白是版式的一部分）。
+  const voidExempt = stage.classList?.contains('vk-stage') || stage.hasAttribute?.('data-allow-void') || stage.closest?.('[data-allow-void]');
+  if (safeRect && safeRect.height > 0 && !voidExempt) {
+    const band = bottomGap(safe || stage, safeRect);
+    if (band >= safeRect.height * 0.25) {
+      out.push({
+        type: 'void',
+        what: `底部空 ${band}px（安全区 ${Math.round((band / safeRect.height) * 100)}%）`,
+        box: [0, Math.round(safeRect.height - band), Math.round(safeRect.width), band],
+        fix: '主角再大一档 / vk-page align="center" / 补一条撑住下半页的物证',
+      });
+    }
+  }
+
   // 组件级溢出（Frame 原语）：内容比盒子宽/高。
   if (typeof window !== 'undefined' && typeof window.vk?.auditOverflow === 'function') {
     for (const a of window.vk.auditOverflow(stage)) {
@@ -396,7 +418,9 @@ export function metrics(root = document) {
     }
     if (!first) first = kids.find((el) => !el.matches?.('vk-title')) || kids[0];
     const fr = first?.getBoundingClientRect();
+    // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
+      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-spotlight, [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -407,6 +431,7 @@ export function metrics(root = document) {
     return {
       index: i,
       id: stage.id || '',
+      safeH: Math.round(sr.height),
       contentTop: fr ? Math.round(fr.top - sr.top) : null,
       contentBottom: Math.round(maxBottom - sr.top),
       contentLeft: fr ? Math.round(fr.left - sr.left) : null,
@@ -419,6 +444,62 @@ export function metrics(root = document) {
 
 function safeBox(stage) {
   return stage.querySelector?.('.vk-page-bd') || stage.querySelector?.('.vk-stage') || stage;
+}
+
+const PARSE_RGB = (s) => {
+  const m = String(s).match(/rgba?\(([^)]+)\)/);
+  if (!m) return null;
+  const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+  return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
+};
+
+/**
+ * 底部空带：内容最低的一点墨到安全区底边还有多少。
+ *
+ * 只量一件事——"这页是不是一半空着"。什么算墨：
+ *   · 文字（用 Range 取行盒，不看块级盒子；段落不会因为盒子高就算满）
+ *   · 替换元素（img / canvas / video / svg）
+ *   · 有面的块（背景色或背景图）
+ *   · 只有边框的块（按边框算，框里是空的不算墨）
+ * 覆盖层（聚光/圈选/连线）不算：那是"压暗"，不是内容。
+ */
+function bottomGap(holder, sr) {
+  let inkBottom = 0;
+  const mark = (left, top, right, bottom) => {
+    if (right - left < 0.5 || bottom - top < 0.5) return;
+    const b = Math.min(bottom, sr.bottom) - sr.top;
+    if (b > inkBottom) inkBottom = b;
+  };
+
+  for (const el of holder.querySelectorAll('*')) {
+    if (el.hasAttribute?.('data-vk-overlay')) continue;
+    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-spotlight')) continue;
+    if (el.closest?.('svg')) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    if (parseFloat(cs.opacity) < 0.15) continue;
+
+    for (const n of el.childNodes) {
+      if (n.nodeType !== 3 || !n.textContent.trim()) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) mark(r.left, r.top, r.right, r.bottom);
+    }
+
+    const tag = el.tagName;
+    const replaced = tag === 'IMG' || tag === 'CANVAS' || tag === 'VIDEO' || tag === 'svg';
+    const bg = PARSE_RGB(cs.backgroundColor);
+    const hasBg = (bg && bg.a > 0.06) || (cs.backgroundImage && cs.backgroundImage !== 'none');
+    const bw = (s) => parseFloat(cs[s]) || 0;
+    const hasBorder = bw('borderBottomWidth') >= 1 && (PARSE_RGB(cs.borderBottomColor)?.a || 0) > 0.05;
+
+    if (replaced || hasBg || hasBorder) {
+      const r = el.getBoundingClientRect();
+      mark(r.left, r.top, r.right, r.bottom);
+    }
+  }
+
+  return Math.round(Math.max(0, sr.height - inkBottom));
 }
 
 export function installAudit(VK) {

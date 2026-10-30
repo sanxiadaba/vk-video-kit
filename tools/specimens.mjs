@@ -189,7 +189,7 @@ function specPage(tag, no) {
   const stripBody = stripOf.get(tag) || rawBody;
   const presets = PRESETS[tag] || [];
   const meta = `${String(no).padStart(3, '0')} / ${String(ORDER.length).padStart(3, '0')}`;
-  const plate = `<vk-page align="top">
+  const plate = `<vk-page align="top" data-allow-void>
   <vk-stack gap="2xs">
     <vk-row justify="between" align="baseline">
       <vk-row gap="xs" align="baseline">
@@ -269,7 +269,7 @@ function indexPage(n) {
     n < PAGES
       ? `<a href="${pageHref(n + 1)}"><vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text></a>`
       : `<vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text>`;
-  const page = `<vk-page align="top">
+  const page = `<vk-page align="top" data-allow-void>
   <vk-stack gap="sm">
     <vk-row justify="between" align="baseline">
       <vk-row gap="md" align="baseline">
@@ -337,3 +337,4 @@ if (check) {
 } else {
   console.log(`specimens: ${files.size} 张（写入 ${written}）`);
 }
+

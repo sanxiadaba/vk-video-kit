@@ -491,6 +491,7 @@ for (const target of list) {
     if (e.type === 'orphan') warn(target.label, `孤行 ${e.chars} 字：${e.what}`);
     if (e.type === 'blue') warn(target.label, `${e.count} 处焦点蓝：${e.what}`);
     if (e.type === 'pin-overlap') warn(target.label, e.what);
+    if (e.type === 'void') warn(target.label, `留白：${e.what}`);
     if (e.type === 'audit-overflow') {
       const parts = [];
       if (e.sw > e.cw + 1) parts.push(`宽 ${e.sw}>${e.cw}`);
@@ -520,7 +521,8 @@ for (const target of list) {
     await presetDiff(target.tag, baseShot);
   }
 
-  const bad = issues.length + special.length;
+  // 只数"真的失败了的"：void 这类记账项不该把一行变成 ✗。
+  const bad = failed.length - failedBefore;
   console.log(`${bad ? '✗' : '✓'} ${target.label}${bad ? `  ${bad} 个画面问题` : ''}  ${pageSize[0]}×${pageSize[1]}`);
   if (cacheOn && failed.length === failedBefore) markCached(cacheKeys.get(target.label));
 }
