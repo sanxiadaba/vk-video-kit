@@ -22,6 +22,8 @@ export const EFFECTS = {
   'vk-term': {
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
     density: { on: '.vk-line', kind: 'style', prop: 'min-height' },
+    // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
+    size: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
   },
 
@@ -216,6 +218,7 @@ export const EFFECTS = {
     mono: { on: 'tbody td', kind: 'style', prop: 'font-family' },
     density: { on: 'tbody td', kind: 'style', prop: 'padding-top' },
     variant: { on: 'tbody td', kind: 'style', prop: 'padding-top' },
+    size: { on: 'tbody td', kind: 'style', prop: 'padding-top', skipVisual: true },
   },
 
   'vk-edge': {
@@ -247,6 +250,8 @@ export const EFFECTS = {
     long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
     w: { on: 'vk-code', kind: 'geometry', prop: 'width' },
     mark: { on: '.vk-tok', kind: 'style', prop: 'background-color' },
+    // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
+    size: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
   },
 };
 
@@ -322,6 +327,7 @@ Object.assign(EFFECTS['vk-steps'], {
 });
 Object.assign(EFFECTS['vk-cells'], {
   stride: { kind: 'any', reason: '只在字节模式下改变地址步长' },
+  size: { on: '.vk-cell', kind: 'style', prop: 'min-height', skipVisual: true },
 });
 Object.assign(EFFECTS['vk-grid'], {
   justify: { on: 'vk-grid', kind: 'style', prop: 'justify-items' },
@@ -423,5 +429,10 @@ Object.assign(EFFECTS['vk-asm'], {
   'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
   'operands-label': { on: '.vk-asm-o', kind: 'text' },
 });
+
+
+
+
+
 
 

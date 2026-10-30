@@ -228,7 +228,10 @@ for (const r of rows) {
   // 不是 4%。真正要拦的是 05 那种「指标框整块算焦点」的 30%+。
   if (r.focusArea > 10) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 10%（高亮比内容还重）` });
   if (r.tierCount > 4) flags.push({ id: r.id, level: 'warn', what: `${r.tierCount} 档字号（一帧 ≤4 档）` });
-  if (r.maxType / r.bodyType < 1.8) flags.push({ id: r.id, level: 'warn', what: `断层 ${(r.maxType / r.bodyType).toFixed(2)}× < 1.8×` });
+  // 断层：字号没跳开，且也没有一块大到能当主角的块。
+  // 代码/表格这类帧，主角是「那一大块」而不是一个字，不该逼作者把标题放大。
+  if (r.maxType / r.bodyType < 1.8 && r.dominant < 50)
+    flags.push({ id: r.id, level: 'warn', what: `既没有字号断层（${(r.maxType / r.bodyType).toFixed(2)}×）也没有主角块（${r.dominant}%）` });
   if (r.px) {
     // 主角要两个都小才算没有：块占位 < 25% 且实块 < 3%。
     // 只数字号帧（一个 224 的数字实块也就 1–2%），也放过满幅窗（块占位大、墨很少）。
@@ -282,6 +285,7 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
 
 
 

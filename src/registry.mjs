@@ -170,7 +170,7 @@ const DEFAULTS = {
   'vk-list': { variant: 'bullet', gap: 'sm' },
   'vk-tag': { tone: 'neutral', size: 'meta', emphasis: 'solid' },
   'vk-callout': { tone: 'info', size: 'body', density: 'normal' },
-  'vk-code': { chrome: 'min', density: 'normal', numbers: 'all' },
+  'vk-code': { chrome: 'min', density: 'normal', numbers: 'all', size: 'normal' },
   'vk-asm': { bytes: '', address: 'all', density: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', density: 'normal' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
@@ -178,7 +178,7 @@ const DEFAULTS = {
   'vk-spotlight': { dim: 0.45, z: 30 },
   'vk-term': { prompt: '$', chrome: 'min', density: 'normal' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all' },
-  'vk-table': { variant: 'ledger', density: 'normal' },
+  'vk-table': { variant: 'ledger', density: 'normal', size: 'normal' },
   'vk-math': { size: 'body' },
   'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'min' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min' },
@@ -187,6 +187,7 @@ const DEFAULTS = {
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral' },
   'vk-bars': { density: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
+  'vk-cells': { cols: '0', size: 'normal' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
   'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
   'vk-stat': { size: 'display-xl', tone: 'none', mark: 'none', format: 'none', align: 'left' },
@@ -496,6 +497,7 @@ export const TAGS = {
       'fold-note': text(),
       'chrome': oneOf('min', 'none'),
       'mark': text(),
+      'size': oneOf('compact', 'normal', 'hero'),
     },
   },
   'vk-term': {
@@ -519,6 +521,7 @@ export const TAGS = {
       'prompt': text(),
       'marks': text(),
       'chrome': oneOf('none', 'min'),
+      'size': oneOf('compact', 'normal', 'hero'),
     },
   },
   'vk-diff': {
@@ -554,6 +557,7 @@ export const TAGS = {
       'stripe': bool(),
       'mono': bool(),
       'density': oneOf('compact', 'normal', 'loose'),
+      'size': oneOf('compact', 'normal', 'hero'),
     },
   },
   'vk-math': {
@@ -685,6 +689,7 @@ export const TAGS = {
       'offsets': bool(),
       'direction': oneOf('ltr', 'rtl'),
       'ruler': bool(),
+      'size': oneOf('compact', 'normal', 'hero'),
     },
   },
   'vk-bytes': {
@@ -1135,6 +1140,10 @@ export function validate() {
   }
   return errors;
 }
+
+
+
+
 
 
 

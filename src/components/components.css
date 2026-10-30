@@ -1621,6 +1621,40 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 .vk-win[data-chrome='plain'] .vk-hd { padding-left: var(--vk-s3); }
 .vk-win[data-chrome='plain'] .vk-br-url { display: none; }
 
+/* ------------------------------------------------------- 内在尺寸三档
+   13.0：一个预设的「体量」不是由父级给多宽决定的，而是它自己的 size。
+   compact 是角落里的辅助证据，normal 是常规一块，hero 是这一帧的主角。
+   字号不动档位，动的是行高、内距、最小高度——所以同一段代码可以是脚注也可以是主角。 */
+
+vk-code[size='compact'] .vk-line { min-height: 48px; }
+vk-code[size='compact'] .vk-bd { padding-block: var(--vk-s1); }
+vk-code[size='hero'] > .vk-code { min-height: 600px; display: flex; flex-direction: column; }
+vk-code[size='hero'] .vk-bd {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding-block: var(--vk-s4);
+}
+vk-code[size='hero'] .vk-line { min-height: 0; flex: 1 1 0; }
+
+vk-cells[size='compact'] .vk-cell { min-height: 112px; padding: var(--vk-s1) var(--vk-s2); }
+vk-cells[size='compact'] .vk-cell-v { font-size: var(--vk-t-data); }
+vk-cells[size='hero'] .vk-cell { min-height: 300px; padding: var(--vk-s4) var(--vk-s3); }
+vk-cells[size='hero'] .vk-cell-v { font-size: var(--vk-t-subhead); line-height: 1.1; }
+vk-cells[size='hero'] .vk-cell-l { font-size: var(--vk-t-data); }
+
+vk-term[size='compact'] .vk-line { min-height: 48px; }
+vk-term[size='normal'] .vk-line { min-height: 64px; }
+vk-term[size='hero'] > .vk-term { min-height: 560px; display: flex; flex-direction: column; }
+vk-term[size='hero'] .vk-bd { flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; }
+vk-term[size='hero'] .vk-line { min-height: 0; flex: 1 1 0; }
+
+vk-table[size='compact'] th,
+vk-table[size='compact'] td { padding: var(--vk-s1) var(--vk-s2); }
+vk-table[size='hero'] th,
+vk-table[size='hero'] td { padding: var(--vk-s5) var(--vk-s6); font-size: var(--vk-t-body); }
+
 /* ---------------------------------------------------------------- vk-stat */
 /* 一帧里「一个数字当家」。数字用 tabular-nums，多个指标并排时小数点对齐。 */
 
@@ -1724,3 +1758,6 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
+
+

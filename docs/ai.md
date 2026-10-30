@@ -187,11 +187,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`tone` · `title` · `size` · `bare` · `at` · `dur` · `enter` · `ease` · `stagger` · `density`
   - 例：`<vk-callout tone="warn" title="提示框标题" size="body">提示框内容，只做占位。</vk-callout>`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `at` · `dur` · `enter` · `ease` · `stagger` · `long` · `numbers` · `numbering` · `density`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `long` · `numbers` · `numbering` · `density`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" density="loose">`
 - **`vk-term`** · 终端 — 终端。src 指向真实 transcript；默认浅色；命令、输出、✓/!/✗ 三种结果行。
-  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `density`
+  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `chrome` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `density`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-term title="zsh" prompt="$" src="../code/hello.term">`
 - **`vk-diff`** · 对比 — 对比：上下对照或左右两窗并排，词级标记 + 一句改了几行。
@@ -199,7 +199,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-diff lang="c" file="bounds.c" src="../code/real.diff">`
 - **`vk-table`** · 表格 — 表格：账本 / 对照 / 规格三种形态，表头与数字列对齐。行可用 <tr state="mark"> 标出重点。
-  - 属性：`variant` · `stripe` · `mono` · `density` · `at` · `dur` · `enter` · `ease` · `stagger`
+  - 属性：`variant` · `stripe` · `mono` · `density` · `size` · `at` · `dur` · `enter` · `ease` · `stagger`
   - 子节点：内容包在 `<table>` 里
   - 状态：`state="current|mark|ok|warn|err"`（row / cell）
   - 例：`<vk-table variant="ledger">`
@@ -215,7 +215,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-tree title="app" current="src/parser.py" depth="4">src/ __init__.py ast.py errors.py lexer.py * parser.py tests/ fixtures/ basic.tokens test_lexer.py + main.py</vk-tree>`
 - **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，超过 cols 自动换行。
-  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `at` · `dur` · `enter` · `ease` · `stagger`
+  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `size` · `at` · `dur` · `enter` · `ease` · `stagger`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-cells cols="6" addr="0x7ffc" offsets>`
