@@ -44,6 +44,9 @@ export class VkTitle extends VkElement {
     this._main?.setAttribute('role', 'heading');
     this._main?.setAttribute('aria-level', level);
     this._shell.dataset.align = align;
+    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
+    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
+    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
     this._shell.dataset.size = size;
 
     const showEyebrow = !!(index || eyebrow || this._eyebrowSlot);
@@ -1212,7 +1215,62 @@ export class VkBars extends VkElement {
   }
 }
 
+/* ----------------------------------------------------------------- stat */
+
+/**
+ * 指标：一帧里「一个数字当家」的那个数字。
+ * 只负责怎么显示（大小/单位/图例/千分位），不负责数字从哪来。
+ */
+export class VkStat extends VkElement {
+  static frame = false;
+
+  render() {
+    const value = this.getAttribute('value') || '';
+    const unit = this.getAttribute('unit') || '';
+    const label = this.getAttribute('label') || '';
+    const size = this.getAttribute('size') || 'display-xl';
+    const tone = this.getAttribute('tone') || 'none';
+    const mark = this.getAttribute('mark') || 'none';
+    const format = this.getAttribute('format') || 'none';
+    const align = this.getAttribute('align') || 'left';
+
+    if (!this._shell) {
+      this.innerHTML = `<div class="vk-stat" role="group">
+        <span class="vk-stat-l" data-meta></span>
+        <span class="vk-stat-row"><span class="vk-stat-m" aria-hidden="true"></span><span class="vk-stat-v"></span><span class="vk-stat-u" data-meta></span></span>
+      </div>`;
+      this._shell = this.querySelector('.vk-stat');
+      this._l = this.querySelector('.vk-stat-l');
+      this._v = this.querySelector('.vk-stat-v');
+      this._u = this.querySelector('.vk-stat-u');
+    }
+    this._shell.dataset.size = size;
+    this._shell.dataset.tone = tone;
+    this._shell.dataset.mark = mark;
+    this._shell.dataset.align = align;
+    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
+    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
+    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
+    this._l.textContent = label;
+    this._v.textContent = statValue(value, format);
+    this._u.textContent = unit;
+    if (!label) this._l.remove();
+    if (!unit) this._u.remove();
+  }
+}
+
+/** 只改写法，不改数值：千分位 / 字节 / 十六进制。 */
+function statValue(raw, format) {
+  if (format === 'none') return raw;
+  const n = Number(String(raw).replace(/[^0-9.eE+-]/g, ''));
+  if (!Number.isFinite(n)) return raw;
+  if (format === 'thousands' || format === 'bytes') return n.toLocaleString('en-US');
+  if (format === 'hex') return '0x' + Math.round(n).toString(16).toUpperCase();
+  return raw;
+}
+
 export function defineComponents() {
+  define('vk-stat', VkStat);
   define('vk-title', VkTitle);
   define('vk-list', VkList);
   define('vk-callout', VkCallout);

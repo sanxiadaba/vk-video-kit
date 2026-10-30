@@ -1616,3 +1616,51 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 .vk-win[data-chrome='plain'] .vk-dots { display: none; }
 .vk-win[data-chrome='plain'] .vk-hd { padding-left: var(--vk-s3); }
 .vk-win[data-chrome='plain'] .vk-br-url { display: none; }
+
+/* ---------------------------------------------------------------- vk-stat */
+/* 一帧里「一个数字当家」。数字用 tabular-nums，多个指标并排时小数点对齐。 */
+
+vk-stat { display: block; }
+
+.vk-stat { display: flex; flex-direction: column; gap: var(--vk-s1); }
+.vk-stat-l { color: var(--vk-ink-3); }
+.vk-stat-row { display: flex; align-items: baseline; gap: var(--vk-s2); }
+.vk-stat-v {
+  font-family: var(--vk-font-sans);
+  font-weight: var(--vk-w-bold);
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  font-variant-numeric: tabular-nums;
+  color: var(--vk-ink-1);
+}
+.vk-stat-u { color: var(--vk-ink-3); }
+
+.vk-stat[data-size='display-2xl'] .vk-stat-v { font-size: var(--vk-t-display-2xl); }
+.vk-stat[data-size='display-xl'] .vk-stat-v { font-size: var(--vk-t-display-xl); }
+.vk-stat[data-size='display'] .vk-stat-v { font-size: var(--vk-t-display); }
+.vk-stat[data-size='title'] .vk-stat-v { font-size: var(--vk-t-title); }
+.vk-stat[data-size='heading'] .vk-stat-v { font-size: var(--vk-t-heading); }
+
+.vk-stat[data-align='center'] { align-items: center; text-align: center; }
+.vk-stat[data-overflow='clip'] { overflow: hidden; }
+.vk-stat[data-grow='1'] { flex: 1 1 auto; }
+.vk-stat[data-fill='1'] { height: 100%; justify-content: center; }
+
+/* 图例：一个点或一根条，和值同色 */
+.vk-stat-m { display: none; }
+.vk-stat[data-mark='dot'] .vk-stat-m,
+.vk-stat[data-mark='bar'] .vk-stat-m { display: inline-block; background: var(--vk-ink-3); }
+.vk-stat[data-mark='dot'] .vk-stat-m { width: 16px; height: 16px; border-radius: 50%; }
+.vk-stat[data-mark='bar'] .vk-stat-m { width: 8px; height: 0.72em; border-radius: 2px; align-self: center; }
+
+.vk-stat[data-tone='focus'] .vk-stat-v,
+.vk-stat[data-tone='focus'] .vk-stat-m { color: var(--vk-focus); }
+.vk-stat[data-tone='focus'] .vk-stat-m { background: var(--vk-focus); }
+.vk-stat[data-tone='info'] .vk-stat-v { color: var(--vk-info); }
+.vk-stat[data-tone='info'] .vk-stat-m { background: var(--vk-info); }
+.vk-stat[data-tone='ok'] .vk-stat-v { color: var(--vk-ok); }
+.vk-stat[data-tone='ok'] .vk-stat-m { background: var(--vk-ok); }
+.vk-stat[data-tone='warn'] .vk-stat-v { color: var(--vk-warn); }
+.vk-stat[data-tone='warn'] .vk-stat-m { background: var(--vk-warn); }
+.vk-stat[data-tone='err'] .vk-stat-v { color: var(--vk-err); }
+.vk-stat[data-tone='err'] .vk-stat-m { background: var(--vk-err); }

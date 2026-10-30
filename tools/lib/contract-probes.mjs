@@ -12,6 +12,18 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-stat': {
+    value: {
+      values: ['1,024'],
+      effect: { on: '.vk-stat-v', kind: 'text' },
+      why: '数字直接写进 .vk-stat-v。',
+    },
+    unit: {
+      values: ['字节'],
+      effect: { on: '.vk-stat-u', kind: 'text' },
+      why: '单位写进 .vk-stat-u。',
+    },
+  },
   'vk-edge': {
     via: {
       values: ['100,100;300,100'],

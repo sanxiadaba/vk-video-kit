@@ -172,6 +172,12 @@ export const PRESETS = {
   ],
   'vk-page': [
   ],
+  'vk-stat': [
+    { label: '更大', attrs: { size: 'display-2xl' } },
+    { label: '带图例点', attrs: { mark: 'dot', tone: 'focus' } },
+    { label: '千分位', attrs: { value: '52980', format: 'thousands' } },
+    { label: '十六进制', attrs: { value: '72', format: 'hex' } },
+  ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
     { label: '小标题阶', attrs: { size: 'heading' } },

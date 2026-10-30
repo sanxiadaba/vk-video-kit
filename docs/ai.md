@@ -145,6 +145,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-window`** · 窗 — 一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。
   - 属性：`title` · `url` · `chrome` · `tone` · `pad`
   - 例：`<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">`
+- **`vk-stat`** · 指标 — 一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。
+  - 属性：`value` · `unit` · `label` · `size` · `tone` · `mark` · `format` · `align`
+  - 例：`<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl">`
 - **`vk-keys`** · 键位 — 键位：把 A + B 写成两枚键帽。
   - 属性：（无）
   - 例：`<vk-keys>Ctrl + C</vk-keys>`

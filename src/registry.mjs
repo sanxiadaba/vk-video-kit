@@ -188,6 +188,7 @@ const DEFAULTS = {
   'vk-bars': { density: 'normal', tone: 'neutral', scale: 'linear' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
+  'vk-stat': { size: 'display-xl', tone: 'none', mark: 'none', format: 'none', align: 'left' },
   'vk-page': { align: 'top' },
 };
 
@@ -617,6 +618,21 @@ export const TAGS = {
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
         'chrome': oneOf('min', 'none'),
+    },
+  },
+  'vk-stat': {
+    name: '指标',
+    layer: 'elements',
+    summary: '一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。',
+    attrs: {
+      'value': text(),
+      'unit': text(),
+      'label': text(),
+      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading'),
+      'tone': oneOf('none', 'focus', 'info', 'ok', 'warn', 'err'),
+      'mark': oneOf('none', 'dot', 'bar'),
+      'format': oneOf('none', 'thousands', 'bytes', 'hex'),
+      'align': oneOf('left', 'center'),
     },
   },
   'vk-keys': {

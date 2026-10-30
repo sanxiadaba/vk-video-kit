@@ -406,6 +406,12 @@ export const SCENES = [
 
 
   {
+    tag: 'vk-stat',
+    body: s`
+<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl"></vk-stat>`,
+  },
+
+  {
     tag: 'vk-quote',
     body: s`
 <vk-quote source="示例出处">

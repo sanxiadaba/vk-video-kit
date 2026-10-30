@@ -47,6 +47,17 @@ export const EFFECTS = {
     size: { on: '.vk-quote', kind: 'style', prop: 'font-size' },
   },
 
+  'vk-stat': {
+    value: { on: '.vk-stat-v', kind: 'text' },
+    unit: { on: '.vk-stat-u', kind: 'text' },
+    label: { on: '.vk-stat-l', kind: 'text' },
+    size: { on: '.vk-stat-v', kind: 'style', prop: 'font-size' },
+    tone: { on: '.vk-stat-v', kind: 'style', prop: 'color' },
+    mark: { on: '.vk-stat', kind: 'attr', prop: 'data-mark' },
+    align: { on: '.vk-stat', kind: 'style', prop: 'text-align' },
+    format: { kind: 'any', reason: '改的是数字写法（千分位/十六进制），要配合 value 才看得出变化' },
+  },
+
   'vk-bits': {
     index: { on: '.vk-bit-i', kind: 'text' },
     group: { kind: 'any', reason: 'group 只改分隔线的粗细/位置，没有单一可比属性' },
