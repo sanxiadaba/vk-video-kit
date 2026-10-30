@@ -1,3 +1,5 @@
+import { resolveAnchor } from './base.mjs';
+
 /**
  * 页面自检：作者页与标本页共用同一份。
  *
@@ -530,7 +532,14 @@ export function focusRegions(stage) {
   ))
     add(el);
   for (const el of stage.querySelectorAll('[tone="focus"]')) add(el);
-  for (const el of stage.querySelectorAll('.vk-spotlight-ring')) add(el);
+  // 圈选本身就是「看这里」：一个 ring 算一个焦点 region。
+  // 但如果它圈的就是已经算过的焦点（聚光目标 / 高亮行），不再重复计数。
+  for (const el of stage.querySelectorAll('vk-ring')) {
+    const expr = el.getAttribute('for') || '';
+    const anchor = expr ? resolveAnchor(stage, expr, el) : null;
+    if (anchor?.el && found.has(anchor.el)) continue;
+    add(el);
+  }
 
   // 去掉被更外层 region 包含的重复项
   const out = [];
@@ -554,3 +563,6 @@ export function installAudit(VK) {
   VK.metrics = metrics;
   VK.focusRegions = focusRegions;
 }
+
+
+

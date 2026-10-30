@@ -743,7 +743,7 @@ export const TAGS = {
       'source': text(),
       'author': text(),
       'variant': oneOf('rule', 'mark'),
-      'size': oneOf('display', 'heading', 'body'),
+      'size': oneOf('display', 'title', 'heading', 'body'),
     },
   },
   'vk-bits': {
@@ -1142,6 +1142,7 @@ export function validate() {
   }
   return errors;
 }
+
 
 
 

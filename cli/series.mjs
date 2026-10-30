@@ -167,7 +167,32 @@ async function domFacts(browser, file) {
       // 焦点用运行期那一份归一实现（region 而不是 node）
       const regions = window.vk?.focusRegions?.(stage) || [];
       for (const el of regions) {
-        const r = el.getBoundingClientRect();
+        // 焦点面积按「墨的包围盒」算，不按元素盒：
+        // 文本焦点（tone=focus 的指标）与圈选（绝对定位铺满整页）按盒算会虚高到 30–139%。
+        // 只给「会盖住东西的」焦点算面积：色字（tone=focus）不遮挡，描边（ring）只有 4px 线。
+        if (el.matches('[tone="focus"], [data-tone="focus"], vk-ring')) continue;
+        const shape = el.querySelector?.('.vk-ov-svg rect, .vk-ov-svg ellipse, .vk-ov-svg path');
+        let r = null;
+        if (shape) r = shape.getBoundingClientRect();
+        else {
+          // 数字焦点只量数字本体：标签在上、单位在右，整块包围盒会把面积撑到 35%。
+          const numEl = el.querySelector?.('.vk-stat-v');
+          const textEl = numEl || el;
+          const text = (textEl.textContent || '').trim();
+          if (text) {
+            const range = document.createRange();
+            range.selectNodeContents(textEl);
+            const rects = [...range.getClientRects()].filter((x) => x.width > 1 && x.height > 1);
+            if (rects.length) {
+              const l = Math.min(...rects.map((x) => x.left));
+              const t = Math.min(...rects.map((x) => x.top));
+              const rr = Math.max(...rects.map((x) => x.right));
+              const bb = Math.max(...rects.map((x) => x.bottom));
+              r = { left: l, top: t, width: rr - l, height: bb - t };
+            }
+          }
+        }
+        if (!r) r = el.getBoundingClientRect();
         focusArea += r.width * r.height;
       }
       return {
@@ -285,6 +310,10 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
+
+
+
 
 
 

@@ -1414,6 +1414,7 @@ vk-quote[variant='mark'] .vk-quote::before {
   color: var(--vk-ink-4);
 }
 vk-quote[size='display'] .vk-quote { font-size: var(--vk-t-display); line-height: 1.16; letter-spacing: -0.02em; }
+vk-quote[size='title'] .vk-quote { font-size: var(--vk-t-title); line-height: 1.12; letter-spacing: -0.02em; }
 .vk-quote-src {
   display: block;
   margin-top: var(--vk-s2);
@@ -1782,6 +1783,7 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
 
 
 
