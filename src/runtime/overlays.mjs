@@ -222,8 +222,9 @@ export class VkSpotlight extends VkOverlay {
         y: 0,
         width: f.w,
         height: f.h,
-        fill: '#ffffff',
-        opacity: dim,
+        // 遮罩必须是"比纸更暗"的颜色：白纸上的白色遮罩等于没画（旧实现 fill:#ffffff，实测 0 像素）。
+        fill: '#0b0f14',
+        opacity: Math.min(0.72, dim * 0.62),
         mask: `url(#${maskId})`,
       })
     );

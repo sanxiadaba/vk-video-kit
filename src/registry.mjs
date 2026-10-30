@@ -206,7 +206,7 @@ export const TAGS = {
     layer: 'elements',
     summary: '一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。',
     attrs: {
-      'surface': oneOf('none', 'paper', 'soft'),
+      'surface': oneOf('none', 'paper', 'soft', 'sf-2', 'sf-3', 'sf-4'),
       'tone': oneOf('ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -229,7 +229,7 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'size': oneOf('display', 'title', 'heading', 'body', 'meta'),
+      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading', 'body', 'meta'),
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
@@ -319,7 +319,7 @@ export const TAGS = {
     attrs: {
       'title': text(),
       'url': text(),
-      'chrome': oneOf('min', 'none', 'browser'),
+      'chrome': oneOf('min', 'none', 'plain', 'browser'),
       'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
     },
@@ -418,7 +418,7 @@ export const TAGS = {
       'eyebrow': text(),
       'sub': text(),
       'level': oneOf('1', '2', '3'),
-      'size': oneOf('display', 'title', 'heading'),
+      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading'),
       'align': oneOf('left', 'center'),
     },
   },
@@ -897,7 +897,7 @@ for (const [tag, def] of Object.entries(TAGS)) {
 /* 竖线要长度：vk-rule 保留 COMMON 的 h；横线的 h 组件自己忽略（线不是面）。 */
 
 const EXTRA = {
-  'vk-box': { surface: oneOf('none', 'paper', 'soft') },
+  'vk-box': { surface: oneOf('none', 'paper', 'soft', 'sf-2', 'sf-3', 'sf-4') },
   'vk-text': { ink: oneOf('primary', 'secondary', 'tertiary', 'muted') },
   'vk-icon': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),

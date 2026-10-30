@@ -81,6 +81,9 @@ vk-box[radius='none'] { border-radius: 0; }
 /* 表面：只有一种材质。paper 是白，soft 是同一张纸上的极浅灰。 */
 vk-box[surface='paper'] { --vk-box-bg: var(--vk-surface-1); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
 vk-box[surface='soft'] { --vk-box-bg: var(--vk-surface-3); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
+vk-box[surface='sf-2'] { --vk-box-bg: var(--vk-sf-2); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
+vk-box[surface='sf-3'] { --vk-box-bg: var(--vk-sf-3); --vk-box-line: var(--vk-line-2); --vk-box-bw: 2px; }
+vk-box[surface='sf-4'] { --vk-box-bg: var(--vk-sf-4); --vk-box-line: var(--vk-line-2); --vk-box-bw: 2px; }
 /* 描边只管粗细；线色归 tone——所以"彩色描边卡"是 tone + border 的组合。 */
 vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
 vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
@@ -108,6 +111,8 @@ vk-text {
   overflow-wrap: anywhere;
 }
 
+vk-text[size='display-2xl'] { font-size: var(--vk-t-display-2xl); line-height: 1.02; letter-spacing: -0.04em; font-weight: var(--vk-w-bold); }
+vk-text[size='display-xl'] { font-size: var(--vk-t-display-xl); line-height: 1.04; letter-spacing: -0.035em; font-weight: var(--vk-w-bold); }
 vk-text[size='display'] { font-size: var(--vk-t-display); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
 vk-text[size='title'] { font-size: var(--vk-t-title); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
 vk-text[size='heading'] { font-size: var(--vk-t-heading); line-height: var(--vk-lh-snug); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); }

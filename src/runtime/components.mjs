@@ -393,7 +393,7 @@ export class VkFigure extends VkElement {
 
 /* ---------------------------------------------------------------- window */
 
-const WIN_CHROME = new Set(['min', 'none', 'browser']);
+const WIN_CHROME = new Set(['min', 'none', 'plain', 'browser']);
 const WIN_PAD = new Set(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
 const WIN_TONES = new Set(['info', 'focus', 'ok', 'warn', 'err']);
 

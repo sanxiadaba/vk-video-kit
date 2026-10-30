@@ -81,6 +81,8 @@ vk-title { display: block; }
   color: var(--vk-ink-1);
   text-wrap: balance;
 }
+.vk-title[data-size='display-2xl'] .vk-title-main { font-size: var(--vk-t-display-2xl); line-height: 1.02; letter-spacing: -0.04em; }
+.vk-title[data-size='display-xl'] .vk-title-main { font-size: var(--vk-t-display-xl); line-height: 1.04; letter-spacing: -0.035em; }
 .vk-title[data-size='display'] .vk-title-main { font-size: var(--vk-t-display); }
 .vk-title[data-size='heading'] .vk-title-main { font-size: var(--vk-t-heading); line-height: var(--vk-lh-snug); }
 
@@ -1609,3 +1611,8 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 .vk-cell > .vk-cell-v { margin-bottom: auto; }
 /* compact 必须真的压行高：48.6*1.45=75.4 > 64 时 min-height 永远不生效 */
 .vk-term[data-density='compact'] .vk-line { line-height: 1.25; min-height: 56px; }
+
+/* chrome=plain：保留标题栏，去掉三点 —— 当卡片用 */
+.vk-win[data-chrome='plain'] .vk-dots { display: none; }
+.vk-win[data-chrome='plain'] .vk-hd { padding-left: var(--vk-s3); }
+.vk-win[data-chrome='plain'] .vk-br-url { display: none; }

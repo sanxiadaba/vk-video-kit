@@ -10,7 +10,9 @@ export const DOTS = '<span class="vk-dots"><i></i><i></i><i></i></span>';
  */
 export function win({ chrome = 'min', head = '', inner = '', cls = '', attrs = '' } = {}) {
   const klass = cls ? ` ${cls}` : '';
-  const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${DOTS}${head}</div>`;
+  // chrome="plain"：有标题栏，没有三点 —— 用来当「卡片」，而不是「窗口」。
+  const dots = chrome === 'plain' ? '' : DOTS;
+  const bar = chrome === 'none' ? '' : `<div class="vk-hd" data-vk-part="hd">${dots}${head}</div>`;
   return `<div class="vk-win${klass}" data-chrome="${esc(chrome)}"${attrs}>${bar}${inner}</div>`;
 }
 
