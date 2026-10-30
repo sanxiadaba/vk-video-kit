@@ -376,6 +376,13 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   mass: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
 });
 
+
+Object.assign((EFFECTS['vk-loupe'] ||= {}), {
+  // 面板落在目标的哪一侧；窄舞台里几条边会被夹到同一处，没有单一可比属性。
+  side: { kind: 'any', reason: '位置由目标与舞台边界共同决定，窄舞台里几条边会被夹到同一处' },
+  zoom: { on: '.vk-loupe', kind: 'style', prop: 'background-size' },
+});
+
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
   emphasis: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },

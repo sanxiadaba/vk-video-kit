@@ -118,6 +118,31 @@ test('底部空带：贴底的页不报', async () => {
   assert.equal(out.issues.length, 0, `不该报留白：${JSON.stringify(out.issues)}`);
 });
 
+
+test('vk-loupe 放大的就是我们指定的那一点', async () => {
+  await page.setContent(
+    SHELL(`<vk-page>
+      <vk-box id="shot" x="120" y="120" w="600" h="200" surface="soft"></vk-box>
+      <vk-loupe for="#shot" src="assets/sample-grid.svg" point="25%,40%" size="200" zoom="3" side="right"></vk-loupe>
+    </vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const r = await page.evaluate(() => {
+    const l = document.querySelector('.vk-loupe');
+    const size = parseFloat(l.style.width);
+    const [bw, bh] = l.style.backgroundSize.split(' ').map(parseFloat);
+    const [px, py] = l.style.backgroundPosition.split(' ').map(parseFloat);
+    return { size, bw, bh, px, py };
+  });
+  // 面板 200，放大 3×：底图宽 = 目标宽 × 3
+  assert.equal(r.bw, 600 * 3, `底图宽应该是 1800，实际 ${r.bw}`);
+  assert.equal(r.bh, 200 * 3);
+  // 指定点 25%,40% 要落在面板正中
+  assert.ok(Math.abs(r.px - (r.size / 2 - 0.25 * r.bw)) < 2, `x 偏移不对：${r.px}`);
+  assert.ok(Math.abs(r.py - (r.size / 2 - 0.4 * r.bh)) < 2, `y 偏移不对：${r.py}`);
+});
+
 after(async () => {
   await browser.close();
   await close();

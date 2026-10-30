@@ -12,6 +12,13 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-loupe': {
+    point: {
+      values: ['10%,10%', '80%,80%'],
+      effect: { on: '.vk-loupe', kind: 'style', prop: 'background-position' },
+      why: '放大的是哪一点，直接翻成 background-position。',
+    },
+  },
   'vk-tag': {
     // label 是默认态；body 与 subhead 是两个非默认档。
     size: {

@@ -373,10 +373,112 @@ export class VkPin extends VkOverlay {
   }
 }
 
+
+/* ----------------------------------------------------------------- loupe */
+
+/**
+ * 放大镜：把目标图上的某一小块放大给人看。
+ * 它不复制图，只把同一张图按 zoom 放大后平移到面板里——
+ * 所以放大出来的像素和原图是同一份，不会糊。
+ */
+export class VkLoupe extends VkElement {
+  static frame = false;
+  static watchSource = false;
+
+  render() {
+    this.style.position = 'absolute';
+    this.style.inset = '0';
+    this.style.pointerEvents = 'none';
+    this.dataset.vkOverlay = '';
+    const host = hostOf(this);
+    if (!host) return;
+    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+
+    const target = anchorsOf(this, host)[0];
+    if (!target) {
+      this._warnOnce('target', '找不到 for 目标，放大镜没有画');
+      return;
+    }
+    const src = this.getAttribute('src');
+    if (!src) {
+      this._warnOnce('src', '放大镜缺 src：要放大的那张图');
+      return;
+    }
+
+    const hr = host.getBoundingClientRect();
+    const tr = target.rect;
+    const t = visualToLocal(tr, hr, host.offsetWidth);
+    const at = (this.getAttribute('point') || '50%,50%').split(',').map((v) => parseFloat(v));
+    const fx = Math.min(100, Math.max(0, Number.isFinite(at[0]) ? at[0] : 50)) / 100;
+    const fy = Math.min(100, Math.max(0, Number.isFinite(at[1]) ? at[1] : 50)) / 100;
+
+    const size = numAttr(this, 'size', { min: 80, max: 640, fallback: 240 });
+    const zoom = numAttr(this, 'zoom', { min: 1.2, max: 8, fallback: 2.4 });
+    const gap = numAttr(this, 'gap-px', { min: 0, max: 200, fallback: 24 });
+    const side = this.getAttribute('side') || 'right';
+    const shape = this.getAttribute('variant') || 'circle';
+
+    // 面板放在目标的哪一侧
+    let left = t.x + t.w + gap;
+    let top = t.y + t.h / 2 - size / 2;
+    if (side === 'left') left = t.x - gap - size;
+    else if (side === 'top') {
+      left = t.x + t.w / 2 - size / 2;
+      top = t.y - gap - size;
+    } else if (side === 'bottom') {
+      left = t.x + t.w / 2 - size / 2;
+      top = t.y + t.h + gap;
+    } else if (side === 'inside') {
+      left = t.x + t.w - size - gap;
+      top = t.y + gap;
+    }
+    left = Math.max(0, Math.min(host.offsetWidth - size, left));
+    top = Math.max(0, Math.min(host.offsetHeight - size, top));
+
+    // 放大后在目标本地坐标系里的像素位置；让它落在面板正中
+    const bgW = t.w * zoom;
+    const bgH = t.h * zoom;
+    const px = fx * bgW;
+    const py = fy * bgH;
+
+    const panel = this.querySelector('.vk-loupe') || document.createElement('div');
+    panel.className = 'vk-loupe';
+    panel.dataset.shape = shape;
+    panel.style.left = Math.round(left) + 'px';
+    panel.style.top = Math.round(top) + 'px';
+    panel.style.width = size + 'px';
+    panel.style.height = size + 'px';
+    panel.style.backgroundImage = `url("${src.replace(/"/g, '')}")`;
+    panel.style.backgroundSize = `${Math.round(bgW)}px ${Math.round(bgH)}px`;
+    panel.style.backgroundPosition = `${Math.round(size / 2 - px)}px ${Math.round(size / 2 - py)}px`;
+    panel.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 50 }));
+    if (!panel.parentElement) this.appendChild(panel);
+
+    // 标注是面板的兄弟，不是子元素：面板要 overflow:hidden 裁圆形，标注得在外面才不被裁。
+    let cap = this.querySelector('.vk-loupe-l');
+    const label = this.getAttribute('label');
+    if (label) {
+      if (!cap) {
+        cap = document.createElement('div');
+        cap.className = 'vk-loupe-l';
+        this.appendChild(cap);
+      }
+      cap.textContent = label;
+      // 标注跟着面板走，但要夹在舞台里——面板贴边时标注不能跑出去。
+      const cx = Math.min(host.offsetWidth - 140, Math.max(140, left + size / 2));
+      cap.style.left = Math.round(cx) + 'px';
+      cap.style.top = Math.round(top + size + 8) + 'px';
+      cap.style.transform = 'translateX(-50%)';
+    } else if (cap) cap.remove();
+  }
+}
+
 export function defineOverlays() {
   define('vk-ring', VkRing);
   define('vk-spotlight', VkSpotlight);
   define('vk-pin', VkPin);
+  define('vk-loupe', VkLoupe);
 }
+
 
 

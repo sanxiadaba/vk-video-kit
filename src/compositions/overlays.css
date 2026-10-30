@@ -142,3 +142,26 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
 .vk-pin-bd[data-emphasis='solid'] { background: var(--vk-info-soft); }
 .vk-pin-bd[data-tone='focus'][data-emphasis='solid'] { background: var(--vk-focus-soft); }
 .vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
+/* ----------------------------------------------------------------- loupe */
+/* 放大镜面板：同一张图按 zoom 放大后平移，所以放大出来的像素和原图是一份。
+   圆/方只改裁切，不改内容；投影跟图窗同一套，永远不用纯黑。 */
+.vk-loupe {
+  position: absolute;
+  background-repeat: no-repeat;
+  background-color: var(--vk-surface-1);
+  border: var(--vk-line-w) solid var(--vk-line-2);
+  box-shadow: 0 24px 60px -32px rgba(11, 15, 20, 0.35), 0 0 0 2px rgba(11, 15, 20, 0.05);
+  overflow: hidden;
+}
+.vk-loupe[data-shape='circle'] { border-radius: 50%; }
+.vk-loupe[data-shape='rect'] { border-radius: var(--vk-r-2); }
+/* 标注放在面板下方，不压在放大内容上——放大镜里那一块才是最该看清的。 */
+.vk-loupe-l {
+  position: absolute;
+  padding: 0 var(--vk-s1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  line-height: var(--vk-lh-label);
+  color: var(--vk-ink-2);
+  white-space: nowrap;
+}

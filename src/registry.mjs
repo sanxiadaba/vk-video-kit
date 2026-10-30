@@ -171,6 +171,7 @@ const DEFAULTS = {
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', mass: 'normal' },
+  'vk-loupe': { size: 240, zoom: 2.4, side: 'right', variant: 'circle', 'gap-px': 24, z: 50 },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, z: 40 },
   'vk-spotlight': { dim: 0.45, z: 30 },
@@ -864,6 +865,23 @@ export const TAGS = {
       'poster': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
     },
   },
+  'vk-loupe': {
+    name: '放大镜',
+    layer: 'relations',
+    summary: '把目标图上的一小块放大：同一张图按 zoom 放大后平移，放大出来的像素和原图是同一份。',
+    attrs: {
+      'for': sel(),
+      'src': text(),
+      // 放大哪一点：写百分比（30%,40%）。别用 at——那是时间，由导演层统一管。
+      'point': text(),
+      'size': int({ min: 80, max: 640, step: 1 }),
+      'zoom': num({ min: 1.2, max: 8, step: 0.1 }),
+      'side': oneOf('right', 'left', 'top', 'bottom', 'inside'),
+      'variant': oneOf('circle', 'rect'),
+      'gap-px': num({ min: 0, max: 200, step: 1 }),
+      'label': text(),
+    },
+  },
   'vk-pin': {
     name: '批注泡',
     layer: 'relations',
@@ -932,6 +950,7 @@ const CUSTOM = new Set([
   'vk-pin',
   'vk-ring',
   'vk-spotlight',
+  'vk-loupe',
 ]);
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
@@ -1039,7 +1058,7 @@ const MOTION_ATTRS = {
 for (const [tag, value] of [['vk-edge', 'trace'], ['vk-pin', 'badge'], ['vk-diff', 'compare']]) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), act: { ...oneOf(value), default: value, pose: true } };
 }
-for (const tag of ['vk-ring', 'vk-spotlight', 'vk-pin', 'vk-edge']) {
+for (const tag of ['vk-ring', 'vk-spotlight', 'vk-pin', 'vk-edge', 'vk-loupe']) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), ...MOTION_ATTRS };
 }
 for (const [tag, attrs] of Object.entries(EXTRA)) {
@@ -1164,6 +1183,7 @@ export function validate() {
   }
   return errors;
 }
+
 
 
 

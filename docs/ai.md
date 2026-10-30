@@ -270,6 +270,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
   - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `act` · `at` · `dur` · `enter` · `ease` · `label-size` · `label-dx` · `label-dy` · `via`
   - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36">`
+- **`vk-loupe`** · 放大镜 — 把目标图上的一小块放大：同一张图按 zoom 放大后平移，放大出来的像素和原图是同一份。
+  - 属性：`for` · `src` · `point` · `size` · `zoom` · `side` · `variant` · `gap-px` · `label` · `at` · `dur` · `enter` · `ease`
+  - 例：`<vk-loupe for="#loupe-target" src="../assets/sample-grid.svg" point="30%,40%" size="120" zoom="2.6" side="inside" label="放大 2.6×">`
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
   - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z` · `act` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`

@@ -483,6 +483,17 @@ export const SCENES = [
   },
 
   {
+    tag: 'vk-loupe',
+    body: s`
+<vk-canvas w="1360" h="520">
+  <vk-box id="loupe-target" x="80" y="100" w="360" h="200" surface="soft" border="hair" radius="lg" pad="md">
+    <vk-text size="body" mono>A  B  C  D  E  F  G  H</vk-text>
+    <vk-text size="label" mono ink="tertiary">把其中一格放大看</vk-text>
+  </vk-box>
+  <vk-loupe for="#loupe-target" src="../assets/sample-grid.svg" point="30%,40%" size="120" zoom="2.6" side="inside" label="放大 2.6×"></vk-loupe>
+</vk-canvas>`,
+  },
+  {
     tag: 'vk-pin',
     body: s`
 <vk-canvas w="1360" h="520" grid="16">
@@ -535,4 +546,7 @@ export const SCENES = [
 </vk-page>`,
   },
 ];
+
+
+
 
