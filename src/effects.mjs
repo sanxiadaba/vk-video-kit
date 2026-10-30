@@ -70,7 +70,7 @@ export const EFFECTS = {
     tone: { on: '.vk-stat-v', kind: 'style', prop: 'color' },
     mark: { on: '.vk-stat', kind: 'attr', prop: 'data-mark' },
     align: { on: '.vk-stat', kind: 'style', prop: 'text-align' },
-    format: { kind: 'any', reason: '改的是数字写法（千分位/十六进制），要配合 value 才看得出变化' },
+    format: { on: '.vk-stat-v', kind: 'text' },
   },
 
   'vk-bits': {
@@ -232,12 +232,12 @@ export const EFFECTS = {
   'vk-edge': {
     variant: { on: 'svg path', kind: 'attr', prop: 'd' },
     tension: { on: 'svg path', kind: 'attr', prop: 'd' },
-    'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
-    'to-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
     'gap-px': { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
-    emphasis: { kind: 'any', reason: 'solid 等于默认态；ghost 改用细线，没有可比的单一属性' },
+    emphasis: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
+    'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
+    'to-side': { kind: 'any', reason: '同上：只有目标在那一侧时才生效。' },
     arrow: { on: 'svg path', kind: 'attr', prop: 'd' },
     'arrow-style': { on: '.vk-edge-tip', kind: 'attr', prop: 'data-style' },
     'arrow-size': { on: 'svg path', kind: 'attr', prop: 'd' },

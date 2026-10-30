@@ -128,8 +128,6 @@ const ATTR_META = {
   depth: { label: '最大深度', group: 'layout' },
   limit: { label: '最多显示', group: 'layout' },
   measure: { label: '测量宽', group: 'layout' },
-  'from-side': { label: '起点边', group: 'layout' },
-  'to-side': { label: '终点边', group: 'layout' },
   scale: { label: '刻度', group: 'appearance' },
   emphasis: { label: '强度', group: 'appearance' },
   ink: { label: '墨阶', group: 'appearance' },
@@ -812,7 +810,7 @@ export const TAGS = {
       note: '汇编文本由构建期解析与高亮；改文本请改 src 文件并运行 npm run build。',
     },
     attrs: {
-      'lang': text(),
+      'lang': { ...text(), build: true },  // 汇编文本构建期解析，运行期改 lang 不重新着色
       'src': { ...text(), build: true },
       'lines': text(),
       'file': { ...text(), build: true },

@@ -35,6 +35,12 @@ export const PROBES = {
     },
   },
   'vk-stat': {
+    // thousands 是默认态；只断两个非默认写法。
+    format: {
+      values: ['none', 'hex'],
+      effect: { on: '.vk-stat-v', kind: 'text' },
+      why: '数字写法：千分位 / 原样 / 十六进制。',
+    },
     measure: {
       values: ['16', 'none'],
       effect: { on: 'vk-stat', kind: 'style', prop: 'max-width' },
