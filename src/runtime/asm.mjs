@@ -51,7 +51,7 @@ export class VkAsm extends VkElement {
     const hasBytes = d.rows.some((r) => r.bytes);
     const showBytes = this.hasAttribute('bytes') && hasBytes;
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
-    const density = this.getAttribute('density') || 'normal';
+    const mass = this.getAttribute('mass') || 'normal';
     const title = this.getAttribute('title') || d.file || '';
     const hl = lineSet(this.getAttribute('current'));
     const focus = lineSet(this.getAttribute('focus'));
@@ -117,7 +117,7 @@ export class VkAsm extends VkElement {
     ]
       .filter(Boolean)
       .join(' ');
-    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-density="${esc(density)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
+    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
   }

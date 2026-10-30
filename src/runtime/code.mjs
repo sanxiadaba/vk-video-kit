@@ -73,7 +73,7 @@ export class VkCode extends VkElement {
     const srcPath = this.getAttribute('src') || '';
     const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '');
     const chrome = this.getAttribute('chrome') || 'min';
-    const density = ['compact', 'loose'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
+    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
     const showNums = this.getAttribute('numbers') !== 'none';
     const marks = (this.getAttribute('mark') || '').split(',').map((s) => s.trim()).filter(Boolean);
 
@@ -157,7 +157,7 @@ export class VkCode extends VkElement {
       win({
         chrome,
         cls: 'vk-code',
-        attrs: ` data-density="${density}"`,
+        attrs: ` data-mass="${mass}"`,
         head: fileHead(file, label, this.getAttribute('lines') || ''),
         inner: `<div class="vk-bd" data-vk-part="bd">${rows.join('')}</div>`,
       });
@@ -287,7 +287,7 @@ export class VkTerm extends VkElement {
       : dedent(this._src || '');
     const prompt = this.getAttribute('prompt') || '$';
     const title = this.getAttribute('title') || '';
-    const density = ['compact', 'loose'].includes(this.getAttribute('density')) ? this.getAttribute('density') : 'normal';
+    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
     const rows = source
       .split('\n')
@@ -338,7 +338,7 @@ export class VkTerm extends VkElement {
     this.innerHTML = win({
       chrome,
       cls: 'vk-term',
-      attrs: ` data-density="${density}"`,
+      attrs: ` data-mass="${mass}"`,
       head: title ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
       inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });

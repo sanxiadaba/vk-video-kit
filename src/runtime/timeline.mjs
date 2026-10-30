@@ -50,7 +50,7 @@ export class VkTimeline extends VkElement {
     }
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
-    const density = this.getAttribute('density') || 'normal';
+    const mass = this.getAttribute('mass') || 'normal';
     const span = [this.getAttribute('start') || items[0]?.date, this.getAttribute('end') || items[items.length - 1]?.date]
       .filter(Boolean)
       .join('–');
@@ -58,7 +58,7 @@ export class VkTimeline extends VkElement {
       ? `<header class="vk-tl-hd"><span class="vk-tl-title">${esc(title)}</span><span class="vk-tl-meta" data-meta>${esc(span)}${span ? ' · ' : ''}${items.length} 个节点</span></header>`
       : '';
     const body = variant === 'lanes' ? this._lanes(items) : this._axis(items);
-    this.innerHTML = `<div class="vk-timeline" data-variant="${variant}" data-density="${esc(density)}">${head}${body}</div>`;
+    this.innerHTML = `<div class="vk-timeline" data-variant="${variant}" data-mass="${esc(mass)}">${head}${body}</div>`;
   }
 
   _axis(items) {

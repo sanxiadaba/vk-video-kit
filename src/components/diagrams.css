@@ -148,8 +148,8 @@ vk-asm { display: block; }
 .vk-asm-row.is-hl .vk-asm-a { color: var(--vk-focus); font-weight: var(--vk-w-med); }
 .vk-asm-row.is-hl .vk-asm-order { background: var(--vk-focus); color: #fff; box-shadow: 0 0 0 4px var(--vk-surface-1); }
 .vk-asm-row.is-dim { opacity: var(--vk-dim); }
-.vk-asm[data-density='compact'] .vk-asm-row { min-height: 48px; }
-.vk-asm[data-density='compact'] .vk-asm-cols-hd { min-height: 36px; }
+.vk-asm[data-mass='compact'] .vk-asm-row { min-height: 48px; }
+.vk-asm[data-mass='compact'] .vk-asm-cols-hd { min-height: 36px; }
 .vk-asm-raw { font-size: var(--vk-t-body); line-height: 1.3; }
 /* ------------------------------------------------------------ vk-timeline */
 
@@ -232,10 +232,10 @@ vk-timeline { display: block; }
   color: var(--vk-ink-2);
   overflow-wrap: anywhere;
 }
-.vk-timeline[data-density='compact'] .vk-tl-item { padding: 6px 0; }
-.vk-timeline[data-density='compact'] .vk-tl-dot { margin-top: 8px; }
-.vk-timeline[data-density='loose'] .vk-tl-item { padding: 20px 0; }
-.vk-timeline[data-density='loose'] .vk-tl-dot { margin-top: 12px; }
+.vk-timeline[data-mass='compact'] .vk-tl-item { padding: 6px 0; }
+.vk-timeline[data-mass='compact'] .vk-tl-dot { margin-top: 8px; }
+.vk-timeline[data-mass='hero'] .vk-tl-item { padding: 20px 0; }
+.vk-timeline[data-mass='hero'] .vk-tl-dot { margin-top: 12px; }
 
 /* 泳道：lane 标签 + 步网格。 */
 .vk-tl-lanes {

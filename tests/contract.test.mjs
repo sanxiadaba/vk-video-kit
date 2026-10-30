@@ -8,7 +8,8 @@ const registryAttrs = new Set();
 for (const def of Object.values(TAGS)) for (const name of Object.keys(def.attrs || {})) registryAttrs.add(name);
 for (const list of Object.values(CHILD_ATTRS)) for (const name of list) registryAttrs.add(name);
 
-const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text', 'bleed']);
+// density 是 13.0 里的旧词：只在 base.mjs 的别名层读一次，registry 已经不声明它。
+const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text', 'bleed', 'density']);
 const IGNORE = (name) => name.startsWith('data-') || name.startsWith('aria-') || ALLOW.has(name);
 
 function walk(dir, out = []) {
@@ -71,7 +72,8 @@ test('registry 的默认值都在枚举里（validate 的强化版）', () => {
 });
 
 test('build 只标在真正的构建期属性上', () => {
-  const allowed = new Set(['src', 'lines', 'addr', 'offset', 'length', 'file']);
+  // lang 也算构建期：词级高亮由 Shiki 在构建期编译，运行期改 lang 不会重新着色。
+  const allowed = new Set(['src', 'lines', 'addr', 'offset', 'length', 'file', 'lang']);
   const bad = [];
   for (const [tag, def] of Object.entries(TAGS)) {
     for (const [name, spec] of Object.entries(def.attrs || {})) {
@@ -80,3 +82,5 @@ test('build 只标在真正的构建期属性上', () => {
   }
   assert.deepEqual(bad, [], `可疑的构建期标记：${bad.join(', ')}`);
 });
+
+

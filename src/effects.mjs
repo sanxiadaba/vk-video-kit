@@ -21,9 +21,8 @@ export const EFFECTS = {
 
   'vk-term': {
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
-    density: { on: '.vk-line', kind: 'style', prop: 'min-height' },
+    mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
-    size: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
   },
 
@@ -39,6 +38,8 @@ export const EFFECTS = {
   },
 
   'vk-window': {
+    mass: { on: '.vk-hd', kind: 'style', prop: 'padding-top', skipVisual: true },
+
     title: { on: '.vk-file', kind: 'text' },
     chrome: { on: '.vk-hd', kind: 'style', prop: 'display' },
     tone: { on: '.vk-win', kind: 'style', prop: 'border-top-color' },
@@ -73,6 +74,8 @@ export const EFFECTS = {
   },
 
   'vk-bits': {
+    mass: { on: '.vk-bit-row', kind: 'style', prop: 'min-height', skipVisual: true },
+
     index: { on: '.vk-bit-i', kind: 'text' },
     group: { kind: 'any', reason: 'group 只改分隔线的粗细/位置，没有单一可比属性' },
     sign: { on: '.vk-bit', kind: 'style', prop: 'background-color' },
@@ -84,12 +87,14 @@ export const EFFECTS = {
   'vk-bars': {
     max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
-    density: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
+    mass: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
     format: { on: '.vk-bar-v', kind: 'text' },
   },
 
   'vk-diff': {
+    mass: { on: '.vk-dline', kind: 'style', prop: 'min-height', skipVisual: true },
+
     variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },
     chrome: { on: 'vk-diff .vk-hd', kind: 'style', prop: 'display' },
     summary: { on: '.vk-dmeta', kind: 'style', prop: 'display' },
@@ -164,6 +169,8 @@ export const EFFECTS = {
   },
 
   'vk-tree': {
+    mass: { on: '.vk-tree-row', kind: 'style', prop: 'min-height', skipVisual: true },
+
     depth: { on: 'vk-tree', kind: 'geometry', prop: 'height' },
     summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
     chrome: { on: '.vk-tree-hd', kind: 'style', prop: 'display' },
@@ -175,7 +182,7 @@ export const EFFECTS = {
     ascii: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-c' },
     address: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-a' },
     highlight: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
-    density: { on: '.vk-bytes-row', kind: 'style', prop: 'line-height' },
+    mass: { on: '.vk-bytes-row', kind: 'style', prop: 'line-height' },
     chrome: { on: 'vk-bytes', kind: 'dom', prop: '.vk-hd' },
   },
 
@@ -218,9 +225,8 @@ export const EFFECTS = {
   'vk-table': {
     stripe: { on: 'tbody tr', kind: 'style', prop: 'background-color' },
     mono: { on: 'tbody td', kind: 'style', prop: 'font-family' },
-    density: { on: 'tbody td', kind: 'style', prop: 'padding-top' },
+    mass: { on: 'tbody td', kind: 'style', prop: 'padding-top', skipVisual: true },
     variant: { on: 'tbody td', kind: 'style', prop: 'padding-top' },
-    size: { on: 'tbody td', kind: 'style', prop: 'padding-top', skipVisual: true },
   },
 
   'vk-edge': {
@@ -245,7 +251,7 @@ export const EFFECTS = {
     highlight: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     focus: { on: '.vk-line', kind: 'style', prop: 'opacity' },
     fold: { on: 'svg', kind: 'dom', prop: '.vk-line' },
-    density: { on: '.vk-line', kind: 'style', prop: 'min-height' },
+    mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     chrome: { on: 'vk-code', kind: 'dom', prop: '.vk-hd' },
     numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
     // fit 是内容相关状态：换行后高度由内容决定，只验证 white-space 变了。
@@ -253,7 +259,6 @@ export const EFFECTS = {
     w: { on: 'vk-code', kind: 'geometry', prop: 'width' },
     mark: { on: '.vk-tok', kind: 'style', prop: 'background-color' },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
-    size: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
   },
 };
 
@@ -322,14 +327,14 @@ Object.assign(EFFECTS['vk-term'], {
 Object.assign(EFFECTS['vk-table'], {
 });
 Object.assign(EFFECTS['vk-callout'], {
-  density: { on: '.vk-callout', kind: 'style', prop: 'padding-top' },
+  mass: { on: '.vk-callout', kind: 'style', prop: 'padding-top' },
 });
 Object.assign(EFFECTS['vk-steps'], {
-  density: { on: '.vk-step-n', kind: 'style', prop: 'width' },
+  mass: { on: '.vk-step-n', kind: 'style', prop: 'width' },
 });
 Object.assign(EFFECTS['vk-cells'], {
   stride: { kind: 'any', reason: '只在字节模式下改变地址步长' },
-  size: { on: '.vk-cell', kind: 'style', prop: 'min-height', skipVisual: true },
+  mass: { on: '.vk-cell', kind: 'style', prop: 'min-height', skipVisual: true },
 });
 Object.assign(EFFECTS['vk-grid'], {
   justify: { on: 'vk-grid', kind: 'style', prop: 'justify-items' },
@@ -353,7 +358,7 @@ Object.assign((EFFECTS['vk-asm'] ||= {}), {
   title: { on: '.vk-asm-file', kind: 'text' },
   bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b' },
   address: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-a' },
-  density: { on: '.vk-asm-row', kind: 'style', prop: 'min-height' },
+  mass: { on: '.vk-asm-row', kind: 'style', prop: 'min-height', skipVisual: true },
   chrome: { on: '.vk-asm-hd', kind: 'style', prop: 'display' },
   highlight: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-hl' },
   focus: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-dim' },
@@ -368,7 +373,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   title: { on: '.vk-tl-title', kind: 'text' },
   variant: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-lanes' },
   steps: { kind: 'any', reason: '只在 lanes 模式下改变步数' },
-  density: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
+  mass: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
@@ -431,6 +436,7 @@ Object.assign(EFFECTS['vk-asm'], {
   'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
   'operands-label': { on: '.vk-asm-o', kind: 'text' },
 });
+
 
 
 

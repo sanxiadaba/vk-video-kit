@@ -14,9 +14,9 @@ export const SCENES = [
   {
     tag: 'vk-code',
     body: s`
-<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" density="loose"></vk-code>`,
+<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" mass="hero"></vk-code>`,
     strip: s`
-<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-7" current="4" density="loose"></vk-code>`,
+<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-7" current="4" mass="hero"></vk-code>`,
   },
 
   {

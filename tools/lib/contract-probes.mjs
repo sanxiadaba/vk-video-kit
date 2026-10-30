@@ -222,10 +222,15 @@ export const VISUAL_EXEMPT = {
   'vk-canvas.w': '坐标画布只改几何，不产生新文字/颜色。',
   'vk-canvas.h': '坐标画布只改几何，不产生新文字/颜色。',
   'vk-box.h': '硬高是作者显式选择的裁切；内容溢出不算 h 属性的错。',
-  'vk-code.size': 'hero 档把组件撑到整帧，标本台装不下；只断言行高变了。',
-  'vk-cells.size': 'hero 档把格子撑到 300px，标本台装不下；只断言 min-height 变了。',
-  'vk-term.size': 'hero 档把终端撑到整帧，标本台装不下；只断言行高变了。',
-  'vk-table.size': 'hero 档加内距会把表格撑出标本台；只断言内距变了。',
+  'vk-code.mass': 'hero 档把组件撑到整帧，标本台装不下；只断言行高变了。',
+  'vk-cells.mass': 'hero 档把格子撑到 300px，标本台装不下；只断言 min-height 变了。',
+  'vk-term.mass': 'hero 档把终端撑到整帧，标本台装不下；只断言行高变了。',
+  'vk-table.mass': 'hero 档加内距会把表格撑出标本台；只断言内距变了。',
+  'vk-window.mass': 'window 的 hero 只是把标题栏加高，不改变子树结构。',
+  'vk-diff.mass': 'hero 档把对照行撑高，标本台装不下；只断言行高变了。',
+  'vk-tree.mass': 'hero 档把文件树撑到整帧，标本台放不下；只断言行高变了。',
+  'vk-bits.mass': 'hero 档把位图行撑高，标本台放不下；只断言行高变了。',
+  'vk-asm.mass': 'hero 档把反汇编撑高，标本台装不下；只断言行高变了。',
   'vk-figure.bleed': '出血是负边距，只改几何不改墨；越界由真实帧负责。',
 };
 
@@ -306,5 +311,7 @@ export function visualExemptReason(key) {
   for (const p of VISUAL_PATTERNS) if (p.match.test(key)) return p.reason;
   return null;
 }
+
+
 
 

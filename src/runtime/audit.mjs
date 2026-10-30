@@ -363,10 +363,10 @@ export function auditPage(root = document) {
 
 /** 容量问题的下一步：只给可执行的旋钮，不替作者做审美判断。 */
 function fixFor(x, safeRect) {
-  if (x.type === 'content-clip') return `差 ${x.sh - x.ch}px：先试 gap 降一档 / density="compact" / 删 1 条`;
-  if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / density="compact"`;
+  if (x.type === 'content-clip') return `差 ${x.sh - x.ch}px：先试 gap 降一档 / mass="compact" / 删 1 条`;
+  if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / mass="compact"`;
   if (x.type === 'clip') return `差 ${x.sw - x.cw}px：先试 long="wrap" / 删字符`;
-  if (x.type === 'audit-overflow') return `差 ${Math.max(x.sw - x.cw, x.sh - x.ch)}px：先试 long="wrap" / density="compact" / 删 1 行`;
+  if (x.type === 'audit-overflow') return `差 ${Math.max(x.sw - x.cw, x.sh - x.ch)}px：先试 long="wrap" / mass="compact" / 删 1 行`;
   if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
   if (x.type === 'safe' && x.box && safeRect) {
     const [l, t, r, b] = x.box;
@@ -570,6 +570,7 @@ export function installAudit(VK) {
   VK.metrics = metrics;
   VK.focusRegions = focusRegions;
 }
+
 
 
 

@@ -11,7 +11,7 @@
    ========================================================================== */
 
 import { TAGS, TAG_NAMES, observedOf } from '../registry.mjs';
-import { TIER_ALIAS } from '../shared/tier-alias.mjs';
+import { DENSITY_ALIAS, MASS_TAGS, TIER_ALIAS } from '../shared/tier-alias.mjs';
 import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
 import { wrapCharRange } from './code-utils.mjs';
@@ -312,6 +312,23 @@ export function fetchSource(el) {
 /* --------------------------------------------------------------- 值层迁移 */
 
 export function normalizeTier(el) {
+  // 体量：旧词 density（compact/normal/loose）与旧的内在本 size 都并进 mass。
+  const tag = el.tagName?.toLowerCase();
+  if (MASS_TAGS.has(tag)) {
+    if (!el.hasAttribute('mass')) {
+      const d = el.getAttribute('density'); // 旧词，只在别名层读
+      if (d && DENSITY_ALIAS[d]) {
+        el.setAttribute('mass', DENSITY_ALIAS[d]);
+        el._warnOnce?.('mass', `的 density="${d}" 已退役，请写成 mass="${DENSITY_ALIAS[d]}"`);
+      } else {
+        const s = el.getAttribute('size');
+        if (s === 'compact' || s === 'normal' || s === 'hero') {
+          el.setAttribute('mass', s);
+          el._warnOnce?.('mass', `的 size="${s}" 是内在体量，请写成 mass="${s}"`);
+        }
+      }
+    }
+  }
   // 旧档名（display-2xl / display-xl / display / heading / meta）连上 DOM 的第一刻折成新名，
   // 后面所有环节（CSS、契约、文档、类型）就只认一套词。别名表在 shared/tier-alias.mjs。
   const v = el.getAttribute?.('size');
@@ -742,6 +759,7 @@ export function fillSlot(host, nodes) {
 }
 
 if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
+
 
 
 

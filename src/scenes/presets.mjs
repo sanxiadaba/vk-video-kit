@@ -101,7 +101,7 @@ export const PRESETS = {
     { label: '无底', attrs: { bare: '' } },
   ],
   'vk-code': [
-    { label: '主镜头', attrs: { density: 'loose', chrome: 'none' } },
+    { label: '主镜头', attrs: { mass: 'hero', chrome: 'none' } },
     { label: '聚光', attrs: { focus: '4', current: '4' } },
     { label: '缺口', attrs: { fold: '4' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
@@ -109,7 +109,7 @@ export const PRESETS = {
     { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
   ],
   'vk-term': [
-    { label: '大号', attrs: { density: 'loose' } },
+    { label: '大号', attrs: { mass: 'hero' } },
     { label: '无头', attrs: { chrome: 'none' } },
   ],
   'vk-diff': [
@@ -122,7 +122,7 @@ export const PRESETS = {
     { label: '斑马', attrs: { stripe: '' } },
     { label: '对照', attrs: { variant: 'compare' } },
     { label: '规格', attrs: { variant: 'spec' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '紧凑', attrs: { mass: 'compact' } },
     { label: '等宽', attrs: { mono: '' } },
   ],
   'vk-math': [
@@ -157,7 +157,7 @@ export const PRESETS = {
     { label: '大端', attrs: { word: '4', endian: 'big' } },
     { label: '不要 ASCII', attrs: { ascii: 'none' } },
     { label: '不要地址', attrs: { address: 'none' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '紧凑', attrs: { mass: 'compact' } },
   ],
   'vk-keys': [],
   'vk-cells': [
@@ -198,20 +198,20 @@ export const PRESETS = {
   ],
   'vk-bars': [
     { label: '强调当前', attrs: { tone: 'info' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '紧凑', attrs: { mass: 'compact' } },
     { label: '线性刻度', attrs: { scale: 'linear' } },
   ],
   'vk-asm': [
     { label: '无机器码', attrs: { bytes: null } },
     { label: '无地址列', attrs: { address: 'none' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '紧凑', attrs: { mass: 'compact' } },
     { label: '去窗头', attrs: { chrome: 'none' } },
     { label: '无顺序', attrs: { order: null } },
     { label: '无屏障', attrs: { 'fence-after': null } },
   ],
   'vk-timeline': [
     { label: '泳道', attrs: { variant: 'lanes' } },
-    { label: '紧凑', attrs: { density: 'compact' } },
+    { label: '紧凑', attrs: { mass: 'compact' } },
     { label: '从 1989 起', attrs: { start: '1989' } },
   ],
   'vk-pin': [

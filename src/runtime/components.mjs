@@ -715,7 +715,7 @@ export class VkBytes extends VkElement {
     const endian = this.getAttribute('endian') === 'big' ? 'big' : 'little';
     const ascii = this.getAttribute('ascii') !== 'none';
     const address = this.getAttribute('address') !== 'none';
-    const density = this.getAttribute('density') || 'normal';
+    const mass = this.getAttribute('mass') || 'normal';
     const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
     const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
     const live = this.getAttribute('current');
@@ -755,7 +755,7 @@ export class VkBytes extends VkElement {
     this.innerHTML = win({
       chrome: this.getAttribute('chrome') === 'none' ? 'none' : 'min',
       head: fileHead(file, 'bytes', range),
-      inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-density="${esc(density)}" data-cols="${cols}" data-word="${word}" data-endian="${endian}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
+      inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-mass="${esc(mass)}" data-cols="${cols}" data-word="${word}" data-endian="${endian}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
     });
   }
 }
