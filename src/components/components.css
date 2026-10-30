@@ -1653,6 +1653,45 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 
 vk-code[size='compact'] .vk-line { min-height: 48px; }
 vk-code[size='compact'] .vk-bd { padding-block: var(--vk-s1); }
+
+/* grow：让窗口吃掉父级剩下的高度，行/格等分。
+   这是「物证块能不能当整页主角」的关键——不加 grow 时窗口只到内容高度，
+   一屏 888 里会剩 250–300px 的白，重心永远偏上。 */
+vk-code[grow],
+vk-term[grow],
+vk-asm[grow],
+vk-bytes[grow],
+vk-tree[grow],
+vk-table[grow],
+vk-cells[grow] { display: flex; flex-direction: column; min-height: 0; }
+
+vk-code[grow] > .vk-win,
+vk-term[grow] > .vk-win,
+vk-bytes[grow] > .vk-win,
+vk-tree[grow] > .vk-win { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+vk-asm[grow] > .vk-asm { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+
+vk-code[grow] .vk-bd,
+vk-term[grow] .vk-bd,
+vk-asm[grow] .vk-asm-bd,
+vk-bytes[grow] .vk-bd,
+vk-tree[grow] .vk-bd {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+vk-code[grow] .vk-line,
+vk-term[grow] .vk-line,
+vk-asm[grow] .vk-asm-row,
+vk-bytes[grow] .vk-bytes-row,
+vk-tree[grow] .vk-tree-row { flex: 1 1 0; min-height: 0; }
+
+vk-tree[grow] > .vk-tree { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+vk-tree[grow] .vk-tree-bd { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; justify-content: space-between; }
+
 vk-code[size='hero'] > .vk-code { min-height: 600px; display: flex; flex-direction: column; }
 vk-code[size='hero'] .vk-bd {
   flex: 1 1 auto;
@@ -1783,6 +1822,9 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
+
+
 
 
 

@@ -203,6 +203,7 @@ async function domFacts(browser, file) {
         focus: regions.length,
         focusArea: Math.round((focusArea / (sr.width * sr.height)) * 1000) / 10,
         blocks,
+        items: safe.querySelectorAll('[data-vk-part]').length,
         dominant: Math.round((dom / (sr.width * sr.height)) * 1000) / 10,
         contentTop: contentTop === null ? null : Math.round(contentTop),
         contentBottom: Math.round(maxBottom),
@@ -238,7 +239,9 @@ for (const page of pages) {
   const shot = byName.get(id);
   const dom = await domFacts(browser, page);
   const px = shot ? pixels(shot) : null;
-  const skeleton = [Math.round((dom.contentTop ?? 0) / 24), Math.round(dom.contentBottom / 48), dom.blocks, dom.maxType, dom.align].join('/');
+  // 骨架签名：位置 + 块数 + 最大字号 + 对齐 + 内容项数。
+  // 只前四项的话，「填满的终端」和「填满的文件树」会撞成同一张版。
+  const skeleton = [Math.round((dom.contentTop ?? 0) / 24), Math.round(dom.contentBottom / 48), dom.blocks, dom.maxType, dom.align, dom.items].join('/');
   rows.push({ id, ...dom, px, skeleton });
 }
 await browser.close();
@@ -310,6 +313,8 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
+
 
 
 
