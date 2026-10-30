@@ -172,6 +172,11 @@ export const PRESETS = {
   ],
   'vk-page': [
   ],
+  'vk-panel': [
+    { label: '章节带', attrs: { variant: 'band' } },
+    { label: '更重的面', attrs: { surface: 'sf-2' } },
+    { label: '无编号', attrs: { n: '' } },
+  ],
   'vk-stat': [
     { label: '更大', attrs: { size: 'display-2xl' } },
     { label: '带图例点', attrs: { mark: 'dot', tone: 'focus' } },

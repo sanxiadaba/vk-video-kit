@@ -47,6 +47,15 @@ export const EFFECTS = {
     size: { on: '.vk-quote', kind: 'style', prop: 'font-size' },
   },
 
+  'vk-panel': {
+    variant: { on: '.vk-panel', kind: 'attr', prop: 'data-variant' },
+    surface: { on: '.vk-panel', kind: 'style', prop: 'background-color' },
+    pad: { on: '.vk-panel', kind: 'style', prop: 'padding-top' },
+    border: { on: '.vk-panel', kind: 'style', prop: 'border-top-color' },
+    radius: { on: '.vk-panel', kind: 'style', prop: 'border-top-left-radius' },
+    n: { on: '.vk-panel-n', kind: 'text' },
+  },
+
   'vk-stat': {
     value: { on: '.vk-stat-v', kind: 'text' },
     unit: { on: '.vk-stat-u', kind: 'text' },

@@ -1215,6 +1215,62 @@ export class VkBars extends VkElement {
   }
 }
 
+/* ---------------------------------------------------------------- panel */
+
+/**
+ * 区域：一张卡片或一条章节带。
+ * 只提供「底 + 边 + 三个槽」，不规定里面怎么排 —— 排法是作者的事。
+ *   slot="header" / slot="footer" / 其余进 body
+ */
+export class VkPanel extends VkElement {
+  static frame = false;
+  static renderedRoot = '.vk-panel';
+
+  capture() {}
+
+  render() {
+    const variant = this.getAttribute('variant') || 'card';
+    const surface = this.getAttribute('surface') || 'paper';
+    const pad = this.getAttribute('pad') || 'lg';
+    const border = this.getAttribute('border') || 'hair';
+    const radius = this.getAttribute('radius') || 'lg';
+    const n = this.getAttribute('n') || '';
+
+    const all = takeSlot(this).filter((x) => x);
+    const pick = (name) => all.filter((x) => x.nodeType === 1 && x.getAttribute && x.getAttribute('slot') === name);
+    const header = pick('header');
+    const footer = pick('footer');
+    const body = all.filter((x) => !header.includes(x) && !footer.includes(x));
+
+    if (!this._shell) {
+      this.innerHTML = `<section class="vk-panel"><header class="vk-panel-hd" data-vk-part="hd"><span class="vk-panel-n" data-meta></span></header><div class="vk-panel-bd" data-vk-part="bd"></div><footer class="vk-panel-ft" data-vk-part="ft"></footer></section>`;
+      this._shell = this.querySelector('.vk-panel');
+      this._hd = this.querySelector('.vk-panel-hd');
+      this._n = this.querySelector('.vk-panel-n');
+      this._bd = this.querySelector('.vk-panel-bd');
+      this._ft = this.querySelector('.vk-panel-ft');
+    }
+
+    this._shell.dataset.variant = variant;
+    this._shell.dataset.surface = surface;
+    this._shell.dataset.pad = pad;
+    this._shell.dataset.border = border;
+    this._shell.dataset.radius = radius;
+    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
+    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
+    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
+
+    this._n.textContent = n;
+    this._n.hidden = !n;
+
+    this._hd.append(...header);
+    this._bd.append(...body);
+    this._ft.append(...footer);
+    this._hd.hidden = !header.length && !n;
+    this._ft.hidden = !footer.length;
+  }
+}
+
 /* ----------------------------------------------------------------- stat */
 
 /**
@@ -1270,6 +1326,7 @@ function statValue(raw, format) {
 }
 
 export function defineComponents() {
+  define('vk-panel', VkPanel);
   define('vk-stat', VkStat);
   define('vk-title', VkTitle);
   define('vk-list', VkList);

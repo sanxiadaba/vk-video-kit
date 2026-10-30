@@ -188,6 +188,7 @@ const DEFAULTS = {
   'vk-bars': { density: 'normal', tone: 'neutral', scale: 'linear' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
+  'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg' },
   'vk-stat': { size: 'display-xl', tone: 'none', mark: 'none', format: 'none', align: 'left' },
   'vk-page': { align: 'top' },
 };
@@ -618,6 +619,19 @@ export const TAGS = {
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
         'chrome': oneOf('min', 'none'),
+    },
+  },
+  'vk-panel': {
+    name: '区域',
+    layer: 'elements',
+    summary: '一块区域：卡片或章节带。只提供底、边和三个槽（header / footer / 其余进 body），不规定里面怎么排。',
+    attrs: {
+      'variant': oneOf('card', 'band'),
+      'surface': oneOf('paper', 'sf-1', 'sf-2', 'sf-3'),
+      'pad': oneOf('sm', 'md', 'lg', 'xl'),
+      'border': oneOf('none', 'hair', 'strong'),
+      'radius': oneOf('none', 'md', 'lg'),
+      'n': text(),
     },
   },
   'vk-stat': {

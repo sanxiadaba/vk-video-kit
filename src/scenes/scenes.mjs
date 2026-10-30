@@ -406,6 +406,16 @@ export const SCENES = [
 
 
   {
+    tag: 'vk-panel',
+    body: s`
+<vk-panel n="1" surface="sf-1">
+  <div slot="header"><vk-text size="heading">预处理之后</vk-text></div>
+  <vk-text size="body">一份 52,980 字节、858 行的中间文件。</vk-text>
+  <div slot="footer"><vk-text size="meta" ink="muted" data-meta>hello.i</vk-text></div>
+</vk-panel>`,
+  },
+
+  {
     tag: 'vk-stat',
     body: s`
 <vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl"></vk-stat>`,

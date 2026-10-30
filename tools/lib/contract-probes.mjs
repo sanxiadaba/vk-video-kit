@@ -12,6 +12,13 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-panel': {
+    n: {
+      values: ['3'],
+      effect: { on: '.vk-panel-n', kind: 'text' },
+      why: '编号写进 .vk-panel-n。',
+    },
+  },
   'vk-stat': {
     value: {
       values: ['1,024'],

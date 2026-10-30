@@ -1664,3 +1664,57 @@ vk-stat { display: block; }
 .vk-stat[data-tone='warn'] .vk-stat-m { background: var(--vk-warn); }
 .vk-stat[data-tone='err'] .vk-stat-v { color: var(--vk-err); }
 .vk-stat[data-tone='err'] .vk-stat-m { background: var(--vk-err); }
+/* --------------------------------------------------------------- vk-panel */
+/* 区域：卡片 / 章节带。只给底、边、三槽，不排内容。 */
+
+vk-panel { display: block; }
+
+.vk-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-s3);
+  box-sizing: border-box;
+  background: var(--vk-sf-0);
+  border: var(--vk-line-w) solid var(--vk-line-1);
+  border-radius: var(--vk-r-3);
+  padding: var(--vk-s4);
+}
+.vk-panel-hd { display: flex; align-items: center; gap: var(--vk-s2); }
+.vk-panel-bd { display: flex; flex-direction: column; gap: var(--vk-s3); min-width: 0; }
+.vk-panel-ft { display: flex; align-items: center; gap: var(--vk-s2); }
+
+/* 编号徽章 */
+.vk-panel-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--vk-ink-1);
+  color: var(--vk-sf-0);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-meta);
+  line-height: 1;
+}
+
+.vk-panel[data-surface='sf-1'] { background: var(--vk-sf-1); }
+.vk-panel[data-surface='sf-2'] { background: var(--vk-sf-2); }
+.vk-panel[data-surface='sf-3'] { background: var(--vk-sf-3); }
+
+.vk-panel[data-border='none'] { border-color: transparent; }
+.vk-panel[data-border='strong'] { border-color: var(--vk-line-strong); }
+
+.vk-panel[data-radius='none'] { border-radius: 0; }
+.vk-panel[data-radius='md'] { border-radius: var(--vk-r-2); }
+
+.vk-panel[data-pad='sm'] { padding: var(--vk-s2); }
+.vk-panel[data-pad='md'] { padding: var(--vk-s3); }
+.vk-panel[data-pad='xl'] { padding: var(--vk-s5); }
+
+/* 章节带：不要圆角、不要边，底更重一点 */
+.vk-panel[data-variant='band'] { border-radius: 0; border-color: transparent; background: var(--vk-sf-2); }
+.vk-panel[data-variant='band'] .vk-panel-bd { gap: var(--vk-s2); }
+.vk-panel[data-overflow='clip'] { overflow: hidden; }
+.vk-panel[data-grow='1'] { flex: 1 1 auto; }
+.vk-panel[data-fill='1'] { height: 100%; }
