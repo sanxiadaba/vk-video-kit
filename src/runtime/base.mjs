@@ -338,6 +338,33 @@ export function normalizeTier(el) {
   el._warnOnce?.('tier', `的 size="${v}" 已在 13.0 改名，请写成 size="${next}"`);
 }
 
+/**
+ * 行宽：作者写的是「一行几个字」，不是像素。
+ *
+ *   measure="20"   一行最多 20 个字（1em = 一个汉字宽，所以随字号自动缩放）
+ *   measure="none" 不限，铺满容器
+ *   不写           按字号档的默认行宽（CSS 里的 --vk-measure-*）
+ *
+ * 中英混排时 ch 不等于汉字宽，所以这里用 em 而不是 ch：一汉字 ≈ 1em。
+ */
+export function applyMeasure(el) {
+  const v = el.getAttribute?.('measure');
+  if (v === null) return;
+  if (v === 'none') {
+    el.style.maxWidth = 'none';
+    return;
+  }
+  // 旧写法（label / body / subhead / title / hero）保留：它们的意思是「按那一档的行宽」，
+  // 直接引用 token，行为和 12.x 一致。
+  if (['label', 'body', 'subhead', 'title', 'hero'].includes(v)) {
+    el.style.maxWidth = `var(--vk-measure-${v})`;
+    return;
+  }
+  const n = Number(v);
+  if (Number.isInteger(n) && n >= 8 && n <= 60) el.style.maxWidth = n + 'em';
+  else el._warnOnce?.('measure', `的 measure="${v}" 只能是 none、8–60 的整数（一行几个字）或旧档名（label/body/subhead/title/hero）`);
+}
+
 /* --------------------------------------------------------------- 生命周期 */
 
 /**
@@ -370,6 +397,7 @@ export class VkElement extends Base {
     // 值层迁移：旧档名（display-2xl / heading / meta …）在连上 DOM 的第一刻折成 13.0 的七个名字。
     // 折完再往下走，所以 CSS、文档、契约都只认一套词。
     normalizeTier(this);
+    applyMeasure(this);
     this._registerPlace();
     if (this._done) {
       this._attachObserver();
@@ -508,6 +536,8 @@ export class VkElement extends Base {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this._done || oldValue === newValue) return;
+    // 行宽是纯样式，不重建子树，属性一变就立刻重算。
+    if (name === 'measure') applyMeasure(this);
     if (!this.isConnected) {
       this._dirty = true;
       this._dirtyAttrs.push([name, newValue]);
@@ -759,6 +789,7 @@ export function fillSlot(host, nodes) {
 }
 
 if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
+
 
 
 

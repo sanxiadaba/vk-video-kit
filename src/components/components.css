@@ -1927,3 +1927,9 @@ vk-bytes[mass='hero'] .vk-bytes-row { line-height: 2; }
 
 
 
+
+/* 断行：标题的真正文字在 .vk-title-main 里，base 规则也写在 components.css 里，
+   所以覆盖规则必须排在同一张表的后面——同权重、后出现的胜出。 */
+vk-title[wrap='balance'] .vk-title-main { text-wrap: balance; }
+vk-title[wrap='pretty'] .vk-title-main { text-wrap: pretty; }
+vk-title[wrap='nowrap'] .vk-title-main { text-wrap: nowrap; }

@@ -136,6 +136,8 @@ vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
 /* 散文默认按字号取行宽；作者可以用 measure 覆盖。 */
 vk-text { max-width: var(--vk-measure-body); }
+/* 标题也有默认行宽：长标题不该铺满 1680，measure=none 才会填满。 */
+vk-title { max-width: var(--vk-measure-title); }
 vk-text[measure='label'] { max-width: var(--vk-measure-label); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
 vk-text[measure='subhead'] { max-width: var(--vk-measure-subhead); }
@@ -352,3 +354,9 @@ vk-mark[tone='warn'] { --vk-mark-fill: var(--vk-warn-mark); --vk-mark-rule: var(
 vk-rule[orientation='vertical'] { width: var(--vk-line-w); min-width: var(--vk-line-w); height: 100%; min-height: 48px; align-self: flex-start; }
 /* 空元素不该在画面上留一块色：没有内容就什么都不画。 */
 vk-mark:empty, vk-tag:empty { display: none; }
+/* 断行策略：作者只写一个词，库负责翻译成 CSS。
+   标题默认 balance（两行等长），正文默认 pretty（避免最后一行只剩一两个字）。 */
+/* 正文：断行落在宿主自己身上。 */
+vk-text[wrap='balance'] { text-wrap: balance; }
+vk-text[wrap='pretty'] { text-wrap: pretty; }
+vk-text[wrap='nowrap'] { text-wrap: nowrap; }

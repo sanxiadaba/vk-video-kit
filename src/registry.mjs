@@ -236,7 +236,10 @@ export const TAGS = {
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
-      'measure': { ...oneOf('label', 'body', 'subhead', 'title', 'none'), layout: true },
+      // 行宽：none 不限；8–60 是一行几个字（1em ≈ 一个汉字），不写就按字号档的默认行宽。
+      'measure': { ...text(), layout: true },
+      // 断行：balance 让标题两行等长，pretty 避免孤行，nowrap 不折。
+      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
     },
   },
   'vk-inline': {
@@ -425,6 +428,8 @@ export const TAGS = {
       'level': oneOf('1', '2', '3'),
       'size': oneOf('body', 'subhead', 'title', 'hero', 'mega'),
       'align': oneOf('left', 'center'),
+      'measure': { ...text(), layout: true },
+      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
     },
   },
   'vk-list': {

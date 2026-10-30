@@ -12,6 +12,30 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-text': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['balance', 'nowrap'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略直接落在 text-wrap 上。',
+    },
+  },
+  'vk-title': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-title', kind: 'style', prop: 'max-width' },
+      why: '标题也能限宽：一行几个字。',
+    },
+    wrap: {
+      values: ['nowrap', 'pretty'],
+      effect: { on: '.vk-title-main', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在 .vk-title-main 上。',
+    },
+  },
   'vk-grid': {
     tracks: {
       values: ['1fr 2fr'],
@@ -311,6 +335,7 @@ export function visualExemptReason(key) {
   for (const p of VISUAL_PATTERNS) if (p.match.test(key)) return p.reason;
   return null;
 }
+
 
 
 
