@@ -53,6 +53,10 @@ function pathOf(el, root) {
 /** 时间轴里的 li[at] 是「第几步」，不是秒。求值器不碰 timeline。 */
 const inTimeline = (el) => !!el.closest?.('vk-timeline');
 
+/** stagger 展开的单位：「一行一项」的那些行。 */
+const ROWS =
+  '.vk-line, .vk-asm-row, tbody tr, .vk-tree-row, .vk-cell, .vk-bar, .vk-step, .vk-tl-item';
+
 export function plan(root = document) {
   // 场次属性写在自定义元素 <vk-page> 上（内层 .vk-page 只是坐标盒子）
   const scene = root.querySelector?.('vk-page') || root.querySelector?.('.vk-page') || root;
@@ -67,7 +71,6 @@ export function plan(root = document) {
     const enter = kwargs.enter || el.getAttribute('enter') || 'none';
     if (enter === 'none' || !ENTERERS[enter]) return;
     cues.push({
-      target: pathOf(el, scene),
       el,
       t0: Math.max(0, t0),
       dur: num(kwargs.dur ?? el.getAttribute('dur'), 0.36),
@@ -82,8 +85,9 @@ export function plan(root = document) {
     const step = num(host.getAttribute('stagger'), 0.06);
     const base = num(host.getAttribute('at'), 0);
     const enter = host.getAttribute('enter') || 'rise';
-    // 组件渲染后，源 <li> 已经被换成内部结构，所以要按 data-vk-part 找顶层项。
-    // 这条规则对 code / cells / asm / table / tree 都成立：它们本来就标了 part。
+    // 「一行一项」的单位：代码行、终端行、反汇编行、表格行、文件树行、格子、条。
+    // 先找这些；找不到再退回 data-vk-part 顶层项，最后退回直接子元素。
+    const rows = [...host.querySelectorAll(ROWS)];
     const items = [...host.querySelectorAll('[data-vk-part]')].filter((el) => {
       let p = el.parentElement;
       while (p && p !== host) {
@@ -92,7 +96,7 @@ export function plan(root = document) {
       }
       return true;
     });
-    const list = items.length ? items : [...host.children];
+    const list = rows.length ? rows : items.length ? items : [...host.children];
     list.forEach((child, i) => push(child, base + i * step, { enter }));
     host.setAttribute('data-vk-stagger', '');
   }
@@ -105,12 +109,21 @@ export function plan(root = document) {
   }
 
   cues.sort((a, b) => a.t0 - b.t0);
+  // 稳定 id：下游按 data-vk-cue 找元素，不再依赖「第 2 个 div 的第 3 个 stack」。
+  // 每次 plan 都按同一个顺序重发，所以 id 是确定的、可重复的。
+  cues.forEach((c, i) => {
+    c.el.setAttribute('data-vk-cue', String(i));
+    c.target = `[data-vk-cue="${i}"]`;
+  });
   return { dur, beat, poster, cues };
 }
 
 const ENTERERS = {
-  rise(p) {
-    const y = 24 * (1 - p);
+  // 位移跟着体量走：320px 的数字和 48px 的正文用同一个 24px 上移，
+  // 大字几乎是原地淡入，只有小字才看得见。按元素高度的 35% 取，夹在 12–48px。
+  rise(p, el) {
+    const h = el?.getBoundingClientRect?.().height || 0;
+    const y = Math.min(48, Math.max(12, h * 0.35)) * (1 - p);
     return { transform: `translateY(${y.toFixed(2)}px)`, opacity: String(p) };
   },
   fade(p) {
@@ -170,7 +183,7 @@ export function installDirector(VK) {
     for (const c of current.cues) {
       const p = c.dur > 0 ? Math.min(1, Math.max(0, (tt - c.t0) / c.dur)) : tt >= c.t0 ? 1 : 0;
       if (p >= 1) continue;
-      const pose = ENTERERS[c.kind]((EASE[c.ease] || EASE['out-cubic'])(p));
+      const pose = ENTERERS[c.kind]((EASE[c.ease] || EASE['out-cubic'])(p), c.el);
       // 借来的 opacity 要乘在原来的值上：被聚光退后的格子，动画结束后仍然是退后的。
       const baseOpacity = base.get(c.el)?.opacity;
       for (const [k, v] of Object.entries(pose)) {
@@ -199,6 +212,8 @@ export function installDirector(VK) {
     return current;
   };
 }
+
+
 
 
 

@@ -93,6 +93,40 @@ test('求值只动合成属性，不动布局', async () => {
   }
 });
 
+test('rise 的位移跟着体量走', async () => {
+  // 同一个 24px 上移，对 48px 的正文是半个字高，对 320px 的数字只有 7%——
+  // 大字几乎等于原地淡入。位移必须随元素高度放大，但封顶 48px。
+  const tab = await ctx.newPage();
+  await tab.setContent(
+    `<!doctype html><html><head><meta charset="utf-8"><base href="${base}/">
+<link rel="stylesheet" href="vk/fonts.css"><link rel="stylesheet" href="vk/vk.css"></head>
+<body><vk-page dur="2">
+  <vk-stack gap="md">
+    <vk-text id="small" size="body" at="0" enter="rise" dur="1">一行正文</vk-text>
+    <vk-stat id="big" value="9" size="display-2xl" at="0" enter="rise" dur="1"></vk-stat>
+    <vk-stack id="tall" at="0" enter="rise" dur="1" style="height:600px"></vk-stack>
+  </vk-stack>
+</vk-page><script src="dist/vk.js"></script></body></html>`,
+    { waitUntil: 'load' }
+  );
+  await tab.evaluate(async () => {
+    await window.vk?.ready?.();
+    await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+  });
+  await seek(tab, 0.5);
+  const ty = await tab.evaluate(() =>
+    ['small', 'big', 'tall'].map((id) => {
+      const el = document.querySelector('#' + id);
+      const m = new DOMMatrixReadOnly(getComputedStyle(el).transform);
+      return Math.abs(m.f);
+    })
+  );
+  await tab.close();
+  const [small, big, tall] = ty;
+  assert.ok(big > small * 1.5, `大的应该动得更多：${small.toFixed(1)} vs ${big.toFixed(1)}`);
+  assert.ok(tall > 0 && tall <= 48 * 0.875 + 0.5, `位移要封顶 48px：${tall.toFixed(1)}`);
+});
+
 after(async () => {
   await browser.close();
   await close();

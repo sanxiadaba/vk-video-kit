@@ -195,6 +195,20 @@ async function domFacts(browser, file) {
         if (!r) r = el.getBoundingClientRect();
         focusArea += r.width * r.height;
       }
+      // 时间表：只读，不 seek（seek 会改画面，度量必须看 poster）。
+      const sc = window.vk?.scene?.() || null;
+      const timing = sc && sc.dur
+        ? (() => {
+            const end = sc.cues.reduce((m, c) => Math.max(m, c.t0 + c.dur), 0);
+            return {
+              dur: sc.dur,
+              beat: sc.beat,
+              cues: sc.cues.length,
+              lastEnd: Math.round(end * 100) / 100,
+              still: Math.round(((sc.dur - end) / sc.dur) * 1000) / 10,
+            };
+          })()
+        : null;
       return {
         tiers: sizes.map(([s, n]) => `${s}×${n}`),
         tierCount: sizes.length,
@@ -209,6 +223,7 @@ async function domFacts(browser, file) {
         contentBottom: Math.round(maxBottom),
         align: stage.getAttribute('align') || stage.dataset.align || 'top',
         bleed: !!stage.querySelector('.vk-page-bleed > *'),
+        timing,
       };
     });
   } finally {
@@ -250,6 +265,17 @@ await browser.close();
 
 const flags = [];
 for (const r of rows) {
+  // 时间：这个数以前没人算，于是一整套 12 帧里 78% 是冻住的海报都没被发现。
+  if (r.timing) {
+    if (r.timing.still > 65)
+      flags.push({ id: r.id, level: 'fail', what: `${r.timing.still}% 的时间是静止（最后一下在 ${r.timing.lastEnd}s，页长 ${r.timing.dur}s）` });
+    else if (r.timing.still > 50)
+      flags.push({ id: r.id, level: 'warn', what: `${r.timing.still}% 的时间是静止` });
+    // 节拍：一套片子换场时要落在同一格上，所以页长得是 beat 的整数倍。
+    const k = r.timing.dur / r.timing.beat;
+    if (r.timing.beat > 0 && Math.abs(k - Math.round(k)) > 0.01)
+      flags.push({ id: r.id, level: 'warn', what: `页长 ${r.timing.dur}s 不是 beat ${r.timing.beat}s 的整数倍（${k.toFixed(2)} 拍）` });
+  }
   if (r.focus === 0) flags.push({ id: r.id, level: 'warn', what: '没有焦点：这一帧没有"正在讲这里"' });
   if (r.focus > 1) flags.push({ id: r.id, level: 'fail', what: `${r.focus} 处焦点（应恰好 1 处 region）` });
   // 焦点面积：一行表格的 16% 钴蓝底本来就接近整页的 12%（1680×105 / 1680×888），
