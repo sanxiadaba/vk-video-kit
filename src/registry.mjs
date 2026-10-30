@@ -736,7 +736,7 @@ export const TAGS = {
       'source': text(),
       'author': text(),
       'variant': oneOf('rule', 'mark'),
-      'size': oneOf('heading', 'body'),
+      'size': oneOf('display', 'heading', 'body'),
     },
   },
   'vk-bits': {
