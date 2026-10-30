@@ -191,9 +191,19 @@ export class VkSpotlight extends VkOverlay {
       filter.append(tag('feGaussianBlur', { stdDeviation: feather / 2 }));
       defs.append(filter);
     }
-    const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: f.w, height: f.h });
-    mask.append(tag('rect', { x: 0, y: 0, width: f.w, height: f.h, fill: 'white' }));
+    // 遮罩要盖住整张纸（含 120/96 的页边），否则四边会留白框。
+    const page = f.host.closest?.('.vk-page');
+    let px = 0;
+    let py = 0;
+    if (page) {
+      const cs = getComputedStyle(page);
+      px = parseFloat(cs.paddingLeft) || 0;
+      py = parseFloat(cs.paddingTop) || 0;
+    }
+    const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: -px, y: -py, width: f.w + px * 2, height: f.h + py * 2 });
+    mask.append(tag('rect', { x: -px, y: -py, width: f.w + px * 2, height: f.h + py * 2, fill: 'white' }));
     const holes = tag('g', feather > 0 ? { filter: `url(#${filterId})` } : {});
+    holes.setAttribute('transform', `translate(${px},${py})`);
     for (const a of targets) {
       const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
@@ -207,6 +217,7 @@ export class VkSpotlight extends VkOverlay {
     defs.append(mask);
     this._svg.append(defs);
     const outline = tag('g', { class: 'vk-spotlight-ring' });
+    outline.setAttribute('transform', `translate(${px},${py})`);
     for (const a of targets) {
       const b = this._box(a.rect, f.host, f.hr);
       const pad = 10;
@@ -216,15 +227,18 @@ export class VkSpotlight extends VkOverlay {
         outline.append(tag('rect', { x: b.x - pad, y: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, rx: 12 }));
       }
     }
+    this._svg.style.overflow = 'visible';
+    // viewBox 从 -pad 起，遮罩才能盖到纸边；洞与描边用 translate 保持宿主坐标。
+    this._svg.setAttribute('viewBox', `${-px} ${-py} ${f.w + px * 2} ${f.h + py * 2}`);
     this._svg.append(
       tag('rect', {
-        x: 0,
-        y: 0,
-        width: f.w,
-        height: f.h,
+        x: -px,
+        y: -py,
+        width: f.w + px * 2,
+        height: f.h + py * 2,
         // 遮罩必须是"比纸更暗"的颜色：白纸上的白色遮罩等于没画（旧实现 fill:#ffffff，实测 0 像素）。
         fill: '#0b0f14',
-        opacity: Math.min(0.72, dim * 0.62),
+        opacity: Math.min(0.5, dim * 0.35),
         mask: `url(#${maskId})`,
       })
     );
