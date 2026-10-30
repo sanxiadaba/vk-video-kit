@@ -294,3 +294,13 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 `vk.metrics()`（`vk shot` 会打印一行）给出 `contentTop / contentBottom / contentLeft / contentRight / focus`。
 它只测量、不判定：一集里同一档帧型的 `contentTop` 应该相等，`focus` 应该恰好是 1。偏差超过 8px 或焦点为 0，多半是这一帧缺了主角。
+
+---
+
+## 11 · 新增的三件（12.2）
+
+- **`vk-stat`**：一个数字当家的指标。`<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl">`。数字用 tabular-nums；`format="thousands|bytes|hex"` 只改写法。
+- **`vk-panel`**：区域（卡片 / 章节带）。只给底、边、三槽：`slot="header"` / 正文 / `slot="footer"`，另有 `n` 编号徽章与 `elevation="0..2"`。**它不排内容**，怎么排由作者决定。
+- **`vk-grid tracks`**：真轨道。`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，**px 会在构建期报错**（会让安全区与溢出检查失真）。等分仍用 `cols="1..6"`，两条路互斥。
+
+> `elevation` 声明的重叠会被审计放行，但每次放行都会打印一行「已豁免：A 压在 B 上」。看到这行就说明有人主动叠了层。
