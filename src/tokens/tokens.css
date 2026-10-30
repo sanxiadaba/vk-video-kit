@@ -159,7 +159,7 @@
   --vk-t-label: 36px; /* 行号 / 单位 / 刻度 / 出处 */
   --vk-t-data: 40px; /* 等宽数据：代码、表格数字、地址、字节 */
   --vk-t-body: 48px; /* 要读懂的内容 */
-  --vk-t-subhead: 68px; /* 小标题 / 提示框标题 / 表头组 */
+  --vk-t-subhead: 96px; /* 小标题 / 提示框标题 / 表头组（0.38× 后 36.5，刚好在可读线上） */
   --vk-t-title: 144px; /* 页标题（单行上限实测 93.6% 宽） */
   --vk-t-hero: 224px; /* 一帧一个数字 */
   --vk-t-mega: 320px; /* 一个词当家 */
@@ -289,4 +289,5 @@
   --vk-add-row: var(--vk-add-paper-weak);
   --vk-del-row: var(--vk-del-paper-weak);
 }
+
 
