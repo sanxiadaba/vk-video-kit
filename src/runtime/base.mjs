@@ -11,6 +11,7 @@
    ========================================================================== */
 
 import { TAGS, TAG_NAMES, observedOf } from '../registry.mjs';
+import { TIER_ALIAS } from '../shared/tier-alias.mjs';
 import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
 import { wrapCharRange } from './code-utils.mjs';
@@ -310,20 +311,9 @@ export function fetchSource(el) {
 
 /* --------------------------------------------------------------- 值层迁移 */
 
-/**
- * 13.0 把字号档位的名字换成七个语义名：label / data / body / subhead / title / hero / mega。
- * 旧页还写着 display-2xl / display-xl / display / heading / meta——连上 DOM 的第一刻折成新名，
- * 后面所有环节（CSS、契约、文档、类型）就只认一套词。14.0 删掉这张表。
- */
-const TIER_ALIAS = {
-  'display-2xl': 'mega',
-  'display-xl': 'hero',
-  display: 'title',
-  heading: 'subhead',
-  meta: 'label',
-};
-
 export function normalizeTier(el) {
+  // 旧档名（display-2xl / display-xl / display / heading / meta）连上 DOM 的第一刻折成新名，
+  // 后面所有环节（CSS、契约、文档、类型）就只认一套词。别名表在 shared/tier-alias.mjs。
   const v = el.getAttribute?.('size');
   const next = v && TIER_ALIAS[v];
   if (!next) return;
@@ -752,4 +742,8 @@ export function fillSlot(host, nodes) {
 }
 
 if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
+
+
+
+
 

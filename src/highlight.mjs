@@ -17,6 +17,7 @@ import { parse } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
+import { TIER_ALIAS } from './shared/tier-alias.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
@@ -751,6 +752,13 @@ function validateAuthorHtml(doc, file) {
         continue;
       }
       if (spec.values && !spec.values.includes(raw)) {
+        // 13.0 改过档位名：旧名一版内仍然生效（运行期会折成新名），所以只提示、不拦构建。
+        if (name === 'size' && TIER_ALIAS[raw]) {
+          warnings.push(
+            `${file}:${lineOf(node)} <${node.tagName}> 的 size="${raw}" 已改名，请写成 size="${TIER_ALIAS[raw]}"`
+          );
+          continue;
+        }
         const hit = closestOf(raw, spec.values);
         errors.push(
           diag({
@@ -1460,3 +1468,5 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   for (const e of edits) out = out.slice(0, e.start) + e.inner + out.slice(e.end);
   return { html: applyIcons(out, iconNames), count: edits.length, deps, icons: [...iconNames] };
 }
+
+
