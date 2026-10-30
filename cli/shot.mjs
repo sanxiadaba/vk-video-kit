@@ -5,6 +5,10 @@
  *   node cli/shot.mjs page.html                  → page.png（1920×1080）
  *   node cli/shot.mjs page.html --phone          → page.phone.png（640×360，近似手机横屏）
  *   node cli/shot.mjs page.html --crop 900,300,600,300  → page.crop.png（1:1 局部）
+ *   node cli/shot.mjs page.html --at 2.4                → 求值到 2.4s 再截
+ *   node cli/shot.mjs page.html --scene out.json        → 只导时间表，不截图
+ *   node cli/shot.mjs page.html --fps 30 --out-dir dir/ → 帧序列（本页整段）
+ *   node cli/shot.mjs page.html --fps 30 --range 0-2.4 --out-dir dir/
  *   node cli/shot.mjs page.html --out shots/a.png
  *
  * 只读 file://：先 `npx vk build page.html`，产物是自包含的。
@@ -24,7 +28,7 @@ const valueOf = (name) => {
 };
 
 if (!page) {
-  console.error('用法：node cli/shot.mjs <page.html> [--phone] [--crop x,y,w,h] [--out file.png]');
+  console.error('用法：node cli/shot.mjs <page.html> [--phone] [--crop x,y,w,h] [--out f.png] [--at 秒] [--scene f.json] [--fps 30 --range 0-4.6 --out-dir dir/]');
   process.exit(1);
 }
 
@@ -104,9 +108,55 @@ try {
     process.exit(process.exitCode || 0);
   }
 
+  // 帧序列：一次加载、循环 seek、写 PNG 序列。库只出帧，不管编码。
+  const fpsRaw = valueOf('--fps');
+  const outDir = valueOf('--out-dir');
+  if (fpsRaw || outDir) {
+    const fps = Math.min(120, Math.max(1, Math.round(Number(fpsRaw || 30)) || 30));
+    const scene0 = await tab.evaluate(() => window.vk?.scene?.() || null);
+    if (!scene0 || !scene0.dur) {
+      console.error('✗ 这一页没有时间轴（vk-page 上没有 dur），出不了帧序列');
+      await browser.close();
+      process.exit(1);
+    }
+    const rangeRaw = valueOf('--range');
+    let from = 0;
+    let to = scene0.dur;
+    if (rangeRaw) {
+      const m = String(rangeRaw).match(/^([0-9.]+)\s*-\s*([0-9.]+)$/);
+      if (!m) {
+        console.error('[vk] --range 要写 起-止（秒），例如 --range 0-4.6');
+        await browser.close();
+        process.exit(1);
+      }
+      from = Number(m[1]);
+      to = Number(m[2]);
+    }
+    const dir = path.resolve(outDir || path.join(path.dirname(abs), 'frames'));
+    fs.mkdirSync(dir, { recursive: true });
+    const n = Math.max(1, Math.round((to - from) * fps));
+    for (let i = 0; i < n; i++) {
+      const t = from + i / fps;
+      await tab.evaluate(async (tt) => {
+        window.vk?.seek?.(tt);
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+      }, t);
+      await tab.screenshot({ path: path.join(dir, String(i).padStart(4, '0') + '.png') });
+    }
+    console.log(`✓ ${path.relative(process.cwd(), dir)}/  ${n} 帧 · ${fps}fps · ${from}–${to}s`);
+    await browser.close();
+    process.exit(0);
+  }
+
   // 时刻：先求值再截图。seek 是纯函数，同一 t 永远得到同一张。
   const atRaw = valueOf('--at');
-  const at = atRaw === null ? null : Number(atRaw);
+  // 没写 --at 时取 poster：poster 默认等于 dur，所以老页面行为不变；
+  // 写了 poster="2.0" 的页面，vk shot 出的就是封面那一刻，而不是静态终态。
+  let at = atRaw === null ? null : Number(atRaw);
+  if (at === null) {
+    const sc = await tab.evaluate(() => window.vk?.scene?.() || null);
+    if (sc && sc.dur) at = sc.poster ?? sc.dur;
+  }
   if (at !== null) {
     await tab.evaluate(async (t) => {
       window.vk?.seek?.(t);
