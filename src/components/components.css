@@ -1285,6 +1285,49 @@ vk-cells { display: block; }
 
 /* 统一 state：current / ok / warn 也走同一套底与边，正文仍是墨色。 */
 .vk-cell[data-state='current'] { background: var(--vk-focus-soft); border-color: var(--vk-focus); }
+
+/* ---- act × strength：一处注意力词汇（L5） ----------------
+   act 决定「做什么动作」，strength 只改响度，tone 只管颜色。
+   运行期已经把 act 折成 data-act；行上的 focus 同时落成 data-state=current，
+   所以旧配方继续生效，这里只补「响度」和「mark 不用钴蓝」两件事。 */
+
+.vk-line[data-act='focus'][data-strength='soft'],
+.vk-cell[data-act='focus'][data-strength='soft'],
+.vk-tree-row[data-act='focus'][data-strength='soft'],
+.vk-step[data-act='focus'][data-strength='soft'],
+.vk-tl-item[data-act='focus'][data-strength='soft'],
+.vk-bit-row[data-act='focus'][data-strength='soft'],
+.vk-asm-row[data-act='focus'][data-strength='soft'],
+.vk-bytes-row[data-act='focus'][data-strength='soft'] {
+  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
+}
+
+[data-act='focus'][data-strength='ghost'] {
+  background: transparent !important;
+  box-shadow: inset 4px 0 0 var(--vk-focus) !important;
+}
+
+/* mark 是作者的标注，不是「正在讲」：石墨，永不用钴蓝。 */
+/* 表格行：focus 是一整行的 16% 底 + 4px 左条（不是只圈一格）。 */
+tbody tr[data-state='current'] > td { background: var(--vk-focus-soft); }
+tbody tr[data-state='current'] > td:first-child { box-shadow: inset 4px 0 0 var(--vk-focus); }
+tbody tr[data-act='focus'][data-strength='soft'] > td { background: color-mix(in srgb, var(--vk-focus) 8%, transparent); }
+tbody tr[data-act='mark'] > td { background: color-mix(in srgb, var(--vk-ink-1) 8%, transparent); }
+
+.vk-line[data-act='mark'],
+.vk-cell[data-act='mark'],
+.vk-tree-row[data-act='mark'],
+.vk-step[data-act='mark'],
+.vk-tl-item[data-act='mark'],
+.vk-bit-row[data-act='mark'],
+.vk-asm-row[data-act='mark'],
+.vk-bytes-row[data-act='mark'] {
+  background: color-mix(in srgb, var(--vk-ink-1) 8%, transparent);
+  box-shadow: inset 4px 0 0 var(--vk-ink-3);
+}
+
+[data-act='mark'][data-strength='ghost'] { background: transparent !important; box-shadow: inset 4px 0 0 var(--vk-ink-4) !important; }
+
 .vk-cell[data-state='ok'] { background: var(--vk-ok-weak); border-color: var(--vk-ok); }
 .vk-cell[data-state='warn'] { background: var(--vk-warn-weak); border-color: var(--vk-warn); }
 
@@ -1825,6 +1868,8 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
+
 
 
 

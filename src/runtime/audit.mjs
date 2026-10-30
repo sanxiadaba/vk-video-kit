@@ -541,6 +541,13 @@ export function focusRegions(stage) {
     add(el);
   }
 
+  // 相邻同款行合成一个 region：两行表格、五个高亮字节都只算「一处」。
+  for (const el of [...found]) {
+    if (!(el instanceof HTMLElement)) continue;
+    const prev = el.previousElementSibling;
+    if (prev && found.has(prev) && prev.className === el.className) found.delete(el);
+  }
+
   // 去掉被更外层 region 包含的重复项
   const out = [];
   for (const el of found) {
@@ -563,6 +570,7 @@ export function installAudit(VK) {
   VK.metrics = metrics;
   VK.focusRegions = focusRegions;
 }
+
 
 
 

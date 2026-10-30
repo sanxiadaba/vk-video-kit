@@ -21,6 +21,7 @@ import { defineTimeline } from './timeline.mjs';
 import { defineOverlays } from './overlays.mjs';
 import { installAudit } from './audit.mjs';
 import { installDirector } from './director.mjs';
+import { installPose } from './pose.mjs';
 
 defineElements();
 defineLayout();
@@ -33,7 +34,9 @@ defineTimeline();
 defineOverlays();
 installAudit(VK);
 installDirector(VK);
+installPose(VK);
 
 export { VK };
 export default VK;
+
 

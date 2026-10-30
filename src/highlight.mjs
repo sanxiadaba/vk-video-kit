@@ -519,6 +519,12 @@ function validateAuthorHtml(doc, file) {
             if (!STATE_VALUES.includes(raw)) {
               errors.push(`${file}:${lineOf(node)} <${parent}> 的 state="${raw}" 不在词表里；可用：${STATE_VALUES.join(' / ')}`);
             }
+            // 13.0：state 只留 ok / warn / err；「现在讲这里」是姿态，不是状态。
+            if (raw === 'current') {
+              warnings.push(
+                `${file}:${lineOf(node)} <${parent}> 的 state="current" 已退役，改写成 act="focus"（一版别名仍生效）`
+              );
+            }
             continue;
           }
           if (!allowed.includes(name)) {

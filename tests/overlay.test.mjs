@@ -26,58 +26,58 @@ const ready = async () => {
   await page.waitForTimeout(120);
 };
 
-test('vk-spotlight 的遮罩盖满整张纸，洞对得准目标', async () => {
+test('vk-spotlight 是语境控制器：目标不动，兄弟退后', async () => {
   await page.setContent(
     SHELL(`<vk-page>
       <vk-cells id="mem" cols="4">
         <li value="48" label="H"></li><li value="65" label="e"></li>
         <li value="6C" label="l"></li><li value="00" filled></li>
       </vk-cells>
-      <vk-spotlight for="#mem@cell:3" dim="0.3" feather="0"></vk-spotlight>
+      <vk-spotlight for="#mem@cell:3" dim="0.3"></vk-spotlight>
     </vk-page>`),
     { waitUntil: 'load' }
   );
   await ready();
   const r = await page.evaluate(() => {
-    const page = document.querySelector('.vk-page');
+    const paper = document.querySelector('.vk-page');
     const ov = document.querySelector('vk-spotlight');
-    const veil = document.querySelector('vk-spotlight .vk-ov-svg > rect');
-    const ring = document.querySelector('.vk-spotlight-ring rect');
-    const cell = document.querySelector('#mem .vk-cell[data-cell="3"]');
-    const box = (el) => {
-      const b = el.getBoundingClientRect();
-      return { x: b.left, y: b.top, w: b.width, h: b.height, cx: b.left + b.width / 2, cy: b.top + b.height / 2 };
-    };
+    const cells = [...document.querySelectorAll('#mem .vk-cell')];
     return {
-      parentIsPage: ov.parentElement === page,
-      page: box(page),
-      veil: box(veil),
-      ring: box(ring),
-      cell: box(cell),
+      parentIsPage: ov.parentElement === paper,
+      opacities: cells.map((c) => Number(getComputedStyle(c).opacity)),
+      target: document.querySelector('#mem .vk-cell[data-cell="3"]').hasAttribute('data-vk-focus'),
+      veil: !!document.querySelector('vk-spotlight .vk-ov-svg > rect'),
     };
   });
-  assert.ok(r.parentIsPage, '聚光应该挂成 .vk-page 的子节点（不是 1680 宽的 .vk-page-inner）');
-  assert.ok(Math.abs(r.veil.w - r.page.w) < 2, `遮罩宽 ${r.veil.w} 应等于纸宽 ${r.page.w}`);
-  assert.ok(Math.abs(r.veil.h - r.page.h) < 2, `遮罩高 ${r.veil.h} 应等于纸高 ${r.page.h}`);
-  assert.ok(Math.abs(r.veil.x - r.page.x) < 2 && Math.abs(r.veil.y - r.page.y) < 2, '遮罩要压到纸的左上角');
-  assert.ok(Math.abs(r.ring.cx - r.cell.cx) < 12, `洞中线 ${r.ring.cx} 应落在格子中线 ${r.cell.cx}`);
-  assert.ok(Math.abs(r.ring.cy - r.cell.cy) < 12, `洞中线 ${r.ring.cy} 应落在格子中线 ${r.cell.cy}`);
+  assert.ok(r.parentIsPage, '聚光应该挂成 .vk-page 的子节点');
+  assert.equal(r.veil, false, '语境控制器不画白幕');
+  assert.ok(r.target, '目标要打上 data-vk-focus');
+  for (const [i, o] of r.opacities.entries()) {
+    if (i === 3) assert.ok(o > 0.99, `目标不该退后（实际 ${o}）`);
+    else assert.ok(Math.abs(o - 0.3) < 0.02, `第 ${i} 格应退到 0.3（实际 ${o}）`);
+  }
 });
 
-test('vk-spotlight mode="fade" 用纸色遮罩，不把纸弄脏', async () => {
+test('vk-spotlight 的 dim 与 keep', async () => {
   await page.setContent(
     SHELL(`<vk-page>
-      <vk-cells id="mem" cols="4"><li value="48" label="H"></li><li value="65" label="e"></li>
-      <li value="6C" label="l"></li><li value="00" filled></li></vk-cells>
-      <vk-spotlight for="#mem@cell:3" mode="fade" dim="0.4"></vk-spotlight>
+      <vk-stack gap="md">
+        <vk-text id="a" size="body">甲</vk-text>
+        <vk-text id="b" size="body">乙</vk-text>
+        <vk-text id="c" size="body">丙</vk-text>
+      </vk-stack>
+      <vk-spotlight for="#b" dim="0.55" keep="#c"></vk-spotlight>
     </vk-page>`),
     { waitUntil: 'load' }
   );
   await ready();
-  const fill = await page.$eval('vk-spotlight .vk-ov-svg > rect', (el) => el.getAttribute('fill'));
-  assert.equal(fill, '#ffffff', 'fade 只用纸色退背景；dim 才是墨色');
+  const r = await page.evaluate(() => ({
+    a: Number(getComputedStyle(document.querySelector('#a')).opacity),
+    c: Number(getComputedStyle(document.querySelector('#c')).opacity),
+  }));
+  assert.ok(Math.abs(r.a - 0.55) < 0.02, `dim 应该被读成 0.55（实际 ${r.a}）`);
+  assert.ok(r.c > 0.99, `keep 里的节点不退后（实际 ${r.c}）`);
 });
-
 test('底部空带：量到的是最后一点墨，且不算覆盖层', async () => {
   await page.setContent(
     SHELL(`<vk-page>
@@ -122,3 +122,4 @@ after(async () => {
   await browser.close();
   await close();
 });
+

@@ -252,9 +252,10 @@ const flags = [];
 for (const r of rows) {
   if (r.focus === 0) flags.push({ id: r.id, level: 'warn', what: '没有焦点：这一帧没有"正在讲这里"' });
   if (r.focus > 1) flags.push({ id: r.id, level: 'fail', what: `${r.focus} 处焦点（应恰好 1 处 region）` });
-  // 焦点面积：一条整行高亮本来就占 1680×70 ≈ 7.9%，所以上限是 10%（一页的十分之一），
-  // 不是 4%。真正要拦的是 05 那种「指标框整块算焦点」的 30%+。
-  if (r.focusArea > 10) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 10%（高亮比内容还重）` });
+  // 焦点面积：一行表格的 16% 钴蓝底本来就接近整页的 12%（1680×105 / 1680×888），
+  // 所以硬线是 20%——真正要拦的是「指标框整块算焦点」那种 30%+。
+  if (r.focusArea > 20) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 20%（高亮比内容还重）` });
+  else if (r.focusArea > 12) flags.push({ id: r.id, level: 'warn', what: `焦点面积 ${r.focusArea}% > 12%` });
   if (r.tierCount > 4) flags.push({ id: r.id, level: 'warn', what: `${r.tierCount} 档字号（一帧 ≤4 档）` });
   // 断层：字号没跳开，且也没有一块大到能当主角的块。
   // 代码/表格这类帧，主角是「那一大块」而不是一个字，不该逼作者把标题放大。
@@ -313,6 +314,7 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
 
 
 

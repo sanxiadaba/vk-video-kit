@@ -848,6 +848,9 @@ export class VkCells extends VkElement {
         bad,
         mark,
         filled: el.hasAttribute('filled'),
+        // 姿态属性随行带走：act / strength 是作者写在 <li> 上的，渲染后不能丢。
+        act: el.getAttribute('act') || '',
+        strength: el.getAttribute('strength') || '',
       };
     });
   }
@@ -911,7 +914,7 @@ export class VkCells extends VkElement {
               return `<span class="vk-cell-byte" data-byte="${byteOff}" data-meta>${addr ? fmtAddr(base + byteOff) : `+${byteOff}`}</span>`;
             }).join('')}</span>`
           : '';
-        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('ruler') ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks} role="listitem">
+        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('ruler') ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks}${it.act ? ` act="${esc(it.act)}"` : ''}${it.strength ? ` strength="${esc(it.strength)}"` : ''} role="listitem">
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(it.value)}</span>
           ${ruler}
@@ -1387,5 +1390,6 @@ export class VkTable extends VkElement {
     });
   }
 }
+
 
 

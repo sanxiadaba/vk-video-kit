@@ -437,6 +437,9 @@ try {
       // 静态渲染必须与不写它们时一致——所以不能在这里用「子树有没有变」来探针。
       // 它们由 tests/director.test.mjs 的 poster 逐像素比对覆盖。
       if (spec.motion) continue;
+      // 姿态属性（act / strength）由运行期一遍写成 data-*，不改子树结构；
+      // 由 tests/pose.test.mjs 覆盖（focus 上色、soft 变淡、mark 不用钴蓝）。
+      if (spec.pose) continue;
       const key = `${tag}.${name}`;
       if (spec.build) {
         buildOnly.push(name);
@@ -572,4 +575,5 @@ if (failures.length) {
     `\n契约通过：${checked.length} 个属性 / state，${tags.length + cacheHits}/${totalTags} 个标签${cacheHits ? `（${cacheHits} 个缓存命中）` : ''}。`
   );
 }
+
 

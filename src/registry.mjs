@@ -935,6 +935,10 @@ const COMMON = {
   enter: { ...oneOf('rise', 'fade', 'scale', 'wipe', 'none'), default: 'none', motion: true },
   ease: { ...oneOf('linear', 'out-cubic', 'out-quint', 'out-expo', 'in-cubic', 'in-out-sine'), motion: true },
   stagger: { ...num({ min: 0, max: 2, step: 0.01 }), motion: true },
+  /* L5 姿态层：act 是「做什么动作」，strength 是「多响」。两者都由运行期一遍写成
+     data-act / data-strength，不改变子树结构，所以不进契约的子树探针，由 pose 测试覆盖。 */
+  act: { ...oneOf('focus', 'context', 'mark', 'trace', 'badge', 'compare'), pose: true },
+  strength: { ...oneOf('solid', 'soft', 'ghost'), default: 'solid', pose: true },
 };
 /** 布局协议：由 Frame 基类统一实现，不属于组件自己的 API；`vk doc` 默认折叠。 */
 export const LAYOUT_ATTRS = new Set(Object.keys(COMMON));
