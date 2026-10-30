@@ -1566,6 +1566,9 @@ vk-bars { display: block; }
   border-radius: var(--vk-r-1);
   background: var(--vk-ink-3);
 }
+/* 映射下限：非零值至少要看得见。106 对 52,980 是 1:500，
+   线性刻度下这条只有一个像素——它应该是一个「点」，不是没有。 */
+.vk-bar[data-nonzero] .vk-bar-fill { min-width: 6px; }
 /* 负值：从零线往左长，底色更淡；零线本身是整根轨道的墨线。 */
 .vk-bars[data-has-negative] .vk-bar-fill {
   position: absolute;
@@ -1822,6 +1825,7 @@ vk-panel { display: block; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
+
 
 
 
