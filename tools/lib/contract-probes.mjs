@@ -12,6 +12,13 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-grid': {
+    tracks: {
+      values: ['1fr 2fr'],
+      effect: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns' },
+      why: '轨道直接写在 grid-template-columns 上。',
+    },
+  },
   'vk-panel': {
     n: {
       values: ['3'],

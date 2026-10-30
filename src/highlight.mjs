@@ -534,6 +534,27 @@ function validateAuthorHtml(doc, file) {
     const def = TAGS[tag];
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
 
+    // 真轨道：只收 fr 与 auto，最多 6 条。px 会让安全区与溢出检查失真，所以直接拦。
+    if (tag === 'vk-grid' && attrs.has('tracks')) {
+      const raw = String(attrs.get('tracks')).trim();
+      const parts = raw.split(/\s+/).filter(Boolean);
+      const ok = parts.length >= 1 && parts.length <= 6 && parts.every((t) => /^(\d+(\.\d+)?fr|auto)$/.test(t));
+      if (!ok) {
+        errors.push(
+          diag({
+            file,
+            line: lineOf(node),
+            tag,
+            what: '的 tracks 不是合法轨道',
+            wrote: raw,
+            should: '写成 "1fr 2fr" / "auto 1fr"，1–6 条',
+            why: '只收 fr 与 auto：px 会让安全区与溢出检查失真，等分份数仍然用 cols',
+          })
+        );
+      }
+    }
+
+
     // 子节点契约：条目只能 <li>；table 必须包 <table>；源码件只能 src / 内联块。
     const model = CHILDREN[tag];
     if (model) {

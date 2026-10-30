@@ -208,7 +208,7 @@ export const TAGS = {
     layer: 'elements',
     summary: '一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。',
     attrs: {
-      'surface': oneOf('none', 'paper', 'soft', 'sf-2', 'sf-3', 'sf-4'),
+      'surface': oneOf('none', 'paper', 'soft', 'sf-1', 'sf-2', 'sf-3', 'sf-4'),
       'tone': oneOf('ok', 'warn', 'err'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -355,6 +355,7 @@ export const TAGS = {
     summary: '分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。',
     attrs: {
       'cols': oneOf('1', '2', '3', '4', '5', '6'),
+      'tracks': text(),
       'rows': { ...oneOf('1', '2', '3', '4', '5', '6'), context: 'bounded-height' },
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'gap-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -927,7 +928,7 @@ for (const [tag, def] of Object.entries(TAGS)) {
 /* 竖线要长度：vk-rule 保留 COMMON 的 h；横线的 h 组件自己忽略（线不是面）。 */
 
 const EXTRA = {
-  'vk-box': { surface: oneOf('none', 'paper', 'soft', 'sf-2', 'sf-3', 'sf-4') },
+  'vk-box': { surface: oneOf('none', 'paper', 'soft', 'sf-1', 'sf-2', 'sf-3', 'sf-4') },
   'vk-text': { ink: oneOf('primary', 'secondary', 'tertiary', 'muted') },
   'vk-icon': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),

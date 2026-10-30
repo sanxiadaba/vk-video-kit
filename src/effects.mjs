@@ -111,6 +111,7 @@ export const EFFECTS = {
 
   'vk-grid': {
     cols: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns', skipVisual: true },
+    tracks: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns', skipVisual: true },
     gap: { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
     'gap-x': { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
     'gap-y': { on: 'vk-grid', kind: 'style', prop: 'row-gap' },

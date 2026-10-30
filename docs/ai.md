@@ -164,7 +164,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`gap` · `align` · `justify` · `wrap`
   - 例：`<vk-row gap="md">`
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
-  - 属性：`cols` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `justify`
+  - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
   - 属性：`w` · `h` · `pad-px` · `grid` · `overflow`
