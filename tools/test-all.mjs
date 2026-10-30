@@ -7,6 +7,7 @@
  * 三条硬规则：
  * 1. 全量先 build；CI 已经 build 过时可设 VK_SKIP_BUILD=1（或 --no-build）跳过重复构建。
  * 2. 任何一组失败立即停（fail-fast），不把后面的浏览器任务跑完。
+ *    构建只跑 build:fast（不含索引缩略图）：缩略图是索引装饰，跟测试无关，却要 28 秒。
  * 3. 浏览器任务最多 2 个并发、默认 2 路分片；unit 只跑纯函数测试。
  */
 import { spawn, spawnSync } from 'node:child_process';
@@ -108,7 +109,13 @@ const nodeTest = [
   'tests/shared.test.mjs',
   'tests/transform.test.mjs',
 ];
-const browserTest = [npx, '--test', '--test-concurrency=1', 'tests/canvas.test.mjs', 'tests/dom.test.mjs'];
+// 浏览器回归：所有需要真渲染的测试。并发 2 是实测的甜点——再高就是 Chromium 抢核。
+const browserTest = [
+  npx, '--test', '--test-concurrency=2',
+  'tests/canvas.test.mjs', 'tests/dom.test.mjs',
+  'tests/director.test.mjs', 'tests/pose.test.mjs', 'tests/overlay.test.mjs',
+  'tests/text.test.mjs', 'tests/shot-sequence.test.mjs',
+];
 const browserEnv = {
   ...process.env,
   CONTRACT_SHARDS: process.env.CONTRACT_SHARDS || String(Math.min(4, shards)),
@@ -135,7 +142,7 @@ if (fast) {
   if (!skipBuild && (await freshEnough())) {
     console.log('· build 已跳过（产物比 src 新）');
   } else if (!skipBuild) {
-    const build = await run('build', [npmCmd, 'run', 'build'], { timeoutMs: 300000, env: process.env });
+    const build = await run('build', [npmCmd, 'run', 'build:fast'], { timeoutMs: 300000, env: process.env });
     if (build.code !== 0) aborted = true;
   } else {
     console.log('· build 已跳过（VK_SKIP_BUILD=1 / --no-build）');

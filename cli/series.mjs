@@ -122,9 +122,11 @@ function biggestBlob(grid, w, h) {
 
 /* -------------------------------------------------------------------- DOM */
 
+// 一个页面复用：建立页面比加载页面贵，12 帧没必要开 12 次。
+let sharedTab = null;
 async function domFacts(browser, file) {
-  const tab = await browser.newPage({ viewport: { width: PAGE_W, height: 1080 }, deviceScaleFactor: 1 });
-  try {
+  const tab = sharedTab || (sharedTab = await browser.newPage({ viewport: { width: PAGE_W, height: 1080 }, deviceScaleFactor: 1 }));
+  {
     await tab.goto(pathToFileURL(path.resolve(file)).href, { waitUntil: 'load' });
     await tab.evaluate(async () => {
       await window.vk?.ready?.();
@@ -226,8 +228,6 @@ async function domFacts(browser, file) {
         timing,
       };
     });
-  } finally {
-    await tab.close();
   }
 }
 

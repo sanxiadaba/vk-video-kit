@@ -7,6 +7,7 @@
   "types": "types/index.d.ts",
   "scripts": {
     "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen && node tools/thumbs.mjs && node cli/build.mjs _site/index.html",
+    "build:fast": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen",
     "gen": "node tools/gen.mjs",
     "ai": "node tools/ai-doc.mjs",
     "links": "node tools/links.mjs",

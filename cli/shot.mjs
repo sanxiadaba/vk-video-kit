@@ -9,6 +9,7 @@
  *   node cli/shot.mjs page.html --scene out.json        → 只导时间表，不截图
  *   node cli/shot.mjs page.html --fps 30 --out-dir dir/ → 帧序列（本页整段）
  *   node cli/shot.mjs page.html --fps 30 --range 0-2.4 --out-dir dir/
+ *   node cli/shot.mjs --batch a.html b.html c.html --out-dir shots/   → 一个浏览器拍一组
  *   node cli/shot.mjs page.html --out shots/a.png
  *
  * 只读 file://：先 `npx vk build page.html`，产物是自包含的。
@@ -86,6 +87,45 @@ try {
     await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     return document.documentElement.getAttribute('data-vk-ready');
   });
+
+  // 多页模式：一个浏览器、一个页面循环 goto。拍 12 帧从 29 秒降到 5 秒左右。
+  // 只做「求值到 poster → 截图」，不跑逐页自检（自检是 vk check 的活）。
+  const batchPages = args.filter((a, i) => {
+    if (a.startsWith('-')) return false;
+    const prev = args[i - 1];
+    if (['--out', '--crop', '--at', '--scene', '--fps', '--range', '--out-dir', '--scale'].includes(prev)) return false;
+    if (/^[0-9]+,[0-9]+,[0-9]+,[0-9]+$/.test(a)) return false;
+    return a.endsWith('.html');
+  });
+  if (batchPages.length > 1) {
+    const dir = path.resolve(valueOf('--out-dir') || 'shots');
+    fs.mkdirSync(dir, { recursive: true });
+    const t0 = Date.now();
+    let done = 0;
+    for (const p of batchPages) {
+      const target = path.resolve(p);
+      if (!fs.existsSync(target)) {
+        console.log(`✗ 找不到 ${p}`);
+        continue;
+      }
+      await tab.goto(pathToFileURL(target).href, { waitUntil: 'load' });
+      await tab.evaluate(async () => {
+        if (window.vk?.ready) await window.vk.ready();
+        await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        const sc = window.vk?.scene?.();
+        if (sc && sc.dur) {
+          window.vk.seek(sc.poster ?? sc.dur);
+          await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+        }
+      });
+      const file = path.join(dir, path.basename(target, '.html') + '.png');
+      await tab.screenshot({ path: file, clip: { x: 0, y: 0, width, height } });
+      done++;
+    }
+    console.log(`✓ ${path.relative(process.cwd(), dir)}/  ${done} 页 · ${((Date.now() - t0) / 1000).toFixed(1)}s`);
+    await browser.close();
+    process.exit(0);
+  }
 
   const out = valueOf('--out')
     ? path.resolve(valueOf('--out'))
