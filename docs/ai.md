@@ -88,13 +88,13 @@
 ## 5 · 命令
 
 ```bash
-node bin/vk.mjs brief           # 37 行契约摘要：属性 / 子节点 / 状态
+node bin/vk.mjs brief           # 39 行契约摘要：属性 / 子节点 / 状态
 node bin/vk.mjs build page.html # 预编译 + 校验；增量缓存
 node bin/vk.mjs build . --force # 忽略缓存
 node bin/vk.mjs check page.html # 结构自检；有错退出码 1
 node bin/vk.mjs check a.html b.html # 多页共用一个浏览器
 node bin/vk.mjs shot page.html  # 1920×1080 诊断图；--strict 遇 error 删图
-node bin/vk.mjs tags            # 37 个标签
+node bin/vk.mjs tags            # 39 个标签
 node bin/vk.mjs doc vk-code     # 属性 / 枚举 / 默认值；--all 带布局协议
 node bin/vk.mjs icons arrow     # 搜图标名
 ```

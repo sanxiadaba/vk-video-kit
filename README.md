@@ -3,9 +3,9 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 5-layer visual language of 37 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only with one focus blue and one annotation plum, and the visual system is desktop-only with a two-step type system: 52 for content, 40 for metadata. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 5-layer visual language of 39 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only with one focus blue and one annotation plum, and the visual system is desktop-only with a two-step type system: 52 for content, 40 for metadata. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**37 个标签、5 层、1920×1080，桌面 only，只有白纸。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**39 个标签、5 层、1920×1080，桌面 only，只有白纸。**
 
 ![vk 标本册索引](docs/cover.png)
 
@@ -15,7 +15,7 @@
 - **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：内容 52 / 元数据 40。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有时间轴、没有动效。输出就是一张静帧，动效在剪辑层做。
-- **文档也是库。** 37 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
+- **文档也是库。** 39 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
 
 ## 五层
 
@@ -71,9 +71,9 @@ node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/�
 node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 node bin/vk.mjs shot page.html    # 出一张 1920×1080
 node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
-node bin/vk.mjs tags              # 37 个标签
+node bin/vk.mjs tags              # 39 个标签
 node bin/vk.mjs doc vk-code       # 某个标签的属性
-node bin/vk.mjs brief             # 37 行契约摘要（AI 入口）
+node bin/vk.mjs brief             # 39 行契约摘要（AI 入口）
 node bin/vk.mjs icons arrow       # 搜图标名
 ```
 
@@ -190,7 +190,7 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 
 ## 规格页
 
-`npm run build` 生成的不是组件文档，而是 37 张规格页：
+`npm run build` 生成的不是组件文档，而是 39 张规格页：
 
 - **索引**：7 页（前 6 页每页 6 格，最后一页 1 格）。每格是**帧板**的等比缩略图 + 名字 + `vk-*` 标签名；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
 - **每个组件一页 = 纸 + 帧板**：上方一块 1920×1080 帧板（一行元信息 + 标准形态），下方是状态带（`PRESETS` 逐档）与最小 HTML；帧板仍是单镜头，没有成品、没有用法、没有解剖。
@@ -223,7 +223,7 @@ node bin/vk.mjs shot page.html       # 出一张 1920×1080（--phone / --crop x
 
 `vk check` 查 40px 地板、正文是否落在 52、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 37 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是本地页面引用的构建产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+`npm run build` 之后：`_site/` 是完整静态站（索引 + 39 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是本地页面引用的构建产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 
 ## 仓库结构
 
