@@ -199,6 +199,17 @@ export function auditPage(root = document) {
         const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
         const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
         if (w > 4 && h > 4) {
+          // 声明了 elevation 的元素之间允许叠层，但每次放行都记账，回归时能看见。
+          const elevated = kids[i].closest('[elevation]') || kids[j].closest('[elevation]');
+          if (elevated) {
+            out.push({
+              type: 'layer',
+              what: `已豁免：${clip(kids[i].className || kids[i].tagName)} 压在 ${clip(
+                kids[j].className || kids[j].tagName
+              )} 上（elevation）`,
+            });
+            continue;
+          }
           out.push({
             type: 'overlap',
             what: `${clip(kids[i].className || kids[i].tagName)} × ${clip(kids[j].className || kids[j].tagName)}`,

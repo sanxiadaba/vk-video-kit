@@ -188,7 +188,7 @@ const DEFAULTS = {
   'vk-bars': { density: 'normal', tone: 'neutral', scale: 'linear' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
-  'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg' },
+  'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
   'vk-stat': { size: 'display-xl', tone: 'none', mark: 'none', format: 'none', align: 'left' },
   'vk-page': { align: 'top' },
 };
@@ -633,6 +633,7 @@ export const TAGS = {
       'border': oneOf('none', 'hair', 'strong'),
       'radius': oneOf('none', 'md', 'lg'),
       'n': text(),
+      'elevation': oneOf('0', '1', '2'),
     },
   },
   'vk-stat': {

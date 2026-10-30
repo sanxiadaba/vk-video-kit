@@ -1256,6 +1256,8 @@ export class VkPanel extends VkElement {
     this._shell.dataset.pad = pad;
     this._shell.dataset.border = border;
     this._shell.dataset.radius = radius;
+    this._shell.dataset.elevation = this.getAttribute('elevation') || '0';
+    if (this.hasAttribute('elevation')) this.setAttribute('elevation', this.getAttribute('elevation') || '0');
     this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
     this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
     this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';

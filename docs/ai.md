@@ -146,7 +146,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`title` · `url` · `chrome` · `tone` · `pad`
   - 例：`<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">`
 - **`vk-panel`** · 区域 — 一块区域：卡片或章节带。只提供底、边和三个槽（header / footer / 其余进 body），不规定里面怎么排。
-  - 属性：`variant` · `surface` · `pad` · `border` · `radius` · `n`
+  - 属性：`variant` · `surface` · `pad` · `border` · `radius` · `n` · `elevation`
   - 例：`<vk-panel n="1" surface="sf-1">`
 - **`vk-stat`** · 指标 — 一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。
   - 属性：`value` · `unit` · `label` · `size` · `tone` · `mark` · `format` · `align`

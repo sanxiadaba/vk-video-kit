@@ -102,18 +102,20 @@ try {
   if (json) {
     console.log(JSON.stringify(results.map((it) => ({ ...it, lines: linesFor(it) })), null, 2));
   } else {
+    const WARN = new Set(['layer']);
+    const fatal = (it) => it.issues.filter((x) => !WARN.has(x.type)).length > 0 || it.special.length > 0;
     for (const it of results) {
       const lines = linesFor(it);
       if (!lines.length) console.log(`✓ ${it.rel} 干净`);
       else {
-        console.log(`✗ ${it.rel}  ${lines.length} 个问题`);
+        console.log(`${fatal(it) ? '✗' : '△'} ${it.rel}  ${lines.length} 条`);
         for (const l of lines.slice(0, 20)) console.log(`  · ${l}`);
       }
     }
-    const bad = results.filter((it) => linesFor(it).length).length;
+    const bad = results.filter((it) => fatal(it)).length;
     if (pages.length > 1) console.log(`\n${pages.length} 页 · ${bad} 页有问题`);
   }
-  process.exitCode = results.some((it) => linesFor(it).length) ? 1 : 0;
+  process.exitCode = results.some((it) => it.issues.filter((x) => x.type !== 'layer').length > 0 || it.special.length > 0) ? 1 : 0;
 } finally {
   await browser.close();
 }

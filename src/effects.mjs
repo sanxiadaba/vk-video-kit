@@ -54,6 +54,7 @@ export const EFFECTS = {
     border: { on: '.vk-panel', kind: 'style', prop: 'border-top-color' },
     radius: { on: '.vk-panel', kind: 'style', prop: 'border-top-left-radius' },
     n: { on: '.vk-panel-n', kind: 'text' },
+    elevation: { on: '.vk-panel', kind: 'style', prop: 'box-shadow' },
   },
 
   'vk-stat': {

@@ -1715,6 +1715,8 @@ vk-panel { display: block; }
 /* 章节带：不要圆角、不要边，底更重一点 */
 .vk-panel[data-variant='band'] { border-radius: 0; border-color: transparent; background: var(--vk-sf-2); }
 .vk-panel[data-variant='band'] .vk-panel-bd { gap: var(--vk-s2); }
+.vk-panel[data-elevation='1'] { box-shadow: var(--vk-elev-1); }
+.vk-panel[data-elevation='2'] { box-shadow: var(--vk-elev-2); border-color: transparent; }
 .vk-panel[data-overflow='clip'] { overflow: hidden; }
 .vk-panel[data-grow='1'] { flex: 1 1 auto; }
 .vk-panel[data-fill='1'] { height: 100%; }
