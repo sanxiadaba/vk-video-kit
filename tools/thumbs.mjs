@@ -46,8 +46,8 @@ const jobs = [];
 for (const tag of TAG_NAMES) {
   const file = path.join(SITE, 'specimen', `${tag}.html`);
   if (!fs.existsSync(file)) continue;
-  // 缩略图是整个标本页，所以缓存键必须是页面本身：页头/页脚变了也要跟着重截。
-  const hash = sha1(fs.readFileSync(file, 'utf8') + assetVersion + 'page');
+  // 缩略图是组件本体，缓存键里带上 'body'：裁切方式变了也要跟着重截。
+  const hash = sha1(fs.readFileSync(file, 'utf8') + assetVersion + 'body');
   next[tag] = hash;
   const out = path.join(OUT, `${tag}.png`);
   if (cache[tag] === hash && fs.existsSync(out)) continue;
@@ -74,8 +74,18 @@ async function worker(list) {
       if (window.vk?.ready) await window.vk.ready();
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
-    // 整页，不裁：索引里看到的就是点进去那一页。
-    await page.screenshot({ path: job.out, clip: { x: 0, y: 0, width: 1920, height: 1080 } });
+    // 只截组件本体（.spec-body）＋一圈留白：整页缩到卡片里时，
+    // 组件只有原来的 1/7，字全糊了，索引等于没缩略图。
+    const box = await page.locator('.spec-body').first().boundingBox().catch(() => null);
+    const clip = box
+      ? {
+          x: Math.max(0, box.x - PAD),
+          y: Math.max(0, box.y - PAD),
+          width: Math.min(1920 - Math.max(0, box.x - PAD), box.width + PAD * 2),
+          height: Math.min(1080 - Math.max(0, box.y - PAD), box.height + PAD * 2),
+        }
+      : { x: 0, y: 0, width: 1920, height: 1080 };
+    await page.screenshot({ path: job.out, clip });
   }
   await ctx.close();
 }

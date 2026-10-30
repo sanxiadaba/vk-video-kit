@@ -63,8 +63,10 @@ a:hover{color:#1b3fd6}
 .spec-card-tag{white-space:nowrap;letter-spacing:-.06em}
 /* 索引卡：名字单行，行高按版式收紧。 */
 .spec-card-name,.spec-card-tag,.spec-card-name *,.spec-card-tag *{line-height:1!important;white-space:nowrap}
-/* 缩略图：vk-img 不受 w/h 约束，用 CSS 定高；cover 裁成等高的一条。 */
-vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:296px!important}
+/* 缩略图：vk-img 不受 w/h 约束，用 CSS 定高；contain 完整显示组件本体。
+   留白必须是纸色——灰底会在卡片里画出一道"没内容"的框。 */
+vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:296px!important;background:#fff}
+vk-img.spec-thumb .vk-img{border-radius:0}
 /* 最后一页只有一张卡：放大成专题，不再是一张孤零零的小卡。 */
 .spec-lone{display:flex;justify-content:center;padding-top:24px}
 .spec-lone .spec-card{width:1120px;height:700px}
@@ -245,15 +247,15 @@ function specPage(tag, no) {
 
 function card(tag, no) {
   const def = TAGS[tag];
-  // 索引 = 缩略图 + 名字。缩略图取组件本体（不裁切），卡片端 contain 完整显示。
+  // 索引 = 缩略图 + 名字。缩略图是组件本体（不是整页），卡片端 contain 完整显示。
   return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
-  <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="cover"></vk-img>
+  <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="contain"></vk-img>
   <vk-row class="spec-card-name" gap="xs" align="baseline"><vk-text size="label">${esc(def.name)}</vk-text><vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-row>
 </vk-stack></a>`;
 }
 
-/** 一页 12 格（4 列 × 3 行）。36 格一页时每格只有 273×82，组件认不出来；
- *  12 格一页能做到 414×177（面积 3.3 倍），完整显示、不裁切。 */
+/** 一页 6 格（3 列 × 2 行）。格子再小，缩略图里的组件就认不出来；
+ *  这一页 6 格能做到 490×296，组件本体按 contain 完整放下。 */
 const PER_PAGE = 6;
 const PAGES = Math.ceil(ORDER.length / PER_PAGE);
 const pageHref = (n) => (n === 1 ? 'index.html' : `index-${n}.html`);
