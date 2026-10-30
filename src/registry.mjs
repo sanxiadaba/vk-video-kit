@@ -838,6 +838,10 @@ export const TAGS = {
     summary: '坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。',
     attrs: {
       'align': oneOf('top', 'center', 'bottom'),
+      /* 场次：一页 = 一段时间。dur 为 0 时就是一张静帧。 */
+      'dur': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
+      'beat': { ...num({ min: 0.1, max: 4, step: 0.05 }), motion: true },
+      'poster': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
     },
   },
   'vk-pin': {
@@ -918,6 +922,12 @@ const COMMON = {
   grow: { ...bool(), layout: true },
   fill: { ...bool(), layout: true },
   overflow: { ...oneOf('visible', 'clip'), default: 'visible', layout: true },
+  /* L6 导演层：时刻 → 姿态。不进布局、不改尺寸，所以不参与几何审计。 */
+  at: { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
+  dur: { ...num({ min: 0, max: 60, step: 0.01 }), motion: true },
+  enter: { ...oneOf('rise', 'fade', 'scale', 'wipe', 'none'), default: 'none', motion: true },
+  ease: { ...oneOf('linear', 'out-cubic', 'out-quint', 'out-expo', 'in-cubic', 'in-out-sine'), motion: true },
+  stagger: { ...num({ min: 0, max: 2, step: 0.01 }), motion: true },
 };
 /** 布局协议：由 Frame 基类统一实现，不属于组件自己的 API；`vk doc` 默认折叠。 */
 export const LAYOUT_ATTRS = new Set(Object.keys(COMMON));
@@ -1115,5 +1125,6 @@ export function validate() {
   }
   return errors;
 }
+
 
 

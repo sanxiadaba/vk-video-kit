@@ -6,7 +6,7 @@
      layout     L2 画布与连线
      components L3
      compositions L4
-   时间轴不在这里：本库只保证"静止帧即成品"，出场时间由编排层施加。
+   L6 director 只做「时刻 → 姿态」的求值，不做播放器：poster 仍是成品静帧。
 */
 
 import { VK } from './base.mjs';
@@ -20,6 +20,7 @@ import { defineAsm } from './asm.mjs';
 import { defineTimeline } from './timeline.mjs';
 import { defineOverlays } from './overlays.mjs';
 import { installAudit } from './audit.mjs';
+import { installDirector } from './director.mjs';
 
 defineElements();
 defineLayout();
@@ -31,6 +32,8 @@ defineAsm();
 defineTimeline();
 defineOverlays();
 installAudit(VK);
+installDirector(VK);
 
 export { VK };
 export default VK;
+

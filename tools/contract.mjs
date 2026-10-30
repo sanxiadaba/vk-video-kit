@@ -433,6 +433,10 @@ try {
       // 语境属性（span / rows）：只在特定上下文里有效——span 要有 vk-grid 父级，
       // rows 要有确定高度。它们由构建期校验和 slice 的求解器覆盖，不在这里逐条探针。
       if (spec.context) continue;
+      // 导演层属性（at / dur / enter / ease / stagger）：只有 seek(t) 之后才影响画面，
+      // 静态渲染必须与不写它们时一致——所以不能在这里用「子树有没有变」来探针。
+      // 它们由 tests/director.test.mjs 的 poster 逐像素比对覆盖。
+      if (spec.motion) continue;
       const key = `${tag}.${name}`;
       if (spec.build) {
         buildOnly.push(name);

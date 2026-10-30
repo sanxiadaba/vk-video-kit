@@ -86,6 +86,33 @@ try {
   const out = valueOf('--out')
     ? path.resolve(valueOf('--out'))
     : path.join(path.dirname(abs), `${path.basename(abs, path.extname(abs))}${phone ? '.phone' : crop ? '.crop' : ''}.png`);
+
+  // 时间表：不截图，只把「时刻 → 姿态」的绝对值导给下游（剪辑 / Remotion / ffmpeg）。
+  const sceneOut = valueOf('--scene');
+  if (sceneOut) {
+    const scene = await tab.evaluate(() => window.vk?.scene?.() || null);
+    const target = path.resolve(sceneOut);
+    fs.mkdirSync(path.dirname(target), { recursive: true });
+    if (!scene || !scene.cues.length) {
+      console.error(`✗ ${path.relative(process.cwd(), target)}  这一页没有时间轴（vk-page 上没有 dur）`);
+      process.exitCode = 1;
+    } else {
+      fs.writeFileSync(target, JSON.stringify(scene, null, 2) + '\n');
+      console.log(`✓ ${path.relative(process.cwd(), target)}  ${scene.cues.length} 个 cue · ${scene.dur}s · beat ${scene.beat}s`);
+    }
+    await browser.close();
+    process.exit(process.exitCode || 0);
+  }
+
+  // 时刻：先求值再截图。seek 是纯函数，同一 t 永远得到同一张。
+  const atRaw = valueOf('--at');
+  const at = atRaw === null ? null : Number(atRaw);
+  if (at !== null) {
+    await tab.evaluate(async (t) => {
+      window.vk?.seek?.(t);
+      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
+    }, Number.isFinite(at) ? at : 0);
+  }
   fs.mkdirSync(path.dirname(out), { recursive: true });
 
   /**
@@ -114,8 +141,8 @@ try {
   let errors = 0;
   for (const it of report.issues || []) {
     if (it.type === 'no-payload') lines.push(`缺预编译数据：${it.what}`);
-    else if (it.type === 'font') lines.push(`字号 ${it.fs} < 40：${it.what}`);
-    else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥52）：${it.what}`);
+    else if (it.type === 'font') lines.push(`字号 ${it.fs} < 36：${it.what}`);
+    else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥48）：${it.what}`);
     else if (it.type === 'contrast') lines.push(`对比度 ${it.cr} < ${it.need}：${it.what}`);
     else if (it.type === 'safe') lines.push(`超出安全区：${it.what}`);
     else if (it.type === 'overflow') lines.push(`超出画布：${it.what}`);
@@ -154,4 +181,5 @@ try {
 } finally {
   await browser.close();
 }
+
 
