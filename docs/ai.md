@@ -20,7 +20,7 @@
 
 ## 2 · 字号与颜色
 
-1. 字阶七档：`display-2xl 200` · `display-xl 160` · `display 120` · `title 88` · `heading 64` · `body 52` · `meta 40`。160/200 是「一个数字当家」的档，一帧最多一个，不要拿来当标题。
+1. 字阶七档：`label 36` · `data 40` · `body 48` · `subhead 96` · `title 144` · `hero 224` · `mega 320`。`hero`/`mega` 是「一个数字/一个词当家」的档，一帧最多一个，不要拿来当标题。旧名（display-2xl / display-xl / display / heading / meta）是别名，构建期会提示改名。
 2. 要读懂的内容用 52；元数据、标签、密集 ASCII 数据用 40（`data-meta` 标记），任何可读文字不低于 40。
 3. 钴蓝只有一个含义：**正在讲这里**。它不做语法色——关键字与数字都是墨色 600，字符串是绿的。
 4. 语义色（对 / 错 / 注意）只出现在色条、底色、图标上，不写正文。
@@ -150,7 +150,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-panel n="1" surface="sf-1">`
 - **`vk-stat`** · 指标 — 一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。
   - 属性：`value` · `unit` · `label` · `size` · `tone` · `mark` · `format` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl">`
+  - 例：`<vk-stat value="52,980" unit="字节" label="预处理后" size="hero">`
 - **`vk-keys`** · 键位 — 键位：把 A + B 写成两枚键帽。
   - 属性：（无）
   - 例：`<vk-keys>Ctrl + C</vk-keys>`
@@ -206,7 +206,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-math`** · 公式 — 公式。src 指向真实 .tex；构建期用 KaTeX 渲染成静态 HTML，运行时零依赖。
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
-  - 例：`<vk-math display size="heading" src="../code/formula.tex">`
+  - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
 - **`vk-figure`** · 图窗 — 画框里的图：标题栏、比例、说明、来源。
   - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `shadow` · `bleed` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `position`
   - 例：`<vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图">`

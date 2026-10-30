@@ -285,7 +285,7 @@ vk-edge .vk-edge-label[data-dir='v-left'] {
   transform: translate(calc(-100% - var(--vk-s2)), -50%);
 }
 vk-edge[label-size='label'] .vk-edge-label { font-size: var(--vk-t-body); }
-vk-edge[label-size='meta'] .vk-edge-label { font-size: var(--vk-t-meta); }
+vk-edge[label-size='meta'] .vk-edge-label { font-size: var(--vk-t-label); }
 
 
 

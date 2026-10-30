@@ -308,6 +308,29 @@ export function fetchSource(el) {
   pendingSources.add(p);
 }
 
+/* --------------------------------------------------------------- 值层迁移 */
+
+/**
+ * 13.0 把字号档位的名字换成七个语义名：label / data / body / subhead / title / hero / mega。
+ * 旧页还写着 display-2xl / display-xl / display / heading / meta——连上 DOM 的第一刻折成新名，
+ * 后面所有环节（CSS、契约、文档、类型）就只认一套词。14.0 删掉这张表。
+ */
+const TIER_ALIAS = {
+  'display-2xl': 'mega',
+  'display-xl': 'hero',
+  display: 'title',
+  heading: 'subhead',
+  meta: 'label',
+};
+
+export function normalizeTier(el) {
+  const v = el.getAttribute?.('size');
+  const next = v && TIER_ALIAS[v];
+  if (!next) return;
+  el.setAttribute('size', next);
+  el._warnOnce?.('tier', `的 size="${v}" 已在 13.0 改名，请写成 size="${next}"`);
+}
+
 /* --------------------------------------------------------------- 生命周期 */
 
 /**
@@ -337,6 +360,9 @@ export class VkElement extends Base {
   }
 
   connectedCallback() {
+    // 值层迁移：旧档名（display-2xl / heading / meta …）在连上 DOM 的第一刻折成 13.0 的七个名字。
+    // 折完再往下走，所以 CSS、文档、契约都只认一套词。
+    normalizeTier(this);
     this._registerPlace();
     if (this._done) {
       this._attachObserver();
@@ -726,3 +752,4 @@ export function fillSlot(host, nodes) {
 }
 
 if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
+

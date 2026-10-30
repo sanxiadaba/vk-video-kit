@@ -102,7 +102,7 @@ function nav(no, tag) {
   const prev = ORDER[i - 1];
   const next = ORDER[i + 1];
   const link = (t, label) =>
-    t ? `<a href="${t}.html"><vk-text size="meta" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
+    t ? `<a href="${t}.html"><vk-text size="label" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
   return `<vk-row gap="sm" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
     next,
     (next || '') + ' →'
@@ -193,16 +193,16 @@ function specPage(tag, no) {
   <vk-stack gap="2xs">
     <vk-row justify="between" align="baseline">
       <vk-row gap="xs" align="baseline">
-        <a href="../index.html"><vk-text size="meta" mono ink="muted" data-meta>← 索引</vk-text></a>
-        <vk-text size="meta" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
-        <vk-text size="meta" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="meta" mono ink="muted" data-meta>${esc(tag)}</vk-text>
-        <vk-text size="meta" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="meta" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
+        <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
+        <vk-text size="label" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
       </vk-row>
       <vk-row gap="md" align="baseline">
         ${nav(no, tag)}
-        <vk-text size="meta" mono ink="muted" data-meta>${meta}</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>${meta}</vk-text>
       </vk-row>
     </vk-row>
     <vk-rule></vk-rule>
@@ -234,9 +234,9 @@ function specPage(tag, no) {
       : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`}`;
 
   const sheet = `<section class="vk-sheet">
-  <div class="vk-sheet-hd"><vk-text size="meta" mono data-meta>状态</vk-text><vk-text size="meta" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档` : '无'}</vk-text></div>
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>状态</vk-text><vk-text size="label" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档` : '无'}</vk-text></div>
   <div class="vk-states">${states}</div>
-  <div class="vk-sheet-hd"><vk-text size="meta" mono data-meta>最小写法</vk-text><vk-text size="meta" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>最小写法</vk-text><vk-text size="label" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
   <pre class="vk-snippet">${snippetOf(rawBody, tag)}</pre>
 </section>`;
 
@@ -248,7 +248,7 @@ function card(tag, no) {
   // 索引 = 缩略图 + 名字。缩略图取组件本体（不裁切），卡片端 contain 完整显示。
   return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
   <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="cover"></vk-img>
-  <vk-row class="spec-card-name" gap="xs" align="baseline"><vk-text size="meta">${esc(def.name)}</vk-text><vk-text size="meta" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-row>
+  <vk-row class="spec-card-name" gap="xs" align="baseline"><vk-text size="label">${esc(def.name)}</vk-text><vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-row>
 </vk-stack></a>`;
 }
 
@@ -263,18 +263,18 @@ function indexPage(n) {
   const cards = slice.map((tag, i) => card(tag, i + 1)).join('\n');
   const prev =
     n > 1
-      ? `<a href="${pageHref(n - 1)}"><vk-text size="meta" mono ink="muted" data-meta>← 上一页</vk-text></a>`
-      : `<vk-text size="meta" mono ink="muted" data-meta>← 上一页</vk-text>`;
+      ? `<a href="${pageHref(n - 1)}"><vk-text size="label" mono ink="muted" data-meta>← 上一页</vk-text></a>`
+      : `<vk-text size="label" mono ink="muted" data-meta>← 上一页</vk-text>`;
   const next =
     n < PAGES
-      ? `<a href="${pageHref(n + 1)}"><vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text></a>`
-      : `<vk-text size="meta" mono ink="muted" data-meta>下一页 →</vk-text>`;
+      ? `<a href="${pageHref(n + 1)}"><vk-text size="label" mono ink="muted" data-meta>下一页 →</vk-text></a>`
+      : `<vk-text size="label" mono ink="muted" data-meta>下一页 →</vk-text>`;
   const page = `<vk-page align="top" data-allow-void>
   <vk-stack gap="sm">
     <vk-row justify="between" align="baseline">
       <vk-row gap="md" align="baseline">
-        <vk-text class="spec-card-name" size="meta">${ORDER.length} 个组件</vk-text>
-        <vk-text size="meta" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
+        <vk-text class="spec-card-name" size="label">${ORDER.length} 个组件</vk-text>
+        <vk-text size="label" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
       </vk-row>
       <vk-row gap="md" align="baseline">${prev}${next}</vk-row>
     </vk-row>

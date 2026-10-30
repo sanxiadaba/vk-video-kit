@@ -99,7 +99,7 @@
   border-radius: 6px;
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -109,7 +109,7 @@
 .vk-range {
   flex: 0 0 auto;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: 400;
   line-height: 1;
   color: var(--vk-win-meta-2);
@@ -123,7 +123,7 @@
   border: 2px solid var(--vk-win-tab-line);
   border-radius: 4px;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-med);
   letter-spacing: 0.04em;
   color: var(--vk-win-meta-2);
@@ -141,7 +141,7 @@
   padding: 0 var(--vk-s4);
   border-top: var(--vk-line-w) solid var(--vk-win-rule);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-win-meta-2);
   background: var(--vk-win-soft);
 }

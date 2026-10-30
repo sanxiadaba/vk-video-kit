@@ -73,7 +73,7 @@ writeIfChanged(
 <body>
 <vk-page>
   <vk-stack gap="lg">
-    <vk-text size="heading" weight="bold">页面是画布工具。</vk-text>
+    <vk-text size="subhead" weight="bold">页面是画布工具。</vk-text>
     <vk-text size="body" measure="body">页眉、正文、页脚三行固定；正文永远是 888，不被页眉页脚压缩。</vk-text>
   </vk-stack>
 </vk-page>

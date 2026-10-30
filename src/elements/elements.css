@@ -112,14 +112,15 @@ vk-text {
   overflow-wrap: anywhere;
 }
 
-vk-text[size='display-2xl'] { font-size: var(--vk-t-display-2xl); line-height: 1.02; letter-spacing: -0.04em; font-weight: var(--vk-w-bold); }
-vk-text[size='display-xl'] { font-size: var(--vk-t-display-xl); line-height: 1.04; letter-spacing: -0.035em; font-weight: var(--vk-w-bold); }
-vk-text[size='display'] { font-size: var(--vk-t-display); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
-vk-text[size='title'] { font-size: var(--vk-t-title); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); }
-vk-text[size='heading'] { font-size: var(--vk-t-heading); line-height: var(--vk-lh-snug); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); }
-vk-text[size='body'] { font-size: var(--vk-t-body); }
-vk-text[size='label'] { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
-vk-text[size='meta'] { font-size: var(--vk-t-meta); line-height: var(--vk-lh-body); }
+/* 七个档位，一条梯子：字号、行高、字重、行宽都从这里取。
+   以前这里同时存在 label（渲染成 48）和 meta（36）两套名字，同名不同义——13.0 只留这一套。 */
+vk-text[size='mega']    { font-size: var(--vk-t-mega);    line-height: 1.02; letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
+vk-text[size='hero']    { font-size: var(--vk-t-hero);    line-height: 1.04; letter-spacing: -0.035em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
+vk-text[size='title']   { font-size: var(--vk-t-title);   line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); max-width: var(--vk-measure-title); }
+vk-text[size='subhead'] { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-subhead); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-subhead); }
+vk-text[size='body']    { font-size: var(--vk-t-body);    max-width: var(--vk-measure-body); }
+vk-text[size='data']    { font-size: var(--vk-t-data);    line-height: var(--vk-lh-data); font-family: var(--vk-font-mono); }
+vk-text[size='label']   { font-size: var(--vk-t-label);   line-height: var(--vk-lh-label); max-width: var(--vk-measure-label); }
 
 vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
@@ -133,13 +134,11 @@ vk-text[ink='muted'] { color: var(--vk-ink-4); }
 vk-text[align='center'] { text-align: center; margin-inline: auto; }
 vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
-/* 散文默认按字号取行宽：52→1040、40→1200、88→900…；容器不参与。 */
+/* 散文默认按字号取行宽；作者可以用 measure 覆盖。 */
 vk-text { max-width: var(--vk-measure-body); }
-vk-text[size='display'] { max-width: var(--vk-measure-display); }
-vk-text[size='title'] { max-width: var(--vk-measure-title); }
-vk-text[size='heading'] { max-width: var(--vk-measure-heading); }
-vk-text[size='meta'] { max-width: var(--vk-measure-meta); }
+vk-text[measure='label'] { max-width: var(--vk-measure-label); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
+vk-text[measure='subhead'] { max-width: var(--vk-measure-subhead); }
 vk-text[measure='title'] { max-width: var(--vk-measure-title); }
 vk-text[measure='none'] { max-width: none; }
 

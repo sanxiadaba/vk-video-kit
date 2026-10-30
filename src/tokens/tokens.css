@@ -164,11 +164,12 @@
   --vk-t-hero: 224px; /* 一帧一个数字 */
   --vk-t-mega: 320px; /* 一个词当家 */
 
-  /* 旧名保留一版：构建期会给迁移警告，14.0 删除。 */
+  /* 旧名保留一版（14.0 删除）：只做别名，不许覆盖主名。
+     同名自定义属性后定义的胜出——写成 --vk-t-label: var(--vk-t-label) 会把主名一起弄成无效值。 */
   --vk-t-meta: var(--vk-t-label);
   --vk-t-heading: var(--vk-t-subhead);
-  --vk-t-display: 180px; /* 过渡档：legacy size="display"，14.0 删除 */
-  --vk-t-display-xl: var(--vk-t-hero); /* legacy → hero */
+  --vk-t-display: var(--vk-t-title);
+  --vk-t-display-xl: var(--vk-t-hero);
   --vk-t-display-2xl: var(--vk-t-mega);
 
   /* 字重反过来用：小字要厚（0.38× 下 400 会被抗锯齿糊掉），大字要收（700 又黑又土）。 */

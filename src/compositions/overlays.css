@@ -59,12 +59,15 @@ vk-pin {
   line-height: 1.35;
 }
 .vk-pin-bd[data-tone='info'] { border-left-color: var(--vk-info); }
+/* 批注也有字号档：太小看不清，太大盖住被注的东西。 */
+vk-pin[size='label'] .vk-pin-bd { font-size: var(--vk-t-label); line-height: var(--vk-lh-label); }
+vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-subhead); }
 .vk-pin-bd[data-tone='focus'] { border-left-color: var(--vk-focus); }
 .vk-pin-bd[data-tone='err'] { border-left-color: var(--vk-err); }
 .vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-pin-bd[data-tone='warn'] { border-left-color: var(--vk-warn); }
 .vk-pin-bd[data-tone='neutral'] { border-left-color: var(--vk-ink-1); }
-.vk-pin-bd[data-size='meta'] { font-size: var(--vk-t-meta); padding: var(--vk-s1) var(--vk-s2); }
+.vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); padding: var(--vk-s1) var(--vk-s2); }
 .vk-pin-n {
   display: inline-flex;
   align-items: center;
@@ -77,7 +80,7 @@ vk-pin {
   background: var(--vk-info);
   color: var(--vk-paper-surface-1);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-bold);
   vertical-align: 4px;
 }

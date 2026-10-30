@@ -168,7 +168,7 @@ const DEFAULTS = {
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-title': { size: 'title', align: 'left', level: '2' },
   'vk-list': { variant: 'bullet', gap: 'sm' },
-  'vk-tag': { tone: 'neutral', size: 'meta', emphasis: 'solid' },
+  'vk-tag': { tone: 'neutral', size: 'label', emphasis: 'solid' },
   'vk-callout': { tone: 'info', size: 'body', density: 'normal' },
   'vk-code': { chrome: 'min', density: 'normal', numbers: 'all', size: 'normal' },
   'vk-asm': { bytes: '', address: 'all', density: 'normal', long: 'fail', chrome: 'min' },
@@ -190,7 +190,7 @@ const DEFAULTS = {
   'vk-cells': { cols: '0', size: 'normal' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
   'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
-  'vk-stat': { size: 'display-xl', tone: 'none', mark: 'none', format: 'none', align: 'left' },
+  'vk-stat': { size: 'hero', tone: 'none', mark: 'none', format: 'none', align: 'left' },
   'vk-page': { align: 'top' },
 };
 
@@ -232,11 +232,11 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading', 'body', 'meta'),
+      'size': oneOf('label', 'data', 'body', 'subhead', 'title', 'hero', 'mega'),
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
-      'measure': { ...oneOf('body', 'title', 'none'), layout: true },
+      'measure': { ...oneOf('label', 'body', 'subhead', 'title', 'none'), layout: true },
     },
   },
   'vk-inline': {
@@ -422,7 +422,7 @@ export const TAGS = {
       'eyebrow': text(),
       'sub': text(),
       'level': oneOf('1', '2', '3'),
-      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading'),
+      'size': oneOf('body', 'subhead', 'title', 'hero', 'mega'),
       'align': oneOf('left', 'center'),
     },
   },
@@ -452,7 +452,7 @@ export const TAGS = {
     },
     attrs: {
       'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
-      'size': oneOf('body', 'meta'),
+      'size': oneOf('label', 'body', 'subhead'),
       'emphasis': oneOf('solid', 'soft', 'ghost'),
       'bare': bool(),
         },
@@ -473,7 +473,7 @@ export const TAGS = {
     attrs: {
       'tone': oneOf('info', 'ok', 'warn', 'err'),
       'title': text(),
-      'size': oneOf('heading', 'body', 'meta'),
+      'size': oneOf('label', 'body', 'subhead'),
       'bare': bool(),
     },
   },
@@ -571,7 +571,7 @@ export const TAGS = {
     attrs: {
       'src': { ...text(), build: true },
       'display': bool(),
-      'size': oneOf('heading', 'body', 'meta'),
+      'size': oneOf('label', 'body', 'subhead'),
     },
   },
   'vk-figure': {
@@ -650,7 +650,7 @@ export const TAGS = {
       'value': text(),
       'unit': text(),
       'label': text(),
-      'size': oneOf('display-2xl', 'display-xl', 'display', 'title', 'heading'),
+      'size': oneOf('subhead', 'title', 'hero', 'mega'),
       'tone': oneOf('none', 'focus', 'info', 'ok', 'warn', 'err'),
       'mark': oneOf('none', 'dot', 'bar'),
       'format': oneOf('none', 'thousands', 'bytes', 'hex'),
@@ -743,7 +743,7 @@ export const TAGS = {
       'source': text(),
       'author': text(),
       'variant': oneOf('rule', 'mark'),
-      'size': oneOf('display', 'title', 'heading', 'body'),
+      'size': oneOf('body', 'subhead', 'title', 'hero'),
     },
   },
   'vk-bits': {
@@ -875,7 +875,7 @@ export const TAGS = {
       'leader': oneOf('elbow', 'straight', 'none'),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
       'w': size({ min: 160, max: 900, step: 1 }),
-      'size': oneOf('body', 'meta'),
+      'size': oneOf('label', 'body', 'subhead'),
       'z': int({ min: 0, max: 99, step: 1 }),
     },
   },
@@ -1146,6 +1146,8 @@ export function validate() {
   }
   return errors;
 }
+
+
 
 
 

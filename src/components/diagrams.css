@@ -29,14 +29,14 @@ vk-asm { display: block; }
 }
 .vk-asm-file {
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-med);
   color: var(--vk-ink-1);
 }
-.vk-asm-range { font-size: var(--vk-t-meta); color: var(--vk-ink-4); }
+.vk-asm-range { font-size: var(--vk-t-label); color: var(--vk-ink-4); }
 .vk-asm-lang {
   margin-left: auto;
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-4);
   border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-r-1);
@@ -58,12 +58,12 @@ vk-asm { display: block; }
   border-bottom: 2px solid var(--vk-line-1);
   color: var(--vk-ink-4);
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   letter-spacing: var(--vk-ls-wide);
 }
 .vk-asm-cols-hd .vk-asm-m,
 .vk-asm-cols-hd .vk-asm-o {
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-reg);
   color: var(--vk-ink-4);
 }
@@ -72,7 +72,7 @@ vk-asm { display: block; }
 
 .vk-asm-row {
   min-height: 52px;
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   line-height: 1.2;
   border-bottom: 2px solid var(--vk-line-1);
   white-space: pre;
@@ -81,12 +81,12 @@ vk-asm { display: block; }
 .vk-asm-label {
   padding: 10px var(--vk-s3) 2px;
   color: var(--vk-ink-1);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-bold);
 }
 .vk-asm-a,
 .vk-asm-b {
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-3);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -111,7 +111,7 @@ vk-asm { display: block; }
   border-radius: 50%;
   background: var(--vk-surface-3);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-bold);
   line-height: 1;
   color: var(--vk-ink-2);
@@ -127,7 +127,7 @@ vk-asm { display: block; }
   border-radius: var(--vk-r-1);
   background: var(--vk-warn-weak);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-1);
 }
 .vk-asm-fence-t {
@@ -135,7 +135,7 @@ vk-asm { display: block; }
   letter-spacing: var(--vk-ls-wide);
 }
 .vk-asm-o {
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-2);
   white-space: pre;
 }
@@ -164,7 +164,7 @@ vk-timeline { display: block; }
   border-bottom: 2px solid var(--vk-line-1);
 }
 .vk-tl-title { font-size: var(--vk-t-body); font-weight: var(--vk-w-med); }
-.vk-tl-meta { font-size: var(--vk-t-meta); color: var(--vk-ink-3); font-family: var(--vk-font-mono); }
+.vk-tl-meta { font-size: var(--vk-t-label); color: var(--vk-ink-3); font-family: var(--vk-font-mono); }
 
 /* 轴：竖向事件脊柱。日期右对齐、点落在脊柱上、正文左对齐。
    六条事件在 888 内排得下；更多事件由调用方分页。 */
@@ -199,7 +199,7 @@ vk-timeline { display: block; }
 .vk-tl-item[data-tone='info'] .vk-tl-name { color: var(--vk-info); }
 .vk-tl-date {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   font-weight: var(--vk-w-med);
   line-height: 1;
   color: var(--vk-ink-2);
@@ -227,7 +227,7 @@ vk-timeline { display: block; }
 .vk-tl-desc {
   display: block;
   margin-top: 4px;
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   line-height: 1.2;
   color: var(--vk-ink-2);
   overflow-wrap: anywhere;
@@ -256,7 +256,7 @@ vk-timeline { display: block; }
 }
 .vk-tl-step-hd span {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-meta);
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-4);
   text-align: center;
 }
@@ -298,5 +298,5 @@ vk-timeline { display: block; }
 .vk-tl-chip[data-tone='err'] { border-left-color: var(--vk-err); }
 .vk-tl-chip[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-tl-chip[data-tone='warn'] { border-left-color: var(--vk-warn); }
-.vk-tl-chip .vk-tl-name { font-size: var(--vk-t-meta); margin-top: 0; white-space: normal; }
-.vk-tl-chip .vk-tl-desc { font-size: var(--vk-t-meta); margin-top: 0; white-space: normal; }
+.vk-tl-chip .vk-tl-name { font-size: var(--vk-t-label); margin-top: 0; white-space: normal; }
+.vk-tl-chip .vk-tl-desc { font-size: var(--vk-t-label); margin-top: 0; white-space: normal; }

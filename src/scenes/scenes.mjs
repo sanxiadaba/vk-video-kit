@@ -97,7 +97,7 @@ export const SCENES = [
   <vk-tag tone="info">char</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">4 B</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">指针</vk-tag>
-  <vk-tag tone="neutral" emphasis="soft" size="meta">0x10</vk-tag>
+  <vk-tag tone="neutral" emphasis="soft" size="label">0x10</vk-tag>
 </vk-row>
 <vk-row gap="sm" align="center">
   <vk-tag tone="ok">通过</vk-tag>
@@ -131,7 +131,7 @@ export const SCENES = [
   {
     tag: 'vk-math',
     body: s`
-<vk-math display size="heading" src="../code/formula.tex"></vk-math>`,
+<vk-math display size="subhead" src="../code/formula.tex"></vk-math>`,
   },
 
   {
@@ -166,10 +166,10 @@ export const SCENES = [
     body: s`
 <vk-canvas w="1200" h="520">
   <vk-box id="buf" x="0" y="70" w="320" radius="lg" pad-y="sm" surface="soft">
-    <vk-text size="heading" mono align="center">buf</vk-text>
+    <vk-text size="subhead" mono align="center">buf</vk-text>
   </vk-box>
   <vk-box id="mem" x="700" y="280" w="480" border="strong" radius="lg" pad-y="sm" surface="paper">
-    <vk-text size="heading" mono align="center">一块内存</vk-text>
+    <vk-text size="subhead" mono align="center">一块内存</vk-text>
   </vk-box>
   <vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="指向" tension="42" arrow-style="solid" arrow-size="36"></vk-edge>
 </vk-canvas>`,
@@ -222,25 +222,25 @@ export const SCENES = [
 <vk-grid cols="3" gap="sm">
   <vk-box border="hair" radius="lg" pad="xl" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono ink="muted">类型</vk-text>
+      <vk-text size="label" mono ink="muted">类型</vk-text>
       <vk-text size="body" weight="bold">int</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono ink="muted">字节</vk-text>
+      <vk-text size="label" mono ink="muted">字节</vk-text>
       <vk-text size="body" weight="bold">4</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono ink="muted">最小值</vk-text>
+      <vk-text size="label" mono ink="muted">最小值</vk-text>
       <vk-text size="body" weight="bold">-21 亿</vk-text>
     </vk-stack>
   </vk-box>
   <vk-box border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
-      <vk-text size="meta" mono ink="muted">最大值</vk-text>
+      <vk-text size="label" mono ink="muted">最大值</vk-text>
       <vk-text size="body" weight="bold">21 亿</vk-text>
     </vk-stack>
   </vk-box>
@@ -261,11 +261,11 @@ export const SCENES = [
     body: s`
 <vk-window chrome="browser" url="http://127.0.0.1:5000/hello">
   <vk-stack gap="sm">
-    <vk-text size="heading" weight="bold">示例内容</vk-text>
+    <vk-text size="subhead" weight="bold">示例内容</vk-text>
     <vk-text size="body" ink="secondary">示例文字。</vk-text>
     <vk-row gap="sm" align="center">
       <vk-tag tone="ok">200 OK</vk-tag>
-      <vk-text size="meta" mono ink="muted">text/html · 12 B</vk-text>
+      <vk-text size="label" mono ink="muted">text/html · 12 B</vk-text>
     </vk-row>
   </vk-stack>
 </vk-window>`,
@@ -409,16 +409,16 @@ export const SCENES = [
     tag: 'vk-panel',
     body: s`
 <vk-panel n="1" surface="sf-1">
-  <div slot="header"><vk-text size="heading">预处理之后</vk-text></div>
+  <div slot="header"><vk-text size="subhead">预处理之后</vk-text></div>
   <vk-text size="body">一份 52,980 字节、858 行的中间文件。</vk-text>
-  <div slot="footer"><vk-text size="meta" ink="muted" data-meta>hello.i</vk-text></div>
+  <div slot="footer"><vk-text size="label" ink="muted" data-meta>hello.i</vk-text></div>
 </vk-panel>`,
   },
 
   {
     tag: 'vk-stat',
     body: s`
-<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl"></vk-stat>`,
+<vk-stat value="52,980" unit="字节" label="预处理后" size="hero"></vk-stat>`,
   },
 
   {
@@ -487,7 +487,7 @@ export const SCENES = [
     body: s`
 <vk-canvas w="1360" h="520" grid="16">
   <vk-box id="pin-target" x="120" y="150" w="440" h="200" surface="soft" border="hair" radius="lg">
-    <vk-text size="heading" mono>s[5]</vk-text>
+    <vk-text size="subhead" mono>s[5]</vk-text>
   </vk-box>
   <vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>
 </vk-canvas>`,
@@ -498,7 +498,7 @@ export const SCENES = [
     body: s`
 <vk-canvas w="1360" h="520" grid="16">
   <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="heading" mono>0x2a</vk-text>
+    <vk-text size="subhead" mono>0x2a</vk-text>
   </vk-box>
   <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash></vk-ring>
 </vk-canvas>`,

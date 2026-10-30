@@ -18,7 +18,7 @@ export const PRESETS = {
   ],
   'vk-text': [
     { label: '次要', attrs: { ink: 'tertiary' } },
-    { label: '大字', attrs: { size: 'heading' } },
+    { label: '大字', attrs: { size: 'subhead' } },
     { label: '居中', attrs: { align: 'center' } },
     { label: '等宽', attrs: { mono: '' } },
     { label: '加粗', attrs: { weight: 'bold' } },
@@ -79,8 +79,8 @@ export const PRESETS = {
     { label: '内缩', attrs: { 'pad-px': '48' } },
   ],
   'vk-title': [
-    { label: '更大', attrs: { size: 'display' } },
-    { label: '更小', attrs: { size: 'heading' } },
+    { label: '更大', attrs: { size: 'title' } },
+    { label: '更小', attrs: { size: 'subhead' } },
     { label: '居中', attrs: { align: 'center' } },
   ],
   'vk-list': [
@@ -91,7 +91,7 @@ export const PRESETS = {
     { label: '无符号', attrs: { bare: '' } },
   ],
   'vk-tag': [
-    { label: '小号', attrs: { size: 'meta' } },
+    { label: '小号', attrs: { size: 'label' } },
     { label: '无边框', attrs: { bare: '' } },
   ],
   'vk-callout': [
@@ -126,7 +126,7 @@ export const PRESETS = {
     { label: '等宽', attrs: { mono: '' } },
   ],
   'vk-math': [
-    { label: '更小', attrs: { size: 'meta' } },
+    { label: '更小', attrs: { size: 'label' } },
     { label: '行内', attrs: { display: null } },
   ],
   'vk-figure': [
@@ -178,14 +178,14 @@ export const PRESETS = {
     { label: '无编号', attrs: { n: '' } },
   ],
   'vk-stat': [
-    { label: '更大', attrs: { size: 'display-2xl' } },
+    { label: '更大', attrs: { size: 'mega' } },
     { label: '带图例点', attrs: { mark: 'dot', tone: 'focus' } },
     { label: '千分位', attrs: { value: '52980', format: 'thousands' } },
     { label: '十六进制', attrs: { value: '72', format: 'hex' } },
   ],
   'vk-quote': [
     { label: '压角引号', attrs: { variant: 'mark' } },
-    { label: '小标题阶', attrs: { size: 'heading' } },
+    { label: '小标题阶', attrs: { size: 'subhead' } },
     { label: '长出处', attrs: { author: 'ISO/IEC 9899:2011 第 6.7.3 节' } },
   ],
   'vk-bits': [
@@ -217,7 +217,7 @@ export const PRESETS = {
   'vk-pin': [
     { label: '左侧', attrs: { side: 'left' } },
     { label: '无引线', attrs: { leader: 'none' } },
-    { label: '小字', attrs: { size: 'meta' } },
+    { label: '小字', attrs: { size: 'label' } },
     { label: '编号 3', attrs: { n: '3' } },
     { label: '圆点', attrs: { variant: 'dot' } },
   ],
