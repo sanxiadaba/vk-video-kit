@@ -12,28 +12,12 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
-  'vk-text': {
-    measure: {
-      values: ['16', 'none'],
-      effect: { on: 'vk-text', kind: 'style', prop: 'max-width' },
-      why: '行宽写的是字数，运行期折成 max-width: Nem。',
-    },
-    wrap: {
-      values: ['balance', 'nowrap'],
-      effect: { on: 'vk-text', kind: 'style', prop: 'text-wrap' },
-      why: '断行策略直接落在 text-wrap 上。',
-    },
-  },
-  'vk-title': {
-    measure: {
-      values: ['16', 'none'],
-      effect: { on: 'vk-title', kind: 'style', prop: 'max-width' },
-      why: '标题也能限宽：一行几个字。',
-    },
-    wrap: {
-      values: ['nowrap', 'pretty'],
-      effect: { on: '.vk-title-main', kind: 'style', prop: 'text-wrap' },
-      why: '断行策略落在 .vk-title-main 上。',
+  'vk-tag': {
+    // label 是默认态；body 与 subhead 是两个非默认档。
+    size: {
+      values: ['body'],
+      effect: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
+      why: '标签两档：label 36 / body 48——再大就不是标签了。',
     },
   },
   'vk-grid': {
@@ -51,6 +35,16 @@ export const PROBES = {
     },
   },
   'vk-stat': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-stat', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['nowrap', 'balance'],
+      effect: { on: '.vk-stat-v', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在真正装字的那一层。',
+    },
     value: {
       values: ['1,024'],
       effect: { on: '.vk-stat-v', kind: 'text' },
@@ -174,14 +168,6 @@ export const PROBES = {
     },
   },
   'vk-bits': {},
-  'vk-tag': {
-    // meta 就是默认态；只断 body 这一个非默认值。
-    size: {
-      values: ['body'],
-      effect: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
-      why: '默认 meta 是 40，body 是 52。',
-    },
-  },
   'vk-rule': {
     // neutral 就是默认态；只断 info / focus 这两个非默认值。
     tone: {
@@ -226,6 +212,54 @@ export const PROBES = {
     'bytes-label': { values: ['BYTES'], effect: { on: '.vk-asm-b', kind: 'text' }, why: '列头文字由属性覆盖。' },
     'mnemonic-label': { values: ['OP'], effect: { on: '.vk-asm-m', kind: 'text' }, why: '列头文字由属性覆盖。' },
     'operands-label': { values: ['ARGS'], effect: { on: '.vk-asm-o', kind: 'text' }, why: '列头文字由属性覆盖。' },
+  },
+  'vk-text': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['nowrap', 'balance'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在真正装字的那一层。',
+    },
+  },
+  'vk-title': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-title', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['nowrap', 'pretty'],
+      effect: { on: '.vk-title-main', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在真正装字的那一层。',
+    },
+  },
+  'vk-quote': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-quote', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['nowrap', 'balance'],
+      effect: { on: '.vk-quote', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在真正装字的那一层。',
+    },
+  },
+  'vk-callout': {
+    measure: {
+      values: ['16', 'none'],
+      effect: { on: 'vk-callout', kind: 'style', prop: 'max-width' },
+      why: '行宽写的是字数，运行期折成 max-width: Nem。',
+    },
+    wrap: {
+      values: ['nowrap', 'balance'],
+      effect: { on: '.vk-callout-bd', kind: 'style', prop: 'text-wrap' },
+      why: '断行策略落在真正装字的那一层。',
+    },
   },
 };
 

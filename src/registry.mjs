@@ -458,7 +458,7 @@ export const TAGS = {
     },
     attrs: {
       'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
-      'size': oneOf('label', 'body', 'subhead'),
+      'size': oneOf('label', 'body'),
       'emphasis': oneOf('solid', 'soft', 'ghost'),
       'bare': bool(),
         },
@@ -477,6 +477,8 @@ export const TAGS = {
       ],
     },
     attrs: {
+      'measure': { ...text(), layout: true },
+      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
       'tone': oneOf('info', 'ok', 'warn', 'err'),
       'title': text(),
       'size': oneOf('label', 'body', 'subhead'),
@@ -655,6 +657,8 @@ export const TAGS = {
     layer: 'elements',
     summary: '一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。',
     attrs: {
+      'measure': { ...text(), layout: true },
+      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
       'value': text(),
       'unit': text(),
       'label': text(),
@@ -748,6 +752,8 @@ export const TAGS = {
       ],
     },
     attrs: {
+      'measure': { ...text(), layout: true },
+      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
       'source': text(),
       'author': text(),
       'variant': oneOf('rule', 'mark'),
