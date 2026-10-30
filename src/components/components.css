@@ -1624,7 +1624,7 @@ vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 vk-stat { display: block; }
 
 .vk-stat { display: flex; flex-direction: column; gap: var(--vk-s1); }
-.vk-stat-l { color: var(--vk-ink-3); }
+.vk-stat-l { font-size: var(--vk-t-meta); line-height: var(--vk-lh-body); color: var(--vk-ink-3); }
 .vk-stat-row { display: flex; align-items: baseline; gap: var(--vk-s2); }
 .vk-stat-v {
   font-family: var(--vk-font-sans);
@@ -1634,7 +1634,7 @@ vk-stat { display: block; }
   font-variant-numeric: tabular-nums;
   color: var(--vk-ink-1);
 }
-.vk-stat-u { color: var(--vk-ink-3); }
+.vk-stat-u { font-size: var(--vk-t-meta); line-height: var(--vk-lh-body); color: var(--vk-ink-3); }
 
 .vk-stat[data-size='display-2xl'] .vk-stat-v { font-size: var(--vk-t-display-2xl); }
 .vk-stat[data-size='display-xl'] .vk-stat-v { font-size: var(--vk-t-display-xl); }

@@ -103,7 +103,8 @@ export function auditPage(root = document) {
     const isSup = !!(el.closest && el.closest('vk-inline[variant="sup"], vk-inline[variant="sub"]'));
     if (hasText && opaque(el) && !isSup && !inOverlay) {
       const fs = parseFloat(cs.fontSize);
-      if (!isMeta && fs < MIN_FONT) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
+      // 40 是硬地板，data-meta 也不能破：元数据只放宽对比度与句长，不放宽字号。
+      if (fs < MIN_FONT) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
       if (!isMeta && fs < CONTENT_FONT) {
         const text = (el.textContent || '').replace(/\s+/g, '');
         const isSentence = /[\u4e00-\u9fff]/.test(text) && text.length > 12;
