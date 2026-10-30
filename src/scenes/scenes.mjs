@@ -492,12 +492,10 @@ export const SCENES = [
   {
     tag: 'vk-loupe',
     body: s`
-<vk-canvas w="1360" h="520">
-  <vk-box id="loupe-target" x="80" y="100" w="360" h="200" surface="soft" border="hair" radius="lg" pad="md">
-    <vk-text size="body" mono>A  B  C  D  E  F  G  H</vk-text>
-    <vk-text size="label" mono ink="tertiary">把其中一格放大看</vk-text>
-  </vk-box>
-  <vk-loupe for="#loupe-target" src="../assets/sample-grid.svg" point="30%,40%" size="120" zoom="2.6" side="inside" label="放大 2.6×"></vk-loupe>
+<vk-canvas w="1360" h="420">
+  <vk-img id="loupe-target" src="../assets/sample-grid.svg" x="80" y="70" w="720" h="280" fit="cover" radius="md"></vk-img>
+  <vk-loupe for="#loupe-target" point="6%,20%" size="200" zoom="3" label="放大 3 倍：那一格是 A"></vk-loupe>
+  <vk-text x="80" y="372" size="label" mono ink="muted" data-meta>面板里就是圈住的那一格，同一份像素放大出来的</vk-text>
 </vk-canvas>`,
   },
   {

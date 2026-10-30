@@ -147,6 +147,7 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
    圆/方只改裁切，不改内容；投影跟图窗同一套，永远不用纯黑。 */
 .vk-loupe {
   position: absolute;
+  box-sizing: border-box;
   background-repeat: no-repeat;
   background-color: var(--vk-surface-1);
   border: var(--vk-line-w) solid var(--vk-line-2);
@@ -155,6 +156,14 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
 }
 .vk-loupe[data-shape='circle'] { border-radius: 50%; }
 .vk-loupe[data-shape='rect'] { border-radius: var(--vk-r-2); }
+/* 源点圈：圈住的正好是面板里那一块。没有它，读者不知道放大的是哪一格。 */
+.vk-loupe-spot {
+  position: absolute;
+  box-sizing: border-box;
+  border: 4px solid var(--vk-focus);
+  border-radius: 50%;
+  pointer-events: none;
+}
 /* 标注放在面板下方，不压在放大内容上——放大镜里那一块才是最该看清的。 */
 .vk-loupe-l {
   position: absolute;

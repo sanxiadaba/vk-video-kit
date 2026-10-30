@@ -55,6 +55,43 @@ function hostOf(el) {
   return positioned(el);
 }
 
+/**
+ * 舞台 = 覆盖层的坐标系。唯一一份。
+ *
+ * 为什么要折一次 offsetHeight：`vk-canvas` 这个自定义元素本身没有高度
+ * （高在里面的 .vk-canvas 上），offsetHeight 是 0。谁拿它当"舞台高"去夹位置，
+ * 结果就是所有覆盖层都被夹到顶上——放大镜的面板因此长期贴在画布顶边。
+ */
+function stageOf(el) {
+  const host = hostOf(el);
+  if (!host) return null;
+  // 契约宿主 / 普通页面里，包含块不一定是定位元素；补一个 relative，绝对坐标才有基准。
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  const hr = host.getBoundingClientRect();
+  if (hr.width < 1 || hr.height < 1) return null;
+  return {
+    host,
+    hr,
+    w: Math.round(host.offsetWidth) || Math.round(hr.width),
+    h: Math.round(host.offsetHeight) || Math.round(hr.height),
+  };
+}
+
+/**
+ * 目标自己那张图。放大镜不写 src 时用它——否则面板里会放一张跟目标无关的图，
+ * 读者看到的"放大"其实是另一件事。
+ */
+function imageOf(el) {
+  if (!el) return '';
+  const own = (n) => (n.getAttribute?.('src') || '').trim();
+  if (el.matches?.('vk-img, img')) return own(el);
+  const inner = el.querySelector?.('vk-img, img');
+  if (inner) return own(inner);
+  const bg = getComputedStyle(el).backgroundImage || '';
+  const m = /url\("?([^")]+)"?\)/.exec(bg);
+  return m ? m[1] : '';
+}
+
 class VkOverlay extends VkElement {
   static frame = false;
   static watchSource = false;
@@ -86,21 +123,16 @@ class VkOverlay extends VkElement {
 
   _frame() {
     if (!this._svg) return null;
-    const host = hostOf(this);
-    if (!host) return null;
-    // 契约宿主 / 普通页面里，包含块不一定是定位元素；补一个 relative，绝对坐标才有基准。
-    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
-    const hr = host.getBoundingClientRect();
-    if (hr.width < 1 || hr.height < 1) return null;
-    const w = Math.round(host.offsetWidth) || Math.round(hr.width);
-    const h = Math.round(host.offsetHeight) || Math.round(hr.height);
+    const f = stageOf(this);
+    if (!f) return null;
+    const { w, h } = f;
     if (this._svg.getAttribute('viewBox') !== `0 0 ${w} ${h}`) {
       this._svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
       this._svg.setAttribute('width', '100%');
       this._svg.setAttribute('height', '100%');
       this._svg.setAttribute('preserveAspectRatio', 'none');
     }
-    return { host, hr, w, h };
+    return f;
   }
 
   _box(rect, host, hr) {
@@ -380,34 +412,75 @@ export class VkPin extends VkOverlay {
  * 放大镜：把目标图上的某一小块放大给人看。
  * 它不复制图，只把同一张图按 zoom 放大后平移到面板里——
  * 所以放大出来的像素和原图是同一份，不会糊。
+ *
+ * 两件事必须同时成立，读者才知道"放大的是哪一块"：
+ *   ① 面板不压在它要放大的那一块上（side 默认 auto，挑放得下的那一侧）；
+ *   ② 目标上留一个圈，圈住的正好是面板里那一块（spot，默认开）。
  */
 export class VkLoupe extends VkElement {
   static frame = false;
   static watchSource = false;
+
+  connectedCallback() {
+    super.connectedCallback?.();
+    EDGES.add(this);
+  }
+
+  /**
+   * 舞台还没排出来时（画布刚连上、图片还没解码）先别画，等下一帧再来。
+   * 覆盖层只在连上 DOM 的那一刻被调一次，没人会替它补画，
+   * 所以"量不到就不画"必须自带重试。
+   */
+  _retry() {
+    this._retries = (this._retries || 0) + 1;
+    if (this._retries > 60) return;
+    const again = () => {
+      if (this.isConnected) this.draw();
+    };
+    if (typeof requestAnimationFrame === 'function') requestAnimationFrame(again);
+    else setTimeout(again, 16);
+  }
 
   render() {
     this.style.position = 'absolute';
     this.style.inset = '0';
     this.style.pointerEvents = 'none';
     this.dataset.vkOverlay = '';
-    const host = hostOf(this);
-    if (!host) return;
-    if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+    this.draw();
+    EDGES.add(this);
+    VK._invalidate();
+  }
 
-    const target = anchorsOf(this, host)[0];
+  _clear() {
+    for (const sel of ['.vk-loupe', '.vk-loupe-spot', '.vk-loupe-l']) {
+      this.querySelector(sel)?.remove();
+    }
+  }
+
+  draw() {
+    const f = stageOf(this);
+    if (!f) {
+      this._retry();
+      return;
+    }
+    const target = anchorsOf(this, f.host)[0];
+    this._retries = 0;
     if (!target) {
+      // 目标没了（写错 id / 被藏起来）：把画过的撤掉，别留一个过期的面板。
+      this._clear();
       this._warnOnce('target', '找不到 for 目标，放大镜没有画');
       return;
     }
-    const src = this.getAttribute('src');
+    // 不写 src 就放大目标自己那张图：放大镜指向谁就放大谁。
+    // 手写 src 只留给"目标只是占位、真图在别处"的那种情况。
+    const src = this.getAttribute('src') || imageOf(target.el);
     if (!src) {
-      this._warnOnce('src', '放大镜缺 src：要放大的那张图');
+      this._clear();
+      this._warnOnce('src', '放大镜缺 src：目标不是图，也没有写 src');
       return;
     }
 
-    const hr = host.getBoundingClientRect();
-    const tr = target.rect;
-    const t = visualToLocal(tr, hr, host.offsetWidth);
+    const t = visualToLocal(target.rect, f.hr, f.host.offsetWidth);
     const at = (this.getAttribute('point') || '50%,50%').split(',').map((v) => parseFloat(v));
     const fx = Math.min(100, Math.max(0, Number.isFinite(at[0]) ? at[0] : 50)) / 100;
     const fy = Math.min(100, Math.max(0, Number.isFinite(at[1]) ? at[1] : 50)) / 100;
@@ -415,31 +488,71 @@ export class VkLoupe extends VkElement {
     const size = numAttr(this, 'size', { min: 80, max: 640, fallback: 240 });
     const zoom = numAttr(this, 'zoom', { min: 1.2, max: 8, fallback: 2.4 });
     const gap = numAttr(this, 'gap-px', { min: 0, max: 200, fallback: 24 });
-    const side = this.getAttribute('side') || 'right';
+    const z = numAttr(this, 'z', { min: 0, max: 99, fallback: 50 });
+    const side = this.getAttribute('side') || 'auto';
     const shape = this.getAttribute('variant') || 'circle';
 
-    // 面板放在目标的哪一侧
-    let left = t.x + t.w + gap;
-    let top = t.y + t.h / 2 - size / 2;
-    if (side === 'left') left = t.x - gap - size;
-    else if (side === 'top') {
+    // 面板放在目标的哪一侧。auto = 挑第一个放得下的边，都放不下就挑最宽的那边。
+    const room = {
+      right: f.w - (t.x + t.w) - gap,
+      left: t.x - gap,
+      bottom: f.h - (t.y + t.h) - gap,
+      top: t.y - gap,
+    };
+    let pick = side;
+    if (pick === 'auto') {
+      pick = ['right', 'left', 'bottom', 'top'].find((k) => room[k] >= size) || null;
+      if (!pick) {
+        const widest = ['right', 'left', 'bottom', 'top'].sort((a, b) => room[b] - room[a])[0];
+        pick = widest;
+      }
+    }
+    let left;
+    let top;
+    if (pick === 'left') {
+      left = t.x - gap - size;
+      top = t.y + t.h / 2 - size / 2;
+    } else if (pick === 'top') {
       left = t.x + t.w / 2 - size / 2;
       top = t.y - gap - size;
-    } else if (side === 'bottom') {
+    } else if (pick === 'bottom') {
       left = t.x + t.w / 2 - size / 2;
       top = t.y + t.h + gap;
-    } else if (side === 'inside') {
+    } else if (pick === 'inside') {
       left = t.x + t.w - size - gap;
       top = t.y + gap;
+    } else {
+      left = t.x + t.w + gap;
+      top = t.y + t.h / 2 - size / 2;
     }
-    left = Math.max(0, Math.min(host.offsetWidth - size, left));
-    top = Math.max(0, Math.min(host.offsetHeight - size, top));
+    left = Math.max(0, Math.min(f.w - size, left));
+    top = Math.max(0, Math.min(f.h - size, top));
 
     // 放大后在目标本地坐标系里的像素位置；让它落在面板正中
     const bgW = t.w * zoom;
     const bgH = t.h * zoom;
     const px = fx * bgW;
     const py = fy * bgH;
+
+    // 圈住被放大的那一块。直径 = 面板直径 / zoom，和面板里看到的范围一致；
+    // 太小就看不见，太大就盖住半张图，两头都要管住。
+    const d = Math.round(Math.min(Math.max(24, size / zoom), Math.min(t.w, t.h) * 0.9));
+    let spot = this.querySelector('.vk-loupe-spot');
+    if (this.getAttribute('spot') === 'none') {
+      spot?.remove();
+      spot = null;
+    } else {
+      if (!spot) {
+        spot = document.createElement('div');
+        spot.className = 'vk-loupe-spot';
+        this.appendChild(spot);
+      }
+      spot.style.left = Math.round(t.x + fx * t.w - d / 2) + 'px';
+      spot.style.top = Math.round(t.y + fy * t.h - d / 2) + 'px';
+      spot.style.width = d + 'px';
+      spot.style.height = d + 'px';
+      spot.style.zIndex = String(Math.max(1, z - 1));
+    }
 
     const panel = this.querySelector('.vk-loupe') || document.createElement('div');
     panel.className = 'vk-loupe';
@@ -451,7 +564,7 @@ export class VkLoupe extends VkElement {
     panel.style.backgroundImage = `url("${src.replace(/"/g, '')}")`;
     panel.style.backgroundSize = `${Math.round(bgW)}px ${Math.round(bgH)}px`;
     panel.style.backgroundPosition = `${Math.round(size / 2 - px)}px ${Math.round(size / 2 - py)}px`;
-    panel.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 50 }));
+    panel.style.zIndex = String(z);
     if (!panel.parentElement) this.appendChild(panel);
 
     // 标注是面板的兄弟，不是子元素：面板要 overflow:hidden 裁圆形，标注得在外面才不被裁。
@@ -465,9 +578,16 @@ export class VkLoupe extends VkElement {
       }
       cap.textContent = label;
       // 标注跟着面板走，但要夹在舞台里——面板贴边时标注不能跑出去。
-      const cx = Math.min(host.offsetWidth - 140, Math.max(140, left + size / 2));
+      // 而且它是文字：纸两侧各 120 的安全区必须留出来，不能跟着面板贴到纸边。
+      // 宽度量真的，不假设"大概 196"。
+      const half = Math.max(60, (cap.offsetWidth || 196) / 2);
+      const inset = f.w >= 1600 ? 120 : 8;
+      const cx = Math.min(f.w - inset - half, Math.max(inset + half, left + size / 2));
+      // 面板下面放不下就翻到上面去，宁可换边也不压住图。
+      const below = top + size + 8;
+      const cy = below + 40 > f.h ? top - 40 : below;
       cap.style.left = Math.round(cx) + 'px';
-      cap.style.top = Math.round(top + size + 8) + 'px';
+      cap.style.top = Math.round(cy) + 'px';
       cap.style.transform = 'translateX(-50%)';
     } else if (cap) cap.remove();
   }

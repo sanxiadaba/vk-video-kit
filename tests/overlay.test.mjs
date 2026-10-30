@@ -143,6 +143,78 @@ test('vk-loupe 放大的就是我们指定的那一点', async () => {
   assert.ok(Math.abs(r.py - (r.size / 2 - 0.4 * r.bh)) < 2, `y 偏移不对：${r.py}`);
 });
 
+test('vk-loupe 的面板落在舞台里，源点圈照着同一个点', async () => {
+  await page.setContent(
+    SHELL(`<vk-page>
+      <vk-box id="shot" x="120" y="120" w="600" h="200" surface="soft"></vk-box>
+      <vk-loupe for="#shot" src="assets/sample-grid.svg" point="25%,40%" size="200" zoom="4"></vk-loupe>
+    </vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const r = await page.evaluate(() => {
+    const box = document.querySelector('.vk-loupe').getBoundingClientRect();
+    const spot = document.querySelector('.vk-loupe-spot').getBoundingClientRect();
+    const shot = document.querySelector('#shot').getBoundingClientRect();
+    const page = document.querySelector('.vk-page').getBoundingClientRect();
+    return {
+      box: { l: box.left, t: box.top, r: box.right, b: box.bottom },
+      spot: { l: spot.left, t: spot.top, w: spot.width, h: spot.height },
+      shot: { l: shot.left, t: shot.top },
+      page: { l: page.left, t: page.top, r: page.right, b: page.bottom },
+    };
+  });
+  // 没有被 0 高的舞台夹到顶上——这是它上一次的毛病
+  assert.ok(r.box.t > r.page.t + 100, `面板不该贴在纸顶：top=${r.box.t}`);
+  assert.ok(
+    r.box.l >= r.page.l && r.box.r <= r.page.r && r.box.t >= r.page.t && r.box.b <= r.page.b,
+    `面板跑出纸外：${JSON.stringify(r.box)}`
+  );
+  // 源点圈：圆心就是目标上的 25%,40%，直径 = 面板 / zoom
+  const cx = r.shot.l + 0.25 * 600;
+  const cy = r.shot.t + 0.4 * 200;
+  assert.ok(Math.abs(r.spot.l + r.spot.w / 2 - cx) < 2, `源点圈圆心 x 不对：${r.spot.l + r.spot.w / 2} vs ${cx}`);
+  assert.ok(Math.abs(r.spot.t + r.spot.h / 2 - cy) < 2, `源点圈圆心 y 不对：${r.spot.t + r.spot.h / 2} vs ${cy}`);
+  assert.ok(Math.abs(r.spot.w - 200 / 4) < 2, `源点圈直径应该 = 面板/zoom = 50，实际 ${r.spot.w}`);
+});
+
+test('vk-loupe 在没高度的画布里也不会被夹到顶上', async () => {
+  await page.setContent(
+    SHELL(`<vk-page>
+      <vk-canvas w="900" h="400">
+        <vk-box id="shot" x="60" y="120" w="300" h="160" surface="soft"></vk-box>
+        <vk-loupe for="#shot" src="assets/sample-grid.svg" size="120" side="bottom"></vk-loupe>
+      </vk-canvas>
+    </vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  // setContent 不重载文档：上一个测试留下的 ready 状态会让 ready() 立刻返回，
+  // 这一帧的覆盖层还没画。等它画出来再量几何。
+  await page.waitForSelector('.vk-loupe', { timeout: 2000 });
+  const r = await page.evaluate(() => {
+    const box = document.querySelector('.vk-loupe').getBoundingClientRect();
+    const canvas = document.querySelector('vk-canvas').getBoundingClientRect();
+    return { top: box.top, boxBottom: box.bottom, canvas: { t: canvas.top, b: canvas.bottom } };
+  });
+  // 画布元素自己 offsetHeight=0，旧实现把 top 夹成 0；现在应该落在目标下方、画布里。
+  assert.ok(r.top > r.canvas.t + 200, `面板被夹到画布顶上了：top=${r.top}`);
+  assert.ok(r.boxBottom <= r.canvas.b + 1, `面板跑出画布：bottom=${r.boxBottom} canvas=${r.canvas.b}`);
+});
+
+test('vk-loupe 不写 src 就放大目标自己那张图', async () => {
+  await page.setContent(
+    SHELL(`<vk-page>
+      <vk-img id="pic" src="assets/sample-grid.svg" ratio="720 / 280" fit="cover"></vk-img>
+      <vk-loupe for="#pic" size="200" zoom="3"></vk-loupe>
+    </vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const bg = await page.evaluate(() => document.querySelector('.vk-loupe').style.backgroundImage);
+  assert.ok(bg.includes('sample-grid.svg'), `应该默认用目标那张图，实际：${bg}`);
+});
+
 
 test('vk-compare 的 split 决定裁掉多少', async () => {
   await page.setContent(
