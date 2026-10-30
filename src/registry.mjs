@@ -174,8 +174,8 @@ const DEFAULTS = {
   'vk-asm': { bytes: '', address: 'all', density: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', density: 'normal' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
-  'vk-ring': { variant: 'rect', tone: 'info', 'pad-px': 8, stroke: 4, z: 40 },
-  'vk-spotlight': { dim: 0.6, feather: 24, variant: 'rect', z: 30 },
+  'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, z: 40 },
+  'vk-spotlight': { dim: 0.45, z: 30 },
   'vk-term': { prompt: '$', chrome: 'min', density: 'normal' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all' },
   'vk-table': { variant: 'ledger', density: 'normal' },
@@ -186,7 +186,6 @@ const DEFAULTS = {
   'vk-quote': { variant: 'rule', size: 'body' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral' },
   'vk-bars': { density: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
-  'vk-spotlight': { mode: 'dim' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', density: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-steps': { current: '0', density: 'normal', orientation: 'horizontal' },
   'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
@@ -886,13 +885,11 @@ export const TAGS = {
   'vk-spotlight': {
     name: '聚光',
     layer: 'relations',
-    summary: '聚光：除目标外整体退到背景，可多目标；放在 canvas 或 page 里。',
+    summary: '聚光：目标保持原样，其余逐层退后。不画遮罩、不画描边；可多目标，keep 里的东西不退。',
     attrs: {
       'for': sel(),
       'dim': num({ min: 0, max: 1, step: 0.01 }),
-      'feather': num({ min: 0, max: 120, step: 1 }),
-      'mode': oneOf('dim', 'fade'),
-      'variant': oneOf('rect', 'ellipse'),
+      'keep': text(),
       'z': int({ min: 0, max: 99, step: 1 }),
     },
   },
@@ -1118,3 +1115,5 @@ export function validate() {
   }
   return errors;
 }
+
+

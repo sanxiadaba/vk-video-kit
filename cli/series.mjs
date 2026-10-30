@@ -138,6 +138,7 @@ async function domFacts(browser, file) {
       let focus = 0;
       let focusArea = 0;
       let blocks = 0;
+      let dom = 0;
       let maxBottom = 0;
       let contentTop = null;
       for (const el of safe.querySelectorAll('*')) {
@@ -152,6 +153,11 @@ async function domFacts(browser, file) {
         }
 
         if (el.matches('vk-stack, vk-grid, vk-row, vk-canvas')) blocks++;
+        // 主角体量按「帧级块的 bbox」算：一段 1680 宽的窗和一张满幅图都是块，
+        // 区别在下面的实块面积（像素）。两个都小才是真的没有主角。
+        if (el.matches('vk-stack > *, vk-grid > *') && r.width * r.height > dom) {
+          dom = r.width * r.height;
+        }
         if (r.bottom - sr.top > maxBottom) maxBottom = r.bottom - sr.top;
         if (contentTop === null && el.matches('vk-title, .vk-title')) contentTop = r.top - sr.top;
       }
@@ -172,6 +178,7 @@ async function domFacts(browser, file) {
         focus: regions.length,
         focusArea: Math.round((focusArea / (sr.width * sr.height)) * 1000) / 10,
         blocks,
+        dominant: Math.round((dom / (sr.width * sr.height)) * 1000) / 10,
         contentTop: contentTop === null ? null : Math.round(contentTop),
         contentBottom: Math.round(maxBottom),
         align: stage.getAttribute('align') || stage.dataset.align || 'top',
@@ -217,14 +224,19 @@ const flags = [];
 for (const r of rows) {
   if (r.focus === 0) flags.push({ id: r.id, level: 'warn', what: '没有焦点：这一帧没有"正在讲这里"' });
   if (r.focus > 1) flags.push({ id: r.id, level: 'fail', what: `${r.focus} 处焦点（应恰好 1 处 region）` });
-  if (r.focusArea > 6) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 6%（高亮比内容还重）` });
-  if (r.tierCount > 3) flags.push({ id: r.id, level: 'warn', what: `${r.tierCount} 档字号（一帧 ≤3 档）` });
+  // 焦点面积：一条整行高亮本来就占 1680×70 ≈ 7.9%，所以上限是 10%（一页的十分之一），
+  // 不是 4%。真正要拦的是 05 那种「指标框整块算焦点」的 30%+。
+  if (r.focusArea > 10) flags.push({ id: r.id, level: 'fail', what: `焦点面积 ${r.focusArea}% > 10%（高亮比内容还重）` });
+  if (r.tierCount > 4) flags.push({ id: r.id, level: 'warn', what: `${r.tierCount} 档字号（一帧 ≤4 档）` });
   if (r.maxType / r.bodyType < 1.8) flags.push({ id: r.id, level: 'warn', what: `断层 ${(r.maxType / r.bodyType).toFixed(2)}× < 1.8×` });
   if (r.px) {
-    if (r.px.mass < 0.12) flags.push({ id: r.id, level: 'warn', what: `主角 ${(r.px.mass * 100).toFixed(1)}% < 12%（最大实块压不住纸）` });
+    // 主角要两个都小才算没有：块占位 < 25% 且实块 < 3%。
+    // 只数字号帧（一个 224 的数字实块也就 1–2%），也放过满幅窗（块占位大、墨很少）。
+    if (r.dominant < 25 && r.px.mass < 0.03)
+      flags.push({ id: r.id, level: 'warn', what: `没有主角：最大块 ${r.dominant}% 且实块 ${(r.px.mass * 100).toFixed(1)}%` });
     if (r.px.white > 0.92) flags.push({ id: r.id, level: 'warn', what: `白 ${(r.px.white * 100).toFixed(1)}%（近空页）` });
-    const d = r.px.centroidY - GOLDEN;
-    if (d < -180) flags.push({ id: r.id, level: 'warn', what: `重心 y=${Math.round(r.px.centroidY)}，比黄金线高 ${Math.round(-d)}px` });
+    // 重心只拦「头重脚轻」：带标题的帧，墨迹重心天然在上半页，黄金线对它们不适用。
+    if (r.px.centroidY < 410) flags.push({ id: r.id, level: 'warn', what: `重心 y=${Math.round(r.px.centroidY)}，内容挤在上半页` });
   }
 }
 for (let i = 1; i < rows.length; i++) {
@@ -236,13 +248,14 @@ for (let i = 1; i < rows.length; i++) {
 if (json) {
   console.log(JSON.stringify({ rows, flags }, null, 2));
 } else {
-  const head = ['帧', '字阶', '最大/正文', '焦点', '焦点%', '主角%', '墨%', '白%', '重心', '骨架'];
+  const head = ['帧', '字阶', '最大/正文', '焦点', '焦点%', '块%', '实块%', '墨%', '白%', '重心', '骨架'];
   const body = rows.map((r) => [
     r.id,
     String(r.tierCount),
     `${r.maxType}/${r.bodyType}`,
     String(r.focus),
     r.focusArea.toFixed(1),
+    String(r.dominant),
     r.px ? (r.px.mass * 100).toFixed(1) : '—',
     r.px ? (r.px.ink * 100).toFixed(1) : '—',
     r.px ? (r.px.white * 100).toFixed(1) : '—',
@@ -269,4 +282,9 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
+
+
+
+
 

@@ -228,8 +228,8 @@ export const PRESETS = {
     { label: '大留白', attrs: { 'pad-px': '28' } },
   ],
   'vk-spotlight': [
-    { label: '椭圆', attrs: { variant: 'ellipse' } },
-    { label: '更暗', attrs: { dim: '0.9' } },
-    { label: '硬边', attrs: { feather: '0' } },
+    { label: '轻退', attrs: { dim: '0.2' } },
+    { label: '重退', attrs: { dim: '0.6' } },
+    { label: '保留标题', attrs: { keep: 'vk-title' } },
   ],
 };

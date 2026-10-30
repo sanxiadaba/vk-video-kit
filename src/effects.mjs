@@ -387,10 +387,10 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
 });
 
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
-  dim: { on: '.vk-ov-svg > rect', kind: 'style', prop: 'opacity' },
-  mode: { on: '.vk-ov-svg > rect', kind: 'attr', prop: 'fill' },
-  feather: { kind: 'any', reason: '0 时没有 filter，非 0 才有' },
-  variant: { kind: 'any', reason: '矩形/椭圆的 mask 形状不同' },
+  // 聚光不再画东西：它的唯一产物是"兄弟的 opacity"与目标的 data-vk-focus
+  dim: { kind: 'any', reason: '只改兄弟的 opacity，元素本身不画任何东西' },
+  keep: { kind: 'any', reason: 'keep 里的元素不退后，其余兄弟退' },
+  for: { kind: 'any', reason: '只改兄弟的 opacity 与目标的 data-vk-focus，自己的子树是空的' },
   z: { on: 'vk-spotlight', kind: 'style', prop: 'z-index' },
 });
 
@@ -423,3 +423,5 @@ Object.assign(EFFECTS['vk-asm'], {
   'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
   'operands-label': { on: '.vk-asm-o', kind: 'text' },
 });
+
+

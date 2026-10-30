@@ -109,7 +109,8 @@ class VkOverlay extends VkElement {
   }
 
   _tone() {
-    return this.getAttribute('tone') || 'info';
+    // 圈选默认是焦点（钴蓝），不是标注（石墨）：圈本身就是「看这里」。
+    return this.getAttribute('tone') || 'focus';
   }
 
   draw() {
@@ -187,77 +188,63 @@ export class VkRing extends VkOverlay {
 
 /* -------------------------------------------------------------- spotlight */
 
+/**
+ * 聚光 = 语境（context）控制器，不是一块遮罩。
+ *
+ * 13.0 之前它画一张盖满整页的半透明矩形：白纸上压暗变成灰板，白幕又等于没画，
+ * 而且它自己还画一圈描边——和 vk-ring 输出同一圈像素。
+ *
+ * 现在的语义只有一句话：**目标这条路径保持原样，其它兄弟逐层退后**。
+ * 做法是从目标往上走到纸，每层把"不是当前节点、也不包含目标"的兄弟设成 dim 透明度。
+ * 不画任何图形，所以：白纸不会变灰、字不会被压糊、和 ring 不再是同一个东西。
+ */
 export class VkSpotlight extends VkOverlay {
   draw() {
     const f = this._frame();
     if (!f || !this._svg) return;
     this._svg.replaceChildren();
+    // 上一轮退后的兄弟要还原，否则重复渲染会越叠越暗
+    for (const el of this._dimmed || []) el.style.removeProperty('opacity');
+    this._dimmed = [];
+
     const targets = anchorsOf(this, f.host);
     if (!targets.length) {
-      this._warnOnce('target', '找不到 for 目标，聚光没有画');
+      this._warnOnce('target', '找不到 for 目标，聚光没有生效');
       return;
     }
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 30 }));
-    const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.6 });
-    const feather = numAttr(this, 'feather', { min: 0, max: 120, fallback: 24 });
-    const shape = this.getAttribute('variant') === 'ellipse' ? 'ellipse' : 'rect';
-    // 白纸上压暗会把整张纸变成一块灰板；mode="fade" 改成"往纸里退"——
-    // 其余部分被纸色冲淡，只有目标还是满墨。同一条 mask，换的只是那层颜色。
-    const fade = this.getAttribute('mode') === 'fade';
-    this._svg.dataset.mode = fade ? 'fade' : 'dim';
-    const maskId = `${this._uid}-m`;
-    const filterId = `${this._uid}-f`;
-    const defs = tag('defs');
-    if (feather > 0) {
-      const filter = tag('filter', { id: filterId, x: '-25%', y: '-25%', width: '150%', height: '150%' });
-      filter.append(tag('feGaussianBlur', { stdDeviation: feather / 2 }));
-      defs.append(filter);
-    }
-    // 遮罩盖的就是整张纸。宿主已经是 .vk-page（见 hostOf），所以 0..w / 0..h
-    // 就是 1920×1080，不再需要拿页面 padding 去补 viewBox —— 那是旧实现
-    // 挂在 .vk-page-inner 上时的补丁，补出来还会被 1680 的盒子缩回去。
-    const mask = tag('mask', { id: maskId, maskUnits: 'userSpaceOnUse', x: 0, y: 0, width: f.w, height: f.h });
-    mask.append(tag('rect', { x: 0, y: 0, width: f.w, height: f.h, fill: 'white' }));
-    const holes = tag('g', feather > 0 ? { filter: `url(#${filterId})` } : {});
-    for (const a of targets) {
-      const b = this._box(a.rect, f.host, f.hr);
-      const pad = 10;
-      if (shape === 'ellipse') {
-        holes.append(tag('ellipse', { cx: b.cx, cy: b.cy, rx: b.w / 2 + pad, ry: b.h / 2 + pad, fill: 'black' }));
-      } else {
-        holes.append(tag('rect', { x: b.x - pad, y: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, rx: 12, fill: 'black' }));
+    const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.45 });
+    const keepSel = (this.getAttribute('keep') || '').split(';').map((s) => s.trim()).filter(Boolean);
+    const keep = new Set();
+    for (const sel of keepSel) {
+      try {
+        for (const el of f.host.querySelectorAll(sel)) keep.add(el);
+      } catch {
+        /* 选择器写错就当没写，不炸页面 */
       }
     }
-    mask.append(holes);
-    defs.append(mask);
-    this._svg.append(defs);
-    const outline = tag('g', { class: 'vk-spotlight-ring' });
+    const targetEls = new Set(targets.map((t) => t.el));
+    const skip = (el) => el.hasAttribute('data-vk-overlay') || el.matches('vk-edge, vk-pin, vk-ring, vk-spotlight');
+    const kept = (el) => skip(el) || keep.has(el) || [...keep].some((k) => el.contains(k));
+
+    const seen = new Set();
     for (const a of targets) {
-      const b = this._box(a.rect, f.host, f.hr);
-      const pad = 10;
-      if (shape === 'ellipse') {
-        outline.append(tag('ellipse', { cx: b.cx, cy: b.cy, rx: b.w / 2 + pad, ry: b.h / 2 + pad }));
-      } else {
-        outline.append(tag('rect', { x: b.x - pad, y: b.y - pad, width: b.w + pad * 2, height: b.h + pad * 2, rx: 12 }));
+      let node = a.el;
+      while (node && node !== f.host && node.parentElement) {
+        for (const sib of node.parentElement.children) {
+          if (sib === node || sib.contains(a.el) || seen.has(sib) || kept(sib)) continue;
+          // 兄弟里还装着别的目标（多目标聚光）就也留着
+          if ([...targetEls].some((t) => sib.contains(t))) continue;
+          seen.add(sib);
+          sib.style.opacity = String(dim);
+          this._dimmed.push(sib);
+        }
+        node = node.parentElement;
       }
     }
-    this._svg.style.overflow = 'visible';
-    this._svg.setAttribute('viewBox', `0 0 ${f.w} ${f.h}`);
-    this._svg.append(
-      tag('rect', {
-        x: 0,
-        y: 0,
-        width: f.w,
-        height: f.h,
-        // dim 就是"退到背景多少"：0.2 = 20%。以前写成 dim*0.35，写 0.25 只得到 9%，
-        // 在投影和录屏压缩下等于没画，作者永远猜不到要写多大。
-        // dim  → 墨色遮罩（暗处聚光）；fade → 纸色遮罩（白纸上的"淡出"，不弄脏纸）。
-        fill: fade ? '#ffffff' : '#0b0f14',
-        opacity: Math.min(fade ? 0.85 : 0.62, dim),
-        mask: `url(#${maskId})`,
-      })
-    );
-    this._svg.append(outline);
+    // 目标自身挂上 focus 姿态，让审计与度量看得见
+    for (const el of targetEls) el.setAttribute('data-vk-focus', '');
+    this._targets = targetEls;
   }
 }
 
@@ -391,3 +378,5 @@ export function defineOverlays() {
   define('vk-spotlight', VkSpotlight);
   define('vk-pin', VkPin);
 }
+
+

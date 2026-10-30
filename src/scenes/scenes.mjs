@@ -517,7 +517,7 @@ export const SCENES = [
   <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="body">非目标</vk-text>
   </vk-box>
-  <vk-spotlight for="#spot-target" dim="0.6" feather="24"></vk-spotlight>
+  <vk-spotlight for="#spot-target" dim="0.45"></vk-spotlight>
 </vk-canvas>`,
   },
 
@@ -535,3 +535,4 @@ export const SCENES = [
 </vk-page>`,
   },
 ];
+

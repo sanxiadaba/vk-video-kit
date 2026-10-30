@@ -262,9 +262,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`
-- **`vk-spotlight`** · 聚光 — 聚光：除目标外整体退到背景，可多目标；放在 canvas 或 page 里。
-  - 属性：`for` · `dim` · `feather` · `mode` · `variant` · `z`
-  - 例：`<vk-spotlight for="#spot-target" dim="0.6" feather="24">`
+- **`vk-spotlight`** · 聚光 — 聚光：目标保持原样，其余逐层退后。不画遮罩、不画描边；可多目标，keep 里的东西不退。
+  - 属性：`for` · `dim` · `keep` · `z`
+  - 例：`<vk-spotlight for="#spot-target" dim="0.45">`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 
