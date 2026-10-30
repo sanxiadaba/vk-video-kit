@@ -211,7 +211,8 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 ## 命令
 
 ```bash
-npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata
+npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata（含索引缩略图，约 30s）
+npm run build:fast  # 同上但不截缩略图（约 3s）；测试与日常都用这个
 npm run dev         # build + watch 重建 + dev server（8099）
 npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（约 8s）
 npm run plan -- slice/deck.json  # 容量表 + 自动求解（改 cols 并写回）+ 跨帧建议
@@ -220,6 +221,7 @@ npm run specimens   # 只重生成标本册
 npm run verify      # 只读校验：生成物与源码不一致就失败
 npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
 npm test            # 全量（约 30s；首次 contract/gate 冷跑，暖缓存更快）
+node cli/shot.mjs --batch a.html b.html --out-dir shots/   # 一个浏览器拍一组（12 帧约 3s）
 npm test -- --fast  # 只跑静态检查（不起浏览器）
 npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
 npm run gate        # 40px 地板 / 对比度 / 安全区 / 裁切 / console / 溢出
