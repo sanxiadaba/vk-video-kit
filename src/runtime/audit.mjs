@@ -326,13 +326,12 @@ export function auditPage(root = document) {
     }
   }
 
-  // 一帧最多一处焦点蓝：current 行 / 聚光 / focus 覆盖层合计。
-  const focusNodes = new Set(
-    stage.querySelectorAll(
-      '.vk-line.is-hl, .vk-asm-row.is-hl, .vk-byte.is-hl, .vk-cell.is-hl, .vk-step[data-state="current"], .vk-tree-row[data-current], .vk-spotlight-ring, [tone="focus"]'
-    )
-  );
-  if (focusNodes.size > 1) out.push({ type: 'blue', count: focusNodes.size, what: '一帧出现多处焦点蓝' });
+  // 一帧最多一处焦点蓝。焦点是 region，不是 node：
+  // 五个高亮字节、两行表格、一段圈选都只算 1 处。
+  // 旧实现的手维护并集里写着 `.vk-cell.is-hl` / `.vk-byte.is-hl`，而 DOM 发的是
+  // data-state / data-hl —— 所以 07 帧的五个字节、cells 的 current 从来没被数过。
+  const focusNodes = focusRegions(stage);
+  if (focusNodes.length > 1) out.push({ type: 'blue', count: focusNodes.length, what: '一帧出现多处焦点' });
 
   // 预编译/素材状态。
   const special = [];
@@ -427,9 +426,7 @@ export function metrics(root = document) {
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
     const maxRight = rects.length ? Math.max(...rects.map((r) => r.right)) : sr.right;
-    const focus = stage.querySelectorAll(
-      '.vk-line.is-hl, .vk-asm-row.is-hl, .vk-byte.is-hl, .vk-cell.is-hl, .vk-step[data-state="current"], .vk-tree-row[data-current], .vk-spotlight-ring, [tone="focus"]'
-    ).length;
+    const focus = focusRegions(stage).length;
     return {
       index: i,
       id: stage.id || '',
@@ -504,8 +501,56 @@ function bottomGap(holder, sr) {
   return Math.round(Math.max(0, sr.height - inkBottom));
 }
 
+/**
+ * 焦点 = 一组「现在讲这里」的 region，不是一串 CSS 类。
+ *
+ * 同一个意思今天有十余种写法（current / state=current / data-hl / tone=focus / ring /
+ * spotlight / tree-row[data-current] …），每种由各自的组件实现。这里把它们收进一份
+ * 可数的清单，让审计与跨帧度量说同一种话。
+ *
+ * 三条归一规则：
+ *   · 连续的高亮字节（一段 0–4）算 1 个 region，不是 5 个；
+ *   · 被另一个 region 包住的元素不重复计数（格子套在圈里）；
+ *   · 聚光的目标算 1 个 focus，其余退后算 context（context 不计数）。
+ */
+export function focusRegions(stage) {
+  const found = new Set();
+  const add = (el) => {
+    if (el) found.add(el);
+  };
+
+  for (const el of stage.querySelectorAll('[data-vk-focus]')) add(el);
+  for (const el of stage.querySelectorAll('.vk-line.is-hl, .vk-asm-row.is-hl')) add(el);
+  // 一段高亮字节 = 一个 region：按容器归一，而不是按字节
+  for (const el of stage.querySelectorAll('.vk-byte[data-hl="1"], .vk-byte-c[data-hl="1"]')) {
+    add(el.closest('.vk-bytes-row') || el.closest('.vk-bytes') || el);
+  }
+  for (const el of stage.querySelectorAll(
+    '.vk-cell[data-state="current"], .vk-tree-row[data-current], .vk-step[data-state="current"], .vk-tl-item[data-state="current"], .vk-bit-row[data-state="current"], .vk-bar[data-state="current"], tr[data-state="current"], li[data-state="current"]'
+  ))
+    add(el);
+  for (const el of stage.querySelectorAll('[tone="focus"]')) add(el);
+  for (const el of stage.querySelectorAll('.vk-spotlight-ring')) add(el);
+
+  // 去掉被更外层 region 包含的重复项
+  const out = [];
+  for (const el of found) {
+    let dup = false;
+    for (const other of found) {
+      if (other === el) continue;
+      if (other.contains(el)) {
+        dup = true;
+        break;
+      }
+    }
+    if (!dup) out.push(el);
+  }
+  return out;
+}
+
 export function installAudit(VK) {
   VK.auditPage = auditPage;
   VK.auditPages = auditPages;
   VK.metrics = metrics;
+  VK.focusRegions = focusRegions;
 }

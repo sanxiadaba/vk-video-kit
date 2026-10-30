@@ -150,10 +150,7 @@ async function domFacts(browser, file) {
           const fs = Math.round(parseFloat(cs.fontSize));
           tiers.set(fs, (tiers.get(fs) || 0) + 1);
         }
-        if (el.matches('[data-vk-focus], .is-hl, [data-state="current"], [data-current], .vk-spotlight-ring')) {
-          focus++;
-          focusArea += r.width * r.height;
-        }
+
         if (el.matches('vk-stack, vk-grid, vk-row, vk-canvas')) blocks++;
         if (r.bottom - sr.top > maxBottom) maxBottom = r.bottom - sr.top;
         if (contentTop === null && el.matches('vk-title, .vk-title')) contentTop = r.top - sr.top;
@@ -161,12 +158,18 @@ async function domFacts(browser, file) {
       const sizes = [...tiers.entries()].sort((a, b) => b[0] - a[0]);
       const maxType = sizes.length ? sizes[0][0] : 0;
       const bodyType = sizes.find(([s]) => s <= 48)?.[0] || 48;
+      // 焦点用运行期那一份归一实现（region 而不是 node）
+      const regions = window.vk?.focusRegions?.(stage) || [];
+      for (const el of regions) {
+        const r = el.getBoundingClientRect();
+        focusArea += r.width * r.height;
+      }
       return {
         tiers: sizes.map(([s, n]) => `${s}×${n}`),
         tierCount: sizes.length,
         maxType,
         bodyType,
-        focus,
+        focus: regions.length,
         focusArea: Math.round((focusArea / (sr.width * sr.height)) * 1000) / 10,
         blocks,
         contentTop: contentTop === null ? null : Math.round(contentTop),
@@ -266,3 +269,4 @@ function width(s) {
   for (const ch of String(s)) n += /[\u3000-\u9fff\uff00-\uffef]/.test(ch) ? 2 : 1;
   return n;
 }
+
