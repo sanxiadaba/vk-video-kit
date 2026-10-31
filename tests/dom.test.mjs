@@ -167,14 +167,17 @@ test('终端 src：从真实 transcript 文件读，不在 HTML 里手写', asyn
   assert.match(text, /hi/);
 });
 
-test('终端 chrome=none 只去标题栏，窗体仍是白纸', async () => {
+test('chrome="none" 连壳一起去掉（否则窗外会再套一个框）', async () => {
+  // 第 2 站"窗口里套窗口"就是这条错：只藏了窗头，边框和底色还在。
   await reset('<vk-term chrome="none">$ echo hi\nhi</vk-term>');
   const r = await page.evaluate(() => {
     const e = document.querySelector('vk-term .vk-win');
-    return { bg: getComputedStyle(e).backgroundColor, hd: !!e.querySelector('.vk-hd') };
+    const cs = getComputedStyle(e);
+    return { bg: cs.backgroundColor, border: cs.borderTopWidth, hd: !!e.querySelector('.vk-hd') };
   });
   assert.equal(r.hd, false);
-  assert.equal(r.bg, 'rgb(255, 255, 255)');
+  assert.equal(r.border, '0px', 'chrome=none 还留着边框');
+  assert.equal(r.bg, 'rgba(0, 0, 0, 0)', 'chrome=none 还留着底色');
 });
 
 test('page 重渲染保留槽内焦点，不搬走作者节点', async () => {
