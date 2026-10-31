@@ -489,7 +489,7 @@ function closestOf(word, list) {
   return bestD <= Math.max(2, Math.floor(String(word).length / 2)) ? best : null;
 }
 
-function validateAuthorHtml(doc, file) {
+function validateAuthorHtml(doc, file, html = '') {
   const errors = [];
   const warnings = [];
   /** 新规矩：严格模式下是错误，默认只提醒——旧页要慢慢迁（清单见 docs/layout-plan.md）。 */
@@ -871,7 +871,40 @@ function validateAuthorHtml(doc, file) {
       }
     }
   });
+
+/**
+ * 多余的闭合标签 —— 只有肉眼能看出来的那类错。
+ *
+ * demo 里出现过两个孤立的 </vk-window>：浏览器会默默丢掉它们，页面照常渲染，
+ * 所以 vk check、结构断言、指纹全都放行。但它是错的：删掉开标签时忘了删闭标签，
+ * 下一次改动就会以为那里真的有个窗。
+ *
+ * 只查"闭合标签找不到对应的开标签"。不查未闭合的开标签——那是浏览器自己的容错，
+ * 而且空元素（img/rule/ring…）本来就不该配对。
+ */
+function validateStrayClosers(html, file, errors) {
+  const clean = html
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+    .replace(/<style\b[^>]*>[\s\S]*?<\/style>/gi, '');
+  const re = /<(\/)?(vk-[a-z-]+)\b[^>]*?(\/?)>/g;
+  const open = [];
+  let m;
+  while ((m = re.exec(clean))) {
+    const [, closing, tag, self] = m;
+    const line = clean.slice(0, m.index).split('\n').length;
+    if (closing) {
+      const at = open.lastIndexOf(tag);
+      if (at < 0) errors.push(`${file}:${line} 多余的闭合标签 </${tag}>；没有对应的开标签`);
+      else open.splice(at, 1);
+    } else if (!self) {
+      open.push(tag);
+    }
+  }
+}
+
   validateRefs(doc, file, errors);
+  validateStrayClosers(html, file, errors);
   validateImages(doc, file, errors);
   return { errors, warnings };
 }
@@ -1032,7 +1065,7 @@ function applyIcons(html, names) {
  */
 export async function transformHtml(html, { file = '<memory>', highlighter } = {}) {
   const doc = parse(html, { sourceCodeLocationInfo: true });
-  const { errors, warnings } = validateAuthorHtml(doc, file);
+  const { errors, warnings } = validateAuthorHtml(doc, file, html);
   if (errors.length) {
     throw new Error(
       `vk 校验失败（${errors.length} 条）：\n${errors.slice(0, 30).join('\n')}${errors.length > 30 ? `\n…还有 ${errors.length - 30} 条` : ''}`

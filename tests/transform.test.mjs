@@ -271,3 +271,10 @@ test('vk-img 进入布局协议：span 可用', async () => {
 });
 
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
+
+test('多余的闭合标签在构建期就报错（浏览器会默默丢掉它）', async () => {
+  await assert.rejects(
+    () => transformHtml('<vk-page><vk-text>一段字</vk-text></vk-window></vk-page>', { file: 'stray.html', highlighter: hl }),
+    /多余的闭合标签/
+  );
+});
