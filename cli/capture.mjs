@@ -80,7 +80,16 @@ async function captureRun() {
   const started = Date.now();
   const child =
     process.platform === 'win32' && shell === 'powershell'
-      ? spawn('powershell', ['-NoProfile', '-Command', runCmd], { cwd, windowsHide: true })
+      ? spawn(
+          'powershell',
+          [
+            '-NoProfile',
+            '-Command',
+            // 统一成 UTF-8：不然中文路径在采集结果里会变成乱码（实测：D:\test\�½��ļ���）。
+            '$ErrorActionPreference="Continue"; [Console]::OutputEncoding=[Text.Encoding]::UTF8; ' + runCmd,
+          ],
+          { cwd, windowsHide: true, env: { ...process.env, PYTHONIOENCODING: 'utf-8' } }
+        )
       : spawn(shell, ['-lc', runCmd], { cwd });
   let stdout = '';
   let stderr = '';
