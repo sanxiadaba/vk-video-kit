@@ -123,11 +123,15 @@
 
 ## 7 · 覆盖矩阵（demo 用了哪些原语）
 
-demo 12 帧 + 连排页用到 24 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
-img / inline / loupe / math / page / pin / ring / rule / stack / steps / table / term / text /
-timeline / tree / window。
+demo 12 帧 + 连排页用到 25 个原语：asm / bars / bits / box / bytes / cells / code / edge /
+grid / icon / img / inline / loupe / math / page / pin / ring / rule / stack / steps / table /
+term / text / timeline / tree / window（其中 bits 在复算后仍缺，见下）。
 
-没用的 6 个：box / diff / compare / bits / canvas / list。
+没用的 5 个：canvas / compare / diff / bits / list。
+
+这 12 帧已经**满载**：每加一个物都会顶出安全区。实测过的失败：
+box 套住终端 → 超 51px；list 试了 03/05/12 → 顶掉 bars 或 term；bits 试了 02/09 → 超 12–90px。
+要到 30 个只有两条路：**加帧**（内容设计）或**从现有帧里删内容**换空间。两条都是内容决定，不是库的事。
 demo 的职责是"真实用法能不能拼起来"，不是"把 30 个都点名"。硬塞一个 13 页的 API 冒烟页
 试过一次：三栏塞满后在 1080 里过不了门禁，最后删掉了。这是刻意的取舍，不是遗漏。
 
