@@ -1,3 +1,28 @@
+# 变更记录
+
+## 14.0 · 一个东西，一种写法
+
+深度收敛：41 个标签 → 30，属性声明 749 → 580。
+
+- **删 13 个标签**：title / stat / quote / figure / tag / mark / panel / callout 进配方层
+  （`docs/recipes/`，真页面，过 `vk check`）；row / keys / spotlight / bytes·bits 并进
+  stack / inline / ring / cells。
+- **配方层**：被删的"一组东西的排版"不再占 API，改为可抄走的页面 + CSS。
+- **数值单源**：`src/shared/limits.mjs`；对比度分三档（正文 7:1 / 标注 4.5 / 数据 4.5）。
+- **审计单源**：删掉 gate 里 190 行兜底、contract 里的第二套阈值、`vk.freeze()` 死调用、
+  `lens==='plate'` 死分支。
+- **门禁能失败**：五个坏页面必须被拦（tests/gate-truth.test.mjs）；空帧必红；
+  契约按"概念"记账（17% < 20% 预算）；缓存按内容与工具指纹失效。
+- **坐标是协议**：x/y/z/span/row-span 只在 grid / canvas 子节点成立。
+- **删除兼容层**：tier-alias 表、旧档名折名逻辑。
+- **工具链**：`npm test` 110s → 约 45s（修掉一个 30 秒的 spawnSync 死锁）；
+  `vk shot --batch` 一次拍一组；新增 `tools/css-guard.mjs` 防 CSS 误伤。
+
+## 13.0 · 机制优先
+
+- 四层（值 / 原语 / 机制 / 预设）、七档字阶 36/40/48/96/144/224/320、求值器与 seek、
+  注意力两轴、门禁分层。字号档改名（display-2xl → mega 等），保留一版别名。
+
 ## 12.2.0（未发布）
 
 「体量优先」：字阶多出给数字的两档，白纸上第一次有了明度面。

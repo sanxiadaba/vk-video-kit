@@ -172,7 +172,7 @@ const openTagOf = (tag) => {
 };
 const spec = {
   name: 'vk',
-  version: 12,
+  version: Number(JSON.parse(fs.readFileSync('package.json', 'utf8')).version.split('.')[0]),
   note: '由 src/registry.mjs 生成；AI 的唯一契约。属性分组：content / appearance / state / layout（layout 是协议，不属于组件 API）。',
   layers: LAYERS,
   tags: Object.fromEntries(
