@@ -39,6 +39,26 @@ const shell = String(flag('shell', process.platform === 'win32' ? 'powershell' :
 const width = Number(flag('width', 1920));
 const height = Number(flag('height', 1080));
 const quiet = args.includes('--quiet');
+const verify = flag('verify');
+
+if (verify) {
+  // 校验模式：素材必须和它记录的命令/哈希一致。改了素材却没重跑命令，这里会红。
+  const file = String(verify);
+  const metaRaw = await fs.readFile(file + '.meta.json', 'utf8').catch(() => null);
+  if (!metaRaw) {
+    console.error(`capture: 缺少 ${path.basename(file)}.meta.json（这个文件不是 vk capture 生成的？）`);
+    process.exit(1);
+  }
+  const meta = JSON.parse(metaRaw);
+  const buf = await fs.readFile(file);
+  const now = hash(buf.toString('utf8'));
+  if (now !== meta.outHash) {
+    console.error(`capture: ${path.basename(file)} 与它记录的命令结果不一致（${meta.outHash} → ${now}）。重跑：vk capture --run "${meta.cmd}" --out ${file}`);
+    process.exit(1);
+  }
+  if (!quiet) console.log(`capture: ${path.basename(file)} 与记录一致（${meta.cmd}）`);
+  process.exit(0);
+}
 
 if ((!runCmd && !shot) || !out) {
   console.error(`用法：
@@ -47,7 +67,9 @@ if ((!runCmd && !shot) || !out) {
   process.exit(2);
 }
 
-const hash = (buf) => createHash('sha256').update(buf).digest('hex').slice(0, 16);
+function hash(buf) {
+  return createHash('sha256').update(buf).digest('hex').slice(0, 16);
+}
 const machine = `${process.platform}-${process.arch}`;
 
 async function writeMeta(file, meta) {
@@ -76,7 +98,8 @@ async function captureRun() {
     .join('\n');
 
   await fs.mkdir(path.dirname(path.resolve(out)), { recursive: true });
-  await fs.writeFile(out, body + '\n', 'utf8');
+  const content = body + '\n';
+  await fs.writeFile(out, content, 'utf8');
   await writeMeta(out, {
     kind: 'run',
     cmd: runCmd,
@@ -88,7 +111,7 @@ async function captureRun() {
     machine,
     stdout: stdout.trimEnd(),
     stderr: stderr.trimEnd(),
-    outHash: hash(body),
+    outHash: hash(content),
   });
   if (!quiet) console.log(`capture: ${out}（${body.split('\n').length} 行，退出码 ${exit}，${ms}ms）`);
 }

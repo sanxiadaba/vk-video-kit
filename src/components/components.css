@@ -973,6 +973,7 @@ vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .v
 /* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
    对照的注意力应该落在差异上，而不是落在控件上。 */
 vk-compare{ display: block; }.vk-cmp{
+  box-sizing: border-box;
   position: relative;
   width: 100%;
   overflow: hidden;
@@ -981,6 +982,8 @@ vk-compare{ display: block; }.vk-cmp{
   background: var(--vk-surface-2);
 }.vk-cmp > img{
   display: block;
+  min-height: 0;
+  max-width: 100%;
   position: absolute;
   top: 0;
   left: 0;
