@@ -290,3 +290,40 @@ test('keep 写了已删的标签，构建期就报错', async () => {
     /keep="vk-title" 匹配不到任何元素/
   );
 });
+
+test('vk-compare：缺一张图在构建期就报错', async () => {
+  // 少写 b 的时候画面只剩一块空灰板：看起来像"对照"，其实什么都没有。
+  await assert.rejects(
+    () => transformHtml('<vk-compare a="assets/sample-grid.svg"></vk-compare>', { file: 'cmp.html', highlighter: hl }),
+    /需要 a 和 b 两张图（缺 b）/
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-compare b="assets/sample-grid.svg"></vk-compare>', { file: 'cmp.html', highlighter: hl }),
+    /需要 a 和 b 两张图（缺 a）/
+  );
+});
+
+test('vk-compare：本地图片不存在在构建期就报错', async () => {
+  await assert.rejects(
+    () =>
+      transformHtml('<vk-compare a="nope-a.png" b="nope-b.png"></vk-compare>', {
+        file: path.join(dir, 'page.html'),
+        highlighter: hl,
+      }),
+    /找不到图片 a="nope-a.png"/
+  );
+});
+
+test('vk-tree：depth 只是"画到第几层"，构建期不再把深层条目扔掉', async () => {
+  // 以前构建期按 depth 裁掉第 5 层：运行时手里没有数据，就没法告诉作者"这里少了 N 项"。
+  fs.mkdirSync(path.join(dir, 'deep', 'a', 'b', 'c', 'd', 'e'), { recursive: true });
+  fs.writeFileSync(path.join(dir, 'deep', 'a', 'b', 'c', 'd', 'e', 'f.txt'), 'x\n');
+  const out = await transformHtml('<vk-tree src="deep" depth="2"></vk-tree>', {
+    file: path.join(dir, 'page.html'),
+    highlighter: hl,
+  });
+  const payload = JSON.parse(out.html.match(/<script[^>]*data-vk-tree[^>]*>([\s\S]*?)<\/script>/)[1]);
+  const deep = payload.entries.find((e) => e.name === 'f.txt');
+  assert.ok(deep, '深层条目应该留在 payload 里');
+  assert.equal(deep.depth, 5);
+});

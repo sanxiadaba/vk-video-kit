@@ -18,6 +18,14 @@ vk-asm { display: block; }
   font-family: var(--vk-font-mono);
   container-type: inline-size;
 }
+/* chrome="none" = 不要窗，不是只要窗头不要。
+   asm 自己画壳（不像 code / term 走 .vk-win），所以要单独去一次；
+   否则嵌进 vk-window 就是"窗口里套窗口"。 */
+.vk-asm[data-chrome='none'] {
+  border: 0;
+  border-radius: 0;
+  background: none;
+}
 .vk-asm-hd {
   display: flex;
   align-items: center;

@@ -392,7 +392,12 @@ export function auditPage(root = document) {
   if (stage.querySelector('[data-vk-stale]')) special.push('有预编译数据过期');
   if (stage.querySelector('[data-vk-parsed]')) special.push('源码被浏览器解析（漏转义）');
   if (stage.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
-  if (stage.querySelector('vk-img[data-error], vk-figure[data-error], .vk-fig-win[data-error]')) special.push('图片加载失败');
+  if (
+    stage.querySelector(
+      'vk-img[data-error], vk-compare[data-error], vk-figure[data-error], .vk-fig-win[data-error]'
+    )
+  )
+    special.push('图片加载失败');
 
   // 容量类问题：父级的 safe / overflow 往往只是子级裁切连带出来的。
   // 只报最里层根因，并给一个可执行的改法；不要让人先去修一个不存在的裁切。

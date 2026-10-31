@@ -925,17 +925,32 @@ function validateStrayClosers(html, file, errors) {
 /** 本地图片不存在时构建期就报错；远程 / data: / 绝对路径交给运行时占位。 */
 function validateImages(doc, file, errors) {
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
+  const missing = (src) => {
+    const s = String(src);
+    if (/^(?:[a-z]+:|\/|#)/i.test(s) || s.startsWith('//')) return false;
+    return !fs.existsSync(path.resolve(path.dirname(file), s.split(/[?#]/)[0]));
+  };
   walk(doc, (node) => {
     const tag = node.tagName;
+    if (tag === 'vk-compare') {
+      // 对照是"两张图叠在一起"：缺一张就没有对照，画面上只剩一块空灰板。
+      const [a, b] = [attr(node, 'a') || '', attr(node, 'b') || ''];
+      const lack = [!a && 'a', !b && 'b'].filter(Boolean);
+      if (lack.length) {
+        errors.push(`${file}:${lineOf(node)} <vk-compare> 需要 a 和 b 两张图（缺 ${lack.join(' 和 ')}）`);
+      }
+      for (const [side, src] of [
+        ['a', a],
+        ['b', b],
+      ]) {
+        if (src && missing(src)) errors.push(`${file}:${lineOf(node)} <vk-compare> 找不到图片 ${side}="${src}"`);
+      }
+      return;
+    }
     if (tag !== 'vk-img' && tag !== 'vk-figure') return;
     const src = attr(node, 'src');
     if (!src) return;
-    if (/^(?:[a-z]+:|\/|#)/i.test(src) || src.startsWith('//')) return;
-    const clean = src.split(/[?#]/)[0];
-    const abs = path.resolve(path.dirname(file), clean);
-    if (!fs.existsSync(abs)) {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 找不到图片 ${src}`);
-    }
+    if (missing(src)) errors.push(`${file}:${lineOf(node)} <${tag}> 找不到图片 ${src}`);
   });
 }
 
@@ -1001,11 +1016,10 @@ function sourceConflict(node, tag, file, line) {
 }
 
 /** 真实目录 -> 树数据；不猜状态，只报目录里真实存在的东西。 */
-function treeOf(abs, rootLabel, maxDepth = 4, showHidden = false) {
+function treeOf(abs, rootLabel, showHidden = false) {
   const entries = [];
   const limit = 500;
   const walkDir = (dir, rel, depth) => {
-    if (depth > maxDepth) return;
     let items;
     try {
       items = fs.readdirSync(dir, { withFileTypes: true });
@@ -1279,8 +1293,10 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       if (/\.json$/i.test(src)) {
         throw new Error(`${file}:${line} <vk-tree> 只收目录；JSON 树请用内联 data-vk-source。`);
       }
-      const depth = parseInt(attr(node, 'depth') || '4', 10);
-      payload = treeOf(abs, src.replace(/\\/g, '/'), Number.isFinite(depth) ? Math.max(0, depth) : 4, hasAttr(node, 'hidden'));
+      // depth 只管"画到第几层"，不再是构建期裁剪：构建期偷偷把第 5 层以后扔掉，
+      // 运行时就没有任何东西可以告诉作者"这里少了 N 项"。整棵树扫进 payload，
+      // 运行时按 depth 过滤并报出被挡住的条目（上限 500 条不变）。
+      payload = treeOf(abs, src.replace(/\\/g, '/'), hasAttr(node, 'hidden'));
       for (const e of payload.entries) if (e.type === 'file') deps.push(path.join(abs, e.path));
     }
     const current = attr(node, 'active') || attr(node, 'current');

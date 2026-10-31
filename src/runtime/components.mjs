@@ -253,9 +253,10 @@ export class VkTree extends VkElement {
     const maxDepth = this.hasAttribute('depth')
       ? Math.min(8, Math.max(0, parseInt(this.getAttribute('depth'), 10) || 0))
       : 4;
-    const allEntries = (tree?.entries || this._inlineEntries()).filter(
-      (entry) => !Number.isFinite(maxDepth) || entry.depth <= maxDepth
-    );
+    const everyEntry = tree?.entries || this._inlineEntries();
+    const allEntries = everyEntry.filter((entry) => !Number.isFinite(maxDepth) || entry.depth <= maxDepth);
+    // depth 挡掉的那部分要计数：不报出来，这棵树看起来就是"完整的"。
+    const depthCut = everyEntry.length - allEntries.length;
     if (!this._fold) {
       this._fold = new Set(
         (this.getAttribute('collapsed') || '')
@@ -266,8 +267,8 @@ export class VkTree extends VkElement {
     }
     const fold = this._fold;
     const entries = allEntries.filter((entry) => ![...fold].some((dir) => entry.path.startsWith(dir + '/')));
-    const files = allEntries.filter((e) => e.type === 'file').length;
-    const dirs = allEntries.filter((e) => e.type === 'dir').length;
+    const files = everyEntry.filter((e) => e.type === 'file').length;
+    const dirs = everyEntry.filter((e) => e.type === 'dir').length;
     const branches = allEntries.filter((e) => e.type === 'dir').length;
     const leaves = allEntries.length - branches;
     const root = tree?.root || '';
@@ -287,7 +288,7 @@ export class VkTree extends VkElement {
       }
     }
     const shown = entries.filter((e) => shownTop.some((t) => e === t || e.path.startsWith(t.path + '/')));
-    const hidden = entries.length - shown.length + (truncated ? 1 : 0);
+    const hidden = entries.length - shown.length + depthCut + (truncated ? 1 : 0);
     const roots = [];
     const stack = [];
     for (const entry of shown) {
@@ -353,7 +354,13 @@ export class VkTree extends VkElement {
           <span class="vk-tree-title">${esc(label)}</span>
           ${meta ? `<span class="vk-tree-meta" data-meta>${meta}</span>` : ''}
         </div>
-        <ul class="vk-tree-bd vk-tree-list" role="list" aria-label="${esc(label)}">${roots.map(renderNode).join('')}${hidden > 0 ? `<li class="vk-tree-more" role="listitem">还有 ${hidden}${truncated ? '+' : ''} 项</li>` : ''}</ul>
+        <ul class="vk-tree-bd vk-tree-list" role="list" aria-label="${esc(label)}">${roots.map(renderNode).join('')}${
+          hidden > 0
+            ? `<li class="vk-tree-more" role="listitem">还有 ${hidden}${truncated ? '+' : ''} 项${
+                depthCut ? `（其中 ${depthCut} 项在 depth="${maxDepth}" 以下）` : ''
+              }${truncated ? '（目录太大，只扫了前 500 条）' : ''}</li>`
+            : ''
+        }</ul>
       </div>
     `;
   }
@@ -520,7 +527,13 @@ export class VkCells extends VkElement {
     }
     const spans = items.map((it) => it.span);
     const total = spans.reduce((a, b) => a + b, 0);
-    const addr = this.getAttribute('addr') || '';
+    // 地址是这一块的坐标系：写错了不能悄悄把地址列画成空白。
+    const addrRaw = (this.getAttribute('addr') || '').trim();
+    const addrOk = !addrRaw || /^(?:0x)?[0-9a-f]+$/i.test(addrRaw);
+    if (addrRaw && !addrOk) {
+      this._warnOnce('addr', `的 addr="${addrRaw}" 不是十六进制地址（写成 0x7ffc 这样），地址列已关闭`);
+    }
+    const addr = addrOk ? addrRaw : '';
     const maxSpan = Math.max(...spans);
     let cols = parseInt(this.getAttribute('cols') || String(total), 10);
     if (!Number.isFinite(cols) || cols < 1) cols = total;
@@ -688,6 +701,28 @@ export class VkBits extends VkElement {
     const rows = this._rows && this._rows.length
       ? this._rows
       : [{ label: this.getAttribute('label') || '', value: this.getAttribute('value') || '', mark: false }];
+    // 没有可画的位就不要画问号：那既不是数据也不是错误，只是一句"我也不知道"。
+    // 位数据要么写成 <li value="0100 1000">，要么给宿主写 value="0100 1000"。
+    //
+    // 这里按"解析结果"判断，不按"有没有 rows"判断：rows 永远至少有一条
+    // （没有子节点时默认取宿主的 value），所以空块、只写 label、value 里混进
+    // 非 0/1 字符，以前都会掉到下面那个 ? 占位里。
+    const bitsOf = (raw) => String(raw || '').replace(/\s+/g, '');
+    const bad = rows.find((r) => bitsOf(r.value) && !/^[01]+$/.test(bitsOf(r.value)));
+    if (bad) {
+      this.stale(`的 value="${String(bad.value).slice(0, 24)}" 不是二进制：只能写 0/1（空格可以随便加）`, {
+        build: false,
+      });
+      this.innerHTML = '';
+      return;
+    }
+    if (!rows.some((r) => /^[01]+$/.test(bitsOf(r.value)))) {
+      this.stale('缺少位数据：写成 <li value="0100 1000">，或给宿主写 value="0100 1000"', { build: false });
+      this.innerHTML = '';
+      return;
+    }
+    // 位数据补上之后要把上一轮的 stale 清掉：错误状态不能粘住。
+    delete this.dataset.vkStale;
     const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
     const tone = this.getAttribute('tone') === 'info' ? 'info' : 'neutral';
@@ -696,6 +731,14 @@ export class VkBits extends VkElement {
 
     const widthAttr = Number(this.getAttribute('bit-width'));
     const width = [8, 16, 32, 64].includes(widthAttr) ? widthAttr : 0;
+    // 位串比声明的位宽长时只画最后 width 位：这是截断，不是排版，得说一声。
+    const overWide = width ? rows.find((r) => bitsOf(r.value).length > width) : null;
+    if (overWide) {
+      this._warnOnce(
+        'bit-width',
+        `的位串有 ${bitsOf(overWide.value).length} 位，超过 bit-width="${width}"：只画最后 ${width} 位`
+      );
+    }
     // 字段写成子节点：<li from="30" to="23" label="指数"></li>。一个字段一段，可单独锚定。
     const fieldSpecs = this._fields || []
       .map((el, i) => {
@@ -714,8 +757,7 @@ export class VkBits extends VkElement {
     const fieldStarts = new Set(fieldSpecs.map((f) => f.hi));
 
     const chunksOf = (raw) => {
-      const bits = String(raw || '').replace(/\s+/g, '').split('').filter((c) => c === '0' || c === '1');
-      const bitStr = bits.join('');
+      const bitStr = bitsOf(raw);
       const total = width || bitStr.length;
       if (!total) return [];
       let padded = bitStr;
@@ -787,15 +829,8 @@ export class VkBits extends VkElement {
       })
       .join('');
 
-    // 没有可画的位就不要画一个问号：那既不是数据也不是错误，只是一句"我也不知道"。
-    // 位数据要么写成 <i> 子节点，要么写 value="0100 1000"；两样都没有就明说。
-    if (!rows.length && !(this._fields || []).length) {
-      this.stale('缺少位数据：写成 <i> 子节点，或 value="0100 1000"');
-      this.innerHTML = '';
-      return;
-    }
-
-    this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}"${bytes ? ' data-bytes' : ''}${hasLabel ? ' data-label="1"' : ''}${useFields ? ' data-fields="1"' : ''}>${fieldLegend}${rendered || '<div class="vk-bits"><span class="vk-bit">?</span></div>'}</div>`;
+    // 位数据已经在上面校验过：至少有 0/1 可画，所以这里不再需要占位分支。
+    this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}"${bytes ? ' data-bytes' : ''}${hasLabel ? ' data-label="1"' : ''}${useFields ? ' data-fields="1"' : ''}>${fieldLegend}${rendered}</div>`;
   }
 }
 
@@ -899,8 +934,6 @@ export class VkCompare extends VkElement {
     // split 允许写 "42%" 或 42；numAttr 只认纯数字，所以先剥掉百分号。
     const splitNum = parseFloat(String(this.getAttribute('split') ?? '').replace('%', ''));
     const split = Math.min(100, Math.max(0, Number.isFinite(splitNum) ? splitNum : 50));
-    const la = this.getAttribute('label-a') || '';
-    const lb = this.getAttribute('label-b') || '';
     const fit = this.getAttribute('fit') || 'cover';
     const pos = safePosition(this.getAttribute('position') || '50% 50%');
 
@@ -923,10 +956,60 @@ export class VkCompare extends VkElement {
     const alt = this.getAttribute('alt') || this.getAttribute('label') || '';
     this._shell.style.aspectRatio = ratio;
     this._shell.dataset.fit = fit;
-    for (const [img, src] of [[this._imgB, b], [this._imgA, a]]) {
+    // 两张图缺一张时，画面上只剩一块空灰板：看起来像"对照"，其实什么都没有。
+    // 状态要留在 DOM 上（audit / vk check 能报），并且写进角标（人能看到）。
+    const failed = (this._failed = this._failed || { a: false, b: false });
+    const current = (this._srcs = this._srcs || { a: null, b: null });
+    const paintLabels = () => {
+      // 每次现读属性：监听器是绑一次的，标签可能后来才改。
+      const la = this.getAttribute('label-a') || '';
+      const lb = this.getAttribute('label-b') || '';
+      const la2 = failed.a ? `${la || '图 A'} · 未加载` : la;
+      const lb2 = failed.b ? `${lb || '图 B'} · 未加载` : lb;
+      this._la.textContent = la2;
+      this._lb.textContent = lb2;
+      this._la.style.display = la2 ? '' : 'none';
+      this._lb.style.display = lb2 ? '' : 'none';
+    };
+    const markError = (side) => {
+      failed[side] = true;
+      const bad = failed.a || failed.b;
+      this._shell.toggleAttribute('data-error', bad);
+      this.toggleAttribute('data-error', bad);
+      paintLabels();
+    };
+    for (const [side, img, src] of [['b', this._imgB, b], ['a', this._imgA, a]]) {
+      if (current[side] !== src) {
+        current[side] = src;
+        failed[side] = false;
+      }
       if (img.getAttribute('src') !== src) img.setAttribute('src', src);
       img.style.objectPosition = pos;
       img.alt = alt;
+      if (!img._vkErrBound) {
+        img._vkErrBound = true;
+        img.addEventListener('error', () => {
+          markError(side);
+          this._warnOnce(`img:${side}`, `的 ${side} 图加载失败（${img.getAttribute('src') || '没写 src'}）`);
+        });
+        img.addEventListener('load', () => {
+          if (!img.naturalWidth) {
+            markError(side);
+            this._warnOnce(`img:${side}`, `的 ${side} 图是空的（${img.getAttribute('src') || '没写 src'}）`);
+          }
+        });
+      }
+      if (!src) {
+        markError(side);
+        this._warnOnce(`pair:${side}`, `的 ${side} 图没有 src：对照需要 a 和 b 两张图，缺的一侧会空着`);
+      }
+    }
+    if (failed.a || failed.b) {
+      this._shell.toggleAttribute('data-error', true);
+      this.toggleAttribute('data-error', true);
+    } else {
+      this._shell.removeAttribute('data-error');
+      this.removeAttribute('data-error');
     }
 
     // 对照的前提是两张图同尺寸：不同尺寸时"一半对一半"没有意义，
@@ -953,12 +1036,7 @@ export class VkCompare extends VkElement {
     this._imgA.style.clipPath = `inset(0 0 0 ${split}%)`;
     this._div.style.left = split + '%';
 
-    const show = (el, text) => {
-      el.textContent = text;
-      el.style.display = text ? '' : 'none';
-    };
-    show(this._la, la);
-    show(this._lb, lb);
+    paintLabels();
   }
 }
 

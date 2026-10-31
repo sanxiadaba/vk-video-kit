@@ -89,6 +89,10 @@ export class VkAsm extends VkElement {
       .join('');
     const labelsOn = this.getAttribute('labels') !== 'none';
     const label = (name, fallback) => this.getAttribute(name) || fallback;
+    // chrome 只有 min / none：none = 不要窗，不是只要窗头不要。
+    // 这一块自己画壳（.vk-asm 有边框和底色），所以要把 chrome 写进 DOM，
+    // 让 CSS 能把壳一起去掉——否则嵌进 vk-window 就是"窗口里套窗口"。
+    const chrome = this.getAttribute('chrome') === 'none' ? 'none' : 'min';
     const cols = labelsOn
       ? `<div class="vk-asm-cols vk-asm-cols-hd" aria-hidden="true">
       ${showOrder ? '<span class="vk-asm-ord" data-meta>执行</span>' : ''}
@@ -99,7 +103,7 @@ export class VkAsm extends VkElement {
     </div>`
       : '';
     const head =
-      this.getAttribute('chrome') === 'none'
+      chrome === 'none'
         ? ''
         : `<div class="vk-asm-hd">${DOTS}<span class="vk-asm-file" data-meta>${esc(title)}</span><span class="vk-asm-range" data-meta>${esc(
             [this.getAttribute('lines') || '', d.base || ''].filter(Boolean).join(' · ')
@@ -117,7 +121,7 @@ export class VkAsm extends VkElement {
     ]
       .filter(Boolean)
       .join(' ');
-    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
+    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-chrome="${chrome}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
   }

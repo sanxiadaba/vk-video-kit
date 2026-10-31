@@ -113,21 +113,67 @@ export function sliceLines(text, spec) {
   return lines.slice(a - 1, b).join('\n');
 }
 
-/** 真实 git diff / 手写行段 → { sign, text }；hunk 起始行挂在第一条内容行上。 */
+/**
+ * git 的 index 表头只认 40/7 位十六进制对：`index 3f9a2b1..8c4d5e6 100644`。
+ * 旧实现用 `^index ` 一刀切，于是正文里以 "index " 开头的一行（`index = 0`）
+ * 会从画面上消失——diff 少一行，右下角却还写着"改了几行"。
+ */
+const INDEX_HEADER = /^index [0-9a-f]{7,}\.\.[0-9a-f]{7,}(?:\s|$)/i;
+
+/** 表头路径像不像路径：git 的 a/ b/、带目录、带扩展名、/dev/null、带引号。 */
+const headerPath = (s) => {
+  const t = String(s || '').trim();
+  if (!t) return false;
+  if (t === '/dev/null' || /^"/.test(t)) return true;
+  if (/^[ab]\//.test(t)) return true;
+  return /[\\/]/.test(t) || /\.\w{1,8}$/.test(t);
+};
+
+/**
+ * 真实 git diff / 手写行段 → { sign, text }；hunk 起始行挂在第一条内容行上。
+ *
+ * 表头（`--- ` / `+++ ` / `index `）和正文共用同一批字符：
+ * 删掉的一行如果本来以 `-- ` 开头，源码里就是 `--- ...`，和表头长得一模一样。
+ * 所以表头只在**能证明它是表头**时跳过（diff --git 之后、或 ---/+++ 成对且像路径），
+ * 其余一律当正文——宁可多显示一行，也不能让一行悄悄消失。
+ */
 export function parseDiffItems(source) {
   const lines = String(source).split('\n');
   const out = [];
   let pendingOld = null;
   let pendingNew = null;
   let sawHunk = false;
+  let gitHeader = false; // 已经进了 diff --git 的表头区（遇到第一个 @@ 结束）
+  let skipNewHeader = false; // 上一行刚跳过 "--- <路径>"，紧随的 "+++ ..." 也是表头
 
-  for (const line of lines) {
-    if (/^diff --git /.test(line) || /^index /.test(line) || /^--- /.test(line) || /^\+\+\+ /.test(line)) continue;
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    if (/^diff --git /.test(line)) {
+      gitHeader = true;
+      continue;
+    }
+    if (gitHeader && INDEX_HEADER.test(line)) continue;
+    if (skipNewHeader && /^\+\+\+ /.test(line)) {
+      skipNewHeader = false;
+      continue;
+    }
+    skipNewHeader = false;
+    if (/^--- /.test(line)) {
+      const next = lines[i + 1] || '';
+      const after = lines[i + 2] || '';
+      const isHeader =
+        gitHeader || (/^\+\+\+ /.test(next) && (headerPath(line.slice(4)) || /^@@/.test(after) || out.length === 0));
+      if (isHeader) {
+        skipNewHeader = true;
+        continue;
+      }
+    }
     const hunk = line.match(/^@@\s+-(\d+)(?:,\d+)?\s+\+(\d+)(?:,\d+)?\s+@@/);
     if (hunk) {
       pendingOld = Number(hunk[1]);
       pendingNew = Number(hunk[2]);
       sawHunk = true;
+      gitHeader = false;
       continue;
     }
     if (/^\\ No newline at end of file/.test(line)) continue;

@@ -610,11 +610,16 @@ export class VkElement extends Base {
     console.error(`[vk] <${this.tagName.toLowerCase()}> 渲染失败：${e?.message || e}`, e);
   }
 
-  /** 预编译缺失 / 过期时警告一次 */
-  stale(reason) {
+  /**
+   * 预编译缺失 / 过期时警告一次。
+   *
+   * build:false 用于"没有构建产物可补"的情况（比如位数据写错）：
+   * 否则提示会让人去跑 vk build，而真正要改的是这一块的属性。
+   */
+  stale(reason, { build = true } = {}) {
     this.dataset.vkStale = '1';
     if (this._loading) return;
-    this._warnOnce('stale', `${reason}。运行 npx vk build 生成预编译数据。`);
+    this._warnOnce('stale', build ? `${reason}。运行 npx vk build 生成预编译数据。` : reason);
   }
 }
 

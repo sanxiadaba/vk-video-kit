@@ -140,7 +140,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
   - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink`
-  - 例：`<vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>`
+  - 例：`<vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
   - 例：`<vk-inline variant="code">s[0]</vk-inline>`

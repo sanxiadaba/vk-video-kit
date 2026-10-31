@@ -11,6 +11,7 @@ import {
   sliceLines,
   tokenDiff,
 } from '../src/shared/code.mjs';
+import { formatNumber } from '../src/shared/format.mjs';
 
 test('dedent / tabs 与旧实现一致', () => {
   assert.equal(expandLeadingTabs('\tx'), '    x');
@@ -47,6 +48,44 @@ test('diff 行配对：上下文、替换、纯增删', () => {
   assert.equal(rows[1].right.sign, '+');
   assert.equal(rows[2].ctx, true);
 });
+
+test('diff：正文以 -- / index 开头时不能被当成表头吃掉', () => {
+  // 删掉的一行以 "-- " 开头 → 源码里就是 "--- ..."，和表头长得一样。
+  const rows = buildRows(parseDiffItems('--- a/q.sql\n+++ b/q.sql\n@@ -1,2 +1,2 @@\n select 1;\n--- 这行是注释\n+-- 新的注释\n'));
+  const texts = rows.flatMap((r) => [r.left?.text, r.right?.text]).filter((t) => t != null);
+  assert.ok(texts.includes('-- 这行是注释'), `删除的注释行被吞了：${texts.join(' | ')}`);
+  assert.ok(texts.includes('-- 新的注释'));
+  assert.ok(!texts.some((t) => t === 'q.sql'), '表头不该进正文');
+
+  // 手写行段里的 "index = 0" 不是 git 的 index 表头。
+  const items = parseDiffItems('index = 0\n+index = 1');
+  assert.deepEqual(
+    items.map((i) => `${i.sign}|${i.text}`),
+    ['|index = 0', '+|index = 1']
+  );
+});
+
+test('diff：真正的 git 表头仍然被跳过', () => {
+  const items = parseDiffItems(
+    'diff --git a/f.c b/f.c\nindex 3f9a2b1..8c4d5e6 100644\n--- a/f.c\n+++ b/f.c\n@@ -1 +1 @@\n-a\n+b'
+  );
+  assert.deepEqual(
+    items.map((i) => `${i.sign}|${i.text}`),
+    ['-|a', '+|b']
+  );
+  assert.equal(items[0].oldStart, 1);
+  assert.equal(items[0].newStart, 1);
+});
+
+test('formatNumber：只重排开头的数字，正文与单位原样保留', () => {
+  assert.equal(formatNumber('不是数字', 'thousands'), '不是数字');
+  assert.equal(formatNumber('52980', 'thousands'), '52,980');
+  assert.equal(formatNumber('52980 字节', 'thousands'), '52,980 字节');
+  assert.equal(formatNumber('-1234', 'thousands'), '-1,234');
+  assert.equal(formatNumber('255', 'hex'), '0xFF');
+  assert.equal(formatNumber('x', 'none'), 'x');
+});
+
 
 test('tokenDiff 把 <= 与 < 当成整体', () => {
   const [a, b] = tokenDiff('i <= 3', 'i < 3');

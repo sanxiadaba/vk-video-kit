@@ -287,7 +287,16 @@ export class VkEdge extends VkElement {
       // 标签位置按「标签真实宽度 + 段长」算，不能先挑最长段再硬塞
       const lw = this._label.offsetWidth || 120;
       const lh = this._label.offsetHeight || 44;
-      const spot = (shape === 'ortho' ? labelSpot(g.points, lw, lh) : null) || g.label;
+      // 两端落在同一点时（两个盒子贴在一起、from 和 to 都指同一个目标），
+      // 折线会被 dedupe 收成一个点：没有"中段"可放标签，labelSpot 返回 null、
+      // g.label 也是 null。以前这里直接读 spot.dir 抛错，标签就留在覆盖层左上角——
+      // 画面上是一句漂在角落里的批注。退回锚点本身，并把原因说出来。
+      if (len < 0.5) {
+        this._warnOnce('same-point', '的起点和终点落在同一点（0px）：线没有长度，标签改贴在锚点上');
+      }
+      const spot =
+        (shape === 'ortho' ? labelSpot(g.points, lw, lh) : null) ||
+        g.label || { x: g.points[0].x, y: g.points[0].y, dir: 'v', tight: true };
       const W = host.offsetWidth || w;
       const H = host.offsetHeight || h;
       let d = spot.dir || 'h';

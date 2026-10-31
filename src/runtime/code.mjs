@@ -324,6 +324,23 @@ export class VkTerm extends VkElement {
         return { kind: 'out', text: esc(line) || ' ' };
       });
 
+    // 提示符认不出来时，整块终端会掉成一片灰字：看起来"正常"，其实命令行/输出
+    // 这层结构全丢了。不再多猜提示符（不同 shell 长得都不一样），先明说一句：
+    // 有一行像"提示符 + 命令"，但一个命令行都没认出来。
+    if (!promptAttr && !rows.some((r) => r.kind === 'cmd')) {
+      // 只认「真的像提示符」的前缀：盘符路径、PS、user@host、[user@host]$。
+      // 普通输出里出现 `price > 5` 不该被当成提示符——那会变成新的假警报。
+      const lineLike = source
+        .split('\n')
+        .find((l) => /^(?:PS\s+[^>]*|[A-Za-z]:[\\/][^>]*|\[[^\]]*\][$#%]|[^\s]*@[^\s]*)[>$#%]\s+\S/.test(l));
+      if (lineLike) {
+        this._warnOnce(
+          'prompt',
+          `没有认出任何命令行：有一行像提示符（"${lineLike.trim().slice(0, 40)}"），但它不是 $ / > / PS>。用 prompt="..." 指明，否则整块都会画成输出。`
+        );
+      }
+    }
+
 
     const body = rows
       .map((r, i) => {

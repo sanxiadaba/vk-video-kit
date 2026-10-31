@@ -37,7 +37,7 @@ export const SCENES = [
     tag: 'vk-text',
     body: s`
 <vk-box class="spec-w1120" surface="none">
-  <vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>
+  <vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>
 </vk-box>`,
   },
 

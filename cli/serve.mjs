@@ -152,10 +152,22 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
     }
   });
 
-  await new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(port, '127.0.0.1', resolve);
-  });
+  const listen = () =>
+    new Promise((resolve, reject) => {
+      server.once('error', reject);
+      server.listen(port, '127.0.0.1', resolve);
+    });
+  await listen();
+  // Chromium 拒绝连接一批"不安全端口"（6000、6665-6669、10080 …）。
+  // port=0 时系统可能正好分到它们，页面直接 ERR_UNSAFE_PORT ——
+  // 看起来像组件挂了，其实是端口不能用。只对自动分配端口重试，显式端口不动。
+  if (port === 0) {
+    const UNSAFE = new Set([2049, 3659, 4045, 4190, 5060, 5061, 6000, 6566, 6665, 6666, 6667, 6668, 6669, 6679, 6697, 10080]);
+    while (UNSAFE.has(server.address().port)) {
+      await new Promise((r) => server.close(r));
+      await listen();
+    }
+  }
   const actual = server.address().port;
   const base = `http://127.0.0.1:${actual}`;
   return {
