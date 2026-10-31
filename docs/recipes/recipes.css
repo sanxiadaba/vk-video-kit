@@ -111,7 +111,7 @@ body.r-doc {
 
 /* -------------------------------------------------------------------- 图窗 */
 /* 一张图 + 一句说明。图窗的边框是"这是一张图"的信号，不是装饰。 */
-.r-figure { display: block; margin: 0; }
+.r-figure { padding: 2px; display: block; margin: 0; }
 .r-figure-img {
   display: block;
   box-sizing: border-box;
@@ -150,26 +150,32 @@ body.r-doc {
 /* --------------------------------------------------------------- 提示 / 卡片 */
 /* 提示 = 一条竖线 + 图标 + 标题 + 正文。竖线用 tone 上色，正文仍是墨色。
    14.0 删掉 vk-callout 之后，这套写法留在这里——它是"一组东西的排版"。 */
+/* 提示 = 图标一列 + 文字一列 + 左边一条色线。数值照抄原 vk-callout（图标 64px、gap s2）。 */
 .r-callout {
+  box-sizing: border-box;
   display: flex;
-  gap: var(--vk-s3);
-  padding-left: var(--vk-s4);
+  align-items: flex-start;
+  gap: var(--vk-s2);
+  padding: var(--vk-s3) var(--vk-s4);
   border-left: 4px solid var(--vk-info);
+  border-radius: var(--vk-r-2);
+  background: var(--vk-surface-2);
   color: var(--vk-ink-1);
   font-size: var(--vk-t-body);
   line-height: var(--vk-lh-body);
 }
-.r-callout[data-tone='warn'] { border-left-color: var(--vk-warn); }
-.r-callout[data-tone='err'] { border-left-color: var(--vk-err); }
-.r-callout[data-tone='ok'] { border-left-color: var(--vk-ok); }
-.r-callout-hd {
-  margin: 0 0 var(--vk-s2);
-  font-size: var(--vk-t-subhead);
-  font-weight: var(--vk-w-bold);
-  line-height: var(--vk-lh-snug);
-  max-width: none;
-}
+.r-callout[data-tone='warn'] { border-left-color: var(--vk-warn); background: var(--vk-warn-weak); }
+.r-callout[data-tone='err'] { border-left-color: var(--vk-err); background: var(--vk-err-weak); }
+.r-callout[data-tone='ok'] { border-left-color: var(--vk-ok); background: var(--vk-ok-weak); }
+.r-callout[data-flat] { background: none; }
+.r-callout > .vk-ic { width: 64px; height: 64px; flex: 0 0 auto; margin-top: 0.1em; color: var(--vk-info); }
+.r-callout[data-tone='warn'] > .vk-ic { color: var(--vk-warn); }
+.r-callout[data-tone='err'] > .vk-ic { color: var(--vk-err); }
+.r-callout[data-tone='ok'] > .vk-ic { color: var(--vk-ok); }
+.r-callout > div { flex: 1; min-width: 0; }
+.r-callout-hd { margin: 0 0 var(--vk-s2); font-size: var(--vk-t-subhead); font-weight: var(--vk-w-bold); line-height: var(--vk-lh-snug); }
 .r-callout-bd { margin: 0; max-width: var(--vk-measure-body); }
+
 
 /* 卡片 = 一块面 + 一张头 + 一条分隔。14.0 删掉 vk-panel 之后用它。 */
 .r-panel {
