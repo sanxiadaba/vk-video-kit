@@ -27,6 +27,33 @@ test('capture 跑真命令并写出命令与哈希', () => {
   assert.ok(meta.outHash, '缺少产物哈希');
 });
 
+test('--step 依次执行，写清每一步的命令与输出', () => {
+  const file = path.join(dir, 'steps.txt');
+  const r = run([
+    '--step', 'echo step-one',
+    '--step', 'cd .',
+    '--step', 'echo step-two',
+    '--out', file,
+    '--quiet',
+  ]);
+  assert.equal(r.status, 0, r.stderr);
+  // 没有输出的 step 只留命令行；提示符固定 $。
+  assert.equal(fs.readFileSync(file, 'utf8'), '$ echo step-one\nstep-one\n$ cd .\n$ echo step-two\nstep-two\n');
+  const meta = JSON.parse(fs.readFileSync(file + '.meta.json', 'utf8'));
+  assert.equal(meta.kind, 'run');
+  assert.equal(meta.exit, 0);
+  assert.deepEqual(meta.steps.map((s) => s.cmd), ['echo step-one', 'cd .', 'echo step-two']);
+  assert.deepEqual(meta.steps.map((s) => s.stdout), ['step-one', '', 'step-two']);
+  assert.ok(meta.steps.every((s) => s.exit === 0 && Number.isFinite(s.ms)), 'steps 缺少 exit/ms');
+  assert.equal(run(['--verify', file, '--quiet']).status, 0);
+});
+
+test('--step 与 --run 互斥', () => {
+  const r = run(['--run', 'echo x', '--step', 'echo y', '--out', path.join(dir, 'both.txt'), '--quiet']);
+  assert.equal(r.status, 2);
+  assert.match(r.stderr, /只能二选一/);
+});
+
 test('--verify 认得出"素材被改过"', () => {
   assert.equal(run(['--verify', out, '--quiet']).status, 0);
   fs.appendFileSync(out, '手写的一行\n');

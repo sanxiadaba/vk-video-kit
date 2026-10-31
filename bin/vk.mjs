@@ -6,7 +6,7 @@
  *   vk check <page>       结构自检（字号/对比度/安全区/溢出/重叠/空锚点）
  *   vk shot <page>        出一张 1920×1080（--at 秒 / --fps 30 --out-dir 目录）
  *   vk series             跨帧量一集：体量 / 骨架 / 字阶 / 焦点 / 白占比
- *   vk capture --run/--shot  把真实材料采集进仓库（真跑一条命令 / 真截一张图）
+ *   vk capture --run/--step/--shot  把真实材料采集进仓库（真跑命令 / 分步跑 / 真截一张图）
  *   vk serve [port]       开发服务器，改文件刷新即见
  *   vk tags               列出 37 个标签
  *   vk doc <tag>          看某个标签的属性、内容与默认值
