@@ -28,7 +28,9 @@ const frames = fs
   .map((f) => path.join(dir, 'frames', f));
 
 const story = path.join(dir, 'index.html');
-const pages = fs.existsSync(story) ? [...frames, story] : frames;
+const appendix = path.join(dir, 'appendix.html');
+const extra = [story, appendix].filter((p) => fs.existsSync(p));
+const pages = [...frames, ...extra];
 
 let bad = 0;
 const run = (args, label) => {
