@@ -285,7 +285,10 @@ export class VkTerm extends VkElement {
     const source = this._raw
       ? sliceLines(dedent(this._raw), this.getAttribute('lines'))
       : dedent(this._src || '');
-    const prompt = this.getAttribute('prompt') || '$';
+    // 提示符：作者写 prompt 就用它；不写则自动认三种常见写法。
+    // 采集来自 Windows 时是 ">"，来自 PowerShell 时可能带路径，来自 bash 时是 "$"。
+    const promptAttr = this.getAttribute('prompt');
+    const prompts = promptAttr ? [promptAttr] : ['$', '>', 'PS>'];
     const title = this.getAttribute('title') || '';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
@@ -298,9 +301,10 @@ export class VkTerm extends VkElement {
           const cmd = line === '$' ? '' : line.slice(2);
           return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd };
         }
-        if (line === prompt || line.startsWith(prompt + ' ')) {
-          const cmd = line === prompt ? '' : line.slice(prompt.length + 1);
-          return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd };
+        const hit = prompts.find((p) => line === p || line.startsWith(p + ' '));
+        if (hit) {
+          const cmd = line === hit ? '' : line.slice(hit.length + 1);
+          return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd, sign: hit };
         }
         // 结果符号可配：marks="PASS|WARN|FAIL"。默认 ✓ / ! / ✗。
         const marksAttr = String(this.getAttribute('marks') || '')
@@ -323,7 +327,7 @@ export class VkTerm extends VkElement {
 
     const body = rows
       .map((r, i) => {
-        const sign = r.kind === 'cmd' ? prompt : r.kind === 'out' ? '' : r.sign;
+        const sign = r.kind === 'cmd' ? r.sign || promptAttr || '$' : r.kind === 'out' ? '' : r.sign;
         const signCls = r.kind === 'cmd' ? 'vk-prompt' : r.kind === 'out' ? '' : 'vk-sign';
         const cls = `vk-line is-${r.kind}`;
         const sr = r.kind === 'ok' ? '成功：' : r.kind === 'warn' ? '警告：' : r.kind === 'err' ? '错误：' : '';
