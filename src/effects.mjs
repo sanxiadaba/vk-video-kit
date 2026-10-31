@@ -6,13 +6,13 @@
  */
 export const EFFECTS = {
   'vk-list': {
-    rule: { on: 'vk-list', kind: 'geometry', prop: 'height' },
-    bare: { on: 'vk-list li', kind: 'style', prop: 'padding-left' },
+    rule: { on: 'vk-list', kind: 'geometry', prop: 'height', expect: { not: '0' } },
+    bare: { on: 'vk-list li', kind: 'style', prop: 'padding-left', expect: { to: '0px' } },
     gap: { on: 'vk-list', kind: 'geometry', prop: 'height' },
   },
 
   'vk-steps': {
-    current: { on: 'vk-steps', kind: 'style', prop: 'color' },
+    current: { on: 'vk-steps', kind: 'style', prop: 'color', expect: { not: 'rgb(11, 15, 20)' } },
   },
 
   'vk-cells': {
@@ -45,14 +45,14 @@ export const EFFECTS = {
 
     index: { on: '.vk-bit-i', kind: 'text' },
     group: { kind: 'any', reason: 'group 只改分隔线的粗细/位置，没有单一可比属性' },
-    sign: { on: '.vk-bit', kind: 'style', prop: 'background-color' },
+    sign: { on: '.vk-bit', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
     tone: { on: '.vk-bit', kind: 'style', prop: 'color' },
     width: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit' },
-    bytes: { on: '.vk-bits', kind: 'style', prop: 'border-bottom-width' },
+    bytes: { on: '.vk-bits', kind: 'style', prop: 'border-bottom-width', expect: { not: '0px' } },
   },
 
   'vk-bars': {
-    max: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    max: { on: '.vk-bar-fill', kind: 'style', prop: 'width', expect: { not: '0px' } },
     scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
     mass: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
@@ -70,7 +70,7 @@ export const EFFECTS = {
   },
 
   'vk-math': {
-    display: { on: 'vk-math', kind: 'style', prop: 'display' },
+    display: { on: 'vk-math', kind: 'style', prop: 'display', expect: ['block', 'inline-block'] },
     size: { on: 'vk-math .katex', kind: 'style', prop: 'font-size' },
   },
 
@@ -176,8 +176,8 @@ export const EFFECTS = {
 
 
   'vk-table': {
-    stripe: { on: 'tbody tr', kind: 'style', prop: 'background-color' },
-    mono: { on: 'tbody td', kind: 'style', prop: 'font-family' },
+    stripe: { on: 'tbody tr', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
+    mono: { on: 'tbody td', kind: 'style', prop: 'font-family', expect: /mono/i },
     mass: { on: 'tbody td', kind: 'style', prop: 'padding-top', skipVisual: true },
     variant: { on: 'tbody td', kind: 'style', prop: 'padding-top' },
   },
@@ -194,7 +194,7 @@ export const EFFECTS = {
     arrow: { on: 'svg path', kind: 'attr', prop: 'd' },
     'arrow-style': { on: '.vk-edge-tip', kind: 'attr', prop: 'data-style' },
     'arrow-size': { on: 'svg path', kind: 'attr', prop: 'd' },
-    dash: { on: 'svg path', kind: 'style', prop: 'stroke-dasharray' },
+    dash: { on: 'svg path', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
     label: { on: '.vk-edge-label', kind: 'text' },
     cap: { on: 'svg circle', kind: 'style', prop: 'display' },
     z: { on: 'vk-edge', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
@@ -259,7 +259,7 @@ Object.assign(EFFECTS['vk-mark'], {
 });
 Object.assign(EFFECTS['vk-rule'], {
   variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
-  dash: { on: 'vk-rule', kind: 'style', prop: 'background-image' },
+  dash: { on: 'vk-rule', kind: 'style', prop: 'background-image', expect: { not: 'none' } },
 });
 Object.assign(EFFECTS['vk-list'], {
   variant: { kind: 'any', reason: '四种形态只换条目标记字形，不改高度；无法用单一几何/样式断言。' },
@@ -299,14 +299,14 @@ Object.assign(EFFECTS['vk-tree'], {
 });
 Object.assign(EFFECTS['vk-canvas'], {
   overflow: { on: 'vk-canvas', kind: 'style', prop: 'overflow-x', skipVisual: true },
-  grid: { on: 'vk-canvas', kind: 'style', prop: 'background-image' },
+  grid: { on: 'vk-canvas', kind: 'style', prop: 'background-image', expect: { not: 'none' } },
 });
 
 /* ---------------------------------------------------------- 5.0 新件 / 升级 */
 
 Object.assign((EFFECTS['vk-asm'] ||= {}), {
   title: { on: '.vk-asm-file', kind: 'text' },
-  bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b' },
+  bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b', expect: { not: '0' } },
   address: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-a' },
   mass: { on: '.vk-asm-row', kind: 'style', prop: 'min-height', skipVisual: true },
   chrome: { on: '.vk-asm-hd', kind: 'style', prop: 'display' },
@@ -330,12 +330,12 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 Object.assign((EFFECTS['vk-loupe'] ||= {}), {
   // 面板落在目标的哪一侧；窄舞台里几条边会被夹到同一处，没有单一可比属性。
   side: { kind: 'any', reason: '位置由目标与舞台边界共同决定，窄舞台里几条边会被夹到同一处' },
-  zoom: { on: '.vk-loupe', kind: 'style', prop: 'background-size' },
+  zoom: { on: '.vk-loupe', kind: 'style', prop: 'background-size', expect: /px/ },
 });
 
 Object.assign((EFFECTS['vk-compare'] ||= {}), {
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
-  split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path' },
+  split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path', expect: /inset|polygon|circle/ },
   ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
 });
 
@@ -357,7 +357,7 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
   variant: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
   'pad-px': { on: '.vk-ring-shape', kind: 'geometry', prop: 'width' },
   tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
-  dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray' },
+  dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
   width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
   z: { on: 'vk-ring', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
 });
@@ -371,7 +371,7 @@ Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
 });
 
 Object.assign(EFFECTS['vk-cells'], {
-  offsets: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell-byte' },
+  offsets: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell-byte', expect: { not: '0' } },
   direction: { kind: 'any', reason: '只在字节模式下改变字节尺方向' },
   ruler: { kind: 'any', reason: '只在字节模式下画对齐括号' },
 });

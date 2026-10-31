@@ -16,9 +16,9 @@ import { TAGS, TAG_NAMES } from '../../src/registry.mjs';
 import { PROBES, EFFECT_OVERRIDES } from './contract-probes.mjs';
 
 /** 只要求"有变化"的上限。每收紧一批，就把这个数字改小，不许改大。 */
-export const LOOSE_BUDGET = 25;
+export const LOOSE_BUDGET = 8;
 /** 完全不限定目标元素的上限。 */
-export const ANY_BUDGET = 16;
+export const ANY_BUDGET = 15;
 
 export function intentStats() {
   const out = { intent: [], loose: [], any: [], skipped: 0 };

@@ -411,7 +411,7 @@ export const SCENES = [
   <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
     <vk-text size="subhead" mono>0x2a</vk-text>
   </vk-box>
-  <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash></vk-ring>
+  <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16"></vk-ring>
 </vk-canvas>`,
   },
 

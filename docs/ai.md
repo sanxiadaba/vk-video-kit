@@ -251,7 +251,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线/压暗：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `dim` · `keep` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
-  - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`
+  - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16">`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 

@@ -168,7 +168,7 @@ export const PRESETS = {
   'vk-ring': [
     { label: '椭圆', attrs: { variant: 'ellipse' } },
     { label: '下划线', attrs: { variant: 'underline' } },
-    { label: '实线', attrs: { dash: null } },
+    { label: '虚线', attrs: { dash: '' } },
     { label: '大留白', attrs: { 'pad-px': '28' } },
   ],
 };
