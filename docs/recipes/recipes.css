@@ -197,3 +197,36 @@ body.r-doc {
   font-size: var(--vk-t-label);
   color: var(--vk-ink-3);
 }
+
+/* A/B 对照用的小标签：左边是配方，右边是原语手写。 */
+.r-slab {
+  margin: 0;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  line-height: var(--vk-lh-label);
+  letter-spacing: 0.06em;
+  color: var(--vk-ink-3);
+}
+
+/* 原语手写版的"竖线"和"左条"：配方里有，手写就得自己补——这正是对照要说明的事。 */
+.r-rule-left { border-left: 4px solid var(--vk-line-3); padding-left: var(--vk-s4); }
+.r-note-left { border-left: 4px solid var(--vk-info); background: var(--vk-info-soft); padding: var(--vk-s3) var(--vk-s4); border-radius: var(--vk-r-2); }
+
+/* A/B 页专用：图窗按 720 宽收，不然 1680 宽的 720/280 图会有 653 高，一页放不下。 */
+.r-ab-fig { max-width: 720px; }
+
+/* A/B 两栏各自收在 800：不收的话网格会按内容撑开，右栏跑到画布外面。 */
+.r-ab {
+  display: grid;
+  grid-template-columns: 800px 800px;
+  gap: var(--vk-s5);
+  align-items: start;
+}
+.r-ab > vk-stack { max-width: 800px; }
+/* 网格子项默认 min-width:auto，长内容会把列撑破。 */
+.r-ab vk-stack { min-width: 0; }
+/* A/B 页里两栏只有 800 宽：配方的默认行宽要让位，否则右栏被撑到画布外。 */
+.r-ab .r-callout-bd { max-width: none; }
+.r-ab .r-title-sub { max-width: none; }
+/* A/B 页的正文宽度用 CSS 钉死：靠属性 measure 会跟运行期时序抢跑。 */
+.r-ab-text { display: block; max-width: 768px; }

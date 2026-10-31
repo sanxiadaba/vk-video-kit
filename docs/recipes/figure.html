@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>vk · 配方 图与行内小件</title>
+<link rel="stylesheet" href="../../vk/fonts.css">
+<link rel="stylesheet" href="../../vk/vk.css">
+<link rel="stylesheet" href="recipes.css">
+</head>
+<body class="r-doc">
+<vk-page align="top">
+  <vk-stack gap="2xs">
+    <div class="r-title r-title--body">
+      <p class="r-eyebrow" data-meta>原 vk-figure / vk-tag / vk-mark</p>
+      <h2 class="r-title-main">图与行内小件</h2>
+    </div>
+    <p class="r-slab" data-meta>图 + 一句说明就是 figure 的全部；胶囊和荧光笔本来就是主题色，不值得占标签。</p>
+    <vk-rule variant="strong"></vk-rule>
+
+    <div class="r-ab">
+      <vk-stack gap="2xs">
+        <p class="r-slab" data-meta>配方</p>
+        <vk-stack gap="2xs">
+          <figure class="r-figure r-ab-fig">
+            <span class="r-figure-img"><vk-img src="../../assets/sample-grid.svg" ratio="720 / 280" fit="cover" radius="none" border="none"></vk-img></span>
+            <span class="r-figure-cap" data-meta>图 + 一句说明</span>
+          </figure>
+          <p class="r-body"><span class="r-tag">胶囊</span> 与 <span class="r-mark">荧光笔</span> 都是行内小件。</p>
+        </vk-stack>
+      </vk-stack>
+      <vk-stack gap="2xs">
+        <p class="r-slab" data-meta>原语手写</p>
+        <vk-stack gap="2xs">
+          <div class="r-ab-fig"><vk-img src="../../assets/sample-grid.svg" ratio="720 / 280" fit="cover" radius="none" border="none"></vk-img></div>
+          <vk-text size="label" ink="muted" data-meta>图 + 一句说明</vk-text>
+          <p class="r-body">胶囊与荧光笔在这里没有等价写法——它们本来就是 CSS。</p>
+        </vk-stack>
+      </vk-stack>
+    </div>
+  </vk-stack>
+</vk-page>
+<script src="../../dist/vk.js"></script>
+</body>
+</html>

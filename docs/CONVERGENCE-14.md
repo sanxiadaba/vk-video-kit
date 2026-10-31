@@ -48,8 +48,14 @@
 
 ## 2 · 配方层：删掉的知识没有消失
 
-`docs/recipes/index.html` 是**真页面**，和组件一样过 `vk check`（`tests/recipes.test.mjs`）。
-它承载：标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片。
+`docs/recipes/` 是**真页面**，每一页都过 `vk check`（`tests/recipes.test.mjs` 逐页跑）。
+
+- `index.html`：目录；
+- `stat.html` `title.html` `quote.html` `figure.html`：**A/B 对照**——左边是配方（一行 class），
+  右边是同一个东西用原语硬写。两栏都必须过同一套门禁。
+
+（提示框的 A/B 页没做成：`vk check` 在该页上量出一个 1860px 宽的盒子，查了两轮没定位到原因，
+先删掉不糊弄。提示框本身由演示片第 9 帧示范。）
 
 为什么不是纯文档：纯文档必然漂移——13.0 的 `design.md` 就写着"没有动效、没有时间轴"，
 而运行时装着求值器。能跑的配方不会漂。

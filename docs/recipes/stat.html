@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1920">
+<title>vk · 配方 指标</title>
+<link rel="stylesheet" href="../../vk/fonts.css">
+<link rel="stylesheet" href="../../vk/vk.css">
+<link rel="stylesheet" href="recipes.css">
+</head>
+<body class="r-doc">
+<vk-page align="top">
+  <vk-stack gap="2xs">
+    <div class="r-title r-title--body">
+      <p class="r-eyebrow" data-meta>原 vk-stat</p>
+      <h2 class="r-title-main">指标</h2>
+    </div>
+    <p class="r-slab" data-meta>标签在上、数值居中、单位跟随。14.0 里它是一行 class；数值写法是 vk-text 的 format。</p>
+    <vk-rule variant="strong"></vk-rule>
+
+    <div class="r-ab">
+      <vk-stack gap="2xs">
+        <p class="r-slab" data-meta>配方</p>
+        <div class="r-stat r-stat--subhead r-stat--focus">
+          <span class="r-stat-label" data-meta>预处理之后</span>
+          <span class="r-stat-line"><span class="r-stat-value">52,980</span><span class="r-stat-unit">字节</span></span>
+        </div>
+      </vk-stack>
+      <vk-stack gap="2xs">
+        <p class="r-slab" data-meta>原语手写</p>
+        <vk-stack gap="2xs">
+          <vk-text size="label" ink="muted" data-meta>预处理之后</vk-text>
+          <vk-stack direction="row" gap="sm" align="baseline">
+            <vk-text size="subhead" weight="bold" format="thousands">52980</vk-text>
+            <vk-text size="label" ink="muted" data-meta>字节</vk-text>
+          </vk-stack>
+        </vk-stack>
+      </vk-stack>
+    </div>
+  </vk-stack>
+</vk-page>
+<script src="../../dist/vk.js"></script>
+</body>
+</html>

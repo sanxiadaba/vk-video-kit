@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 
-export const CACHE_VERSION = 'vk-check-3';
+export const CACHE_VERSION = 'vk-check-4';
 const ROOT = process.cwd();
 const CACHE_DIR = path.join(ROOT, '.vk-cache');
 
@@ -62,6 +62,9 @@ export function sharedHash(site) {
     ...walk(path.join(site, 'dist')),
     ...walk(path.join(site, 'assets')),
     ...walk(path.join(ROOT, 'tools')),
+    // 页面自己的 CSS 也是输入：配方页借 docs/recipes/recipes.css，
+    // 改了 CSS 而页面指纹不变时，旧绿结论会被原样搬过来（14.0 踩过）。
+    ...walk(path.join(ROOT, 'docs')).filter((f) => f.endsWith('.css')),
     path.join(ROOT, 'src/registry.mjs'),
     path.join(ROOT, 'src/effects.mjs'),
     path.join(ROOT, 'src/shared/limits.mjs'),

@@ -3,46 +3,37 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=1920">
-<title>vk · 配方册</title>
+<title>vk · 配方 目录</title>
 <link rel="stylesheet" href="../../vk/fonts.css">
 <link rel="stylesheet" href="../../vk/vk.css">
 <link rel="stylesheet" href="recipes.css">
 </head>
 <body class="r-doc">
 <vk-page align="top">
-  <vk-stack gap="sm">
-
+  <vk-stack gap="2xs">
     <div class="r-title r-title--subhead">
       <p class="r-eyebrow">配方册</p>
       <h2 class="r-title-main">一个东西，一种写法</h2>
-      <p class="r-title-sub">下面每块都是原语拼出来的，没有新标签。</p>
     </div>
     <vk-rule variant="strong"></vk-rule>
-
-    <vk-grid cols="3" gap="sm" align="start">
-
-      <div class="r-stat r-stat--focus">
-        <span class="r-stat-value">52,980</span>
-        <span class="r-stat-unit">字节</span>
-        <span class="r-stat-label">预处理之后</span>
-      </div>
-
-      <div class="r-quote r-quote--body">
-        <p class="r-quote-text">quirky, flawed, and an enormous success.</p>
-        <span class="r-quote-cite">Dennis Ritchie</span>
-      </div>
-
-      <vk-stack gap="sm">
-        <figure class="r-figure">
-          <span class="r-figure-img"><vk-img src="../../assets/sample-grid.svg" ratio="720 / 280" fit="cover" radius="none" border="none"></vk-img></span>
-          <span class="r-figure-cap">图 + 一句说明</span>
-        </figure>
-        <p class="r-body"><span class="r-tag">胶囊</span> 是行内小件，<span class="r-mark">荧光笔只加色带</span></p>
+    <vk-stack gap="sm">
+      <vk-stack direction="row" gap="sm" align="baseline">
+        <vk-text size="body">指标</vk-text>
+        <vk-text size="label" ink="muted" data-meta>原 vk-stat → stat.html</vk-text>
       </vk-stack>
-
-    </vk-grid>
-
-
+      <vk-stack direction="row" gap="sm" align="baseline">
+        <vk-text size="body">标题三件套</vk-text>
+        <vk-text size="label" ink="muted" data-meta>原 vk-title → title.html</vk-text>
+      </vk-stack>
+      <vk-stack direction="row" gap="sm" align="baseline">
+        <vk-text size="body">引文</vk-text>
+        <vk-text size="label" ink="muted" data-meta>原 vk-quote → quote.html</vk-text>
+      </vk-stack>
+      <vk-stack direction="row" gap="sm" align="baseline">
+        <vk-text size="body">图与行内小件</vk-text>
+        <vk-text size="label" ink="muted" data-meta>原 vk-figure / vk-tag / vk-mark → figure.html</vk-text>
+      </vk-stack>
+    </vk-stack>
   </vk-stack>
 </vk-page>
 <script src="../../dist/vk.js"></script>
