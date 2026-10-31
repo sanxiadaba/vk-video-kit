@@ -1,7 +1,7 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf } from './icons.mjs';
-import { win, fileHead } from './window.mjs';
+import { win, fileHead, DOTS } from './window.mjs';
 
 /* ------------------------------------------------------------------ title */
 
@@ -349,6 +349,7 @@ export class VkTree extends VkElement {
     this.innerHTML = `
       <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}">
         <div class="vk-tree-hd" data-vk-part="tree-hd">
+        ${DOTS}
           <span class="vk-tree-title">${esc(label)}</span>
           ${meta ? `<span class="vk-tree-meta" data-meta>${meta}</span>` : ''}
         </div>

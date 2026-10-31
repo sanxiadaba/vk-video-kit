@@ -385,15 +385,6 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-loupe',
-    body: s`
-<vk-canvas w="1360" h="420">
-  <vk-img id="loupe-target" src="../assets/sample-grid.svg" x="80" y="70" w="720" h="280" fit="cover" radius="md"></vk-img>
-  <vk-loupe for="#loupe-target" point="6%,20%" size="200" zoom="3" label="放大 3 倍：那一格是 A"></vk-loupe>
-  <vk-text x="80" y="372" size="label" mono ink="muted" data-meta>面板里就是圈住的那一格，同一份像素放大出来的</vk-text>
-</vk-canvas>`,
-  },
-  {
     tag: 'vk-pin',
     body: s`
 <vk-canvas w="1360" h="520" grid="16">

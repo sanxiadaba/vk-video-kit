@@ -327,11 +327,6 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 });
 
 
-Object.assign((EFFECTS['vk-loupe'] ||= {}), {
-  // 面板落在目标的哪一侧；窄舞台里几条边会被夹到同一处，没有单一可比属性。
-  side: { kind: 'any', reason: '位置由目标与舞台边界共同决定，窄舞台里几条边会被夹到同一处' },
-  zoom: { on: '.vk-loupe', kind: 'style', prop: 'background-size', expect: /px/ },
-});
 
 Object.assign((EFFECTS['vk-compare'] ||= {}), {
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },

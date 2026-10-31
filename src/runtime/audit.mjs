@@ -92,7 +92,7 @@ export function auditPage(root = document) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-loupe');
+    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
     const inBleed = !!el.closest('.vk-page-bleed');
