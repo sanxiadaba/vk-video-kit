@@ -21,6 +21,13 @@ export class VkList extends VkElement {
   }
 
   render() {
+    const items = this._items || [];
+    if (!items.length) {
+      this.innerHTML = '';
+      this.stale('列表还没有条目：把每一项写成 <li>…</li> 子节点（空列表不会画出空框）', { build: false });
+      return;
+    }
+    delete this.dataset.vkStale;
     const variant = this.getAttribute('variant') || 'bullet';
     const ordered = variant === 'ordered';
     const rule = this.hasAttribute('rule');
@@ -616,6 +623,12 @@ export class VkSteps extends VkElement {
 
   render() {
     const items = this._items || [];
+    if (!items.length) {
+      this.innerHTML = '';
+      this.stale('步骤还没有条目：把每一步写成 <li>…</li> 子节点（空步骤条不会画出空框）', { build: false });
+      return;
+    }
+    delete this.dataset.vkStale;
     let current = parseInt(this.getAttribute('current') ?? '0', 10);
     if (!Number.isFinite(current) || current < 0) current = 0;
     if (items.length && current > items.length - 1) {
@@ -1063,7 +1076,16 @@ export function defineComponents() {
 export class VkTable extends VkElement {
   static watchSource = false;
   render() {
-    this.querySelectorAll('tr').forEach((tr, r) => {
+    const rows = this.querySelectorAll('tr');
+    if (!rows.length) {
+      // 空表在画面上是 0 高度：看起来像"这里没东西"，其实是漏了行。
+      // 不画空框，直接说清楚怎么补。
+      this.innerHTML = '';
+      this.stale('这个表还没有行：在 <table> 里写 <tr><td>…</td></tr>（表头也算行）', { build: false });
+      return;
+    }
+    delete this.dataset.vkStale;
+    rows.forEach((tr, r) => {
       tr.dataset.row = String(r);
       [...tr.children].forEach((cell, c) => {
         if (cell.tagName === 'TD' || cell.tagName === 'TH') cell.dataset.cell = `${r},${c}`;

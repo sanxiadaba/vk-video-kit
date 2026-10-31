@@ -298,6 +298,21 @@ export function auditPage(root = document) {
     }
   }
 
+  // 空数据组件：列表 / 步骤 / 表格没有条目时是 0 高度，整页检查都会沉默——
+  // 画面上看起来"这里没东西"，观众不知道是漏写还是本来如此。
+  const EMPTY_COMPONENTS = {
+    'vk-table': ['tr', '这个表还没有行：在 <table> 里写 <tr><td>…</td></tr>'],
+    'vk-list': ['li', '列表还没有条目：把每一项写成 <li>…</li> 子节点'],
+    'vk-steps': ['li', '步骤还没有条目：把每一步写成 <li>…</li> 子节点'],
+  };
+  for (const [tag, [child, fix]] of Object.entries(EMPTY_COMPONENTS)) {
+    for (const el of stage.querySelectorAll(tag)) {
+      if (el.closest('template')) continue;
+      if (getComputedStyle(el).display === 'none') continue;
+      if (!el.querySelector(child)) out.push({ type: 'empty-component', what: tag, fix });
+    }
+  }
+
   // 组件级溢出（Frame 原语）：内容比盒子宽/高。
   if (typeof window !== 'undefined' && typeof window.vk?.auditOverflow === 'function') {
     for (const a of window.vk.auditOverflow(stage)) {
@@ -389,7 +404,7 @@ export function auditPage(root = document) {
   // 预编译/素材状态。
   const special = [];
   if (stage.querySelector('[data-vk-unknown]')) special.push(`未知图标：${stage.querySelector('[data-vk-unknown]').dataset.vkUnknown}`);
-  if (stage.querySelector('[data-vk-stale]')) special.push('有预编译数据过期');
+  if (stage.querySelector('[data-vk-stale]')) special.push('有组件缺少数据或数据已过期（data-vk-stale）');
   if (stage.querySelector('[data-vk-parsed]')) special.push('源码被浏览器解析（漏转义）');
   if (stage.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
   if (

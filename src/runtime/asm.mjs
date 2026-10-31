@@ -49,6 +49,15 @@ export class VkAsm extends VkElement {
     }
     const hasAddr = d.rows.some((r) => r.addr);
     const hasBytes = d.rows.some((r) => r.bytes);
+    if (d.skipped > 0) {
+      this.dataset.vkSkipped = String(d.skipped);
+      this._warnOnce(
+        'skipped',
+        `跳过了 ${d.skipped} 行非指令行（objdump 的 file format / Disassembly of section / objdump 提示）。它们不是作者写错的指令；要显示就删掉这些行再构建`
+      );
+    } else {
+      delete this.dataset.vkSkipped;
+    }
     const showBytes = this.hasAttribute('bytes') && hasBytes;
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const mass = this.getAttribute('mass') || 'normal';

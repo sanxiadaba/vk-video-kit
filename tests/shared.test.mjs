@@ -6,12 +6,23 @@ import {
   dedent,
   expandLeadingTabs,
   hash32,
+  hasAnsi,
   lineSet,
   parseDiffItems,
   sliceLines,
+  stripAnsi,
   tokenDiff,
 } from '../src/shared/code.mjs';
 import { formatNumber } from '../src/shared/format.mjs';
+
+test('stripAnsi：剥掉颜色/光标/OSC 控制符，文本原样保留', () => {
+  assert.equal(stripAnsi('\u001b[31mred\u001b[0m'), 'red');
+  assert.equal(stripAnsi('\u001b[2J\u001b[Hclear'), 'clear');
+  assert.equal(stripAnsi('\u001b]0;title\u0007body'), 'body');
+  assert.equal(stripAnsi('plain'), 'plain');
+  assert.equal(hasAnsi('\u001b[31mred'), true);
+  assert.equal(hasAnsi('plain'), false);
+});
 
 test('dedent / tabs 与旧实现一致', () => {
   assert.equal(expandLeadingTabs('\tx'), '    x');

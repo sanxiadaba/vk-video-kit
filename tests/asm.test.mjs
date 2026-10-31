@@ -29,3 +29,23 @@ test('asm：助记符与操作数拆分', () => {
   assert.deepEqual(splitInsn('movl $0x2a, -0x4(%rbp)'), { mnemonic: 'movl', operands: '$0x2a, -0x4(%rbp)' });
   assert.deepEqual(splitInsn('ret'), { mnemonic: 'ret', operands: '' });
 });
+
+test('asm：objdump 表头不是指令，整行跳过并计数', () => {
+  const text = [
+    'hello.exe:     file format pei-i386',
+    '',
+    'Disassembly of section .text:',
+    '',
+    '00401000 <_main>:',
+    '  401000: 55                    push   %rbp',
+    '  401001: 48 89 e5              mov    %rsp,%rbp',
+    'objdump: warning: something to know',
+  ].join('\n');
+  const { rows, labels, skipped } = parseAsm(text);
+  assert.equal(skipped, 3);
+  assert.equal(labels.length, 1);
+  const insns = rows.filter((r) => r.kind === 'insn');
+  assert.equal(insns.length, 2);
+  assert.deepEqual(insns.map((r) => r.text), ['push   %rbp', 'mov    %rsp,%rbp']);
+  assert.ok(!rows.some((r) => /file format|Disassembly of section|objdump: warning/.test(r.text)));
+});

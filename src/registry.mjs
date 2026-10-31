@@ -86,7 +86,7 @@ const ATTR_META = {
   start: { label: '起点', content: true },
   end: { label: '终点', content: true },
   lanes: { label: '泳道', content: true },
-  steps: { label: '步数', group: 'layout' },
+  steps: { label: '步数（轴宽）', group: 'layout' },
   date: { label: '日期', content: true },
   lane: { label: '泳道', content: true },
   at: { label: '所在步', group: 'layout' },
@@ -132,7 +132,7 @@ const ATTR_META = {
   emphasis: { label: '强度', group: 'appearance' },
   ink: { label: '墨阶', group: 'appearance' },
   long: { label: '长行', group: 'appearance' },
-  filled: { label: '填充格（序号，0 起）', group: 'state' },
+  filled: { label: '填充格（布尔：写 filled 即填充）', group: 'state' },
   ruler: { label: '字节尺', group: 'appearance' },
   overflow: { label: '溢出', group: 'appearance' },
   fill: { label: '填满', group: 'layout' },
@@ -471,7 +471,6 @@ export const TAGS = {
       'stripe': bool(),
       'mono': bool(),
       'mass': oneOf('compact', 'normal', 'hero'),
-      'mass': oneOf('compact', 'normal', 'hero'),
     },
   },
   'vk-math': {
@@ -542,7 +541,7 @@ export const TAGS = {
         { name: 'label', label: '标签', type: 'text', attr: 'label' },
         { name: 'span', label: '跨几格', type: 'int', attr: 'span' },
         { name: 'state', label: '状态', type: 'text', attr: 'state' },
-        { name: 'filled', label: '填充格', type: 'bool', attr: 'filled' },
+        { name: 'filled', label: '填充格（布尔）', type: 'bool', attr: 'filled' },
       ],
     },
     attrs: {
@@ -928,7 +927,7 @@ const ATTR_META_BY_TAG = {
     current: { label: '当前字节段', group: 'state' },
   },
   'vk-cells': {
-    filled: { label: '填充格（序号，0 起）', group: 'state' },
+    filled: { label: '填充格（布尔：写 filled 即填充）', group: 'state' },
     },
   'vk-bits': {
     'bit-width': { label: '位宽', group: 'layout' },

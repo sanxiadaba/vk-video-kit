@@ -173,8 +173,21 @@ test('vk-compare：图 404 也要标 data-error，不能只剩一块空灰板', 
   assert.match(logs.join('\n'), /图加载失败/);
 });
 
-test('vk-term：认不出提示符时要明说，不能整块静默掉灰', async () => {
+test('vk-term：盘符路径提示符被识别成命令行，提示符原样显示', async () => {
   const { tab, logs } = await open('<vk-term title="cmd">C:\\src\\demo&gt; gcc hello.c -o hello</vk-term>');
+  const r = await tab.evaluate(() => ({
+    cmds: document.querySelectorAll('vk-term .vk-line.is-cmd').length,
+    prompt: document.querySelector('vk-term .vk-prompt')?.textContent || '',
+    text: document.querySelector('vk-term .vk-bd')?.textContent || '',
+  }));
+  assert.equal(r.cmds, 1);
+  assert.equal(r.prompt, 'C:\\src\\demo>');
+  assert.match(r.text, /gcc hello\.c/);
+  assert.doesNotMatch(logs.join('\n'), /没有认出任何命令行/);
+});
+
+test('vk-term：仍然认不出的提示符要明说，不能整块静默掉灰', async () => {
+  const { tab, logs } = await open('<vk-term>user@host:~$ cmd</vk-term>');
   const r = await tab.evaluate(() => ({
     cmds: document.querySelectorAll('vk-term .vk-line.is-cmd').length,
     outs: document.querySelectorAll('vk-term .vk-line.is-out').length,

@@ -19,7 +19,7 @@ import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { TIER_ALIAS } from './shared/tier-alias.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
-import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared } from './shared/code.mjs';
+import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
 import { diag } from './shared/diag.mjs';
 import { TAGS, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
@@ -641,6 +641,29 @@ function validateAuthorHtml(doc, file, html = '') {
         })
       );
     }
+    // canvas 的子节点靠 x/y 定位；漏写一个就会静默落到 0，和"放在左上角"分不清。
+    if (node.parentNode?.tagName === 'vk-canvas' && tag.startsWith('vk-')) {
+      const free =
+        tag === 'vk-edge' ||
+        XY_OVERLAY.has(tag) ||
+        attrs.has('data-vk-overlay');
+      if (!free) {
+        const missing = ['x', 'y'].filter((n) => !attrs.has(n));
+        if (missing.length) {
+          errors.push(
+            diag({
+              file,
+              line: lineOf(node),
+              tag,
+              what: `在 <vk-canvas> 里缺 ${missing.join(' 和 ')}`,
+              wrote: [...attrs].filter(([n]) => n === 'x' || n === 'y').map(([n, v]) => `${n}="${v}"`).join(' ') || '（没写坐标）',
+              should: `给这个子节点同时写 x="…" y="…"（像素）；连线/覆盖层用 for 定位，不受这条约束`,
+              why: '缺坐标会静默落在 (0,0)：画面上看起来"就是这样摆的"，其实是漏写',
+            })
+          );
+        }
+      }
+    }
     // w/h 是像素摆位，同样只在坐标空间里成立。
     if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && node.parentNode?.tagName !== 'vk-canvas') {
       strictness(
@@ -1161,8 +1184,12 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     }
 
     const lang = resolveLang(rawLang || inferLang(src) || 'text');
-    const hash = hash32(source);
-    const total = source.split('\n').length;
+    // 终端颜色控制符不参与高亮与 hash：颜色由设计系统决定。
+    // 但 HTML 里仍留原文（运行时 stripAnsi 后再算 hash），这样 vk-code / vk-term
+    // 才能在运行时提示一次"已忽略终端颜色控制符"，而不是把 \x1b 露在画面上。
+    const cleanSource = tag === 'vk-diff' ? source : stripAnsi(source);
+    const hash = hash32(cleanSource);
+    const total = cleanSource.split('\n').length;
     // lines="4-6" 时，source 已经是切片；但 current/focus/fold 写的是源文件行号。
     // 越界不能静默：写错的行段只会让"重点"消失，画面看起来仍然正常。
     const base = Number((attr(node, 'lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
@@ -1193,6 +1220,33 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         errors.push(`${file}:${line} <${tag}> 的 current="${outside.join(',')}" 不在 focus 内；聚光会把当前行一起压暗`);
       }
     }
+    // mark="词" 在源码里找不到时，运行时 markTerms 会静默不标——画面上看起来
+    // 一切正常，只是"重点"没了。构建期把它拦住，并给出源码里真实存在的标识符。
+    if (tag === 'vk-code') {
+      const terms = String(attr(node, 'mark') || '')
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (terms.length) {
+        const identifiers = [...new Set(cleanSource.match(/[A-Za-z_$][\w$]*/g) || [])];
+        const candidates = identifiers.slice(0, 12);
+        for (const term of terms) {
+          const escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+          let found = false;
+          try {
+            found = new RegExp(`(?<![\\w$])${escaped}(?![\\w$])`).test(cleanSource);
+          } catch {
+            found = cleanSource.includes(term);
+          }
+          if (!found) {
+            errors.push(
+              `${file}:${line} <vk-code> 的 mark="${term}" 在源码里找不到：这段里没有这个词，` +
+                `运行时会静默不标。${candidates.length ? `源码里实际有：${candidates.join(', ')}` : '这段源码里没有任何标识符（mark 在 src 里找不到）'}`
+            );
+          }
+        }
+      }
+    }
     let data;
     let attrName;
 
@@ -1219,7 +1273,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       }
       attrName = 'data-vk-hl-diff';
     } else {
-      data = await paintCode(highlighter, source, lang);
+      data = await paintCode(highlighter, cleanSource, lang);
       attrName = 'data-vk-hl';
     }
 
@@ -1302,6 +1356,23 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const current = attr(node, 'active') || attr(node, 'current');
     if (current && !payload.entries.some((e) => e.path === current || e.name === current)) {
       errors.push(`${file}:${line} <vk-tree> 的 active="${current}" 不在目录里`);
+    }
+    // collapsed 写错时，运行时只会把这串名字当"没有这个目录"而静默全展开——
+    // 树看起来是完整的，但"收起的部分"从未发生。构建期给出真实目录候选。
+    const collapsedRaw = attr(node, 'collapsed');
+    if (collapsedRaw) {
+      const dirs = payload.entries.filter((e) => e.type === 'dir');
+      for (const part of String(collapsedRaw).split(',')) {
+        const dir = part.trim().replace(/\/+$/, '');
+        if (!dir) continue;
+        if (!dirs.some((e) => e.path === dir || e.name === dir)) {
+          const names = dirs.map((e) => e.path || e.name).slice(0, 12);
+          errors.push(
+            `${file}:${line} <vk-tree> 的 collapsed="${dir}" 不是这棵树里的目录` +
+              `${names.length ? `；可用目录：${names.join(', ')}` : '（这棵树没有子目录）'}`
+          );
+        }
+      }
     }
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
@@ -1391,7 +1462,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     } else {
       raw = inline;
     }
-    const { rows, labels } = parseAsm(raw);
+    const { rows, labels, skipped } = parseAsm(raw);
     const asmLang = resolveLang(attr(node, 'lang') || 'asm');
     const range = lineRange(node);
     const selected = range ? rows.filter((r) => r.line >= range[0] && r.line <= range[1]) : rows;
@@ -1427,7 +1498,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         h,
       });
     }
-    const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang };
+    const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang, skipped };
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
       start: loc.startTag.endOffset,

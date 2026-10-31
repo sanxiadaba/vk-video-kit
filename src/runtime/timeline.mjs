@@ -45,6 +45,7 @@ export class VkTimeline extends VkElement {
   render() {
     const items = this._items || [];
     if (!items.length) {
+      delete this.dataset.stepsOverflow;
       this.innerHTML = '<div class="vk-timeline" data-empty>（没有事件）</div>';
       return;
     }
@@ -88,11 +89,26 @@ export class VkTimeline extends VkElement {
       .filter(Boolean);
     const lanes = declared.length ? declared : [...new Set(items.map((it) => it.lane).filter(Boolean))];
     if (!lanes.length) lanes.push('lane');
-    const stepCount = Math.max(
-      parseInt(this.getAttribute('steps') || '0', 10) || 0,
-      ...items.map((it) => (parseInt(it.at || '0', 10) || 0) + (parseInt(it.span || '1', 10) || 1)),
-      1
-    );
+    /**
+     * steps 的语义：**声明轴宽**。at 是 0 起的步号，span 是占几格。
+     * 条目 at+span 超出 steps 时，不能静默把轴撑大（作者会以为 steps 生效了），
+     * 也不能把条目裁掉（少了一步看起来像数据错误）。这里以内容为准把轴放宽，
+     * 同时在 DOM 上留 data-steps-overflow 并 warn 一次，让作者二选一改掉。
+     */
+    const declaredSteps = parseInt(this.getAttribute('steps') || '0', 10) || 0;
+    const needOf = (it) =>
+      Math.max(0, parseInt(it.at || '0', 10) || 0) + Math.max(1, parseInt(it.span || '1', 10) || 1);
+    const requiredSteps = Math.max(0, ...items.map(needOf), 1);
+    const stepCount = Math.max(declaredSteps, requiredSteps, 1);
+    if (declaredSteps && requiredSteps > declaredSteps) {
+      this.dataset.stepsOverflow = String(requiredSteps);
+      this._warnOnce(
+        'steps',
+        `的 steps="${declaredSteps}" 小于条目实际占到的 ${requiredSteps} 步（at+span 越界）：按 ${requiredSteps} 步画。把 steps 改成 ${requiredSteps}，或把 at/span 收进 0–${declaredSteps - 1}`
+      );
+    } else {
+      delete this.dataset.stepsOverflow;
+    }
     const head = `<div class="vk-tl-lane-hd" aria-hidden="true"></div><div class="vk-tl-step-hd" aria-hidden="true">${Array.from(
       { length: stepCount },
       (_, i) => `<span data-meta>${i}</span>`

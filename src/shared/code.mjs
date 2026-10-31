@@ -17,6 +17,23 @@ export function expandLeadingTabs(line) {
   });
 }
 
+/**
+ * 终端转义序列：CSI（`\x1b[31m`、`\x1b[2J`）、OSC（`\x1b]0;标题\x07`）与两字符序列。
+ * 只剥颜色/光标控制，不保留颜色：这个库的颜色由设计系统决定，不由终端决定。
+ */
+const ANSI_RE = /\u001b(?:\[[0-?]*[ -/]*[@-~]|\][^\u0007\u001b]*(?:\u0007|\u001b\\)|[@-_])|\u009b[0-?]*[ -/]*[@-~]/g;
+
+/** 剥掉 ANSI 转义；返回纯文本。构建期与运行期共用同一份。 */
+export function stripAnsi(text) {
+  return String(text ?? '').replace(ANSI_RE, '');
+}
+
+/** 这段文本里有没有 ANSI 转义（剥前剥后不同就是有）。 */
+export function hasAnsi(text) {
+  const s = String(text ?? '');
+  return stripAnsi(s) !== s;
+}
+
 /** 去掉源码缩进带来的公共缩进；统一 CRLF。 */
 export function dedent(text) {
   let t = String(text).replace(/\r\n?/g, '\n');

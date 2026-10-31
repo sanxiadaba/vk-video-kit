@@ -2,9 +2,25 @@ import {
   esc, dedent, warnIfParsed, fetchSource, hash32, langKey, langLabel, lineSet,
   precompiledSource, numAttr, VkElement, define,
 } from './base.mjs';
-import { indexRanges, sliceLines } from '../shared/code.mjs';
+import { indexRanges, sliceLines, stripAnsi } from '../shared/code.mjs';
 import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
+
+/**
+ * 采集来的终端文本可能带 ANSI 转义（`\x1b[31m`）。
+ * 颜色由设计系统决定，不由终端决定：渲染前剥掉，并只提示一次。
+ */
+function terminalText(el, text) {
+  const raw = String(text ?? '');
+  const clean = stripAnsi(raw);
+  if (clean !== raw) {
+    el._warnOnce(
+      'ansi',
+      '已忽略终端颜色控制符（ANSI 转义）：颜色由设计系统决定，不由终端决定。采集时关掉颜色（如 --color=never / NO_COLOR=1）即可不再提示'
+    );
+  }
+  return clean;
+}
 
 /* ------------------------------------------------------------------- code */
 
@@ -64,8 +80,35 @@ export class VkCode extends VkElement {
     this._fetched = true;
   }
 
+  /**
+   * 长行溢出：同步量一次，不靠 rAF。
+   *
+   * 以前放在 requestAnimationFrame 里，离屏 / 后台标签页不跑 rAF，右缘渐隐就永远不出现，
+   * 画面看起来像"这行完整"。这里直接读 scrollWidth / clientWidth：读一次强制布局，
+   * 但只在渲染时和尺寸变化时各一次，成本可控。
+   */
+  _measureOverflow() {
+    const bd = this.querySelector('.vk-bd');
+    if (!bd) return;
+    const fit = this.getAttribute('long') || 'clip';
+    // clientWidth 为 0 时量不出来（display:none），保持现状，交给 ResizeObserver 再量。
+    const over = fit === 'clip' && bd.clientWidth > 0 && bd.scrollWidth > bd.clientWidth + 1;
+    if (over) this.dataset.vkOverflow = '';
+    else delete this.dataset.vkOverflow;
+  }
+
+  _watchOverflow() {
+    this._measureOverflow();
+    if (typeof ResizeObserver !== 'function') return;
+    this._ro?.disconnect();
+    const bd = this.querySelector('.vk-bd');
+    if (!bd) return;
+    this._ro = new ResizeObserver(() => this._measureOverflow());
+    this._ro.observe(bd);
+  }
+
   render() {
-    const full = dedent(this._raw ?? this._src ?? '');
+    const full = dedent(terminalText(this, this._raw ?? this._src ?? ''));
     const source = this._raw ? sliceLines(full, this.getAttribute('lines')) : full;
     const lang = (this.getAttribute('lang') || this._hlLang || 'text').toLowerCase();
     const label = langLabel(lang);
@@ -187,15 +230,8 @@ export class VkCode extends VkElement {
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
     this.style.width = Number.isFinite(w) ? w + 'px' : '';
 
-    // 长行不静默裁切：量一次，clip 时给右缘渐隐；wrap/scroll 是作者显式选择。
-    requestAnimationFrame(() => {
-      const bd = this.querySelector('.vk-bd');
-      if (!bd) return;
-      const fit = this.getAttribute('long') || 'clip';
-      const over = fit === 'clip' && bd.scrollWidth > bd.clientWidth + 1;
-      if (over) this.dataset.vkOverflow = '';
-      else delete this.dataset.vkOverflow;
-    });
+    // 长行不静默裁切：同步量一次，clip 时给右缘渐隐；wrap/scroll 是作者显式选择。
+    this._watchOverflow();
   }
 }
 
@@ -224,6 +260,28 @@ function commentStart(cmd) {
     if (ch === '#' && (i === 0 || /\s/.test(cmd[i - 1]))) return i;
   }
   return -1;
+}
+
+/**
+ * 自动认命令行提示符。只认"确实像 prompt"的形状：
+ *   C:\src\demo> cmd        （Windows cmd / 盘符路径）
+ *   PS C:\src> cmd          （PowerShell，带 PS 前缀）
+ *   [user@host ~]$ cmd      （bash / zsh，带 user@host 的方括号）
+ * 普通输出里的 `price > 5` 没有盘符路径 / PS 前缀 / 方括号，不会命中。
+ * 命中的提示符原样作为 sign 显示，后面才是命令。
+ */
+const AUTO_PROMPTS = [
+  /^(PS\s+[A-Za-z]:[\\/][^>\r\n]*>)(?:\s+(.*))?$/,
+  /^([A-Za-z]:[\\/][^>\r\n]*>)(?:\s+(.*))?$/,
+  /^(\[[^\]\r\n]*@[^\]\r\n]*\][$#%])(?:\s+(.*))?$/,
+];
+
+function detectPrompt(line) {
+  for (const rx of AUTO_PROMPTS) {
+    const m = line.match(rx);
+    if (m) return { sign: m[1], cmd: (m[2] || '').trim() };
+  }
+  return null;
 }
 
 function paintTermCommand(cmd) {
@@ -282,9 +340,11 @@ export class VkTerm extends VkElement {
   }
 
   render() {
-    const source = this._raw
-      ? sliceLines(dedent(this._raw), this.getAttribute('lines'))
-      : dedent(this._src || '');
+    const clean = terminalText(
+      this,
+      this._raw ? dedent(this._raw) : dedent(this._src || '')
+    );
+    const source = this._raw ? sliceLines(clean, this.getAttribute('lines')) : clean;
     // 提示符：作者写 prompt 就用它；不写则自动认三种常见写法。
     // 采集来自 Windows 时是 ">"，来自 PowerShell 时可能带路径，来自 bash 时是 "$"。
     const promptAttr = this.getAttribute('prompt');
@@ -300,6 +360,10 @@ export class VkTerm extends VkElement {
         if (line === '$' || line.startsWith('$ ')) {
           const cmd = line === '$' ? '' : line.slice(2);
           return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd };
+        }
+        const auto = promptAttr ? null : detectPrompt(line);
+        if (auto) {
+          return { kind: 'cmd', text: paintTermCommand(auto.cmd), empty: !auto.cmd, sign: auto.sign };
         }
         const hit = prompts.find((p) => line === p || line.startsWith(p + ' '));
         if (hit) {
@@ -336,7 +400,7 @@ export class VkTerm extends VkElement {
       if (lineLike) {
         this._warnOnce(
           'prompt',
-          `没有认出任何命令行：有一行像提示符（"${lineLike.trim().slice(0, 40)}"），但它不是 $ / > / PS>。用 prompt="..." 指明，否则整块都会画成输出。`
+          `没有认出任何命令行：有一行像提示符（"${lineLike.trim().slice(0, 40)}"），但它不是 $ / > / PS>，也不像盘符路径、PS 前缀或 [user@host] 提示符。用 prompt="..." 指明，否则整块都会画成输出。`
         );
       }
     }
