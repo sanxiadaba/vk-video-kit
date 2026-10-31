@@ -1,0 +1,131 @@
+/* ============================================================================
+   配方层 —— 不是组件，是"怎么说"。
+
+   14.0 删掉了 title / stat / quote / figure / tag / mark 六个标签，理由是
+   它们不是"一个东西"，而是"一组东西的排版"。它们原来做的事没有消失，
+   只是从 API 移到了这里：一套可复制、可检查、可被 AI 读的写法。
+
+   这一层不是库的一部分：它可以被抄进任何一个项目，也可以被替换掉。
+   用到的只有 tokens（颜色/字号/间距）和原语标签。
+   ========================================================================== */
+
+/* 配方页的底：正文 48、行高、纸色。作者页也要有一层"默认文字"，
+   否则 <p> 会掉回浏览器的 16px —— 这是配方层最容易漏的一步。 */
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-body);
+  line-height: var(--vk-lh-body);
+}
+.r-body { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
+
+/* ---------------------------------------------------------------- 标题三件套 */
+/* 上：eyebrow（第几站）；中：一句话主张；下：一句解释。
+   三件套的间距是经验值，不是随便写的：eyebrow 到标题 8px、标题到副题 24px。 */
+.r-title { display: block; }
+.r-eyebrow {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-s2);
+  margin: 0 0 var(--vk-s2);
+  font-size: var(--vk-t-label);
+  line-height: var(--vk-lh-label);
+  letter-spacing: 0.08em;
+  color: var(--vk-ink-3);
+}
+.r-title-main {
+  margin: 0;
+  font-size: var(--vk-t-title);
+  font-weight: var(--vk-w-bold);
+  line-height: var(--vk-lh-tight);
+  letter-spacing: var(--vk-ls-tight);
+  color: var(--vk-ink-1);
+}
+.r-title--subhead .r-title-main { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-snug); }
+.r-title--hero .r-title-main { font-size: var(--vk-t-hero); line-height: 1.04; letter-spacing: -0.035em; }
+.r-title-sub {
+  margin: var(--vk-s3) 0 0;
+  max-width: var(--vk-measure-body);
+  font-size: var(--vk-t-body);
+  line-height: var(--vk-lh-body);
+  color: var(--vk-ink-2);
+}
+
+/* -------------------------------------------------------------------- 指标 */
+/* 一个数、一个单位、一句它是什么。单位是标注，所以小一号、灰一档。 */
+.r-stat { display: flex; flex-direction: column; gap: var(--vk-s1); }
+.r-stat-value {
+  font-size: var(--vk-t-hero);
+  font-weight: var(--vk-w-bold);
+  line-height: var(--vk-lh-tight);
+  letter-spacing: var(--vk-ls-tight);
+  font-variant-numeric: tabular-nums;
+  color: var(--vk-ink-1);
+}
+.r-stat--focus .r-stat-value { color: var(--vk-focus); }
+.r-stat--subhead .r-stat-value { font-size: var(--vk-t-subhead); }
+.r-stat-line { display: flex; align-items: baseline; gap: var(--vk-s1); }
+.r-stat-unit { font-size: var(--vk-t-body); color: var(--vk-ink-3); }
+.r-stat-label { font-size: var(--vk-t-label); color: var(--vk-ink-3); }
+
+/* -------------------------------------------------------------------- 引文 */
+.r-quote {
+  display: block;
+  margin: 0;
+  padding-left: var(--vk-s5);
+  border-left: var(--vk-line-w) solid var(--vk-line-2);
+}
+.r-quote-text {
+  margin: 0;
+  font-size: var(--vk-t-subhead);
+  line-height: var(--vk-lh-snug);
+  color: var(--vk-ink-1);
+}
+/* 引文可以整页大，也可以放进三栏里——那是体量，不是另一个组件。 */
+.r-quote--body .r-quote-text { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
+.r-quote-cite {
+  display: block;
+  margin-top: var(--vk-s3);
+  font-size: var(--vk-t-label);
+  color: var(--vk-ink-3);
+}
+
+/* -------------------------------------------------------------------- 图窗 */
+/* 一张图 + 一句说明。图窗的边框是"这是一张图"的信号，不是装饰。 */
+.r-figure { display: block; margin: 0; }
+.r-figure-img {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  width: 100%;
+  border: var(--vk-line-w) solid var(--vk-line-2);
+  border-radius: var(--vk-r-3);
+  overflow: hidden;
+}
+.r-figure-cap {
+  display: block;
+  margin-top: var(--vk-s2);
+  font-size: var(--vk-t-label);
+  line-height: var(--vk-lh-label);
+  color: var(--vk-ink-3);
+}
+
+/* -------------------------------------------------------------- 胶囊 / 荧光 */
+.r-tag {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 var(--vk-s2);
+  border-radius: var(--vk-r-pill);
+  background: var(--vk-surface-2);
+  font-size: var(--vk-t-label);
+  line-height: 1.6;
+  color: var(--vk-ink-2);
+  white-space: nowrap;
+}
+.r-mark {
+  /* 荧光笔：底下一条半透明色带，字本身不动。 */
+  background: linear-gradient(transparent 62%, var(--vk-focus-mark) 62%);
+  color: inherit;
+}
