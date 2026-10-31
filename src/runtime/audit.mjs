@@ -544,12 +544,18 @@ export function focusRegions(stage) {
   const add = (el) => {
     if (el) found.add(el);
   };
+  // 覆盖层自己身上的 data-tone（ring 的 SVG 默认 tone="focus"）不是"画面上的焦点"，
+  // 它是画法。只数作者/姿态落在内容上的标记。
+  const inOverlay = (el) => !!el?.closest?.('[data-vk-overlay]');
+  const addInk = (el) => {
+    if (el && !inOverlay(el)) found.add(el);
+  };
 
-  for (const el of stage.querySelectorAll('[data-vk-focus]')) add(el);
+  for (const el of stage.querySelectorAll('[data-vk-focus]')) addInk(el);
   // 注意力只有两个来源：作者写的 act="focus"，以及运行期落到元素上的 data-act / data-tone。
   // 13.0 这里只认 [tone="focus"]，于是 pose 给块级元素上的焦点（data-tone）永远数不到——
   // CSS 把字涂蓝、审计说"只有一处焦点"。
-  for (const el of stage.querySelectorAll('[data-act="focus"], [tone="focus"], [data-tone="focus"]')) add(el);
+  for (const el of stage.querySelectorAll('[data-act="focus"], [tone="focus"], [data-tone="focus"]')) addInk(el);
   for (const el of stage.querySelectorAll('.vk-line.is-hl, .vk-asm-row.is-hl')) add(el);
   // 一段高亮字节 = 一个 region：按容器归一，而不是按字节
   for (const el of stage.querySelectorAll('.vk-byte[data-hl="1"], .vk-byte-c[data-hl="1"]')) {
@@ -558,8 +564,7 @@ export function focusRegions(stage) {
   for (const el of stage.querySelectorAll(
     '.vk-cell[data-state="current"], .vk-tree-row[data-current], .vk-step[data-state="current"], .vk-tl-item[data-state="current"], .vk-bit-row[data-state="current"], .vk-bar[data-state="current"], tr[data-state="current"], li[data-state="current"]'
   ))
-    add(el);
-  for (const el of stage.querySelectorAll('[tone="focus"]')) add(el);
+    addInk(el);
   // 圈选本身就是「看这里」：一个 ring 算一个焦点 region。
   // 但如果它圈的就是已经算过的焦点（聚光目标 / 高亮行），不再重复计数。
   for (const el of stage.querySelectorAll('vk-ring')) {
