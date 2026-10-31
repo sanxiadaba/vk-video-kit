@@ -66,6 +66,17 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
       if (fresh) return hit.html;
     }
     const html = (await fs.readFile(file)).toString('utf8');
+    // 库文件改了而这个进程还活着：它的 registry 是旧的，校验结论不可信。
+    // 以前这里会报"预编译失败"，看着像页面写错了，其实是服务器过时。
+    const nowId = computeServerId();
+    if (nowId !== serverId) {
+      const e = new Error(
+        '库文件已经改过，但 vk serve 还是启动时那一份（' + serverId + ' → ' + nowId + '）。\n' +
+          '重启服务器后这条错误会消失；如果仍然存在，才是页面真的写错了。'
+      );
+      e.staleServer = true;
+      throw e;
+    }
     const out = await transformHtml(html, { file, highlighter: await highlighter() });
     const deps = [];
     for (const d of out.deps || []) {

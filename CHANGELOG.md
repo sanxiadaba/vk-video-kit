@@ -4,10 +4,10 @@
 
 深度收敛：41 个标签 → 30，属性声明 749 → 580。
 
-- **删 13 个标签**：title / stat / quote / figure / tag / mark / panel / callout 进配方层
-  （`docs/recipes/`，真页面，过 `vk check`）；row / keys / spotlight / bytes·bits 并进
-  stack / inline / ring / cells。
-- **配方层**：被删的"一组东西的排版"不再占 API，改为可抄走的页面 + CSS。
+- **删 11 个标签**：title / stat / quote / figure / tag / mark / panel / callout 直接删除
+  （库不提供替代层，组合归项目自己的 CSS）；row / keys / spotlight 并进 stack / inline / ring。
+- **零组合**：库只出 30 个原语 + 令牌。曾经的"配方层"已删除——多维护一套组合语义，
+  等于把库变回角色标签，只是换了名字。
 - **数值单源**：`src/shared/limits.mjs`；对比度分三档（正文 7:1 / 标注 4.5 / 数据 4.5）。
 - **审计单源**：删掉 gate 里 190 行兜底、contract 里的第二套阈值、`vk.freeze()` 死调用、
   `lens==='plate'` 死分支。

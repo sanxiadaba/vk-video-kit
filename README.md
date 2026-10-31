@@ -5,7 +5,7 @@
 
 **English.** vk is a 4-layer visual language of 30 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is paper-only with one focus blue and one annotation plum, and the visual system is desktop-only, with a seven-step type ladder and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**30 个标签、四层（值 / 原语 / 机制 / 配方）、1920×1080，桌面 only，只有白纸。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**30 个原语标签、1920×1080，桌面 only，只有白纸。库不提供任何组合。**
 
 ![vk 标本册索引](docs/cover.png)
 
@@ -26,8 +26,7 @@
 | L3 数据与解析 | 12 | `vk-list` `vk-table` `vk-cells` `vk-bars` `vk-steps` `vk-timeline` `vk-code` `vk-term` `vk-diff` `vk-tree` `vk-asm` `vk-math` |
 | L4 关系 | 5 | `vk-edge` `vk-ring` `vk-pin` `vk-loupe` `vk-compare` |
 
-“一组东西的排版”（标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片）不占标签，
-见 [`docs/recipes/`](docs/recipes/index.html)——那是真页面，和组件一样过 `vk check`。
+“一组东西的排版”（标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片）不占标签，**库也不提供**——它们是项目自己的 CSS（一集片子一个 `film.css`）。
 规格在 [`docs/v14.md`](docs/v14.md)。
 
 ## 快速开始
