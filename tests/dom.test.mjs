@@ -47,17 +47,6 @@ test('numbers=none 真的隐藏行号并恢复源码内距', async () => {
   assert.equal(r.pad, '32px');
 });
 
-test('图窗加载失败显示自己的占位', async () => {
-  await reset('<vk-figure src="/nope.png" alt="x" caption="cap"></vk-figure>');
-  await sleep(300);
-  const r = await page.evaluate(() => ({
-    ph: getComputedStyle(document.querySelector('.vk-fig-ph')).display,
-    imgError: document.querySelector('vk-img')?.hasAttribute('data-error'),
-  }));
-  assert.equal(r.imgError, true);
-  assert.equal(r.ph, 'flex');
-});
-
 test('图标原型链名字不会把函数源码塞进 SVG', async () => {
   await reset('<vk-icon name="constructor"></vk-icon>');
   const html = await page.$eval('vk-icon svg', (e) => e.innerHTML);
@@ -278,16 +267,6 @@ test('diff 统一视图有旧/新双行号', async () => {
   assert.ok(n > 0);
 });
 
-test('figure 的原生 figcaption 进入图注，不混进媒体槽', async () => {
-  await reset('<vk-figure src="../assets/img/sample.svg" alt="图"><figcaption>原生图注</figcaption></vk-figure>');
-  const r = await page.evaluate(() => ({
-    caption: document.querySelector('.vk-fig-caption')?.textContent.trim(),
-    slot: document.querySelector('.vk-fig-slot')?.textContent.trim(),
-  }));
-  assert.equal(r.caption, '原生图注');
-  assert.equal(r.slot, '');
-});
-
 test('tree 折叠的是子列表，数量来自未过滤的真实条目', async () => {
   await reset(`<vk-tree collapsed="src"><script type="application/json" data-vk-tree>{"root":"app","entries":[
     {"name":"src","path":"src","depth":0,"type":"dir","ext":"","size":0},
@@ -326,6 +305,38 @@ test('7.0 深挖：bits 32 位字段、asm 顺序屏障', async () => {
   }));
   assert.equal(r.bits, 32);
   assert.equal(r.fields, 3);
+});
+
+test('窗头四档：browser 有地址栏 / plain 没三点 / none 没窗头', async () => {
+  await reset('<vk-window id="w" chrome="browser" url="127.0.0.1/x"><vk-text>内容</vk-text></vk-window>');
+  const look = () =>
+    page.evaluate(() => {
+      const w = document.querySelector('#w');
+      const hd = w.querySelector('.vk-hd');
+      return {
+        hd: hd ? getComputedStyle(hd).display : 'missing',
+        url: !!w.querySelector('.vk-br-url'),
+        dots: (() => {
+          const d = w.querySelector('.vk-dots');
+          return d ? getComputedStyle(d).display !== 'none' : false;
+        })(),
+      };
+    });
+  const browserMode = await look();
+  assert.notEqual(browserMode.hd, 'none', 'browser 要显示窗头');
+  assert.ok(browserMode.url, 'browser 要有地址栏');
+  assert.ok(browserMode.dots, 'browser 要有三点');
+
+  await page.evaluate(() => document.querySelector('#w').setAttribute('chrome', 'plain'));
+  await sleep(60);
+  const plain = await look();
+  assert.notEqual(plain.hd, 'none', 'plain 仍要有窗头');
+  assert.ok(!plain.dots, 'plain 不要三点（当卡片用）');
+
+  await page.evaluate(() => document.querySelector('#w').setAttribute('chrome', 'none'));
+  await sleep(60);
+  const none = await look();
+  assert.equal(none.hd, 'none', 'none 要把窗头整个收掉');
 });
 
 after(async () => {

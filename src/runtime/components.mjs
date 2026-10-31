@@ -195,213 +195,6 @@ export class VkCallout extends VkElement {
   }
 }
 
-/* ----------------------------------------------------------------- figure */
-
-export class VkFigure extends VkElement {
-  static watchSource = true;
-  static slot = true;
-  static slotHost = '.vk-fig-slot';
-  static renderedRoot = '.vk-win';
-
-  render() {
-    const src = this.getAttribute('src') || '';
-    const alt = this.getAttribute('alt') || '';
-    const caption = this.getAttribute('caption') || '';
-    const fig = this.getAttribute('fig') || '';
-    const url = this.getAttribute('url') || '';
-    const ratioRaw = this.getAttribute('ratio') || '16 / 9';
-    const rm = ratioRaw.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
-    // 终端截图可以很宽（4–6:1），海报可以很高；只拦明显写错的。
-    const ratio = rm && Number(rm[1]) / Number(rm[2]) >= 0.25 && Number(rm[1]) / Number(rm[2]) <= 8 ? ratioRaw : '16 / 9';
-    if (ratio !== ratioRaw) this._warnOnce('ratio', `的 ratio="${ratioRaw}" 不合法，按 16 / 9 处理`);
-    const fit = this.getAttribute('fit') || 'cover';
-    const focus = safePosition(this.getAttribute('position') || '50% 50%');
-    // 13.0：默认不套窗头。真实截图自带浏览器/终端外壳，再套一层假三点，
-    // 观众会先看到"这图贴歪了"。要窗头自己写 chrome="min"。
-    const chrome = this.getAttribute('chrome') || 'none';
-    const shadow = this.getAttribute('shadow') || 'none';
-    const bleed = this.getAttribute('bleed') || 'none';
-
-    if (!this._shell) {
-      this._captionSlot = this.querySelector(':scope > figcaption');
-      this._captionSlot?.remove();
-      const body = takeSlot(this);
-      this.innerHTML = win({
-        chrome: 'min',
-        cls: 'vk-fig-win',
-        attrs: ' role="figure"',
-        head: '<b class="vk-fig-fig"></b>',
-        inner: `<div class="vk-fig-body" data-vk-part="fig-body"><div class="vk-fig-slot"></div><div class="vk-fig-ph" aria-hidden="true">图未加载</div></div><figcaption class="vk-fig-caption"></figcaption><div class="vk-fig-url"></div>`,
-      });
-      this._shell = this.querySelector('.vk-win');
-      this._hd = this.querySelector('.vk-hd');
-      this._fig = this.querySelector('.vk-fig-fig');
-      this._cap = this.querySelector('.vk-fig-caption');
-      this._body = this.querySelector('.vk-fig-body');
-      this._slot = this.querySelector('.vk-fig-slot');
-      this._ph = this.querySelector('.vk-fig-ph');
-      this._url = this.querySelector('.vk-fig-url');
-      fillSlot(this._slot, body);
-    }
-
-    this._shell.dataset.chrome = chrome;
-    this._shell.dataset.shadow = shadow;
-    this._shell.dataset.fit = fit;
-    this.dataset.bleed = bleed;
-
-    this._fig.textContent = fig ? `FIG ${fig}` : '';
-    this._fig.style.display = fig ? '' : 'none';
-    if (this._captionSlot) this._cap.replaceChildren(...this._captionSlot.childNodes);
-    else this._cap.textContent = caption;
-    this._cap.style.display = caption || this._captionSlot ? '' : 'none';
-    this._body.style.aspectRatio = ratio;
-    this._shell.setAttribute('role', 'figure');
-    const label = caption || alt || '';
-    if (label) this._shell.setAttribute('aria-label', label);
-    else this._shell.removeAttribute('aria-label');
-
-    if (src) {
-      if (!this._img) {
-        this._img = document.createElement('vk-img');
-        this._img.className = 'vk-fig-img';
-        this._body.insertBefore(this._img, this._slot);
-        this._bindImg();
-      }
-      this._img.setAttribute('src', src);
-      this._img.setAttribute('alt', alt);
-      this._img.setAttribute('fit', fit);
-      this._img.setAttribute('position', focus);
-      if (this._img.hasAttribute('data-error')) this._shell.setAttribute('data-error', '');
-    } else if (this._img) {
-      this._img.remove();
-      this._img = null;
-      this._shell.removeAttribute('data-error');
-    }
-    if (src) this._shell.removeAttribute('data-empty');
-    else this._shell.setAttribute('data-empty', '');
-    this._ph.textContent = this._shell.hasAttribute('data-error')
-      ? '图未加载 · 检查路径'
-      : src ? '图未加载' : '还没有图片';
-
-    // 裁切框：crop 是"图片的百分比"，不是容器的百分比（cover / contain 下两者不等）。
-    if (!this._crop) {
-      this._crop = document.createElement('span');
-      this._crop.className = 'vk-fig-crop';
-      this._crop.setAttribute('aria-hidden', 'true');
-      this._cropLabel = document.createElement('span');
-      this._cropLabel.className = 'vk-fig-crop-label';
-      this._cropLabel.setAttribute('data-meta', '');
-      this._body.appendChild(this._crop);
-    }
-    if (this._cropLabel && this._cropLabel.parentNode !== this._hd) {
-      this._fig.after(this._cropLabel);
-    }
-    const cropLabel = this.getAttribute('crop-label') || '';
-    this._cropLabel.textContent = cropLabel;
-    this._cropLabel.style.display = cropLabel && this.getAttribute('crop') ? '' : 'none';
-    this._placeCrop();
-
-    if (url) {
-      this._url.textContent = url;
-      this._url.style.display = '';
-    } else {
-      this._url.textContent = '';
-      this._url.style.display = 'none';
-    }
-
-    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
-    this.style.width = Number.isFinite(w) ? w + 'px' : '100%';
-  }
-
-  /**
-   * crop 用"图片自己"的百分比。cover / contain 下图片的可见矩形与容器不等，
-   * 所以先按 object-fit / object-position 求出图片画在哪，再把图片坐标换成容器坐标。
-   */
-  _placeCrop() {
-    const cropEl = this._crop;
-    if (!cropEl) return;
-    const raw = (this.getAttribute('crop') || '').trim();
-    const p = raw.split(',').map((n) => Number(n.trim()));
-    const ok =
-      p.length === 4 &&
-      p.every(Number.isFinite) &&
-      p[2] > 0 &&
-      p[3] > 0 &&
-      p[0] >= 0 &&
-      p[1] >= 0 &&
-      p[0] + p[2] <= 100 &&
-      p[1] + p[3] <= 100;
-    if (!ok) {
-      cropEl.hidden = true;
-      if (raw) this._warnOnce('crop', `的 crop="${raw}" 不是 0–100 内的 x,y,w,h`);
-      return;
-    }
-    const [x, y, w, h] = p;
-    const body = this._body;
-    const W = body.clientWidth;
-    const H = body.clientHeight;
-    const img = body.querySelector('img');
-    const nw = img?.naturalWidth || 0;
-    const nh = img?.naturalHeight || 0;
-    let left = (x / 100) * W;
-    let top = (y / 100) * H;
-    let width = (w / 100) * W;
-    let height = (h / 100) * H;
-    if (nw && nh && W && H) {
-      const cs = getComputedStyle(img);
-      const contain = cs.objectFit === 'contain';
-      const scale = contain ? Math.min(W / nw, H / nh) : Math.max(W / nw, H / nh);
-      const dw = nw * scale;
-      const dh = nh * scale;
-      const pos = (cs.objectPosition || '50% 50%').split(/\s+/);
-      const frac = (t) => {
-        if (!t) return 0.5;
-        if (t.endsWith('%')) return parseFloat(t) / 100;
-        if (t === 'left' || t === 'top') return 0;
-        if (t === 'right' || t === 'bottom') return 1;
-        return 0.5;
-      };
-      const ox = (W - dw) * frac(pos[0]);
-      const oy = (H - dh) * frac(pos[1] ?? pos[0]);
-      left = ox + (x / 100) * dw;
-      top = oy + (y / 100) * dh;
-      width = (w / 100) * dw;
-      height = (h / 100) * dh;
-      // 只画容器里看得见的那一段；整块都在画面外就不画。
-      const x0 = Math.max(0, left);
-      const y0 = Math.max(0, top);
-      const x1 = Math.min(W, left + width);
-      const y1 = Math.min(H, top + height);
-      if (x1 - x0 < 2 || y1 - y0 < 2) {
-        cropEl.hidden = true;
-        return;
-      }
-      left = x0;
-      top = y0;
-      width = x1 - x0;
-      height = y1 - y0;
-    }
-    cropEl.hidden = false;
-    cropEl.style.left = `${left}px`;
-    cropEl.style.top = `${top}px`;
-    cropEl.style.width = `${width}px`;
-    cropEl.style.height = `${height}px`;
-  }
-
-  _bindImg() {
-    if (!this._img || this._img._vkFigureBound) return;
-    this._img._vkFigureBound = true;
-    const setPh = () => {
-      if (!this._ph) return;
-      this._ph.textContent = this._shell?.hasAttribute('data-error')
-        ? '图未加载 · 检查路径'
-        : this.hasAttribute('src') ? '图未加载' : '还没有图片';
-    };
-    this._img.addEventListener('vk:img-error', () => { this._shell?.setAttribute('data-error', ''); setPh(); });
-    this._img.addEventListener('vk:img-load', () => { this._shell?.removeAttribute('data-error'); setPh(); this._placeCrop(); });
-  }
-}
-
 /* ---------------------------------------------------------------- window */
 
 const WIN_CHROME = new Set(['min', 'none', 'plain', 'browser']);
@@ -1359,7 +1152,6 @@ export function defineComponents() {
   define('vk-title', VkTitle);
   define('vk-list', VkList);
   define('vk-callout', VkCallout);
-  define('vk-figure', VkFigure);
   define('vk-window', VkWindow);
   define('vk-tree', VkTree);
   define('vk-math', VkMath);
@@ -1368,26 +1160,11 @@ export function defineComponents() {
   define('vk-steps', VkSteps);
   define('vk-bits', VkBits);
   define('vk-bars', VkBars);
-  define('vk-tag', VkTag);
   define('vk-table', VkTable);
   define('vk-compare', VkCompare);
 }
 
 /** 标签：把裸文本包进 span，才能真的 ellipsis；图标保持固定宽。 */
-export class VkTag extends VkElement {
-  static watchSource = true;
-  static frame = false;
-
-  render() {
-    for (const n of [...this.childNodes]) {
-      if (n.nodeType !== 3 || !n.textContent.trim()) continue;
-      const span = document.createElement('span');
-      span.className = 'vk-tag-t';
-      this.replaceChild(span, n);
-      span.appendChild(n);
-    }
-  }
-}
 
 /** 原生 <table> 的宿主：内容不动，Frame 只负责 w；给每格写锚点。 */
 export class VkTable extends VkElement {

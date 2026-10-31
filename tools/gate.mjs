@@ -369,7 +369,7 @@ async function inspect() {
       if (document.querySelector('[data-vk-stale]')) special.push('有预编译数据过期');
       if (document.querySelector('[data-vk-parsed]')) special.push('源码被浏览器解析（漏转义）');
       if (document.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
-      if (document.querySelector('vk-img[data-error], vk-figure[data-error], .vk-fig-win[data-error]')) special.push('图片加载失败');
+      if (document.querySelector('vk-img[data-error], .vk-fig-win[data-error]')) special.push('图片加载失败');
 
       return { issues: out, special, page: [Math.round(pageRect.width), Math.round(pageRect.height)] };
     },

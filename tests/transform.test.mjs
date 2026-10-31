@@ -91,7 +91,7 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
     ['<vk-box w="-10"></vk-box>', /超出/],
     ['<vk-code lang="c" src="hello.c" typo="x"></vk-code>', /未知属性 typo/],
     ['<vk-icon name="not-a-real-icon"></vk-icon>', /没有图标/],
-    ['<vk-tag bare="false"></vk-tag>', /布尔属性/],
+    ['<vk-callout bare="false">x</vk-callout>', /布尔属性/],
     ['<vk-canvas layout="flow"></vk-canvas>', /未知属性 layout/],
     ['<vk-page w="800"></vk-page>', /未知属性 w/],
   ];

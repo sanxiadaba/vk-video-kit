@@ -158,14 +158,12 @@ const DEFAULTS = {
   'vk-icon': { name: 'circle-help', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
-  'vk-mark': { variant: 'highlight', tone: 'info' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-title': { size: 'title', align: 'left', level: '2' },
   'vk-list': { variant: 'bullet', gap: 'sm' },
-  'vk-tag': { tone: 'neutral', size: 'label', emphasis: 'solid' },
   'vk-callout': { tone: 'info', size: 'body', mass: 'normal' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
@@ -178,7 +176,6 @@ const DEFAULTS = {
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
   'vk-compare': { ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%' },
-  'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'none', shadow: 'none', bleed: 'none' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
@@ -302,19 +299,6 @@ export const TAGS = {
       'orientation': oneOf('horizontal', 'vertical'),
     },
   },
-  'vk-mark': {
-    name: '标记',
-    layer: 'elements',
-    summary: '行内标注：高亮、下划线、删除线、圈。只包文字，不改布局。',
-    content: {
-      kind: 'text',
-      target: 'vk-mark',
-      fields: [{ name: 'text', label: '标记文字', type: 'textarea', text: true }],
-    },
-    attrs: {
-      'tone': oneOf('info', 'ok', 'err', 'warn'),
-    },
-  },
   'vk-window': {
     name: '窗',
     layer: 'elements',
@@ -436,22 +420,6 @@ export const TAGS = {
       'bare': bool(),
           'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
     },
-  },
-  'vk-tag': {
-    name: '标签',
-    layer: 'components',
-    summary: '一个小标签：状态、分类、元信息。两档尺寸，可带图标。',
-    content: {
-      kind: 'text',
-      target: 'vk-tag',
-      fields: [{ name: 'text', label: '标签文字', type: 'text', text: true }],
-    },
-    attrs: {
-      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
-      'size': oneOf('label', 'body'),
-      'emphasis': oneOf('solid', 'soft', 'ghost'),
-      'bare': bool(),
-        },
   },
   'vk-callout': {
     name: '提示框',
@@ -587,36 +555,6 @@ export const TAGS = {
       'position': text(),
       'label-a': text(),
       'label-b': text(),
-    },
-  },
-  'vk-figure': {
-    name: '图窗',
-    layer: 'components',
-    summary: '画框里的图：标题栏、比例、说明、来源。',
-    content: {
-      kind: 'text',
-      target: 'vk-figure',
-      fields: [
-        { name: 'src', label: '图片地址', type: 'text', attr: 'src' },
-        { name: 'alt', label: '替代文字', type: 'text', attr: 'alt' },
-        { name: 'caption', label: '图注', type: 'text', attr: 'caption' },
-        { name: 'fig', label: '图号', type: 'text', attr: 'fig' },
-        { name: 'url', label: '来源', type: 'text', attr: 'url' },
-      ],
-    },
-    attrs: {
-      'src': text(),
-      'alt': text(),
-      'caption': text(),
-      'fig': text(),
-      'url': text(),
-      'ratio': text(),
-      'crop': text(),
-      'crop-label': text(),
-      'fit': oneOf('cover', 'contain', 'none'),
-      'chrome': oneOf('none', 'min', 'plain'),
-      'shadow': oneOf('none', 'sm', 'md', 'lg'),
-      'bleed': oneOf('none', 'left', 'right', 'full', 'y'),
     },
   },
   'vk-tree': {
@@ -908,7 +846,7 @@ export const TAGS = {
    块级组件统一拿 Frame 的 w/h/grow/fill/overflow/measure；
    行内组件（icon/tag/mark/keys）不拿 w；
    自定义几何（page/annotate/edge/canvas/img）自己声明。 */
-const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-inline']);
+const INLINE = new Set(['vk-icon', 'vk-inline']);
 const CUSTOM = new Set([
   'vk-page',
   'vk-edge',

@@ -153,9 +153,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-rule`** · 分隔线 — 一根线。线宽三档；纯装饰或语义分隔。
   - 属性：`orientation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant` · `tone` · `dash`
   - 例：`<vk-rule>`
-- **`vk-mark`** · 标记 — 行内标注：高亮、下划线、删除线、圈。只包文字，不改布局。
-  - 属性：`tone` · `variant`
-  - 例：`<vk-mark variant="highlight">高亮</vk-mark>`
 - **`vk-window`** · 窗 — 一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。
   - 属性：`mass` · `title` · `url` · `chrome` · `tone` · `pad` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">`
@@ -188,9 +185,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：条目写成 `<li>`
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="sm">`
-- **`vk-tag`** · 标签 — 一个小标签：状态、分类、元信息。两档尺寸，可带图标。
-  - 属性：`tone` · `size` · `emphasis` · `bare`
-  - 例：`<vk-tag>int</vk-tag>`
 - **`vk-callout`** · 提示框 — 提示块：说明、正确、注意、错误。色条 + 淡底 + 图标，正文仍是墨色。
   - 属性：`tone` · `title` · `size` · `bare` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `mass`
   - 例：`<vk-callout tone="warn" title="提示框标题" size="body">提示框内容，只做占位。</vk-callout>`
@@ -218,9 +212,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-compare`** · 对照 — 前后对照：两张图叠在同一个框里，上面那张按 split 裁掉一部分；静态就是「改到一半」的那一帧。
   - 属性：`a` · `b` · `alt` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后">`
-- **`vk-figure`** · 图窗 — 画框里的图：标题栏、比例、说明、来源。
-  - 属性：`src` · `alt` · `caption` · `fig` · `url` · `ratio` · `crop` · `crop-label` · `fit` · `chrome` · `shadow` · `bleed` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `position`
-  - 例：`<vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）

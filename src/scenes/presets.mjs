@@ -56,12 +56,6 @@ export const PRESETS = {
     { label: '宽行距', attrs: { 'gap-y': 'xl' } },
     { label: '居中', attrs: { align: 'center' } },
   ],
-  'vk-mark': [
-    { label: '下划线', attrs: { variant: 'underline' } },
-    { label: '删除线', attrs: { variant: 'strike' } },
-    { label: '圈', attrs: { variant: 'circle' } },
-    { label: '错误色', attrs: { tone: 'err' } },
-  ],
   'vk-edge': [
     { label: '曲线', attrs: { variant: 'curve' } },
     { label: '直线', attrs: { variant: 'line' } },
@@ -85,10 +79,6 @@ export const PRESETS = {
     { label: '有序', attrs: { variant: 'ordered' } },
     { label: '分隔线', attrs: { rule: '' } },
     { label: '无符号', attrs: { bare: '' } },
-  ],
-  'vk-tag': [
-    { label: '小号', attrs: { size: 'label' } },
-    { label: '无边框', attrs: { bare: '' } },
   ],
   'vk-callout': [
     { label: '说明', attrs: { tone: 'info' } },
@@ -124,16 +114,6 @@ export const PRESETS = {
   'vk-math': [
     { label: '更小', attrs: { size: 'label' } },
     { label: '行内', attrs: { display: null } },
-  ],
-  'vk-figure': [
-    { label: '裁切右下', attrs: { crop: '45,45,50,50' } },
-    { label: '无裁切框', attrs: { crop: null } },
-    { label: '方图', attrs: { ratio: '1 / 1' } },
-    { label: '4:3', attrs: { ratio: '4 / 3' } },
-    { label: '无头', attrs: { chrome: 'none' } },
-    { label: '带来源', attrs: { url: 'zh.wikipedia.org' } },
-    { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
-    { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
   ],
   'vk-window': [
     { label: '无窗头', attrs: { chrome: 'none' } },

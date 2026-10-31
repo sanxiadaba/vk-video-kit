@@ -11,7 +11,7 @@ test('registry 自检通过', () => {
  * 标签数是收敛指标，不是常数：14.0 要求它只减不增。
  * 写死一个数字会让每次收敛都要改测试；写"只减不增"才是在约束设计。
  */
-const TAG_CEILING = 37;
+const TAG_CEILING = 34;
 
 test(`标签数不超过 ${TAG_CEILING}（只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);

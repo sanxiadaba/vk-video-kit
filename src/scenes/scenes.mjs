@@ -92,24 +92,6 @@ export const SCENES = [
 </vk-box>`,
   },
 
-  {
-    tag: 'vk-tag',
-    body: s`
-<vk-stack gap="sm" align="start">
-<vk-stack direction="row" gap="sm" align="center">
-  <vk-tag>int</vk-tag>
-  <vk-tag tone="info">char</vk-tag>
-  <vk-tag tone="neutral" emphasis="soft">4 B</vk-tag>
-  <vk-tag tone="neutral" emphasis="soft">指针</vk-tag>
-  <vk-tag tone="neutral" emphasis="soft" size="label">0x10</vk-tag>
-</vk-stack>
-<vk-stack direction="row" gap="sm" align="center">
-  <vk-tag tone="ok">通过</vk-tag>
-  <vk-tag tone="warn">警告</vk-tag>
-  <vk-tag tone="err">错误</vk-tag>
-</vk-stack>
-</vk-stack>`,
-  },
 
   {
     tag: 'vk-table',
@@ -235,13 +217,6 @@ export const SCENES = [
   <vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后"></vk-compare>
 </vk-grid>`,
   },
-  {
-    tag: 'vk-figure',
-    body: s`
-<div class="spec-w1100"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
-    strip: s`
-<div class="spec-w600"><vk-figure fig="01" caption="一张 16:9 的图" ratio="16 / 9" crop="76.25,32.22,12.5,23.33" crop-label="裁切区" src="../assets/img/sample.svg" alt="一张示例图"></vk-figure></div>`,
-  },
 
   {
     tag: 'vk-window',
@@ -251,7 +226,7 @@ export const SCENES = [
     <vk-text size="subhead" weight="bold">示例内容</vk-text>
     <vk-text size="body" ink="secondary">示例文字。</vk-text>
     <vk-stack direction="row" gap="sm" align="center">
-      <vk-tag tone="ok">200 OK</vk-tag>
+      <vk-text size="label">200 OK</vk-text>
       <vk-text size="label" mono ink="muted">text/html · 12 B</vk-text>
     </vk-stack>
   </vk-stack>
@@ -321,13 +296,6 @@ export const SCENES = [
 <vk-img class="spec-w1200" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl"></vk-img>`,
   },
 
-  {
-    tag: 'vk-mark',
-    body: s`
-<vk-box class="spec-w1120" surface="none">
-  <vk-text size="body" measure="body">示例文字：<vk-mark variant="highlight">高亮</vk-mark>、<vk-mark variant="underline">下划线</vk-mark>、<vk-mark variant="circle">圈选</vk-mark>。</vk-text>
-</vk-box>`,
-  },
 
   {
     tag: 'vk-rule',

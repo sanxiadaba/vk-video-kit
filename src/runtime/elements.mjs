@@ -197,5 +197,4 @@ export function defineElements() {
   define('vk-text', VkText);
   define('vk-inline', VkInline);
   define('vk-rule', VkRule);
-  define('vk-mark', plain());
 }

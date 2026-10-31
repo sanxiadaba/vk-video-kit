@@ -103,7 +103,7 @@ test('rise 的位移跟着体量走', async () => {
 <body><vk-page dur="2">
   <vk-stack gap="md">
     <vk-text id="small" size="body" at="0" enter="rise" dur="1">一行正文</vk-text>
-    <vk-stat id="big" value="9" size="mega" at="0" enter="rise" dur="1"></vk-stat>
+    <vk-text id="big" size="mega" at="0" enter="rise" dur="1">9</vk-text>
     <vk-stack id="tall" at="0" enter="rise" dur="1" style="height:600px"></vk-stack>
   </vk-stack>
 </vk-page><script src="dist/vk.js"></script></body></html>`,

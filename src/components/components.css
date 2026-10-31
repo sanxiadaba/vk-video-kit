@@ -12,7 +12,6 @@
 vk-code,
 vk-term,
 vk-diff,
-vk-figure,
 vk-window,
 vk-bits,
 vk-bars,
@@ -209,72 +208,6 @@ vk-list[gap='3xl'] .vk-list { --vk-list-gap: var(--vk-s8); }
   font-weight: var(--vk-w-med);
   line-height: 1.95;
   color: var(--vk-ink-3);
-}
-
-/* ---------------------------------------------------------------- vk-tag */
-
-vk-tag {
-  --vk-tag-bg: transparent;
-  --vk-tag-line: var(--vk-line-3);
-  --vk-tag-solid: var(--vk-ink-1);
-  display: inline-flex;
-  align-items: center;
-  align-self: flex-start;
-  gap: var(--vk-s1);
-  box-sizing: border-box;
-  max-width: 100%;
-  height: 56px;
-  padding: 0 var(--vk-s1);
-  border: 2px solid var(--vk-tag-line);
-  border-radius: var(--vk-r-1);
-  background: var(--vk-tag-bg);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
-  line-height: 1;
-  font-weight: var(--vk-w-med);
-  color: var(--vk-ink-1);
-  vertical-align: middle;
-  white-space: nowrap;
-  overflow: hidden;
-}
-vk-tag .vk-tag-t {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  line-height: 1.2;
-}
-vk-tag[size='label'] .vk-tag-t { line-height: 1.15; }
-vk-tag[size='label'] { height: 56px; padding: 0 var(--vk-s1); font-size: var(--vk-t-label); border-radius: var(--vk-r-1); }
-vk-tag[size='body'] { height: 72px; padding: 0 var(--vk-s2); font-size: var(--vk-t-body); border-radius: var(--vk-r-1); }
-vk-tag .vk-icon { flex: 0 0 auto; width: 1em; height: 1em; font-size: inherit; }
-vk-tag .vk-icon svg { width: 100%; height: 100%; }
-
-vk-tag[tone='info'] { --vk-tag-bg: var(--vk-info-soft); --vk-tag-line: var(--vk-info-line); --vk-tag-solid: var(--vk-info); }
-vk-tag[tone='focus'] { --vk-tag-bg: var(--vk-focus-soft); --vk-tag-line: var(--vk-focus-line); --vk-tag-solid: var(--vk-focus); }
-vk-tag[tone='ok'] { --vk-tag-bg: var(--vk-ok-weak); --vk-tag-line: var(--vk-ok); --vk-tag-solid: var(--vk-ok); }
-vk-tag[tone='err'] { --vk-tag-bg: var(--vk-err-weak); --vk-tag-line: var(--vk-err); --vk-tag-solid: var(--vk-err); }
-vk-tag[tone='warn'] { --vk-tag-bg: var(--vk-warn-weak); --vk-tag-line: var(--vk-warn); --vk-tag-solid: var(--vk-warn); }
-vk-tag[tone='neutral'][emphasis='soft'] { background: var(--vk-surface-2); border-color: var(--vk-line-2); color: var(--vk-ink-3); }
-/* 强度三档：ghost 只剩字，soft 是淡底，solid 是实心。tone 只决定色相。 */
-vk-tag[emphasis='ghost'] {
-  background: transparent;
-  border-color: transparent;
-  color: var(--vk-ink-3);
-}
-vk-tag[emphasis='solid'] {
-  background: var(--vk-tag-solid);
-  border-color: var(--vk-tag-solid);
-  color: #fff;
-}
-
-/* bare 是"只剩字"，必须把 ink 反色一起收掉。 */
-vk-tag[bare] {
-  padding-left: 0;
-  padding-right: 0;
-  border-color: transparent;
-  background: none;
-  color: var(--vk-ink-2);
 }
 
 /* ------------------------------------------------------------ vk-callout */
@@ -761,110 +694,6 @@ vk-math[size='label'] .vk-math { font-size: var(--vk-t-label); }
   color: var(--vk-ink-1);
   border-left: 4px solid var(--vk-err);
   padding-left: var(--vk-s2);
-}
-
-/* ------------------------------------------------------------- vk-figure */
-
-.vk-fig-win .vk-hd b {
-  padding: 2px 10px;
-  border-radius: 4px;
-  background: var(--vk-surface-2);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
-  font-weight: var(--vk-w-bold);
-  letter-spacing: 0.08em;
-  color: var(--vk-ink-1);
-}
-.vk-fig-caption {
-  padding: var(--vk-s2) var(--vk-s4);
-  border-top: var(--vk-line-w) solid var(--vk-win-rule);
-  font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-body);
-  color: var(--vk-win-fg-2);
-  overflow-wrap: anywhere;
-  text-wrap: pretty;
-}
-.vk-fig-body {
-  position: relative;
-  overflow: hidden;
-  background: var(--vk-surface-2);
-}
-/* 裁切框：2px 钴蓝 + 框外压暗，只服务"看这一块"。百分比定位，不依赖原图尺寸。 */
-.vk-fig-crop {
-  box-sizing: border-box;
-  position: absolute;
-  z-index: 3;
-  border: 4px solid var(--vk-focus);
-  border-radius: 4px;
-  box-shadow: 0 0 0 9999px rgba(11, 15, 20, 0.16);
-  pointer-events: none;
-}
-.vk-fig-crop-label {
-  position: static;
-  margin-left: 12px;
-  padding: 0 12px;
-  border: 2px solid var(--vk-focus);
-  border-radius: var(--vk-r-1);
-  background: var(--vk-surface-1);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
-  font-weight: var(--vk-w-med);
-  line-height: 38px;
-  color: var(--vk-focus);
-  white-space: nowrap;
-  box-shadow: none;
-}
-.vk-fig-img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-/* 场与层：图版的三件事——投影、出血、像素对齐。
-   1px 的边框在手机 0.38× 下等于没有，所以层次只能靠投影（永远不用纯黑）。 */
-.vk-fig-win[data-shadow='sm'] { box-shadow: var(--vk-elev-1); }
-.vk-fig-win[data-shadow='md'] { box-shadow: 0 8px 24px -12px rgba(11, 15, 20, 0.18), 0 0 0 2px rgba(11, 15, 20, 0.04); }
-.vk-fig-win[data-shadow='lg'] { box-shadow: 0 32px 80px -40px rgba(11, 15, 20, 0.35), 0 0 0 2px rgba(11, 15, 20, 0.05); }
-.vk-fig-win[data-fit='none'] .vk-fig-img { object-fit: none; }
-.vk-fig-win[data-fit='contain'] .vk-fig-img { object-fit: contain; }
-
-/* 出血：往纸边上顶。负内距抵消 .vk-page 的 120/96，只允许物证类物件这么干。 */
-vk-figure[bleed='left'] { margin-left: calc(-1 * var(--vk-safe-x)); }
-vk-figure[bleed='right'] { margin-right: calc(-1 * var(--vk-safe-x)); }
-vk-figure[bleed='full'] {
-  margin-left: calc(-1 * var(--vk-safe-x));
-  margin-right: calc(-1 * var(--vk-safe-x));
-}
-vk-figure[bleed='y'] { margin-bottom: calc(-1 * var(--vk-safe-y)); }
-vk-figure[bleed='full'] .vk-fig-win,
-vk-figure[bleed='left'] .vk-fig-win,
-vk-figure[bleed='right'] .vk-fig-win { border-radius: 0; }
-
-.vk-fig-ph {
-  position: absolute;
-  inset: 0;
-  display: none;
-  align-items: center;
-  justify-content: center;
-  font-size: var(--vk-t-body);
-  color: var(--vk-ink-4);
-  background: var(--vk-surface-2);
-}
-.vk-fig-win[data-error] .vk-fig-ph { display: flex; }
-.vk-fig-win[data-empty] .vk-fig-ph { display: flex; }
-vk-figure:has(vk-img[data-error]) .vk-fig-ph { display: flex; }
-vk-figure:has(vk-img[data-error]) .vk-fig-img { visibility: hidden; }
-.vk-fig-win[data-error] .vk-fig-img { visibility: hidden; }
-.vk-fig-url {
-  min-width: 0;
-  padding: var(--vk-s2) var(--vk-s3);
-  border-top: var(--vk-line-w) solid var(--vk-win-rule);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
-  color: var(--vk-win-meta-2);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 /* --------------------------------------------------- 窗的地址栏（browser） */
@@ -1631,8 +1460,6 @@ vk-bars[mass='hero'] .vk-bar-t { height: 32px; }
 .vk-bytes[data-mass='hero'] .vk-bytes-row { min-height: 64px; }
 
 /* tag 的三档强度：中性标签也要有可见差异。 */
-vk-tag[emphasis='soft'] { background: var(--vk-surface-2); border-color: var(--vk-line-2); }
-vk-tag[emphasis='ghost'] { background: transparent; border-color: transparent; }
 
 /* 图号是窗头里的一枚 chip，不能比窗头高。 */
 .vk-fig-fig {

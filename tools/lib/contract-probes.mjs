@@ -31,14 +31,6 @@ export const PROBES = {
       why: '放大的是哪一点，直接翻成 background-position。',
     },
   },
-  'vk-tag': {
-    // label 是默认态；body 与 subhead 是两个非默认档。
-    size: {
-      values: ['body'],
-      effect: { on: 'vk-tag', kind: 'style', prop: 'font-size' },
-      why: '标签两档：label 36 / body 48——再大就不是标签了。',
-    },
-  },
   'vk-grid': {
     tracks: {
       values: ['1fr 2fr'],
@@ -170,28 +162,6 @@ export const PROBES = {
       why: '聚光让非目标行透明度下降。',
     },
   },
-  'vk-figure': {
-    ratio: {
-      values: ['2 / 1'],
-      effect: { on: 'vk-figure .vk-fig-body', kind: 'style', prop: 'aspect-ratio', expect: '2 / 1' },
-      why: '比例写在 .vk-fig-body 的 aspect-ratio 上。',
-    },
-    position: {
-      values: ['30% 70%'],
-      effect: { on: 'vk-figure img', kind: 'style', prop: 'object-position', expect: /30%\s+70%/ },
-      why: '焦点由内部 vk-img 的 object-position 表达。',
-    },
-    crop: {
-      values: ['20,20,30,30'],
-      effect: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
-      why: '裁切框是 .vk-fig-crop 覆盖层；标本已经有框，换个矩形就是 left/top/width/height 的变化。',
-    },
-    'crop-label': {
-      values: ['s[5]'],
-      effect: { on: '.vk-fig-crop-label', kind: 'text' },
-      why: '标签是裁切框里的一个覆盖元素；没有标签时整块不渲染。',
-    },
-  },
   'vk-bits': {},
   'vk-rule': {
     // neutral 就是默认态；只断 info / focus 这两个非默认值。
@@ -292,7 +262,9 @@ export const PROBES = {
 export const EFFECT_OVERRIDES = {
   'vk-img.ratio': { on: 'vk-img .vk-img', kind: 'style', prop: 'aspect-ratio', expect: '2 / 1' },
   'vk-code.fold': { on: 'vk-code', kind: 'dom', prop: '.vk-line.is-fold' },
-  'vk-figure.ratio': { on: 'vk-figure .vk-fig-body', kind: 'style', prop: 'aspect-ratio', expect: '2 / 1' },
+  // chrome 的四个值改的是三处不同元素（none 藏窗头、min/dialog 藏地址栏），
+  // 单一 prop 量不了它。这里只要求"改了就变"，具体行为由 dom.test 的窗头用例守着。
+  'vk-window.chrome': { kind: 'any', reason: '四个值改三处元素，单一属性量不了' },
 };
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
@@ -314,7 +286,6 @@ export const VISUAL_EXEMPT = {
   'vk-tree.mass': 'hero 档把文件树撑到整帧，标本台放不下；只断言行高变了。',
   'vk-bits.mass': 'hero 档把位图行撑高，标本台放不下；只断言行高变了。',
   'vk-asm.mass': 'hero 档把反汇编撑高，标本台装不下；只断言行高变了。',
-  'vk-figure.bleed': '出血是负边距，只改几何不改墨；越界由真实帧负责。',
 };
 
 /**
@@ -325,11 +296,7 @@ export const EFFECT_ANY = [
   { tag: 'vk-window', attr: 'url', reason: 'url 只在 chrome="browser" / "dialog" 时出现；单场景无法同时改两个属性。' },
   { tag: 'vk-timeline', attr: 'lanes', reason: 'lanes 只在 variant="lanes" 时生效；单场景无法同时改两个属性。' },
   { tag: 'vk-code', attr: 'fold-note', reason: 'fold-note 只在 fold 存在时出现；单场景无法同时改两个属性。' },
-  {
-    tag: 'vk-mark',
-    attr: 'variant',
-    reason: 'variant 与 type 共用同一组 CSS；三种形态分别用底色/内阴影/删除线，没有单一可比属性。',
-  },
+
   {
     tag: 'vk-list',
     attr: 'variant',
