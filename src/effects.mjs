@@ -58,16 +58,6 @@ export const EFFECTS = {
     elevation: { on: '.vk-panel', kind: 'style', prop: 'box-shadow' },
   },
 
-  'vk-stat': {
-    value: { on: '.vk-stat-v', kind: 'text' },
-    unit: { on: '.vk-stat-u', kind: 'text' },
-    label: { on: '.vk-stat-l', kind: 'text' },
-    size: { on: '.vk-stat-v', kind: 'style', prop: 'font-size' },
-    tone: { on: '.vk-stat-v', kind: 'style', prop: 'color' },
-    mark: { on: '.vk-stat', kind: 'attr', prop: 'data-mark' },
-    align: { on: '.vk-stat', kind: 'style', prop: 'text-align' },
-    format: { on: '.vk-stat-v', kind: 'text' },
-  },
 
   'vk-bits': {
     mass: { on: '.vk-bit-row', kind: 'style', prop: 'min-height', skipVisual: true },
@@ -208,11 +198,6 @@ export const EFFECTS = {
     h: { on: 'vk-box', kind: 'geometry', prop: 'height', skipVisual: true },
   },
 
-  'vk-title': {
-    size: { on: '.vk-title-main', kind: 'style', prop: 'font-size' },
-    align: { on: '.vk-title', kind: 'style', prop: 'text-align' },
-    level: { on: '.vk-title-main', kind: 'attr', prop: 'aria-level' },
-  },
 
   'vk-table': {
     stripe: { on: 'tbody tr', kind: 'style', prop: 'background-color' },

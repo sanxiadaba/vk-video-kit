@@ -30,9 +30,11 @@ body.r-doc {
   align-items: center;
   gap: var(--vk-s2);
   margin: 0 0 var(--vk-s2);
+  font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);
-  line-height: var(--vk-lh-label);
-  letter-spacing: 0.08em;
+  font-weight: var(--vk-w-med);
+  line-height: 1.2;
+  letter-spacing: 0.14em;
   color: var(--vk-ink-3);
 }
 .r-title-main {
@@ -42,8 +44,15 @@ body.r-doc {
   line-height: var(--vk-lh-tight);
   letter-spacing: var(--vk-ls-tight);
   color: var(--vk-ink-1);
+  text-wrap: balance;
 }
+.r-title--mega .r-title-main { font-size: var(--vk-t-mega); line-height: 1.02; letter-spacing: -0.04em; }
 .r-title--subhead .r-title-main { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-snug); }
+.r-title--body .r-title-main { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); font-weight: var(--vk-w-med); }
+.r-title--center { text-align: center; }
+.r-title--center .r-title-main { margin-inline: auto; }
+.r-title--center .r-eyebrow { justify-content: center; }
+.r-title--center .r-title-sub { margin-left: auto; margin-right: auto; }
 .r-title--hero .r-title-main { font-size: var(--vk-t-hero); line-height: 1.04; letter-spacing: -0.035em; }
 .r-title-sub {
   margin: var(--vk-s3) 0 0;
@@ -55,7 +64,7 @@ body.r-doc {
 
 /* -------------------------------------------------------------------- 指标 */
 /* 一个数、一个单位、一句它是什么。单位是标注，所以小一号、灰一档。 */
-.r-stat { display: flex; flex-direction: column; gap: var(--vk-s1); }
+.r-stat { display: flex; flex-direction: column; gap: 0; }
 .r-stat-value {
   font-size: var(--vk-t-hero);
   font-weight: var(--vk-w-bold);
@@ -65,10 +74,14 @@ body.r-doc {
   color: var(--vk-ink-1);
 }
 .r-stat--focus .r-stat-value { color: var(--vk-focus); }
-.r-stat--subhead .r-stat-value { font-size: var(--vk-t-subhead); }
+.r-stat--mega .r-stat-value { font-size: var(--vk-t-mega); line-height: 1.02; letter-spacing: -0.04em; }
+.r-stat--hero .r-stat-value { font-size: var(--vk-t-hero); line-height: 1.04; letter-spacing: -0.035em; }
+.r-stat--title .r-stat-value { font-size: var(--vk-t-title); line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); }
+.r-stat--body .r-stat-value { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
+.r-stat--subhead .r-stat-value { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-snug); }
 .r-stat-line { display: flex; align-items: baseline; gap: var(--vk-s1); }
-.r-stat-unit { font-size: var(--vk-t-body); color: var(--vk-ink-3); }
-.r-stat-label { font-size: var(--vk-t-label); color: var(--vk-ink-3); }
+.r-stat-unit { font-size: var(--vk-t-label); line-height: 1.4; color: var(--vk-ink-3); }
+.r-stat-label { font-size: var(--vk-t-label); line-height: 1.4; color: var(--vk-ink-3); }
 
 /* -------------------------------------------------------------------- 引文 */
 .r-quote {

@@ -139,7 +139,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
-  - 属性：`size` · `weight` · `mono` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink`
+  - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink`
   - 例：`<vk-text size="body" measure="body">示例文字。这一段只展示字号、行高和行宽。</vk-text>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
@@ -159,9 +159,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-panel`** · 区域 — 一块区域：卡片或章节带。只提供底、边和三个槽（header / footer / 其余进 body），不规定里面怎么排。
   - 属性：`variant` · `surface` · `pad` · `border` · `radius` · `n` · `elevation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-panel n="1" surface="sf-1">`
-- **`vk-stat`** · 指标 — 一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。
-  - 属性：`value` · `unit` · `label` · `size` · `tone` · `mark` · `format` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-stat value="52,980" unit="字节" label="预处理后" size="hero">`
 
 ### L2 排布 · 只决定在哪、多大
 
@@ -177,9 +174,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 ### L3 器械 · 渲染一种编程数据的形状
 
-- **`vk-title`** · 标题 — 标题：一句话主张 + 可选副题。
-  - 属性：`index` · `eyebrow` · `sub` · `level` · `size` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">示例标题</vk-title>`
 - **`vk-list`** · 列表 — 列表。要点 / 清单 / 定义；条目写成 <li>。步骤用 vk-steps。
   - 属性：`rule` · `bare` · `gap` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant`
   - 子节点：条目写成 `<li>`

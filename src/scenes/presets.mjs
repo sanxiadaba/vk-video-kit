@@ -68,11 +68,6 @@ export const PRESETS = {
   'vk-canvas': [
     { label: '内缩', attrs: { 'pad-px': '48' } },
   ],
-  'vk-title': [
-    { label: '更大', attrs: { size: 'title' } },
-    { label: '更小', attrs: { size: 'subhead' } },
-    { label: '居中', attrs: { align: 'center' } },
-  ],
   'vk-list': [
     { label: '清单', attrs: { variant: 'check' } },
     { label: '定义', attrs: { variant: 'define' } },
@@ -151,12 +146,6 @@ export const PRESETS = {
     { label: '章节带', attrs: { variant: 'band' } },
     { label: '更重的面', attrs: { surface: 'sf-2' } },
     { label: '无编号', attrs: { n: '' } },
-  ],
-  'vk-stat': [
-    { label: '更大', attrs: { size: 'mega' } },
-    { label: '带图例点', attrs: { mark: 'dot', tone: 'focus' } },
-    { label: '千分位', attrs: { value: '52980', format: 'thousands' } },
-    { label: '十六进制', attrs: { value: '72', format: 'hex' } },
   ],
   'vk-bits': [
     { label: '索引反向', attrs: { index: '0-7' } },

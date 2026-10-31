@@ -11,7 +11,7 @@
 /* ---------------------------------------------------- 生成内容的默认值
    组件吐出来的 <p>/<ul>/<figure> 不许带 UA 外边距：
    纵向节奏只能来自布局 gap 或组件显式声明的 margin。 */
-:where(vk-title, vk-text, vk-list, vk-callout, vk-code, vk-term, vk-diff,
+:where(vk-text, vk-list, vk-callout, vk-code, vk-term, vk-diff,
   vk-table, vk-math, vk-window, vk-tree, vk-keys,
   vk-cells, vk-bytes, vk-steps, vk-quote, vk-bits, vk-bars)
   :where(p, h1, h2, h3, h4, h5, h6, ul, ol, dl, figure, blockquote, pre) {
@@ -137,7 +137,6 @@ vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 /* 散文默认按字号取行宽；作者可以用 measure 覆盖。 */
 vk-text { max-width: var(--vk-measure-body); }
 /* 标题也有默认行宽：长标题不该铺满 1680，measure=none 才会填满。 */
-vk-title { max-width: var(--vk-measure-title); }
 vk-text[measure='label'] { max-width: var(--vk-measure-label); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
 vk-text[measure='subhead'] { max-width: var(--vk-measure-subhead); }
@@ -178,12 +177,6 @@ vk-inline[variant='link'] {
 /* em 只有一个意思：作者想让观众看这里。它属于标注，用梅紫。
    但它不能比"当前行"更响：只给一条梅紫下划线，整块底留给 vk-mark。 */
 vk-text em,
-vk-title em {
-  font-style: normal;
-  background: none;
-  box-shadow: inset 0 -0.08em 0 var(--vk-info);
-  padding: 0;
-}
 
 /* muted 正文里的 em 改用更淡的下划线：底太浅仍只有 4.45，不如换一种标注标记。 */
 vk-text[ink='muted'] em {

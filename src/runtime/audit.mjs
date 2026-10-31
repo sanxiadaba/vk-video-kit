@@ -317,7 +317,7 @@ export function auditPage(root = document) {
   }
 
   // 孤行：多行文本的最后一行少于 4 个汉字宽，读起来像排版事故。
-  for (const el of stage.querySelectorAll('vk-text, .vk-title-sub, .vk-callout-bd, .vk-list li, .vk-quote-bd')) {
+  for (const el of stage.querySelectorAll('vk-text, .r-title-sub, .vk-callout-bd, .vk-list li')) {
     if (el.closest('[data-meta]') || el.closest('svg')) continue;
     const text = (el.textContent || '').replace(/\s+/g, '').trim();
     if (text.length < 12) continue;
@@ -435,15 +435,8 @@ export function metrics(root = document) {
     const safe = safeBox(stage);
     const sr = safe.getBoundingClientRect();
     const kids = [...(safe.children || [])].filter((el) => el.getBoundingClientRect().height > 0);
-    // 内容 = 标题块之后的第一个可见块（标题块通常在 vk-stack 里）
-    const title = safe.querySelector('vk-title');
-    let first = null;
-    if (title) {
-      let n = title.nextElementSibling;
-      while (n && !n.getBoundingClientRect().height) n = n.nextElementSibling;
-      first = n;
-    }
-    if (!first) first = kids.find((el) => !el.matches?.('vk-title')) || kids[0];
+    // 内容底 = 最后一个可见块；14.0 没有 vk-title 了，标题就是普通的块。
+    let first = kids.find((el) => !el.matches?.('[data-vk-overlay]')) || kids[0];
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]

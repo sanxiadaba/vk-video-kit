@@ -162,7 +162,6 @@ const DEFAULTS = {
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
-  'vk-title': { size: 'title', align: 'left', level: '2' },
   'vk-list': { variant: 'bullet', gap: 'sm' },
   'vk-callout': { tone: 'info', size: 'body', mass: 'normal' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
@@ -184,7 +183,6 @@ const DEFAULTS = {
   'vk-cells': { cols: '0', mass: 'normal' },
   'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal' },
   'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
-  'vk-stat': { size: 'hero', tone: 'none', mark: 'none', format: 'none', align: 'left' },
   'vk-page': { align: 'top' },
 };
 
@@ -234,6 +232,8 @@ export const TAGS = {
       'measure': { ...text(), layout: true },
       // 断行：balance 让标题两行等长，pretty 避免孤行，nowrap 不折。
       'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
+      // 数值写法（原 vk-stat 的唯一机制）：52980 → 52,980。排版归配方。
+      'format': oneOf('none', 'thousands', 'bytes', 'hex'),
     },
   },
   'vk-inline': {
@@ -378,34 +378,6 @@ export const TAGS = {
     },
   },
 
-  'vk-title': {
-    name: '标题',
-    layer: 'components',
-    summary: '标题：一句话主张 + 可选副题。',
-    slots: [
-      { name: 'eyebrow', description: '眉题；也可用 eyebrow 属性' },
-      { name: 'sub', description: '副题；也可用 sub 属性' },
-    ],
-    content: {
-      kind: 'text',
-      target: 'vk-title',
-      fields: [
-        { name: 'text', label: '标题文字', type: 'textarea', text: true },
-        { name: 'eyebrow', label: '眉题', type: 'text', attr: 'eyebrow' },
-        { name: 'sub', label: '副题', type: 'text', attr: 'sub' },
-      ],
-    },
-    attrs: {
-      'index': text(),
-      'eyebrow': text(),
-      'sub': text(),
-      'level': oneOf('1', '2', '3'),
-      'size': oneOf('body', 'subhead', 'title', 'hero', 'mega'),
-      'align': oneOf('left', 'center'),
-      'measure': { ...text(), layout: true },
-      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
-    },
-  },
   'vk-list': {
     name: '列表',
     layer: 'components',
@@ -594,23 +566,6 @@ export const TAGS = {
       'radius': oneOf('none', 'md', 'lg'),
       'n': text(),
       'elevation': oneOf('0', '1', '2'),
-    },
-  },
-  'vk-stat': {
-    name: '指标',
-    layer: 'elements',
-    summary: '一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。',
-    attrs: {
-      'measure': { ...text(), layout: true },
-      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
-      'value': text(),
-      'unit': text(),
-      'label': text(),
-      'size': oneOf('subhead', 'title', 'hero', 'mega'),
-      'tone': oneOf('none', 'focus', 'info', 'ok', 'warn', 'err'),
-      'mark': oneOf('none', 'dot', 'bar'),
-      'format': oneOf('none', 'thousands', 'bytes', 'hex'),
-      'align': oneOf('left', 'center'),
     },
   },
   'vk-cells': {

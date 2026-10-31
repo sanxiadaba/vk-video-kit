@@ -1,75 +1,10 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { formatNumber } from '../shared/format.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead } from './window.mjs';
 
 /* ------------------------------------------------------------------ title */
 
-export class VkTitle extends VkElement {
-  static watchSource = true;
-  static slot = true;
-  static slotHost = '.vk-title-main';
-  static renderedRoot = '.vk-title';
-
-  capture() {}
-
-  render() {
-    const index = this.getAttribute('index') || '';
-    const eyebrow = this.getAttribute('eyebrow') || '';
-    const sub = this.getAttribute('sub') || '';
-    const size = this.getAttribute('size') || 'title';
-    const align = this.getAttribute('align') || 'left';
-
-    if (!this._shell) {
-      this._eyebrowSlot = this.querySelector(':scope > [slot="eyebrow"]');
-      this._subSlot = this.querySelector(':scope > [slot="sub"]');
-      this._eyebrowSlot?.remove();
-      this._subSlot?.remove();
-      const body = takeSlot(this);
-      this.innerHTML = `<div class="vk-title" data-align="left" data-size="title">
-        <div class="vk-eyebrow"><b></b><i></i><span class="vk-eyebrow-t"></span></div>
-        <div class="vk-title-main"></div>
-        <p class="vk-title-sub"></p>
-      </div>`;
-      this._shell = this.querySelector('.vk-title');
-      this._eyebrow = this.querySelector('.vk-eyebrow');
-      this._eyebrowB = this._eyebrow.querySelector('b');
-      this._eyebrowI = this._eyebrow.querySelector('i');
-      this._eyebrowT = this._eyebrow.querySelector('.vk-eyebrow-t');
-      this._main = this.querySelector('.vk-title-main');
-      this._sub = this.querySelector('.vk-title-sub');
-      fillSlot(this._main, body);
-    }
-
-    const level = ['1', '2', '3'].includes(this.getAttribute('level')) ? this.getAttribute('level') : '2';
-    this._main?.setAttribute('role', 'heading');
-    this._main?.setAttribute('aria-level', level);
-    this._shell.dataset.align = align;
-    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
-    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
-    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
-    this._shell.dataset.size = size;
-
-    const showEyebrow = !!(index || eyebrow || this._eyebrowSlot);
-    if (showEyebrow) {
-      if (!this._eyebrow.parentNode) this._shell.prepend(this._eyebrow);
-      this._eyebrowB.textContent = index;
-      this._eyebrowB.style.display = index ? '' : 'none';
-      this._eyebrowI.style.display = index && (eyebrow || this._eyebrowSlot) ? '' : 'none';
-      if (this._eyebrowSlot) this._eyebrowT.replaceChildren(this._eyebrowSlot);
-      else this._eyebrowT.textContent = eyebrow;
-    } else {
-      this._eyebrow.remove();
-    }
-
-    if (sub || this._subSlot) {
-      if (!this._sub.parentNode) this._shell.append(this._sub);
-      if (this._subSlot) this._sub.replaceChildren(this._subSlot);
-      else this._sub.textContent = sub;
-    } else {
-      this._sub.remove();
-    }
-  }
-}
 
 /* ------------------------------------------------------------------- list */
 
@@ -966,7 +901,7 @@ export class VkBars extends VkElement {
           ? `left:${Math.min(pct, zeroPct).toFixed(2)}%;width:${Math.abs(pct - zeroPct).toFixed(2)}%`
           : `width:${pct.toFixed(2)}%`;
         const zero = split ? `<span class="vk-bar-zero" style="left:${zeroPct.toFixed(2)}%"></span>` : '';
-        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.value > 0 ? ' data-nonzero="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(statValue(String(r.value), format))}</span></div>`;
+        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.value > 0 ? ' data-nonzero="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(formatNumber(String(r.value), format))}</span></div>`;
       })
       .join('');
     this.innerHTML = `<div class="vk-bars"${split ? ' data-has-negative="1"' : ''}>${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;
@@ -1037,53 +972,6 @@ export class VkPanel extends VkElement {
  * 指标：一帧里「一个数字当家」的那个数字。
  * 只负责怎么显示（大小/单位/图例/千分位），不负责数字从哪来。
  */
-export class VkStat extends VkElement {
-  static frame = false;
-
-  render() {
-    const value = this.getAttribute('value') || '';
-    const unit = this.getAttribute('unit') || '';
-    const label = this.getAttribute('label') || '';
-    const size = this.getAttribute('size') || 'display-xl';
-    const tone = this.getAttribute('tone') || 'none';
-    const mark = this.getAttribute('mark') || 'none';
-    const format = this.getAttribute('format') || 'none';
-    const align = this.getAttribute('align') || 'left';
-
-    if (!this._shell) {
-      this.innerHTML = `<div class="vk-stat" role="group">
-        <span class="vk-stat-l" data-meta></span>
-        <span class="vk-stat-row"><span class="vk-stat-m" aria-hidden="true"></span><span class="vk-stat-v"></span><span class="vk-stat-u" data-meta></span></span>
-      </div>`;
-      this._shell = this.querySelector('.vk-stat');
-      this._l = this.querySelector('.vk-stat-l');
-      this._v = this.querySelector('.vk-stat-v');
-      this._u = this.querySelector('.vk-stat-u');
-    }
-    this._shell.dataset.size = size;
-    this._shell.dataset.tone = tone;
-    this._shell.dataset.mark = mark;
-    this._shell.dataset.align = align;
-    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
-    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
-    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
-    this._l.textContent = label;
-    this._v.textContent = statValue(value, format);
-    this._u.textContent = unit;
-    if (!label) this._l.remove();
-    if (!unit) this._u.remove();
-  }
-}
-
-/** 只改写法，不改数值：千分位 / 字节 / 十六进制。 */
-function statValue(raw, format) {
-  if (format === 'none') return raw;
-  const n = Number(String(raw).replace(/[^0-9.eE+-]/g, ''));
-  if (!Number.isFinite(n)) return raw;
-  if (format === 'thousands' || format === 'bytes') return n.toLocaleString('en-US');
-  if (format === 'hex') return '0x' + Math.round(n).toString(16).toUpperCase();
-  return raw;
-}
 
 
 /* ----------------------------------------------------------------- compare */
@@ -1148,8 +1036,6 @@ export class VkCompare extends VkElement {
 
 export function defineComponents() {
   define('vk-panel', VkPanel);
-  define('vk-stat', VkStat);
-  define('vk-title', VkTitle);
   define('vk-list', VkList);
   define('vk-callout', VkCallout);
   define('vk-window', VkWindow);

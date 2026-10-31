@@ -51,9 +51,9 @@ test('measure="none" 放开行宽', async () => {
   assert.equal(await maxW(tab, '#a'), 'none');
 });
 
-test('wrap 改断行策略（标题落在 .vk-title-main 上）', async () => {
-  const tab = await open('<vk-title id="t" size="title" wrap="nowrap">一个很长的标题</vk-title>');
-  const v = await tab.evaluate(() => getComputedStyle(document.querySelector('.vk-title-main')).getPropertyValue('text-wrap'));
+test('wrap 改断行策略（落在文字宿主自己身上）', async () => {
+  const tab = await open('<vk-text id="t" size="title" wrap="nowrap">一个很长的标题</vk-text>');
+  const v = await tab.evaluate(() => getComputedStyle(document.querySelector('#t')).getPropertyValue('text-wrap'));
   assert.equal(v, 'nowrap');
 });
 

@@ -32,13 +32,6 @@ export const SCENES = [
 <vk-diff lang="c" file="bounds.c" src="../code/real.diff"></vk-diff>`,
   },
 
-  {
-    tag: 'vk-title',
-    body: s`
-<vk-box class="spec-w" surface="none">
-  <vk-title index="01" eyebrow="示例 · 组件" size="title" sub="副标题只做占位。">示例标题</vk-title>
-</vk-box>`,
-  },
 
   {
     tag: 'vk-text',
@@ -355,11 +348,6 @@ export const SCENES = [
 </vk-panel>`,
   },
 
-  {
-    tag: 'vk-stat',
-    body: s`
-<vk-stat value="52,980" unit="字节" label="预处理后" size="hero"></vk-stat>`,
-  },
 
   {
     tag: 'vk-bits',
@@ -453,7 +441,7 @@ export const SCENES = [
     body: s`
 <vk-page>
   <vk-stack gap="lg">
-    <vk-title index="01" eyebrow="m.c" size="title">示例页面</vk-title>
+    <vk-stack gap="2xs"><vk-text size="label" mono ink="muted" data-meta>m.c</vk-text><vk-text size="title" weight="bold">示例页面</vk-text></vk-stack>
     <vk-text size="body" measure="body">页面只提供 1920×1080 画布与安全区。</vk-text>
   </vk-stack>
 </vk-page>`,

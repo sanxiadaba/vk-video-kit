@@ -101,10 +101,10 @@ test('晚到的 page / title 内容进入内容槽，而不是留在宿主外', 
   const inBd = await page.$eval('vk-page .vk-page-bd', (e) => !!e.querySelector('#late'));
   assert.equal(inBd, true);
 
-  await reset('<vk-title>one</vk-title>');
-  await page.evaluate(() => document.querySelector('vk-title').append(document.createTextNode(' two')));
+  await reset('<vk-callout>one</vk-callout>');
+  await page.evaluate(() => document.querySelector('vk-callout').append(document.createTextNode(' two')));
   await sleep(80);
-  const text = await page.$eval('vk-title .vk-title-main', (e) => e.textContent);
+  const text = await page.$eval('vk-callout .vk-callout-bd', (e) => e.textContent);
   assert.match(text, /two/);
 });
 
@@ -226,18 +226,6 @@ test('代码行号对读屏隐藏', async () => {
   await reset('<vk-code lang="text">one\ntwo</vk-code>');
   const hidden = await page.$$eval('vk-code .vk-ln', (els) => els.every((e) => e.getAttribute('aria-hidden') === 'true'));
   assert.equal(hidden, true);
-});
-
-test('具名槽进入 eyebrow / sub，而不是被当成正文', async () => {
-  await reset('<vk-title sub="属性副题"><span slot="eyebrow">眉题</span>主标题</vk-title>');
-  const r = await page.evaluate(() => ({
-    eyebrow: document.querySelector('.vk-eyebrow-t')?.textContent.trim(),
-    sub: document.querySelector('.vk-title-sub')?.textContent.trim(),
-    main: document.querySelector('.vk-title-main')?.textContent.trim(),
-  }));
-  assert.equal(r.eyebrow, '眉题');
-  assert.equal(r.sub, '属性副题');
-  assert.equal(r.main, '主标题');
 });
 
 test('fold 是真正的隐藏：被折叠行不渲染，只留一条范围说明', async () => {

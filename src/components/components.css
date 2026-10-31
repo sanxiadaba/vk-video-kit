@@ -46,57 +46,6 @@ vk-cells {
   font-feature-settings: 'calt' 0, 'liga' 0, 'dlig' 0, 'clig' 0;
 }
 
-/* -------------------------------------------------------------- vk-title */
-
-vk-title { display: block; }
-
-.vk-eyebrow {
-  display: flex;
-  align-items: center;
-  gap: var(--vk-s2);
-  margin-bottom: var(--vk-s2);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
-  font-weight: var(--vk-w-med);
-  line-height: 1.2;
-  letter-spacing: 0.14em;
-  color: var(--vk-ink-3);
-}
-.vk-eyebrow b { font-weight: var(--vk-w-med); color: var(--vk-ink-1); }
-.vk-eyebrow i {
-  display: block;
-  width: 24px;
-  height: 2px;
-  background: var(--vk-line-strong);
-}
-
-.vk-title-main {
-  margin: 0;
-  font-size: var(--vk-t-title);
-  font-weight: var(--vk-w-bold);
-  line-height: var(--vk-lh-tight);
-  letter-spacing: var(--vk-ls-tight);
-  color: var(--vk-ink-1);
-  text-wrap: balance;
-}
-.vk-title[data-size='mega'] .vk-title-main { font-size: var(--vk-t-mega); line-height: 1.02; letter-spacing: -0.04em; }
-.vk-title[data-size='hero'] .vk-title-main { font-size: var(--vk-t-hero); line-height: 1.04; letter-spacing: -0.035em; }
-.vk-title[data-size='title'] .vk-title-main { font-size: var(--vk-t-title); }
-.vk-title[data-size='subhead'] .vk-title-main { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-snug); }
-.vk-title[data-size='body'] .vk-title-main { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); font-weight: var(--vk-w-med); }
-
-.vk-title-sub {
-  margin: var(--vk-s3) 0 0;
-  max-width: var(--vk-measure-body);
-  font-size: var(--vk-t-body);
-  line-height: var(--vk-lh-body);
-  color: var(--vk-ink-2);
-}
-.vk-title[data-align='center'] { text-align: center; }
-.vk-title[data-align='center'] .vk-title-main { margin-inline: auto; }
-.vk-title[data-align='center'] .vk-eyebrow { justify-content: center; }
-.vk-title[data-align='center'] .vk-title-sub { margin-left: auto; margin-right: auto; }
-
 /* --------------------------------------------------------------- vk-list */
 
 vk-list { display: block; }
@@ -1552,77 +1501,6 @@ vk-table[mass='compact'] td { padding: var(--vk-s1) var(--vk-s2); }
 vk-table[mass='hero'] th,
 vk-table[mass='hero'] td { padding: var(--vk-s5) var(--vk-s6); font-size: var(--vk-t-body); }
 
-/* ---------------------------------------------------------------- vk-stat */
-/* 一帧里「一个数字当家」。数字用 tabular-nums，多个指标并排时小数点对齐。 */
-
-vk-stat { display: block; }
-
-.vk-stat { display: flex; flex-direction: column; gap: var(--vk-s1); }
-.vk-stat-l { font-size: var(--vk-t-label); line-height: var(--vk-lh-body); color: var(--vk-ink-3); }
-.vk-stat-row { display: flex; align-items: baseline; gap: var(--vk-s2); }
-.vk-stat-v {
-  font-family: var(--vk-font-sans);
-  font-weight: var(--vk-w-bold);
-  letter-spacing: -0.03em;
-  line-height: 1.02;
-  font-variant-numeric: tabular-nums;
-  color: var(--vk-ink-1);
-}
-.vk-stat-u { font-size: var(--vk-t-label); line-height: var(--vk-lh-body); color: var(--vk-ink-3); }
-
-.vk-stat[data-size='mega'] .vk-stat-v { font-size: var(--vk-t-mega); }
-.vk-stat[data-size='hero'] .vk-stat-v { font-size: var(--vk-t-hero); }
-.vk-stat[data-size='title'] .vk-stat-v { font-size: var(--vk-t-title); }
-.vk-stat[data-size='title'] .vk-stat-v { font-size: var(--vk-t-title); }
-.vk-stat[data-size='subhead'] .vk-stat-v { font-size: var(--vk-t-subhead); }
-
-.vk-stat[data-align='center'] { align-items: center; text-align: center; }
-.vk-stat[data-overflow='clip'] { overflow: hidden; }
-.vk-stat[data-grow='1'] { flex: 1 1 auto; }
-.vk-stat[data-fill='1'] { height: 100%; justify-content: center; }
-
-/* 图例：一个点或一根条，和值同色 */
-.vk-stat-m { display: none; }
-.vk-stat[data-mark='dot'] .vk-stat-m,
-.vk-stat[data-mark='bar'] .vk-stat-m { display: inline-block; background: var(--vk-ink-3); }
-.vk-stat[data-mark='dot'] .vk-stat-m { width: 16px; height: 16px; border-radius: 50%; }
-.vk-stat[data-mark='bar'] .vk-stat-m { width: 8px; height: 0.72em; border-radius: 2px; align-self: center; }
-
-.vk-stat[data-tone='focus'] .vk-stat-v,
-.vk-stat[data-tone='focus'] .vk-stat-m { color: var(--vk-focus); }
-.vk-stat[data-tone='focus'] .vk-stat-m { background: var(--vk-focus); }
-
-/* 块级焦点：数字、标题、正文、引文、提示框都只写 act="focus"，颜色按形状分派。
-   strength 只改响度：solid 是钴蓝本体，soft 淡化，ghost 退回墨色只留一道左条。
-   选择器挂在宿主元素上（标签名 + [data-act]），因为 data-act 是运行期写在宿主上的。 */
-vk-stat[data-act='focus'] .vk-stat-v,
-vk-title[data-act='focus'] .vk-title-main,
-vk-text[data-act='focus'],
-vk-callout[data-act='focus'] .vk-callout-hd { color: var(--vk-focus); }
-
-vk-stat[data-act='focus'][data-strength='soft'] .vk-stat-v,
-vk-title[data-act='focus'][data-strength='soft'] .vk-title-main,
-vk-text[data-act='focus'][data-strength='soft'],
-vk-callout[data-act='focus'][data-strength='soft'] .vk-callout-hd {
-  color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
-}
-
-vk-stat[data-act='focus'][data-strength='ghost'] .vk-stat-v,
-vk-title[data-act='focus'][data-strength='ghost'] .vk-title-main,
-vk-text[data-act='focus'][data-strength='ghost'],
-vk-callout[data-act='focus'][data-strength='ghost'] .vk-callout-hd {
-  color: var(--vk-ink-1);
-  box-shadow: inset 4px 0 0 var(--vk-focus);
-  padding-left: var(--vk-s2);
-}
-.vk-stat[data-tone='info'] .vk-stat-v { color: var(--vk-info); }
-.vk-stat[data-tone='info'] .vk-stat-m { background: var(--vk-info); }
-.vk-stat[data-tone='ok'] .vk-stat-v { color: var(--vk-ok); }
-.vk-stat[data-tone='ok'] .vk-stat-m { background: var(--vk-ok); }
-.vk-stat[data-tone='warn'] .vk-stat-v { color: var(--vk-warn); }
-.vk-stat[data-tone='warn'] .vk-stat-m { background: var(--vk-warn); }
-.vk-stat[data-tone='err'] .vk-stat-v { color: var(--vk-err); }
-.vk-stat[data-tone='err'] .vk-stat-m { background: var(--vk-err); }
 /* --------------------------------------------------------------- vk-panel */
 /* 区域：卡片 / 章节带。只给底、边、三槽，不排内容。 */
 
@@ -1710,26 +1588,14 @@ vk-bytes[mass='hero'] .vk-bytes-row { line-height: 2; }
 
 
 
-/* 断行：标题的真正文字在 .vk-title-main 里，base 规则也写在 components.css 里，
-   所以覆盖规则必须排在同一张表的后面——同权重、后出现的胜出。 */
-vk-title[wrap='balance'] .vk-title-main { text-wrap: balance; }
-vk-title[wrap='pretty'] .vk-title-main { text-wrap: pretty; }
-vk-title[wrap='nowrap'] .vk-title-main { text-wrap: nowrap; }
 
 /* 断行：文字类组件都认 wrap。规则落在真正装字的那一层，
    并且必须排在各自 base 规则之后——同权重、后出现的胜出。 */
-vk-callout[wrap='balance'] .vk-callout-bd,
-vk-stat[wrap='balance'] .vk-stat-v { text-wrap: balance; }
-
-vk-callout[wrap='pretty'] .vk-callout-bd,
-vk-stat[wrap='pretty'] .vk-stat-v { text-wrap: pretty; }
-
-vk-callout[wrap='nowrap'] .vk-callout-bd,
-vk-stat[wrap='nowrap'] .vk-stat-v { text-wrap: nowrap; }
-
-/* callout 与 stat 也有默认行宽：不写 measure 时按正文行宽收，measure=none 才铺满。 */
 vk-callout { max-width: var(--vk-measure-body); }
-vk-stat { max-width: var(--vk-measure-body); }
+
+vk-callout[wrap='balance'] .vk-callout-bd { text-wrap: balance; }
+vk-callout[wrap='pretty'] .vk-callout-bd { text-wrap: pretty; }
+vk-callout[wrap='nowrap'] .vk-callout-bd { text-wrap: nowrap; }
 
 /* --------------------------------------------------------------- compare */
 /* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
@@ -1781,3 +1647,19 @@ vk-compare { display: block; }
 }
 .vk-cmp-la { left: var(--vk-s2); }
 .vk-cmp-lb { right: var(--vk-s2); }
+
+/* 块级焦点：14.0 删掉 title/stat 之后，块级元素只剩 vk-text 与 vk-callout 的头。 */
+vk-text[data-act='focus'],
+vk-callout[data-act='focus'] .vk-callout-hd { color: var(--vk-focus); }
+
+vk-text[data-act='focus'][data-strength='soft'],
+vk-callout[data-act='focus'][data-strength='soft'] .vk-callout-hd {
+  color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
+}
+
+vk-text[data-act='focus'][data-strength='ghost'],
+vk-callout[data-act='focus'][data-strength='ghost'] .vk-callout-hd {
+  color: var(--vk-ink-1);
+  box-shadow: inset 4px 0 0 var(--vk-focus);
+  padding-left: var(--vk-s2);
+}

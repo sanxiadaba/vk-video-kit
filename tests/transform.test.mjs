@@ -100,19 +100,15 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
   }
 });
 
-test('具名槽：允许 eyebrow/sub/title；槽和属性不能同时写', async () => {
+test('具名槽：面板头走槽；宿主自己写 slot 则拒绝', async () => {
   const ok = await transformHtml(
-    '<vk-title sub="属性副题"><span slot="eyebrow">眉题</span>主标题</vk-title>',
+    '<vk-panel><span slot="hd">页头</span>面板内容</vk-panel>',
     { file: 'slots.html', highlighter: hl }
   );
-  assert.ok(ok.html.includes('slot="eyebrow"'));
+  assert.ok(ok.html.includes('slot="hd"'));
   await assert.rejects(
-    () => transformHtml('<vk-title sub="属性" slot="x">主标题</vk-title>', { file: 'slots.html', highlighter: hl }),
+    () => transformHtml('<vk-panel slot="x">面板</vk-panel>', { file: 'slots.html', highlighter: hl }),
     /不支持 slot/
-  );
-  await assert.rejects(
-    () => transformHtml('<vk-title sub="属性"><span slot="sub">槽</span></vk-title>', { file: 'slots.html', highlighter: hl }),
-    /不能同时写 slot 和属性/
   );
   await assert.rejects(
     () => transformHtml('<vk-callout><span slot="body">x</span></vk-callout>', { file: 'slots.html', highlighter: hl }),

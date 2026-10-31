@@ -1,4 +1,5 @@
 import { VK, esc, numAttr, safePosition, VkElement, define, plain } from './base.mjs';
+import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
 
 /**
@@ -119,7 +120,20 @@ export class VkBox extends VkElement {
 /** 纯文本宿主：内容就是子节点，Frame 只负责 w/measure。 */
 export class VkText extends VkElement {
   static watchSource = false;
-  render() {}
+
+  render() {
+    // 14.0：vk-stat 的"数值写法"搬到这里。排版（标签/单位放哪）归配方，
+    // 而"52980 写成 52,980"是文本机制，跟着文字走。
+    const format = this.getAttribute('format');
+    if (!format || format === 'none') return;
+    const raw = (this.textContent || '').trim();
+    if (!raw || this._formatted) return;
+    const next = formatNumber(raw, format);
+    if (next !== raw) {
+      this._formatted = true;
+      this.textContent = next;
+    }
+  }
 }
 
 /**
