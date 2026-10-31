@@ -10,6 +10,7 @@ import http from 'node:http';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
+import { spawn } from 'node:child_process';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 import { computeServerId } from './lib/build-id.mjs';
 
@@ -46,6 +47,30 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
   // 进程启动时的服务端代码指纹：页面拿它和 dist/build.json.server 对比，
   // 不一致 = 这个进程比磁盘上的 serve.mjs 旧，必须重启。
   const serverId = computeServerId();
+  // 过时了就自己重启：库改十几轮，人不会记得重启服务器，
+  // 而每次"过时"看起来都像页面坏了。--no-restart 可以关掉（测试与 CI 用）。
+  // 端口 0 是测试用的临时端口，不能自己重启（会抢不到端口、把测试进程搞乱）。
+  const noRestart = port === 0 || process.argv.includes('--no-restart');
+  let restarting = false;
+  const selfRestart = () => {
+    if (noRestart || restarting) return;
+    restarting = true;
+    setTimeout(() => {
+      // 先在 close 回调里放手，再拉起新进程占同一个端口——顺序反了会 EADDRINUSE。
+      server.close(() => {
+        try {
+          spawn(process.execPath, process.argv.slice(1), {
+            cwd: process.cwd(),
+            detached: true,
+            stdio: 'inherit',
+          }).unref();
+        } catch {
+          // 起不来就保持原样：下一次请求还会再提示
+        }
+        process.exit(0);
+      });
+    }, 150);
+  };
   let highlighterPromise = null;
   const highlighter = () => (highlighterPromise ||= createVkHighlighter());
   // dev 下每改一次 .c 才重算；同一页面的重复请求只转换一次。
@@ -125,6 +150,8 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
         try {
           data = Buffer.from(await renderHtml(file), 'utf8');
         } catch (e) {
+          // 进程过时：页面里明说，同时自己重启——这次刷新之后就是新代码。
+          if (e.staleServer) selfRestart();
           console.error(`✗ ${path.relative(root, file)}: ${e.message}`);
           res.writeHead(500, { 'content-type': 'text/html; charset=utf-8' });
           res.end(
