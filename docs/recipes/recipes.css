@@ -11,7 +11,7 @@
 
 /* 配方页的底：正文 48、行高、纸色。作者页也要有一层"默认文字"，
    否则 <p> 会掉回浏览器的 16px —— 这是配方层最容易漏的一步。 */
-body {
+body.r-doc {
   margin: 0;
   background: #fff;
   color: var(--vk-ink-1);
@@ -74,8 +74,8 @@ body {
 .r-quote {
   display: block;
   margin: 0;
-  padding-left: var(--vk-s5);
-  border-left: var(--vk-line-w) solid var(--vk-line-2);
+  padding: var(--vk-s1) 0 var(--vk-s1) var(--vk-s4);
+  border-left: 4px solid var(--vk-ink-1);
 }
 .r-quote-text {
   margin: 0;
@@ -84,10 +84,13 @@ body {
   color: var(--vk-ink-1);
 }
 /* 引文可以整页大，也可以放进三栏里——那是体量，不是另一个组件。 */
+/* 引文可以整页大（title 档）、也可以进三栏（body 档）：体量不同，不是两个组件。 */
+.r-quote--title .r-quote-text { font-size: var(--vk-t-title); line-height: 1.12; letter-spacing: -0.02em; }
 .r-quote--body .r-quote-text { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); }
 .r-quote-cite {
   display: block;
-  margin-top: var(--vk-s3);
+  margin-top: var(--vk-s2);
+  line-height: 1.4;
   font-size: var(--vk-t-label);
   color: var(--vk-ink-3);
 }
