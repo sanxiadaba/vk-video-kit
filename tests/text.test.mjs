@@ -62,4 +62,3 @@ after(async () => {
   await browser.close();
   await closeServer();
 });
-

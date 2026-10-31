@@ -147,7 +147,13 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
     server,
     base,
     port: actual,
-    close: () => new Promise((resolve) => server.close(resolve)),
+    // 关服务器时先把 keep-alive 连接掐掉：http.Server.close() 会一直等它们自己断，
+    // 浏览器还活着的时候就是干等（实测每个测试文件多花 9 秒收尾）。
+    close: () =>
+      new Promise((resolve) => {
+        server.closeAllConnections?.();
+        server.close(resolve);
+      }),
   };
 }
 

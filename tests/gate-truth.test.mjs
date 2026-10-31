@@ -2,7 +2,7 @@ import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import { chromium } from 'playwright-core';
 import { startServer } from '../cli/serve.mjs';
-import { spawnSync } from 'node:child_process';
+import { run } from '../tools/lib/run.mjs';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -114,9 +114,11 @@ test('vk check 对坏页返回非零', async () => {
     .replace('rel="stylesheet" href="vk/vk.css"', `rel="stylesheet" href="${base}/vk/vk.css"`)
     .replace('src="dist/vk.js"', `src="${base}/dist/vk.js"`);
   fs.writeFileSync(file, html);
-  const r = spawnSync(process.execPath, [path.resolve('bin/vk.mjs'), 'check', file], { encoding: 'utf8' });
+  // 必须用异步 spawn：这个测试服务器跑在本进程里，spawnSync 会卡住事件循环，
+  // 子进程的请求得不到响应，整整等 30 秒超时（曾经就是这么慢的）。
+  const r = await run(process.execPath, [path.resolve('bin/vk.mjs'), 'check', file]);
   fs.rmSync(dir, { recursive: true, force: true });
-  assert.notEqual(r.status, 0, `vk check 对空页应返回非零，实际 ${r.status}\n${r.stdout}\n${r.stderr}`);
+  assert.notEqual(r.code, 0, `vk check 对空页应返回非零，实际 ${r.code}\n${r.out}\n${r.err}`);
 });
 
 after(async () => {
