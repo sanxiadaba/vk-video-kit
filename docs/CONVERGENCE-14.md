@@ -14,7 +14,7 @@
 | CSS 行数 | 3382 | **2502** | −880（−26%） |
 | 阈值定义 | 3 套（96/72/96、36/36/35.5、4.5/3） | **1 套**（`src/shared/limits.mjs`） | — |
 | 规格文档 | 4 份（design/v13/README/ai） | **1 份**（`docs/v14.md`） | — |
-| `npm test` | ~110s | **~45s** | −59% |
+| `npm test`（温） | ~110s | **32s** | −71% |
 
 ## 1 · 删了什么，凭什么
 
@@ -73,6 +73,7 @@
 | 审计副本 | audit / gate 兜底 / contract 各一套阈值 | 一份 `auditPage` + 一份 `limits.mjs` |
 | 焦点识别 | 只认 `[tone]`，pose 写的是 `[data-tone]` | 认 `data-act` / `data-tone` |
 | 测试清单 | 手写，漏 3 个文件 | 扫目录，18 个全跑 |
+| 缓存键 | 不含页面自己的 CSS | 含 `docs/**.css`（改了配方 CSS 旧绿结论不再复用） |
 
 **五个坏页面**（空页 / 超宽 / 两处焦点 / 越安全区 / 灰字太浅）全部被拦，见 `tests/gate-truth.test.mjs`。
 
@@ -98,7 +99,7 @@
 
 | 项 | 之前 | 现在 |
 |---|---|---|
-| `npm test` | ~110s | **~45s** |
+| `npm test`（温） | ~110s | **32s** |
 | 12 帧截图 | 12 次 CLI ≈ 25s | 一次 `--batch` **3.9s** |
 | 整片重建 | 6 条命令 | `node tools/film.mjs` **~12s** |
 | 30 秒死锁 | `spawnSync` 卡住测试服务器 | 异步 spawn |
