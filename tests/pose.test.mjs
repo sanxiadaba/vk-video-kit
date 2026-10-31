@@ -78,7 +78,7 @@ test('旧词仍然可用：state="current"', async () => {
   assert.notEqual(await bg(await open(''), 1), await bg(await open('state="current"'), 1));
 });
 
-test('块上的 focus：数字 / 标题 / 正文 / 引文都会上色', async () => {
+test('块上的 focus：数字 / 标题 / 正文都会上色', async () => {
   const tab = await ctx.newPage();
   await tab.setContent(
     `<!doctype html><html><head><meta charset="utf-8"><base href="${base}/">
@@ -87,7 +87,6 @@ test('块上的 focus：数字 / 标题 / 正文 / 引文都会上色', async ()
   <vk-stat id="s" value="13" unit="字符" label="输出"></vk-stat>
   <vk-title id="h">一个标题</vk-title>
   <vk-text id="t">一段正文</vk-text>
-  <vk-quote id="q">一句话</vk-quote>
 </vk-stack></vk-page><script src="dist/vk.js"></script></body></html>`,
     { waitUntil: 'load' }
   );
@@ -100,22 +99,21 @@ test('块上的 focus：数字 / 标题 / 正文 / 引文都会上色', async ()
       stat: getComputedStyle(document.querySelector('#s .vk-stat-v')).color,
       title: getComputedStyle(document.querySelector('#h .vk-title-main')).color,
       text: getComputedStyle(document.querySelector('#t')).color,
-      quote: getComputedStyle(document.querySelector('#q .vk-quote')).color,
     }));
   const before = await colors();
   await tab.evaluate(() => {
-    for (const id of ['s', 'h', 't', 'q']) document.querySelector('#' + id).setAttribute('act', 'focus');
+    for (const id of ['s', 'h', 't']) document.querySelector('#' + id).setAttribute('act', 'focus');
     window.vk.pose();
   });
   const solid = await colors();
   await tab.evaluate(() => {
-    for (const id of ['s', 'h', 't', 'q']) document.querySelector('#' + id).setAttribute('strength', 'ghost');
+    for (const id of ['s', 'h', 't']) document.querySelector('#' + id).setAttribute('strength', 'ghost');
     window.vk.pose();
   });
   const ghost = await colors();
   await tab.close();
 
-  for (const k of ['stat', 'title', 'text', 'quote']) {
+  for (const k of ['stat', 'title', 'text']) {
     assert.notEqual(solid[k], before[k], `${k} 的 focus 应该改颜色：${before[k]} → ${solid[k]}`);
     assert.notEqual(solid[k], ghost[k], `${k} 的 ghost 应该比 solid 淡：${solid[k]} → ${ghost[k]}`);
   }

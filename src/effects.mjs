@@ -47,10 +47,6 @@ export const EFFECTS = {
     w: { on: 'vk-window', kind: 'geometry', prop: 'width' },
   },
 
-  'vk-quote': {
-    variant: { on: '.vk-quote', kind: 'style', prop: 'border-left-width' },
-    size: { on: '.vk-quote', kind: 'style', prop: 'font-size' },
-  },
 
   'vk-panel': {
     variant: { on: '.vk-panel', kind: 'attr', prop: 'data-variant' },

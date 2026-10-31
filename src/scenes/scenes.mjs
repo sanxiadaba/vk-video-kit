@@ -394,14 +394,6 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-quote',
-    body: s`
-<vk-quote source="示例出处">
-  示例引文。
-</vk-quote>`,
-  },
-
-  {
     tag: 'vk-bits',
     body: s`
 <vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign>

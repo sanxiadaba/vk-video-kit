@@ -969,36 +969,6 @@ export class VkSteps extends VkElement {
 
 /* ---------------------------------------------------------------- quote */
 
-export class VkQuote extends VkElement {
-  static watchSource = true;
-  static slot = true;
-  static slotHost = '.vk-quote-t';
-  static renderedRoot = '.vk-quote';
-
-  capture() {}
-
-  render() {
-    // 空引文只剩一条黑竖杠；没有正文就不画。
-    if (!this.textContent.trim()) {
-      this.innerHTML = '';
-      return;
-    }
-    if (!this._shell) {
-      const body = takeSlot(this);
-      this.innerHTML = '<blockquote class="vk-quote"><div class="vk-quote-t"></div><cite class="vk-quote-src" data-meta></cite></blockquote>';
-      this._shell = this.querySelector('.vk-quote');
-      this._t = this.querySelector('.vk-quote-t');
-      this._src = this.querySelector('.vk-quote-src');
-      fillSlot(this._t, body);
-    }
-    const source = this.getAttribute('source') || '';
-    const author = this.getAttribute('author') || '';
-    const origin = source && author ? `${source} · ${author}` : source || author;
-    this._src.textContent = origin ? `— ${origin}` : '';
-    this._src.style.display = origin ? '' : 'none';
-  }
-}
-
 /* ----------------------------------------------------------------- bits */
 
 export class VkBits extends VkElement {
@@ -1396,7 +1366,6 @@ export function defineComponents() {
   define('vk-cells', VkCells);
   define('vk-bytes', VkBytes);
   define('vk-steps', VkSteps);
-  define('vk-quote', VkQuote);
   define('vk-bits', VkBits);
   define('vk-bars', VkBars);
   define('vk-tag', VkTag);

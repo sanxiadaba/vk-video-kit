@@ -14,7 +14,6 @@ vk-term,
 vk-diff,
 vk-figure,
 vk-window,
-vk-quote,
 vk-bits,
 vk-bars,
 vk-cells {
@@ -1429,46 +1428,6 @@ vk-steps[mass='compact'] .vk-step { gap: var(--vk-s1); }
 /* ---- 树：允许去窗头（和 code / term / diff 并列，便于拼窗） ---- */
 .vk-tree[data-chrome='none'] > .vk-tree-hd { display: none; }
 
-/* --------------------------------------------------------------- vk-quote */
-vk-quote { display: block; }
-.vk-quote {
-  margin: 0;
-  position: relative;
-  padding: var(--vk-s1) 0 var(--vk-s1) var(--vk-s4);
-  border-left: 4px solid var(--vk-ink-1);
-  font-size: var(--vk-t-body);
-  line-height: 1.5;
-  color: var(--vk-ink-1);
-  text-wrap: pretty;
-}
-vk-quote[size='subhead'] .vk-quote { font-size: var(--vk-t-subhead); line-height: 1.35; }
-vk-quote[variant='mark'] .vk-quote {
-  padding-top: 72px;
-  padding-left: 0;
-  border-left-width: 0;
-}
-vk-quote[variant='mark'] .vk-quote::before {
-  content: '\201C';
-  position: absolute;
-  left: -6px;
-  top: -18px;
-  font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-title);
-  line-height: 1;
-  color: var(--vk-ink-4);
-}
-vk-quote[size='hero'] .vk-quote { font-size: var(--vk-t-hero); line-height: 1.04; letter-spacing: -0.035em; }
-vk-quote[size='title'] .vk-quote { font-size: var(--vk-t-title); line-height: 1.12; letter-spacing: -0.02em; }
-vk-quote[size='title'] .vk-quote { font-size: var(--vk-t-title); line-height: 1.12; letter-spacing: -0.02em; }
-.vk-quote-src {
-  display: block;
-  margin-top: var(--vk-s2);
-  font-size: var(--vk-t-label);
-  line-height: 1.4;
-  color: var(--vk-ink-3);
-}
-.vk-quote-src b { font-weight: var(--vk-w-med); color: var(--vk-ink-2); }
-
 /* ---------------------------------------------------------------- vk-bits */
 vk-bits { display: block; }
 .vk-bits-wrap {
@@ -1661,7 +1620,6 @@ vk-bars[mass='compact'] .vk-bar-t { height: 16px; }
 /* 强度只留三档底色；没有第二种材质。 */
 .vk-pin-bd[data-emphasis='ghost'] { background: transparent; }
 /* 空引文会只剩一条黑杠；空提示框会只剩一条色条。 */
-vk-quote:empty { display: none; }
 vk-callout:empty { display: none; }
 vk-table[mass='hero'] th { padding: var(--vk-s2) var(--vk-s4); }
 vk-table[mass='hero'] td { padding: var(--vk-s4) var(--vk-s5); }
@@ -1813,13 +1771,11 @@ vk-stat { display: block; }
 vk-stat[data-act='focus'] .vk-stat-v,
 vk-title[data-act='focus'] .vk-title-main,
 vk-text[data-act='focus'],
-vk-quote[data-act='focus'] .vk-quote,
 vk-callout[data-act='focus'] .vk-callout-hd { color: var(--vk-focus); }
 
 vk-stat[data-act='focus'][data-strength='soft'] .vk-stat-v,
 vk-title[data-act='focus'][data-strength='soft'] .vk-title-main,
 vk-text[data-act='focus'][data-strength='soft'],
-vk-quote[data-act='focus'][data-strength='soft'] .vk-quote,
 vk-callout[data-act='focus'][data-strength='soft'] .vk-callout-hd {
   color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
 }
@@ -1827,7 +1783,6 @@ vk-callout[data-act='focus'][data-strength='soft'] .vk-callout-hd {
 vk-stat[data-act='focus'][data-strength='ghost'] .vk-stat-v,
 vk-title[data-act='focus'][data-strength='ghost'] .vk-title-main,
 vk-text[data-act='focus'][data-strength='ghost'],
-vk-quote[data-act='focus'][data-strength='ghost'] .vk-quote,
 vk-callout[data-act='focus'][data-strength='ghost'] .vk-callout-hd {
   color: var(--vk-ink-1);
   box-shadow: inset 4px 0 0 var(--vk-focus);
@@ -1936,15 +1891,12 @@ vk-title[wrap='nowrap'] .vk-title-main { text-wrap: nowrap; }
 
 /* 断行：文字类组件都认 wrap。规则落在真正装字的那一层，
    并且必须排在各自 base 规则之后——同权重、后出现的胜出。 */
-vk-quote[wrap='balance'] .vk-quote,
 vk-callout[wrap='balance'] .vk-callout-bd,
 vk-stat[wrap='balance'] .vk-stat-v { text-wrap: balance; }
 
-vk-quote[wrap='pretty'] .vk-quote,
 vk-callout[wrap='pretty'] .vk-callout-bd,
 vk-stat[wrap='pretty'] .vk-stat-v { text-wrap: pretty; }
 
-vk-quote[wrap='nowrap'] .vk-quote,
 vk-callout[wrap='nowrap'] .vk-callout-bd,
 vk-stat[wrap='nowrap'] .vk-stat-v { text-wrap: nowrap; }
 

@@ -178,11 +178,6 @@ export const PRESETS = {
     { label: '千分位', attrs: { value: '52980', format: 'thousands' } },
     { label: '十六进制', attrs: { value: '72', format: 'hex' } },
   ],
-  'vk-quote': [
-    { label: '压角引号', attrs: { variant: 'mark' } },
-    { label: '小标题阶', attrs: { size: 'subhead' } },
-    { label: '长出处', attrs: { author: 'ISO/IEC 9899:2011 第 6.7.3 节' } },
-  ],
   'vk-bits': [
     { label: '索引反向', attrs: { index: '0-7' } },
     { label: '无索引', attrs: { index: 'none' } },

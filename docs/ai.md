@@ -238,9 +238,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`current` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation`
   - 子节点：条目写成 `<li>`
   - 例：`<vk-steps current="1">`
-- **`vk-quote`** · 引文 — 一段引文：出处、作者；左侧竖线或压角引号。
-  - 属性：`source` · `author` · `variant` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-quote source="示例出处">示例引文。</vk-quote>`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
   - 属性：`mass` · `value` · `index` · `group` · `sign` · `label` · `tone` · `bit-width` · `bytes` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`

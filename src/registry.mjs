@@ -181,7 +181,6 @@ const DEFAULTS = {
   'vk-figure': { ratio: '16 / 9', fit: 'cover', position: '50% 50%', chrome: 'none', shadow: 'none', bleed: 'none' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
-  'vk-quote': { variant: 'rule', size: 'body' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
   'vk-bars': { mass: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
@@ -732,28 +731,6 @@ export const TAGS = {
     attrs: {
       'current': int({ min: 0, max: 99, step: 1 }),
       'mass': oneOf('compact', 'normal', 'hero'),
-    },
-  },
-  'vk-quote': {
-    name: '引文',
-    layer: 'components',
-    summary: '一段引文：出处、作者；左侧竖线或压角引号。',
-    content: {
-      kind: 'text',
-      target: 'vk-quote',
-      fields: [
-        { name: 'text', label: '引文', type: 'textarea', text: true },
-        { name: 'source', label: '出处', type: 'text', attr: 'source' },
-        { name: 'author', label: '作者', type: 'text', attr: 'author' },
-      ],
-    },
-    attrs: {
-      'measure': { ...text(), layout: true },
-      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
-      'source': text(),
-      'author': text(),
-      'variant': oneOf('rule', 'mark'),
-      'size': oneOf('body', 'subhead', 'title', 'hero'),
     },
   },
   'vk-bits': {
