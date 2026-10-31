@@ -8,7 +8,7 @@
  *   vk series             跨帧量一集：体量 / 骨架 / 字阶 / 焦点 / 白占比
  *   vk capture --run/--step/--shot  把真实材料采集进仓库（真跑命令 / 分步跑 / 真截一张图）
  *   vk serve [port]       开发服务器，改文件刷新即见
- *   vk tags               列出 37 个标签
+ *   vk tags               列出全部标签
  *   vk doc <tag>          看某个标签的属性、内容与默认值
  *   vk icons [query]      搜 Lucide 图标名
  */
@@ -167,6 +167,8 @@ if (cmd === 'build' || cmd === 'check-build') {
     console.log(`\n共 ${hit.length} 个`);
   }
 } else {
+  // 标签数是 registry 的事实，不在这里写死：收敛一次就要改一次文档。
+  const { TAG_NAMES } = await import('../src/registry.mjs');
   console.log(`
 vk —— 把内容做成画面单元
 
@@ -175,7 +177,7 @@ vk —— 把内容做成画面单元
   vk shot <page>        截一张 1920×1080（--phone / --crop / --at 秒 / --scene 表.json）
 vk shot <page> --fps 30 --range 0-4.6 --out-dir film/  出帧序列（库只出帧，不做编码）
   vk serve [port]       开发服务器（默认 8099）
-  vk tags               列出 37 个标签（--json）
+  vk tags               列出 ${TAG_NAMES.length} 个标签（--json）
   vk doc <tag>          看某个标签的属性、内容与默认值
   vk icons [query]      搜 Lucide 图标名（--json）
 

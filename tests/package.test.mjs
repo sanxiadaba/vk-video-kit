@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import { spawnSync } from 'node:child_process';
+import { TAG_NAMES } from '../src/registry.mjs';
 
 const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
 const lock = JSON.parse(fs.readFileSync('package-lock.json', 'utf8'));
@@ -45,6 +46,13 @@ test('真实示例文件存在（不随包发布）', () => {
   for (const f of ['code/hello.c', 'code/array.c', 'code/real.diff', 'code/warn.c', 'code/broken.c']) {
     assert.ok(fs.existsSync(f), f);
   }
+});
+
+test('vk --help 的标签数从 registry 动态取，不写死', () => {
+  const r = spawnSync(process.execPath, ['bin/vk.mjs', '--help'], { encoding: 'utf8' });
+  assert.equal(r.status, 0, r.stderr);
+  assert.match(r.stdout, new RegExp(`列出 ${TAG_NAMES.length} 个标签`), `help 应为 ${TAG_NAMES.length} 个标签`);
+  assert.doesNotMatch(r.stdout, /37 个标签/, '旧的写死数字 37 不能留在 help 里');
 });
 
 test('CI 只要求 chromium，不要求 msedge', () => {

@@ -72,6 +72,34 @@ test('② 构建期按剥离 ANSI 后的文本高亮与算 hash，HTML 里保留
   assert.ok(out.html.includes('\u001b[31m'), '原文要留给运行时提示');
 });
 
+test('① vk-cells 的 <li> 接受 act：focus 构建通过、bogus 报可用值、state=current 仍提示退役', async () => {
+  const ok = await transformHtml(
+    '<vk-cells cols="2"><li value="14" label="字节" act="focus"></li><li value="15"></li></vk-cells>',
+    { file: 'p.html', highlighter: hl }
+  );
+  assert.match(ok.html, /act="focus"/, 'act="focus" 应原样留在产物里，运行期才能落到 .vk-cell');
+
+  await assert.rejects(
+    () => transformHtml('<vk-cells cols="2"><li value="14" act="bogus"></li></vk-cells>', { file: 'p.html', highlighter: hl }),
+    /act="bogus"[\s\S]*可用：focus \/ context \/ mark/,
+    '非法 act 必须在构建期报错并列出 cells 的词表'
+  );
+
+  const warnings = [];
+  const oldWarn = console.warn;
+  console.warn = (...args) => warnings.push(args.join(' '));
+  try {
+    const out = await transformHtml('<vk-cells cols="2"><li value="14" state="current"></li></vk-cells>', {
+      file: 'p.html',
+      highlighter: hl,
+    });
+    assert.match(out.html, /state="current"/, 'state="current" 仍作为一版别名生效');
+  } finally {
+    console.warn = oldWarn;
+  }
+  assert.match(warnings.join('\n'), /state="current" 已退役[\s\S]*<li act="focus">/, '退役提示必须指向现在能构建的写法');
+});
+
 test('⑧ vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
   const field = TAGS['vk-cells'].content.fields.find((f) => f.name === 'filled');
   assert.ok(field, 'vk-cells 的 filled 文档字段不见了');

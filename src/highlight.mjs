@@ -536,7 +536,17 @@ function validateAuthorHtml(doc, file, html = '') {
             // 13.0：state 只留 ok / warn / err；「现在讲这里」是姿态，不是状态。
             if (raw === 'current') {
               warnings.push(
-                `${file}:${lineOf(node)} <${parent}> 的 state="current" 已退役，改写成 act="focus"（一版别名仍生效）`
+                `${file}:${lineOf(node)} <${parent}> 的子节点 state="current" 已退役，改写成 <${tag} act="focus">（一版别名仍生效）`
+              );
+            }
+            continue;
+          }
+          // act 是宿主与条目共用的姿态词；值域从 registry 取，别在这里再抄一份。
+          if (name === 'act' && allowed.includes('act')) {
+            const values = TAGS[parent]?.attrs?.act?.values || [];
+            if (!values.includes(raw)) {
+              errors.push(
+                `${file}:${lineOf(node)} <${parent}> 的子节点 act="${raw}" 不在词表里；可用：${values.join(' / ')}`
               );
             }
             continue;
@@ -1462,7 +1472,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     } else {
       raw = inline;
     }
-    const { rows, labels, skipped } = parseAsm(raw);
+    const { rows, labels, skipped, unmerged } = parseAsm(raw);
     const asmLang = resolveLang(attr(node, 'lang') || 'asm');
     const range = lineRange(node);
     const selected = range ? rows.filter((r) => r.line >= range[0] && r.line <= range[1]) : rows;
@@ -1498,7 +1508,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         h,
       });
     }
-    const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang, skipped };
+    const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang, skipped, unmerged };
     const json = JSON.stringify(payload).replace(/</g, '\\u003c');
     edits.push({
       start: loc.startTag.endOffset,

@@ -490,7 +490,8 @@ export const TAGS = {
   'vk-compare': {
     name: '对照',
     layer: 'components',
-    summary: '前后对照：两张图叠在同一个框里，上面那张按 split 裁掉一部分；静态就是「改到一半」的那一帧。',
+    summary:
+      '前后对照：左边 split% 显示 a、右边显示 b（a 在左、b 在右，与左下/右下角标对应）；上面那张按 split 裁掉右侧，静态就是「改到一半」的那一帧。',
     attrs: {
       'a': text(),
       'b': text(),
@@ -531,7 +532,7 @@ export const TAGS = {
   'vk-cells': {
     name: '内存格',
     layer: 'components',
-    summary: '一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，超过 cols 自动换行。',
+    summary: '一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，act="focus" 标出当前格，超过 cols 自动换行。',
     content: {
       kind: 'children',
       target: 'vk-cells',
@@ -878,7 +879,8 @@ export const TAG_NAMES = Object.keys(TAGS);
 export const CHILD_ATTRS = {
   'vk-timeline': ['date', 'label', 'lane', 'at', 'span', 'tone', 'state'],
   'vk-bits': ['label', 'value', 'from', 'to', 'state'],
-  'vk-cells': ['value', 'label', 'span', 'state', 'filled'],
+  // act 和宿主一样是姿态词：state="current" 退役后，焦点格写在 <li act="focus">。
+  'vk-cells': ['value', 'label', 'span', 'state', 'filled', 'act'],
   'vk-bars': ['label', 'value', 'state'],
   'vk-list': ['state'],
   'vk-steps': [],
@@ -929,6 +931,13 @@ const ATTR_META_BY_TAG = {
   'vk-cells': {
     filled: { label: '填充格（布尔：写 filled 即填充）', group: 'state' },
     },
+  'vk-compare': {
+    a: { label: '左图（split% 以左显示 a）', content: true },
+    b: { label: '右图（split% 以右显示 b）', content: true },
+    split: { label: '左侧 a 的占比（%，剩下给 b）', group: 'appearance' },
+    'label-a': { label: '左下角标（对应 a）', content: true },
+    'label-b': { label: '右下角标（对应 b）', content: true },
+  },
   'vk-bits': {
     'bit-width': { label: '位宽', group: 'layout' },
     fields: { label: '字段区间', content: true },

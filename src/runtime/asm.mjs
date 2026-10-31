@@ -58,6 +58,15 @@ export class VkAsm extends VkElement {
     } else {
       delete this.dataset.vkSkipped;
     }
+    if (d.unmerged > 0) {
+      this.dataset.vkUnmerged = String(d.unmerged);
+      this._warnOnce(
+        'asm-cont',
+        `有 ${d.unmerged} 行像是 objdump 的机器码续行（只有缩进的十六进制字节），但前面没有可接的地址行；已按普通行保留。请检查 lines 截取是否从指令中间开始`
+      );
+    } else {
+      delete this.dataset.vkUnmerged;
+    }
     const showBytes = this.hasAttribute('bytes') && hasBytes;
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const mass = this.getAttribute('mass') || 'normal';

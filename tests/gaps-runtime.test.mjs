@@ -156,6 +156,68 @@ test('⑨ vk-code 长行溢出同步测量：不跑 rAF 也有渐隐标记', asy
   assert.equal(r.over, true, `sw=${r.sw} cw=${r.cw}`);
 });
 
+test('① vk-cells 的 <li act="focus"> 真的渲染出焦点格，而不是只过构建', async () => {
+  const { tab } = await open(
+    '<vk-page><vk-cells id="c" cols="3">' +
+      '<li value="14" label="字节" act="focus"></li><li value="15" label="下一个"></li>' +
+      '</vk-cells></vk-page>'
+  );
+  const r = await tab.evaluate(() => {
+    const cells = [...document.querySelectorAll('#c .vk-cell')];
+    return {
+      act: cells[0].getAttribute('act'),
+      dataAct: cells[0].dataset.act,
+      state: cells[0].dataset.state,
+      bg: getComputedStyle(cells[0]).backgroundColor,
+      second: { act: cells[1].getAttribute('act'), state: cells[1].dataset.state },
+    };
+  });
+  assert.equal(r.act, 'focus', '运行时不能把 <li> 上的 act 丢掉');
+  assert.equal(r.dataAct, 'focus', 'pose 层应把 act 折成 data-act');
+  assert.equal(r.state, 'current', '焦点落地是 data-state="current"（复用行配方）');
+  assert.notEqual(r.bg, 'rgba(0, 0, 0, 0)', '焦点格应该有可见底色');
+  assert.equal(r.second.dataAct, undefined, '没写 act 的格子不该被带上焦点');
+});
+
+test('② audit 的孤行判定先除回祖先 scale：scale(.5) 不误报，未缩放也不误报', async () => {
+  // 16 个汉字、每行 6 字：最后一行 4 字。按"缩放过 ÷ 未缩放字号"会算成 2 字 → 孤行。
+  const text = '一二三四五六七八九十一二三四五六';
+  // 14 个汉字：最后一行 2 字，是真的孤行；修完也要继续报。
+  const orphanText = '一二三四五六七八九十一二三四';
+  const page = (scaled, t = text) => {
+    const body = `<vk-page><vk-text style="width:300px;text-wrap:wrap" size="body">${t}</vk-text></vk-page>`;
+    return scaled
+      ? `<div style="transform:scale(.5);transform-origin:0 0;width:3840px">${body}</div>`
+      : body;
+  };
+  const orphanOf = async (body) => {
+    const { tab } = await open(body);
+    return tab.evaluate(() => window.vk.auditPage(document).issues.filter((x) => x.type === 'orphan').map((x) => x.chars));
+  };
+  assert.deepEqual(await orphanOf(page(true)), [], 'scale(.5) 容器里的 4 字末行不是孤行');
+  assert.deepEqual(await orphanOf(page(false)), [], '未缩放时同样不该误报');
+  assert.deepEqual(await orphanOf(page(true, orphanText)), [2], '真的 2 字孤行仍要报，不能把判定一起关掉');
+});
+
+test('⑥ vk-term 的 mass 三档同时改字号：compact < normal < hero', async () => {
+  const { tab } = await open(
+    '<vk-page>' +
+      '<vk-term id="c" mass="compact" prompt="$">$ echo hi\nhi</vk-term>' +
+      '<vk-term id="n" mass="normal" prompt="$">$ echo hi\nhi</vk-term>' +
+      '<vk-term id="h" mass="hero" prompt="$">$ echo hi\nhi</vk-term>' +
+      '</vk-page>'
+  );
+  const r = await tab.evaluate(() =>
+    ['c', 'n', 'h'].map((id) => {
+      const bd = document.querySelector(`#${id} .vk-bd`);
+      return { fs: parseFloat(getComputedStyle(bd).fontSize), lh: getComputedStyle(bd).lineHeight };
+    })
+  );
+  assert.ok(r[0].fs < r[1].fs, `compact ${r[0].fs} 应小于 normal ${r[1].fs}`);
+  assert.ok(r[1].fs < r[2].fs, `normal ${r[1].fs} 应小于 hero ${r[2].fs}`);
+  assert.ok(r[2].fs >= r[1].fs * 1.4, `hero ${r[2].fs} 要明显大于 normal ${r[1].fs}`);
+});
+
 test('⑩ vk-timeline steps 与 at+span 矛盾：不静默撑大，warn 且留 data-*', async () => {
   const { tab, logs } = await open(
     '<vk-timeline id="bad" variant="lanes" steps="3" lanes="主线程">' +

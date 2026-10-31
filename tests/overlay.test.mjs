@@ -158,6 +158,36 @@ test('vk-compare 的 split 决定裁掉多少', async () => {
   assert.ok(r.ratio.startsWith('4 / 3'), `比例应该写进 aspect-ratio：${r.ratio}`);
 });
 
+test('vk-compare：a 固定留左侧，label-a 与 a 同边', async () => {
+  await page.setContent(
+    SHELL(`<vk-page><vk-grid cols="3">
+      <vk-compare span="2" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="4 / 3"
+        split="50" label-a="改前" label-b="改后"></vk-compare>
+    </vk-grid></vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const r = await page.evaluate(() => {
+    const a = document.querySelector('.vk-cmp-a');
+    const la = document.querySelector('.vk-cmp-la');
+    const lb = document.querySelector('.vk-cmp-lb');
+    return {
+      clip: a.style.clipPath,
+      aSrc: a.getAttribute('src'),
+      la: la.textContent,
+      lb: lb.textContent,
+      laLeft: la.getBoundingClientRect().left,
+      lbLeft: lb.getBoundingClientRect().left,
+    };
+  });
+  // split=50：a 的裁切只留左半（右侧 inset 50%），右半露出 b。
+  assert.equal(r.clip, 'inset(0px 50% 0px 0px)', `a 应留在左边：${r.clip}`);
+  assert.match(r.aSrc, /sample-grid\.svg$/, 'a 属性必须落到上面那张图');
+  assert.equal(r.la, '改前');
+  assert.equal(r.lb, '改后');
+  assert.ok(r.laLeft < r.lbLeft, 'label-a 在左下、label-b 在右下');
+});
+
 after(async () => {
   await browser.close();
   await close();

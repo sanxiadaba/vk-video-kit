@@ -188,7 +188,12 @@ vk-term{ display: block; }.vk-term .vk-bd{
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-body);
   line-height: var(--vk-lh-code);
-}.vk-term .vk-line{
+}
+/* 体量三档同时改行高与字号：hero 要让"上屏"那一行明显压过其它行。
+   字号只到 1.5×正文（72px）：再大，标本页 1680 宽里的 32 字符命令行会溢出。 */
+.vk-term[data-mass='compact'] .vk-bd{ font-size: var(--vk-t-data); line-height: 1.25; }
+.vk-term[data-mass='normal'] .vk-bd{ font-size: var(--vk-t-body); line-height: var(--vk-lh-code); }
+.vk-term[data-mass='hero'] .vk-bd{ font-size: calc(var(--vk-t-body) * 1.5); line-height: 1.35; }.vk-term .vk-line{
   display: flex;
   align-items: baseline;
   gap: var(--vk-s2);

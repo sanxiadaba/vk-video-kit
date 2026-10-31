@@ -197,14 +197,14 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
-- **`vk-compare`** · 对照 — 前后对照：两张图叠在同一个框里，上面那张按 split 裁掉一部分；静态就是「改到一半」的那一帧。
+- **`vk-compare`** · 对照 — 前后对照：左边 split% 显示 a、右边显示 b（a 在左、b 在右，与左下/右下角标对应）；上面那张按 split 裁掉右侧，静态就是「改到一半」的那一帧。
   - 属性：`a` · `b` · `alt` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-tree title="app" current="src/parser.py" depth="4">src/ __init__.py ast.py errors.py lexer.py * parser.py tests/ fixtures/ basic.tokens test_lexer.py + main.py</vk-tree>`
-- **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，超过 cols 自动换行。
+- **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，act="focus" 标出当前格，超过 cols 自动换行。
   - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）

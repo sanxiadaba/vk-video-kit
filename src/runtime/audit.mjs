@@ -20,6 +20,31 @@ const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
 const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring']);
 
+/**
+ * 从元素到文档根的累计 scaleX。
+ *
+ * getBoundingClientRect / Range 量到的是祖先 transform 之后的结果，
+ * 而 computed font-size 是没缩放的。连排页把每帧缩到 0.5 时，
+ * 直接拿"缩放后的行宽 ÷ 未缩放字号"会把正常的一行算成孤行。
+ * 只乘 scale：旋转/斜切不该改变"这一行有几个字"的判断。
+ */
+function cumulativeScaleX(el) {
+  let scale = 1;
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const t = getComputedStyle(n).transform;
+    if (t && t !== 'none') {
+      const m = t.match(/^matrix(?:3d)?\(([^)]+)\)$/);
+      if (m) {
+        const p = m[1].split(',').map(Number);
+        const sx = Math.hypot(p[0] || 0, p[1] || 0);
+        if (sx > 0) scale *= sx;
+      }
+    }
+    if (n === document.documentElement) break;
+  }
+  return scale || 1;
+}
+
 export function auditPage(root = document) {
   const out = [];
   const stage = root.matches?.('.vk-page, .vk-stage') ? root : root.querySelector?.('.vk-page') || root.querySelector?.('.vk-stage') || root;
@@ -364,13 +389,16 @@ export function auditPage(root = document) {
     const text = (el.textContent || '').replace(/\s+/g, '').trim();
     if (text.length < 12) continue;
     const fs = parseFloat(getComputedStyle(el).fontSize) || 40;
+    // 行盒与行距都是缩放后的像素；判断"几个字"时要把祖先 scale 除回去。
+    const scale = cumulativeScaleX(el);
     const range = document.createRange();
     range.selectNodeContents(el);
     const rects = [...range.getClientRects()].filter((r) => r.width > 2 && r.height > 2);
     if (rects.length < 2) continue;
     const rows = [];
     for (const r of rects) {
-      const row = rows.find((x) => Math.abs(x.top - r.top) < fs * 0.6);
+      // 同一行的判定也用缩放后的字高，否则缩得太小时两行会被并成一行。
+      const row = rows.find((x) => Math.abs(x.top - r.top) < fs * scale * 0.6);
       if (row) {
         row.left = Math.min(row.left, r.left);
         row.right = Math.max(row.right, r.right);
@@ -378,7 +406,7 @@ export function auditPage(root = document) {
     }
     if (rows.length < 2) continue;
     const last = rows[rows.length - 1];
-    const chars = (last.right - last.left) / fs;
+    const chars = (last.right - last.left) / (fs * scale);
     if (chars < 3.2) out.push({ type: 'orphan', what: clip(text.slice(0, 18)), chars: +chars.toFixed(1) });
   }
 

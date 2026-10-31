@@ -9,6 +9,9 @@
 
 // 机器码段可以为空：`objdump --no-show-raw-insn` 与部分反汇编器只给地址。
 const OBJDUMP = /^\s*([0-9a-f]{4,16}):\s*((?:[0-9a-f]{2}\s+)*)\s*(.+)$/i;
+// objdump 把超过 7 字节的指令折行：续行没有地址，只有缩进的机器码字节。
+// 它不是一条独立指令，必须并回上一条；否则屏幕上会多出一行只有 `00` 的"指令"。
+const OBJDUMP_CONT = /^\s+((?:[0-9a-f]{2}(?:\s+|$))+)$/i;
 const LABEL_ADDR = /^\s*([0-9a-f]{4,16})\s+<([^>]+)>:\s*$/i;
 const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
 
@@ -36,6 +39,7 @@ export function parseAsm(text) {
   const rows = [];
   const labels = [];
   let skipped = 0;
+  let unmerged = 0;
   const lines = String(text ?? '')
     .replace(/\r\n?/g, '\n')
     .split('\n');
@@ -45,6 +49,17 @@ export function parseAsm(text) {
     if (isAsmNoise(raw)) {
       skipped++;
       return;
+    }
+    const cont = raw.match(OBJDUMP_CONT);
+    if (cont) {
+      const prev = rows[rows.length - 1];
+      if (prev?.kind === 'insn' && prev.addr) {
+        const more = cont[1].trim().replace(/\s+/g, ' ');
+        prev.bytes = prev.bytes ? `${prev.bytes} ${more}` : more;
+        return;
+      }
+      // 前面没有可接的地址行：不猜，仍按普通行处理，并让运行时说一声。
+      unmerged++;
     }
     const lab = raw.match(LABEL_ADDR);
     if (lab) {
@@ -77,7 +92,7 @@ export function parseAsm(text) {
     rows.push({ line, kind: 'insn', addr: '', bytes: '', text: body });
   });
 
-  return { rows, labels, skipped };
+  return { rows, labels, skipped, unmerged };
 }
 
 /** 把一条指令拆成助记符与操作数；只是显示辅助，不改变原文。 */
