@@ -180,3 +180,23 @@ test('ring variant="dim"：目标不动、兄弟退后、keep 保住', async () 
   assert.equal(r.o, '0.4', '兄弟要退后到 dim');
   assert.equal(r.k, '1', 'keep 里的元素不能退后');
 });
+
+test('批注泡自动选边：不压住正文', async () => {
+  // 目标在上半页，上方只有标题：默认应该往右/下走，而不是盖住标题。
+  await page.setContent(
+    SHELL(`<vk-page align="top"><vk-stack gap="lg">
+      <vk-text class="t" size="title" weight="bold">这一行不能被批注泡盖住</vk-text>
+      <vk-box id="tgt" w="240" h="96" surface="soft"><vk-text size="body">目标</vk-text></vk-box>
+    </vk-stack><vk-pin for="#tgt">这里是一条批注</vk-pin></vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await page.evaluate(() => window.vk.ready());
+  const r = await page.evaluate(() => {
+    const bd = document.querySelector('.vk-pin-bd').getBoundingClientRect();
+    const t = document.querySelector('.t').getBoundingClientRect();
+    const w = Math.min(bd.right, t.right) - Math.max(bd.left, t.left);
+    const h = Math.min(bd.bottom, t.bottom) - Math.max(bd.top, t.top);
+    return { w, h };
+  });
+  assert.ok(!(r.w > 60 && r.h > 20), `批注泡压住了标题：重叠 ${Math.round(r.w)}×${Math.round(r.h)}`);
+});

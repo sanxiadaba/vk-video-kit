@@ -357,14 +357,40 @@ export class VkPin extends VkOverlay {
       anchor = this._box(target.rect, f.host, f.hr);
       if (!Number.isFinite(left) || !Number.isFinite(top)) {
         let side = this.getAttribute('side') || 'auto';
+        // 自动选边：先算四个候选位置，再按"压住多少字"排序。
+        // 13.x 只看"哪边有地方"，于是第 10 站的批注泡稳稳压住标题——
+        // 有地方和压不压字是两件事。
         if (side === 'auto') {
-          const rightRoom = f.w - (anchor.x + anchor.w);
-          const leftRoom = anchor.x;
-          const bottomRoom = f.h - (anchor.y + anchor.h);
-          if (rightRoom >= bw + gap) side = 'right';
-          else if (leftRoom >= bw + gap) side = 'left';
-          else if (bottomRoom >= bh + gap) side = 'bottom';
-          else side = 'top';
+          const texts = [...f.host.querySelectorAll('vk-text, p, h1, h2, h3, li')]
+            .filter((el) => !el.closest('vk-pin') && (el.textContent || '').trim())
+            .map((el) => el.getBoundingClientRect());
+          const cover = (x, y) => {
+            let area = 0;
+            for (const t of texts) {
+              const w = Math.min(x + bw, t.right) - Math.max(x, t.left);
+              const h = Math.min(y + bh, t.bottom) - Math.max(y, t.top);
+              if (w > 4 && h > 4) area += w * h;
+            }
+            // 出画也扣分：优先选既压不到字、又留在画布里的位置
+            const outX = Math.max(0, -x) + Math.max(0, x + bw - f.w);
+            const outY = Math.max(0, -y) + Math.max(0, y + bh - f.h);
+            return area + (outX + outY) * 400;
+          };
+          const spots = {
+            right: [anchor.x + anchor.w + gap, anchor.cy - bh / 2],
+            left: [anchor.x - gap - bw, anchor.cy - bh / 2],
+            bottom: [anchor.cx - bw / 2, anchor.y + anchor.h + gap],
+            top: [anchor.cx - bw / 2, anchor.y - gap - bh],
+          };
+          const order = ['right', 'bottom', 'left', 'top'];
+          let best = order[0];
+          let bestScore = Infinity;
+          for (const key of order) {
+            const score = cover(spots[key][0], spots[key][1]);
+            if (score < bestScore) { bestScore = score; best = key; }
+            if (score === 0) break;
+          }
+          side = best;
         }
         if (side === 'right') {
           left = anchor.x + anchor.w + gap;

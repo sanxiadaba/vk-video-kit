@@ -227,6 +227,28 @@ export function auditPage(root = document) {
     }
   }
 
+  // 覆盖层压住正文：批注泡这类"画在别人身上"的东西，压住字就是错。
+  // 13.x 把 pin/ring/edge 当"显式覆盖"整体排除了，于是第 10 站的批注泡盖住标题，
+  // 门禁仍然说"干净"——这条就是补那个盲区。只查真正有底的泡，线条类不算。
+  for (const pin of stage.querySelectorAll('vk-pin')) {
+    const bubble = pin.querySelector('.vk-pin-bd') || pin;
+    const pr = bubble.getBoundingClientRect();
+    if (pr.width < 4 || pr.height < 4) continue;
+    for (const t of stage.querySelectorAll('vk-text, p, h1, h2, h3, li')) {
+      if (pin.contains(t)) continue;
+      if (!(t.textContent || '').trim()) continue;
+      const b = t.getBoundingClientRect();
+      if (b.width < 4 || b.height < 4) continue;
+      const w = Math.min(pr.right, b.right) - Math.max(pr.left, b.left);
+      const h = Math.min(pr.bottom, b.bottom) - Math.max(pr.top, b.top);
+      if (w <= 4 || h <= 4) continue;
+      const cover = (w * h) / (b.width * b.height);
+      if (h > b.height * 0.4 && w > 60) {
+        out.push({ type: 'overlay-text', what: clip(bubble.className || 'vk-pin'), target: clip(t.className || t.tagName), cover: +cover.toFixed(2) });
+      }
+    }
+  }
+
   // 底部空带：这一页下半空了多少。
   //
   // 只测量，不判定：一整集里"每帧下半空一半"是分镜问题，不是组件问题，
