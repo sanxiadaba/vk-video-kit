@@ -675,7 +675,7 @@ export class VkTree extends VkElement {
       <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}">
         <div class="vk-tree-hd" data-vk-part="tree-hd">
           <span class="vk-tree-title">${esc(label)}</span>
-          ${meta ? `<span class="vk-tree-meta">${meta}</span>` : ''}
+          ${meta ? `<span class="vk-tree-meta" data-meta>${meta}</span>` : ''}
         </div>
         <ul class="vk-tree-bd vk-tree-list" role="list" aria-label="${esc(label)}">${roots.map(renderNode).join('')}${hidden > 0 ? `<li class="vk-tree-more" role="listitem">还有 ${hidden}${truncated ? '+' : ''} 项</li>` : ''}</ul>
       </div>
@@ -778,7 +778,7 @@ export class VkKeys extends VkElement {
     // 只按"空格 + 加号 + 空格"分键，`+` 本身可以是一枚键。
     const keys = raw.split(/\s+\+\s+/).filter(Boolean);
     this.innerHTML = `<span class="vk-keys" role="group" aria-label="${esc(raw)}">${keys
-      .map((k, i) => `${i ? '<span class="vk-keyplus" aria-hidden="true">+</span>' : ''}<kbd class="vk-key">${esc(k)}</kbd>`)
+      .map((k, i) => `${i ? '<span class="vk-keyplus" aria-hidden="true" data-meta>+</span>' : ''}<kbd class="vk-key">${esc(k)}</kbd>`)
       .join('')}</span>`;
   }
 }

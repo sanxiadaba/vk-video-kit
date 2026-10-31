@@ -11,7 +11,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 
-export const CACHE_VERSION = 'vk-check-2';
+export const CACHE_VERSION = 'vk-check-3';
 const ROOT = process.cwd();
 const CACHE_DIR = path.join(ROOT, '.vk-cache');
 
@@ -49,16 +49,22 @@ export function hashFiles(files) {
   return h.digest('hex').slice(0, 32);
 }
 
-/** 所有页面共享的产物 + 检查工具。任何一项变，全站缓存失效。 */
+/**
+ * 所有页面共享的产物 + 检查工具。任何一项变，全站缓存失效。
+ *
+ * 13.0 漏了 src/effects.mjs —— 把一条 kind:'style' 改成 kind:'any'，
+ * 契约会"缓存命中"直接变绿。检查的**语义**也是输入，不能只哈希产物。
+ * 所以：整个 tools/ 目录 + 所有参与判断的 src 文件都进来。
+ */
 export function sharedHash(site) {
   return hashFiles([
     ...walk(path.join(site, 'vk')),
     ...walk(path.join(site, 'dist')),
     ...walk(path.join(site, 'assets')),
-    ...walk(path.join(ROOT, 'tools/lib')),
-    path.join(ROOT, 'tools/gate.mjs'),
-    path.join(ROOT, 'tools/contract.mjs'),
+    ...walk(path.join(ROOT, 'tools')),
     path.join(ROOT, 'src/registry.mjs'),
+    path.join(ROOT, 'src/effects.mjs'),
+    path.join(ROOT, 'src/shared/limits.mjs'),
     path.join(ROOT, 'src/scenes/presets.mjs'),
     path.join(ROOT, 'package.json'),
     path.join(ROOT, 'package-lock.json'),
@@ -73,9 +79,15 @@ export function cacheKey(scope, shared, page, name, extra = '') {
   return createHash('sha1').update([CACHE_VERSION, scope, shared, page, name, extra].join('|')).digest('hex');
 }
 
+/**
+ * 命中判定：不只看".ok 文件在不在"，还要看它记的键与版本是不是当前这一次。
+ * 备份/复制/CI 缓存都会把旧 .ok 带过来；只查存在性等于拿旧结论给新代码盖章。
+ */
 export function isCached(key) {
   try {
-    return fs.existsSync(path.join(CACHE_DIR, `${key}.ok`));
+    const raw = fs.readFileSync(path.join(CACHE_DIR, `${key}.ok`), 'utf8');
+    const rec = JSON.parse(raw);
+    return rec.v === CACHE_VERSION && rec.key === key;
   } catch {
     return false;
   }
@@ -84,7 +96,7 @@ export function isCached(key) {
 export function markCached(key) {
   try {
     fs.mkdirSync(CACHE_DIR, { recursive: true });
-    fs.writeFileSync(path.join(CACHE_DIR, `${key}.ok`), new Date().toISOString());
+    fs.writeFileSync(path.join(CACHE_DIR, `${key}.ok`), JSON.stringify({ v: CACHE_VERSION, key, at: new Date().toISOString() }));
   } catch {
     /* 缓存写失败不影响检查 */
   }

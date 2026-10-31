@@ -97,25 +97,13 @@ async function pool(tasks, limit = 2) {
 }
 
 const npx = process.platform === 'win32' ? 'node' : 'node';
-const nodeTest = [
-  npx,
-  '--test',
-  '--test-concurrency=1',
-  'tests/anchor.test.mjs',
-  'tests/contract.test.mjs',
-  'tests/geometry.test.mjs',
-  'tests/package.test.mjs',
-  'tests/registry.test.mjs',
-  'tests/shared.test.mjs',
-  'tests/transform.test.mjs',
-];
+// 测试清单不再手写：手写清单漏过三个文件（layout-rules / asm / anchors-geometry），
+// 漏掉的那几个恰好是最容易悄悄坏掉的。现在扫目录，用"要不要真浏览器"分组。
+const testFiles = fs.readdirSync('tests').filter((f) => f.endsWith('.test.mjs')).sort();
+const needsBrowser = (f) => /startServer\(|from 'playwright/.test(fs.readFileSync(`tests/${f}`, 'utf8'));
+const nodeTest = [npx, '--test', '--test-concurrency=1', ...testFiles.filter((f) => !needsBrowser(f)).map((f) => `tests/${f}`)];
 // 浏览器回归：所有需要真渲染的测试。并发 2 是实测的甜点——再高就是 Chromium 抢核。
-const browserTest = [
-  npx, '--test', '--test-concurrency=2',
-  'tests/canvas.test.mjs', 'tests/dom.test.mjs',
-  'tests/director.test.mjs', 'tests/pose.test.mjs', 'tests/overlay.test.mjs',
-  'tests/text.test.mjs', 'tests/shot-sequence.test.mjs',
-];
+const browserTest = [npx, '--test', '--test-concurrency=2', ...testFiles.filter(needsBrowser).map((f) => `tests/${f}`)];
 const browserEnv = {
   ...process.env,
   CONTRACT_SHARDS: process.env.CONTRACT_SHARDS || String(Math.min(4, shards)),

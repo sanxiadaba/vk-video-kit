@@ -477,6 +477,7 @@ for (const target of list) {
   for (const f of fonts) fail(target.label, f);
   for (const e of issues) {
     if (e.type === 'font') fail(target.label, `字号 ${e.fs}px < ${MIN_FONT}：${e.what}`);
+    if (e.type === 'empty') fail(target.label, `空帧：${e.what}`);
     if (e.type === 'contrast') fail(target.label, `对比度 ${e.cr} < ${e.need}：${e.what}`);
     if (e.type === 'overflow') fail(target.label, `超出 1920×1080：${e.what} ${e.box.join(',')}`);
     if (e.type === 'safe') fail(target.label, `超出 1680×888 安全区：${e.what} ${e.box.join(',')}`);

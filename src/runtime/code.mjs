@@ -242,7 +242,7 @@ function paintTermCommand(cmd) {
         return `<span class="vk-cmd-exe">${esc(part)}</span>`;
       }
       if (/^--?[\w-]+/.test(part)) return `<span class="vk-cmd-flag">${esc(part)}</span>`;
-      if (termIsPath(part)) return `<span class="vk-cmd-path">${esc(part)}</span>`;
+      if (termIsPath(part)) return `<span class="vk-cmd-path" data-meta>${esc(part)}</span>`;
       if (/^\d+(?:\.\d+)?(?:ms|s|%|px|kb|mb)?$/.test(part)) return `<span class="vk-cmd-num">${esc(part)}</span>`;
       return esc(part);
     })
@@ -328,7 +328,7 @@ export class VkTerm extends VkElement {
         const cls = `vk-line is-${r.kind}`;
         const sr = r.kind === 'ok' ? '成功：' : r.kind === 'warn' ? '警告：' : r.kind === 'err' ? '错误：' : '';
         // 输出从 0 列开始：真实终端不会把 stdout 缩进到 prompt 列。
-        const signHtml = r.kind === 'out' ? '' : `<span class="${signCls}">${esc(sign || ' ')}</span>`;
+        const signHtml = r.kind === 'out' ? '' : `<span class="${signCls}" data-meta>${esc(sign || ' ')}</span>`;
         return `<div class="${cls}" style="--i:${i}"><span class="vk-sr">${sr}</span>${signHtml}<span class="vk-txt">${r.text || ' '}</span></div>`;
       })
       .join('');

@@ -378,7 +378,7 @@ async function countSel(tag, sel) {
 }
 
 /** 每个标签只看它自己声明的属性：55 个属性 × 整棵子树是这里最贵的一步。 */
-const BASE_PROPS = ['display', 'visibility', 'opacity'];
+const BASE_PROPS = ['display', 'visibility', 'opacity', 'color', 'backgroundColor', 'borderColor', 'fill', 'stroke'];
 
 /** 内容属性的探针值：只求“改得动”，不求语义正确。 */
 function contentProbeValue(spec) {
@@ -409,6 +409,16 @@ function stylePropsFor(tag) {
   return [...set];
 }
 
+/**
+ * 跳过的属性必须记账。
+ *
+ * 13.0 的做法是 continue 掉 382 个属性、什么都不说，于是"契约通过"变成一句空话。
+ * 现在每一类跳过都计数，并受预算约束：预算只许往下调，不许往上。
+ * 每降一档都要有替代的覆盖（例如 pose 由 tests/pose.test.mjs 覆盖）。
+ */
+const SKIP_BUDGET = Number(process.env.VK_SKIP_BUDGET || 382);
+const skipped = { motion: 0, pose: 0, context: 0, build: 0 };
+
 try {
   for (const tag of tags) {
     if (!TAGS[tag]) {
@@ -432,17 +442,19 @@ try {
       if (isHidden(tag, name)) continue;
       // 语境属性（span / rows）：只在特定上下文里有效——span 要有 vk-grid 父级，
       // rows 要有确定高度。它们由构建期校验和 slice 的求解器覆盖，不在这里逐条探针。
-      if (spec.context) continue;
+      if (spec.context) { skipped.context++; continue; }
       // 导演层属性（at / dur / enter / ease / stagger）：只有 seek(t) 之后才影响画面，
       // 静态渲染必须与不写它们时一致——所以不能在这里用「子树有没有变」来探针。
       // 它们由 tests/director.test.mjs 的 poster 逐像素比对覆盖。
-      if (spec.motion) continue;
+      if (spec.motion) { skipped.motion++; continue; }
       // 姿态属性（act / strength）由运行期一遍写成 data-*，不改子树结构；
       // 由 tests/pose.test.mjs 覆盖（focus 上色、soft 变淡、mark 不用钴蓝）。
-      if (spec.pose) continue;
+      // 14.0：四类跳过全部记账，并受 SKIP_BUDGET 约束——见文件末尾。
+      if (spec.pose) { skipped.pose++; continue; }
       const key = `${tag}.${name}`;
       if (spec.build) {
         buildOnly.push(name);
+        skipped.build++;
         continue;
       }
       const probe = PROBES[tag]?.[name];
@@ -558,6 +570,11 @@ try {
     if (cacheOn && failures.length === failedBefore) markCached(cacheKeys.get(tag));
   }
   if (!checked.length) failures.push('契约没有检查任何属性：0 个对象不算通过');
+  const skipTotal = skipped.motion + skipped.pose + skipped.context + skipped.build;
+  console.log(
+    `\n跳过 ${skipTotal} 个属性（motion ${skipped.motion} / pose ${skipped.pose} / context ${skipped.context} / build ${skipped.build}），预算 ${SKIP_BUDGET}`
+  );
+  if (skipTotal > SKIP_BUDGET) failures.push(`跳过 ${skipTotal} 个属性 > 预算 ${SKIP_BUDGET}：删掉没人用的声明，或补上覆盖`);
 } catch (e) {
   failures.push(`运行失败：${e?.message || e}`);
 } finally {

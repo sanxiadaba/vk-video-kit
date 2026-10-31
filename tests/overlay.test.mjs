@@ -102,6 +102,23 @@ test('底部空带：量到的是最后一点墨，且不算覆盖层', async ()
   assert.ok(out.contentBottom < 400, `覆盖层不该抬高内容底（实际 ${out.contentBottom}）`);
 });
 
+test('空页必须报 empty：没有字也没有图', async () => {
+  await page.setContent(SHELL(`<vk-page><vk-stack></vk-stack></vk-page>`), { waitUntil: 'load' });
+  await ready();
+  const out = await page.evaluate(() => window.vk.auditPage().issues.filter((x) => x.type === 'empty'));
+  assert.equal(out.length, 1, `空页应报一条 empty，实际 ${JSON.stringify(out)}`);
+});
+
+test('有一句话的页不报 empty', async () => {
+  await page.setContent(
+    SHELL(`<vk-page><vk-text size="body">这一页有一整句话，不该被判成空帧，哪怕它很短。</vk-text></vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await ready();
+  const out = await page.evaluate(() => window.vk.auditPage().issues.filter((x) => x.type === 'empty'));
+  assert.equal(out.length, 0, `不该报 empty：${JSON.stringify(out)}`);
+});
+
 test('底部空带：贴底的页不报', async () => {
   await page.setContent(
     SHELL(`<vk-page align="bottom">

@@ -82,6 +82,7 @@ try {
     const lines = [];
     for (const x of it.issues) {
       if (x.type === 'font') lines.push(`字号 ${x.fs} < 36：${x.what}`);
+      else if (x.type === 'empty') lines.push(`空帧：${x.what}`);
       else if (x.type === 'font-content') lines.push(`正文落在 ${x.fs}（应 ≥48）：${x.what}`);
       else if (x.type === 'contrast') lines.push(`对比度 ${x.cr} < ${x.need}：${x.what}`);
       else if (x.type === 'safe') lines.push(`超出安全区：${x.what} ${x.box?.join(',') || ''}`);

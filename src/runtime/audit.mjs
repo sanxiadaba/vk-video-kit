@@ -1,25 +1,23 @@
 import { resolveAnchor } from './base.mjs';
+import { LIMITS } from '../shared/limits.mjs';
 
 /**
  * 页面自检：作者页与标本页共用同一份。
  *
  * 只看作者最容易踩的六件事：字号、对比度、安全区、溢出、裁切、重叠、空锚点。
  * 不是"像素基线"，也不需要截图；CLI 的 `vk check`、`vk shot` 自检都调它。
+ *
+ * 所有数值来自 shared/limits.mjs —— 这里不再有第二份定义。
+ * 对比度分两档：正文 7:1，标注（ink="muted"，即 [data-meta] 里）4.5:1。
  */
 
-/**
- * 13.0 尺度梯的两个门槛（观看条件：手机横屏 0.38×）：
- * - 36 是硬地板（行号 / 单位 / 刻度 / 出处），0.38× 下 13.7px。
- * - 48 是"要读懂的内容"的门槛：一整句中文落在 36 或 40，就是排错了。
- *   用"含汉字 + 长于 12 字"判定"一整句"，短标签不算。
- * - 等宽数据（代码 / 表格数字 / 地址）走 40，x-height 比汉字大，可读性接近 48。
- */
-const MIN_FONT = 36;
-const CONTENT_FONT = 48;
-const MIN_RATIO = 4.5;
-const LARGE_RATIO = 3;
-const LARGE_FONT = 96;
-const DATA_FONT = 40;
+const MIN_FONT = LIMITS.fontFloor;
+const CONTENT_FONT = LIMITS.fontBody;
+const MIN_RATIO = LIMITS.contrastText;
+const MUTED_RATIO = LIMITS.contrastMuted;
+const LARGE_RATIO = LIMITS.contrastLarge;
+const DATA_RATIO = LIMITS.contrastData;
+const LARGE_FONT = LIMITS.fontLarge;
 const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-spotlight']);
 
 export function auditPage(root = document) {
@@ -103,7 +101,10 @@ export function auditPage(root = document) {
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     // 出血层只收图/面：正文放进去会绕过安全区，直接报。
     if (hasText && inBleed) out.push({ type: 'bleed-text', what: clip(el.textContent || el.tagName) });
-    const isMeta = !!(el.closest && el.closest('[data-meta]'));
+    const isMeta = !!(el.closest && (el.closest('[data-meta]') || el.closest('[ink="muted"]')));
+    // 数据区 = 等宽字体。颜色在这里是编码（字符串绿、运算符蓝、地址灰），
+    // 全推到 7:1 会让代码块变成一片深灰；所以按 AA 4.5 走。
+    const inData = /mono/i.test(cs.fontFamily);
     const isSup = !!(el.closest && el.closest('vk-inline[variant="sup"], vk-inline[variant="sub"]'));
     if (hasText && opaque(el) && !isSup && !inOverlay) {
       const fs = parseFloat(cs.fontSize);
@@ -117,7 +118,8 @@ export function auditPage(root = document) {
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));
-        const need = fs >= LARGE_FONT ? LARGE_RATIO : MIN_RATIO;
+        // 分档：标注 4.5 / 数据区 4.5 / 大字 4.5 / 正文 7。
+        const need = isMeta ? MUTED_RATIO : inData ? DATA_RATIO : fs >= LARGE_FONT ? LARGE_RATIO : MIN_RATIO;
         if (cr < need) out.push({ type: 'contrast', what: clip(el.className || el.tagName), cr: +cr.toFixed(2), need });
       }
     }
@@ -243,6 +245,28 @@ export function auditPage(root = document) {
         what: `底部空 ${band}px（安全区 ${Math.round((band / safeRect.height) * 100)}%）`,
         box: [0, Math.round(safeRect.height - band), Math.round(safeRect.width), band],
         fix: '主角再大一档 / vk-page align="center" / 补一条撑住下半页的物证',
+      });
+    }
+  }
+
+  // 空帧：一个组件都没渲染出来、或整页只剩背景时，上面所有检查都会沉默——
+  // 因为没有任何东西可以不合格。这一条把"没画面"从"没问题"里分出来。
+  //
+  // 例外是"故意空"的页：标本台（.vk-stage）、文献页/图版（data-allow-void）。
+  // 它们本来就只有一个元件或大片留白，拿空帧去拦它是错的。
+  if (!voidExempt) {
+    const body = stage.querySelector('.vk-page-bd') || stage;
+    const chars = (body.innerText || '').replace(/\s+/g, '').length;
+    const media = [...body.querySelectorAll('img, svg, canvas, vk-img, vk-canvas, vk-figure')].filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 80 && r.height > 80;
+    }).length;
+    if (chars < 12 && media === 0) {
+      out.push({
+        type: 'empty',
+        what: `可见文字 ${chars} 字、没有图`,
+        chars,
+        fix: '组件没渲染出来？检查脚本是否加载、预编译是否过期',
       });
     }
   }
@@ -522,6 +546,10 @@ export function focusRegions(stage) {
   };
 
   for (const el of stage.querySelectorAll('[data-vk-focus]')) add(el);
+  // 注意力只有两个来源：作者写的 act="focus"，以及运行期落到元素上的 data-act / data-tone。
+  // 13.0 这里只认 [tone="focus"]，于是 pose 给块级元素上的焦点（data-tone）永远数不到——
+  // CSS 把字涂蓝、审计说"只有一处焦点"。
+  for (const el of stage.querySelectorAll('[data-act="focus"], [tone="focus"], [data-tone="focus"]')) add(el);
   for (const el of stage.querySelectorAll('.vk-line.is-hl, .vk-asm-row.is-hl')) add(el);
   // 一段高亮字节 = 一个 region：按容器归一，而不是按字节
   for (const el of stage.querySelectorAll('.vk-byte[data-hl="1"], .vk-byte-c[data-hl="1"]')) {
