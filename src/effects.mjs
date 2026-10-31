@@ -108,17 +108,13 @@ export const EFFECTS = {
   },
 
   'vk-stack': {
+    direction: { on: 'vk-stack', kind: 'style', prop: 'flex-direction' },
+    wrap: { on: 'vk-stack', kind: 'style', prop: 'flex-wrap' },
     gap: { on: 'vk-stack', kind: 'style', prop: 'row-gap' },
     align: { on: 'vk-stack', kind: 'style', prop: 'align-items' },
     justify: { on: 'vk-stack', kind: 'style', prop: 'justify-content' },
   },
 
-  'vk-row': {
-    gap: { on: 'vk-row', kind: 'style', prop: 'column-gap' },
-    align: { on: 'vk-row', kind: 'style', prop: 'align-items' },
-    justify: { on: 'vk-row', kind: 'style', prop: 'justify-content' },
-    wrap: { on: 'vk-row', kind: 'style', prop: 'flex-wrap' },
-  },
 
   'vk-grid': {
     cols: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns', skipVisual: true },
@@ -276,7 +272,7 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-text', 'vk-stack', 'vk-row', 'vk-grid', 'vk-rule', 'vk-title',
+  'vk-box', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule', 'vk-title',
   'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-figure', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',

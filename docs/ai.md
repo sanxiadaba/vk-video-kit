@@ -169,11 +169,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L2 排布 · 只决定在哪、多大
 
 - **`vk-stack`** · 竖排 — 纵向节奏。只给间距和对齐，不画任何东西。
-  - 属性：`gap` · `align` · `justify` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`gap` · `direction` · `align` · `justify` · `wrap` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-stack gap="sm">`
-- **`vk-row`** · 横排 — 横向排列。可换行、可两端推开。
-  - 属性：`gap` · `align` · `justify` · `wrap` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-row gap="md">`
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
   - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`

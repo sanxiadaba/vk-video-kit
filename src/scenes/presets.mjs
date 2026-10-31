@@ -48,10 +48,6 @@ export const PRESETS = {
     { label: '紧', attrs: { gap: '2xs' } },
     { label: '松', attrs: { gap: 'xl' } },
   ],
-  'vk-row': [
-    { label: '紧', attrs: { gap: '2xs' } },
-    { label: '松', attrs: { gap: 'xl' } },
-  ],
   'vk-grid': [
     { label: '四列', attrs: { cols: '4' } },
     { label: '两列', attrs: { cols: '2' } },

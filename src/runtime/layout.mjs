@@ -332,6 +332,5 @@ export function defineLayout() {
     render() {}
   };
   define('vk-stack', flow());
-  define('vk-row', flow());
   define('vk-grid', VkGrid);
 }

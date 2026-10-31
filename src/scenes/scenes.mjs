@@ -53,10 +53,10 @@ export const SCENES = [
     body: s`
 <vk-box class="spec-w1680" surface="none">
   <vk-text size="body" measure="none">句子里可以放 <vk-inline variant="code">s[0]</vk-inline>、<vk-inline variant="math">O(\log n)</vk-inline>、<vk-inline variant="sup">2</vk-inline> 与 <vk-inline variant="sub">i</vk-inline>，也可以放 <vk-inline variant="link" href="../index.html">一个链接</vk-inline>。字号跟随所在行，不破坏字阶。</vk-text>
-  <vk-row gap="lg" align="center">
+  <vk-stack direction="row" gap="lg" align="center">
     <vk-inline variant="keys">Ctrl + C</vk-inline>
     <vk-inline variant="keys">Ctrl + Shift + P</vk-inline>
-  </vk-row>
+  </vk-stack>
 </vk-box>`,
   },
 
@@ -96,18 +96,18 @@ export const SCENES = [
     tag: 'vk-tag',
     body: s`
 <vk-stack gap="sm" align="start">
-<vk-row gap="sm" align="center">
+<vk-stack direction="row" gap="sm" align="center">
   <vk-tag>int</vk-tag>
   <vk-tag tone="info">char</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">4 B</vk-tag>
   <vk-tag tone="neutral" emphasis="soft">指针</vk-tag>
   <vk-tag tone="neutral" emphasis="soft" size="label">0x10</vk-tag>
-</vk-row>
-<vk-row gap="sm" align="center">
+</vk-stack>
+<vk-stack direction="row" gap="sm" align="center">
   <vk-tag tone="ok">通过</vk-tag>
   <vk-tag tone="warn">警告</vk-tag>
   <vk-tag tone="err">错误</vk-tag>
-</vk-row>
+</vk-stack>
 </vk-stack>`,
   },
 
@@ -146,19 +146,19 @@ export const SCENES = [
     <vk-text size="body" weight="bold" mono align="center">a</vk-text>
   </vk-box>
   <vk-box id="obj-1" x="560" y="120" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
-    <vk-row gap="sm" align="baseline" justify="between">
+    <vk-stack direction="row" gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
       <vk-text size="body" mono ink="muted">0x7f2a</vk-text>
-    </vk-row>
+    </vk-stack>
   </vk-box>
   <vk-box id="name-b" x="0" y="300" w="240" radius="pill" pad-y="xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">b</vk-text>
   </vk-box>
   <vk-box id="obj-2" x="560" y="300" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
-    <vk-row gap="sm" align="baseline" justify="between">
+    <vk-stack direction="row" gap="sm" align="baseline" justify="between">
       <vk-text size="body" mono weight="medium">[1, 2, 3]</vk-text>
       <vk-text size="body" mono ink="muted">0x7f2e</vk-text>
-    </vk-row>
+    </vk-stack>
   </vk-box>
   <vk-edge from="#name-a" to="#obj-1" label="引用"></vk-edge>
   <vk-edge from="#name-b" to="#obj-2" label="切片"></vk-edge>
@@ -183,40 +183,16 @@ export const SCENES = [
     tag: 'vk-stack',
     body: s`
 <vk-stack gap="sm">
-  <vk-box border="hair" radius="lg" pad="md" class="spec-w600" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w520" surface="paper">
     <vk-text size="body">01</vk-text>
   </vk-box>
-  <vk-box border="hair" radius="lg" pad="md" class="spec-w1000" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w520" surface="paper">
     <vk-text size="body">02</vk-text>
   </vk-box>
-  <vk-box border="hair" radius="lg" pad="md" class="spec-w1000" surface="paper">
+  <vk-box border="hair" radius="lg" pad="md" class="spec-w520" surface="paper">
     <vk-text size="body">03</vk-text>
   </vk-box>
 </vk-stack>`,
-  },
-
-  {
-    tag: 'vk-row',
-    body: s`
-<vk-box class="spec-w1680" surface="none">
-  <vk-row gap="md">
-    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
-      <vk-text size="body" align="center">01</vk-text>
-    </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="xs" class="spec-pill" surface="soft">
-      <vk-text size="body" align="center">02</vk-text>
-    </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
-      <vk-text size="body" align="center">03</vk-text>
-    </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="xs" class="spec-pill" surface="soft">
-      <vk-text size="body" align="center">04</vk-text>
-    </vk-box>
-    <vk-box radius="pill" pad-x="md" pad-y="md" class="spec-pill" surface="soft">
-      <vk-text size="body" align="center">05</vk-text>
-    </vk-box>
-  </vk-row>
-</vk-box>`,
   },
 
   {
@@ -274,10 +250,10 @@ export const SCENES = [
   <vk-stack gap="sm">
     <vk-text size="subhead" weight="bold">示例内容</vk-text>
     <vk-text size="body" ink="secondary">示例文字。</vk-text>
-    <vk-row gap="sm" align="center">
+    <vk-stack direction="row" gap="sm" align="center">
       <vk-tag tone="ok">200 OK</vk-tag>
       <vk-text size="label" mono ink="muted">text/html · 12 B</vk-text>
-    </vk-row>
+    </vk-stack>
   </vk-stack>
 </vk-window>`,
   },
@@ -305,7 +281,7 @@ export const SCENES = [
   {
     tag: 'vk-icon',
     body: s`
-<vk-row gap="2xl" align="center">
+<vk-stack direction="row" gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="terminal" size="lg"></vk-icon>
     <vk-text size="body" mono ink="tertiary">终端</vk-text>
@@ -322,8 +298,8 @@ export const SCENES = [
     <vk-icon name="rocket" size="lg"></vk-icon>
     <vk-text size="body" mono ink="tertiary">运行</vk-text>
   </vk-stack>
-</vk-row>
-<vk-row gap="2xl" align="center">
+</vk-stack>
+<vk-stack direction="row" gap="2xl" align="center">
   <vk-stack gap="xs" align="center">
     <vk-icon name="database" size="lg"></vk-icon>
     <vk-text size="body" mono ink="tertiary">数据</vk-text>
@@ -336,7 +312,7 @@ export const SCENES = [
     <vk-icon name="settings" size="lg"></vk-icon>
     <vk-text size="body" mono ink="tertiary">设置</vk-text>
   </vk-stack>
-</vk-row>`,
+</vk-stack>`,
   },
 
   {
@@ -359,7 +335,7 @@ export const SCENES = [
 <vk-stack gap="lg">
   <vk-rule></vk-rule>
   <vk-rule variant="strong"></vk-rule>
-  <div class="spec-h240"><vk-row justify="center"><vk-rule orientation="vertical" fill></vk-rule></vk-row></div>
+  <div class="spec-h240"><vk-stack direction="row" justify="center"><vk-rule orientation="vertical" fill></vk-rule></vk-stack></div>
 </vk-stack>`,
   },
 

@@ -29,6 +29,7 @@ vk-stack[align='start'] { align-items: flex-start; }
 vk-stack[align='center'] { align-items: center; }
 vk-stack[align='end'] { align-items: flex-end; }
 vk-stack[align='stretch'] { align-items: stretch; }
+vk-stack[align='baseline'] { align-items: baseline; }
 
 vk-stack[justify='start'] { justify-content: flex-start; }
 vk-stack[justify='center'] { justify-content: center; }
@@ -37,44 +38,44 @@ vk-stack[justify='between'] { justify-content: space-between; }
 
 vk-stack[grow] { flex: 1 1 auto; }
 
-/* ---------------------------------------------------------------- vk-row */
+/* 横排 = 同一个 stack 的 direction='row'（14.0 把 vk-row 并了进来） */
 
-vk-row {
+vk-stack[direction='row'] {
   box-sizing: border-box;
   display: flex;
   flex-direction: row;
   gap: var(--vk-s3);
   min-width: 0;
 }
-vk-row[gap='2xs'] { gap: var(--vk-s1); }
-vk-row[gap='group'] { gap: var(--vk-gap-group); }
-vk-row[gap='section'] { gap: var(--vk-gap-section); }
-vk-row[gap='plate'] { gap: var(--vk-gap-plate); }
-vk-row[gap='xs'] { gap: var(--vk-s2); }
-vk-row[gap='sm'] { gap: var(--vk-s3); }
-vk-row[gap='md'] { gap: var(--vk-s4); }
-vk-row[gap='lg'] { gap: var(--vk-s5); }
-vk-row[gap='xl'] { gap: var(--vk-s6); }
-vk-row[gap='2xl'] { gap: var(--vk-s7); }
-vk-row[gap='3xl'] { gap: var(--vk-s8); }
+vk-stack[direction='row'][gap='2xs'] { gap: var(--vk-s1); }
+vk-stack[direction='row'][gap='group'] { gap: var(--vk-gap-group); }
+vk-stack[direction='row'][gap='section'] { gap: var(--vk-gap-section); }
+vk-stack[direction='row'][gap='plate'] { gap: var(--vk-gap-plate); }
+vk-stack[direction='row'][gap='xs'] { gap: var(--vk-s2); }
+vk-stack[direction='row'][gap='sm'] { gap: var(--vk-s3); }
+vk-stack[direction='row'][gap='md'] { gap: var(--vk-s4); }
+vk-stack[direction='row'][gap='lg'] { gap: var(--vk-s5); }
+vk-stack[direction='row'][gap='xl'] { gap: var(--vk-s6); }
+vk-stack[direction='row'][gap='2xl'] { gap: var(--vk-s7); }
+vk-stack[direction='row'][gap='3xl'] { gap: var(--vk-s8); }
 
-vk-row[align='top'] { align-items: flex-start; }
-vk-row[align='center'] { align-items: center; }
-vk-row[align='bottom'] { align-items: flex-end; }
-vk-row[align='stretch'] { align-items: stretch; }
-vk-row[align='baseline'] { align-items: baseline; }
+vk-stack[direction='row'][align='start'] { align-items: flex-start; }
+vk-stack[direction='row'][align='center'] { align-items: center; }
+vk-stack[direction='row'][align='end'] { align-items: flex-end; }
+vk-stack[direction='row'][align='stretch'] { align-items: stretch; }
+vk-stack[direction='row'][align='baseline'] { align-items: baseline; }
 
-vk-row[justify='start'] { justify-content: flex-start; }
-vk-row[justify='center'] { justify-content: center; }
-vk-row[justify='end'] { justify-content: flex-end; }
-vk-row[justify='between'] { justify-content: space-between; }
+vk-stack[direction='row'][justify='start'] { justify-content: flex-start; }
+vk-stack[direction='row'][justify='center'] { justify-content: center; }
+vk-stack[direction='row'][justify='end'] { justify-content: flex-end; }
+vk-stack[direction='row'][justify='between'] { justify-content: space-between; }
 
-vk-row[wrap] { flex-wrap: wrap; }
+vk-stack[direction='row'][wrap] { flex-wrap: wrap; }
 /* 布局决定尺寸，组件不被压缩：只有显式 grow 的子项才吃掉剩余空间；
    文本是例外：它必须能收缩，否则长句会把整行撑出画面。 */
-vk-row > * { flex: 0 0 auto; }
-vk-row > vk-text { flex: 0 1 auto; min-width: 0; }
-vk-row > [grow] { flex: 1 1 auto; min-width: 0; }
+vk-stack[direction='row'] > * { flex: 0 0 auto; }
+vk-stack[direction='row'] > vk-text { flex: 0 1 auto; min-width: 0; }
+vk-stack[direction='row'] > [grow] { flex: 1 1 auto; min-width: 0; }
 
 /* Frame 的公共属性：grow 主轴、fill 交叉轴、measure 测量宽、overflow 裁切 */
 [grow] { flex: 1 1 auto; min-width: 0; }
@@ -292,6 +293,6 @@ vk-edge[label-size='meta'] .vk-edge-label { font-size: var(--vk-t-label); }
 
 /* `align` 与 HTML 遗留提示 [align=center]{text-align:center} 撞名：
    布局原语必须自己把文字对齐复位，否则整个子树的文字会被居中。 */
-vk-stack, vk-row, vk-grid, vk-canvas { text-align: start; }
+vk-stack, vk-grid, vk-canvas { text-align: start; }
 
 

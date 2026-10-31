@@ -159,8 +159,7 @@ const DEFAULTS = {
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-mark': { variant: 'highlight', tone: 'info' },
-  'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start' },
-  'vk-row': { gap: 'sm', align: 'stretch', justify: 'start' },
+  'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
@@ -337,20 +336,13 @@ export const TAGS = {
     summary: '纵向节奏。只给间距和对齐，不画任何东西。',
     attrs: {
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
-      'align': oneOf('start', 'center', 'end', 'stretch'),
+      // direction: 竖排（默认）或横排。14.0 把 vk-row 并了进来——
+      // 它们本来就是同一个空类，差别只有一条 flex-direction。
+      'direction': oneOf('column', 'row'),
+      'align': oneOf('start', 'center', 'end', 'stretch', 'baseline'),
       'justify': oneOf('start', 'center', 'end', 'between'),
+      'wrap': { ...bool(), context: 'direction-row' },
       'grow': { ...bool(), hidden: true },
-    },
-  },
-  'vk-row': {
-    name: '横排',
-    layer: 'layout',
-    summary: '横向排列。可换行、可两端推开。',
-    attrs: {
-      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
-      'align': oneOf('top', 'center', 'bottom', 'stretch', 'baseline'),
-      'justify': oneOf('start', 'center', 'end', 'between'),
-      'wrap': bool(),
     },
   },
   'vk-grid': {

@@ -623,7 +623,7 @@ function validateAuthorHtml(doc, file) {
           tag,
           what: '的 x/y 只有坐标空间认',
           wrote: [...attrs].filter(([n]) => n === 'x' || n === 'y').map(([n, v]) => `${n}="${v}"`).join(' '),
-          should: '放进 <vk-canvas>，或用 <vk-stack> / <vk-row> / <vk-grid> 配 gap 排版',
+          should: '放进 <vk-canvas>，或用 <vk-stack> / <vk-grid> 配 gap 排版',
           why: 'x/y 是绝对坐标：改一个字就要重算像素，布局也就不可求解了',
         })
       );

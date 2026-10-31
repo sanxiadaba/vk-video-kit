@@ -54,6 +54,7 @@ a:hover{color:#1b3fd6}
 .spec-w1100{width:1100px}
 .spec-w1000{width:1000px}
 .spec-w600{width:600px}
+.spec-w520{width:520px}
 .spec-h560{height:560px}
 .spec-h240{display:flex;height:240px}
 .spec-pill{width:160px}
@@ -105,10 +106,10 @@ function nav(no, tag) {
   const next = ORDER[i + 1];
   const link = (t, label) =>
     t ? `<a href="${t}.html"><vk-text size="label" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
-  return `<vk-row gap="sm" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
+  return `<vk-stack direction="row" gap="sm" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
     next,
     (next || '') + ' →'
-  )}</vk-row>`;
+  )}</vk-stack>`;
 }
 
 function applyPreset(body, tag, attrs = {}) {
@@ -193,20 +194,20 @@ function specPage(tag, no) {
   const meta = `${String(no).padStart(3, '0')} / ${String(ORDER.length).padStart(3, '0')}`;
   const plate = `<vk-page align="top" data-allow-void>
   <vk-stack gap="2xs">
-    <vk-row justify="between" align="baseline">
-      <vk-row gap="xs" align="baseline">
+    <vk-stack direction="row" justify="between" align="baseline">
+      <vk-stack direction="row" gap="xs" align="baseline">
         <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
         <vk-text size="label" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
-      </vk-row>
-      <vk-row gap="md" align="baseline">
+      </vk-stack>
+      <vk-stack direction="row" gap="md" align="baseline">
         ${nav(no, tag)}
         <vk-text size="label" mono ink="muted" data-meta>${meta}</vk-text>
-      </vk-row>
-    </vk-row>
+      </vk-stack>
+    </vk-stack>
     <vk-rule></vk-rule>
 <div class="spec-body">${tag === 'vk-page' ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
   </vk-stack>
@@ -250,7 +251,7 @@ function card(tag, no) {
   // 索引 = 缩略图 + 名字。缩略图是组件本体（不是整页），卡片端 contain 完整显示。
   return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
   <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="contain"></vk-img>
-  <vk-row class="spec-card-name" gap="xs" align="baseline"><vk-text size="label">${esc(def.name)}</vk-text><vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-row>
+  <vk-stack direction="row" class="spec-card-name" gap="xs" align="baseline"><vk-text size="label">${esc(def.name)}</vk-text><vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-stack>
 </vk-stack></a>`;
 }
 
@@ -273,13 +274,13 @@ function indexPage(n) {
       : `<vk-text size="label" mono ink="muted" data-meta>下一页 →</vk-text>`;
   const page = `<vk-page align="top" data-allow-void>
   <vk-stack gap="sm">
-    <vk-row justify="between" align="baseline">
-      <vk-row gap="md" align="baseline">
+    <vk-stack direction="row" justify="between" align="baseline">
+      <vk-stack direction="row" gap="md" align="baseline">
         <vk-text class="spec-card-name" size="label">${ORDER.length} 个组件</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
-      </vk-row>
-      <vk-row gap="md" align="baseline">${prev}${next}</vk-row>
-    </vk-row>
+      </vk-stack>
+      <vk-stack direction="row" gap="md" align="baseline">${prev}${next}</vk-stack>
+    </vk-stack>
     <vk-rule variant="strong"></vk-rule>
 ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
   </vk-stack>
