@@ -118,11 +118,10 @@
 
 ## 7 · 覆盖矩阵（demo 用了哪些原语）
 
-demo 12 帧 + 连排页用到 17 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
-img / page / ring / rule / stack / table / term / text / tree。
+demo 12 帧 + 连排页用到 20 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
+img / inline / list / page / ring / rule / stack / steps / table / term / text / tree。
 
-没用的 13 个：box / inline / window / list / diff / math / compare / steps / timeline /
-bits / pin / loupe / canvas。它们由**标本页 + 契约 + 组合冒烟**覆盖，不由 demo 覆盖——
+没用的 10 个：box / window / diff / math / compare / timeline / bits / pin / loupe / canvas。它们由**标本页 + 契约 + 组合冒烟**覆盖，不由 demo 覆盖——
 demo 的职责是"真实用法能不能拼起来"，不是"把 30 个都点名"。硬塞一个 13 页的 API 冒烟页
 试过一次：三栏塞满后在 1080 里过不了门禁，最后删掉了。这是刻意的取舍，不是遗漏。
 
