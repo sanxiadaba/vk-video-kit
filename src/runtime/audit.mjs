@@ -352,7 +352,9 @@ export function auditPage(root = document) {
   }
 
   // w 是硬宽：量出来必须等于写的数字（容忍 1.5px）。
+  // 覆盖层除外：vk-pin 的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
   for (const el of stage.querySelectorAll('[w]')) {
+    if (el.closest('vk-edge, vk-pin, vk-ring')) continue;
     const raw = (el.getAttribute('w') || '').trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
     const cs = getComputedStyle(el);

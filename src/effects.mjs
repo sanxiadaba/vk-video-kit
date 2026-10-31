@@ -54,6 +54,7 @@ export const EFFECTS = {
   'vk-bars': {
     max: { on: '.vk-bar-fill', kind: 'style', prop: 'width', expect: { not: '0px' } },
     scale: { on: '.vk-bar-fill', kind: 'style', prop: 'width' },
+    'ratio-to': { on: 'vk-bars', kind: 'dom', prop: '.vk-bar-x' },
     mass: { on: '.vk-bar', kind: 'style', prop: 'min-height' },
     tone: { on: '.vk-bar-fill', kind: 'style', prop: 'background-color' },
     format: { on: '.vk-bar-v', kind: 'text' },
@@ -329,6 +330,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 
 
 Object.assign((EFFECTS['vk-compare'] ||= {}), {
+  mode: { on: '.vk-cmp', kind: 'style', prop: 'display', expect: 'grid' },
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
   split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path', expect: /inset|polygon|circle/ },
   ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },

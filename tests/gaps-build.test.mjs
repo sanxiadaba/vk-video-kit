@@ -107,3 +107,40 @@ test('⑧ vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
   assert.doesNotMatch(field.label, /序号/);
   assert.equal(field.type, 'bool');
 });
+
+test('⑨ vk-compare：mode=side / stack 同时写 split 构建期警告，不静默忽略', async () => {
+  const warnings = [];
+  const oldWarn = console.warn;
+  console.warn = (...args) => warnings.push(args.join(' '));
+  try {
+    const out = await transformHtml(
+      '<vk-compare mode="side" split="30" fit="cover" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg"></vk-compare>',
+      { file: 'p.html', highlighter: hl }
+    );
+    assert.match(out.html, /mode="side"/);
+  } finally {
+    console.warn = oldWarn;
+  }
+  assert.match(warnings.join('\n'), /mode="side" 下 split 不起作用/, 'side 下 split 必须明确说它不起作用');
+});
+
+test('⑩ vk-pin 的 w 接受 200px，vk-bars 的 ratio-to 指空时构建期警告', async () => {
+  const pin = await transformHtml(
+    '<vk-page><vk-box id="x">目标</vk-box><vk-pin for="#x" w="200px">批注</vk-pin></vk-page>',
+    { file: 'p.html', highlighter: hl }
+  );
+  assert.match(pin.html, /w="200px"/);
+
+  const warnings = [];
+  const oldWarn = console.warn;
+  console.warn = (...args) => warnings.push(args.join(' '));
+  try {
+    await transformHtml(
+      '<vk-bars ratio-to="9"><li value="106" label="a"></li><li value="52980" label="b"></li></vk-bars>',
+      { file: 'p.html', highlighter: hl }
+    );
+  } finally {
+    console.warn = oldWarn;
+  }
+  assert.match(warnings.join('\n'), /ratio-to="9" 指不到任何一行/);
+});

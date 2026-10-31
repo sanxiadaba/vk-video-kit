@@ -79,6 +79,18 @@ export const PROBES = {
       effect: { on: '.vk-bar-v', kind: 'text' },
       why: '数值列的写法（千分位 / 原样）；数字本身不变。',
     },
+    'ratio-to': {
+      values: ['0', '2'],
+      effect: { on: 'vk-bars', kind: 'dom', prop: '.vk-bar-x' },
+      why: '倍率基准行必须真的把 ×N 标到条旁；0 与末行是最容易越界的两个端点。',
+    },
+  },
+  'vk-pin': {
+    w: {
+      values: ['200', '320'],
+      effect: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
+      why: 'w 只改气泡宽；宿主始终铺满整页，所以量 .vk-pin-bd 才对。',
+    },
   },
   'vk-edge': {
     via: {

@@ -31,6 +31,10 @@ export class VkTimeline extends VkElement {
       return {
         date: el.getAttribute('date') || '',
         label: el.getAttribute('label') || '',
+        // value / note：数字当主值、说明降一档。和 label / date 共存，
+        // 都写时按 value > label、note > 正文 的顺序取，旧写法一个字都不用改。
+        value: el.getAttribute('value') || '',
+        note: el.getAttribute('note') || '',
         lane: el.getAttribute('lane') || '',
         at: el.getAttribute('at') || '',
         span: el.getAttribute('span') || '',
@@ -62,21 +66,36 @@ export class VkTimeline extends VkElement {
     this.innerHTML = `<div class="vk-timeline" data-variant="${variant}" data-mass="${esc(mass)}">${head}${body}</div>`;
   }
 
+  /** 主值 / 说明：value 顶掉 label 的主位，note 顶掉正文的小字位；都没写就保持旧样子。 */
+  _parts(it) {
+    const main = it.value
+      ? `<span class="vk-tl-value">${esc(it.value)}</span>`
+      : it.label
+        ? `<span class="vk-tl-name">${esc(it.label)}</span>`
+        : '';
+    const sub = it.note || it.text || (it.value ? it.label : '');
+    return {
+      main,
+      sub: sub ? `<span class="vk-tl-desc${it.note ? ' vk-tl-note' : ''}">${esc(sub)}</span>` : '',
+    };
+  }
+
   _axis(items) {
     const sorted = items
       .map((it, i) => ({ it, i }))
       .sort((a, b) => (num(a.it.date) ?? 0) - (num(b.it.date) ?? 0));
     const rows = sorted
-      .map(
-        ({ it }, si) => `<li class="vk-tl-item" data-vk-part="event" data-event="${si}"${it.mark ? ' data-mark' : ''}${it.state ? ' data-state="' + esc(it.state) + '"' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
+      .map(({ it }, si) => {
+        const { main, sub } = this._parts(it);
+        return `<li class="vk-tl-item" data-vk-part="event" data-event="${si}"${it.mark ? ' data-mark' : ''}${it.state ? ' data-state="' + esc(it.state) + '"' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
           <span class="vk-tl-date" data-meta>${esc(it.date)}</span>
           <span class="vk-tl-dot" aria-hidden="true"></span>
           <span class="vk-tl-body">
-            ${it.label ? `<span class="vk-tl-name">${esc(it.label)}</span>` : ''}
-            ${it.text ? `<span class="vk-tl-desc">${esc(it.text)}</span>` : ''}
+            ${main}
+            ${sub}
           </span>
-        </li>`
-      )
+        </li>`;
+      })
       .join('');
 
     return `<ol class="vk-tl-events" aria-label="事件">${rows}</ol>`;
@@ -122,9 +141,10 @@ export class VkTimeline extends VkElement {
           .map(({ it, i }) => {
             const at = Math.max(0, Math.min(stepCount - 1, parseInt(it.at || '0', 10) || 0));
             const span = Math.max(1, Math.min(stepCount - at, parseInt(it.span || '1', 10) || 1));
+            const { main, sub } = this._parts(it);
             return `<li class="vk-tl-chip" data-vk-part="event" data-event="${i}" data-lane="${esc(lane)}" style="grid-column:${at + 1} / span ${span}"${it.mark ? ' data-mark' : ''}${it.state ? ' data-state="' + esc(it.state) + '"' : ''}${it.tone ? ` data-tone="${esc(it.tone)}"` : ''}>
-              ${it.label ? `<span class="vk-tl-name">${esc(it.label)}</span>` : ''}
-              ${it.text ? `<span class="vk-tl-desc">${esc(it.text)}</span>` : ''}
+              ${main}
+              ${sub}
             </li>`;
           })
           .join('');

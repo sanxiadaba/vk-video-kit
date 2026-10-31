@@ -232,6 +232,20 @@ vk-timeline { display: block; }
   line-height: 1.08;
   overflow-wrap: anywhere;
 }
+/* 主值：一帧里数字当主角的那一档。说明仍是 label 级，不跟数字抢。 */
+.vk-tl-value {
+  display: block;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-hero);
+  font-weight: var(--vk-w-bold);
+  line-height: 1.02;
+  letter-spacing: -0.035em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+.vk-tl-note {
+  color: var(--vk-ink-2);
+}
 .vk-tl-desc {
   display: block;
   margin-top: 4px;
@@ -307,4 +321,5 @@ vk-timeline { display: block; }
 .vk-tl-chip[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-tl-chip[data-tone='warn'] { border-left-color: var(--vk-warn); }
 .vk-tl-chip .vk-tl-name { font-size: var(--vk-t-label); margin-top: 0; white-space: normal; }
+.vk-tl-chip .vk-tl-value { font-size: var(--vk-t-subhead); line-height: 1; white-space: normal; }
 .vk-tl-chip .vk-tl-desc { font-size: var(--vk-t-label); margin-top: 0; white-space: normal; }

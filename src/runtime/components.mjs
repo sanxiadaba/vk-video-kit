@@ -114,11 +114,12 @@ export class VkWindow extends VkElement {
       this.innerHTML = win({
         chrome: 'min',
         cls: 'vk-win-tag',
-        head: '<span class="vk-file" data-meta></span><span class="vk-br-url" data-meta><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
+        head: '<span class="vk-file" data-meta><span class="vk-file-t"></span></span><span class="vk-br-url" data-meta><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
         inner: '<div class="vk-win-bd" data-vk-part="bd"></div>',
       });
       this._shell = this.querySelector('.vk-win');
       this._file = this.querySelector('.vk-file');
+      this._fileT = this.querySelector('.vk-file-t');
       this._url = this.querySelector('.vk-br-url');
       this._host = this.querySelector('.vk-br-host');
       this._path = this.querySelector('.vk-br-path');
@@ -131,7 +132,9 @@ export class VkWindow extends VkElement {
     if (tone) this._shell.dataset.tone = tone;
     else delete this._shell.dataset.tone;
 
-    this._file.textContent = title;
+    this._fileT.textContent = title;
+    // 长标题在窗头里省略；title 悬停时还能看到全文。
+    this._file.title = title;
     this._file.style.display = title ? '' : 'none';
 
     // 只突出"在哪"：域名是主体，路径淡化；解析失败也不把整段 URL 塞进 host。
@@ -880,6 +883,37 @@ export class VkBars extends VkElement {
     if (hasNegative && log) {
       this._warnOnce('scale', '的对数刻度不支持负值：负值按 0 画，改用 scale="linear" 才能画在零线左边');
     }
+    /**
+     * ratio-to：把「差了几倍」直接写出来。
+     *
+     * 两条刻度都不能同时讲清 106 / 52,980：log 把三根压成一样长，linear 让 106 只剩 6px。
+     * 倍率不是刻度问题，而是一条独立的标注——所以条长照旧，旁边多一个 ×500。
+     * 行号 0 起，和 #id@item:0 是同一套编号；指空 / 基数为 0 都不静默吞掉。
+     */
+    const ratioRaw = this.getAttribute('ratio-to');
+    let baseIndex = null;
+    let ratioBase = null;
+    if (ratioRaw != null && ratioRaw.trim() !== '') {
+      const idx = Number(ratioRaw);
+      if (!Number.isInteger(idx) || idx < 0 || idx >= rows.length) {
+        this._warnOnce('ratio-to', `的 ratio-to="${ratioRaw}" 指不到任何一行（共 ${rows.length} 行，0 起）：不标倍率`);
+      } else if (!(rows[idx].value > 0)) {
+        this._warnOnce('ratio-to', `的基准行 ${idx} 的值不是正数（${rows[idx].value}）：倍率没有意义，不标倍率`);
+      } else {
+        baseIndex = idx;
+        ratioBase = rows[idx].value;
+      }
+    }
+    const ratioTextOf = (row, i) => {
+      if (ratioBase == null) return '';
+      if (!(row.value > 0)) {
+        this._warnOnce(`ratio-to:row:${i}`, `第 ${i} 行的值不是正数（${row.value}）：不标它的倍率`);
+        return '';
+      }
+      const q = row.value / ratioBase;
+      const text = q >= 10 ? String(Math.round(q)) : String(Number(q.toFixed(q >= 1 ? 1 : 2)));
+      return `<span class="vk-bar-x" data-meta${i === baseIndex ? ' data-ratio-base=""' : ''}>×${esc(text)}</span>`;
+    };
     const attrMax = Number(this.getAttribute('max'));
     // 有负值时值域自动包含 0，零线才有地方放。
     const dataMax = Math.max(...rows.map((r) => r.value), 0);
@@ -891,7 +925,7 @@ export class VkBars extends VkElement {
     const denom = log ? Math.log1p(Math.max(0, max)) : max;
     const split = hasNegative && !log;
     const items = rows
-      .map((r) => {
+      .map((r, ri) => {
         let pct;
         if (log) {
           const raw = Math.log1p(Math.max(0, r.value));
@@ -905,7 +939,7 @@ export class VkBars extends VkElement {
           ? `left:${Math.min(pct, zeroPct).toFixed(2)}%;width:${Math.abs(pct - zeroPct).toFixed(2)}%`
           : `width:${pct.toFixed(2)}%`;
         const zero = split ? `<span class="vk-bar-zero" style="left:${zeroPct.toFixed(2)}%"></span>` : '';
-        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.value > 0 ? ' data-nonzero="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(formatNumber(String(r.value), format))}</span></div>`;
+        return `<div class="vk-bar"${neg ? ' data-negative="1"' : ''}${r.value > 0 ? ' data-nonzero="1"' : ''}${r.state ? ' data-state="' + esc(r.state) + '"' : ''}><span class="vk-bar-l">${esc(r.label)}</span><span class="vk-bar-t">${zero}<span class="vk-bar-fill" style="${style}"></span></span><span class="vk-bar-v">${esc(formatNumber(String(r.value), format))}${ratioTextOf(r, ri)}</span></div>`;
       })
       .join('');
     this.innerHTML = `<div class="vk-bars"${split ? ' data-has-negative="1"' : ''}>${items}</div>${unit ? `<p class="vk-bars-unit" data-meta>单位：${esc(unit)}</p>` : ''}`;
@@ -941,6 +975,23 @@ export class VkCompare extends VkElement {
   render() {
     const a = this.getAttribute('a') || '';
     const b = this.getAttribute('b') || '';
+    const modeRaw = (this.getAttribute('mode') || 'split').trim();
+    const mode = modeRaw === 'side' || modeRaw === 'stack' ? modeRaw : 'split';
+    if (modeRaw !== mode) {
+      this._warnOnce('mode', `的 mode="${modeRaw}" 不认识，按 mode="split" 叠图裁切；可用：split / side / stack`);
+    }
+    // side / stack 是"两张完整的图并排/上下"，没有分割线可裁。
+    // 写了 split 不能装没看见：构建期也会提示一次（见 src/highlight.mjs）。
+    if (mode !== 'split' && this.hasAttribute('split')) {
+      this._warnOnce(
+        'split',
+        `的 mode="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）：删掉 split，或改用 mode="split"`
+      );
+    }
+    // side / stack 的唯一承诺是"两张图都完整"，所以按 contain 画；显式写 cover 要说清楚。
+    if (mode !== 'split' && this.getAttribute('fit') === 'cover') {
+      this._warnOnce('fit', `的 mode="${mode}" 下 fit="cover" 不起作用：并排/上下按 contain 完整显示`);
+    }
     const ratioRaw = this.getAttribute('ratio') || '16 / 9';
     const rm = ratioRaw.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
     const ratio = rm && Number(rm[1]) / Number(rm[2]) >= 0.25 && Number(rm[1]) / Number(rm[2]) <= 8 ? ratioRaw : '16 / 9';
@@ -967,7 +1018,10 @@ export class VkCompare extends VkElement {
     }
 
     const alt = this.getAttribute('alt') || this.getAttribute('label') || '';
-    this._shell.style.aspectRatio = ratio;
+    this._shell.dataset.mode = mode;
+    this._shell.style.setProperty('--vk-cmp-ratio', ratio);
+    // split 才有"一个框里的两张叠图"；side / stack 的高度由每张图自己的比例撑开。
+    this._shell.style.aspectRatio = mode === 'split' ? ratio : '';
     this._shell.dataset.fit = fit;
     // 两张图缺一张时，画面上只剩一块空灰板：看起来像"对照"，其实什么都没有。
     // 状态要留在 DOM 上（audit / vk check 能报），并且写进角标（人能看到）。
@@ -1035,6 +1089,8 @@ export class VkCompare extends VkElement {
       const rb = B.naturalWidth / B.naturalHeight;
       const mismatch = Math.abs(ra - rb) / Math.max(ra, rb) > 0.02;
       this._shell.toggleAttribute('data-mismatch', mismatch);
+      // audit 查的是宿主上的 data-mismatch：只标内部壳等于没报。
+      this.toggleAttribute('data-mismatch', mismatch);
       if (mismatch) {
         this._warnOnce(
           'pair',
@@ -1049,8 +1105,14 @@ export class VkCompare extends VkElement {
     // a 在左、b 在右：裁掉 a 的右半边，让底下那张 b 从分割线往右露出来。
     // 之前写的是 inset(0 0 0 split%)——那是"只留 a 的右半边"，
     // 于是左半边显示的是 b，和左角的 label-a 正好错位。
-    this._imgA.style.clipPath = `inset(0 ${100 - split}% 0 0)`;
-    this._div.style.left = split + '%';
+    if (mode === 'split') {
+      this._imgA.style.clipPath = `inset(0 ${100 - split}% 0 0)`;
+      this._div.style.left = split + '%';
+    } else {
+      // side / stack：两张图各自完整，不裁切，也没有分割线。
+      this._imgA.style.clipPath = '';
+      this._div.style.left = '';
+    }
 
     paintLabels();
   }

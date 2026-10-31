@@ -914,6 +914,9 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
   text-align: right;
   color: var(--vk-ink-2);
   white-space: nowrap;
+}.vk-bar-x{
+  margin-left: var(--vk-s2);
+  color: var(--vk-ink-3);
 }vk-bars[mass='compact'] .vk-bar{ line-height: 1.15; min-height: 56px; }vk-bars[mass='compact'] .vk-bar-t{ height: 16px; }.vk-bars-unit{
   margin: 0;
   font-size: var(--vk-t-label);
@@ -1017,7 +1020,28 @@ vk-compare{ display: block; }.vk-cmp{
   color: var(--vk-ink-2);
   white-space: nowrap;
   z-index: 3;
-}.vk-cmp-la{ left: var(--vk-s2); }.vk-cmp-lb{ right: var(--vk-s2); }vk-text[data-tone='focus'][data-strength='soft']{
+}.vk-cmp-la{ left: var(--vk-s2); }.vk-cmp-lb{ right: var(--vk-s2); }/* side / stack：两张图各自完整，不裁切。
+   注意不能用"一半对一半"的叠图思维：结构不同的两张表一行数都不一样，
+   叠起来再 split 会把"行数差"正好裁掉。这里用 grid 并排/上下，各占一个完整格子。 */
+.vk-cmp[data-mode='side']{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  align-items: start;
+}.vk-cmp[data-mode='stack']{
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+}.vk-cmp[data-mode='side'] > img,
+.vk-cmp[data-mode='stack'] > img{
+  position: static;
+  width: 100%;
+  height: auto;
+  max-width: 100%;
+  aspect-ratio: var(--vk-cmp-ratio, 16 / 9);
+  object-fit: contain;
+  background: var(--vk-surface-2);
+}.vk-cmp[data-mode='side'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='side'] > .vk-cmp-b{ grid-column: 2; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-b{ grid-column: 1; grid-row: 2; }.vk-cmp[data-mode='side'] > .vk-cmp-div,
+.vk-cmp[data-mode='stack'] > .vk-cmp-div{ display: none; }.vk-cmp[data-mode='stack'] > .vk-cmp-la{ bottom: calc(50% + var(--vk-s2)); }.vk-cmp[data-mode='side'] > .vk-cmp-la,
+.vk-cmp[data-mode='side'] > .vk-cmp-lb{ bottom: var(--vk-s2); }vk-text[data-tone='focus'][data-strength='soft']{
   color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
 }vk-text[data-tone='focus'][data-strength='ghost']{
   color: var(--vk-ink-1);

@@ -675,7 +675,8 @@ function validateAuthorHtml(doc, file, html = '') {
       }
     }
     // w/h 是像素摆位，同样只在坐标空间里成立。
-    if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && node.parentNode?.tagName !== 'vk-canvas') {
+    // vk-pin 的 w 是气泡上限宽，不是宿主摆位：宿主铺满整页，这条不适用。
+    if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && tag !== 'vk-pin' && node.parentNode?.tagName !== 'vk-canvas') {
       strictness(
         diag({
           file,
@@ -729,6 +730,41 @@ function validateAuthorHtml(doc, file, html = '') {
           why: '气泡只有一条引线；多目标会让气泡位置失去意义',
         })
       );
+    }
+    // side / stack 没有分割线：这时 split 是无效词，不能装没看见。
+    if (tag === 'vk-compare' && attrs.has('split')) {
+      const mode = (attrs.get('mode') || 'split').trim();
+      if (mode === 'side' || mode === 'stack') {
+        warnings.push(
+          `${file}:${lineOf(node)} <vk-compare> 的 mode="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）；删掉 split，或改用 mode="split"`
+        );
+      }
+    }
+    // side / stack 按 contain 保证两张图完整；显式写 cover 就是无效词。
+    if (tag === 'vk-compare' && attrs.get('fit') === 'cover') {
+      const mode = (attrs.get('mode') || 'split').trim();
+      if (mode === 'side' || mode === 'stack') {
+        warnings.push(
+          `${file}:${lineOf(node)} <vk-compare> 的 mode="${mode}" 下 fit="cover" 不起作用（并排/上下按 contain 完整显示）；删掉 fit，或改用 mode="split"`
+        );
+      }
+    }
+    // ratio-to 指空 / 基数不是正数时，倍率标不出来；构建期先提醒，别等运行时。
+    if (tag === 'vk-bars' && attrs.has('ratio-to')) {
+      const idx = Number(attrs.get('ratio-to'));
+      const rows = (node.childNodes || []).filter((n) => n.tagName === 'li' || n.tagName === 'i');
+      if (Number.isInteger(idx) && (idx < 0 || idx >= rows.length)) {
+        warnings.push(
+          `${file}:${lineOf(node)} <vk-bars> 的 ratio-to="${attrs.get('ratio-to')}" 指不到任何一行（共 ${rows.length} 行，0 起）：不会标倍率`
+        );
+      } else if (Number.isInteger(idx) && idx >= 0) {
+        const base = Number((rows[idx].attrs || []).find((a) => a.name === 'value')?.value);
+        if (!(base > 0)) {
+          warnings.push(
+            `${file}:${lineOf(node)} <vk-bars> 的 ratio-to="${attrs.get('ratio-to')}" 指向的基数不是正数：倍率没有意义，不会标`
+          );
+        }
+      }
     }
     // span / row-span 只在分份容器里有意义：父级必须是 vk-grid。
     // 浏览器会忽略错误位置的 grid-column / grid-row，所以这条必须在构建期拦住。
@@ -841,7 +877,9 @@ function validateAuthorHtml(doc, file, html = '') {
       if (spec.type === 'size') {
         const special = raw === 'fit' || raw === 'full';
         if (!special) {
-          const n = Number(raw);
+          // vk-pin 的 w 允许写 "200px"：运行时也认这个写法，别让作者被单位绊住。
+          const px = tag === 'vk-pin' && name === 'w' ? raw.match(/^(\d+(?:\.\d+)?)px$/) : null;
+          const n = Number(px ? px[1] : raw);
           const range = `${spec.min ?? '−∞'}…${spec.max ?? '∞'}`;
           if (!Number.isFinite(n)) {
             errors.push(

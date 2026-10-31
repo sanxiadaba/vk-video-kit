@@ -78,6 +78,8 @@ const ATTR_META = {
   span: { label: '占几份', group: 'layout' },
   omit: { label: '字符区间', content: true },
   value: { label: '数值', content: true },
+  note: { label: '说明', content: true },
+  'ratio-to': { label: '倍率基准行（0 起）', group: 'appearance' },
   unit: { label: '单位', content: true },
   max: { label: '最大值', group: 'appearance' },
   source: { label: '出处', content: true },
@@ -172,7 +174,7 @@ const DEFAULTS = {
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
-  'vk-compare': { ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%' },
+  'vk-compare': { mode: 'split', ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
@@ -491,11 +493,12 @@ export const TAGS = {
     name: '对照',
     layer: 'components',
     summary:
-      '前后对照：左边 split% 显示 a、右边显示 b（a 在左、b 在右，与左下/右下角标对应）；上面那张按 split 裁掉右侧，静态就是「改到一半」的那一帧。',
+      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。',
     attrs: {
       'a': text(),
       'b': text(),
       'alt': text(),
+      'mode': oneOf('split', 'side', 'stack'),
       'ratio': text(),
       'split': num({ min: 0, max: 100, step: 1 }),
       'fit': oneOf('cover', 'contain'),
@@ -614,7 +617,7 @@ export const TAGS = {
   'vk-bars': {
     name: '条',
     layer: 'components',
-    summary: '一组横向条：标签、数值条、单位。子节点写成 <li value label>。',
+    summary: '一组横向条：标签、数值条、单位；ratio-to 指向基准行（0 起）时，每条旁直接标出相对它的倍率（×500）。子节点写成 <li value label>。',
     content: {
       kind: 'items',
       target: 'vk-bars',
@@ -623,6 +626,7 @@ export const TAGS = {
     attrs: {
       'max': num({ min: 1, max: 1000000000, step: 1 }),
       'scale': oneOf('linear', 'log'),
+      'ratio-to': int({ min: 0, max: 999, step: 1 }),
       'unit': text(),
       'format': oneOf('thousands', 'none'),
       'mass': oneOf('compact', 'normal', 'hero'),
@@ -665,7 +669,7 @@ export const TAGS = {
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -877,7 +881,9 @@ export const TAG_NAMES = Object.keys(TAGS);
  * 它们不是宿主属性，但仍然要被构建期校验；拼错会静默不生效。
  */
 export const CHILD_ATTRS = {
-  'vk-timeline': ['date', 'label', 'lane', 'at', 'span', 'tone', 'state'],
+  // vk-timeline 的 value 是主值（大数字，压过 label），note 是说明（label 级，压过正文）；
+  // 它们和 date / label 共存，旧条目一个字不用改。
+  'vk-timeline': ['date', 'label', 'value', 'note', 'lane', 'at', 'span', 'tone', 'state'],
   'vk-bits': ['label', 'value', 'from', 'to', 'state'],
   // act 和宿主一样是姿态词：state="current" 退役后，焦点格写在 <li act="focus">。
   'vk-cells': ['value', 'label', 'span', 'state', 'filled', 'act'],
@@ -932,11 +938,19 @@ const ATTR_META_BY_TAG = {
     filled: { label: '填充格（布尔：写 filled 即填充）', group: 'state' },
     },
   'vk-compare': {
-    a: { label: '左图（split% 以左显示 a）', content: true },
-    b: { label: '右图（split% 以右显示 b）', content: true },
-    split: { label: '左侧 a 的占比（%，剩下给 b）', group: 'appearance' },
-    'label-a': { label: '左下角标（对应 a）', content: true },
-    'label-b': { label: '右下角标（对应 b）', content: true },
+    a: { label: 'a 图（split 左半 / side 左侧 / stack 上方）', content: true },
+    b: { label: 'b 图（split 右半 / side 右侧 / stack 下方）', content: true },
+    mode: { label: '对照方式（split 叠图裁切 / side 并排 / stack 上下；后两者完整显示）', group: 'appearance' },
+    split: { label: 'split 模式左侧 a 的占比（%，side/stack 下无效）', group: 'appearance' },
+    'label-a': { label: 'a 的角标（左下）', content: true },
+    'label-b': { label: 'b 的角标（右下）', content: true },
+  },
+  'vk-pin': {
+    w: { label: '气泡宽（像素，可写 200 或 200px）', group: 'layout' },
+  },
+  'vk-timeline': {
+    value: { label: '主值（value 条目：大数字，压过 label）', content: true },
+    note: { label: '说明（value 条目：主值下的小字，压过正文）', content: true },
   },
   'vk-bits': {
     'bit-width': { label: '位宽', group: 'layout' },

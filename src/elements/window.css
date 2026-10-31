@@ -106,6 +106,18 @@
   color: var(--vk-win-fg);
 }
 
+/* 标题要能缩：长标题不能把窗头撑破，更不能裁掉半个字。
+   .vk-file 是 flex 容器，直接放在里面的文字不会吃 text-overflow；
+   所以真正的文字节点再包一层，由它自己省略。 */
+.vk-file-t {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 .vk-range {
   flex: 0 0 auto;
   font-family: var(--vk-font-mono);
@@ -174,6 +186,8 @@
 /* ------------------------------------------------------------ vk-window */
 /* 窗的公开标签：与 code / term / diff 共用同一个 .vk-win，不嵌套。 */
 vk-window { display: block; }
+/* 标题是窗头里唯一可伸缩的东西：宽不够时先缩它，再省略。 */
+vk-window .vk-file { flex: 0 1 auto; max-width: 100%; }
 
 .vk-win-tag { overflow: hidden; border-top: 0 solid transparent; }
 .vk-win-tag[data-tone] { border-top-width: 4px; }

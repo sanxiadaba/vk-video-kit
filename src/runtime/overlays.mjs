@@ -328,7 +328,20 @@ export class VkPin extends VkOverlay {
     this._bd.dataset.emphasis = this.getAttribute('emphasis') || 'soft';
     this._bd.dataset.size = this.getAttribute('size') || 'body';
     this._svg.dataset.tone = this._tone();
-    const w = numAttr(this, 'w', { min: 160, max: 900, fallback: 360 });
+    // w 是气泡的宽，不是宿主的宽：宿主铺满整页，量它永远不等于 w。
+    // 作者常写 "200px"；这里只认数字和数字+px，两种都收。
+    const wRaw = String(this.getAttribute('w') ?? '').trim();
+    const wm = wRaw.match(/^(\d+(?:\.\d+)?)(?:px)?$/);
+    let w = 360;
+    if (wRaw) {
+      if (!wm) {
+        this._warnOnce('w', `的 w="${wRaw}" 不是像素宽（写 200 或 200px），按 360 处理`);
+      } else {
+        const n = Number(wm[1]);
+        w = Math.min(900, Math.max(160, n));
+        if (w !== n) this._warnOnce('w', `的 w="${wRaw}" 超出 160…900，按 ${w} 处理`);
+      }
+    }
     this._bd.style.width = w + 'px';
     const n = parseInt(this.getAttribute('n') || '0', 10);
     this._n.hidden = !(n > 0);
