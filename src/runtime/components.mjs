@@ -920,6 +920,28 @@ export class VkCompare extends VkElement {
       img.style.objectPosition = pos;
       img.alt = alt;
     }
+
+    // 对照的前提是两张图同尺寸：不同尺寸时"一半对一半"没有意义，
+    // 画面会一边被拉伸、一边被裁掉，观众却以为看到的是同一个取景框。
+    const checkPair = () => {
+      const A = this._imgA;
+      const B = this._imgB;
+      if (!A.naturalWidth || !B.naturalWidth) return;
+      const ra = A.naturalWidth / A.naturalHeight;
+      const rb = B.naturalWidth / B.naturalHeight;
+      const mismatch = Math.abs(ra - rb) / Math.max(ra, rb) > 0.02;
+      this._shell.toggleAttribute('data-mismatch', mismatch);
+      if (mismatch) {
+        this._warnOnce(
+          'pair',
+          `两张图尺寸比例不同（${A.naturalWidth}×${A.naturalHeight} vs ${B.naturalWidth}×${B.naturalHeight}）：对照会一边拉伸一边裁切`
+        );
+      }
+    };
+    for (const img of [this._imgA, this._imgB]) {
+      if (img.complete) checkPair();
+      else img.addEventListener('load', checkPair, { once: true });
+    }
     this._imgA.style.clipPath = `inset(0 0 0 ${split}%)`;
     this._div.style.left = split + '%';
 

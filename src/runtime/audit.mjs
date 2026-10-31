@@ -227,6 +227,11 @@ export function auditPage(root = document) {
     }
   }
 
+  // 对照的两张图必须同比例：不同比例时"一半对一半"是假的。
+  for (const cmp of stage.querySelectorAll('vk-compare[data-mismatch]')) {
+    out.push({ type: 'compare-mismatch', what: clip(cmp.className || 'vk-compare') });
+  }
+
   // 覆盖层压住正文：批注泡这类"画在别人身上"的东西，压住字就是错。
   // 13.x 把 pin/ring/edge 当"显式覆盖"整体排除了，于是第 10 站的批注泡盖住标题，
   // 门禁仍然说"干净"——这条就是补那个盲区。只查真正有底的泡，线条类不算。
