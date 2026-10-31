@@ -531,7 +531,10 @@ try {
         const diffs = diffSnap(baseSnap, snap);
         const visual = exempt ? [] : await page.evaluate(visualInPage, tag);
         const afterCount = eff.kind === 'dom' ? await countSel(tag, eff.prop) : 0;
-        const hit = effectHit(eff, diffs, beforeCount, afterCount, targetPaths);
+        const eff2 = eff.expectFromValue
+          ? { ...eff, expect: { to: eff.expectFromValue === 'px' ? `${value}px` : String(value) } }
+          : eff;
+        const hit = effectHit(eff2, diffs, beforeCount, afterCount, targetPaths);
         if (!best || (hit.ok && !best.hit.ok) || (hit.ok === best.hit.ok && diffs.length > best.diffs.length)) {
           best = { value, diffs, visual, hit };
         }

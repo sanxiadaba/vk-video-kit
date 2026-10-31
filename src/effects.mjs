@@ -93,8 +93,8 @@ export const EFFECTS = {
   },
 
   'vk-canvas': {
-    w: { on: 'vk-canvas', kind: 'geometry', prop: 'width', skipVisual: true },
-    h: { on: 'vk-canvas', kind: 'geometry', prop: 'height', skipVisual: true },
+    w: { on: 'vk-canvas', kind: 'geometry', prop: 'width', skipVisual: true, expectFromValue: 'raw' },
+    h: { on: 'vk-canvas', kind: 'geometry', prop: 'height', skipVisual: true, expectFromValue: 'raw' },
     'pad-px': { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   },
 
@@ -197,7 +197,7 @@ export const EFFECTS = {
     dash: { on: 'svg path', kind: 'style', prop: 'stroke-dasharray' },
     label: { on: '.vk-edge-label', kind: 'text' },
     cap: { on: 'svg circle', kind: 'style', prop: 'display' },
-    z: { on: 'vk-edge', kind: 'style', prop: 'z-index' },
+    z: { on: 'vk-edge', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
   },
 
   'vk-code': {
@@ -223,7 +223,7 @@ const COMMON = {
   w: { on: '@', kind: 'geometry', prop: 'width' },
   h: { on: '@', kind: 'geometry', prop: 'height' },
   grow: { on: '@', kind: 'style', prop: 'flex-grow', expect: { to: '1' } },
-  fill: { on: '@', kind: 'attr', prop: 'fill' },
+  fill: { on: '@', kind: 'attr', prop: 'fill', expect: { to: '' } },
   overflow: { on: '@', kind: 'style', prop: 'overflow' },
   measure: { on: '@', kind: 'style', prop: 'max-width', expect: { not: 'none' } },
 };
@@ -346,7 +346,7 @@ Object.assign((EFFECTS['vk-pin'] ||= {}), {
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
   n: { on: '.vk-pin-n', kind: 'text' },
-  z: { on: 'vk-pin', kind: 'style', prop: 'z-index' },
+  z: { on: 'vk-pin', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
   leader: { kind: 'any', reason: '引线有无/形状都改 path' },
   side: { kind: 'any', reason: '自动贴边，位置随目标变化' },
   x: { kind: 'any', reason: '作者写死的气泡坐标' },
@@ -359,7 +359,7 @@ Object.assign((EFFECTS['vk-ring'] ||= {}), {
   tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
   dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray' },
   width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
-  z: { on: 'vk-ring', kind: 'style', prop: 'z-index' },
+  z: { on: 'vk-ring', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
 });
 
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
