@@ -106,7 +106,7 @@ export const EFFECTS = {
     size: { on: 'vk-text', kind: 'style', prop: 'font-size' },
     weight: { on: 'vk-text', kind: 'style', prop: 'font-weight' },
     ink: { on: 'vk-text', kind: 'style', prop: 'color' },
-    mono: { on: 'vk-text', kind: 'style', prop: 'font-family' },
+    mono: { on: 'vk-text', kind: 'style', prop: 'font-family', expect: /mono/i },
     align: { on: 'vk-text', kind: 'style', prop: 'text-align' },
     measure: { on: 'vk-text', kind: 'style', prop: 'max-width' },
   },
@@ -222,10 +222,10 @@ export const EFFECTS = {
 const COMMON = {
   w: { on: '@', kind: 'geometry', prop: 'width' },
   h: { on: '@', kind: 'geometry', prop: 'height' },
-  grow: { on: '@', kind: 'style', prop: 'flex-grow' },
+  grow: { on: '@', kind: 'style', prop: 'flex-grow', expect: { to: '1' } },
   fill: { on: '@', kind: 'attr', prop: 'fill' },
   overflow: { on: '@', kind: 'style', prop: 'overflow' },
-  measure: { on: '@', kind: 'style', prop: 'max-width' },
+  measure: { on: '@', kind: 'style', prop: 'max-width', expect: { not: 'none' } },
 };
 
 const COMMON_TAGS = [

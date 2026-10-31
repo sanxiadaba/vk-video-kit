@@ -16,6 +16,7 @@ import { TAGS, TAG_NAMES, isHidden } from '../src/registry.mjs';
 import { EFFECTS } from '../src/effects.mjs';
 import { diffSnap, effectHit, valuesFor } from './lib/contract-core.mjs';
 import { PROBES, EFFECT_OVERRIDES, VISUAL_EXEMPT, EFFECT_ANY, EFFECT_ANY_BUDGET, SHARED_VALUES, visualExemptReason } from './lib/contract-probes.mjs';
+import { intentStats, LOOSE_BUDGET, ANY_BUDGET } from './lib/intent.mjs';
 import { cacheEnabled, cacheKey, isCached, markCached, pageHash, sharedHash } from './lib/check-cache.mjs';
 
 const only = process.argv.slice(2).filter((a) => !a.startsWith('-'));
@@ -593,6 +594,17 @@ try {
   await browser.close();
   await close();
 }
+
+// 意图记账：断"改成什么"的算合格，只断"有变化"的进预算。
+// 数字只许往下调——这就是"豁免清单有上限"的落地方式。
+const intents = intentStats();
+const looseOver = intents.loose.length > LOOSE_BUDGET;
+const anyOver = intents.any.length > ANY_BUDGET;
+console.log(
+  `\n意图断言：${intents.intent.length} 个属性断"改成什么"，${intents.loose.length} 个只断"有变化"（预算 ${LOOSE_BUDGET}），${intents.any.length} 个完全不限定（预算 ${ANY_BUDGET}）`
+);
+if (looseOver) failures.push(`只断"有变化"的属性 ${intents.loose.length} 个 > 预算 ${LOOSE_BUDGET}：给它们写 expect，或把预算调小`);
+if (anyOver) failures.push(`不限定目标的属性 ${intents.any.length} 个 > 预算 ${ANY_BUDGET}`);
 
 console.log('');
 if (failures.length) {

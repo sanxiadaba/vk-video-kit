@@ -398,9 +398,7 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
 }.vk-br-host{ display: inline-block; max-width: 60%; vertical-align: bottom; color: var(--vk-win-fg); font-weight: var(--vk-w-med); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; line-height: 1.2; }.vk-br-host.is-empty{ color: var(--vk-win-meta-2); font-weight: 400; }.vk-br-path{ min-width: 0; white-space: nowrap; color: var(--vk-win-meta); overflow: hidden; text-overflow: ellipsis; line-height: 1.2; }/* 地址栏只在 browser 头出现；必须写在 components 层里 ——
    elements 层的同名规则会被后加载的层整体压过，与选择器权重无关。 */
 .vk-win-tag[data-chrome='min'] > .vk-hd .vk-br-url,
-.vk-win-tag[data-chrome='dialog'] > .vk-hd .vk-br-url{ display: none; }/* ----------------------------------------------------------- vk-filetree */
-
-vk-tree{ display: block; }.vk-tree{
+.vk-win-tag[data-chrome='dialog'] > .vk-hd .vk-br-url{ display: none; }.vk-tree{
   box-sizing: border-box;
   font-family: var(--vk-font-mono);
 }.vk-tree-list{
@@ -598,12 +596,7 @@ vk-bytes{ display: block; }.vk-bytes{
   color: var(--vk-ink-2);
   white-space: pre;
   letter-spacing: 0;
-}.vk-bytes[data-cols='4'] .vk-bytes-row{ grid-template-columns: 10ch minmax(0, 1fr) 4ch; }/* --------------------------------------------------------------- vk-keys */
-
-vk-keys{
-  display: inline-block;
-  vertical-align: middle;
-}.vk-keys{
+}.vk-bytes[data-cols='4'] .vk-bytes-row{ grid-template-columns: 10ch minmax(0, 1fr) 4ch; }.vk-keys{
   display: inline-flex;
   align-items: center;
   gap: var(--vk-s2);
@@ -921,8 +914,7 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
   font-size: var(--vk-t-label);
   color: var(--vk-ink-3);
 }/* 窄格子（展示站的小镜头）里地址退到元信息档；单元格自己是容器，规则才真的会命中。 */
-.vk-cell{ container-type: inline-size; }
-@container (max-width: 150px) {.vk-cell-a{ font-size: var(--vk-t-label); letter-spacing: -0.04em; }
+.vk-cell{ container-type: inline-size; }@container (max-width: 150px){.vk-cell-a{ font-size: var(--vk-t-label); letter-spacing: -0.04em; }
 }/* 强度只留三档底色；没有第二种材质。 */
 .vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: var(--vk-s2) var(--vk-s4); }vk-table[mass='hero'] td{ padding: var(--vk-s4) var(--vk-s5); }vk-steps[mass='hero'] .vk-step-n{ width: 80px; height: 80px; }vk-steps[mass='hero'] .vk-step{ gap: var(--vk-s3); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
 
