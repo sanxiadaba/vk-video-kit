@@ -36,7 +36,8 @@
 | `vk-keys` | 与 `vk-inline` 同为行内小件 | `vk-inline variant="keys"` |
 | `vk-spotlight` | 与 `vk-ring` 同为"看这里"，一个压暗一个画框 | `vk-ring variant="dim"` |
 
-`vk-bytes` / `vk-bits` **没有并进 `vk-cells`**（原计划 41→28，实际 30）。这不是偷懒，是计划自己的两条规矩打架：
+`vk-bytes` / `vk-bits` **没有并进 `vk-cells`**（原计划 41→28，实际 30）。**2026-10-31 决策：接受 30，保住 20% 预算。**
+这不是偷懒，是计划自己的两条规矩打架：
 
 - `vk-cells` + `vk-bytes` + `vk-bits` 的属性并集是 **39 条**，其中 17 条只在各自的 variant 下成立；
 - 这 17 条必须标成 `context`（否则契约会在 cells 的默认态上量它们，必然失败）；
