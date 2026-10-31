@@ -340,6 +340,19 @@ function validateRefs(doc, file, errors) {
       return;
     }
 
+    // 1.5) keep 的选择器必须真的选得到东西。
+    // vk-ring 的 dim 用它"保住"不该被压暗的元素；选不到时运行期静默跳过，
+    // 结果就是本该亮着的主体被一起压灰——demo 第 9 帧踩过（keep="vk-title"，标签已删）。
+    if (attr(node, 'keep')) {
+      for (const sel of String(attr(node, 'keep')).split(';').map((x) => x.trim()).filter(Boolean)) {
+        let ok = true;
+        if (sel.startsWith('#')) ok = ids.has(sel.slice(1));
+        else if (sel.startsWith('.')) ok = classes.has(sel.slice(1));
+        else if (/^vk-[a-z-]+$/.test(sel)) ok = !!TAGS[sel];
+        if (!ok) errors.push(`${file}:${lineOf(node)} <${tag}> 的 keep="${sel}" 匹配不到任何元素`);
+      }
+    }
+
     // 2) for / from / to 的 `#id@part:arg` 形式（裸 CSS 选择器静态判不了，留给运行时）
     for (const name of ['for', 'from', 'to']) {
       const raw = attr(node, name);

@@ -278,3 +278,15 @@ test('多余的闭合标签在构建期就报错（浏览器会默默丢掉它�
     /多余的闭合标签/
   );
 });
+
+test('keep 写了已删的标签，构建期就报错', async () => {
+  // demo 第 9 帧的"半页灰"就是这一条：keep="vk-title"，标签删了，运行期静默跳过。
+  await assert.rejects(
+    () =>
+      transformHtml(
+        '<vk-page><vk-text id="a">字</vk-text><vk-ring for="#a" variant="dim" keep="vk-title"></vk-ring></vk-page>',
+        { file: 'keep.html', highlighter: hl }
+      ),
+    /keep="vk-title" 匹配不到任何元素/
+  );
+});
