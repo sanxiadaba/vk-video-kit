@@ -129,7 +129,11 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
           res.writeHead(500, { 'content-type': 'text/html; charset=utf-8' });
           res.end(
             `<!doctype html><meta charset="utf-8"><body style="font:16px/1.6 ui-monospace,monospace;padding:40px">` +
-              `<h1 style="color:#CC3A2F">vk 预编译失败</h1><p>${escHtml(path.relative(root, file))}</p>` +
+              (e.staleServer
+        ? '<h1 style="color:#8A6D00">dev server 已经过时</h1>' +
+          '<p>库文件改过了，但这个进程用的还是启动时那一份。重启 vk serve 即可。下面不是页面的错。</p>'
+        : '<h1 style="color:#CC3A2F">vk 预编译失败</h1>') +
+      `<p>${escHtml(path.relative(root, file))}</p>` +
               `<pre style="white-space:pre-wrap;background:#FEE;padding:20px;border-left:4px solid #CC3A2F">${escHtml(e.message)}</pre></body>`
           );
           return;
