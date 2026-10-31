@@ -116,7 +116,17 @@
 - **dev server 过时**：库改了而进程还活着时，以前会报"预编译失败"（像是页面写错），
   现在明确说"服务器过时，重启即可"。
 
-## 7 · 还没做的
+## 7 · 覆盖矩阵（demo 用了哪些原语）
+
+demo 12 帧 + 连排页用到 17 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
+img / page / ring / rule / stack / table / term / text / tree。
+
+没用的 13 个：box / inline / window / list / diff / math / compare / steps / timeline /
+bits / pin / loupe / canvas。它们由**标本页 + 契约 + 组合冒烟**覆盖，不由 demo 覆盖——
+demo 的职责是"真实用法能不能拼起来"，不是"把 30 个都点名"。硬塞一个 13 页的 API 冒烟页
+试过一次：三栏塞满后在 1080 里过不了门禁，最后删掉了。这是刻意的取舍，不是遗漏。
+
+## 8 · 还没做的
 
 1. **`vk-bytes` / `vk-bits` 未并**（见 §1）：合并会把"跳过"推到 29%，与 20% 预算冲突。所以是 30 不是 28。
 2. **契约仍有一份自己的视觉检查**（`visualInPage`），只是阈值改读 `limits`；
