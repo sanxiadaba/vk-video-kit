@@ -787,6 +787,14 @@ export class VkBits extends VkElement {
       })
       .join('');
 
+    // 没有可画的位就不要画一个问号：那既不是数据也不是错误，只是一句"我也不知道"。
+    // 位数据要么写成 <i> 子节点，要么写 value="0100 1000"；两样都没有就明说。
+    if (!rows.length && !(this._fields || []).length) {
+      this.stale('缺少位数据：写成 <i> 子节点，或 value="0100 1000"');
+      this.innerHTML = '';
+      return;
+    }
+
     this.innerHTML = `<div class="vk-bits-wrap" data-tone="${tone}" data-rows="${rows.length}"${bytes ? ' data-bytes' : ''}${hasLabel ? ' data-label="1"' : ''}${useFields ? ' data-fields="1"' : ''}>${fieldLegend}${rendered || '<div class="vk-bits"><span class="vk-bit">?</span></div>'}</div>`;
   }
 }
