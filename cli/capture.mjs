@@ -39,6 +39,10 @@ const shell = String(flag('shell', process.platform === 'win32' ? 'powershell' :
 const width = Number(flag('width', 1920));
 const height = Number(flag('height', 1080));
 const quiet = args.includes('--quiet');
+// 有些组件只吃纯正文（vk-asm 不接受提示符行）：--no-prompt 去掉第一行。
+const noPrompt = args.includes('--no-prompt');
+// 有些命令会先打印表头（objdump 的 file format 三行）：--skip-until 从这里之后开始记。
+const skipUntil = flag('skip-until');
 const verify = flag('verify');
 
 if (verify) {
@@ -102,12 +106,17 @@ async function captureRun() {
 
   // 终端里看到的样子：先提示符 + 命令，再输出（stderr 也并进来，视频里本来就是混着看的）
   const prompt = process.platform === 'win32' ? '>' : '$';
-  const body = [`${prompt} ${runCmd}`, stdout.replace(/\r\n/g, '\n').replace(/\n+$/, ''), stderr.trim() ? stderr.replace(/\r\n/g, '\n').trimEnd() : '']
+  const body = [noPrompt ? '' : `${prompt} ${runCmd}`, stdout.replace(/\r\n/g, '\n').replace(/\n+$/, ''), stderr.trim() ? stderr.replace(/\r\n/g, '\n').trimEnd() : '']
     .filter((s) => s !== '')
     .join('\n');
 
   await fs.mkdir(path.dirname(path.resolve(out)), { recursive: true });
-  const content = body + '\n';
+  let kept = body;
+  if (skipUntil) {
+    const at = kept.indexOf(String(skipUntil));
+    if (at >= 0) kept = kept.slice(kept.indexOf('\n', at) + 1);
+  }
+  const content = kept.replace(/\n{2,}/g, '\n\n').trimEnd() + '\n';
   await fs.writeFile(out, content, 'utf8');
   await writeMeta(out, {
     kind: 'run',
