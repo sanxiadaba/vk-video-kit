@@ -196,3 +196,11 @@ vk-window { display: block; }
 
 /* 窗头按 chrome 变形：min / dialog 显示标题，browser 显示地址栏。 */
 .vk-win-tag[data-chrome='browser'] > .vk-hd .vk-file { display: none; }
+
+/* chrome="none" = 不要窗，不是只要窗头不要。
+   之前只藏了 .vk-hd，边框和底色还在，于是"窗口里套一个窗口"。 */
+.vk-win[data-chrome='none'] {
+  border: 0;
+  background: none;
+  border-radius: 0;
+}
