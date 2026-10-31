@@ -591,6 +591,8 @@ export function focusRegions(stage) {
 }
 
 export function installAudit(VK) {
+  // 阈值表也给出去：门禁在浏览器里跑时读它，而不是各自抄一份数字。
+  VK.limits = LIMITS;
   VK.auditPage = auditPage;
   VK.auditPages = auditPages;
   VK.metrics = metrics;

@@ -20,7 +20,6 @@ export const PRESETS = {
     { label: '次要', attrs: { ink: 'tertiary' } },
     { label: '大字', attrs: { size: 'subhead' } },
     { label: '居中', attrs: { align: 'center' } },
-    { label: '等宽', attrs: { mono: '' } },
     { label: '加粗', attrs: { weight: 'bold' } },
   ],
   'vk-icon': [
@@ -32,10 +31,8 @@ export const PRESETS = {
   'vk-img': [
     /* 图片的尺寸由容器决定（frame=false，w/h 从来就没生效过）。
        预设改成真正影响画面的四个维度：比例、填充、焦点、圆角。 */
-    { label: '宽幅', attrs: { ratio: '16 / 9' } },
     { label: '竖幅', attrs: { ratio: '3 / 4' } },
     { label: '方图', attrs: { ratio: '1 / 1' } },
-    { label: '完整', attrs: { fit: 'contain' } },
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
     { label: '圆图', attrs: { ratio: '1 / 1', radius: 'pill' } },
@@ -139,7 +136,6 @@ export const PRESETS = {
   'vk-bits': [
     { label: '索引反向', attrs: { index: '0-7' } },
     { label: '无索引', attrs: { index: 'none' } },
-    { label: '逐位分开', attrs: { group: '1' } },
     { label: '强调色', attrs: { tone: 'info' } },
     { label: '16 位', attrs: { 'bit-width': '16', value: '1111 1111 0000 0001' } },
     { label: '字节界', attrs: { bytes: '' } },

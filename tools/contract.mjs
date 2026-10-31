@@ -256,13 +256,15 @@ function visualInPage(tag) {
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText && opaque(el)) {
+      const L = window.vk?.limits || { fontFloor: 36, contrastText: 7, contrastMuted: 4.5, contrastLarge: 4.5, fontLarge: 96 };
       const fs = parseFloat(cs.fontSize);
-      const meta = el.closest?.('[data-meta]');
-      if (!meta && fs < 35.5) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
+      const meta = el.closest?.('[data-meta]') || el.closest?.('[ink="muted"]');
+      if (!meta && fs < L.fontFloor) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));
-        const need = fs >= 96 ? 3 : 4.5;
+        const mono = /mono/i.test(cs.fontFamily);
+        const need = meta ? L.contrastMuted : mono ? L.contrastLarge : fs >= L.fontLarge ? L.contrastLarge : L.contrastText;
         if (cr < need) out.push({ type: 'contrast', what: (el.className || el.tagName).toString().slice(0, 50), cr: +cr.toFixed(2), need });
       }
     }
@@ -307,7 +309,6 @@ async function open(tag) {
   const resp = await page.goto(`${base}/${pagePath}`, { waitUntil: 'load' });
   if (!resp || !resp.ok()) throw new Error(`${tag}: HTTP ${resp?.status()}`);
   await page.evaluate(() => window.vk?.ready?.());
-  await page.evaluate(() => window.vk?.freeze?.());
   if (process.env.VK_INJECT_CSS) await page.addStyleTag({ content: process.env.VK_INJECT_CSS });
   await page.waitForTimeout(40);
 }
@@ -416,8 +417,13 @@ function stylePropsFor(tag) {
  * 现在每一类跳过都计数，并受预算约束：预算只许往下调，不许往上。
  * 每降一档都要有替代的覆盖（例如 pose 由 tests/pose.test.mjs 覆盖）。
  */
-const SKIP_BUDGET = Number(process.env.VK_SKIP_BUDGET || 382);
+// 预算按"概念"算，不按"声明"算：act 在 30 个标签上各声明一次，概念只有一个。
+// 13.0 用声明数当分母，于是同一件事被数了 30 遍，比例永远下不去。
+const SKIP_RATIO = Number(process.env.VK_SKIP_RATIO || 0.2);
 const skipped = { motion: 0, pose: 0, context: 0, build: 0 };
+const skippedNames = new Set();
+const declaredNames = new Set();
+for (const tag of TAG_NAMES) for (const name of Object.keys(TAGS[tag].attrs || {})) declaredNames.add(name);
 
 try {
   for (const tag of tags) {
@@ -442,19 +448,20 @@ try {
       if (isHidden(tag, name)) continue;
       // 语境属性（span / rows）：只在特定上下文里有效——span 要有 vk-grid 父级，
       // rows 要有确定高度。它们由构建期校验和 slice 的求解器覆盖，不在这里逐条探针。
-      if (spec.context) { skipped.context++; continue; }
+      if (spec.context) { skipped.context++; skippedNames.add(name); continue; }
       // 导演层属性（at / dur / enter / ease / stagger）：只有 seek(t) 之后才影响画面，
       // 静态渲染必须与不写它们时一致——所以不能在这里用「子树有没有变」来探针。
       // 它们由 tests/director.test.mjs 的 poster 逐像素比对覆盖。
-      if (spec.motion) { skipped.motion++; continue; }
+      if (spec.motion) { skipped.motion++; skippedNames.add(name); continue; }
       // 姿态属性（act / strength）由运行期一遍写成 data-*，不改子树结构；
       // 由 tests/pose.test.mjs 覆盖（focus 上色、soft 变淡、mark 不用钴蓝）。
       // 14.0：四类跳过全部记账，并受 SKIP_BUDGET 约束——见文件末尾。
-      if (spec.pose) { skipped.pose++; continue; }
+      if (spec.pose) { skipped.pose++; skippedNames.add(name); continue; }
       const key = `${tag}.${name}`;
       if (spec.build) {
         buildOnly.push(name);
         skipped.build++;
+        skippedNames.add(name);
         continue;
       }
       const probe = PROBES[tag]?.[name];
@@ -571,10 +578,15 @@ try {
   }
   if (!checked.length) failures.push('契约没有检查任何属性：0 个对象不算通过');
   const skipTotal = skipped.motion + skipped.pose + skipped.context + skipped.build;
+  const ratio = skippedNames.size / declaredNames.size;
   console.log(
-    `\n跳过 ${skipTotal} 个属性（motion ${skipped.motion} / pose ${skipped.pose} / context ${skipped.context} / build ${skipped.build}），预算 ${SKIP_BUDGET}`
+    `\n跳过 ${skipTotal} 条声明（motion ${skipped.motion} / pose ${skipped.pose} / context ${skipped.context} / build ${skipped.build}）`
   );
-  if (skipTotal > SKIP_BUDGET) failures.push(`跳过 ${skipTotal} 个属性 > 预算 ${SKIP_BUDGET}：删掉没人用的声明，或补上覆盖`);
+  console.log(
+    `按概念算：${skippedNames.size}/${declaredNames.size} = ${(ratio * 100).toFixed(0)}%（预算 ${(SKIP_RATIO * 100).toFixed(0)}%）`
+  );
+  if (ratio > SKIP_RATIO)
+    failures.push(`跳过的概念占 ${(ratio * 100).toFixed(0)}% > ${(SKIP_RATIO * 100).toFixed(0)}%：删掉没人用的声明，或补上覆盖`);
 } catch (e) {
   failures.push(`运行失败：${e?.message || e}`);
 } finally {

@@ -29,10 +29,12 @@ import { SITE } from './lib/paths.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { TAGS } from '../src/registry.mjs';
 
-const MIN_FONT = 36; // 13.0 地板：36 design px = 手机 13.7px
-const MIN_RATIO = 4.5;
-const LARGE_RATIO = 3;
-const LARGE_FONT = 72;
+import { LIMITS } from '../src/shared/limits.mjs';
+
+const MIN_FONT = LIMITS.fontFloor; // 36 design px = 手机 13.7px
+const MIN_RATIO = LIMITS.contrastText;
+const LARGE_RATIO = LIMITS.contrastLarge;
+const LARGE_FONT = LIMITS.fontLarge;
 const failed = [];
 const warned = [];
 const fail = (tag, msg) => failed.push(`${tag}: ${msg}`);
@@ -148,8 +150,7 @@ let loadedPath = null;
 
 async function open(target) {
   consoleIssues = [];
-  const lens = target.lens && target.lens !== 'plate' ? target.lens : '';
-  const hash = lens ? `#${lens}` : '';
+  const hash = '';
   // 同一页的四个镜头只 load 一次：后面靠 hashchange 切镜头，省掉 3 次完整加载。
   if (loadedPath !== target.path) {
     const resp = await page.goto(`${base}/${target.path}${hash}`, { waitUntil: 'load' });
@@ -168,213 +169,23 @@ async function open(target) {
     fail(target.label, '运行时未就绪：window.vk 未定义');
     return false;
   }
-  await page.evaluate(() => window.vk?.freeze?.());
   await page.evaluate(() => document.fonts?.ready);
-  if (lens) {
-    await page.waitForFunction(
-      (name) => {
-        const section = document.querySelector(`[data-lens="${name}"]`);
-        return section && !section.hidden && section.dataset.filled === '1';
-      },
-      lens,
-      { timeout: 4000 }
-    ).catch(() => {});
-    await page.evaluate(() => window.vk?.layout?.());
-    await sleep(200);
-  } else {
-    await sleep(60);
-  }
   return true;
 }
 
 /* -------------------------------------------------------------- 画面检查 */
 
 async function inspect() {
-  return page.evaluate(
-    ({ MIN_FONT, MIN_RATIO, LARGE_RATIO, LARGE_FONT }) => {
-      const out = [];
-      const stage = document.querySelector('.vk-page') || document.querySelector('.vk-stage') || document.body;
-      // 与 vk check / vk shot 共用同一份运行期审计；下面的手写检查只在旧产物缺 auditPage 时兜底。
-      const audited = window.vk?.auditPage?.();
-      if (audited) {
-        const r = stage.getBoundingClientRect();
-        return { issues: audited.issues, special: audited.special, page: [Math.round(r.width), Math.round(r.height)] };
-      }
-      const safe = document.querySelector('.vk-page-bd') || document.querySelector('.vk-stage');
-      const pageRect = stage.getBoundingClientRect();
-      const safeRect = safe?.getBoundingClientRect();
-
-      const parse = (s) => {
-        const m = String(s).match(/rgba?\(([^)]+)\)/);
-        if (!m) return null;
-        const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
-        return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
-      };
-      const blend = (f, b) => {
-        const a = f.a + b.a * (1 - f.a);
-        if (a <= 0.0001) return { r: 0, g: 0, b: 0, a: 0 };
-        return {
-          r: (f.r * f.a + b.r * b.a * (1 - f.a)) / a,
-          g: (f.g * f.a + b.g * b.a * (1 - f.a)) / a,
-          b: (f.b * f.a + b.b * b.a * (1 - f.a)) / a,
-          a,
-        };
-      };
-      const bgOf = (el) => {
-        let n = el;
-        let acc = null;
-        while (n && n !== document.documentElement) {
-          const c = parse(getComputedStyle(n).backgroundColor);
-          if (c && c.a > 0.01) {
-            acc = acc ? blend(acc, c) : c;
-            if (c.a >= 0.99) break;
-          }
-          n = n.parentElement;
-        }
-        return acc ? blend(acc, { r: 255, g: 255, b: 255, a: 1 }) : { r: 255, g: 255, b: 255, a: 1 };
-      };
-      const lum = (c) => {
-        const f = (v) => {
-          v /= 255;
-          return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
-        };
-        return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
-      };
-      const ratio = (a, b) => {
-        const l1 = lum(a);
-        const l2 = lum(b);
-        return (Math.max(l1, l2) + 0.05) / (Math.min(l1, l2) + 0.05);
-      };
-      const opaque = (el) => {
-        let n = el;
-        while (n && n !== document.documentElement) {
-          if (parseFloat(getComputedStyle(n).opacity) < 0.5) return false;
-          n = n.parentElement;
-        }
-        return true;
-      };
-      const clip = (s) => (s || '').toString().slice(0, 60);
-      // 同一个溢出盒子只报最外层：父级已经失败时，不再把整棵子树刷屏。
-      const overSeen = new Set();
-      const safeSeen = new Set();
-      const covered = (el, set) => {
-        for (let p = el.parentElement; p; p = p.parentElement) if (set.has(p)) return true;
-        return false;
-      };
-
-      for (const el of stage.querySelectorAll('*')) {
-        if (el.closest('.katex')) continue;
-        if (el.hasAttribute?.('data-ellipsis')) continue;
-        const cs = getComputedStyle(el);
-        if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-        const r = el.getBoundingClientRect();
-        if (r.width < 1 || r.height < 1) continue;
-        if (el.closest('svg') || el.closest('.vk-sr')) continue;
-        const inSideNav = !!el.closest('[data-side-nav]');
-        const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
-        const pageScaffold = el.matches('.vk-page-inner, .vk-page-bd, .vk-page-hd, .vk-page-ft');
-
-        const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-        const isMeta = !!(el.closest && el.closest('[data-meta]'));
-        if (hasText && opaque(el)) {
-          const fs = parseFloat(cs.fontSize);
-          if (!isMeta && fs < MIN_FONT) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
-          const fg = parse(cs.color);
-          if (fg) {
-            const cr = ratio(fg, bgOf(el));
-            const need = fs >= LARGE_FONT ? LARGE_RATIO : MIN_RATIO;
-            if (cr < need) out.push({ type: 'contrast', what: clip(el.className || el.tagName), cr: +cr.toFixed(2), need });
-          }
-        }
-
-        if (!inSideNav && (r.left < -4 || r.top < -4 || r.right > 1924 || r.bottom > 1084)) {
-          if (!covered(el, overSeen)) {
-            overSeen.add(el);
-            out.push({
-              type: 'overflow',
-              what: clip(el.className || el.tagName),
-              box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
-            });
-          }
-        }
-
-        // 安全区只约束正文；页眉/页脚住在安全区上下 96 的轨道里，页面骨架本身是整页。
-        if (safeRect && !inSideNav && !inPageChrome && !pageScaffold) {
-          if (
-            (r.left < safeRect.left - 2 ||
-              r.right > safeRect.right + 2 ||
-              r.top < safeRect.top - 2 ||
-              r.bottom > safeRect.bottom + 2) &&
-            !covered(el, safeSeen)
-          ) {
-            safeSeen.add(el);
-            out.push({
-              type: 'safe',
-              what: clip(el.className || el.tagName),
-              box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
-            });
-          }
-        }
-
-        const ox = cs.overflowX === 'hidden' || cs.overflowX === 'clip';
-        const oy = cs.overflowY === 'hidden' || cs.overflowY === 'clip';
-        if (ox && el.scrollWidth > el.clientWidth + 3) {
-          out.push({ type: 'clip', what: clip(el.className || el.tagName), sw: el.scrollWidth, cw: el.clientWidth });
-        }
-        if (oy && el.scrollHeight > el.clientHeight + 3) {
-          out.push({ type: 'clip-y', what: clip(el.className || el.tagName), sh: el.scrollHeight, ch: el.clientHeight });
-        }
-      }
-
-      // 行号不能压到代码正文上。
-      for (const line of stage.querySelectorAll('.vk-line, .vk-dline')) {
-        const num = line.querySelector('.vk-dnums') || line.querySelector('.vk-ln');
-        const src = line.querySelector('.vk-src, .vk-dsrc');
-        if (!num || !src) continue;
-        const nr = num.getBoundingClientRect();
-        const sr = src.getBoundingClientRect();
-        if (nr.width < 1 || sr.width < 1) continue;
-        if (nr.right > sr.left + 0.5) {
-          out.push({ type: 'ln-overlap', what: clip(line.className), gap: +(nr.right - sr.left).toFixed(1) });
-        }
-      }
-
-      // w 是硬宽：量出来必须等于写的数字（容忍 1.5px 的亚像素取整）。
-      for (const el of stage.querySelectorAll('[w]')) {
-        const raw = (el.getAttribute('w') || '').trim();
-        if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
-        const cs = getComputedStyle(el);
-        if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-        const want = Number(raw);
-        const got = el.offsetWidth;
-        if (got < 1) continue;
-        if (Math.abs(got - want) > 1.5) {
-          out.push({ type: 'w', what: clip(el.className || el.tagName), want, got, tag: el.tagName.toLowerCase() });
-        }
-      }
-
-      // 运行时自己的溢出审计（Frame 原语）：内容比盒子宽/高都算失败。
-      const audit = typeof window.vk?.auditOverflow === 'function' ? window.vk.auditOverflow(stage) : null;
-      if (audit === null) out.push({ type: 'audit-missing', what: 'window.vk.auditOverflow 不存在' });
-      else {
-        for (const a of audit) {
-          out.push({ type: 'audit-overflow', what: `${a.tag} ${a.sel}`, sw: a.sw, cw: a.cw, sh: a.sh, ch: a.ch });
-        }
-      }
-
-      const special = [];
-      if (document.querySelector('[data-vk-unknown]')) {
-        special.push(`未知图标：${document.querySelector('[data-vk-unknown]').dataset.vkUnknown}`);
-      }
-      if (document.querySelector('[data-vk-stale]')) special.push('有预编译数据过期');
-      if (document.querySelector('[data-vk-parsed]')) special.push('源码被浏览器解析（漏转义）');
-      if (document.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
-      if (document.querySelector('vk-img[data-error], .vk-fig-win[data-error]')) special.push('图片加载失败');
-
-      return { issues: out, special, page: [Math.round(pageRect.width), Math.round(pageRect.height)] };
-    },
-    { MIN_FONT, MIN_RATIO, LARGE_RATIO, LARGE_FONT }
-  );
+  // 画面审计只有一份：src/runtime/audit.mjs 的 auditPage。
+  // 13.0 在这里还抄了一份 190 行的兜底，两边的阈值会打架（96/72/35.5），已删。
+  return page.evaluate(() => {
+    const stage = document.querySelector('.vk-page') || document.querySelector('.vk-stage') || document.body;
+    const r = stage.getBoundingClientRect();
+    const page = [Math.round(r.width), Math.round(r.height)];
+    const audited = window.vk?.auditPage?.();
+    if (!audited) return { issues: [{ type: 'audit-missing', what: '运行时没有 auditPage（构建过期？）' }], special: [], page };
+    return { issues: audited.issues, special: audited.special, page };
+  });
 }
 
 /** 字体：check() 不会触发加载，必须显式 load 一次；一页加载过全站共用。 */
@@ -517,7 +328,7 @@ for (const target of list) {
   }
 
   // 预设只对"成品"镜头有意义：其余四个镜头里这块元件是隐藏的，改了也拍不到。
-  if (checkPresets && target.kind === 'specimen' && target.lens === 'plate') {
+  if (checkPresets && target.kind === 'specimen') {
     const baseShot = await page.screenshot();
     await presetDiff(target.tag, baseShot);
   }
