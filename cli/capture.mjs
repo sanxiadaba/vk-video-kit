@@ -75,15 +75,18 @@ if (verify) {
   }
   const meta = JSON.parse(metaRaw);
   const buf = await fs.readFile(file);
-  const now = hash(buf.toString('utf8'));
+  // 文本产物按 utf8 复算、截图产物按原始字节复算——采集时怎么算的，这里就怎么算。
+  const now = meta.kind === 'shot' ? hash(buf) : hash(buf.toString('utf8'));
   if (now !== meta.outHash) {
-    const rerun = meta.steps?.length
-      ? meta.steps.map((s) => `--step "${s.cmd}"`).join(' ')
-      : `--run "${meta.cmd}"`;
+    const rerun = meta.kind === 'shot'
+      ? `--shot "${meta.target}" --width ${meta.width} --height ${meta.height}`
+      : meta.steps?.length
+        ? meta.steps.map((s) => `--step "${s.cmd}"`).join(' ')
+        : `--run "${meta.cmd}"`;
     console.error(`capture: ${path.basename(file)} 与它记录的命令结果不一致（${meta.outHash} → ${now}）。重跑：vk capture ${rerun} --out ${file}`);
     process.exit(1);
   }
-  const label = meta.steps?.length ? `${meta.steps.length} 步` : meta.cmd;
+  const label = meta.kind === 'shot' ? `${meta.width}×${meta.height} 截图` : meta.steps?.length ? `${meta.steps.length} 步` : meta.cmd;
   if (!quiet) console.log(`capture: ${path.basename(file)} 与记录一致（${label}）`);
   process.exit(0);
 }

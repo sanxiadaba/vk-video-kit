@@ -1033,7 +1033,10 @@ export class VkCompare extends VkElement {
       if (img.complete) checkPair();
       else img.addEventListener('load', checkPair, { once: true });
     }
-    this._imgA.style.clipPath = `inset(0 0 0 ${split}%)`;
+    // a 在左、b 在右：裁掉 a 的右半边，让底下那张 b 从分割线往右露出来。
+    // 之前写的是 inset(0 0 0 split%)——那是"只留 a 的右半边"，
+    // 于是左半边显示的是 b，和左角的 label-a 正好错位。
+    this._imgA.style.clipPath = `inset(0 ${100 - split}% 0 0)`;
     this._div.style.left = split + '%';
 
     paintLabels();

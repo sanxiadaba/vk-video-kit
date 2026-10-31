@@ -151,7 +151,9 @@ test('vk-compare 的 split 决定裁掉多少', async () => {
     const box = document.querySelector('.vk-cmp');
     return { clip: a.style.clipPath, divLeft: div.style.left, ratio: getComputedStyle(box).aspectRatio };
   });
-  assert.equal(r.clip, 'inset(0px 0px 0px 30%)', `裁切位置应该跟 split 一致：${r.clip}`);
+  // a 在左、b 在右：split=30 表示"左边 30% 是 a"，所以裁掉 a 的右边 70%。
+  // 旧断言写的是 inset(0 0 0 30%)——那是"只留 a 的右半边"，图像与标签会左右错位。
+  assert.equal(r.clip, 'inset(0px 70% 0px 0px)', `裁切应该留下左边 30%：${r.clip}`);
   assert.equal(r.divLeft, '30%');
   assert.ok(r.ratio.startsWith('4 / 3'), `比例应该写进 aspect-ratio：${r.ratio}`);
 });
