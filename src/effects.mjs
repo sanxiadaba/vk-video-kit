@@ -26,16 +26,6 @@ export const EFFECTS = {
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
   },
 
-  'vk-figure': {
-    fit: { on: 'vk-figure img', kind: 'style', prop: 'object-fit' },
-    position: { on: 'vk-figure img', kind: 'style', prop: 'object-position' },
-    crop: { on: '.vk-fig-crop', kind: 'style', prop: 'left' },
-    'crop-label': { on: '.vk-fig-crop-label', kind: 'text' },
-    chrome: { on: 'vk-figure .vk-hd', kind: 'style', prop: 'display' },
-    shadow: { on: '.vk-fig-win', kind: 'style', prop: 'box-shadow' },
-    bleed: { on: 'vk-figure', kind: 'attr', prop: 'data-bleed', skipVisual: true },
-    w: { on: 'vk-figure', kind: 'geometry', prop: 'width' },
-  },
 
   'vk-window': {
     mass: { on: '.vk-hd', kind: 'style', prop: 'padding-top', skipVisual: true },
@@ -48,15 +38,6 @@ export const EFFECTS = {
   },
 
 
-  'vk-panel': {
-    variant: { on: '.vk-panel', kind: 'attr', prop: 'data-variant' },
-    surface: { on: '.vk-panel', kind: 'style', prop: 'background-color' },
-    pad: { on: '.vk-panel', kind: 'style', prop: 'padding-top' },
-    border: { on: '.vk-panel', kind: 'style', prop: 'border-top-color' },
-    radius: { on: '.vk-panel', kind: 'style', prop: 'border-top-left-radius' },
-    n: { on: '.vk-panel-n', kind: 'text' },
-    elevation: { on: '.vk-panel', kind: 'style', prop: 'box-shadow' },
-  },
 
 
   'vk-bits': {
@@ -180,11 +161,6 @@ export const EFFECTS = {
     bare: { on: 'vk-tag', kind: 'style', prop: 'padding-left' },
   },
 
-  'vk-callout': {
-    tone: { on: '.vk-callout', kind: 'style', prop: 'border-left-color' },
-    size: { on: 'vk-callout', kind: 'style', prop: 'font-size' },
-    flat: { on: '.vk-callout', kind: 'style', prop: 'background-color' },
-  },
 
   'vk-box': {
     surface: { on: 'vk-box', kind: 'style', prop: 'background-color' },
@@ -253,10 +229,10 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule', 'vk-title',
-  'vk-list', 'vk-callout', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
-  'vk-math', 'vk-figure', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
-  'vk-steps', 'vk-quote', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',
+  'vk-box', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule',
+  'vk-list', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
+  'vk-math', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
+  'vk-steps', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',
 ];
 for (const tag of COMMON_TAGS) {
   const own = EFFECTS[tag] || {};
@@ -302,9 +278,6 @@ Object.assign(EFFECTS['vk-term'], {
   long: { on: '.vk-txt', kind: 'style', prop: 'white-space', skipVisual: true },
 });
 Object.assign(EFFECTS['vk-table'], {
-});
-Object.assign(EFFECTS['vk-callout'], {
-  mass: { on: '.vk-callout', kind: 'style', prop: 'padding-top' },
 });
 Object.assign(EFFECTS['vk-steps'], {
   mass: { on: '.vk-step-n', kind: 'style', prop: 'width' },

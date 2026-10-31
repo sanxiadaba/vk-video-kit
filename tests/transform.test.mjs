@@ -91,29 +91,13 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
     ['<vk-box w="-10"></vk-box>', /超出/],
     ['<vk-code lang="c" src="hello.c" typo="x"></vk-code>', /未知属性 typo/],
     ['<vk-icon name="not-a-real-icon"></vk-icon>', /没有图标/],
-    ['<vk-callout bare="false">x</vk-callout>', /布尔属性/],
+    ['<vk-text mono="false">x</vk-text>', /布尔属性/],
     ['<vk-canvas layout="flow"></vk-canvas>', /未知属性 layout/],
     ['<vk-page w="800"></vk-page>', /未知属性 w/],
   ];
   for (const [html, re] of cases) {
     await assert.rejects(() => transformHtml(html, { file: path.join(dir, 'page.html'), highlighter: hl }), re);
   }
-});
-
-test('具名槽：面板头走槽；宿主自己写 slot 则拒绝', async () => {
-  const ok = await transformHtml(
-    '<vk-panel><span slot="hd">页头</span>面板内容</vk-panel>',
-    { file: 'slots.html', highlighter: hl }
-  );
-  assert.ok(ok.html.includes('slot="hd"'));
-  await assert.rejects(
-    () => transformHtml('<vk-panel slot="x">面板</vk-panel>', { file: 'slots.html', highlighter: hl }),
-    /不支持 slot/
-  );
-  await assert.rejects(
-    () => transformHtml('<vk-callout><span slot="body">x</span></vk-callout>', { file: 'slots.html', highlighter: hl }),
-    /不支持 slot/
-  );
 });
 
 test('图标构建期内联，未知图标仍然报错', async () => {

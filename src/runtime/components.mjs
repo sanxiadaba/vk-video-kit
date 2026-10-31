@@ -76,59 +76,6 @@ export class VkList extends VkElement {
 
 const CALLOUT_ICON = { info: 'info', ok: 'circle-check', warn: 'triangle-alert', err: 'circle-x' };
 
-export class VkCallout extends VkElement {
-  static watchSource = true;
-  static slot = true;
-  static slotHost = '.vk-callout-bd';
-  static renderedRoot = '.vk-callout';
-
-  capture() {}
-
-  render() {
-    this.setAttribute('role', 'note');
-    // 没有标题也没有正文：画面上不该留一条孤零零的色条。
-    if (!this.textContent.trim() && !this.getAttribute('title')) {
-      this.innerHTML = '';
-      return;
-    }
-    const tone = this.getAttribute('tone') || 'info';
-    const title = this.getAttribute('title') || '';
-    const flat = this.hasAttribute('bare');
-
-    if (!this._shell) {
-      this._titleSlot = this.querySelector(':scope > [slot="title"]');
-      this._titleSlot?.remove();
-      const body = takeSlot(this);
-      this.innerHTML = `<div class="vk-callout" data-tone="info">
-        <div class="vk-callout-hd">
-          <svg class="vk-ic" viewBox="0 0 24 24" aria-hidden="true"></svg>
-          <span class="vk-callout-t"></span>
-        </div>
-        <div class="vk-callout-bd"></div>
-      </div>`;
-      this._shell = this.querySelector('.vk-callout');
-      this._icon = this.querySelector('.vk-ic');
-      this._title = this.querySelector('.vk-callout-t');
-      this._body = this.querySelector('.vk-callout-bd');
-      fillSlot(this._body, body);
-    }
-
-    this._shell.dataset.tone = tone;
-    if (flat) this._shell.dataset.flat = '';
-    else delete this._shell.dataset.flat;
-    this._icon.innerHTML = iconOf(CALLOUT_ICON[tone] || 'info');
-    if (title || this._titleSlot) {
-      if (this._titleSlot) this._title.replaceChildren(this._titleSlot);
-      else this._title.textContent = title;
-      this._title.style.display = '';
-      delete this._shell.dataset.title;
-    } else {
-      this._title.textContent = '';
-      this._title.style.display = 'none';
-      this._shell.dataset.title = 'none';
-    }
-  }
-}
 
 /* ---------------------------------------------------------------- window */
 
@@ -915,56 +862,6 @@ export class VkBars extends VkElement {
  * 只提供「底 + 边 + 三个槽」，不规定里面怎么排 —— 排法是作者的事。
  *   slot="header" / slot="footer" / 其余进 body
  */
-export class VkPanel extends VkElement {
-  static frame = false;
-  static renderedRoot = '.vk-panel';
-
-  capture() {}
-
-  render() {
-    const variant = this.getAttribute('variant') || 'card';
-    const surface = this.getAttribute('surface') || 'paper';
-    const pad = this.getAttribute('pad') || 'lg';
-    const border = this.getAttribute('border') || 'hair';
-    const radius = this.getAttribute('radius') || 'lg';
-    const n = this.getAttribute('n') || '';
-
-    const all = takeSlot(this).filter((x) => x);
-    const pick = (name) => all.filter((x) => x.nodeType === 1 && x.getAttribute && x.getAttribute('slot') === name);
-    const header = pick('header');
-    const footer = pick('footer');
-    const body = all.filter((x) => !header.includes(x) && !footer.includes(x));
-
-    if (!this._shell) {
-      this.innerHTML = `<section class="vk-panel"><header class="vk-panel-hd" data-vk-part="hd"><span class="vk-panel-n" data-meta></span></header><div class="vk-panel-bd" data-vk-part="bd"></div><footer class="vk-panel-ft" data-vk-part="ft"></footer></section>`;
-      this._shell = this.querySelector('.vk-panel');
-      this._hd = this.querySelector('.vk-panel-hd');
-      this._n = this.querySelector('.vk-panel-n');
-      this._bd = this.querySelector('.vk-panel-bd');
-      this._ft = this.querySelector('.vk-panel-ft');
-    }
-
-    this._shell.dataset.variant = variant;
-    this._shell.dataset.surface = surface;
-    this._shell.dataset.pad = pad;
-    this._shell.dataset.border = border;
-    this._shell.dataset.radius = radius;
-    this._shell.dataset.elevation = this.getAttribute('elevation') || '0';
-    if (this.hasAttribute('elevation')) this.setAttribute('elevation', this.getAttribute('elevation') || '0');
-    this._shell.dataset.overflow = this.getAttribute('overflow') || 'visible';
-    this._shell.dataset.grow = this.hasAttribute('grow') ? '1' : '0';
-    this._shell.dataset.fill = this.hasAttribute('fill') ? '1' : '0';
-
-    this._n.textContent = n;
-    this._n.hidden = !n;
-
-    this._hd.append(...header);
-    this._bd.append(...body);
-    this._ft.append(...footer);
-    this._hd.hidden = !header.length && !n;
-    this._ft.hidden = !footer.length;
-  }
-}
 
 /* ----------------------------------------------------------------- stat */
 
@@ -1035,9 +932,7 @@ export class VkCompare extends VkElement {
 }
 
 export function defineComponents() {
-  define('vk-panel', VkPanel);
   define('vk-list', VkList);
-  define('vk-callout', VkCallout);
   define('vk-window', VkWindow);
   define('vk-tree', VkTree);
   define('vk-math', VkMath);

@@ -61,8 +61,8 @@ test('坏页 2：超宽的字 → 溢出/裁切', async () => {
 test('坏页 3：两处焦点 → blue 报告 2 处', async () => {
   await page.setContent(
     SHELL(`<vk-page align="top">
-      <vk-text act="focus">第一处焦点，这里在讲它。</vk-text>
-      <vk-callout title="乙" act="focus">第二处焦点，这里也在讲它。</vk-callout>
+      <vk-text class="a" act="focus">第一处焦点，这里在讲它。</vk-text>
+      <vk-text class="b" act="focus">第二处焦点，这里也在讲它。</vk-text>
     </vk-page>`),
     { waitUntil: 'load' }
   );

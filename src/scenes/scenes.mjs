@@ -66,15 +66,6 @@ export const SCENES = [
 </vk-box>`,
   },
 
-  {
-    tag: 'vk-callout',
-    body: s`
-<vk-box class="spec-w1360" surface="none">
-  <vk-callout tone="warn" title="提示框标题" size="body">
-    提示框内容，只做占位。
-  </vk-callout>
-</vk-box>`,
-  },
 
   {
     tag: 'vk-box',
@@ -338,15 +329,6 @@ export const SCENES = [
   },
 
 
-  {
-    tag: 'vk-panel',
-    body: s`
-<vk-panel n="1" surface="sf-1">
-  <div slot="header"><vk-text size="subhead">预处理之后</vk-text></div>
-  <vk-text size="body">一份 52,980 字节、858 行的中间文件。</vk-text>
-  <div slot="footer"><vk-text size="label" ink="muted" data-meta>hello.i</vk-text></div>
-</vk-panel>`,
-  },
 
 
   {

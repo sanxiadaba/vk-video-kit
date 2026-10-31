@@ -163,7 +163,6 @@ const DEFAULTS = {
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm' },
-  'vk-callout': { tone: 'info', size: 'body', mass: 'normal' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', mass: 'normal' },
@@ -182,7 +181,6 @@ const DEFAULTS = {
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-cells': { cols: '0', mass: 'normal' },
   'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal' },
-  'vk-panel': { variant: 'card', surface: 'paper', pad: 'lg', border: 'hair', radius: 'lg', elevation: '0' },
   'vk-page': { align: 'top' },
 };
 
@@ -393,28 +391,6 @@ export const TAGS = {
           'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
     },
   },
-  'vk-callout': {
-    name: '提示框',
-    layer: 'components',
-    summary: '提示块：说明、正确、注意、错误。色条 + 淡底 + 图标，正文仍是墨色。',
-    slots: [{ name: 'title', description: '标题；也可用 title 属性' }],
-    content: {
-      kind: 'text',
-      target: 'vk-callout',
-      fields: [
-        { name: 'text', label: '正文', type: 'textarea', text: true },
-        { name: 'title', label: '标题', type: 'text', attr: 'title' },
-      ],
-    },
-    attrs: {
-      'measure': { ...text(), layout: true },
-      'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
-      'tone': oneOf('info', 'ok', 'warn', 'err'),
-      'title': text(),
-      'size': oneOf('label', 'body', 'subhead'),
-      'bare': bool(),
-    },
-  },
   'vk-code': {
     name: '代码窗',
     layer: 'components',
@@ -552,20 +528,6 @@ export const TAGS = {
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
         'chrome': oneOf('min', 'none'),
-    },
-  },
-  'vk-panel': {
-    name: '区域',
-    layer: 'elements',
-    summary: '一块区域：卡片或章节带。只提供底、边和三个槽（header / footer / 其余进 body），不规定里面怎么排。',
-    attrs: {
-      'variant': oneOf('card', 'band'),
-      'surface': oneOf('paper', 'sf-1', 'sf-2', 'sf-3'),
-      'pad': oneOf('sm', 'md', 'lg', 'xl'),
-      'border': oneOf('none', 'hair', 'strong'),
-      'radius': oneOf('none', 'md', 'lg'),
-      'n': text(),
-      'elevation': oneOf('0', '1', '2'),
     },
   },
   'vk-cells': {

@@ -145,3 +145,48 @@ body.r-doc {
   background: linear-gradient(transparent 62%, var(--vk-focus-mark) 62%);
   color: inherit;
 }
+
+/* --------------------------------------------------------------- 提示 / 卡片 */
+/* 提示 = 一条竖线 + 图标 + 标题 + 正文。竖线用 tone 上色，正文仍是墨色。
+   14.0 删掉 vk-callout 之后，这套写法留在这里——它是"一组东西的排版"。 */
+.r-callout {
+  display: flex;
+  gap: var(--vk-s3);
+  padding-left: var(--vk-s4);
+  border-left: 4px solid var(--vk-info);
+  color: var(--vk-ink-1);
+  font-size: var(--vk-t-body);
+  line-height: var(--vk-lh-body);
+}
+.r-callout[data-tone='warn'] { border-left-color: var(--vk-warn); }
+.r-callout[data-tone='err'] { border-left-color: var(--vk-err); }
+.r-callout[data-tone='ok'] { border-left-color: var(--vk-ok); }
+.r-callout-hd {
+  margin: 0 0 var(--vk-s2);
+  font-size: var(--vk-t-subhead);
+  font-weight: var(--vk-w-bold);
+  line-height: var(--vk-lh-snug);
+  max-width: none;
+}
+.r-callout-bd { margin: 0; max-width: var(--vk-measure-body); }
+
+/* 卡片 = 一块面 + 一张头 + 一条分隔。14.0 删掉 vk-panel 之后用它。 */
+.r-panel {
+  display: block;
+  box-sizing: border-box;
+  padding: var(--vk-s5);
+  border: var(--vk-line-w) solid var(--vk-line-2);
+  border-radius: var(--vk-r-3);
+  background: var(--vk-surface-1);
+}
+.r-panel-hd {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--vk-s3);
+  padding-bottom: var(--vk-s3);
+  border-bottom: var(--vk-line-w) solid var(--vk-line-1);
+  margin-bottom: var(--vk-s3);
+  font-size: var(--vk-t-label);
+  color: var(--vk-ink-3);
+}

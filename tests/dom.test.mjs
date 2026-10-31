@@ -101,10 +101,10 @@ test('晚到的 page / title 内容进入内容槽，而不是留在宿主外', 
   const inBd = await page.$eval('vk-page .vk-page-bd', (e) => !!e.querySelector('#late'));
   assert.equal(inBd, true);
 
-  await reset('<vk-callout>one</vk-callout>');
-  await page.evaluate(() => document.querySelector('vk-callout').append(document.createTextNode(' two')));
+  await reset('<vk-window>one</vk-window>');
+  await page.evaluate(() => document.querySelector('vk-window').append(document.createTextNode(' two')));
   await sleep(80);
-  const text = await page.$eval('vk-callout .vk-callout-bd', (e) => e.textContent);
+  const text = await page.$eval('vk-window .vk-win-bd', (e) => e.textContent);
   assert.match(text, /two/);
 });
 

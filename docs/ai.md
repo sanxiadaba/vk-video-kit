@@ -156,9 +156,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-window`** · 窗 — 一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。
   - 属性：`mass` · `title` · `url` · `chrome` · `tone` · `pad` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">`
-- **`vk-panel`** · 区域 — 一块区域：卡片或章节带。只提供底、边和三个槽（header / footer / 其余进 body），不规定里面怎么排。
-  - 属性：`variant` · `surface` · `pad` · `border` · `radius` · `n` · `elevation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-panel n="1" surface="sf-1">`
 
 ### L2 排布 · 只决定在哪、多大
 
@@ -179,9 +176,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：条目写成 `<li>`
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="sm">`
-- **`vk-callout`** · 提示框 — 提示块：说明、正确、注意、错误。色条 + 淡底 + 图标，正文仍是墨色。
-  - 属性：`tone` · `title` · `size` · `bare` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `mass`
-  - 例：`<vk-callout tone="warn" title="提示框标题" size="body">提示框内容，只做占位。</vk-callout>`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。
   - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers` · `numbering`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）

@@ -317,7 +317,7 @@ export function auditPage(root = document) {
   }
 
   // 孤行：多行文本的最后一行少于 4 个汉字宽，读起来像排版事故。
-  for (const el of stage.querySelectorAll('vk-text, .r-title-sub, .vk-callout-bd, .vk-list li')) {
+  for (const el of stage.querySelectorAll('vk-text, .r-title-sub, .r-callout-bd, .vk-list li')) {
     if (el.closest('[data-meta]') || el.closest('svg')) continue;
     const text = (el.textContent || '').replace(/\s+/g, '').trim();
     if (text.length < 12) continue;

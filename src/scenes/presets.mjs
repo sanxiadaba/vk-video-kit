@@ -75,12 +75,6 @@ export const PRESETS = {
     { label: '分隔线', attrs: { rule: '' } },
     { label: '无符号', attrs: { bare: '' } },
   ],
-  'vk-callout': [
-    { label: '说明', attrs: { tone: 'info' } },
-    { label: '正确', attrs: { tone: 'ok' } },
-    { label: '错误', attrs: { tone: 'err' } },
-    { label: '无底', attrs: { bare: '' } },
-  ],
   'vk-code': [
     { label: '主镜头', attrs: { mass: 'hero', chrome: 'none' } },
     { label: '聚光', attrs: { focus: '4', current: '4' } },
@@ -141,11 +135,6 @@ export const PRESETS = {
     { label: '第三步', attrs: { current: '2' } },
   ],
   'vk-page': [
-  ],
-  'vk-panel': [
-    { label: '章节带', attrs: { variant: 'band' } },
-    { label: '更重的面', attrs: { surface: 'sf-2' } },
-    { label: '无编号', attrs: { n: '' } },
   ],
   'vk-bits': [
     { label: '索引反向', attrs: { index: '0-7' } },

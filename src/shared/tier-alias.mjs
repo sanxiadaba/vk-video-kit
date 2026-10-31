@@ -34,7 +34,6 @@ export const MASS_TAGS = new Set([
   'vk-tree',
   'vk-bits',
   'vk-window',
-  'vk-callout',
 ]);
 
 /** 旧词：density 的三档并进 mass；loose 是「更松」，对应 hero。 */

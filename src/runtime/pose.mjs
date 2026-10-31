@@ -19,7 +19,7 @@ const STRENGTHS = new Set(['solid', 'soft', 'ghost']);
 const ROWISH = '.vk-cell, .vk-line, .vk-tree-row, .vk-step, .vk-tl-item, .vk-bit-row, .vk-bar, tbody tr, .vk-asm-row, .vk-bytes-row';
 
 /** 块/文字这类「整块」：focus 落成钴蓝 ink（tone 的注意力一侧）。 */
-const BLOCKISH = 'vk-text, vk-callout';
+const BLOCKISH = 'vk-text';
 
 function dimSiblings(el, amount) {
   const stop = el.closest('[data-act="context"]');
