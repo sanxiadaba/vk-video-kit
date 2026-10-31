@@ -764,25 +764,6 @@ export class VkBytes extends VkElement {
 
 /* ------------------------------------------------------------------ keys */
 
-export class VkKeys extends VkElement {
-  static watchSource = true;
-  static frame = false;
-  static renderedRoot = '.vk-keys';
-
-  capture() {
-    this._src = dedent(textSource(this));
-  }
-
-  render() {
-    const raw = (this._src || '').trim();
-    // 只按"空格 + 加号 + 空格"分键，`+` 本身可以是一枚键。
-    const keys = raw.split(/\s+\+\s+/).filter(Boolean);
-    this.innerHTML = `<span class="vk-keys" role="group" aria-label="${esc(raw)}">${keys
-      .map((k, i) => `${i ? '<span class="vk-keyplus" aria-hidden="true" data-meta>+</span>' : ''}<kbd class="vk-key">${esc(k)}</kbd>`)
-      .join('')}</span>`;
-  }
-}
-
 /* ------------------------------------------------------------------ math */
 
 export class VkMath extends VkElement {
@@ -1411,7 +1392,6 @@ export function defineComponents() {
   define('vk-figure', VkFigure);
   define('vk-window', VkWindow);
   define('vk-tree', VkTree);
-  define('vk-keys', VkKeys);
   define('vk-math', VkMath);
   define('vk-cells', VkCells);
   define('vk-bytes', VkBytes);

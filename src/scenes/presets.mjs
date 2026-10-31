@@ -159,7 +159,6 @@ export const PRESETS = {
     { label: '不要地址', attrs: { address: 'none' } },
     { label: '紧凑', attrs: { mass: 'compact' } },
   ],
-  'vk-keys': [],
   'vk-cells': [
     { label: '四列', attrs: { cols: '4' } },
     { label: '八列', attrs: { cols: '8' } },
@@ -226,10 +225,5 @@ export const PRESETS = {
     { label: '下划线', attrs: { variant: 'underline' } },
     { label: '实线', attrs: { dash: null } },
     { label: '大留白', attrs: { 'pad-px': '28' } },
-  ],
-  'vk-spotlight': [
-    { label: '轻退', attrs: { dim: '0.2' } },
-    { label: '重退', attrs: { dim: '0.6' } },
-    { label: '保留标题', attrs: { keep: 'vk-title' } },
   ],
 };

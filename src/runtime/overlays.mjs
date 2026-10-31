@@ -3,7 +3,7 @@
  *
  * 三个标签都只画在包含块上，不改布局：
  *   <vk-ring for="#cells@byte:5" shape="ellipse" tone="err"></vk-ring>
- *   <vk-spotlight for="#code@line:7" dim="0.72"></vk-spotlight>
+ *   <vk-ring variant="dim" for="#code@line:7" dim="0.72"></vk-ring>
  *   <vk-pin for="#cells@cell:2" side="right" n="1">这里越界</vk-pin>
  *
  * 放进 vk-canvas 或 vk-page 正文；目标用 #id@part:arg 寻址。
@@ -154,6 +154,12 @@ class VkOverlay extends VkElement {
 
 export class VkRing extends VkOverlay {
   draw() {
+    // 圈选与聚光本来就是一件事的两种长相：都是"看这里"，一个画框、一个压暗兄弟。
+    // 14.0 把 vk-spotlight 并进这里：variant="dim"。
+    if ((this.getAttribute('variant') || 'rect') === 'dim') {
+      applyDim(this);
+      return;
+    }
     const f = this._frame();
     if (!f || !this._svg) return;
     this._svg.replaceChildren();
@@ -230,23 +236,23 @@ export class VkRing extends VkOverlay {
  * 做法是从目标往上走到纸，每层把"不是当前节点、也不包含目标"的兄弟设成 dim 透明度。
  * 不画任何图形，所以：白纸不会变灰、字不会被压糊、和 ring 不再是同一个东西。
  */
-export class VkSpotlight extends VkOverlay {
-  draw() {
-    const f = this._frame();
-    if (!f || !this._svg) return;
-    this._svg.replaceChildren();
+/** 压暗：目标之外全部退后。ring 的 variant="dim" 走这一条。 */
+function applyDim(self) {
+    const f = self._frame();
+    if (!f || !self._svg) return;
+    self._svg.replaceChildren();
     // 上一轮退后的兄弟要还原，否则重复渲染会越叠越暗
-    for (const el of this._dimmed || []) el.style.removeProperty('opacity');
-    this._dimmed = [];
+    for (const el of self._dimmed || []) el.style.removeProperty('opacity');
+    self._dimmed = [];
 
-    const targets = anchorsOf(this, f.host);
+    const targets = anchorsOf(self, f.host);
     if (!targets.length) {
-      this._warnOnce('target', '找不到 for 目标，聚光没有生效');
+      self._warnOnce('target', '找不到 for 目标，聚光没有生效');
       return;
     }
-    this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 30 }));
-    const dim = numAttr(this, 'dim', { min: 0, max: 1, fallback: 0.45 });
-    const keepSel = (this.getAttribute('keep') || '').split(';').map((s) => s.trim()).filter(Boolean);
+    self.style.zIndex = String(numAttr(self, 'z', { min: 0, max: 99, fallback: 30 }));
+    const dim = numAttr(self, 'dim', { min: 0, max: 1, fallback: 0.45 });
+    const keepSel = (self.getAttribute('keep') || '').split(';').map((s) => s.trim()).filter(Boolean);
     const keep = new Set();
     for (const sel of keepSel) {
       try {
@@ -256,7 +262,7 @@ export class VkSpotlight extends VkOverlay {
       }
     }
     const targetEls = new Set(targets.map((t) => t.el));
-    const skip = (el) => el.hasAttribute('data-vk-overlay') || el.matches('vk-edge, vk-pin, vk-ring, vk-spotlight');
+    const skip = (el) => el.hasAttribute('data-vk-overlay') || el.matches('vk-edge, vk-pin, vk-ring');
     const kept = (el) => skip(el) || keep.has(el) || [...keep].some((k) => el.contains(k));
 
     const seen = new Set();
@@ -269,15 +275,14 @@ export class VkSpotlight extends VkOverlay {
           if ([...targetEls].some((t) => sib.contains(t))) continue;
           seen.add(sib);
           sib.style.opacity = String(dim);
-          this._dimmed.push(sib);
+          self._dimmed.push(sib);
         }
         node = node.parentElement;
       }
     }
     // 目标自身挂上 focus 姿态，让审计与度量看得见
     for (const el of targetEls) el.setAttribute('data-vk-focus', '');
-    this._targets = targetEls;
-  }
+    self._targets = targetEls;
 }
 
 /* ------------------------------------------------------------------- pin */
@@ -595,7 +600,6 @@ export class VkLoupe extends VkElement {
 
 export function defineOverlays() {
   define('vk-ring', VkRing);
-  define('vk-spotlight', VkSpotlight);
   define('vk-pin', VkPin);
   define('vk-loupe', VkLoupe);
 }

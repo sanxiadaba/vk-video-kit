@@ -18,7 +18,7 @@ const MUTED_RATIO = LIMITS.contrastMuted;
 const LARGE_RATIO = LIMITS.contrastLarge;
 const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
-const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-spotlight']);
+const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring']);
 
 export function auditPage(root = document) {
   const out = [];
@@ -92,7 +92,7 @@ export function auditPage(root = document) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-spotlight, vk-loupe');
+    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-loupe');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
     const inBleed = !!el.closest('.vk-page-bleed');
@@ -447,7 +447,7 @@ export function metrics(root = document) {
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
-      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-spotlight, [data-vk-overlay]'))
+      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -498,7 +498,7 @@ function bottomGap(holder, sr) {
 
   for (const el of holder.querySelectorAll('*')) {
     if (el.hasAttribute?.('data-vk-overlay')) continue;
-    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-spotlight')) continue;
+    if (el.closest?.('vk-edge, vk-pin, vk-ring')) continue;
     if (el.closest?.('svg')) continue;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;

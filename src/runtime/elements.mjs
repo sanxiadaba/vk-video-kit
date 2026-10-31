@@ -132,6 +132,24 @@ export class VkInline extends VkElement {
 
   render() {
     const variant = this.getAttribute('variant') || 'code';
+    // 键位：`Ctrl + C` 写成两枚键帽。它和行内代码是同一件事（行内小件），
+    // 只是长相不同——14.0 把 vk-keys 并进这里，少一个标签。
+    if (variant === 'keys') {
+      const raw = (this.textContent || '').replace(/\s+/g, ' ').trim();
+      if (raw && !this._keysDone) {
+        this._keysDone = true;
+        const keys = raw
+          .split(/\s+\+\s+/)
+          .filter(Boolean)
+          .map(
+            (k, i) =>
+              `${i ? '<span class="vk-keyplus" aria-hidden="true" data-meta>+</span>' : ''}<kbd class="vk-key">${esc(k)}</kbd>`
+          )
+          .join('');
+        this.innerHTML = `<span class="vk-keys" role="group" aria-label="${esc(raw)}">${keys}</span>`;
+      }
+      return;
+    }
     if (variant === 'math' && !this._mathDone) {
       const data = this.querySelector(':scope > script[data-vk-math]');
       if (data) {

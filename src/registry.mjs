@@ -173,8 +173,7 @@ const DEFAULTS = {
   'vk-timeline': { variant: 'events', mass: 'normal' },
   'vk-loupe': { size: 240, zoom: 2.4, side: 'auto', variant: 'circle', spot: 'ring', 'gap-px': 24, z: 50 },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
-  'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, z: 40 },
-  'vk-spotlight': { dim: 0.45, z: 30 },
+  'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
@@ -252,7 +251,7 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字 / TeX', type: 'textarea', text: true }],
     },
     attrs: {
-      'variant': oneOf('code', 'math', 'sup', 'sub', 'link'),
+      'variant': oneOf('code', 'math', 'sup', 'sub', 'link', 'keys'),
       'href': text(),
     },
   },
@@ -685,17 +684,6 @@ export const TAGS = {
       'align': oneOf('left', 'center'),
     },
   },
-  'vk-keys': {
-    name: '键位',
-    layer: 'elements',
-    summary: '键位：把 A + B 写成两枚键帽。',
-    content: {
-      kind: 'text',
-      target: 'vk-keys',
-      fields: [{ name: 'text', label: '键位（用 + 分隔）', type: 'text', text: true }],
-    },
-    attrs: {},
-  },
   'vk-cells': {
     name: '内存格',
     layer: 'components',
@@ -931,25 +919,17 @@ export const TAGS = {
   'vk-ring': {
     name: '圈选',
     layer: 'relations',
-    summary: '圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。',
+    summary: '圈选/框选/下划线/压暗：绑到任意锚点，只画覆盖层，不改布局。',
     attrs: {
       'for': sel(),
-      'variant': oneOf('ellipse', 'rect', 'underline', 'bracket'),
+      'variant': oneOf('ellipse', 'rect', 'underline', 'bracket', 'dim'),
+      // 只在 variant="dim"（压暗）时有意义：光一个 ring 无法判断"其余退后"的效果。
+      'dim': { ...num({ min: 0, max: 1, step: 0.01 }), context: 'variant-dim' },
+      'keep': { ...text(), context: 'variant-dim' },
       'pad-px': num({ min: 0, max: 80, step: 1 }),
       'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
       'dash': bool(),
       'stroke': num({ min: 1, max: 12, step: 1 }),
-      'z': int({ min: 0, max: 99, step: 1 }),
-    },
-  },
-  'vk-spotlight': {
-    name: '聚光',
-    layer: 'relations',
-    summary: '聚光：目标保持原样，其余逐层退后。不画遮罩、不画描边；可多目标，keep 里的东西不退。',
-    attrs: {
-      'for': sel(),
-      'dim': num({ min: 0, max: 1, step: 0.01 }),
-      'keep': text(),
       'z': int({ min: 0, max: 99, step: 1 }),
     },
   },
@@ -959,7 +939,7 @@ export const TAGS = {
    块级组件统一拿 Frame 的 w/h/grow/fill/overflow/measure；
    行内组件（icon/tag/mark/keys）不拿 w；
    自定义几何（page/annotate/edge/canvas/img）自己声明。 */
-const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-keys', 'vk-inline']);
+const INLINE = new Set(['vk-icon', 'vk-tag', 'vk-mark', 'vk-inline']);
 const CUSTOM = new Set([
   'vk-page',
   'vk-edge',
@@ -967,7 +947,6 @@ const CUSTOM = new Set([
   'vk-img',
   'vk-pin',
   'vk-ring',
-  'vk-spotlight',
   'vk-loupe',
 ]);
 const COMMON = {
@@ -1076,7 +1055,7 @@ const MOTION_ATTRS = {
 for (const [tag, value] of [['vk-edge', 'trace'], ['vk-pin', 'badge'], ['vk-diff', 'compare']]) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), act: { ...oneOf(value), default: value, pose: true } };
 }
-for (const tag of ['vk-ring', 'vk-spotlight', 'vk-pin', 'vk-edge', 'vk-loupe']) {
+for (const tag of ['vk-ring', 'vk-pin', 'vk-edge', 'vk-loupe']) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), ...MOTION_ATTRS };
 }
 for (const [tag, attrs] of Object.entries(EXTRA)) {

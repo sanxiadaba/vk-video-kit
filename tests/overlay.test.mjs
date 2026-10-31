@@ -26,27 +26,27 @@ const ready = async () => {
   await page.waitForTimeout(120);
 };
 
-test('vk-spotlight 是语境控制器：目标不动，兄弟退后', async () => {
+test('vk-ring variant=dim 是语境控制器：目标不动，兄弟退后', async () => {
   await page.setContent(
     SHELL(`<vk-page>
       <vk-cells id="mem" cols="4">
         <li value="48" label="H"></li><li value="65" label="e"></li>
         <li value="6C" label="l"></li><li value="00" filled></li>
       </vk-cells>
-      <vk-spotlight for="#mem@cell:3" dim="0.3"></vk-spotlight>
+      <vk-ring variant="dim" for="#mem@cell:3" dim="0.3"></vk-ring>
     </vk-page>`),
     { waitUntil: 'load' }
   );
   await ready();
   const r = await page.evaluate(() => {
     const paper = document.querySelector('.vk-page');
-    const ov = document.querySelector('vk-spotlight');
+    const ov = document.querySelector('vk-ring');
     const cells = [...document.querySelectorAll('#mem .vk-cell')];
     return {
       parentIsPage: ov.parentElement === paper,
       opacities: cells.map((c) => Number(getComputedStyle(c).opacity)),
       target: document.querySelector('#mem .vk-cell[data-cell="3"]').hasAttribute('data-vk-focus'),
-      veil: !!document.querySelector('vk-spotlight .vk-ov-svg > rect'),
+      veil: !!document.querySelector('vk-ring .vk-ov-svg > rect'),
     };
   });
   assert.ok(r.parentIsPage, '聚光应该挂成 .vk-page 的子节点');
@@ -58,7 +58,7 @@ test('vk-spotlight 是语境控制器：目标不动，兄弟退后', async () =
   }
 });
 
-test('vk-spotlight 的 dim 与 keep', async () => {
+test('vk-ring 的 dim 与 keep', async () => {
   await page.setContent(
     SHELL(`<vk-page>
       <vk-stack gap="md">
@@ -66,7 +66,7 @@ test('vk-spotlight 的 dim 与 keep', async () => {
         <vk-text id="b" size="body">乙</vk-text>
         <vk-text id="c" size="body">丙</vk-text>
       </vk-stack>
-      <vk-spotlight for="#b" dim="0.55" keep="#c"></vk-spotlight>
+      <vk-ring variant="dim" for="#b" dim="0.55" keep="#c"></vk-ring>
     </vk-page>`),
     { waitUntil: 'load' }
   );

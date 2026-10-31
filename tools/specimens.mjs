@@ -9,7 +9,7 @@
  *   node tools/specimens.mjs --check
  */
 import fs from 'node:fs';
-import { TAGS, LAYERS, byLayer } from '../src/registry.mjs';
+import { TAGS, TAG_NAMES, LAYERS, byLayer } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { checkMode } from './lib/io.mjs';
@@ -317,6 +317,24 @@ function specHash(tag, rawBody, presets) {
 fs.mkdirSync(`${SITE}/specimen`, { recursive: true });
 let written = 0;
 let stale = 0;
+
+// 删掉已经不存在的标签的标本页。
+// 14.0 会一路删标签；生成器只写不删，残留的 vk-keys.html 会让 links 门禁
+// 报"不可达"，还会让索引链接到空页。这里按 registry 的现状清一遍。
+const live = new Set(TAG_NAMES.map((t) => `${t}.html`));
+for (const dir of [`${SITE}/specimen`, `${SITE}/specimens`]) {
+  if (!fs.existsSync(dir)) continue;
+  for (const name of fs.readdirSync(dir)) {
+    if (!/^vk-.*\.html$/.test(name) || live.has(name)) continue;
+    if (check) {
+      stale++;
+      console.error(`✗ ${dir}/${name}（标签已删除，产物还在）`);
+    } else {
+      fs.rmSync(`${dir}/${name}`, { force: true });
+    }
+  }
+}
+
 for (const [file, html] of files) {
   const before = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : null;
   if (before === html) continue;

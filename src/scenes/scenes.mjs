@@ -53,6 +53,10 @@ export const SCENES = [
     body: s`
 <vk-box class="spec-w1680" surface="none">
   <vk-text size="body" measure="none">句子里可以放 <vk-inline variant="code">s[0]</vk-inline>、<vk-inline variant="math">O(\log n)</vk-inline>、<vk-inline variant="sup">2</vk-inline> 与 <vk-inline variant="sub">i</vk-inline>，也可以放 <vk-inline variant="link" href="../index.html">一个链接</vk-inline>。字号跟随所在行，不破坏字阶。</vk-text>
+  <vk-row gap="lg" align="center">
+    <vk-inline variant="keys">Ctrl + C</vk-inline>
+    <vk-inline variant="keys">Ctrl + Shift + P</vk-inline>
+  </vk-row>
 </vk-box>`,
   },
 
@@ -299,21 +303,6 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-keys',
-    body: s`
-<vk-row gap="lg" align="center">
-  <vk-keys>Ctrl + C</vk-keys>
-  <vk-keys>Ctrl + D</vk-keys>
-  <vk-keys>Ctrl + Z</vk-keys>
-</vk-row>
-<vk-row gap="lg" align="center">
-  <vk-keys>Ctrl + R</vk-keys>
-  <vk-keys>Ctrl + S</vk-keys>
-  <vk-keys>Ctrl + /</vk-keys>
-</vk-row>`,
-  },
-
-  {
     tag: 'vk-icon',
     body: s`
 <vk-row gap="2xl" align="center">
@@ -517,23 +506,6 @@ export const SCENES = [
     <vk-text size="subhead" mono>0x2a</vk-text>
   </vk-box>
   <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash></vk-ring>
-</vk-canvas>`,
-  },
-
-  {
-    tag: 'vk-spotlight',
-    body: s`
-<vk-canvas w="1360" h="520">
-  <vk-box x="80" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="body">非目标</vk-text>
-  </vk-box>
-  <vk-box id="spot-target" x="520" y="120" w="380" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="body" mono>0x2a</vk-text>
-  </vk-box>
-  <vk-box x="960" y="120" w="320" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="body">非目标</vk-text>
-  </vk-box>
-  <vk-spotlight for="#spot-target" dim="0.45"></vk-spotlight>
 </vk-canvas>`,
   },
 

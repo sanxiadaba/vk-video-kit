@@ -165,9 +165,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-stat`** · 指标 — 一个指标：大数字 + 单位 + 标签，可选色点/色条做图例。数字用 tabular-nums，多个指标能对齐。
   - 属性：`value` · `unit` · `label` · `size` · `tone` · `mark` · `format` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-stat value="52,980" unit="字节" label="预处理后" size="hero">`
-- **`vk-keys`** · 键位 — 键位：把 A + B 写成两枚键帽。
-  - 属性：（无）
-  - 例：`<vk-keys>Ctrl + C</vk-keys>`
 
 ### L2 排布 · 只决定在哪、多大
 
@@ -279,12 +276,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-pin`** · 批注泡 — 自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。
   - 属性：`for` · `side` · `x` · `y` · `n` · `tone` · `variant` · `emphasis` · `leader` · `gap-px` · `w` · `size` · `z` · `act` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>`
-- **`vk-ring`** · 圈选 — 圈选/框选/下划线：绑到任意锚点，只画覆盖层，不改布局。
-  - 属性：`for` · `variant` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
+- **`vk-ring`** · 圈选 — 圈选/框选/下划线/压暗：绑到任意锚点，只画覆盖层，不改布局。
+  - 属性：`for` · `variant` · `dim` · `keep` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16" dash>`
-- **`vk-spotlight`** · 聚光 — 聚光：目标保持原样，其余逐层退后。不画遮罩、不画描边；可多目标，keep 里的东西不退。
-  - 属性：`for` · `dim` · `keep` · `z` · `at` · `dur` · `enter` · `ease`
-  - 例：`<vk-spotlight for="#spot-target" dim="0.45">`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 

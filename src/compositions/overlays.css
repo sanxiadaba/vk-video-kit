@@ -5,7 +5,6 @@
    ========================================================================== */
 
 vk-ring,
-vk-spotlight,
 vk-pin {
   position: absolute;
   inset: 0;
@@ -40,8 +39,6 @@ vk-pin {
 .vk-ov-svg[data-dash] .vk-ring-shape { stroke-dasharray: 16 12; }
 
 /* ------------------------------------------------------------ spotlight */
-.vk-spotlight-ring rect,
-.vk-spotlight-ring ellipse { fill: none; stroke: var(--vk-focus); stroke-width: 4px; }
 
 /* ------------------------------------------------------------------ pin */
 

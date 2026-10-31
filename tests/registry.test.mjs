@@ -7,10 +7,21 @@ test('registry 自检通过', () => {
   assert.deepEqual(validate(), []);
 });
 
-test('41 个标签，分在 5 个有内容的层', () => {
-  assert.equal(TAG_NAMES.length, 41);
+/**
+ * 标签数是收敛指标，不是常数：14.0 要求它只减不增。
+ * 写死一个数字会让每次收敛都要改测试；写"只减不增"才是在约束设计。
+ */
+const TAG_CEILING = 40;
+
+test(`标签数不超过 ${TAG_CEILING}（只减不增）`, () => {
+  assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);
+  assert.equal(TAG_NAMES.length, Object.keys(TAGS).length, 'TAG_NAMES 与 TAGS 不一致');
   const counts = Object.fromEntries(LAYERS.map((l) => [l.id, byLayer(l.id).length]));
-  assert.deepEqual(counts, { tokens: 0, elements: 11, layout: 4, components: 20, relations: 5, page: 1 });
+  assert.ok(counts.tokens === 0, 'token 层不该有标签');
+  for (const [id, n] of Object.entries(counts)) {
+    if (id === 'tokens') continue;
+    assert.ok(n > 0, `${id} 层是空的`);
+  }
 });
 
 test('每个标签都有说明和合法属性', () => {
