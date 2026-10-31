@@ -257,3 +257,22 @@ after(async () => {
   await close();
 });
 
+test('ring variant="dim"：目标不动、兄弟退后、keep 保住', async () => {
+  await page.setContent(
+    SHELL(`<vk-page><vk-stack gap="md">
+      <vk-text id="t" size="body">重点</vk-text>
+      <vk-text id="o" size="body">该退后</vk-text>
+      <vk-text id="k" size="body">被保住</vk-text>
+    </vk-stack><vk-ring for="#t" variant="dim" dim="0.4" keep="#k"></vk-ring></vk-page>`),
+    { waitUntil: 'load' }
+  );
+  await page.evaluate(() => window.vk.ready());
+  const r = await page.evaluate(() => ({
+    t: getComputedStyle(document.querySelector('#t')).opacity,
+    o: getComputedStyle(document.querySelector('#o')).opacity,
+    k: getComputedStyle(document.querySelector('#k')).opacity,
+  }));
+  assert.equal(r.t, '1', '目标不该被压暗');
+  assert.equal(r.o, '0.4', '兄弟要退后到 dim');
+  assert.equal(r.k, '1', 'keep 里的元素不能退后');
+});
