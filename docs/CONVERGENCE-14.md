@@ -117,13 +117,16 @@
 - **组合冒烟**：`tests/compose.test.mjs`。
 - **dev server 过时**：库改了而进程还活着时，以前会报"预编译失败"（像是页面写错），
   现在明确说"服务器过时，重启即可"。
+- **demo 第 9 帧的"半页灰"**：它的 `keep="vk-title"` 指向一个**已经删掉的标签**，
+  所以标题从来没被保住、被 dim 一起压灰了。改成 `.f-title` 后正常——
+  这是"删标签时忘了改引用"的又一个例子，而且它只在画面上显形，门禁看不出来。
 
 ## 7 · 覆盖矩阵（demo 用了哪些原语）
 
-demo 12 帧 + 连排页用到 20 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
-img / inline / list / page / ring / rule / stack / steps / table / term / text / tree。
+demo 12 帧 + 连排页用到 21 个原语：asm / bars / bytes / cells / code / edge / grid / icon /
+img / inline / math / page / ring / rule / stack / steps / table / term / text / timeline / tree。
 
-没用的 10 个：box / window / diff / math / compare / timeline / bits / pin / loupe / canvas。它们由**标本页 + 契约 + 组合冒烟**覆盖，不由 demo 覆盖——
+没用的 9 个：box / window / diff / compare / bits / pin / loupe / canvas / list。它们由**标本页 + 契约 + 组合冒烟**覆盖，不由 demo 覆盖——
 demo 的职责是"真实用法能不能拼起来"，不是"把 30 个都点名"。硬塞一个 13 页的 API 冒烟页
 试过一次：三栏塞满后在 1080 里过不了门禁，最后删掉了。这是刻意的取舍，不是遗漏。
 
