@@ -937,7 +937,9 @@ function validateAuthorHtml(doc, file, html = '') {
       const items = (node.childNodes || []).filter((c) => c.tagName === 'li').length;
       const n = Number(attrs.get('current'));
       if (items > 0 && Number.isFinite(n) && n >= items) {
-        errors.push(`${file}:${lineOf(node)} <vk-steps> 的 current="${n}" 超出 0–${items - 1}（共 ${items} 步）`);
+        errors.push(
+          `${file}:${lineOf(node)} <vk-steps> 的 current="${n}" 超出 0–${items - 1}（共 ${items} 步）；不想标当前步就写 current="-1"`
+        );
       }
     }
     if (tag === 'vk-timeline' && attrs.has('lanes')) {

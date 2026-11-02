@@ -12,7 +12,22 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { spawn } from 'node:child_process';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
-import { computeServerId } from './lib/build-id.mjs';
+import { computeStamp, isStale } from './lib/build-id.mjs';
+
+/**
+ * 过时判定（纯函数，测试直接调，不用起真进程）。
+ *
+ * 判据 = 服务端代码指纹 + 构建产物指纹（build.json 的 id / dist/vk.js 的哈希）。
+ * 只看 serve.mjs 自己是上一版的 bug：库新增 vk-label、vk-steps.connector 之后
+ * serve.mjs 一个字没动，判定永远"没过时"，页面却拿旧 registry 报「未知标签」。
+ *
+ * @param {string} startupStamp startServer 启动时记下的指纹
+ * @param {string} [root] 库根（默认 = 本库）
+ * @returns {boolean} true = 磁盘上的库比这个进程新，必须重启
+ */
+export function serverIsStale(startupStamp, root = undefined) {
+  return isStale(startupStamp, computeStamp(root));
+}
 
 const TYPES = {
   '.html': 'text/html; charset=utf-8',
@@ -44,9 +59,9 @@ const escHtml = (s) =>
  * @returns {Promise<{ server: import('node:http').Server, base: string, port: number, close: () => Promise<void> }>}
  */
 export async function startServer({ port = 8099, root = process.cwd(), transform = true } = {}) {
-  // 进程启动时的服务端代码指纹：页面拿它和 dist/build.json.server 对比，
-  // 不一致 = 这个进程比磁盘上的 serve.mjs 旧，必须重启。
-  const serverId = computeServerId();
+  // 进程启动时的库指纹：服务端代码 + 构建产物（dist/build.json 的 id）。
+  // 页面 / 请求拿它和现在的指纹比，不一致 = 这个进程比磁盘上的库旧，必须重启。
+  const serverStamp = computeStamp();
   // 过时了就自己重启：库改十几轮，人不会记得重启服务器，
   // 而每次"过时"看起来都像页面坏了。--no-restart 可以关掉（测试与 CI 用）。
   // 端口 0 是测试用的临时端口，不能自己重启（会抢不到端口、把测试进程搞乱）。
@@ -77,6 +92,17 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
   const htmlCache = new Map();
 
   async function renderHtml(file) {
+    // 先判旧、再看缓存：页面自己的 mtime 没变，但库重建过，缓存里的那份也不能信
+    // （它由旧 registry 的校验产出）。放在缓存前面，过时才不会被命中缓存掩盖。
+    if (serverIsStale(serverStamp)) {
+      const e = new Error(
+        '库已更新（构建产物或服务端代码变了），这个 vk serve 进程还是启动时那一份。\n' +
+          '启动指纹 ' + serverStamp + ' → 现在 ' + computeStamp() + '。\n' +
+          '已经自动重启；刷新后这条提示会消失。如果仍然存在，才是页面真的写错了。'
+      );
+      e.staleServer = true;
+      throw e;
+    }
     const st = await fs.stat(file);
     const hit = htmlCache.get(file);
     if (hit && hit.mtimeMs === st.mtimeMs) {
@@ -91,17 +117,6 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
       if (fresh) return hit.html;
     }
     const html = (await fs.readFile(file)).toString('utf8');
-    // 库文件改了而这个进程还活着：它的 registry 是旧的，校验结论不可信。
-    // 以前这里会报"预编译失败"，看着像页面写错了，其实是服务器过时。
-    const nowId = computeServerId();
-    if (nowId !== serverId) {
-      const e = new Error(
-        '库文件已经改过，但 vk serve 还是启动时那一份（' + serverId + ' → ' + nowId + '）。\n' +
-          '重启服务器后这条错误会消失；如果仍然存在，才是页面真的写错了。'
-      );
-      e.staleServer = true;
-      throw e;
-    }
     const out = await transformHtml(html, { file, highlighter: await highlighter() });
     const deps = [];
     for (const d of out.deps || []) {
@@ -132,9 +147,10 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
       res.end(
         JSON.stringify({
           build: build?.id || null,
-          server: serverId,
-          expectedServer: build?.server || null,
-          ok: !!build && serverId === build.server,
+          server: serverStamp,
+          buildServer: build?.server || null,
+          stale: serverIsStale(serverStamp),
+          ok: !serverIsStale(serverStamp),
         })
       );
       return;
@@ -157,8 +173,9 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
           res.end(
             `<!doctype html><meta charset="utf-8"><body style="font:16px/1.6 ui-monospace,monospace;padding:40px">` +
               (e.staleServer
-        ? '<h1 style="color:#8A6D00">dev server 已经过时</h1>' +
-          '<p>库文件改过了，但这个进程用的还是启动时那一份。重启 vk serve 即可。下面不是页面的错。</p>'
+        ? '<h1 style="color:#8A6D00">库已更新，正在重启</h1>' +
+          '<p>这个 vk serve 进程用的是启动时那一份 registry / dist。已经自动重启，' +
+          '等一两秒刷新本页即可。这不是页面的错。</p>'
         : '<h1 style="color:#CC3A2F">vk 预编译失败</h1>') +
       `<p>${escHtml(path.relative(root, file))}</p>` +
               `<pre style="white-space:pre-wrap;background:#FEE;padding:20px;border-left:4px solid #CC3A2F">${escHtml(e.message)}</pre></body>`
@@ -214,7 +231,7 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
 /** CLI 入口：bin/vk.mjs 调这个，不要把端口丢掉 */
 export async function main(port = 8099, root = process.cwd()) {
   const { base } = await startServer({ port, root });
-  console.log(`serving ${root} on ${base}`);
+  console.log(`serving ${root} on ${base} · lib ${computeStamp()}`);
 }
 
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {

@@ -605,14 +605,15 @@ export const TAGS = {
   'vk-steps': {
     name: '步骤',
     layer: 'components',
-    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>。',
+    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）。',
     content: {
       kind: 'items',
       target: 'vk-steps',
       fields: [{ name: 'items', label: '步骤（一行一个）', type: 'lines', item: 'li' }],
     },
     attrs: {
-      'current': int({ min: 0, max: 99, step: 1 }),
+      // -1 是合法值：地图页要"五步等权、不站在任何一步"，0 做不到。
+      'current': int({ min: -1, max: 99, step: 1 }),
       'mass': oneOf('compact', 'normal', 'hero'),
     },
   },

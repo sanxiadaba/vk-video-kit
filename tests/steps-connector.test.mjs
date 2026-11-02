@@ -125,6 +125,32 @@ test('connector="line" 只有线没有箭头；"none" 一条都不画', async ()
   assert.equal(noneData, 'none', 'connector 落到 data-connector，CSS 只认它');
 });
 
+test('current="-1"：纯地图，五步等权，一个"当前步"都不标', async () => {
+  const tab = await open(`<vk-steps id="s" current="-1" connector="arrow">${LIS}</vk-steps>`);
+  const r = await tab.evaluate(() => {
+    const step = (s) => document.querySelectorAll(`#s .vk-step[data-state="${s}"]`).length;
+    const num = document.querySelector('#s .vk-step-n');
+    return {
+      current: step('current'),
+      done: step('done'),
+      todo: step('todo'),
+      conn: [...document.querySelectorAll('#s .vk-step-line')].map((el) => el.dataset.conn),
+      nums: [...document.querySelectorAll('#s .vk-step-n')].map((el) => el.textContent),
+      aria: document.querySelectorAll('#s [aria-current]').length,
+      numBg: getComputedStyle(num).backgroundColor,
+      label: document.querySelector('#s .vk-step-t').textContent,
+    };
+  });
+  assert.equal(r.current, 0, 'current="-1" 不许有当前步');
+  assert.equal(r.done, 0, '也不许有已完成步：五步同一态');
+  assert.equal(r.todo, 5, '五步全部是 todo（同一个态）');
+  assert.deepEqual(r.conn, ['todo', 'todo', 'todo', 'todo'], '连接线也不带状态色');
+  assert.equal(r.aria, 0, '没有「当前步」就不该有 aria-current');
+  assert.equal(r.numBg, 'rgb(255, 255, 255)', '编号方块回到纸色，不涂焦点蓝');
+  assert.deepEqual(r.nums, ['01', '02', '03', '04', '05'], '地图仍要有步号（等权不等于无编号）');
+  assert.equal(r.label, '预处理');
+});
+
 test('竖排：连接线转 90°，箭头朝下', async () => {
   const tab = await open(`<vk-steps id="s" current="1" orientation="vertical" connector="arrow">${LIS}</vk-steps>`);
   const r = await tab.evaluate(() => {

@@ -620,6 +620,9 @@ export class VkCells extends VkElement {
  *
  * 流程的箭头由组件画：每一步等宽、连接线等长、箭头统一指向下一步。
  * 作者不需要（也不能）写坐标或手工连 vk-edge。
+ *
+ * current="-1"：**不标当前步**。给"纯地图"页用——五步等权，没有"走到哪一步"的暗示；
+ * 不写 current 仍是 0（第一步即当前步），旧页一个字不用改。
  */
 export class VkSteps extends VkElement {
   static watchSource = true;
@@ -640,9 +643,11 @@ export class VkSteps extends VkElement {
       return;
     }
     delete this.dataset.vkStale;
-    let current = parseInt(this.getAttribute('current') ?? '0', 10);
-    if (!Number.isFinite(current) || current < 0) current = 0;
-    if (items.length && current > items.length - 1) {
+    // -1 = 不标当前步：地图页要有"五步等权"的写法，否则只能假装站在某一步。
+    const rawCurrent = parseInt(this.getAttribute('current') ?? '0', 10);
+    let current = Number.isFinite(rawCurrent) ? rawCurrent : 0;
+    if (current < -1) current = -1;
+    if (current > items.length - 1) {
       this._warnOnce('current', `的 current="${current}" 超过 ${items.length - 1}，按最后一步处理`);
       current = items.length - 1;
     }
@@ -657,6 +662,7 @@ export class VkSteps extends VkElement {
     root.dataset.connector = connector;
     items.forEach((it, i) => {
       const n = i + 1;
+      // current = -1 时三个分支都不命中：五步同为 todo，等权的地图。
       const state = i < current ? 'done' : i === current ? 'current' : 'todo';
       const step = document.createElement('li');
       step.className = 'vk-step';
