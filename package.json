@@ -1,7 +1,7 @@
 {
   "name": "vk-video-kit",
   "version": "14.0.0",
-  "description": "把内容做成画面单元：30 个原语标签、四层（值/原语/机制/预设）、1920×1080；被删的\"角色\"以可执行配方留在 docs/recipes。",
+  "description": "把内容做成画面单元：31 个原语标签、四层（值/原语/机制/预设）、1920×1080；被删的\"角色\"以可执行配方留在 docs/recipes。",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
   "types": "types/index.d.ts",
@@ -11,6 +11,7 @@
     "gen": "node tools/gen.mjs",
     "ai": "node tools/ai-doc.mjs",
     "links": "node tools/links.mjs",
+    "capabilities": "node tools/capabilities.mjs",
     "contract": "node tools/contract-all.mjs",
     "contract:one": "node tools/contract.mjs",
     "scenes": "node tools/scenes.mjs",

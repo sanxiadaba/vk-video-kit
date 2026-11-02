@@ -1,4 +1,4 @@
-import { VK, esc, numAttr, safePosition, VkElement, define, plain } from './base.mjs';
+import { VK, esc, numAttr, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
 
@@ -114,6 +114,55 @@ export class VkBox extends VkElement {
 
   render() {
     // w/h/x/y 由 Frame 原语统一应用；这里只保留一个空渲染。
+  }
+}
+
+/**
+ * vk-panel —— 一块内容分区。
+ *
+ * 底色 / 内距 / 圆角 / 描边都由 CSS 从属性算出来；只有 title 需要 JS：
+ * 标题带是「有 / 无」一层结构，CSS 长不出来。标题带里放一个 vk-label，
+ * 于是它和页面上的其它小标题共用一个原语。
+ *
+ * 子节点第一次渲染时被搬进 .vk-panel-bd（移动节点，不序列化 HTML），
+ * 之后属性变化只更新标题带，不重排内容。
+ */
+export class VkPanel extends VkElement {
+  static watchSource = false;
+  static renderedRoot = '.vk-panel-bd';
+
+  render() {
+    if (!this._bd) {
+      const body = takeSlot(this);
+      const bd = document.createElement('div');
+      bd.className = 'vk-panel-bd';
+      bd.setAttribute('data-vk-part', 'bd');
+      this.replaceChildren(bd);
+      fillSlot(bd, body);
+      this._bd = bd;
+    }
+
+    const title = (this.getAttribute('title') || '').trim();
+    if (!title) {
+      this._hd?.remove();
+      this._hd = null;
+      this._title = '';
+      return;
+    }
+    if (!this._hd) {
+      this._hd = document.createElement('header');
+      this._hd.className = 'vk-panel-hd';
+      this.insertBefore(this._hd, this._bd);
+    }
+    if (this._title !== title) {
+      this._title = title;
+      const label = document.createElement('vk-label');
+      label.setAttribute('variant', 'kicker');
+      label.textContent = title;
+      this._hd.replaceChildren(label);
+      this._hd.setAttribute('role', 'heading');
+      this._hd.setAttribute('aria-level', '2');
+    }
   }
 }
 
@@ -241,6 +290,7 @@ export function defineElements() {
   define('vk-box', VkBox);
   define('vk-text', VkText);
   define('vk-label', VkLabel);
+  define('vk-panel', VkPanel);
   define('vk-inline', VkInline);
   define('vk-rule', VkRule);
 }

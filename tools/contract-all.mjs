@@ -1,5 +1,5 @@
 /**
- * 契约门禁并行版：30 个标签切成 N 路，各自起浏览器。
+ * 契约门禁并行版：31 个标签切成 N 路，各自起浏览器。
  *
  *   node tools/contract-all.mjs
  *   $env:CONTRACT_SHARDS=8; node tools/contract-all.mjs

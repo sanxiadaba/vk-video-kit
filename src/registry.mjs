@@ -159,6 +159,7 @@ const ATTR_META = {
 /** 组件默认值：属性参考与组件页的“默认”列都读它。 */
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
+  'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'hair' },
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
   'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
@@ -216,6 +217,23 @@ export const TAGS = {
       'h': num({ min: 48, max: 1080, step: 1 }),
       'x': { ...num({ min: -1920, max: 1920, step: 1 }), hidden: true },
       'y': { ...num({ min: -1080, max: 1080, step: 1 }), hidden: true },
+    },
+  },
+  'vk-panel': {
+    name: '分区',
+    layer: 'elements',
+    summary:
+      '一块内容分区：底色、可选标题带、内距、圆角。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。',
+    attrs: {
+      // 语义色只用来染「面」：plain / raised 上落 wash，inset 上落 tint，dark 上落深色 wash。
+      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'err', 'warn'),
+      // 四档表面：白纸 / 抬起 / 凹下 / 深色。三档浅色靠明度分开，不是四种主题。
+      'variant': oneOf('plain', 'raised', 'inset', 'dark'),
+      // 有标题才有标题带；标题带里放 vk-label（kicker）。
+      'title': text(),
+      'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
+      'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
+      'border': oneOf('none', 'hair', 'strong'),
     },
   },
   'vk-text': {

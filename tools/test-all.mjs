@@ -118,8 +118,9 @@ if (fast) {
     [
       () => run('verify', [process.execPath, 'tools/verify.mjs'], { timeoutMs: 120000 }),
       () => run('links', [process.execPath, 'tools/links.mjs'], { timeoutMs: 120000 }),
+      () => run('capabilities', [process.execPath, 'tools/capabilities.mjs', '--check'], { timeoutMs: 120000 }),
     ],
-    2
+    3
   );
   if (staticFailed) aborted = true;
   else {
@@ -141,8 +142,9 @@ if (fast) {
       [
         () => run('verify', [process.execPath, 'tools/verify.mjs'], { timeoutMs: 180000 }),
         () => run('links', [process.execPath, 'tools/links.mjs'], { timeoutMs: 180000 }),
+        () => run('capabilities', [process.execPath, 'tools/capabilities.mjs', '--check'], { timeoutMs: 180000 }),
       ],
-      2
+      3
     );
     if (staticFailed) aborted = true;
   }

@@ -16,6 +16,12 @@ export const PRESETS = {
     { label: '横向内距', attrs: { 'pad-x': 'xl' } },
     { label: '纵向内距', attrs: { 'pad-y': 'xl' } },
   ],
+  'vk-panel': [
+    { label: '抬起', attrs: { variant: 'raised' } },
+    { label: '语义分区', attrs: { tone: 'ok' } },
+    { label: '强边', attrs: { border: 'strong', radius: 'md' } },
+    { label: '大内距', attrs: { pad: 'xl' } },
+  ],
   'vk-text': [
     { label: '次要', attrs: { ink: 'tertiary' } },
     { label: '大字', attrs: { size: 'subhead' } },

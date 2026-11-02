@@ -1,0 +1,73 @@
+{
+  "note": "能力矩阵的唯一数据源。一条能力 = 契约断言 + 标本页 + 测试；三件缺一，tools/capabilities.mjs 就报红并让 npm test 失败。加能力先改这里，再去补三件。",
+  "capabilities": [
+    {
+      "id": "surface-wash",
+      "name": "语义淡底 · wash",
+      "what": "五色各一档极淡底（浅色 + 深色），做分区背景；落在 vk-panel 上时是 plain / raised 的底。",
+      "contracts": ["vk-panel.tone"],
+      "specimen": "vk-panel",
+      "tests": [
+        {
+          "file": "tests/surfaces.test.mjs",
+          "name": "语义淡底：五色 wash 齐全，浅色/深色两套各自成阶"
+        },
+        { "file": "tests/panel.test.mjs", "name": "vk-panel variant=plain：六种 tone 的底色" }
+      ]
+    },
+    {
+      "id": "surface-tint",
+      "name": "语义淡底 · tint",
+      "what": "五色各一档稍深的底（浅色 + 深色），做强调块；落在 vk-panel 上时是 inset 的底、也是标题带的高一档。",
+      "contracts": ["vk-panel.tone"],
+      "specimen": "vk-panel",
+      "tests": [
+        {
+          "file": "tests/surfaces.test.mjs",
+          "name": "语义淡底：五色 tint 齐全，比 wash 深、比实色浅"
+        },
+        { "file": "tests/panel.test.mjs", "name": "vk-panel variant=inset：六种 tone 的底色" }
+      ]
+    },
+    {
+      "id": "panel-plain",
+      "name": "vk-panel · plain",
+      "what": "白纸上一块平的区：靠明度与描边分开，不用第二套材质。",
+      "contracts": ["vk-panel.variant"],
+      "specimen": "vk-panel",
+      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=plain：六种 tone 的底色" }]
+    },
+    {
+      "id": "panel-raised",
+      "name": "vk-panel · raised",
+      "what": "抬起一档：近白底 + 投影，表示“浮在纸面上的一层”。",
+      "contracts": ["vk-panel.variant"],
+      "specimen": "vk-panel",
+      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=raised：六种 tone 的底色" }]
+    },
+    {
+      "id": "panel-inset",
+      "name": "vk-panel · inset",
+      "what": "凹下一档：灰底；带 tone 时落到 tint，成为强调块。",
+      "contracts": ["vk-panel.variant"],
+      "specimen": "vk-panel",
+      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=inset：六种 tone 的底色" }]
+    },
+    {
+      "id": "panel-dark",
+      "name": "vk-panel · dark",
+      "what": "深色块：墨底 + 白字 + 深色 wash/tint；同一套语义色在深色上也成立。",
+      "contracts": ["vk-panel.variant"],
+      "specimen": "vk-panel",
+      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=dark：六种 tone 的底色" }]
+    },
+    {
+      "id": "panel-title",
+      "name": "vk-panel · 标题带",
+      "what": "title 生成一条标题带，里面是一个 vk-label；没 title 就不留空带。",
+      "contracts": ["vk-panel.title"],
+      "specimen": "vk-panel",
+      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel：标题带用 vk-label，title 变了就跟着变" }]
+    }
+  ]
+}

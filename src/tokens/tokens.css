@@ -39,17 +39,50 @@
   --vk-paper-surface-2: var(--vk-paper-sf-1);
   --vk-paper-surface-3: var(--vk-paper-sf-2);
 
-  /* 浓度三档：wash 铺面 / mark 标块。固定色值，不再用 alpha 叠白。 */
-  --vk-wash-focus: #e8ecfd;
-  --vk-mark-focus: #c9d3f7;
-  --vk-wash-info: #f6ebf7;
-  --vk-mark-info: #e3c2e6;
-  --vk-wash-ok: #e6f4ee;
-  --vk-mark-ok: #b3ddcc;
-  --vk-wash-err: #fdeae8;
-  --vk-mark-err: #f2bcb7;
-  --vk-wash-warn: #fdf2e2;
-  --vk-mark-warn: #f2d3a2;
+  /* 语义淡底：每个语义色两档，做「面」的浓度，不是第二种主题。
+     · wash 极淡 —— 分区背景（和纸只差一档，够分开又不抢字）
+     · tint 稍深 —— 强调块（一块内容比周围重，但仍读得清）
+
+     两档都由该语义色与白（浅色版）/ 与墨 #0b0f14（深色版）按比例混合，不新增色相。
+     浅色两档与 --vk-info/-focus/-ok/-err/-warn 同色相；深色两档混入的是带一点冷调的墨，
+     色相随底色轻微偏移（≤16°），仍是同一支色。
+     固定 hex、alpha 恒为 1：出片时不会因为底下垫了什么而变色。
+
+     对比度（WCAG，正文墨 #0b0f14 / 深色块上的白字）：
+       浅色 wash：墨 16.6–16.8:1；tint：墨 13.2–13.7:1
+       深色 wash：白 17.3–17.9:1；tint：白 14.2–16.0:1
+     两档之间的亮度差：wash→tint 1.23–1.26:1；深色 1.12–1.21:1。 */
+  --vk-wash-info: #edeef0;
+  --vk-tint-info: #d4d6d9;
+  --vk-wash-focus: #eaeefb;
+  --vk-tint-focus: #cdd5f6;
+  --vk-wash-ok: #e9f2f0;
+  --vk-tint-ok: #c9deda;
+  --vk-wash-err: #f8ebeb;
+  --vk-tint-err: #eecfce;
+  --vk-wash-warn: #f4efe8;
+  --vk-tint-warn: #e5d7c7;
+
+  /* 深色块上的同一套淡底：给 vk-panel variant="dark" 用。
+     wash 是深色分区，tint 是深色强调块；白字对比度见上。 */
+  --vk-dark-wash-info: #13171e;
+  --vk-dark-tint-info: #1c222b;
+  --vk-dark-wash-focus: #0e1733;
+  --vk-dark-tint-focus: #11205a;
+  --vk-dark-wash-ok: #0b1e1f;
+  --vk-dark-tint-ok: #0b302c;
+  --vk-dark-wash-err: #261316;
+  --vk-dark-tint-err: #471718;
+  --vk-dark-wash-warn: #1f1911;
+  --vk-dark-tint-warn: #39250d;
+
+  /* 旧名保留一版：mark 就是 tint 的别名（14.0 之前没有任何样式引用它们）。
+     不复制色值，也不允许再出现另一组「标记色」。 */
+  --vk-mark-info: var(--vk-tint-info);
+  --vk-mark-focus: var(--vk-tint-focus);
+  --vk-mark-ok: var(--vk-tint-ok);
+  --vk-mark-err: var(--vk-tint-err);
+  --vk-mark-warn: var(--vk-tint-warn);
 
   /* 顺序阶：把「数量」变成一个维度（bars / 密度） */
   --vk-seq-1: #e9eefc;
@@ -266,6 +299,12 @@
   --vk-sf-2: var(--vk-paper-sf-2);
   --vk-sf-3: var(--vk-paper-sf-3);
   --vk-sf-4: var(--vk-paper-sf-4);
+
+  /* 深色分区（vk-panel variant="dark"）：底/线/字都是已有值的别名，
+     不新增色值。白字在墨底上 19.2:1，发丝线在墨底上 2.5:1（只做分区，不承担文字）。 */
+  --vk-panel-dark: var(--vk-ink-1);
+  --vk-panel-dark-line: var(--vk-ink-3);
+  --vk-panel-dark-ink: var(--vk-sf-0);
 
   --vk-line-1: var(--vk-paper-line-1);
   --vk-line-2: var(--vk-paper-line-2);

@@ -185,6 +185,18 @@ export const EFFECTS = {
     h: { on: 'vk-box', kind: 'geometry', prop: 'height', skipVisual: true },
   },
 
+  'vk-panel': {
+    // variant 与 tone 都先落在「这一块的底」上：四种表面 + 五色 wash/tint 是同一套色阶。
+    variant: { on: 'vk-panel', kind: 'style', prop: 'background-color' },
+    tone: { on: 'vk-panel', kind: 'style', prop: 'background-color' },
+    // 标题带是一个 vk-label：title 改了，带里的字必须跟着改。
+    title: { on: '.vk-panel-hd .vk-label-t', kind: 'text', expect: 'VKPROBE' },
+    pad: { on: '.vk-panel-bd', kind: 'style', prop: 'padding-top' },
+    radius: { on: 'vk-panel', kind: 'style', prop: 'border-radius' },
+    border: { on: 'vk-panel', kind: 'style', prop: 'border-top-width' },
+    // w / h 是 COMMON 的 canvas-child 协议（契约按 context 跳过），不在这里重复声明。
+  },
+
 
   'vk-table': {
     stripe: { on: 'tbody tr', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
@@ -240,7 +252,7 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule',
+  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule',
   'vk-list', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',

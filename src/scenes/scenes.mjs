@@ -1,5 +1,5 @@
 /**
- * 29 个场景 = 展台上唯一的真源。
+ * 30 个场景 = 展台上唯一的真源。
  *
  * specimen、工作台、可复制代码、参考表都从这里生成：
  * 一份内容，四处使用，改一处就全对。
@@ -95,6 +95,57 @@ export const SCENES = [
 </vk-box>`,
   },
 
+
+  {
+    tag: 'vk-panel',
+    // 同一段 hello.c + 同一行终端输出，放进四档表面：
+    // 白纸 → 分区（wash）→ 强调块（tint）→ 深色。看的是「层次」，不是装饰。
+    body: s`
+<vk-grid cols="2" gap="sm">
+  <vk-panel variant="plain" title="plain · 白纸">
+    <vk-stack gap="2xs">
+      <vk-text size="data" mono>int main(void) {</vk-text>
+      <vk-text size="data" mono>  puts("hello");</vk-text>
+      <vk-text size="data" mono>}</vk-text>
+      <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
+    </vk-stack>
+  </vk-panel>
+  <vk-panel variant="plain" tone="info" title="wash · 分区">
+    <vk-stack gap="2xs">
+      <vk-text size="data" mono>int main(void) {</vk-text>
+      <vk-text size="data" mono>  puts("hello");</vk-text>
+      <vk-text size="data" mono>}</vk-text>
+      <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
+    </vk-stack>
+  </vk-panel>
+  <vk-panel variant="inset" tone="focus" title="tint · 强调">
+    <vk-stack gap="2xs">
+      <vk-text size="data" mono>int main(void) {</vk-text>
+      <vk-text size="data" mono>  puts("hello");</vk-text>
+      <vk-text size="data" mono>}</vk-text>
+      <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
+    </vk-stack>
+  </vk-panel>
+  <vk-panel variant="dark" title="dark · 深色">
+    <vk-stack gap="2xs">
+      <vk-text size="data" mono>int main(void) {</vk-text>
+      <vk-text size="data" mono>  puts("hello");</vk-text>
+      <vk-text size="data" mono>}</vk-text>
+      <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
+    </vk-stack>
+  </vk-panel>
+</vk-grid>`,
+    // 预设从一块开始：raised / 语义色 / 强边各自只看一块，不在四联格里叠。
+    strip: s`
+<vk-panel variant="plain" title="plain · 白纸">
+  <vk-stack gap="2xs">
+    <vk-text size="data" mono>int main(void) {</vk-text>
+    <vk-text size="data" mono>  puts("hello");</vk-text>
+    <vk-text size="data" mono>}</vk-text>
+    <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
+  </vk-stack>
+</vk-panel>`,
+  },
 
   {
     tag: 'vk-table',

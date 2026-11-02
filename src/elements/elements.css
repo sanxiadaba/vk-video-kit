@@ -97,6 +97,116 @@ vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-
 /* 定位：只有显式声明才离开文档流 */
 /* 定位：给 x/y 即绝对定位；没有 pos 属性。 */
 vk-box[x], vk-box[y] { position: absolute; }
+
+/* ------------------------------------------------------------- vk-panel
+   一块内容分区：底色 + 可选标题带 + 内距 + 圆角。
+   分工：vk-box 是「没有标题的面」，vk-panel 是「有标题、带语义的分区」。
+   它只描述自己这一块——不认识兄弟、不排别人，排布仍然归 vk-stack / vk-grid。
+
+   底色是四档表面：plain 白纸 / raised 抬起 / inset 凹下 / dark 深色；
+   tone 把其中任意一档染成语义淡底：
+     plain·raised + tone → wash（极淡，分区）
+     inset       + tone → tint（稍深，强调块）
+     dark        + tone → 深色 wash / 标题带深色 tint
+   底永远是实色（alpha=1），深色页上不会「透」出意外颜色。 */
+vk-panel {
+  --vk-panel-bg: var(--vk-sf-0);
+  --vk-panel-hd-bg: var(--vk-sf-1);
+  --vk-panel-line: var(--vk-line-1);
+  --vk-panel-bw: var(--vk-line-w);
+  --vk-panel-ink: var(--vk-ink-1);
+  --vk-panel-pad: var(--vk-s4);
+  --vk-panel-r: var(--vk-r-3);
+
+  box-sizing: border-box;
+  position: relative;
+  display: block;
+  padding: 0;
+  border: var(--vk-panel-bw) solid var(--vk-panel-line);
+  border-radius: var(--vk-panel-r);
+  background: var(--vk-panel-bg);
+  color: var(--vk-panel-ink);
+  font-family: var(--vk-font-sans);
+}
+
+/* 标题带：有 title 才有这一层（组件不生成空槽）。 */
+vk-panel .vk-panel-hd {
+  display: flex;
+  align-items: baseline;
+  gap: var(--vk-s2);
+  padding: calc(var(--vk-panel-pad) * 0.5) var(--vk-panel-pad);
+  border-bottom: var(--vk-panel-bw) solid var(--vk-panel-line);
+  /* 标题带自己收上圆角：panel 默认不裁切内容（overflow 与 registry 默认值一致）。 */
+  border-radius: calc(var(--vk-panel-r) - var(--vk-panel-bw)) calc(var(--vk-panel-r) - var(--vk-panel-bw)) 0 0;
+  background: var(--vk-panel-hd-bg);
+}
+/* 标题带里的 vk-label 跟着这一块的墨色走：浅色块用墨、深色块用白。 */
+vk-panel .vk-panel-hd vk-label { color: inherit; }
+vk-panel .vk-panel-bd { padding: var(--vk-panel-pad); }
+
+/* 内距：一档值同时管标题带与内容，块内的呼吸是一致的。 */
+vk-panel[pad='2xs'] { --vk-panel-pad: var(--vk-s1); }
+vk-panel[pad='xs'] { --vk-panel-pad: var(--vk-s2); }
+vk-panel[pad='sm'] { --vk-panel-pad: var(--vk-s3); }
+vk-panel[pad='md'] { --vk-panel-pad: var(--vk-s4); }
+vk-panel[pad='lg'] { --vk-panel-pad: var(--vk-s5); }
+vk-panel[pad='xl'] { --vk-panel-pad: var(--vk-s6); }
+vk-panel[pad='2xl'] { --vk-panel-pad: var(--vk-s7); }
+vk-panel[pad='3xl'] { --vk-panel-pad: var(--vk-s8); }
+
+/* 圆角：宿主与标题带读同一个半径变量，标题带自己减掉描边厚度。 */
+vk-panel[radius='sm'] { --vk-panel-r: var(--vk-r-1); }
+vk-panel[radius='md'] { --vk-panel-r: var(--vk-r-2); }
+vk-panel[radius='lg'] { --vk-panel-r: var(--vk-r-3); }
+vk-panel[radius='xl'] { --vk-panel-r: var(--vk-r-4); }
+vk-panel[radius='pill'] { --vk-panel-r: var(--vk-r-pill); }
+vk-panel[radius='none'] { --vk-panel-r: 0px; }
+
+/* 描边只管粗细；没有描边时标题带的分隔线也一起消失。 */
+vk-panel[border='hair'] { --vk-panel-bw: var(--vk-line-w); }
+vk-panel[border='strong'] { --vk-panel-bw: var(--vk-line-w-strong); }
+vk-panel[border='none'] { --vk-panel-bw: 0px; --vk-panel-line: transparent; }
+
+/* 四种表面。白纸上的三档靠明度分开：白 / 近白 / 灰。 */
+vk-panel[variant='plain'] { --vk-panel-bg: var(--vk-sf-0); --vk-panel-hd-bg: var(--vk-sf-1); }
+vk-panel[variant='raised'] {
+  --vk-panel-bg: var(--vk-sf-1);
+  --vk-panel-hd-bg: var(--vk-sf-2);
+  box-shadow: var(--vk-elev-2);
+}
+vk-panel[variant='inset'] {
+  --vk-panel-bg: var(--vk-sf-2);
+  --vk-panel-hd-bg: var(--vk-sf-3);
+  --vk-panel-line: var(--vk-line-3);
+}
+vk-panel[variant='dark'] {
+  --vk-panel-bg: var(--vk-panel-dark);
+  --vk-panel-hd-bg: var(--vk-ink-2);
+  --vk-panel-line: var(--vk-panel-dark-line);
+  --vk-panel-ink: var(--vk-panel-dark-ink);
+}
+
+/* 语义淡底：五色，两档。深色 variant 单独一套（white 字 + 深色 wash/tint）。 */
+vk-panel[tone='info']:not([variant='dark']) { --vk-panel-bg: var(--vk-wash-info); --vk-panel-hd-bg: var(--vk-tint-info); --vk-panel-line: var(--vk-line-3); }
+vk-panel[tone='focus']:not([variant='dark']) { --vk-panel-bg: var(--vk-wash-focus); --vk-panel-hd-bg: var(--vk-tint-focus); --vk-panel-line: var(--vk-line-3); }
+vk-panel[tone='ok']:not([variant='dark']) { --vk-panel-bg: var(--vk-wash-ok); --vk-panel-hd-bg: var(--vk-tint-ok); --vk-panel-line: var(--vk-line-3); }
+vk-panel[tone='err']:not([variant='dark']) { --vk-panel-bg: var(--vk-wash-err); --vk-panel-hd-bg: var(--vk-tint-err); --vk-panel-line: var(--vk-line-3); }
+vk-panel[tone='warn']:not([variant='dark']) { --vk-panel-bg: var(--vk-wash-warn); --vk-panel-hd-bg: var(--vk-tint-warn); --vk-panel-line: var(--vk-line-3); }
+
+/* inset + tone：再深一档，成为「强调块」。 */
+vk-panel[variant='inset'][tone='info'] { --vk-panel-bg: var(--vk-tint-info); }
+vk-panel[variant='inset'][tone='focus'] { --vk-panel-bg: var(--vk-tint-focus); }
+vk-panel[variant='inset'][tone='ok'] { --vk-panel-bg: var(--vk-tint-ok); }
+vk-panel[variant='inset'][tone='err'] { --vk-panel-bg: var(--vk-tint-err); }
+vk-panel[variant='inset'][tone='warn'] { --vk-panel-bg: var(--vk-tint-warn); }
+
+/* dark + tone：块本身是深色 wash，标题带用深色 tint 抬一档。 */
+vk-panel[variant='dark'][tone='info'] { --vk-panel-bg: var(--vk-dark-wash-info); --vk-panel-hd-bg: var(--vk-dark-tint-info); --vk-panel-line: var(--vk-dark-tint-info); }
+vk-panel[variant='dark'][tone='focus'] { --vk-panel-bg: var(--vk-dark-wash-focus); --vk-panel-hd-bg: var(--vk-dark-tint-focus); --vk-panel-line: var(--vk-dark-tint-focus); }
+vk-panel[variant='dark'][tone='ok'] { --vk-panel-bg: var(--vk-dark-wash-ok); --vk-panel-hd-bg: var(--vk-dark-tint-ok); --vk-panel-line: var(--vk-dark-tint-ok); }
+vk-panel[variant='dark'][tone='err'] { --vk-panel-bg: var(--vk-dark-wash-err); --vk-panel-hd-bg: var(--vk-dark-tint-err); --vk-panel-line: var(--vk-dark-tint-err); }
+vk-panel[variant='dark'][tone='warn'] { --vk-panel-bg: var(--vk-dark-wash-warn); --vk-panel-hd-bg: var(--vk-dark-tint-warn); --vk-panel-line: var(--vk-dark-tint-warn); }
+
 /* -------------------------------------------------------------- vk-text */
 
 vk-text {

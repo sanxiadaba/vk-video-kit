@@ -1,7 +1,7 @@
 /**
  * 构建期设计门禁。
  *
- *   node tools/gate.mjs                     # 全部：30 specimen + 8 frame + index
+ *   node tools/gate.mjs                     # 全部：31 specimen + 8 frame + index
  *   node tools/gate.mjs vk-code frame-0     # 只跑匹配对象
  *   node tools/gate.mjs --no-presets        # 快检：跳过预设像素差（默认跑）
  *   node tools/gate.mjs --shard=2/4

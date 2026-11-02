@@ -15,7 +15,7 @@
 
 - 从任意一个标签开始，不需要先搭 `vk-page`。
 - 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 52→1040），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
-- **全库只有白纸**：没有深色主题、深色代码窗、反色卡片。
+- **只有一种材质：白纸。** 没有深色主题、深色代码窗、反色卡片；层次靠纸的明度（`sf-0..4`）与 `vk-panel` 的四档表面 / 语义淡底，不靠第二种材质。
 - 没有播放器、时间轴、逐行淡入；静止帧就是成品。
 
 ## 2 · 字号与颜色
@@ -138,6 +138,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-box`** · 面 — 一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。
   - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
+- **`vk-panel`** · 分区 — 一块内容分区：底色、可选标题带、内距、圆角。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。
+  - 属性：`tone` · `variant` · `title` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 例：`<vk-panel variant="plain" title="plain · 白纸">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
   - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>`
@@ -284,11 +287,15 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 ---
 
-## 11 · 新增的三件（12.2）
+## 11 · 表面与层次（14.1 / 批次 A）
 
-- **`vk-stat`**：一个数字当家的指标。`<vk-stat value="52,980" unit="字节" label="预处理后" size="display-xl">`。数字用 tabular-nums；`format="thousands|bytes|hex"` 只改写法。
-- **`vk-panel`**：区域（卡片 / 章节带）。只给底、边、三槽：`slot="header"` / 正文 / `slot="footer"`，另有 `n` 编号徽章与 `elevation="0..2"`。**它不排内容**，怎么排由作者决定。
-- **`vk-grid tracks`**：真轨道。`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，**px 会在构建期报错**（会让安全区与溢出检查失真）。等分仍用 `cols="1..6"`，两条路互斥。
+- **`vk-panel`**：一块**内容分区**。`<vk-panel tone="info" variant="inset" title="输出" pad="md" radius="lg" border="hair">…</vk-panel>`。
+  - 四档表面：`plain` 白纸 / `raised` 抬起（近白 + 投影）/ `inset` 凹下（灰）/ `dark` 深色（墨底白字）。
+  - `tone` 只染面：`plain`、`raised` 上落 **wash**（极淡，分区）；`inset` 上落 **tint**（稍深，强调块）；`dark` 上落**深色 wash / tint**。
+  - `title` 生成标题带，里面是一个 `vk-label`；标题带的底比内容再高一档。**它不排内容**——内容怎么排由你决定（`vk-stack` / `vk-grid`）。
+  - 与 `vk-box` 的分工：`box` 是「没有标题的面」，`panel` 是「有标题、带语义的分区」。
+- **语义淡底**：`--vk-wash-*` / `--vk-tint-*`（浅色）与 `--vk-dark-wash-*` / `--vk-dark-tint-*`（深色），五色 × 两档。两档都由语义色与白/墨混合，色相不变；浅色版上的正文墨 ≥ 13:1，深色版上的白字 ≥ 14:1。
+- **能力矩阵**：`docs/capabilities.md` 记「能力」而不是标签；每条能力必须有契约断言 / 标本页 / 测试，缺一件 `npm test` 就红（`node tools/capabilities.mjs`）。
 
-> `elevation` 声明的重叠会被审计放行，但每次放行都会打印一行「已豁免：A 压在 B 上」。看到这行就说明有人主动叠了层。
+> `vk-grid tracks` 仍是真轨道：`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，px 会在构建期报错。等分仍用 `cols="1..6"`，两条路互斥。
 

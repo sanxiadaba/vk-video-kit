@@ -38,13 +38,6 @@ export const PROBES = {
       why: '轨道直接写在 grid-template-columns 上。',
     },
   },
-  'vk-panel': {
-    n: {
-      values: ['3'],
-      effect: { on: '.vk-panel-n', kind: 'text' },
-      why: '编号写进 .vk-panel-n。',
-    },
-  },
   'vk-stat': {
     // thousands 是默认态；只断两个非默认写法。
     format: {

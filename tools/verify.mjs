@@ -39,13 +39,14 @@ const steps = [
   ['css / js', ['tools/build.mjs', '--check']],
   ['specimen hosts', ['tools/scenes.mjs', '--check']],
   ['site assets', ['tools/assemble.mjs', '--check']],
+  ['capability matrix', ['tools/capabilities.mjs', '--check']],
   ['specimen pages', ['tools/specimens.mjs', '--check']],
   ['precompiled hosts', ['cli/build.mjs', '--check', '_site/specimens']],
   ['precompiled site', ['cli/build.mjs', '--check', '_site/specimen', '_site/index.html']],
 ];
 
-// 前六步只读且互不依赖，并行跑；最后两步是预编译校验，放在最后串行。
-const readOnly = steps.slice(0, 6);
+// 前七步只读且互不依赖，并行跑；最后两步是预编译校验，放在最后串行。
+const readOnly = steps.slice(0, 7);
 const precompiled = steps.slice(6);
 let failed = 0;
 for (const [label, code, out] of await pool(readOnly, 3)) {

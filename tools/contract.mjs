@@ -2,7 +2,7 @@
  * 契约门禁：每个公开属性必须产生「声明过的效果」，并且所有取值下都过
  * 40px 地板 / 对比度 / 安全区。
  *
- *   node tools/contract.mjs                # 全部 30 个标签
+ *   node tools/contract.mjs                # 全部 31 个标签
  *   node tools/contract.mjs vk-code        # 单件
  *   node tools/contract.mjs --shard=1/4    # 分片（必须 1..16）
  *
@@ -418,7 +418,7 @@ function stylePropsFor(tag) {
  * 现在每一类跳过都计数，并受预算约束：预算只许往下调，不许往上。
  * 每降一档都要有替代的覆盖（例如 pose 由 tests/pose.test.mjs 覆盖）。
  */
-// 预算按"概念"算，不按"声明"算：act 在 30 个标签上各声明一次，概念只有一个。
+// 预算按"概念"算，不按"声明"算：act 在 31 个标签上各声明一次，概念只有一个。
 // 13.0 用声明数当分母，于是同一件事被数了 30 遍，比例永远下不去。
 const SKIP_RATIO = Number(process.env.VK_SKIP_RATIO || 0.2);
 const skipped = { motion: 0, pose: 0, context: 0, build: 0 };
