@@ -628,8 +628,12 @@ export function focusRegions(stage) {
   // 覆盖层自己身上的 data-tone（ring 的 SVG 默认 tone="focus"）不是"画面上的焦点"，
   // 它是画法。只数作者/姿态落在内容上的标记。
   const inOverlay = (el) => !!el?.closest?.('[data-vk-overlay]');
+  // 标签（kicker/chip/badge）是导航，不是"看这里"：它说明这页讲什么，
+  // 不该占本帧的注意力。否则给 kicker 上一层语义色就会被算成第二个焦点，
+  // 和真正的答案抢位置——作者只好要么不给标签上色、要么把答案的颜色去掉。
+  const inLabel = (el) => !!el?.closest?.('vk-label');
   const addInk = (el) => {
-    if (el && !inOverlay(el)) found.add(el);
+    if (el && !inOverlay(el) && !inLabel(el)) found.add(el);
   };
 
   for (const el of stage.querySelectorAll('[data-vk-focus]')) addInk(el);
