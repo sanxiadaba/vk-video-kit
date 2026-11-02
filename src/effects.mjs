@@ -108,9 +108,18 @@ export const EFFECTS = {
     size: { on: 'vk-text', kind: 'style', prop: 'font-size' },
     weight: { on: 'vk-text', kind: 'style', prop: 'font-weight' },
     ink: { on: 'vk-text', kind: 'style', prop: 'color' },
+    tone: { on: 'vk-text', kind: 'style', prop: 'color' },
     mono: { on: 'vk-text', kind: 'style', prop: 'font-family', expect: /mono/i },
     align: { on: 'vk-text', kind: 'style', prop: 'text-align' },
     measure: { on: 'vk-text', kind: 'style', prop: 'max-width' },
+  },
+
+  'vk-label': {
+    // 三种形态的差别是「底」：kicker 透明、chip 浅底、badge 实色。
+    variant: { on: '.vk-label', kind: 'style', prop: 'background-color' },
+    // 语义色落在字上（与 vk-text / vk-icon 同一套 token）。
+    tone: { on: 'vk-label', kind: 'style', prop: 'color' },
+    ink: { on: 'vk-label', kind: 'style', prop: 'color' },
   },
 
   'vk-icon': {
@@ -394,6 +403,8 @@ Object.assign((EFFECTS['vk-rule'] ||= {}), {
 
 Object.assign((EFFECTS['vk-steps'] ||= {}), {
   orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
+  // 箭头 / 细线 / 不画：落到 .vk-steps 的 data-connector 上，由一条 CSS 决定。
+  connector: { on: '.vk-steps', kind: 'attr', prop: 'data-connector' },
 });
 
 Object.assign(EFFECTS['vk-asm'], {

@@ -54,6 +54,8 @@ const ATTR_META = {
   to: { label: '终点', content: true },
 
   tone: { label: '色调', group: 'appearance' },
+  icon: { label: '图标', content: true },
+  connector: { label: '连接线', group: 'appearance' },
   surface: { label: '表面', group: 'appearance' },
   variant: { label: '形态', group: 'appearance' },
   mass: { label: '体量', group: 'appearance' },
@@ -158,6 +160,7 @@ const ATTR_META = {
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
+  'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'circle-help', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
@@ -183,7 +186,7 @@ const DEFAULTS = {
   'vk-bars': { mass: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-cells': { cols: '0', mass: 'normal' },
-  'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal' },
+  'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow' },
   'vk-page': { align: 'top' },
 };
 
@@ -235,6 +238,23 @@ export const TAGS = {
       'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
       // 数值写法（原 vk-stat 的唯一机制）：52980 → 52,980。排版归配方。
       'format': oneOf('none', 'thousands', 'bytes', 'hex'),
+    },
+  },
+  'vk-label': {
+    name: '标签',
+    layer: 'elements',
+    summary: '一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标。',
+    content: {
+      kind: 'text',
+      target: 'vk-label',
+      fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
+    },
+    attrs: {
+      'variant': oneOf('kicker', 'chip', 'badge'),
+      'tone': oneOf('info', 'focus', 'ok', 'err', 'warn'),
+      'ink': oneOf('primary', 'secondary', 'tertiary', 'muted'),
+      // 内联图标：只收 Lucide 名字，构建期校验；不写就没有图标槽。
+      'icon': text(),
     },
   },
   'vk-inline': {
@@ -757,7 +777,7 @@ export const TAGS = {
    块级组件统一拿 Frame 的 w/h/grow/fill/overflow/measure；
    行内组件（icon/tag/mark/keys）不拿 w；
    自定义几何（page/annotate/edge/canvas/img）自己声明。 */
-const INLINE = new Set(['vk-icon', 'vk-inline']);
+const INLINE = new Set(['vk-icon', 'vk-inline', 'vk-label']);
 const CUSTOM = new Set([
   'vk-page',
   'vk-edge',
@@ -797,7 +817,11 @@ for (const [tag, def] of Object.entries(TAGS)) {
 
 const EXTRA = {
   'vk-box': { surface: oneOf('none', 'paper', 'soft', 'sf-1', 'sf-2', 'sf-3', 'sf-4') },
-  'vk-text': { ink: oneOf('primary', 'secondary', 'tertiary', 'muted') },
+  'vk-text': {
+    ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
+    // 语义色：与 vk-icon 同一套词表（info / focus / ok / err / warn），不写就是纯墨阶。
+    tone: oneOf('info', 'focus', 'ok', 'err', 'warn'),
+  },
   'vk-icon': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
     size: oneOf('sm', 'md', 'lg', 'xl', 'inherit'),
@@ -824,6 +848,8 @@ const EXTRA = {
   'vk-steps': {
     mass: oneOf('compact', 'normal', 'hero'),
     orientation: oneOf('horizontal', 'vertical'),
+    // 流程的箭头由组件画：作者只写步骤名，不再一根根手连。
+    connector: oneOf('arrow', 'line', 'none'),
   },
   'vk-cells': {
     stride: oneOf('1', '2', '4', '8'),

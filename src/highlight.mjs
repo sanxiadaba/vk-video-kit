@@ -925,11 +925,12 @@ function validateAuthorHtml(doc, file, html = '') {
       if (caps > 1) errors.push(`${file}:${lineOf(node)} <vk-figure> 只能有一个 figcaption`);
       if (caps && attrs.has('caption')) errors.push(`${file}:${lineOf(node)} <vk-figure> 的 figcaption 和 caption 不能同时写`);
     }
-    if (tag === 'vk-icon') {
-      const name = attrs.get('name');
+    if (tag === 'vk-icon' || (tag === 'vk-label' && attrs.has('icon'))) {
+      const name = attrs.get(tag === 'vk-icon' ? 'name' : 'icon');
       if (name && !ICONS[name]) {
         const near = Object.keys(ICONS).filter((n) => n.includes(name) || name.includes(n)).slice(0, 3);
-        errors.push(`${file}:${lineOf(node)} <vk-icon> 没有图标 "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
+        const where = tag === 'vk-icon' ? '<vk-icon> 没有图标' : '<vk-label> 的 icon 没有图标';
+        errors.push(`${file}:${lineOf(node)} ${where} "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
       }
     }
     if (tag === 'vk-steps' && attrs.has('current')) {
@@ -1191,6 +1192,12 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (node.tagName === 'vk-bytes') bytesNodes.push(node);
     if (node.tagName === 'vk-asm') asmNodes.push(node);
     if (node.tagName === 'vk-icon') iconNodes.push(node);
+    // vk-label 的图标在运行期画（它要跟着形态/文字一起重排），
+    // 但名字必须在构建期进页面图标表，否则运行时查不到、退成圆心问号。
+    if (node.tagName === 'vk-label') {
+      const name = attr(node, 'icon');
+      if (name && ICONS[name]) iconNames.add(name);
+    }
   });
 
   const edits = [];

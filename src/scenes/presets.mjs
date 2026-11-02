@@ -21,6 +21,14 @@ export const PRESETS = {
     { label: '大字', attrs: { size: 'subhead' } },
     { label: '居中', attrs: { align: 'center' } },
     { label: '加粗', attrs: { weight: 'bold' } },
+    { label: '语义色', attrs: { tone: 'ok' } },
+  ],
+  'vk-label': [
+    { label: '标签', attrs: { variant: 'chip' } },
+    { label: '实色序号', attrs: { variant: 'badge', tone: 'focus' } },
+    { label: '正确', attrs: { tone: 'ok' } },
+    { label: '警告', attrs: { tone: 'warn' } },
+    { label: '错误', attrs: { tone: 'err' } },
   ],
   'vk-icon': [
     { label: '小', attrs: { size: 'sm' } },

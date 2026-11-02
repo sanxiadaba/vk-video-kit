@@ -139,8 +139,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
-  - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink`
+  - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>`
+- **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标。
+  - 属性：`variant` · `tone` · `ink` · `icon`
+  - 例：`<vk-label variant="kicker">第 3 步 · 汇编</vk-label>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
   - 例：`<vk-inline variant="code">s[0]</vk-inline>`
@@ -214,7 +217,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" current="0-5">`
 - **`vk-steps`** · 步骤 — 步骤条：编号 + 连线 + 当前步。条目写成 <li>。
-  - 属性：`current` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation`
+  - 属性：`current` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation` · `connector`
   - 子节点：条目写成 `<li>`
   - 例：`<vk-steps current="1">`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。

@@ -117,6 +117,37 @@ export class VkBox extends VkElement {
   }
 }
 
+/**
+ * vk-label —— 一行小字：分类、进度、状态。
+ *
+ * 它是「标签 / 角标」这一个东西：kicker（纯文字）、chip（浅底）、badge（实色）。
+ * 字号与色板全部读 vk-text 使用的同一套 token；不写 tone 时走 ink 墨阶。
+ * 图标是可选的：写 icon 才出现图标槽，没写就没有空槽（不留幽灵节点）。
+ */
+export class VkLabel extends VkElement {
+  static watchSource = false;
+  static frame = false;
+  static renderedRoot = '.vk-label';
+
+  render() {
+    // 渲染后 textContent 仍是标签文字（图标是 svg，不带字），所以每次都能从 DOM 取回原文。
+    const text = (this.textContent || '').replace(/\s+/g, ' ').trim();
+    const raw = (this.getAttribute('icon') || '').trim();
+    const known = raw ? hasIcon(raw) : false;
+    if (raw && !known) this.dataset.vkUnknown = raw;
+    else delete this.dataset.vkUnknown;
+    // 没写 icon 时不生成 .vk-label-ic：图标槽的存在本身就是作者意图。
+    const icon = raw
+      ? `<span class="vk-label-ic" aria-hidden="true"><svg viewBox="0 0 24 24">${iconOf(
+          known ? raw : 'circle-help'
+        )}</svg></span>`
+      : '';
+    this.innerHTML = `<span class="vk-label" data-vk-part="label" data-meta>${icon}<span class="vk-label-t">${esc(
+      text
+    )}</span></span>`;
+  }
+}
+
 /** 纯文本宿主：内容就是子节点，Frame 只负责 w/measure。 */
 export class VkText extends VkElement {
   static watchSource = false;
@@ -209,6 +240,7 @@ export function defineElements() {
   define('vk-img', VkImg);
   define('vk-box', VkBox);
   define('vk-text', VkText);
+  define('vk-label', VkLabel);
   define('vk-inline', VkInline);
   define('vk-rule', VkRule);
 }

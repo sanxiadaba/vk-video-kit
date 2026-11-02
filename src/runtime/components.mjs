@@ -92,6 +92,8 @@ const CALLOUT_ICON = { info: 'info', ok: 'circle-check', warn: 'triangle-alert',
 const WIN_CHROME = new Set(['min', 'none', 'plain', 'browser']);
 const WIN_PAD = new Set(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
 const WIN_TONES = new Set(['info', 'focus', 'ok', 'warn', 'err']);
+/** 流程连接线的画法：箭头 / 细线 / 不画。 */
+const CONNECTORS = new Set(['arrow', 'line', 'none']);
 
 /**
  * 窗：L1 原子。三点窗头 + 标题 / 地址栏 / 对话框，内容由作者放。
@@ -613,8 +615,11 @@ export class VkCells extends VkElement {
 /* ----------------------------------------------------------------- steps */
 
 /**
- * 步骤条：编号 + 连线 + 当前步。
- *   <vk-steps current="2"><li>写代码</li><li>编译</li><li>运行</li></vk-steps>
+ * 步骤条：编号 + 等距连接线 + 当前步。
+ *   <vk-steps current="2" connector="arrow"><li>写代码</li><li>编译</li><li>运行</li></vk-steps>
+ *
+ * 流程的箭头由组件画：每一步等宽、连接线等长、箭头统一指向下一步。
+ * 作者不需要（也不能）写坐标或手工连 vk-edge。
  */
 export class VkSteps extends VkElement {
   static watchSource = true;
@@ -641,8 +646,15 @@ export class VkSteps extends VkElement {
       this._warnOnce('current', `的 current="${current}" 超过 ${items.length - 1}，按最后一步处理`);
       current = items.length - 1;
     }
+    // 连接线只有三种画法；写错就按默认箭头画，并在控制台说清楚。
+    const rawConnector = this.getAttribute('connector');
+    const connector = CONNECTORS.has(rawConnector) ? rawConnector : 'arrow';
+    if (rawConnector && !CONNECTORS.has(rawConnector)) {
+      this._warnOnce('connector', `的 connector="${rawConnector}" 不认识，按 arrow 处理（可用：arrow / line / none）`);
+    }
     const root = document.createElement('ol');
     root.className = 'vk-steps';
+    root.dataset.connector = connector;
     items.forEach((it, i) => {
       const n = i + 1;
       const state = i < current ? 'done' : i === current ? 'current' : 'todo';
@@ -665,11 +677,18 @@ export class VkSteps extends VkElement {
       text.className = 'vk-step-t';
       for (const node of it.nodes || []) text.append(node);
       step.append(num, text);
-      const line = document.createElement('li');
-      line.className = 'vk-step-line';
-      line.setAttribute('role', 'presentation');
-      line.setAttribute('aria-hidden', 'true');
-      root.append(step, line);
+      root.append(step);
+      // 最后一步后面不画线：连接线只在两步之间，端点因此可数、等距。
+      if (i < items.length - 1) {
+        const line = document.createElement('li');
+        line.className = 'vk-step-line';
+        // 线的状态跟「它通向的那一步」走：done 绿、current 钴蓝、todo 灰。
+        const next = i + 1;
+        line.dataset.conn = next < current ? 'done' : next === current ? 'current' : 'todo';
+        line.setAttribute('role', 'presentation');
+        line.setAttribute('aria-hidden', 'true');
+        root.append(line);
+      }
     });
     this.replaceChildren(root);
   }

@@ -740,66 +740,164 @@ tbody tr[data-state='current'] > td{ background: var(--vk-focus-soft); }tbody tr
   background: color-mix(in srgb, var(--vk-ink-1) 8%, transparent);
   box-shadow: inset 4px 0 0 var(--vk-ink-3);
 }[data-act='mark'][data-strength='ghost']{ background: transparent !important; box-shadow: inset 4px 0 0 var(--vk-ink-4) !important; }.vk-cell[data-state='ok']{ background: var(--vk-ok-weak); border-color: var(--vk-ok); }.vk-cell[data-state='warn']{ background: var(--vk-warn-weak); border-color: var(--vk-warn); }/* -------------------------------------------------------------- vk-steps */
+/* 流程由组件画：编号方块等宽、连接线等长、箭头方向一致。
+   作者只写步骤名；connector 决定画箭头 / 只画线 / 不画。 */
 
-vk-steps{ display: block; }.vk-steps{
+vk-steps {
+  display: block;
+}
+.vk-steps {
   display: flex;
   align-items: flex-start;
   gap: 0;
   margin: 0;
   padding: 0;
   list-style: none;
-}.vk-step{
+}
+/* 每一步等宽：连接线的端点因此等距，不随文字长短漂移。 */
+.vk-step {
   display: flex;
+  flex: 1 1 0;
   flex-direction: column;
   gap: var(--vk-s2);
   min-width: 0;
-}.vk-step-n{
-  position: relative;
+}
+.vk-step-n {
   display: grid;
   place-items: center;
-  width: 64px;
-  height: 64px;
+  box-sizing: border-box;
+  width: var(--vk-step-n);
+  height: var(--vk-step-n);
   border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-r-2);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-body);
   color: var(--vk-ink-3);
   background: var(--vk-surface-1);
-}.vk-step-t{
+}
+.vk-step-t {
   font-size: var(--vk-t-body);
   line-height: 1.3;
   color: var(--vk-ink-3);
-}.vk-step[data-state='current'] .vk-step-n{
+}
+/* 当前步：实心钴蓝。全库只有这一个「正在讲这里」的信号。 */
+.vk-step[data-state='current'] .vk-step-n {
   border-color: var(--vk-focus);
   background: var(--vk-focus);
   color: #fff;
-}.vk-step[data-state='current'] .vk-step-t{ color: var(--vk-ink-1); font-weight: var(--vk-w-med); }.vk-step[data-state='done'] .vk-step-n{
+}
+.vk-step[data-state='current'] .vk-step-t {
+  color: var(--vk-ink-1);
+  font-weight: var(--vk-w-med);
+}
+/* 已完成：绿框 + 勾。语义色只落在编号与勾上，文字仍是墨色。 */
+.vk-step[data-state='done'] .vk-step-n {
   border-color: var(--vk-ok);
   background: var(--vk-ok-weak);
   color: var(--vk-ok);
-}.vk-step[data-state='done'] .vk-step-t::after{
+}
+.vk-step[data-state='done'] .vk-step-t {
+  color: var(--vk-ink-1);
+}
+.vk-step[data-state='done'] .vk-step-t::after {
   content: '✓';
   margin-left: var(--vk-s1);
   color: var(--vk-ok);
   font-weight: var(--vk-w-bold);
-}.vk-step[data-state='done'] .vk-step-t{ color: var(--vk-ink-1); }.vk-step[data-state='done'] + .vk-step-line{ background: var(--vk-ok); }.vk-step[data-state='done'] + .vk-step-line::after{ border-left-color: var(--vk-ok); }/* current 之后的线不再染蓝：蓝色只表示"当前这一步"，不表示"下一段"。 */
-.vk-step[data-state='current'] + .vk-step-line{ background: var(--vk-line-3); }.vk-step[data-state='current'] + .vk-step-line::after{ border-left-color: var(--vk-line-3); }.vk-step-line{
-  flex: 1 1 24px;
-  min-width: 24px;
+}
+
+/* 连接线：固定长度 + 垂直居中在编号方块上。等长是算出来的（--vk-step-conn）。 */
+.vk-step-line {
   position: relative;
+  flex: 0 0 var(--vk-step-conn);
   height: 4px;
-  margin: 30px var(--vk-s3) 0;
+  margin: calc(var(--vk-step-n) / 2 - 2px) var(--vk-s3) 0;
   background: var(--vk-line-3);
-}.vk-step-line::after{
+}
+/* 箭头由组件画：方向永远指向下一步，不靠作者连坐标。 */
+.vk-step-line::after {
   content: '';
   position: absolute;
   right: -2px;
   top: 50%;
   transform: translateY(-50%);
-  border-left: 12px solid var(--vk-line-3);
+  border-left: var(--vk-step-tip) solid var(--vk-line-3);
   border-top: 7px solid transparent;
   border-bottom: 7px solid transparent;
-}vk-steps[orientation='vertical'] .vk-steps{ flex-direction: column; gap: var(--vk-s3); }vk-steps[orientation='vertical'] .vk-step{ flex-direction: row; align-items: center; gap: var(--vk-s3); }vk-steps[orientation='vertical'] .vk-step-line{ display: none; }vk-steps[mass='compact'] .vk-step-n{ width: 48px; height: 48px; }vk-steps[mass='compact'] .vk-step{ gap: var(--vk-s1); }.vk-step-line:last-child{ display: none; }/* ------------------------------------------------------- 行内高亮与批注区 */
+}
+.vk-step-line[data-conn='done'] {
+  background: var(--vk-ok);
+}
+.vk-step-line[data-conn='done']::after {
+  border-left-color: var(--vk-ok);
+}
+/* 指向当前步的那一根是钴蓝：焦点只有一个，就是「你在这里」。 */
+.vk-step-line[data-conn='current'] {
+  background: var(--vk-focus);
+}
+.vk-step-line[data-conn='current']::after {
+  border-left-color: var(--vk-focus);
+}
+
+/* connector：line 只画线不画箭头；none 一条都不画。 */
+.vk-steps[data-connector='line'] .vk-step-line::after {
+  display: none;
+}
+.vk-steps[data-connector='none'] .vk-step-line {
+  display: none;
+}
+
+/* 竖排：编号在左、文字在右；连接线变成一段竖线，箭头朝下。 */
+vk-steps[orientation='vertical'] .vk-steps {
+  flex-direction: column;
+  gap: var(--vk-s3);
+}
+vk-steps[orientation='vertical'] .vk-step {
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--vk-s3);
+}
+vk-steps[orientation='vertical'] .vk-step-line {
+  flex: 0 0 48px;
+  width: 4px;
+  height: 48px;
+  margin: 0 0 0 calc(var(--vk-step-n) / 2 - 2px);
+  background: var(--vk-line-3);
+}
+vk-steps[orientation='vertical'] .vk-step-line::after {
+  right: auto;
+  left: 50%;
+  top: auto;
+  bottom: -2px;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: var(--vk-step-tip) solid var(--vk-line-3);
+  border-bottom: 0;
+}
+vk-steps[orientation='vertical'] .vk-step-line[data-conn='done']::after {
+  border-top-color: var(--vk-ok);
+}
+vk-steps[orientation='vertical'] .vk-step-line[data-conn='current']::after {
+  border-top-color: var(--vk-focus);
+}
+
+/* 体量：只改编号方块与间距，不改字阶。 */
+vk-steps[mass='compact'] .vk-steps {
+  --vk-step-n: 48px;
+}
+vk-steps[mass='compact'] .vk-step {
+  gap: var(--vk-s1);
+}
+vk-steps[mass='hero'] .vk-steps {
+  --vk-step-n: 80px;
+}
+vk-steps[mass='hero'] .vk-step {
+  gap: var(--vk-s3);
+}
+
+/* ------------------------------------------------------- 行内高亮与批注区 */
 /* 代码里的字符区间：span="4:9-12" 与 @char 都落到这两个类上。 */
 .vk-char{
   border-radius: 4px;
@@ -948,7 +1046,7 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
 }/* 窄格子（展示站的小镜头）里地址退到元信息档；单元格自己是容器，规则才真的会命中。 */
 .vk-cell{ container-type: inline-size; }@container (max-width: 150px){.vk-cell-a{ font-size: var(--vk-t-label); letter-spacing: -0.04em; }
 }/* 强度只留三档底色；没有第二种材质。 */
-.vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: var(--vk-s2) var(--vk-s4); }vk-table[mass='hero'] td{ padding: var(--vk-s4) var(--vk-s5); }vk-steps[mass='hero'] .vk-step-n{ width: 80px; height: 80px; }vk-steps[mass='hero'] .vk-step{ gap: var(--vk-s3); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
+.vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: var(--vk-s2) var(--vk-s4); }vk-table[mass='hero'] td{ padding: var(--vk-s4) var(--vk-s5); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
 
 /* 图号是窗头里的一枚 chip，不能比窗头高。 */
 .vk-fig-fig{
@@ -1083,13 +1181,5 @@ vk-compare{ display: block; }.vk-cmp{
 .vk-cmp[data-label-position='top'] > .vk-cmp-lb{
   top: var(--vk-s1);
   bottom: auto;
-}vk-text[data-tone='focus'][data-strength='soft']{
-  color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
-}vk-text[data-tone='focus'][data-strength='ghost']{
-  color: var(--vk-ink-1);
-  box-shadow: inset 4px 0 0 var(--vk-focus);
-  padding-left: var(--vk-s2);
-}
-
-/* 块级焦点：pose 给块写的是 tone="focus"（不是 data-act）。 */
-vk-text[data-tone='focus'] { color: var(--vk-focus); }
+}/* 块级焦点：颜色只有一条路径 —— vk-text[tone]（见 L1 elements.css）。
+   pose 给块写的就是 tone="focus"；data-tone 只是留给审计读的镜像，不再单独上色。 */

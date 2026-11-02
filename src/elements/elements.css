@@ -129,6 +129,27 @@ vk-text[ink='secondary'] { color: var(--vk-ink-2); }
 vk-text[ink='tertiary'] { color: var(--vk-ink-3); }
 vk-text[ink='muted'] { color: var(--vk-ink-4); }
 
+/* 语义色：与 vk-icon 同一套词表，用的是同一组语义 token。
+   不写 tone 时这里一条都不命中——墨阶行为逐像素不变。
+   文字用「文字档」（--vk-*-ink，≥7:1）；底/线/图标才用原色。 */
+vk-text[tone='info'] { --vk-text-tone: var(--vk-info-ink); }
+vk-text[tone='focus'] { --vk-text-tone: var(--vk-focus-ink); }
+vk-text[tone='ok'] { --vk-text-tone: var(--vk-ok-ink); }
+vk-text[tone='err'] { --vk-text-tone: var(--vk-err-ink); }
+vk-text[tone='warn'] { --vk-text-tone: var(--vk-warn-ink); }
+/* tone 比 ink 更具体：同时写了也以语义色为准（写 ink 是作者的第二意图，语义色赢）。 */
+vk-text[tone] { color: var(--vk-text-tone); }
+/* strength 是「多响」，与 act="focus" 同一套姿态词：
+   solid 直给语义色；soft 与主墨混一档；ghost 只留一条色条，字回墨色。 */
+vk-text[tone][data-strength='soft'] {
+  color: color-mix(in srgb, var(--vk-text-tone) 55%, var(--vk-ink-1));
+}
+vk-text[tone][data-strength='ghost'] {
+  color: var(--vk-ink-1);
+  box-shadow: inset 4px 0 0 var(--vk-text-tone);
+  padding-left: var(--vk-s2);
+}
+
 vk-text[align='center'] { text-align: center; margin-inline: auto; }
 vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
@@ -140,6 +161,83 @@ vk-text[measure='body'] { max-width: var(--vk-measure-body); }
 vk-text[measure='subhead'] { max-width: var(--vk-measure-subhead); }
 vk-text[measure='title'] { max-width: var(--vk-measure-title); }
 vk-text[measure='none'] { max-width: none; }
+
+/* ------------------------------------------------------------- vk-label */
+
+/* 一行小字。字号只有 label 一档、色板与 vk-text 同一套：
+   kicker（纯文字）给分类与进度，chip（浅底）给状态，badge（实色）给序号。 */
+vk-label {
+  display: inline-flex;
+  vertical-align: -0.08em;
+  max-width: 100%;
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-label);
+  font-weight: var(--vk-w-med);
+  line-height: var(--vk-lh-label);
+  letter-spacing: var(--vk-ls-wide);
+  color: var(--vk-ink-4);
+  white-space: nowrap;
+}
+vk-label .vk-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-s1);
+  min-width: 0;
+  color: inherit;
+}
+vk-label .vk-label-t {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 图标：1em，跟着字走；没写 icon 时组件不生成这个槽。 */
+vk-label .vk-label-ic {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+}
+vk-label .vk-label-ic svg {
+  width: 100%;
+  height: 100%;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+/* 墨阶：与 vk-text 的四档同名同值。 */
+vk-label[ink='primary'] { color: var(--vk-ink-1); }
+vk-label[ink='secondary'] { color: var(--vk-ink-2); }
+vk-label[ink='tertiary'] { color: var(--vk-ink-3); }
+vk-label[ink='muted'] { color: var(--vk-ink-4); }
+
+/* 语义色：与 vk-text / vk-icon 同一套五值，一档都不新造。 */
+vk-label[tone='info'] { --vk-label-tone: var(--vk-info-ink); --vk-label-wash: var(--vk-info-soft); }
+vk-label[tone='focus'] { --vk-label-tone: var(--vk-focus-ink); --vk-label-wash: var(--vk-focus-soft); }
+vk-label[tone='ok'] { --vk-label-tone: var(--vk-ok-ink); --vk-label-wash: var(--vk-ok-weak); }
+vk-label[tone='err'] { --vk-label-tone: var(--vk-err-ink); --vk-label-wash: var(--vk-err-weak); }
+vk-label[tone='warn'] { --vk-label-tone: var(--vk-warn-ink); --vk-label-wash: var(--vk-warn-weak); }
+vk-label[tone] { color: var(--vk-label-tone); }
+
+/* kicker：纯文字。字距再松一点，读起来像「小标题」而不是「小字」。 */
+vk-label[variant='kicker'] { letter-spacing: 0.12em; }
+
+/* chip：浅底、圆角，像一枚标签。底来自同一个语义色的 weak 档。 */
+vk-label[variant='chip'] .vk-label {
+  padding: 0 var(--vk-s3);
+  border-radius: var(--vk-r-pill);
+  background: var(--vk-label-wash, var(--vk-surface-3));
+}
+/* badge：实色小方块，用来放序号。数字用等宽，宽度可预测。 */
+vk-label[variant='badge'] .vk-label {
+  padding: 0 var(--vk-s2);
+  border-radius: var(--vk-r-2);
+  background: var(--vk-label-tone, var(--vk-ink-1));
+  color: #fff;
+  font-family: var(--vk-font-mono);
+  letter-spacing: 0;
+}
 
 /* ------------------------------------------------------------ vk-inline */
 

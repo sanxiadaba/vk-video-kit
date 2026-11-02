@@ -42,6 +42,25 @@ export const SCENES = [
   },
 
   {
+    tag: 'vk-label',
+    body: s`
+<vk-stack gap="md">
+  <vk-stack direction="row" gap="lg" align="center">
+    <vk-label variant="kicker">第 3 步 · 汇编</vk-label>
+    <vk-label variant="chip">已完成</vk-label>
+    <vk-label variant="badge" tone="focus">3</vk-label>
+    <vk-label variant="chip" tone="warn" icon="triangle-alert">有洞</vk-label>
+  </vk-stack>
+  <vk-stack direction="row" gap="lg" align="center">
+    <vk-label tone="ok" icon="circle-check">通过</vk-label>
+    <vk-label tone="err" icon="circle-x">越界</vk-label>
+    <vk-label tone="info" icon="circle-alert">注意</vk-label>
+    <vk-label ink="secondary" icon="arrow-right">下一步</vk-label>
+  </vk-stack>
+</vk-stack>`,
+  },
+
+  {
     tag: 'vk-inline',
     body: s`
 <vk-box class="spec-w1680" surface="none">

@@ -99,6 +99,16 @@
   --vk-warn-paper-weak: rgba(138, 75, 0, 0.08);
   --vk-warn-paper-mark: rgba(138, 75, 0, 0.22);
 
+  /* 语义色的「文字档」：同一组色相，深到能当正文（≥7:1）。
+     底/线/图标用上面的原色（3:1 就够），文字用这一组——
+     值和词表都来自同一个语义色，不是第二套调色板。
+     info / focus 原色已经过 7:1，直接别名，不复制色值。 */
+  --vk-info-ink: var(--vk-info);
+  --vk-focus-ink: var(--vk-focus);
+  --vk-ok-ink: #07544a; /* 8.6:1 */
+  --vk-err-ink: #8f1d17; /* 8.9:1 */
+  --vk-warn-ink: #6e3c00; /* 9.1:1 */
+
   /* 修订：只给 diff / 文件树，不参与"对错" */
   --vk-add-paper: #0f7a3d;
   --vk-add-paper-weak: rgba(15, 122, 61, 0.1);
@@ -138,6 +148,13 @@
   --vk-edge-gap: 36px;
   --vk-edge-min: 64px;
   --vk-edge-cap: 14px;
+
+  /* ---------------------------------------------------------------- 流程
+     步骤条由组件画：编号方块一个尺寸，连接线一个长度。
+     等距不是「看起来差不多」，是这两个数决定的。 */
+  --vk-step-n: 64px;
+  --vk-step-conn: 96px;
+  --vk-step-tip: 12px;
 
   /* ---------------------------------------------------------------- 字 */
   --vk-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei",
