@@ -25,6 +25,12 @@ export const EFFECTS = {
     mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
+    // 词法：lang 换一套 token，落到宿主上的 data-lang 是这次切换的证据。
+    lang: { on: 'vk-term', kind: 'attr', prop: 'data-lang', expectFromValue: 'raw' },
+    // 指一行：整行 focus 底（与 vk-code 的 current 同一条视觉规则）。
+    current: { on: '.vk-line', kind: 'style', prop: 'background-color' },
+    // 出场：reveal=line 逐行、none 不参与；静态画面不变，data-reveal 是声明的证据。
+    reveal: { on: 'vk-term', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
   },
 
 
@@ -227,6 +233,8 @@ export const EFFECTS = {
     highlight: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     focus: { on: '.vk-line', kind: 'style', prop: 'opacity' },
     fold: { on: 'svg', kind: 'dom', prop: '.vk-line' },
+    // 逐行浮现 / 不参与出场：静态画面不变，data-reveal 是声明的证据。
+    reveal: { on: 'vk-code', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
     mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     chrome: { on: 'vk-code', kind: 'dom', prop: '.vk-hd' },
     numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
@@ -340,6 +348,8 @@ Object.assign((EFFECTS['vk-asm'] ||= {}), {
   order: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' },
   'fence-after': { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' },
   'fence-label': { on: '.vk-asm-fence', kind: 'text' },
+  // 逐行浮现的声明证据：静态画面不变，data-reveal 说明它参不参与出场。
+  reveal: { on: 'vk-asm', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
 });
 
 Object.assign((EFFECTS['vk-timeline'] ||= {}), {

@@ -327,3 +327,55 @@ test('vk-tree：depth 只是"画到第几层"，构建期不再把深层条目�
   assert.ok(deep, '深层条目应该留在 payload 里');
   assert.equal(deep.depth, 5);
 });
+
+/* ---------------------------------------------------------------- vk-term 词法 */
+
+const termPayload = (html) => {
+  const m = html.match(/<script[^>]*data-vk-term[^>]*>([\s\S]*?)<\/script>/);
+  return m ? JSON.parse(m[1]) : null;
+};
+
+test('vk-term：构建期把每一行切成 token，运行期直接消费', async () => {
+  fs.writeFileSync(path.join(dir, 'steps.txt'), '$ gcc -E hello.c -o hello.i\nHello, World!\n');
+  const out = await transformHtml('<vk-term lang="sh" src="steps.txt"></vk-term>', {
+    file: path.join(dir, 'page.html'),
+    highlighter: hl,
+  });
+  assert.ok(out.html.includes('data-vk-src'), '原文仍然只留一份引用');
+  const payload = termPayload(out.html);
+  assert.ok(payload, '没有生成 data-vk-term');
+  assert.equal(payload.lang, 'sh');
+  assert.equal(payload.lines.length, 2);
+  assert.equal(payload.lines[0].kind, 'cmd');
+  assert.deepEqual(
+    payload.lines[0].tokens.filter((t) => t.k).map((t) => [t.k, t.t]),
+    [
+      ['cmd', 'gcc'],
+      ['flag', '-E'],
+      ['path', 'hello.c'],
+      ['flag', '-o'],
+      ['path', 'hello.i'],
+    ]
+  );
+  assert.equal(payload.lines[0].tokens.map((t) => t.t).join(''), 'gcc -E hello.c -o hello.i');
+  assert.equal(payload.lines[1].kind, 'out');
+  assert.ok(out.html.includes('data-vk-term'), '构建期数据必须在 HTML 里');
+});
+
+test('vk-term：lang="none" 构建期就是纯文本；current 越界要报错', async () => {
+  const none = await transformHtml('<vk-term lang="none">$ gcc -E hello.c</vk-term>', {
+    file: 'term-none.html',
+    highlighter: hl,
+  });
+  const payload = termPayload(none.html);
+  assert.equal(payload.lang, 'none');
+  assert.equal(payload.lines[0].kind, 'out');
+  assert.ok(payload.lines[0].tokens.every((t) => !t.k));
+  // 内联文本仍留在 HTML 里（和 vk-code 一样，机器数据只是附在后面）。
+  assert.ok(none.html.includes('gcc -E hello.c'));
+
+  await assert.rejects(
+    () => transformHtml('<vk-term current="9">$ one\n$ two</vk-term>', { file: 'term.html', highlighter: hl }),
+    /current="9" 超出 1–2 行/
+  );
+});

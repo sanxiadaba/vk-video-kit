@@ -21,8 +21,11 @@ export const SCENES = [
 
   {
     tag: 'vk-term',
+    // 真实采集产物（assets/hello/build/steps.txt）：四步编译 + 一行输出。
+    // 默认就上色；lang="none" 是「同一段 transcript，未上色」的对照。
+    // reveal="line" 让 6 行按 at + stagger 逐行浮现（标本页 dur=2.2，可 seek 出三帧）。
     body: s`
-<vk-term title="zsh" prompt="$" src="../code/hello.term"></vk-term>`,
+<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" src="../assets/hello/build/steps.txt"></vk-term>`,
   },
 
 

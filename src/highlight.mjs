@@ -17,6 +17,7 @@ import { parse } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
+import { lexShellLine, shellLang, shellLines } from './shared/shell.mjs';
 import { TIER_ALIAS } from './shared/tier-alias.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
@@ -1045,6 +1046,7 @@ function collectText(node) {
           hasAttr(n, 'data-vk-math') ||
           hasAttr(n, 'data-vk-src') ||
           hasAttr(n, 'data-vk-source') ||
+          hasAttr(n, 'data-vk-term') ||
           hasAttr(n, 'data-vk-asm') ||
           hasAttr(n, 'data-vk-tree') ||
           hasAttr(n, 'data-vk-bytes'))
@@ -1251,7 +1253,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     // 越界不能静默：写错的行段只会让"重点"消失，画面看起来仍然正常。
     const base = Number((attr(node, 'lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const hi = base + total - 1;
-    for (const name of ['current', 'focus', 'fold']) {
+    for (const name of ['current', 'line', 'focus', 'fold']) {
       for (const { from, to } of indexRanges(attr(node, name))) {
         if (from < base || from > hi || to > hi) {
           errors.push(
@@ -1262,14 +1264,15 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       }
     }
     const foldRanges = indexRanges(attr(node, 'fold'));
-    for (const name of ['current', 'focus']) {
+    for (const name of ['current', 'line', 'focus']) {
       for (const { from, to } of indexRanges(attr(node, name))) {
         if (foldRanges.some((f) => from <= f.to && to >= f.from)) {
           errors.push(`${file}:${line} <${tag}> 的 ${name}="${from}${to === from ? '' : '-' + to}" 落在 fold 区间内，折叠后不会显示`);
         }
       }
     }
-    const currentSet = lineSet(attr(node, 'current'));
+    // current 是正式名；line 是同一概念的别名（current 优先）。
+    const currentSet = lineSet(attr(node, 'current') || attr(node, 'line'));
     const focusSet = lineSet(attr(node, 'focus'));
     if (currentSet.size && focusSet.size) {
       const outside = [...currentSet].filter((n) => !focusSet.has(n));
@@ -1353,7 +1356,15 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     }
     const src = attr(node, 'src');
     const inline = inlineSourceText(node);
-    if (!src && inline == null) continue;
+    const { text, hasElement } = collectText(node);
+    if (!src && inline == null && !text.trim()) continue;
+    if (hasElement) {
+      errors.push(
+        `${file}:${line} <vk-term> 里有 HTML 元素。transcript 里的 "<" 要写成 "&lt;"，` +
+          `或者放进 <script type="text/plain" data-vk-source>。`
+      );
+      continue;
+    }
     sourceConflict(node, 'vk-term', file, line);
     const linesAttr = attr(node, 'lines');
     let source;
@@ -1365,10 +1376,42 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       const raw = fs.readFileSync(abs, 'utf8');
       source = dedent(linesAttr ? sliceLines(raw, linesAttr) : raw);
       deps.push(abs);
-    } else {
+    } else if (inline != null) {
       source = dedent(linesAttr ? sliceLines(inline, linesAttr) : inline);
+    } else {
+      source = dedent(linesAttr ? sliceLines(text, linesAttr) : text);
     }
-    edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${srcScript(source)}\n` });
+
+    // 构建期就把行切好：词法只有一份（src/shared/shell.mjs），运行期只在
+    // hash / lang / prompt / marks 对不上时才自己重切。
+    const lang = shellLang(attr(node, 'lang') || 'sh');
+    const promptAttr = attr(node, 'prompt') || '';
+    const marksAttr = attr(node, 'marks') || '';
+    const marks = marksAttr.split('|').map((s) => s.trim()).filter(Boolean);
+    const lines = shellLines(source);
+    const rows = lines.map((lineText) =>
+      lexShellLine(lineText, { lang, prompts: promptAttr ? [promptAttr] : null, marks })
+    );
+
+    const base = Number((linesAttr || '').match(/^\s*(\d+)/)?.[1]) || 1;
+    const hi = base + lines.length - 1;
+    for (const name of ['current', 'line']) {
+      for (const { from, to } of indexRanges(attr(node, name))) {
+        if (from < base || from > hi || to > hi) {
+          errors.push(
+            `${file}:${line} <vk-term> 的 ${name}="${from}${to === from ? '' : '-' + to}" 超出 ${base}–${hi} 行（源文件行号）；` +
+              `片段从 ${base} 起，写成 ${base}${hi > base ? `–${hi}` : ''} 范围内的行号`
+          );
+        }
+      }
+    }
+
+    const payload = { hash: hash32(source), lang, prompt: promptAttr, marks: marksAttr, lines: rows };
+    const json = JSON.stringify(payload).replace(/</g, '\\u003c');
+    const termScript = `<script type="application/json" data-vk-term>${json}</script>`;
+    // 有 src 时只留引用 + 机器数据；内联时保留作者写的文本（和 vk-code 一致）。
+    const inner = src ? `\n${srcScript(source)}${termScript}\n` : `\n${escText(source)}${termScript}\n`;
+    edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }
 
   // 树：src 指向真实目录；内联时收 JSON 条目。
@@ -1528,7 +1571,7 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     }
     const first = selected[0]?.line;
     const last = selected[selected.length - 1]?.line;
-    for (const name of ['current', 'focus']) {
+    for (const name of ['current', 'line', 'focus']) {
       for (const { from, to } of indexRanges(attr(node, name))) {
         if (first == null || from < first || to > last) {
           errors.push(
@@ -1537,22 +1580,14 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
         }
       }
     }
+    // 分色在运行期用共享词法切（src/shared/shell.mjs 的 tokenizeAsm）：
+    // 这里只保留「这是构建期解析出来的行」这个事实，不再预烤第二套 HTML。
     const painted = [];
     for (const row of selected) {
-      let h = escText(row.text);
-      if (row.text && row.kind === 'insn') {
-        try {
-          const lines = await paintCode(highlighter, row.text, asmLang);
-          if (lines[0]) h = lines[0];
-        } catch {
-          /* 没有 asm 语法就退化为等宽纯文本，不阻断构建 */
-        }
-      }
       painted.push({
         ...row,
         m: row.kind === 'insn' ? splitInsn(row.text).mnemonic : '',
         o: row.kind === 'insn' ? splitInsn(row.text).operands : '',
-        h,
       });
     }
     const payload = { file: fileName, rows: painted, labels, base: attr(node, 'addr') || '', lang: asmLang, skipped, unmerged };

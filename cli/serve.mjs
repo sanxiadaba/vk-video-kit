@@ -46,6 +46,9 @@ const TYPES = {
   '.h': 'text/plain; charset=utf-8',
   '.py': 'text/plain; charset=utf-8',
   '.term': 'text/plain; charset=utf-8',
+  // 真实采集的 transcript 常是 .txt（assets/hello/build/steps.txt 这类）：
+  // 浏览器要按文本看，不能当下载。vk-term/vk-code 的 src 也靠它。
+  '.txt': 'text/plain; charset=utf-8',
   '.diff': 'text/plain; charset=utf-8',
   '.tex': 'text/plain; charset=utf-8',
 };

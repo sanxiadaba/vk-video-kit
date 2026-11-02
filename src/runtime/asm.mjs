@@ -6,17 +6,21 @@
  */
 import { VkElement, define, esc, lineSet } from './base.mjs';
 import { splitInsn } from '../shared/asm.mjs';
+import { tokenizeAsm, tokensToHtml } from '../shared/shell.mjs';
 import { DOTS } from './window.mjs';
 
-/** 操作数：逗号后留空格；寄存器加重、立即数降一阶，括号保持墨色。 */
+/**
+ * 操作数分色：寄存器 / 立即数 / 地址 / 注释 各自一色，用与 vk-term 同一张
+ * token 表（src/shared/shell.mjs）。以前这里是一把正则把 %reg 与 $imm 涂两色，
+ * 地址、注释、标点全是操作数的墨色——指令读起来还是一整块。
+ */
 function operandHtml(text) {
+  // 逗号后留一个空格：这是排版，不是词法；token 在排版后的文本上切。
   const clean = String(text || '')
     .replace(/,\s*/g, ', ')
     .replace(/\s+/g, ' ')
     .trim();
-  return esc(clean).replace(/(%[a-z0-9]+|\$?0x[0-9a-f]+|\b\d+\b)/gi, (s) =>
-    s.startsWith('%') ? `<span class="vk-op-reg">${s}</span>` : `<span class="vk-op-imm">${s}</span>`
-  );
+  return tokensToHtml(tokenizeAsm(clean, { mnemonic: false }));
 }
 
 export class VkAsm extends VkElement {
@@ -71,8 +75,10 @@ export class VkAsm extends VkElement {
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const mass = this.getAttribute('mass') || 'normal';
     const title = this.getAttribute('title') || d.file || '';
-    const hl = lineSet(this.getAttribute('current'));
+    const hl = lineSet(this.getAttribute('current') || this.getAttribute('line') || '');
     const focus = lineSet(this.getAttribute('focus'));
+    const revealRaw = this.getAttribute('reveal');
+    this.dataset.reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';
     const orderList = (this.getAttribute('order') || '')
       .split(',')
       .map((s) => s.trim())
@@ -96,7 +102,7 @@ export class VkAsm extends VkElement {
           ${showOrder ? `<span class="vk-asm-ord">${badge}</span>` : ''}
           ${showAddr ? `<span class="vk-asm-a" data-meta>${r.addr ? '0x' + esc(r.addr) : ''}</span>` : ''}
           ${showBytes ? `<span class="vk-asm-b" data-meta>${esc(r.bytes || '')}</span>` : ''}
-          <span class="vk-asm-m">${esc(parts.mnemonic)}</span>
+          <span class="vk-asm-m">${parts.mnemonic ? `<span class="vk-tok-cmd">${esc(parts.mnemonic)}</span>` : ''}</span>
           <span class="vk-asm-o">${operandHtml(parts.operands)}</span>
         </div>`;
         if (fenceAfter && String(r.line) === fenceAfter) {

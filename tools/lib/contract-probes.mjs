@@ -121,6 +121,13 @@ export const PROBES = {
       why: '焦点偏移落在内部 img 的 object-position。',
     },
   },
+  'vk-term': {
+    current: {
+      values: ['3'],
+      effect: { on: '.vk-line', kind: 'style', prop: 'background-color' },
+      why: '指一行：整行 focus 底，与 vk-code 的 current 同一条视觉规则。标本有 6 行真实 transcript。',
+    },
+  },
   'vk-code': {
     highlight: {
       values: ['3'],
@@ -310,6 +317,12 @@ export const EFFECT_ANY = [
   { tag: 'vk-window', attr: 'url', reason: 'url 只在 chrome="browser" / "dialog" 时出现；单场景无法同时改两个属性。' },
   { tag: 'vk-timeline', attr: 'lanes', reason: 'lanes 只在 variant="lanes" 时生效；单场景无法同时改两个属性。' },
   { tag: 'vk-code', attr: 'fold-note', reason: 'fold-note 只在 fold 存在时出现；单场景无法同时改两个属性。' },
+  {
+    tag: 'vk-term',
+    attr: 'marks',
+    reason:
+      '结果 glyph 只在含 ✓/!/✗ 的 transcript 上可见；标本用的是真实采集的 steps.txt（没有结果行），静态画面不变。三种状态由 tests/shell-dom.test.mjs 的 marks 用例覆盖。',
+  },
 
   {
     tag: 'vk-list',

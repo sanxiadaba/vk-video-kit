@@ -171,12 +171,12 @@ const DEFAULTS = {
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
-  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
-  'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
+  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all' },
+  'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min', reveal: 'all' },
   'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
-  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal' },
+  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
@@ -437,7 +437,7 @@ export const TAGS = {
   'vk-code': {
     name: '代码窗',
     layer: 'components',
-    summary: '代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。',
+    summary: '代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮；reveal="line" 逐行浮现。',
     content: {
       kind: 'rebuild',
       note: '代码文本由 Shiki 在构建期编译；改文本请改 src 文件并运行 npm run build。这里仍然可以调高亮行、聚光、折叠、密度、窗头。',
@@ -448,6 +448,8 @@ export const TAGS = {
       'lines': text(),
       'file': text(),
       'current': lines(),
+      // 与 current 同义：讲解时指一行。current 优先；两个是同一个概念，只留一版别名。
+      'line': { ...lines(), hidden: true },
       'focus': lines(),
       'fold': lines(),
       'omit': text(),
@@ -455,12 +457,14 @@ export const TAGS = {
       'chrome': oneOf('min', 'none'),
       'mark': text(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // all = 整块出现（默认，和以前一样）；line = 按 at + stagger 逐行浮现；none = 不参与出场。
+      'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
     },
   },
   'vk-term': {
     name: '终端',
     layer: 'components',
-    summary: '终端。src 指向真实 transcript；默认浅色；命令、输出、✓/!/✗ 三种结果行。',
+    summary: '终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。',
     content: {
       kind: 'text',
       target: 'vk-term',
@@ -477,6 +481,12 @@ export const TAGS = {
       'title': text(),
       'prompt': text(),
       'marks': text(),
+      // sh = 认提示符后按 shell 切；powershell 同一套词法；asm = 非命令行按汇编切；none = 纯文本不上色。
+      'lang': { ...oneOf('sh', 'powershell', 'asm', 'none'), default: 'sh' },
+      // 指一行：与 vk-code / vk-asm 同一个名字。line 是同义别名。
+      'current': lines(),
+      'line': { ...lines(), hidden: true },
+      'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
       'chrome': oneOf('none', 'min'),
       'mass': oneOf('compact', 'normal', 'hero'),
     },
@@ -693,6 +703,9 @@ export const TAGS = {
       'lines': text(),
       'file': { ...text(), build: true },
       'current': lines(),
+      // 与 current 同义：讲解时指一行。current 优先。
+      'line': { ...lines(), hidden: true },
+      'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
       'focus': lines(),
       'addr': { ...text(), build: true },
       'title': text(),

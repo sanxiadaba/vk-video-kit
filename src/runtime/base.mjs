@@ -95,6 +95,7 @@ export function warnIfParsed(el) {
           c.hasAttribute('data-vk-hl-diff') ||
           c.hasAttribute('data-vk-src') ||
           c.hasAttribute('data-vk-source') ||
+          c.hasAttribute('data-vk-term') ||
           c.hasAttribute('data-vk-asm') ||
           c.hasAttribute('data-vk-tree'))
       )

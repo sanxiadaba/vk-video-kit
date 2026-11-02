@@ -179,6 +179,12 @@ function scopeIds(html, prefix) {
   );
 }
 
+/**
+ * 有出场演示的标本页给一条时间轴：没有 dur，director 的 plan() 不产生任何 cue，
+ * reveal="line" 就只能看静帧。poster = dur = 终态，所以静态截图与门禁都不变。
+ */
+const SCENE_DUR = { 'vk-term': '2.2' };
+
 const STATE_STRIP = {
   'vk-cells': `<vk-cells cols="4"><li value="1" label="a[0]" state="current"></li><li value="2" label="a[1]" state="mark"></li><li value="3" label="a[2]" state="err"></li><li value="0" label="a[3]" state="ok"></li></vk-cells>`,
   'vk-table': `<vk-table variant="matrix"><table><thead><tr><th>i\\j</th><th>0</th><th>1</th></tr></thead><tbody><tr><th>0</th><td state="current">1</td><td state="mark">2</td></tr><tr><th>1</th><td>3</td><td state="err">4</td></tr></tbody></table></vk-table>`,
@@ -192,7 +198,8 @@ function specPage(tag, no) {
   const stripBody = stripOf.get(tag) || rawBody;
   const presets = PRESETS[tag] || [];
   const meta = `${String(no).padStart(3, '0')} / ${String(ORDER.length).padStart(3, '0')}`;
-  const plate = `<vk-page align="top" data-allow-void>
+  const sceneDur = SCENE_DUR[tag] ? ` dur="${SCENE_DUR[tag]}"` : '';
+  const plate = `<vk-page align="top" data-allow-void${sceneDur}>
   <vk-stack gap="2xs">
     <vk-stack direction="row" justify="between" align="baseline">
       <vk-stack direction="row" gap="xs" align="baseline">

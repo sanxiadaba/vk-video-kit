@@ -1,0 +1,10 @@
+> git diff --no-index --unified=1 --no-color before.c after.c 2>$null
+diff --git a/before.c b/after.c
+index c2e6bc7..5b835cf 100644
+--- a/before.c
++++ b/after.c
+@@ -5,3 +5,3 @@ int main(void)
+     char *s = "Hello, World!";
+-    printf("%s\n", s);
++    puts(s);
+     return 0;

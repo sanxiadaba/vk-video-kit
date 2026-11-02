@@ -79,9 +79,13 @@ export function plan(root = document) {
     });
   };
 
-  // 容器上的 stagger：直接子元素依次入场
-  for (const host of scene.querySelectorAll('[stagger]')) {
+  // 容器上的 stagger：直接子元素依次入场。
+  // reveal="line" 是同一件事的声明式写法：按宿主自己的 at + stagger 逐行浮现，
+  // 不另写一套引擎——行仍然是 .vk-line / .vk-asm-row，cue 仍然进同一张表。
+  for (const host of scene.querySelectorAll('[stagger], [reveal="line"]')) {
     if (inTimeline(host) || host.parentElement?.closest('[data-vk-overlay]')) continue;
+    // reveal="none" 的子树不参与出场：整块从第 0 帧就在。
+    if (host.closest('[reveal="none"]')) continue;
     const step = num(host.getAttribute('stagger'), 0.06);
     const base = num(host.getAttribute('at'), 0);
     const enter = host.getAttribute('enter') || 'rise';
@@ -105,6 +109,8 @@ export function plan(root = document) {
   for (const el of scene.querySelectorAll('[at], [enter]')) {
     if (inTimeline(el) || el.parentElement?.closest('[data-vk-overlay]')) continue;
     if (el.hasAttribute('stagger')) continue; // 容器自己已经展开
+    if (el.getAttribute('reveal') === 'line') continue; // 已经按行展开
+    if (el.closest('[reveal="none"]')) continue; // 显式出场：不参与
     push(el, num(el.getAttribute('at'), 0), {});
   }
 

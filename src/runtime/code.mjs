@@ -3,6 +3,7 @@ import {
   precompiledSource, numAttr, VkElement, define,
 } from './base.mjs';
 import { indexRanges, sliceLines, stripAnsi } from '../shared/code.mjs';
+import { lexShellLine, looksLikePrompt, shellLang, shellLines, tokensToHtml } from '../shared/shell.mjs';
 import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
 
@@ -119,6 +120,8 @@ export class VkCode extends VkElement {
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
     const showNums = this.getAttribute('numbers') !== 'none';
     const marks = (this.getAttribute('mark') || '').split(',').map((s) => s.trim()).filter(Boolean);
+    const revealRaw = this.getAttribute('reveal');
+    this.dataset.reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';
 
     const parsed = source.split('\n').map((text) => ({ text, sign: '' }));
     const hash = hash32(source);
@@ -142,7 +145,7 @@ export class VkCode extends VkElement {
     const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const toSlice = (set) =>
       new Set([...set].map((v) => v - startNo + 1).filter((v) => v >= 1 && v <= lines.length));
-    const hl = toSlice(lineSet(this.getAttribute('current')));
+    const hl = toSlice(lineSet(this.getAttribute('current') || this.getAttribute('line') || ''));
     const focus = toSlice(lineSet(this.getAttribute('focus')));
     // 真折叠：区间内的行不渲染；只在区间开头留一条"几行已折叠"。
     const foldSet = new Set();
@@ -237,76 +240,11 @@ export class VkCode extends VkElement {
 
 /* ------------------------------------------------------------------- term */
 
-const TERM_EXT =
-  /\.(?:py|js|mjs|ts|tsx|jsx|json|md|txt|html|css|ya?ml|toml|lock|log|csv|png|jpe?g|svg|sh|bash|zsh|go|rs|java|c|h|cpp|rb|php|sql)$/i;
-const termIsPath = (t) => (t.includes('/') || TERM_EXT.test(t)) && /^[\w.~/-]+$/.test(t);
-
-function commentStart(cmd) {
-  let quote = null;
-  for (let i = 0; i < cmd.length; i++) {
-    const ch = cmd[i];
-    if (quote) {
-      if (ch === '\\' && quote === '"') {
-        i++;
-        continue;
-      }
-      if (ch === quote) quote = null;
-      continue;
-    }
-    if (ch === '"' || ch === "'") {
-      quote = ch;
-      continue;
-    }
-    if (ch === '#' && (i === 0 || /\s/.test(cmd[i - 1]))) return i;
-  }
-  return -1;
-}
-
-/**
- * 自动认命令行提示符。只认"确实像 prompt"的形状：
- *   C:\src\demo> cmd        （Windows cmd / 盘符路径）
- *   PS C:\src> cmd          （PowerShell，带 PS 前缀）
- *   [user@host ~]$ cmd      （bash / zsh，带 user@host 的方括号）
- * 普通输出里的 `price > 5` 没有盘符路径 / PS 前缀 / 方括号，不会命中。
- * 命中的提示符原样作为 sign 显示，后面才是命令。
+/*
+ * 命令行的词法在 src/shared/shell.mjs：构建期（src/highlight.mjs）与运行期
+ * 都 import 同一份，这里只负责把 token 摆成一行。以前这里有一份 split(/\s+/)
+ * 的猜法——命令名一色、其余全灰；两份实现就是那样分叉出来的。
  */
-const AUTO_PROMPTS = [
-  /^(PS\s+[A-Za-z]:[\\/][^>\r\n]*>)(?:\s+(.*))?$/,
-  /^([A-Za-z]:[\\/][^>\r\n]*>)(?:\s+(.*))?$/,
-  /^(\[[^\]\r\n]*@[^\]\r\n]*\][$#%])(?:\s+(.*))?$/,
-];
-
-function detectPrompt(line) {
-  for (const rx of AUTO_PROMPTS) {
-    const m = line.match(rx);
-    if (m) return { sign: m[1], cmd: (m[2] || '').trim() };
-  }
-  return null;
-}
-
-function paintTermCommand(cmd) {
-  const hash = commentStart(cmd);
-  const head = hash >= 0 ? cmd.slice(0, hash) : cmd;
-  const tail = hash >= 0 ? cmd.slice(hash) : '';
-  let first = true;
-  const painted = head
-    .split(/(\s+|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*')/g)
-    .map((part) => {
-      if (!part) return '';
-      if (/^\s+$/.test(part)) return part;
-      if (/^["']/.test(part)) return `<span class="vk-cmd-str">${esc(part)}</span>`;
-      if (first) {
-        first = false;
-        return `<span class="vk-cmd-exe">${esc(part)}</span>`;
-      }
-      if (/^--?[\w-]+/.test(part)) return `<span class="vk-cmd-flag">${esc(part)}</span>`;
-      if (termIsPath(part)) return `<span class="vk-cmd-path" data-meta>${esc(part)}</span>`;
-      if (/^\d+(?:\.\d+)?(?:ms|s|%|px|kb|mb)?$/.test(part)) return `<span class="vk-cmd-num">${esc(part)}</span>`;
-      return esc(part);
-    })
-    .join('');
-  return painted + (tail ? `<span class="vk-cmd-comment">${esc(tail)}</span>` : '');
-}
 
 export class VkTerm extends VkElement {
   static watchSource = true;
@@ -316,8 +254,19 @@ export class VkTerm extends VkElement {
     delete this.dataset.vkParsed;
     warnIfParsed(this);
     this._preSrc = precompiledSource(this);
+    // 构建期算好的逐行 token；运行期只在 hash/属性对不上时用共享词法重算。
+    const data = this.querySelector(':scope > script[data-vk-term]');
+    this._term = null;
+    if (data) {
+      try {
+        const d = JSON.parse(data.textContent);
+        if (d && Array.isArray(d.lines)) this._term = d;
+      } catch {
+        /* 损坏的 token 数据按缺失处理，运行期会自己切 */
+      }
+    }
     const clone = this.cloneNode(true);
-    clone.querySelectorAll('script[data-vk-src]').forEach((n) => n.remove());
+    clone.querySelectorAll('script[data-vk-src], script[data-vk-term]').forEach((n) => n.remove());
     this._src = clone.textContent.replace(/\r\n?/g, '\n');
     if (!this._src.trim() && this._preSrc != null) this._src = this._preSrc;
     this._raw = null;
@@ -348,55 +297,47 @@ export class VkTerm extends VkElement {
     // 提示符：作者写 prompt 就用它；不写则自动认三种常见写法。
     // 采集来自 Windows 时是 ">"，来自 PowerShell 时可能带路径，来自 bash 时是 "$"。
     const promptAttr = this.getAttribute('prompt');
-    const prompts = promptAttr ? [promptAttr] : ['$', '>', 'PS>'];
+    const prompts = promptAttr ? [promptAttr] : null;
+    const marksRaw = String(this.getAttribute('marks') || '');
+    const marks = marksRaw.split('|').map((s) => s.trim()).filter(Boolean);
+    const lang = shellLang(this.getAttribute('lang') || 'sh');
+    const revealRaw = this.getAttribute('reveal');
+    const reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';
     const title = this.getAttribute('title') || '';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
-    const rows = source
-      .split('\n')
-      .map((raw) => raw.replace(/\s+$/, ''))
-      .filter((line, i, all) => !(line === '' && i === all.length - 1))
-      .map((line) => {
-        if (line === '$' || line.startsWith('$ ')) {
-          const cmd = line === '$' ? '' : line.slice(2);
-          return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd };
-        }
-        const auto = promptAttr ? null : detectPrompt(line);
-        if (auto) {
-          return { kind: 'cmd', text: paintTermCommand(auto.cmd), empty: !auto.cmd, sign: auto.sign };
-        }
-        const hit = prompts.find((p) => line === p || line.startsWith(p + ' '));
-        if (hit) {
-          const cmd = line === hit ? '' : line.slice(hit.length + 1);
-          return { kind: 'cmd', text: paintTermCommand(cmd), empty: !cmd, sign: hit };
-        }
-        // 结果符号可配：marks="PASS|WARN|FAIL"。默认 ✓ / ! / ✗。
-        const marksAttr = String(this.getAttribute('marks') || '')
-          .split('|')
-          .map((s) => s.trim())
-          .filter(Boolean);
-        const okMark = marksAttr[0] || '✓';
-        const warnMark = marksAttr[1] || '!';
-        const errMark = marksAttr[2] || '✗';
-        const rxEscape = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const resultRx = new RegExp(`^(${[okMark, warnMark, errMark].map(rxEscape).join('|')})\\s+(.*)$`);
-        const m = line.match(resultRx);
-        if (m) {
-          const kind = m[1] === okMark ? 'ok' : m[1] === warnMark ? 'warn' : 'err';
-          return { kind, sign: m[1], text: esc(m[2]) };
-        }
-        return { kind: 'out', text: esc(line) || ' ' };
-      });
+    // 声明写在宿主上，契约与 director 都读得见；静态像素不变。
+    this.dataset.lang = lang;
+    this.dataset.reveal = reveal;
+
+    const lines = shellLines(source);
+    // 构建期已经切好的话直接用；hash / lang / prompt / marks 任一不符就自己切。
+    const built = this._term;
+    const usable =
+      built &&
+      built.hash === hash32(source) &&
+      built.lang === lang &&
+      (built.prompt || '') === (promptAttr || '') &&
+      (built.marks || '') === marksRaw &&
+      built.lines.length === lines.length;
+    const rows = lines.map((line, i) => (usable ? built.lines[i] : lexShellLine(line, { lang, prompts, marks })));
+    // 诊断/测试用：这一块到底用的是构建期 token，还是运行时重切。
+    // data-vk-* 是运行时内部标记，不进契约快照。
+    if (usable) this.dataset.vkTermUsed = '1';
+    else delete this.dataset.vkTermUsed;
+
+    // 指一行：current 是正式名，line 是同一概念的别名（current 优先）。
+    const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
+    const currentRaw = this.getAttribute('current') || this.getAttribute('line') || '';
+    const currentSet = new Set([...lineSet(currentRaw)].map((v) => v - startNo + 1));
 
     // 提示符认不出来时，整块终端会掉成一片灰字：看起来"正常"，其实命令行/输出
     // 这层结构全丢了。不再多猜提示符（不同 shell 长得都不一样），先明说一句：
     // 有一行像"提示符 + 命令"，但一个命令行都没认出来。
-    if (!promptAttr && !rows.some((r) => r.kind === 'cmd')) {
+    if (!promptAttr && lang !== 'none' && !rows.some((r) => r.kind === 'cmd')) {
       // 只认「真的像提示符」的前缀：盘符路径、PS、user@host、[user@host]$。
       // 普通输出里出现 `price > 5` 不该被当成提示符——那会变成新的假警报。
-      const lineLike = source
-        .split('\n')
-        .find((l) => /^(?:PS\s+[^>]*|[A-Za-z]:[\\/][^>]*|\[[^\]]*\][$#%]|[^\s]*@[^\s]*)[>$#%]\s+\S/.test(l));
+      const lineLike = lines.find(looksLikePrompt);
       if (lineLike) {
         this._warnOnce(
           'prompt',
@@ -405,16 +346,17 @@ export class VkTerm extends VkElement {
       }
     }
 
-
     const body = rows
       .map((r, i) => {
         const sign = r.kind === 'cmd' ? r.sign || promptAttr || '$' : r.kind === 'out' ? '' : r.sign;
-        const signCls = r.kind === 'cmd' ? 'vk-prompt' : r.kind === 'out' ? '' : 'vk-sign';
-        const cls = `vk-line is-${r.kind}`;
+        const signCls = r.kind === 'cmd' ? 'vk-prompt vk-tok-prompt' : r.kind === 'out' ? '' : 'vk-sign';
+        const isHl = currentSet.has(i + 1);
+        const cls = `vk-line is-${r.kind}${isHl ? ' is-hl' : ''}`;
         const sr = r.kind === 'ok' ? '成功：' : r.kind === 'warn' ? '警告：' : r.kind === 'err' ? '错误：' : '';
         // 输出从 0 列开始：真实终端不会把 stdout 缩进到 prompt 列。
         const signHtml = r.kind === 'out' ? '' : `<span class="${signCls}" data-meta>${esc(sign || ' ')}</span>`;
-        return `<div class="${cls}" style="--i:${i}"><span class="vk-sr">${sr}</span>${signHtml}<span class="vk-txt">${r.text || ' '}</span></div>`;
+        const text = tokensToHtml(r.tokens) || ' ';
+        return `<div class="${cls}" data-line="${startNo + i}" style="--i:${i}"><span class="vk-sr">${sr}</span>${signHtml}<span class="vk-txt">${text}</span></div>`;
       })
       .join('');
 

@@ -97,6 +97,10 @@ export const PRESETS = {
   'vk-term': [
     { label: '大号', attrs: { mass: 'hero' } },
     { label: '无头', attrs: { chrome: 'none' } },
+    // 同一段 transcript 的对照：不上色时命令、参数、路径、输出全在墨阶里。
+    { label: '不上色', attrs: { lang: 'none' } },
+    // 讲解时指一行：整行 focus 底 + 左缘一条蓝（与 vk-code 的 current 同一条规则）。
+    { label: '指第 3 行', attrs: { current: '3' } },
   ],
   'vk-diff': [
     { label: '并排', attrs: { variant: 'split' } },

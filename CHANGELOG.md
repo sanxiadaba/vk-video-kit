@@ -1,5 +1,37 @@
 # 变更记录
 
+## 14.2 · 表达力（批次 B）
+
+先让代码/终端**读得出来**：一行命令里命令名、参数、路径、输出、报错本来是同一个颜色，
+观众看不出哪一段是"我在敲的"、哪一段是"机器回的"。
+
+- **`vk-term` 的 shell 词法**（`src/shared/shell.mjs`）：一行 transcript 拆成
+  `prompt / cmd / flag / path / string / num / out / err`（以及 `var / comment / punct`），
+  各自一色，颜色全部来自已有语义令牌（墨阶 + info / focus / ok / err），不新增色相。
+  认不出就落 `out`——任何一行都有颜色，绝不整行丢色。词法只有一份：构建期
+  （`src/highlight.mjs`）把每行切好写进 `data-vk-term`，运行期（`src/runtime/code.mjs`）
+  直接消费；hash / lang / prompt / marks 对不上时才用同一份词法重切。
+  - `lang="sh|powershell|asm|none"`：`asm` 让非命令行按汇编切；`none` 是纯文本，
+    不认提示符、不切 token（同一段 transcript 的"未上色"对照）。
+  - **行为变化（有意）**：不写新属性的 `<vk-term>` 现在会上色。这是本批的全部目的；
+    文字、行高、窗壳都没动，变的是每一段的颜色与命令名的字重（700 → 600，与
+    `vk-code` 的关键字一致）。
+- **`vk-asm` 分色**：助记符 / 寄存器 / 立即数（`$0x…`）/ 地址 / 注释 各一色，
+  与终端同一张 token 表；objdump 的机器码列（`f3 c3`）不会被涂成助记符。
+  旧的两色操作数 class（`vk-op-reg` / `vk-op-imm`）退役。
+- **逐行浮现 `reveal="all|line|none"`**（三个组件都有，默认 `all` = 现状）：
+  `line` 按宿主的 `at` + `stagger` 逐行浮现，复用 director 的 `plan()/seek()`，
+  没有第二套动画引擎；`none` 让整块不参与出场。**不是打字机**——没有逐字，
+  录屏不慢、静帧也有意义。
+- **当前行 `current`（`line` 是同一概念的别名）**：`vk-term` 补上 `current`，
+  与 `vk-code` / `vk-asm` 同一条视觉规则（整行 focus 底 + 左缘 4px 蓝条），
+  讲解时可以指着一行说。
+- **能力矩阵 +3 条**：`term-shell-lexicon` / `asm-tokenize` / `reveal-line`，
+  契约、标本、测试三件齐全；标本册的 `vk-term` 页换成真实采集产物
+  （`assets/hello/build/steps.txt`），并给出 `lang="none"` 的上色前后对照。
+- **真实采集产物进了仓库**：`assets/hello/build/{steps.txt,disasm.txt,pair.diff}`，
+  词法测试直接拿它们断言 token 种类与数量，不再只对玩具样例负责。
+
 ## 14.1 · 表面与层次（批次 A）
 
 先给画面深度，颜色才有地方落：只有一种纸 + 四档灰时，彩色只能往字上抹。

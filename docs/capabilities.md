@@ -16,6 +16,9 @@
 | vk-panel · inset | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · dark | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · 标题带 | `vk-panel.title` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
+| 终端 · shell 词法 | `vk-term.lang` | `specimen/vk-term.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
+| 汇编 · 五色 token | `vk-asm.focus` | `specimen/vk-asm.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
+| 逐行浮现 · reveal | `vk-term.reveal`<br>`vk-code.reveal`<br>`vk-asm.reveal`<br>`vk-term.current` | `specimen/vk-term.html` | `tests/shell-dom.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -67,6 +70,27 @@
 - 契约断言：`vk-panel.title`
 - 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
 - 测试：`tests/panel.test.mjs` · 「vk-panel：标题带用 vk-label，title 变了就跟着变」
+
+### ✅ 终端 · shell 词法
+
+- 能力：一行 transcript 拆成 prompt / cmd / flag / path / string / num / out / err 并各自上色；认不出就落 out，绝不整行丢色。词法只有一份（src/shared/shell.mjs），构建期与运行期共用；lang="none" 是同一段文本的未上色对照。
+- 契约断言：`vk-term.lang`
+- 标本页：`_site/specimen/vk-term.html` + 契约宿主 `_site/specimens/vk-term.html`
+- 测试：`tests/shell.test.mjs` · 「shell 词法：steps.txt 的 6 行各自成类，命令/参数/路径分开」；`tests/shell-dom.test.mjs` · 「vk-term 上色：命令 / 参数 / 路径 / 输出各自一类，颜色真的不同」
+
+### ✅ 汇编 · 五色 token
+
+- 能力：助记符 / 寄存器 / 立即数 / 地址 / 注释各一色，和终端用同一张语义 token 表（不新增色相）；objdump 的机器码列不会被涂成助记符。契约能探到的是行级视觉（focus / 行底），token 本身由单测与标本页守着。
+- 契约断言：`vk-asm.focus`
+- 标本页：`_site/specimen/vk-asm.html` + 契约宿主 `_site/specimens/vk-asm.html`
+- 测试：`tests/shell.test.mjs` · 「asm 分色：真实 disasm.txt 前 200 行，种类与数量都对得上」；`tests/shell-dom.test.mjs` · 「vk-asm 分色：助记符 / 寄存器 / 立即数 / 地址 / 注释各一色」
+
+### ✅ 逐行浮现 · reveal
+
+- 能力：reveal="all|line|none"：all 是现状整块出现；line 按 at + stagger 逐行浮现（复用 director 的 plan/seek，不新写引擎）；none 整块不参与。current / line 让一行处于 focus，供讲解时指。不是打字机。
+- 契约断言：`vk-term.reveal` · `vk-code.reveal` · `vk-asm.reveal` · `vk-term.current`
+- 标本页：`_site/specimen/vk-term.html` + 契约宿主 `_site/specimens/vk-term.html`
+- 测试：`tests/shell-dom.test.mjs` · 「vk-term reveal="line"：t=0 / 中 / 末三态（复用 director，不是新引擎）」；`tests/shell-dom.test.mjs` · 「reveal="none"：整块不参与出场（at/enter 也不动它）」；`tests/shell-dom.test.mjs` · 「vk-code reveal="line"：代码行也按 at + stagger 逐行浮现」；`tests/shell-dom.test.mjs` · 「vk-term current / line：指哪一行，哪一行整行 focus」
 
 ## 怎么判红
 

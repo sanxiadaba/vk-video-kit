@@ -214,13 +214,31 @@ vk-term{ display: block; }.vk-term .vk-bd{
   text-overflow: ellipsis;
   white-space: nowrap;
   text-align: left;
-  color: var(--vk-win-fg-2);
+  /* 墨阶 tertiary：提示符是「这不是命令本体」的元信息，退一档墨。 */
+  color: var(--vk-ink-3);
   font-weight: var(--vk-w-bold);
   user-select: none;
-}/* 命令行的语法色：复用 window 的 paper/ink 两套语法 token，不借语义色。
-   语义色只留给结果行的底/条/glyph。 */
-.vk-cmd-exe{ color: var(--vk-win-k); font-weight: var(--vk-w-bold); }.vk-cmd-str,
-.vk-cmd-path{ color: var(--vk-win-s); }.vk-cmd-flag{ color: var(--vk-win-p); }.vk-cmd-num{ color: var(--vk-win-n); }.vk-cmd-comment{ color: var(--vk-win-c); font-style: italic; }.vk-term .vk-txt{ min-width: 0; white-space: pre-wrap; word-break: break-word; }.vk-term .is-cmd .vk-txt{ color: var(--vk-win-fg); }.vk-term .is-out .vk-txt{ color: var(--vk-win-fg-2); }/* 结果行：整行一条语义底，glyph 说明是哪一种。色盲也能读。 */
+}/* 终端 / 汇编的语义 token：类名与映射表在 src/shared/shell.mjs，构建期与运行期
+   同一份。颜色全部来自已有语义令牌（墨阶 + info / focus / ok / err），不新增色相；
+   结构与 vk-code 的高亮一致（<span class="vk-tok-…" data-tok="…">）。 */
+.vk-tok-prompt{ color: var(--vk-ink-3); }
+.vk-tok-cmd{ color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
+.vk-tok-flag{ color: var(--vk-info-ink); }
+.vk-tok-path{ color: var(--vk-focus-ink); }
+.vk-tok-str{ color: var(--vk-ok-ink); }
+.vk-tok-num{ color: var(--vk-ink-1); }
+.vk-tok-out{ color: var(--vk-ink-2); }
+.vk-tok-err{ color: var(--vk-err-ink); }
+.vk-tok-var{ color: var(--vk-info-ink); }
+.vk-tok-comment{ color: var(--vk-ink-3); font-style: italic; }
+.vk-tok-punct{ color: var(--vk-ink-3); }
+.vk-tok-reg{ color: var(--vk-focus-ink); }
+.vk-tok-imm{ color: var(--vk-ok-ink); }
+.vk-tok-addr{ color: var(--vk-ink-3); }
+.vk-term .vk-txt{ min-width: 0; white-space: pre-wrap; word-break: break-word; }.vk-term .is-cmd .vk-txt{ color: var(--vk-win-fg); }.vk-term .is-out .vk-txt{ color: var(--vk-win-fg-2); }
+/* 指一行：与 vk-code 的 current 同一条视觉规则（整行 focus 底 + 左缘一条蓝）。
+   term 的正文在 .vk-txt 里，没有 .vk-src，所以左缘条要单独落到它身上。 */
+.vk-term .vk-line.is-hl .vk-txt{ box-shadow: inset 4px 0 0 var(--vk-focus); }/* 结果行：整行一条语义底，glyph 说明是哪一种。色盲也能读。 */
 .vk-sign{
   flex: 0 0 40px;
   text-align: center;
