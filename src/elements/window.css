@@ -113,6 +113,10 @@
   display: block;
   flex: 1 1 auto;
   min-width: 0;
+  /* 行盒按墨迹撑开：36px 等宽字的墨迹约 42px，line-height: 1 会把它卡在 36，
+     任何 chrome="min" 的窗、任何标题都会被 vk check 判成"纵向被裁"。
+     1.2（43.2px）刚好容下墨迹，又仍然落在 48px 的 .vk-file 里。 */
+  line-height: 1.2;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;

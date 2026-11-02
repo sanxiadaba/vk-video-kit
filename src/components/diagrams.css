@@ -266,7 +266,11 @@ vk-timeline { display: block; }
   color: var(--vk-ink-2);
   overflow-wrap: anywhere;
 }
-.vk-timeline[data-mass='compact'] .vk-tl-item { padding: 6px 0; }
+/* compact 再密一档：三条约 494px 的 subhead 时间线要能压进 470 以内。
+   padding 6 → 2，说明行与主值之间也从 4 收到 2；字形、行高都不动，
+   所以数字仍然完整、说明仍有一行自己的位置，不会叠字。 */
+.vk-timeline[data-mass='compact'] .vk-tl-item { padding: 2px 0; }
+.vk-timeline[data-mass='compact'] .vk-tl-desc { margin-top: 2px; }
 .vk-timeline[data-mass='compact'] .vk-tl-dot { margin-top: 8px; }
 .vk-timeline[data-mass='hero'] .vk-tl-item { padding: 20px 0; }
 .vk-timeline[data-mass='hero'] .vk-tl-dot { margin-top: 12px; }

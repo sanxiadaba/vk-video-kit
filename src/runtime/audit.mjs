@@ -385,6 +385,16 @@ export function auditPage(root = document) {
     }
   }
 
+  // 条本身放不下时，值列其实仍是完整的：不要再报"文本超出单元格"。
+  // 作者能做的是换行（每行一条）或者改 ratio——把这句直接写进报告。
+  for (const el of stage.querySelectorAll('.vk-bars')) {
+    if (el.closest('.vk-page-bleed')) continue;
+    if (el.clientWidth < 8) continue;
+    if (el.scrollWidth > el.clientWidth + 3) {
+      out.push({ type: 'narrow', el, what: 'vk-bars', sw: el.scrollWidth, cw: el.clientWidth });
+    }
+  }
+
   // 孤行：多行文本的最后一行少于 4 个汉字宽，读起来像排版事故。
   for (const el of stage.querySelectorAll('vk-text, .r-title-sub, .r-callout-bd, .vk-list li')) {
     if (el.closest('[data-meta]') || el.closest('svg')) continue;
@@ -468,6 +478,7 @@ function fixFor(x, safeRect) {
   if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / mass="compact"`;
   if (x.type === 'clip') return `差 ${x.sw - x.cw}px：先试 long="wrap" / 删字符`;
   if (x.type === 'audit-overflow') return `差 ${Math.max(x.sw - x.cw, x.sh - x.ch)}px：先试 long="wrap" / mass="compact" / 删 1 行`;
+  if (x.type === 'narrow') return '格太窄：改成每行一条（换行），或改 ratio / 缩短标签；不要继续压值列';
   if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
   if (x.type === 'safe' && x.box && safeRect) {
     const [l, t, r, b] = x.box;

@@ -113,6 +113,13 @@ vk-list{ display: block; }.vk-list{
   font-weight: var(--vk-w-med);
   line-height: 1.95;
   color: var(--vk-ink-3);
+}/* 密度：compact 只压行高与项目内距，字号、墨色、项目符号都不动。
+   默认 normal 没有自己的规则 —— 旧页面不写 mass 时逐像素不变。 */
+.vk-list[data-mass='compact']{
+  line-height: 1.2;
+  --vk-list-gap: var(--vk-s2);
+}.vk-list[data-mass='compact'] > li{
+  padding-left: 48px;
 }/* --------------------------------------------------------------- vk-code */
 
 vk-code{ display: block; }.vk-code .vk-bd{
@@ -877,14 +884,15 @@ vk-bits{ display: block; }.vk-bits-wrap{
   border-bottom-color: var(--vk-info-line);
 }.vk-bit-legend-f:first-child b{ color: var(--vk-info); }.vk-bit-legend-f:nth-child(2){ border-bottom-color: var(--vk-line-strong); }.vk-bit-legend-f:nth-child(3){ border-bottom-color: var(--vk-line-strong); }.vk-bits-wrap[data-label='1'] .vk-bit-legend{ width: calc(100% - 184px); margin-left: 184px; }.vk-bit-legend-f b{ font-weight: var(--vk-w-med); color: var(--vk-ink-1); }.vk-bit-legend-f i{ font-style: normal; color: var(--vk-ink-3); }.vk-bits-wrap[data-fields='1'] .vk-bit-col[data-gap],
 .vk-bits-wrap[data-fields='1'] .vk-bit-col[data-byte]{ border-left: 0; }.vk-bits-wrap[data-fields='1'] .vk-bit-col[data-field-start]{ border-left: 3px solid var(--vk-line-strong); }/* ---------------------------------------------------------------- vk-bars */
-vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: var(--vk-s3); padding-right: var(--vk-s2); }.vk-bar{
+vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: var(--vk-s3); padding-right: var(--vk-s2); container-type: inline-size; }.vk-bar{
   display: grid;
-  grid-template-columns: 220px minmax(0, 1fr) minmax(176px, max-content);
+  /* 值列必须完整：max-content 比 176px 的下限更硬。窄格先压条，不压数字。 */
+  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) max-content;
   align-items: center;
-  gap: var(--vk-s3);
+  gap: var(--vk-s2);
   font-size: var(--vk-t-body);
   line-height: 1.5;
-}.vk-bar-l{ color: var(--vk-ink-2); }.vk-bar-t{
+}.vk-bar-l{ color: var(--vk-ink-2); min-width: 0; }.vk-bar-t{
   position: relative;
   height: 24px;
   overflow: hidden;
@@ -921,6 +929,18 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
 }.vk-bar-x{
   margin-left: var(--vk-s2);
   color: var(--vk-ink-3);
+}/* 窄格（展示站的小镜头）换行：标签独占一行，条与值并排第二行。
+   值列仍按 max-content 完整显示，条拿剩下的宽——它被压短，但数字不被裁。
+   这个断点（480）低于 demo 的 516，宽格里的单行布局一个像素都不动。 */
+@container (max-width: 480px){
+  .vk-bar{
+    grid-template-columns: minmax(0, 1fr) max-content;
+    grid-template-areas: 'label label' 'track value';
+    row-gap: var(--vk-s1);
+  }
+  .vk-bar-l{ grid-area: label; }
+  .vk-bar-t{ grid-area: track; }
+  .vk-bar-v{ grid-area: value; }
 }vk-bars[mass='compact'] .vk-bar{ line-height: 1.15; min-height: 56px; }vk-bars[mass='compact'] .vk-bar-t{ height: 16px; }.vk-bars-unit{
   margin: 0;
   font-size: var(--vk-t-label);

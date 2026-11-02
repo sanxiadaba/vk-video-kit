@@ -239,6 +239,7 @@ try {
     else if (it.type === 'clip') lines.push(`横向被裁：${it.what}（${it.sw} > ${it.cw}）`);
     else if (it.type === 'clip-y') lines.push(`纵向被裁：${it.what}（${it.sh} > ${it.ch}）`);
     else if (it.type === 'content-clip') lines.push(`内容被裁：${it.what}（内容 ${it.sh} > 盒子 ${it.ch}）`);
+    else if (it.type === 'narrow') lines.push(`格太窄：${it.what}（${it.sw} > ${it.cw}）：建议换行 / 改 ratio`);
     else if (it.type === 'overlap') lines.push(`重叠 ${it.size?.join('×') || ''}：${it.what}`);
     else if (it.type === 'zero') lines.push(`空锚点：${it.what}`);
     else if (it.type === 'ln-overlap') lines.push(`行号压住代码：${it.what}（+${it.gap}px）`);

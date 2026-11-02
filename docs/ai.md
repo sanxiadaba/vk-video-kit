@@ -172,7 +172,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L3 器械 · 渲染一种编程数据的形状
 
 - **`vk-list`** · 列表 — 列表。要点 / 清单 / 定义；条目写成 <li>。步骤用 vk-steps。
-  - 属性：`rule` · `bare` · `gap` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant`
+  - 属性：`rule` · `bare` · `gap` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant`
   - 子节点：条目写成 `<li>`
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="sm">`

@@ -9,6 +9,7 @@ export const EFFECTS = {
     rule: { on: 'vk-list', kind: 'geometry', prop: 'height', expect: { not: '0' } },
     bare: { on: 'vk-list li', kind: 'style', prop: 'padding-left', expect: { to: '0px' } },
     gap: { on: 'vk-list', kind: 'geometry', prop: 'height' },
+    mass: { on: '.vk-list', kind: 'style', prop: 'line-height' },
   },
 
   'vk-steps': {

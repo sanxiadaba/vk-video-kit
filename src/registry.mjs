@@ -166,7 +166,7 @@ const DEFAULTS = {
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
-  'vk-list': { variant: 'bullet', gap: 'sm' },
+  'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
   'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
@@ -391,7 +391,9 @@ export const TAGS = {
     attrs: {
       'rule': bool(),
       'bare': bool(),
-          'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
+      'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
+      // 密度：compact 只压行高与内距（1.2 / s2），默认 normal 与引入前逐像素一致。
+      'mass': oneOf('compact', 'normal'),
     },
   },
   'vk-code': {

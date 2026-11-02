@@ -32,10 +32,13 @@ export class VkList extends VkElement {
     const ordered = variant === 'ordered';
     const rule = this.hasAttribute('rule');
     const bare = this.hasAttribute('bare');
+    // 密度：compact 只改行高与内距；不写 / 写 normal 完全走旧样式。
+    const mass = this.getAttribute('mass') === 'compact' ? 'compact' : 'normal';
     const mode = variant === 'ordered' ? 'bullet' : variant;
     const ul = document.createElement(ordered ? 'ol' : 'ul');
     ul.className = 'vk-list';
     ul.dataset.mode = mode;
+    ul.dataset.mass = mass;
     if (ordered) ul.dataset.ordered = '';
     if (rule) ul.dataset.rule = '';
     if (bare) ul.dataset.bare = '';
