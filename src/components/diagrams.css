@@ -243,6 +243,18 @@ vk-timeline { display: block; }
   font-variant-numeric: tabular-nums;
   overflow-wrap: anywhere;
 }
+/* value 的体量档：不写就是 hero（224），与引入 value-size 之前完全一致。
+   title / subhead 只改字号与行高，主值仍然是这一条的主位。
+   只落在轴模式的 .vk-tl-item 上：泳道 chip 只有一格宽，224 放不进去，
+   那里仍按 subhead 画（见文件末尾的 .vk-tl-chip .vk-tl-value）。 */
+.vk-timeline[data-value-size='title'] .vk-tl-item .vk-tl-value {
+  font-size: var(--vk-t-title);
+  line-height: 1.06;
+}
+.vk-timeline[data-value-size='subhead'] .vk-tl-item .vk-tl-value {
+  font-size: var(--vk-t-subhead);
+  line-height: 1.1;
+}
 .vk-tl-note {
   color: var(--vk-ink-2);
 }

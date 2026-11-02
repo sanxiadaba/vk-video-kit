@@ -209,6 +209,15 @@ export const PROBES = {
       why: '收起一个真实存在的目录；断行数。',
     },
   },
+  'vk-timeline': {
+    // 标本把 value-size 定在 subhead（演示"一帧三个数字"的降档用法），
+    // 默认 hero 与 subhead 已由 tests/gaps-kit.test.mjs 逐档测过；
+    // 契约只探 title 这一档，免得同一件事在两个地方各断言一次。
+    'value-size': {
+      values: ['title'],
+      why: '标本用 subhead；契约只补 title 这一档（hero 是默认，subhead 是标本态）。',
+    },
+  },
   'vk-asm': {
     highlight: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'background-color' }, why: '高亮行必须有背景色差。' },
     focus: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'opacity' }, why: '聚光让非目标行透明度下降。' },
@@ -293,7 +302,7 @@ export const VISUAL_EXEMPT = {
   'vk-cells.mass': 'hero 档把格子撑到 300px，标本台装不下；只断言 min-height 变了。',
   'vk-term.mass': 'hero 档把终端撑到整帧，标本台装不下；只断言行高变了。',
   'vk-table.mass': 'hero 档加内距会把表格撑出标本台；只断言内距变了。',
-  'vk-window.mass': 'window 的 hero 只是把标题栏加高，不改变子树结构。',
+  'vk-window.mass': 'window 的标本里没有 diff / 代码行，hero 只加高标题栏；行高确实随窗的体量变，由 tests/gaps-kit.test.mjs 覆盖。',
   'vk-diff.mass': 'hero 档把对照行撑高，标本台装不下；只断言行高变了。',
   'vk-tree.mass': 'hero 档把文件树撑到整帧，标本台放不下；只断言行高变了。',
   'vk-bits.mass': 'hero 档把位图行撑高，标本台放不下；只断言行高变了。',

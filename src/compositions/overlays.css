@@ -134,8 +134,30 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
   background: var(--vk-info);
 }
 
-/* 强度三档：pin 的气泡 */
+/* 强度三档：pin 的气泡。
+   solid 必须是"实色 + 反白"：半透明深蓝 + 深墨字压在深色终端截图上，
+   气泡和字一起消失。底色取设计系统里的语义实色，字取 paper——每一组都 ≥ 6.4:1，
+   而且 alpha=1，下面的截图一个像素都不会透上来。 */
 .vk-pin-bd[data-emphasis='soft'] { background: var(--vk-surface-2); }
-.vk-pin-bd[data-emphasis='solid'] { background: var(--vk-info-soft); }
-.vk-pin-bd[data-tone='focus'][data-emphasis='solid'] { background: var(--vk-focus-soft); }
+.vk-pin-bd[data-emphasis='solid'] {
+  --vk-pin-solid: var(--vk-ink-1);
+  background: var(--vk-pin-solid);
+  color: var(--vk-paper-surface-1);
+  border-color: var(--vk-pin-solid);
+}
+.vk-pin-bd[data-emphasis='solid'][data-tone='info'] { --vk-pin-solid: var(--vk-info); }
+.vk-pin-bd[data-emphasis='solid'][data-tone='focus'] { --vk-pin-solid: var(--vk-focus); }
+.vk-pin-bd[data-emphasis='solid'][data-tone='ok'] { --vk-pin-solid: var(--vk-ok); }
+.vk-pin-bd[data-emphasis='solid'][data-tone='warn'] { --vk-pin-solid: var(--vk-warn); }
+.vk-pin-bd[data-emphasis='solid'][data-tone='err'] { --vk-pin-solid: var(--vk-err); }
+/* 编号也反白：同色底上的同色圆点等于没有编号。 */
+.vk-pin-bd[data-emphasis='solid'] .vk-pin-n {
+  background: var(--vk-paper-surface-1);
+  color: var(--vk-ink-1);
+}
+/* dot 变体整个气泡就是一个点：编号跟着实色底走，不再套一圈白。 */
+.vk-pin-bd[data-variant='dot'][data-emphasis='solid'] .vk-pin-n {
+  background: var(--vk-pin-solid);
+  color: var(--vk-paper-surface-1);
+}
 .vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }

@@ -21,6 +21,12 @@ const num = (v) => {
   return Number.isFinite(n) ? n : null;
 };
 
+/**
+ * value 的体量档：一帧放三个数字时，hero（224）会把整页撑到 864+
+ * 所以给一档明确的降档词。词表是闭集，构建期也会拦（见 src/highlight.mjs）。
+ */
+const VALUE_SIZES = new Set(['hero', 'title', 'subhead']);
+
 export class VkTimeline extends VkElement {
   static watchSource = true;
   static renderedRoot = '.vk-timeline';
@@ -56,6 +62,12 @@ export class VkTimeline extends VkElement {
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const mass = this.getAttribute('mass') || 'normal';
+    // 不写 = hero：引入 value-size 之前 value 就是 hero（224），一个像素都不许变。
+    const valueSizeRaw = (this.getAttribute('value-size') || 'hero').trim();
+    const valueSize = VALUE_SIZES.has(valueSizeRaw) ? valueSizeRaw : 'hero';
+    if (valueSizeRaw !== valueSize) {
+      this._warnOnce('value-size', `的 value-size="${valueSizeRaw}" 不认识，按 hero 画；可用：hero / title / subhead`);
+    }
     const span = [this.getAttribute('start') || items[0]?.date, this.getAttribute('end') || items[items.length - 1]?.date]
       .filter(Boolean)
       .join('–');
@@ -63,7 +75,7 @@ export class VkTimeline extends VkElement {
       ? `<header class="vk-tl-hd"><span class="vk-tl-title">${esc(title)}</span><span class="vk-tl-meta" data-meta>${esc(span)}${span ? ' · ' : ''}${items.length} 个节点</span></header>`
       : '';
     const body = variant === 'lanes' ? this._lanes(items) : this._axis(items);
-    this.innerHTML = `<div class="vk-timeline" data-variant="${variant}" data-mass="${esc(mass)}">${head}${body}</div>`;
+    this.innerHTML = `<div class="vk-timeline" data-variant="${variant}" data-mass="${esc(mass)}" data-value-size="${esc(valueSize)}">${head}${body}</div>`;
   }
 
   /** 主值 / 说明：value 顶掉 label 的主位，note 顶掉正文的小字位；都没写就保持旧样子。 */

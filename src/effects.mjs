@@ -325,6 +325,9 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   variant: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-lanes' },
   steps: { kind: 'any', reason: '只在 lanes 模式下改变步数' },
   mass: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
+  // 三档：hero 224（默认）/ title 144 / subhead 96。标本写的是 subhead，
+  // 所以契约只探 title 一档（见 contract-probes 的 PROBES）。
+  'value-size': { on: '.vk-tl-value', kind: 'style', prop: 'font-size', expect: '144px' },
 });
 
 
@@ -334,6 +337,8 @@ Object.assign((EFFECTS['vk-compare'] ||= {}), {
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
   split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path', expect: /inset|polygon|circle/ },
   ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
+  // top 在图上让出一条 64px 的带：这是"角标不压图"的几何证据。
+  'label-position': { on: '.vk-cmp', kind: 'style', prop: 'padding-top', expect: '64px' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {

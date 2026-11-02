@@ -146,6 +146,8 @@ const ATTR_META = {
   numbers: { label: '行号', group: 'appearance' },
   summary: { label: '摘要', group: 'appearance' },
   'label-size': { label: '标签字号', group: 'appearance' },
+  'label-position': { label: '角标位置', group: 'appearance' },
+  'value-size': { label: '主值字号', group: 'appearance' },
   'label-dx': { label: '标签 X', group: 'layout' },
   'label-dy': { label: '标签 Y', group: 'layout' },
   header: { label: '页眉', content: true },
@@ -167,14 +169,14 @@ const DEFAULTS = {
   'vk-list': { variant: 'bullet', gap: 'sm' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min' },
-  'vk-timeline': { variant: 'events', mass: 'normal' },
+  'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
-  'vk-compare': { mode: 'split', ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%' },
+  'vk-compare': { mode: 'split', ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%', 'label-position': 'inside' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
@@ -493,7 +495,7 @@ export const TAGS = {
     name: '对照',
     layer: 'components',
     summary:
-      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。',
+      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。',
     attrs: {
       'a': text(),
       'b': text(),
@@ -505,6 +507,8 @@ export const TAGS = {
       'position': text(),
       'label-a': text(),
       'label-b': text(),
+      // 角标默认叠在图上（inside，保持旧样子）；top 在图上腾一条带，不压任何像素。
+      'label-position': oneOf('inside', 'top'),
     },
   },
   'vk-tree': {
@@ -669,7 +673,7 @@ export const TAGS = {
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 224 / title 144 / subhead 96，默认 hero）。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -683,6 +687,9 @@ export const TAGS = {
       'lanes': text(),
       'title': text(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // value 是"主值"（大数字）。一帧放三个数字时 hero 会把整页撑爆，
+      // 所以给一档可选的体量：hero 224（默认，和引入前完全一致）/ title 144 / subhead 96。
+      'value-size': oneOf('hero', 'title', 'subhead'),
     },
   },
   'vk-page': {
@@ -942,8 +949,9 @@ const ATTR_META_BY_TAG = {
     b: { label: 'b 图（split 右半 / side 右侧 / stack 下方）', content: true },
     mode: { label: '对照方式（split 叠图裁切 / side 并排 / stack 上下；后两者完整显示）', group: 'appearance' },
     split: { label: 'split 模式左侧 a 的占比（%，side/stack 下无效）', group: 'appearance' },
-    'label-a': { label: 'a 的角标（左下）', content: true },
-    'label-b': { label: 'b 的角标（右下）', content: true },
+    'label-a': { label: 'a 的角标（inside 时左下 / top 时左上）', content: true },
+    'label-b': { label: 'b 的角标（inside 时右下 / top 时右上）', content: true },
+    'label-position': { label: '角标位置（inside 叠在图上 / top 在图上另起一条带，不压图像）', group: 'appearance' },
   },
   'vk-pin': {
     w: { label: '气泡宽（像素，可写 200 或 200px）', group: 'layout' },

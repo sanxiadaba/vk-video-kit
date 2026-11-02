@@ -240,12 +240,16 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
 }.vk-dline{
   display: flex;
   align-items: center;
-  min-height: 70px;
-  height: 70px;
+  /* 行高是变量：体量（diff 自己的 mass，或外层窗的 mass）只改这一个数，
+     行盒、最小高、行距一起跟着走，不会出现"min-height 改了、height 还钉在 70"。
+     默认 70 与引入变量之前完全一致。 */
+  --vk-dline-h: 70px;
+  min-height: var(--vk-dline-h);
+  height: var(--vk-dline-h);
   padding-right: var(--vk-s4);
   white-space: pre;
   overflow: hidden;
-  line-height: 70px;
+  line-height: var(--vk-dline-h);
 }.vk-sr{
   position: absolute;
   width: 1px;
@@ -284,7 +288,7 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   --vk-win-rule: var(--vk-line-2);
   --vk-win-meta: var(--vk-ink-3);
 }.vk-dsplit{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--vk-s3); align-items: stretch; }.vk-diff-pane{ width: 100%; min-width: 0; }/* 并排时每列只有一半宽：代码退到 44 地板，换来 24 个字符不被裁。 */
-.vk-diff-pane .vk-dbd{ font-size: var(--vk-t-label); }.vk-diff-pane .vk-dline{ min-height: 70px; height: 70px; }.vk-diff-split[data-chrome='none'] .vk-diff-pane::before{
+.vk-diff-pane .vk-dbd{ font-size: var(--vk-t-label); }.vk-diff-split[data-chrome='none'] .vk-diff-pane::before{
   content: attr(data-label);
   display: flex;
   align-items: center;
@@ -977,13 +981,17 @@ vk-tree[grow] .vk-tree-row{ flex: 1 1 0; min-height: 0; }vk-tree[grow] > .vk-tre
 vk-table[mass='compact'] td{ padding: var(--vk-s1) var(--vk-s2); }vk-table[mass='hero'] th,
 vk-table[mass='hero'] td{ padding: var(--vk-s5) var(--vk-s6); font-size: var(--vk-t-body); }/* 体量三档：compact 收紧、normal 常规、hero 让块吃掉剩余高度。
    window / diff / tree / bits 是这轮才补上体量的——它们以前只跟着 density 走。 */
-vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .vk-tree-row{ min-height: 88px; }vk-diff[mass='compact'] .vk-dline{ min-height: 56px; }vk-diff[mass='hero'] .vk-dline{ min-height: 88px; }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }vk-asm[mass='hero'] .vk-asm-row{ min-height: 88px; }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
+vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .vk-tree-row{ min-height: 88px; }vk-diff[mass='compact'] .vk-dline{ --vk-dline-h: 58px; }vk-diff[mass='normal'] .vk-dline{ --vk-dline-h: 70px; }vk-diff[mass='hero'] .vk-dline{ --vk-dline-h: 88px; }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }/* 窗的体量必须落到内容行：只改自己的内距等于没压——窗里是 diff / 代码时，
+   行高还钉在 70，窗口就永远压不下去。内层自己写了 mass 时按内层（:not([mass])）。 */
+vk-window[mass='compact'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 58px; }vk-window[mass='normal'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 70px; }vk-window[mass='hero'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 88px; }vk-window[mass='compact'] vk-code:not([mass]) .vk-line{ min-height: 58px; line-height: 58px; }vk-window[mass='normal'] vk-code:not([mass]) .vk-line{ min-height: 70px; line-height: 70px; }vk-window[mass='hero'] vk-code:not([mass]) .vk-line{ min-height: 88px; line-height: 88px; }vk-asm[mass='hero'] .vk-asm-row{ min-height: 88px; }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
 /* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
    对照的注意力应该落在差异上，而不是落在控件上。 */
 vk-compare{ display: block; }.vk-cmp{
   box-sizing: border-box;
   position: relative;
   width: 100%;
+  /* 角标顶置时让出来的那条带；64 = --vk-s6，够放一行 36 的角标。 */
+  --vk-cmp-band: var(--vk-s6);
   overflow: hidden;
   border-radius: var(--vk-r-2);
   border: var(--vk-line-w) solid var(--vk-line-2);
@@ -1041,7 +1049,21 @@ vk-compare{ display: block; }.vk-cmp{
   background: var(--vk-surface-2);
 }.vk-cmp[data-mode='side'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='side'] > .vk-cmp-b{ grid-column: 2; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-b{ grid-column: 1; grid-row: 2; }.vk-cmp[data-mode='side'] > .vk-cmp-div,
 .vk-cmp[data-mode='stack'] > .vk-cmp-div{ display: none; }.vk-cmp[data-mode='stack'] > .vk-cmp-la{ bottom: calc(50% + var(--vk-s2)); }.vk-cmp[data-mode='side'] > .vk-cmp-la,
-.vk-cmp[data-mode='side'] > .vk-cmp-lb{ bottom: var(--vk-s2); }vk-text[data-tone='focus'][data-strength='soft']{
+.vk-cmp[data-mode='side'] > .vk-cmp-lb{ bottom: var(--vk-s2); }/* 角标顶置：先在图上让出一条 64px 的带，图像从带下面开始画。
+   默认 inside 仍是"叠在图上、贴底"，所以这些规则只认 data-label-position='top'；
+   它解决的是「角标压住图最后几行」——被压掉的字，读者永远看不到。 */
+.vk-cmp[data-label-position='top']{
+  padding-top: var(--vk-cmp-band);
+}.vk-cmp[data-label-position='top'][data-mode='split'] > img{
+  top: var(--vk-cmp-band);
+  height: calc(100% - var(--vk-cmp-band));
+}.vk-cmp[data-label-position='top'] > .vk-cmp-div{
+  top: var(--vk-cmp-band);
+}.vk-cmp[data-label-position='top'] > .vk-cmp-la,
+.vk-cmp[data-label-position='top'] > .vk-cmp-lb{
+  top: var(--vk-s1);
+  bottom: auto;
+}vk-text[data-tone='focus'][data-strength='soft']{
   color: color-mix(in srgb, var(--vk-focus) 55%, var(--vk-ink-1));
 }vk-text[data-tone='focus'][data-strength='ghost']{
   color: var(--vk-ink-1);

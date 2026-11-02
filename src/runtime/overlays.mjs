@@ -342,10 +342,18 @@ export class VkPin extends VkOverlay {
         if (w !== n) this._warnOnce('w', `的 w="${wRaw}" 超出 160…900，按 ${w} 处理`);
       }
     }
-    this._bd.style.width = w + 'px';
+    // 编号先落定，再量宽度：带编号的气泡比不带编号的宽一圈，
+    // 先量后填会把编号挤到第二行——这正是"短批注折成三行"的来源之一。
     const n = parseInt(this.getAttribute('n') || '0', 10);
     this._n.hidden = !(n > 0);
     this._n.textContent = n > 0 ? String(n) : '';
+    // 批注只有一句话：w 太窄时它会折成三行，读起来像诗，不像注。
+    // 先量"一行到底要多少"，再按内容加宽到 360 为止；比 w 窄就不动——
+    // 那是作者自己要的窄气泡，不替他收窄。上限 360：再宽就盖住被注的东西了。
+    this._bd.style.width = 'max-content';
+    const natural = Math.ceil(this._bd.getBoundingClientRect().width);
+    const fitted = Math.min(900, Math.max(160, Math.max(w, Math.min(natural, 360))));
+    this._bd.style.width = fitted + 'px';
     this.draw();
     EDGES.add(this);
     VK._invalidate();

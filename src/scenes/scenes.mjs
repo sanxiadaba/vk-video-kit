@@ -375,9 +375,9 @@ export const SCENES = [
   {
     tag: 'vk-timeline',
     body: s`
-<vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线">
+<vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线" value-size="subhead">
   <li date="1972" lane="A" at="0" label="事件一">说明一</li>
-  <li date="1989" lane="A" at="1" label="事件二">说明二</li>
+  <li date="1989" lane="A" at="1" label="峰值" value="52,980" note="预处理前 · 字节"></li>
   <li date="1999" lane="B" at="2" label="事件三">说明三</li>
   <li date="2011" lane="A" at="3" label="事件四">说明四</li>
   <li date="2018" lane="B" at="4" label="事件五">说明五</li>

@@ -197,8 +197,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
-- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。
-  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。
+  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
@@ -232,11 +232,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-asm title="main.s" lines="1-13" current="6" bytes long="wrap"
         order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">`
-- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）。
-  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 224 / title 144 / subhead 96，默认 hero）。
+  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `value-size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
-  - 例：`<vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线">`
+  - 例：`<vk-timeline start="1972" end="2018" lanes="A,B" title="示例时间线" value-size="subhead">`
 
 ### L4 关系 · 两点之间的关系与批注
 

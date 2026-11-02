@@ -969,6 +969,8 @@ export class VkBars extends VkElement {
  * 静态就是「改到一半」的那一帧；要动起来就交给导演层（enter="wipe" 正好是划开）。
  * 增删只用语义色：divider 与角标只用石墨，不抢注意力。
  */
+const CMP_LABEL_POSITIONS = new Set(['inside', 'top']);
+
 export class VkCompare extends VkElement {
   static watchSource = false;
 
@@ -1000,6 +1002,12 @@ export class VkCompare extends VkElement {
     const split = Math.min(100, Math.max(0, Number.isFinite(splitNum) ? splitNum : 50));
     const fit = this.getAttribute('fit') || 'cover';
     const pos = safePosition(this.getAttribute('position') || '50% 50%');
+    // 角标两档：inside（默认，叠在图上）与 top（在图上另起一条带，不压像素）。
+    const labelPosRaw = (this.getAttribute('label-position') || 'inside').trim();
+    const labelPosition = CMP_LABEL_POSITIONS.has(labelPosRaw) ? labelPosRaw : 'inside';
+    if (labelPosRaw !== labelPosition) {
+      this._warnOnce('label-position', `的 label-position="${labelPosRaw}" 不认识，按 inside 画；可用：inside / top`);
+    }
 
     if (!this._shell) {
       this.innerHTML = `<div class="vk-cmp" role="img">
@@ -1023,6 +1031,7 @@ export class VkCompare extends VkElement {
     // split 才有"一个框里的两张叠图"；side / stack 的高度由每张图自己的比例撑开。
     this._shell.style.aspectRatio = mode === 'split' ? ratio : '';
     this._shell.dataset.fit = fit;
+    this._shell.dataset.labelPosition = labelPosition;
     // 两张图缺一张时，画面上只剩一块空灰板：看起来像"对照"，其实什么都没有。
     // 状态要留在 DOM 上（audit / vk check 能报），并且写进角标（人能看到）。
     const failed = (this._failed = this._failed || { a: false, b: false });
