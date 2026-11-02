@@ -19,6 +19,11 @@
 | 终端 · shell 词法 | `vk-term.lang` | `specimen/vk-term.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
 | 汇编 · 五色 token | `vk-asm.focus` | `specimen/vk-asm.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
 | 逐行浮现 · reveal | `vk-term.reveal`<br>`vk-code.reveal`<br>`vk-asm.reveal`<br>`vk-term.current` | `specimen/vk-term.html` | `tests/shell-dom.test.mjs` | ✅ 绿 |
+| 标注 · 连线 arrow | `vk-annotate.shape`<br>`vk-annotate.head`<br>`vk-annotate.dash`<br>`vk-annotate.width` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 标注 · 圈选 circle | `vk-annotate.ring`<br>`vk-annotate.double` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 标注 · 批注 note | `vk-annotate.note` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 标注 · 编号点 badge | `vk-annotate.n` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 对照 · 差异框 mark | `vk-compare.mark`<br>`vk-compare.mark-label` | `specimen/vk-compare.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -91,6 +96,41 @@
 - 契约断言：`vk-term.reveal` · `vk-code.reveal` · `vk-asm.reveal` · `vk-term.current`
 - 标本页：`_site/specimen/vk-term.html` + 契约宿主 `_site/specimens/vk-term.html`
 - 测试：`tests/shell-dom.test.mjs` · 「vk-term reveal="line"：t=0 / 中 / 末三态（复用 director，不是新引擎）」；`tests/shell-dom.test.mjs` · 「reveal="none"：整块不参与出场（at/enter 也不动它）」；`tests/shell-dom.test.mjs` · 「vk-code reveal="line"：代码行也按 at + stagger 逐行浮现」；`tests/shell-dom.test.mjs` · 「vk-term current / line：指哪一行，哪一行整行 focus」
+
+### ✅ 标注 · 连线 arrow
+
+- 能力：mode="arrow"：从一个元素（或 x,y 坐标）指向另一个。shape=straight|ortho|curve 决定走线，dash 决定实虚，width 改线宽，head=arrow|dot|none 决定端点。旧 vk-edge 是它的别名，走线与 13.x 逐像素一致。
+- 契约断言：`vk-annotate.shape` · `vk-annotate.head` · `vk-annotate.dash` · `vk-annotate.width`
+- 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
+- 测试：`tests/annotate.test.mjs` · 「vk-annotate arrow：三种 shape 各走一种路径，实虚/线宽/端点各自生效」；`tests/annotate.test.mjs` · 「旧标签是别名：vk-edge / vk-pin / vk-ring 与 vk-annotate 同几何」
+
+### ✅ 标注 · 圈选 circle
+
+- 能力：mode="circle"：圈出目标，ring=ellipse|rect 决定椭圆或矩形，double 再画一圈内环。旧 vk-ring（含 dim 压暗）是它的别名。
+- 契约断言：`vk-annotate.ring` · `vk-annotate.double`
+- 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
+- 测试：`tests/annotate.test.mjs` · 「vk-annotate circle：椭圆 / 矩形 / 双圈各不相同，且圈住目标」
+
+### ✅ 标注 · 批注 note
+
+- 能力：mode="note"：note=bubble|label|badge 三种写法，都复用 vk-pin 的自动避让（先算四个候选位置，再按压住多少正文排序），所以批注不遮正文。旧 vk-pin 是它的别名。
+- 契约断言：`vk-annotate.note`
+- 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
+- 测试：`tests/annotate.test.mjs` · 「vk-annotate note：泡 / 引线标签 / 编号点三种写法，且不压住正文」
+
+### ✅ 标注 · 编号点 badge
+
+- 能力：mode="badge"：编号点（①②③）钉在任意锚点上，n 是编号。位置由锚点决定，不手摆坐标。
+- 契约断言：`vk-annotate.n`
+- 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
+- 测试：`tests/annotate.test.mjs` · 「vk-annotate badge：编号点钉在任意锚点上，位置跟着锚点走」
+
+### ✅ 对照 · 差异框 mark
+
+- 能力：vk-compare 的 mark 在对照图上标出一处或多处差异：x1,y1,x2,y2（相对百分比，多组用 ;），细框 + 角标；mark-label 一一对应。split 下每处只标在所属的那一半（框心决定 A/B），side/stack 下标在 a 上。
+- 契约断言：`vk-compare.mark` · `vk-compare.mark-label`
+- 标本页：`_site/specimen/vk-compare.html` + 契约宿主 `_site/specimens/vk-compare.html`
+- 测试：`tests/annotate.test.mjs` · 「vk-compare mark：百分比换成像素，split 下只标在所属的一半」；`tests/annotate.test.mjs` · 「vk-compare mark：写错的坐标不画框，也不炸页面」
 
 ## 怎么判红
 

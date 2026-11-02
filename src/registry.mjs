@@ -152,6 +152,14 @@ const ATTR_META = {
   'value-size': { label: '主值字号', group: 'appearance' },
   'label-dx': { label: '标签 X', group: 'layout' },
   'label-dy': { label: '标签 Y', group: 'layout' },
+  // 关系层（vk-annotate）：一个组件、四种形态，属性名按形态分组。
+  mode: { label: '形态', group: 'appearance' },
+  shape: { label: '形状', group: 'appearance' },
+  head: { label: '端点', group: 'appearance' },
+  ring: { label: '圈形', group: 'appearance' },
+  double: { label: '内外两圈', group: 'appearance' },
+  width: { label: '线宽', group: 'appearance' },
+  'mark-label': { label: '差异标签', content: true },
   header: { label: '页眉', content: true },
   footer: { label: '页脚', content: true },
 };
@@ -176,6 +184,17 @@ const DEFAULTS = {
   'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
+  'vk-annotate': {
+    mode: 'arrow',
+    shape: 'ortho',
+    dash: 'solid',
+    head: 'arrow',
+    note: 'bubble',
+    ring: 'ellipse',
+    tone: 'neutral',
+    size: 'body',
+    emphasis: 'soft',
+  },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
@@ -545,7 +564,7 @@ export const TAGS = {
     name: '对照',
     layer: 'components',
     summary:
-      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。',
+      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。',
     attrs: {
       'a': text(),
       'b': text(),
@@ -559,6 +578,9 @@ export const TAGS = {
       'label-b': text(),
       // 角标默认叠在图上（inside，保持旧样子）；top 在图上腾一条带，不压任何像素。
       'label-position': oneOf('inside', 'top'),
+      // 差异框：相对百分比坐标，多组用 ";"。split 下只画在所属的那一半。
+      'mark': text(),
+      'mark-label': text(),
     },
   },
   'vk-tree': {
@@ -803,6 +825,48 @@ export const TAGS = {
       'z': int({ min: 0, max: 99, step: 1 }),
     },
   },
+  /**
+   * 关系层：一个组件，四种形态。vk-edge / vk-pin / vk-ring 是它的旧名字，
+   * 只是把 mode 固定成 arrow / note / circle，并在构建期提示迁移。
+   */
+  'vk-annotate': {
+    name: '标注',
+    layer: 'relations',
+    summary:
+      '关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。',
+    content: {
+      kind: 'text',
+      target: 'vk-annotate',
+      fields: [
+        { name: 'text', label: '批注文字（note 形态）', type: 'textarea', text: true },
+        { name: 'for', label: '目标（circle / note / badge，或 arrow 的终点）', type: 'text', attr: 'for' },
+      ],
+    },
+    attrs: {
+      'mode': { ...oneOf('arrow', 'circle', 'note', 'badge'), default: 'arrow' },
+      // 目标 / 两端：支持 #id@part:arg、CSS 选择器，以及 arrow 的 "x,y" 坐标。
+      'for': sel(),
+      'from': sel(),
+      'to': sel(),
+      // arrow：走线与端点。
+      'shape': { ...oneOf('straight', 'ortho', 'curve'), default: 'ortho' },
+      'dash': { ...oneOf('solid', 'dashed'), default: 'solid' },
+      'width': num({ min: 1, max: 24, step: 1 }),
+      'head': { ...oneOf('arrow', 'dot', 'none'), default: 'arrow' },
+      // circle：椭圆或矩形；double 再画一圈内环。
+      'ring': { ...oneOf('ellipse', 'rect'), default: 'ellipse' },
+      'double': bool(),
+      // note：泡 / 引线标签 / 编号点；badge 形态固定编号点。
+      'note': { ...oneOf('bubble', 'label', 'badge'), default: 'bubble' },
+      'n': int({ min: 1, max: 99, step: 1 }),
+      'size': { ...oneOf('label', 'body', 'subhead'), default: 'body' },
+      'emphasis': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
+      'tone': { ...oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'), default: 'neutral' },
+      'label': text(),
+      'gap-px': num({ min: 0, max: 240, step: 1 }),
+      'z': int({ min: 0, max: 99, step: 1 }),
+    },
+  },
 };
 
 /* ----------------------------------------------------------------- v10 共享语法
@@ -817,6 +881,7 @@ const CUSTOM = new Set([
   'vk-img',
   'vk-pin',
   'vk-ring',
+  'vk-annotate',
 ]);
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
@@ -930,7 +995,7 @@ const MOTION_ATTRS = {
 for (const [tag, value] of [['vk-edge', 'trace'], ['vk-pin', 'badge'], ['vk-diff', 'compare']]) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), act: { ...oneOf(value), default: value, pose: true } };
 }
-for (const tag of ['vk-ring', 'vk-pin', 'vk-edge']) {
+for (const tag of ['vk-ring', 'vk-pin', 'vk-edge', 'vk-annotate']) {
   if (TAGS[tag]) TAGS[tag].attrs = { ...(TAGS[tag].attrs || {}), ...MOTION_ATTRS };
 }
 for (const [tag, attrs] of Object.entries(EXTRA)) {
@@ -1012,6 +1077,19 @@ const ATTR_META_BY_TAG = {
     'label-a': { label: 'a 的角标（inside 时左下 / top 时左上）', content: true },
     'label-b': { label: 'b 的角标（inside 时右下 / top 时右上）', content: true },
     'label-position': { label: '角标位置（inside 叠在图上 / top 在图上另起一条带，不压图像）', group: 'appearance' },
+    mark: { label: '差异框（x1,y1,x2,y2；多组用 ;，相对百分比）', content: true },
+    'mark-label': { label: '差异框角标（多组用 ; 与 mark 一一对应）', content: true },
+  },
+  'vk-annotate': {
+    mode: { label: '形态（arrow 连线 / circle 圈选 / note 批注 / badge 编号点）', group: 'appearance' },
+    shape: { label: '连线形状（straight 直线 / ortho 折线 / curve 曲线）', group: 'appearance' },
+    dash: { label: '虚实（solid 实线 / dashed 虚线）', group: 'appearance' },
+    head: { label: '端点（arrow 箭头 / dot 圆点 / none 无）', group: 'appearance' },
+    ring: { label: '圈形（ellipse 椭圆 / rect 矩形）', group: 'appearance' },
+    double: { label: '内外两圈', group: 'appearance' },
+    note: { label: '批注形态（bubble 泡 / label 引线标签 / badge 编号点）', group: 'appearance' },
+    label: { label: '连线标签', content: true },
+    n: { label: '编号（badge 形态）', content: true },
   },
   'vk-pin': {
     w: { label: '气泡宽（像素，可写 200 或 200px）', group: 'layout' },

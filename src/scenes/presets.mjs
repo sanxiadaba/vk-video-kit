@@ -189,4 +189,12 @@ export const PRESETS = {
     { label: '虚线', attrs: { dash: '' } },
     { label: '大留白', attrs: { 'pad-px': '28' } },
   ],
+  'vk-annotate': [
+    { label: '直线', attrs: { shape: 'straight' } },
+    { label: '曲线', attrs: { shape: 'curve' } },
+    { label: '虚线', attrs: { dash: 'dashed', tone: 'info' } },
+    { label: '圆点端点', attrs: { head: 'dot', tone: 'info' } },
+    { label: '圈选', attrs: { mode: 'circle', for: '#pst-b', ring: 'ellipse', double: '' } },
+    { label: '编号点', attrs: { mode: 'badge', for: '#pst-a', n: '2' } },
+  ],
 };

@@ -269,9 +269,13 @@ export const SCENES = [
 
   {
     tag: 'vk-compare',
+    // 真实截图对：gcc -O0（13 行）vs -O2（10 行）。mark 标出 -O2 少掉的那 3 行，
+    // 坐标是相对取景框的百分比；split 下只画在所属的那一侧（这里是右半的 b）。
     body: s`
 <vk-grid cols="3">
-  <vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后"></vk-compare>
+  <vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
+    label-a="gcc -O0 · 13 行" label-b="gcc -O2 · 10 行"
+    mark="58,73,93,84" mark-label="少 3 行"></vk-compare>
 </vk-grid>`,
   },
 
@@ -481,6 +485,65 @@ export const SCENES = [
 
 
 
+
+  {
+    tag: 'vk-annotate',
+    // 四种形态各一例，全部用真实内容（hello.c 的前三行 + 一行终端输出）。
+    // 下半张是三种走线 × 实虚的对照：形状是几何，不是滤镜。
+    body: s`
+<vk-canvas w="1500" h="820">
+  <vk-code id="vka-src" x="40" y="20" w="660" lang="c" file="hello.c" src="../code/hello.c" lines="1-3" mass="compact"></vk-code>
+  <vk-box id="vka-out" x="820" y="20" w="460" border="hair" radius="lg" pad="md" surface="paper">
+    <vk-stack gap="2xs">
+      <vk-text size="label" mono ink="muted">$ ./hello.exe</vk-text>
+      <vk-text size="body" mono>Hello, World!</vk-text>
+    </vk-stack>
+  </vk-box>
+  <vk-box id="vka-gap" x="820" y="250" w="460" h="140" border="hair" radius="lg" pad="md" surface="none">
+    <vk-text size="body" ink="secondary">这里空着</vk-text>
+  </vk-box>
+
+  <vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info"></vk-annotate>
+  <vk-annotate id="vka-circle" mode="circle" for="#vka-src@line:3" ring="ellipse" double tone="focus"></vk-annotate>
+  <vk-annotate id="vka-note" mode="note" note="bubble" for="#vka-gap@side:left" tone="warn">-O2 少了 3 行</vk-annotate>
+  <vk-annotate id="vka-badge" mode="badge" for="#vka-gap@side:right" n="2"></vk-annotate>
+
+  <vk-text x="40" y="555" size="label" mono ink="muted">形状 × 虚实（左实 / 右虚）</vk-text>
+
+  <vk-text x="40" y="600" size="label" mono ink="muted">straight 实</vk-text>
+  <vk-box id="sh1a" x="320" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh1b" x="540" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="straight" from="#sh1a@side:right" to="#sh1b@side:left"></vk-annotate>
+  <vk-text x="760" y="600" size="label" mono ink="muted">straight 虚</vk-text>
+  <vk-box id="sh2a" x="1040" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh2b" x="1260" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="straight" dash="dashed" from="#sh2a@side:right" to="#sh2b@side:left"></vk-annotate>
+
+  <vk-text x="40" y="670" size="label" mono ink="muted">ortho 实</vk-text>
+  <vk-box id="sh3a" x="320" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh3b" x="540" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="ortho" from="#sh3a@side:right" to="#sh3b@side:left"></vk-annotate>
+  <vk-text x="760" y="670" size="label" mono ink="muted">ortho 虚</vk-text>
+  <vk-box id="sh4a" x="1040" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh4b" x="1260" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="ortho" dash="dashed" from="#sh4a@side:right" to="#sh4b@side:left"></vk-annotate>
+
+  <vk-text x="40" y="740" size="label" mono ink="muted">curve 实</vk-text>
+  <vk-box id="sh5a" x="320" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh5b" x="540" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="curve" from="#sh5a@side:right" to="#sh5b@side:left"></vk-annotate>
+  <vk-text x="760" y="740" size="label" mono ink="muted">curve 虚</vk-text>
+  <vk-box id="sh6a" x="1040" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
+  <vk-box id="sh6b" x="1260" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
+  <vk-annotate mode="arrow" shape="curve" dash="dashed" from="#sh6a@side:right" to="#sh6b@side:left"></vk-annotate>
+</vk-canvas>`,
+    strip: s`
+<vk-canvas w="1200" h="360">
+  <vk-box id="pst-a" x="40" y="80" w="240" h="100" surface="soft" radius="lg"><vk-text size="body" mono align="center">hello.c</vk-text></vk-box>
+  <vk-box id="pst-b" x="760" y="180" w="300" h="100" surface="paper" border="hair" radius="lg"><vk-text size="body" mono align="center">hello.exe</vk-text></vk-box>
+  <vk-annotate mode="arrow" from="#pst-a@side:right" for="#pst-b@side:left" label="编译"></vk-annotate>
+</vk-canvas>`,
+  },
 
   {
     tag: 'vk-page',

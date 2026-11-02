@@ -1,5 +1,50 @@
 # 变更记录
 
+## 14.3 · 关系与图示（批次 C）
+
+箭头、圈选、批注、对照标记长期各管一半：`vk-edge` 只会三种走线，`vk-pin` 只有一个泡，
+`vk-ring` 只会画圈，`vk-compare` 只会把两张图摆在一起、让观众自己找不同。
+这一批把「关系」收成一个组件，并给对照补上**读出差异**的能力。
+
+- **`vk-annotate`（第 32 个标签）**：一个组件，四种形态，`mode` 决定画什么。
+  - `mode="arrow"`：`from` → `to`（或 `for`）的连线；`shape="straight|ortho|curve"`、
+    `dash="solid|dashed"`、`width`（1–24）、`head="arrow|dot|none"`、`label`、`tone`。
+    端点可以是元素锚点（`#id@side/point/region/part`）、CSS 选择器，或 `"x,y"` 像素坐标。
+  - `mode="circle"`：圈出 `for` 的目标；`ring="ellipse|rect"`、`double`（内外两圈）、
+    `width`、`dash`、`tone`。多目标仍用 `;` 分隔。
+  - `mode="note"`：`note="bubble|label|badge"` 三种写法（泡 / 引线标签 / 编号点），
+    **复用 vk-pin 的自动避让**：先算四个候选位置，再按压住多少正文排序，最后才选边。
+    新标签的避让把代码行（`.vk-line` / `.vk-src`）也算作正文——批注不能盖住代码。
+  - `mode="badge"`：编号点（`n`），钉在任意锚点上。
+- **旧标签保留为别名**：`vk-edge` → `mode="arrow"`、`vk-pin` → `mode="note"`、
+  `vk-ring` → `mode="circle"`。三个标签仍在 registry 里，读旧词表
+  （`variant` / `arrow` / `cap` / `stroke` / `side` / `w`…），由同一个类画。
+  构建期给一条迁移提示（warning，不拦构建）：
+  `_site/x.html:12 <vk-edge> 已并入 <vk-annotate mode="arrow">（旧标签继续可用；属性表见 docs/reference.md）`
+- **像素差异（逐条写清）**：
+  - 走线、箭头、标签位置、气泡坐标、避让排序都走同一份代码 + 同一份配置，
+    旧页面的几何**不变**；标签节点多了 `vk-annot-label` 类、气泡多了 `vk-annot-note` 类，
+    宿主多了 `data-*` 状态镜像（`data-mode` / `data-shape` / …），三者都不进 CSS 几何。
+  - `vk-edge` 的 `from` / `to` 现在额外接受 `"x,y"` 坐标；旧页面里这种写法以前只报
+    "不是有效选择器"、不画线，现在会真的画出来。没写过坐标的页面不受影响。
+  - `vk-annotate` 的 circle 固定留白 12px、`vk-ring` 仍是 `pad-px`（默认 8）：
+    两条默认值不同是**有意的**——新组件的圈要离字更远一点，旧页面不动。
+  - 批注避让顺手修了一个旧 bug：正文 rect 是 viewport 坐标，候选位置是包含块局部坐标；
+    画布不在 (0,0) 时两者混用会把"压住多少字"算到别处。现在统一折成本地坐标。
+    `vk-page` 原点在 (0,0)，所以页里的旧批注位置不变（demo 布局指纹仍过）。
+- **`vk-compare` 的差异标注**：`mark="x1,y1,x2,y2;…"`（相对百分比，两个角可任意顺序），
+  `mark-label="…;…"` 与 mark 一一对应；细框 + 角标，颜色用 `warn`（差异不是错误，红色留给错误）。
+  - **`mode="split"` 的取舍**：每处差异只标在它所属的那一半——框心落在分割线左边就裁到
+    左半（A 可见），右边就裁到右半（B 可见），不会跨到另一张图上。
+  - `mode="side" / "stack"`：坐标相对 a 图，标注只画在 a 上（b 是参照物）。
+  - `label-position="top"` 时标注层跟着图像区一起下移，角标不压图。
+- **能力矩阵 +5 条**：`annotate-arrow` / `annotate-circle` / `annotate-note` /
+  `annotate-badge` / `compare-mark`，契约 / 标本 / 测试三件齐全；标签上限 31 → 32。
+- **标本**：新增 `vk-annotate` 页（四种形态各一例 + 三种走线 × 实虚对照，内容用真实
+  `code/hello.c` 与终端输出）；`vk-compare` 页换成真实截图对
+  `assets/hello/o0.png`（gcc -O0 · 13 行）/ `o2.png`（gcc -O2 · 10 行），
+  并标出 "-O2 少 3 行" 的位置。
+
 ## 14.2 · 表达力（批次 B）
 
 先让代码/终端**读得出来**：一行命令里命令名、参数、路径、输出、报错本来是同一个颜色，

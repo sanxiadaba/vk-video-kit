@@ -161,3 +161,139 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
   color: var(--vk-paper-surface-1);
 }
 .vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
+
+/* ============================================================ vk-annotate
+   关系层合并后的本体：arrow / circle / note / badge 共用一套几何与令牌。
+   旧标签 vk-edge / vk-pin / vk-ring 的规则仍在原处，逐像素不动；
+   这里只补新标签的接线（同一批类名与令牌，所以两种标签看起来是同一个东西）。 */
+
+vk-annotate {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* ---- arrow：与 vk-edge 同一套线宽/箭头/标签令牌 ---- */
+vk-annotate .vk-edge-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+}
+vk-annotate .vk-edge-path {
+  fill: none;
+  stroke: var(--vk-ink-3);
+  stroke-width: var(--vk-edge-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+vk-annotate .vk-edge-tip {
+  fill: var(--vk-ink-3);
+  stroke: none;
+}
+vk-annotate .vk-edge-tip[data-style='open'] {
+  fill: none;
+  stroke: var(--vk-ink-3);
+  stroke-width: var(--vk-edge-w);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+vk-annotate .vk-edge-cap {
+  fill: var(--vk-ink-3);
+  stroke: none;
+}
+vk-annotate[tone='info'] .vk-edge-path { stroke: var(--vk-info-line); }
+vk-annotate[tone='info'] .vk-edge-tip,
+vk-annotate[tone='info'] .vk-edge-cap { fill: var(--vk-info-line); }
+vk-annotate[tone='info'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-info-line); }
+vk-annotate[tone='focus'] .vk-edge-path { stroke: var(--vk-focus-line); }
+vk-annotate[tone='focus'] .vk-edge-tip,
+vk-annotate[tone='focus'] .vk-edge-cap { fill: var(--vk-focus-line); }
+vk-annotate[tone='focus'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-focus-line); }
+vk-annotate[tone='ok'] .vk-edge-path { stroke: var(--vk-ok); }
+vk-annotate[tone='ok'] .vk-edge-tip,
+vk-annotate[tone='ok'] .vk-edge-cap { fill: var(--vk-ok); }
+vk-annotate[tone='ok'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-ok); }
+vk-annotate[tone='err'] .vk-edge-path { stroke: var(--vk-err); }
+vk-annotate[tone='err'] .vk-edge-tip,
+vk-annotate[tone='err'] .vk-edge-cap { fill: var(--vk-err); }
+vk-annotate[tone='err'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-err); }
+vk-annotate[tone='warn'] .vk-edge-path { stroke: var(--vk-warn); }
+vk-annotate[tone='warn'] .vk-edge-tip,
+vk-annotate[tone='warn'] .vk-edge-cap { fill: var(--vk-warn); }
+vk-annotate[tone='warn'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-warn); }
+
+vk-annotate .vk-edge-svg[data-dash] .vk-edge-path { stroke-dasharray: 20 14; }
+
+/* 标签是给观众读的：40px、墨色、白底把线切断。位置由几何决定，不靠手摆。 */
+vk-annotate .vk-edge-label {
+  position: absolute;
+  transform: translate(-50%, calc(-100% - var(--vk-s1)));
+  padding: 0 var(--vk-s1);
+  background: var(--vk-surface-1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-body);
+  font-weight: var(--vk-w-med);
+  line-height: 1.3;
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+}
+vk-annotate .vk-edge-label[data-dir='h-below'] { transform: translate(-50%, var(--vk-s1)); }
+vk-annotate .vk-edge-label[data-dir='v'] { transform: translate(var(--vk-s2), -50%); }
+vk-annotate .vk-edge-label[data-dir='v-left'] { transform: translate(calc(-100% - var(--vk-s2)), -50%); }
+vk-annotate[data-size='label'] .vk-edge-label { font-size: var(--vk-t-label); }
+vk-annotate[data-size='subhead'] .vk-edge-label { font-size: var(--vk-t-subhead); }
+
+/* ---- circle：双圈的内环更细，仍用同一个 --vk-ring-w ---- */
+vk-annotate .vk-ring-shape.vk-annot-ring-inner {
+  stroke-width: calc(var(--vk-ring-w, 4px) * 0.5);
+  opacity: 0.55;
+}
+
+/* ---- note：引线标签 / 编号点 ----
+   bubble 沿用 .vk-pin-bd 的既有外观；这里只加两种新形态。 */
+vk-annotate[data-note='label'] .vk-pin-bd {
+  border: 0;
+  border-radius: 0;
+  background: var(--vk-surface-1);
+  box-shadow: none;
+  padding: 0 var(--vk-s1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-body);
+  font-weight: var(--vk-w-med);
+  line-height: 1.3;
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+}
+vk-annotate[data-note='label'] .vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); }
+vk-annotate[data-note='label'] .vk-pin-bd[data-size='subhead'] { font-size: var(--vk-t-subhead); }
+vk-annotate[data-note='badge'] .vk-pin-bd,
+vk-annotate[data-mode='badge'] .vk-pin-bd {
+  width: 40px !important;
+  height: 40px;
+  padding: 0;
+  border: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 50%;
+}
+vk-annotate[data-note='badge'] .vk-pin-bd .vk-pin-t,
+vk-annotate[data-mode='badge'] .vk-pin-bd .vk-pin-t { display: none; }
+vk-annotate[data-note='badge'] .vk-pin-bd .vk-pin-n,
+vk-annotate[data-mode='badge'] .vk-pin-bd .vk-pin-n {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  margin: 0;
+  padding: 0;
+  border-radius: 50%;
+  display: flex;
+}
+vk-annotate[data-mode='badge'] .vk-pin-bd:not(:has(.vk-pin-n:not([hidden])))::before {
+  content: '';
+  display: block;
+  width: 16px;
+  height: 16px;
+  margin: 12px;
+  border-radius: 50%;
+  background: var(--vk-info);
+}

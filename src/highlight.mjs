@@ -212,7 +212,7 @@ const ANCHORS = {
 /** 子节点 <i> 的合法属性由 registry 的 CHILD_ATTRS 统一声明。 */
 const INDEX_PART = new Set(['cell', 'byte', 'bit', 'event', 'row', 'step', 'item']);
 /** 允许自由坐标的三个覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
-const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight']);
+const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight', 'vk-annotate']);
 const Z_OK = new Set([...XY_OVERLAY, 'vk-edge']);
 
 const countTag = (node, tag) => {
@@ -563,6 +563,13 @@ function validateAuthorHtml(doc, file, html = '') {
     }
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
+    // 关系层合并：旧标签是 vk-annotate 的别名，继续可用；只提示一次迁移方向。
+    const ALIAS_MODE = { 'vk-edge': 'arrow', 'vk-pin': 'note', 'vk-ring': 'circle' };
+    if (ALIAS_MODE[tag]) {
+      warnings.push(
+        `${file}:${lineOf(node)} <${tag}> 已并入 <vk-annotate mode="${ALIAS_MODE[tag]}">（旧标签继续可用；属性表见 docs/reference.md）`
+      );
+    }
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
 
     // 真轨道：只收 fr 与 auto，最多 6 条。px 会让安全区与溢出检查失真，所以直接拦。

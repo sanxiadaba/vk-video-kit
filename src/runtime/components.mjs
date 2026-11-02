@@ -999,6 +999,37 @@ export class VkBars extends VkElement {
  */
 const CMP_LABEL_POSITIONS = new Set(['inside', 'top']);
 
+/**
+ * 差异框：`10,20,40,60;55,70,30,15` —— 相对百分比坐标。
+ *
+ * 每段是 x1,y1,x2,y2；不要求左上角在前，两个角可以任意顺序。
+ * 坐标是相对"对照取景框"的，不是相对原图：split 裁掉的部分不参与。
+ */
+function parseMarks(raw, warn) {
+  const out = [];
+  for (const part of String(raw || '').split(';')) {
+    const text = part.trim();
+    if (!text) continue;
+    const nums = text.split(',').map((s) => parseFloat(s.trim()));
+    if (nums.length !== 4 || nums.some((n) => !Number.isFinite(n))) {
+      warn?.(`的 mark="${text}" 不是 x1,y1,x2,y2；这一段已忽略`);
+      continue;
+    }
+    const [x1, y1, x2, y2] = nums.map((n) => Math.max(0, Math.min(100, n)));
+    const x = Math.min(x1, x2);
+    const y = Math.min(y1, y2);
+    const w = Math.abs(x2 - x1);
+    const h = Math.abs(y2 - y1);
+    if (w < 0.5 || h < 0.5) {
+      warn?.(`的 mark="${text}" 宽或高为 0；这一段已忽略`);
+      continue;
+    }
+    out.push({ x, y, w, h });
+  }
+  return out;
+}
+
+
 export class VkCompare extends VkElement {
   static watchSource = false;
 
@@ -1044,6 +1075,10 @@ export class VkCompare extends VkElement {
         <div class="vk-cmp-div" aria-hidden="true"></div>
         <span class="vk-cmp-la"></span>
         <span class="vk-cmp-lb"></span>
+        <div class="vk-cmp-marks" aria-hidden="true">
+          <div class="vk-cmp-marks-a"></div>
+          <div class="vk-cmp-marks-b"></div>
+        </div>
       </div>`;
       this._shell = this.querySelector('.vk-cmp');
       this._imgA = this.querySelector('.vk-cmp-a');
@@ -1051,6 +1086,8 @@ export class VkCompare extends VkElement {
       this._div = this.querySelector('.vk-cmp-div');
       this._la = this.querySelector('.vk-cmp-la');
       this._lb = this.querySelector('.vk-cmp-lb');
+      this._marksA = this.querySelector('.vk-cmp-marks-a');
+      this._marksB = this.querySelector('.vk-cmp-marks-b');
     }
 
     const alt = this.getAttribute('alt') || this.getAttribute('label') || '';
@@ -1152,6 +1189,51 @@ export class VkCompare extends VkElement {
     }
 
     paintLabels();
+    this._paintMarks(mode, split);
+  }
+
+  /**
+   * 差异标注：细框 + 角标。
+   *
+   * split 下的取舍（写进 docs/reference.md）：每一处差异只标在它所属的那一侧 ——
+   * 框心在分割线左边就裁到左半（A 可见），右边就裁到右半（B 可见），
+   * 绝不跨到另一张图的地盘上。side / stack 下两张图各自完整，坐标相对 a 图，
+   * 标注只画在 a 上（b 是参照物）。
+   */
+  _paintMarks(mode, split) {
+    const a = this._marksA;
+    const b = this._marksB;
+    if (!a || !b) return;
+    a.replaceChildren();
+    b.replaceChildren();
+    this._shell.style.setProperty('--vk-cmp-split', split + '%');
+    const marks = parseMarks(this.getAttribute('mark'), (msg) => this._warnOnce('mark', msg));
+    if (!marks.length) return;
+    const labels = String(this.getAttribute('mark-label') || '')
+      .split(';')
+      .map((s) => s.trim());
+    for (const [i, m] of marks.entries()) {
+      const box = document.createElement('div');
+      box.className = 'vk-cmp-mark';
+      box.style.left = m.x + '%';
+      box.style.top = m.y + '%';
+      box.style.width = m.w + '%';
+      box.style.height = m.h + '%';
+      const label = labels[i] || '';
+      if (label) {
+        const s = document.createElement('span');
+        s.className = 'vk-cmp-mark-l';
+        s.textContent = label;
+        box.append(s);
+      }
+      if (mode === 'split') {
+        // 框心落在哪一半，就属于哪一张图。
+        const center = m.x + m.w / 2;
+        (center < split ? a : b).append(box);
+      } else {
+        a.append(box);
+      }
+    }
   }
 }
 

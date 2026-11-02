@@ -31,8 +31,8 @@
    | `focus` | 行 / 格子 / 块 | 行：16% 钴蓝底 + 4px 左条；块（数字、标题、正文、引文）：钴蓝 ink |
    | `context` | 容器 | 兄弟退后（`dim` 默认 0.28），不画白幕、不画描边 |
    | `mark` | 行 / 格子 | 石墨底 + 石墨左条——标注，不是「正在讲」 |
-   | `trace` | `<vk-edge>` | 关系线，可带箭头 |
-   | `badge` | `<vk-pin>` | 编号批注 + 引线 |
+   | `trace` | `<vk-annotate mode="arrow">` | 关系线，可带箭头 |
+   | `badge` | `<vk-annotate mode="note">` | 编号批注 + 引线 |
    | `compare` | `<vk-diff>` | 对照 |
 
    `strength` 只改响度：`solid`（默认）/ `soft` / `ghost`。
@@ -82,7 +82,7 @@
 
 多个目标用分号隔开（`for="#a@side:right;#b@point:0%,50%"`），因为 region 的参数自己用逗号。
 
-几何锚点写在哪就是哪：`vk-edge` 不再把端点从圆角附近推开，`@side` 还会替连线决定出线方向。
+几何锚点写在哪就是哪：`vk-annotate` / `vk-edge` 不再把端点从圆角附近推开，`@side` 还会替连线决定出线方向。
 
 写错会在 `vk build` 报错。
 
@@ -90,12 +90,17 @@
 
 **能由组件内置状态说清的，不用覆盖层。** `current` / `state="mark"` / `state="err"` 已经是"这里"的答案；覆盖层只补组件没有的东西。
 
-| 件 | 它回答 | 不该用来 |
+关系层只有一个组件：`<vk-annotate>`，`mode` 决定它回答哪个问题。
+旧标签 `vk-edge` / `vk-pin` / `vk-ring` 是它的别名（`mode` 固定为 arrow / note / circle），
+继续可用；构建期会给一条迁移提示。
+
+| 形态 | 它回答 | 不该用来 |
 |---|---|---|
-| `vk-edge` | 两个**物件**之间有关系（指针 → 内存） | 表达"这行写了那格"——那是叙述，口播或字幕就够了 |
-| `vk-ring` | 组件没有内置状态，但你要指一片区域 | 组件已经 `state="err"` / `state="mark"` 时再圈一遍 |
-| `vk-spotlight` | 这一屏只留一个目标 | 当"强调"用；强调是 `tone` 和字号的事 |
-| `vk-pin` | 一句话钉在一个点上 | 复述标题或副题；一句话一个点 |
+| `mode="arrow"` | 两个**物件**之间有关系（指针 → 内存） | 表达"这行写了那格"——那是叙述，口播或字幕就够了 |
+| `mode="circle"` | 组件没有内置状态，但你要指一片区域 | 组件已经 `state="err"` / `state="mark"` 时再圈一遍 |
+| `mode="badge"` | 这是第几个点（①②③） | 当"强调"用；强调是 `tone` 和字号的事 |
+| `mode="note"` | 一句话钉在一个点上 | 复述标题或副题；一句话一个点 |
+| `vk-ring variant="dim"`（旧别名） | 这一屏只留一个目标 | 当"强调"用 |
 
 一个信号只用一种机制。两个叠在一起，观众要判断"它们是不是在说同一件事"，这个判断本身与讲解无关。
 
@@ -203,9 +208,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
-- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。
-  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-compare span="2" a="../assets/sample-grid.svg" b="../assets/sample-grid-b.svg" ratio="720 / 280" split="45" label-a="改前" label-b="改后">`
+- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。
+  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `mark` · `mark-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 例：`<vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
+    label-a="gcc -O0 · 13 行" label-b="gcc -O2 · 10 行"
+    mark="58,73,93,84" mark-label="少 3 行">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
@@ -255,6 +262,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-ring`** · 圈选 — 圈选/框选/下划线/压暗：绑到任意锚点，只画覆盖层，不改布局。
   - 属性：`for` · `variant` · `dim` · `keep` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16">`
+- **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
+  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `gap-px` · `z` · `at` · `dur` · `enter` · `ease`
+  - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info">`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 
@@ -271,7 +281,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 - **`vk-bytes` 的地址是算出来的**：`offset` 是文件偏移，`addr` 是窗口第 0 字节的地址，屏幕上是 `addr + offset + i`；`current` 又是片段内 0 基。想让窗口从 `0x404064` 开始，写 `addr="0x404000" offset="0x2064"`。
 - **`span` 只属于 `vk-grid`**：`vk-figure`、`vk-code` 放在 page 直系时 `span` 无效（构建期会报）。全宽 16:9 的图会算出 945px 高、顶出 1080——要么包一层 `vk-grid` 给它 `span`，要么换更宽的 `ratio`。
-- **`vk-pin` 的 `side` 是强制边，不是偏好**：钉在整行宽的组件（tree 的一行、code 的整行）上时，气泡会被夹到画布边缘并压住内容。整行目标改用 `side="auto"` 或显式 `x` / `y`。
+- **`vk-pin` 的 `side` 是强制边，不是偏好**（旧别名）：钉在整行宽的组件（tree 的一行、code 的整行）上时，气泡会被夹到画布边缘并压住内容。整行目标改用 `side="auto"` 或显式 `x` / `y`。新标签 `vk-annotate mode="note"` 没有 `side`，只做自动避让（代码行也算正文）。
+- **`vk-compare` 的 `mark` 是百分比，不是像素**：`mark="x1,y1,x2,y2"` 相对取景框；`split` 下每处只标在所属的一半（框心决定 A/B），`side` / `stack` 下只标在 a 图上。写错坐标只会得到 warning，不会画错位置。
 - **`vk-cells` 的 `cols` 上限是 8**；8 列时地址会省略号截断，想要完整地址就减列或缩短地址。
 - **多行 `current`（`current="4-6"`）算一处焦点**：不要在一个组件里既写 `current` 又写 `focus`，那才是"两处"。
 - **带 `src` 的组件必须 `vk build`**：没预编译会 `stale`（`vk check` / `vk shot` 会红）。审阅页里出现空白帧，先怀疑这一条。

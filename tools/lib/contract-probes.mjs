@@ -23,6 +23,38 @@ export const PROBES = {
       effect: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
       why: '两张图共用同一个 object-position。',
     },
+    mark: {
+      values: ['10,10,20,20;50,50,10,10', '10,10,20,20;50,50,10,10;60,60,10,10'],
+      effect: { on: '.vk-cmp-mark', kind: 'dom', prop: '.vk-cmp-mark' },
+      why: '差异框是真实 DOM：两组 / 三组必然数出 2 / 3 个框，不是只改一个看不见的属性。',
+    },
+    'mark-label': {
+      values: ['VKPROBE'],
+      effect: { on: '.vk-cmp-mark-l', kind: 'text' },
+      why: '角标文字直接落在 .vk-cmp-mark-l。',
+    },
+  },
+  'vk-annotate': {
+    for: {
+      values: ['#vka-src@line:3', '#vka-out@side:right'],
+      effect: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+      why: 'arrow 形态把 for 当终点用；换一个真实锚点，path 的 d 必须变。',
+    },
+    from: {
+      values: ['#vka-gap@side:left', '#vka-out@side:right'],
+      effect: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+      why: '起点换锚点，path 的 d 必须变。',
+    },
+    to: {
+      values: ['#vka-out@side:right', '#vka-gap@side:right'],
+      effect: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+      why: '显式 to 覆盖 for；换终点，path 的 d 必须变。',
+    },
+    tone: {
+      values: ['info', 'focus', 'ok', 'warn', 'err'],
+      effect: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
+      why: 'neutral 是默认墨色（不写 tone 时），只断五个语义色。',
+    },
   },
   'vk-loupe': {
     point: {
@@ -290,6 +322,7 @@ export const EFFECT_OVERRIDES = {
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
+  'vk-compare.mode': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
   'vk-canvas.pad-px': '画布内缩只改子节点坐标，不产生新文字/颜色。',

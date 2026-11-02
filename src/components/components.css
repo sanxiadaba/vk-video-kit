@@ -1201,3 +1201,38 @@ vk-compare{ display: block; }.vk-cmp{
   bottom: auto;
 }/* 块级焦点：颜色只有一条路径 —— vk-text[tone]（见 L1 elements.css）。
    pose 给块写的就是 tone="focus"；data-tone 只是留给审计读的镜像，不再单独上色。 */
+
+/* ------------------------------------------------------- compare · 差异框
+   mark="x1,y1,x2,y2;…" 是相对取景框的百分比。细框 + 角标，颜色用 warn：
+   差异不是错误（红只留给错误），但要比对照的两张图更晚被忽略。 */
+.vk-cmp-marks{ position:absolute; inset:0; z-index:4; pointer-events:none; }
+.vk-cmp-marks-a,
+.vk-cmp-marks-b{ position:absolute; inset:0; }
+.vk-cmp[data-mode='split'] .vk-cmp-marks-a{ clip-path: inset(0 calc(100% - var(--vk-cmp-split, 50%)) 0 0); }
+.vk-cmp[data-mode='split'] .vk-cmp-marks-b{ clip-path: inset(0 0 0 var(--vk-cmp-split, 50%)); }
+.vk-cmp[data-mode='side'] .vk-cmp-marks-a{ width:50%; }
+.vk-cmp[data-mode='stack'] .vk-cmp-marks-a{ height:50%; }
+.vk-cmp[data-mode='side'] .vk-cmp-marks-b,
+.vk-cmp[data-mode='stack'] .vk-cmp-marks-b{ display:none; }
+.vk-cmp[data-label-position='top'] .vk-cmp-marks{ top: var(--vk-cmp-band); }
+.vk-cmp-mark{
+  position:absolute;
+  box-sizing:border-box;
+  border:2px solid var(--vk-warn);
+  border-radius:4px;
+  box-shadow: inset 0 0 0 2px var(--vk-surface-1);
+}
+.vk-cmp-mark-l{
+  position:absolute;
+  left:-2px;
+  top:-2px;
+  padding:0 var(--vk-s1);
+  border:2px solid var(--vk-warn);
+  border-radius:4px;
+  background:var(--vk-surface-1);
+  font-family:var(--vk-font-mono);
+  font-size:var(--vk-t-label);
+  line-height:1.2;
+  color:var(--vk-ink-1);
+  white-space:nowrap;
+}

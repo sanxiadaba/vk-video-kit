@@ -365,12 +365,44 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 
 
 Object.assign((EFFECTS['vk-compare'] ||= {}), {
-  mode: { on: '.vk-cmp', kind: 'style', prop: 'display', expect: 'grid' },
+  // mode=stack 把两张完整图上下叠：总高由 ratio 与容器宽决定，标本台里必然更高。
+  // 这是对照的几何，不是事故；split 默认态仍走完整视觉审计。
+  mode: { on: '.vk-cmp', kind: 'style', prop: 'display', expect: 'grid', skipVisual: true },
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
   split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path', expect: /inset|polygon|circle/ },
   ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
   // top 在图上让出一条 64px 的带：这是"角标不压图"的几何证据。
   'label-position': { on: '.vk-cmp', kind: 'style', prop: 'padding-top', expect: '64px' },
+  // 差异框：标注是真实 DOM（数量可数），标签是真实文字。
+  mark: { on: '.vk-cmp-mark', kind: 'dom', prop: '.vk-cmp-mark' },
+  'mark-label': { on: '.vk-cmp-mark-l', kind: 'text' },
+});
+
+/**
+ * 关系层合并后的本体。arrow 的四个旋钮都真的改 SVG（d / stroke-width /
+ * stroke-dasharray / data-head）；circle / note / badge 的旋钮在同一个宿主上
+ * 留下一份规范化状态（data-*），由 CSS 与契约共同读 —— 契约宿主只有第一个
+ * vk-annotate（arrow 形态）会被快照，所以形态类的旋钮断言落在宿主上。
+ */
+Object.assign((EFFECTS['vk-annotate'] ||= {}), {
+  mode: { on: 'vk-annotate', kind: 'attr', prop: 'data-mode', expectFromValue: 'raw' },
+  for: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  from: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  to: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  shape: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  dash: { on: '.vk-edge-path', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
+  width: { on: '.vk-edge-path', kind: 'style', prop: 'stroke-width', expectFromValue: 'px' },
+  head: { on: '.vk-edge-svg', kind: 'attr', prop: 'data-head', expectFromValue: 'raw' },
+  note: { on: 'vk-annotate', kind: 'attr', prop: 'data-note', expectFromValue: 'raw' },
+  ring: { on: 'vk-annotate', kind: 'attr', prop: 'data-ring', expectFromValue: 'raw' },
+  double: { on: 'vk-annotate', kind: 'attr', prop: 'data-double', expect: '2' },
+  tone: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
+  label: { on: '.vk-edge-label', kind: 'text' },
+  n: { on: 'vk-annotate', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
+  size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
+  emphasis: { on: 'vk-annotate', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
+  'gap-px': { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  z: { on: 'vk-annotate', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
