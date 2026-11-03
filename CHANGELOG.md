@@ -1,5 +1,64 @@
 # 变更记录
 
+## 14.5 · 注解原语与五条硬审计（批次 G + H）
+
+这一批补的是**"高级感"缺的那一层**：注解不再是气泡、图标不再当装饰、一页只有一个"重"，
+并且把这些设计决定变成 `vk check` / gate / 测试共用的硬审计。
+
+### G1 · 新原语 `vk-note`（第 33 个标签）
+
+两种形态，都不是气泡：
+
+- `kind="margin"`（默认）边注：一条 **1px 细线**从目标引出，文字排在栏间空白里，
+  首行与目标正文**同基线**；`side="left|right|auto"`（auto 选有空间的一侧），
+  `leader="line|dot"`（dot 在目标端加一枚 r=4 的小圆点）。
+- `kind="legend"` 编号图例：每个目标右上角一枚编号点（1 / 2 / 3），
+  页角一张编号 + 说明的图例表；`place="br|bl|bottom"` 决定落在哪一角。
+  目标用 `for="#a;#b"` 按顺序给，说明写成 `<li>`，数量必须相同。
+
+文字固定 caption（28）/ 墨阶 `secondary`，没有底、没有描边、没有圆角；**没有箭头**
+（箭头只留给 `vk-annotate mode="arrow"` 的"指向关系"）。它只画覆盖层，不占焦点名额。
+
+构建期校验：`kind="margin"` 必须有 `for` 且能在构建期解析到目标；
+`kind="legend"` 的条目数与目标数必须相同；找不到 `#id` 直接在 `vk build` 红。
+
+### G2 · 图标白名单
+
+- 新增 `src/shared/icons.mjs` 的 `ICON_SEMANTIC`：`check` / `circle-check`（✓）、
+  `triangle-alert` / `info`（!）、`x` / `circle-x`（✗）、`arrow-up` / `arrow-down` / `arrow-right`（方向）。
+- `<vk-icon name="…">` 用了白名单外的名字：**构建期报错**，文案列出全部可用名。
+- 运行期 audit 再兜一层（直接改 DOM 的页面也会被提醒）。
+- `vk-icon` 的默认名从 `circle-help` 改为 `info`（白名单内）；
+  `vk-label` 的 `icon` 仍是全量 Lucide——这一批只约束"独立的语义符号"。
+
+### G3 · 一页最多一块深色
+
+- audit 按**底色亮度**识别深色区域（`vk-panel variant="dark"`、深色终端 / 字节窗、
+  `.vk-bg-dark`、内联深底都算；小于 160×60 的深色件与覆盖层不算）。
+- 一页 >1 块时报错："一页最多一块深色区域，它应该是本页唯一的'重'"。
+
+### H · 五条硬审计（`src/runtime/audit.mjs`）
+
+1. **强调色 ≤1**：只数 `vk-text` / `vk-panel` 上的 `tone="focus"`；`vk-label` / `vk-icon`
+   不占名额，`tone="err|warn"` 作为反例/警告也不占。
+2. **深色块 ≤1**（G3）。
+3. **图标白名单**：`vk-icon` 的 svg 名字必须在白名单里。
+4. **页眉不许含文件名/页号**：`vk-label`（kicker，含默认变体）文本里出现
+   `.c` `.s` `.exe` `.o` `.i` 或「第 N 页/帧」时报错。
+5. **内容必须在 120 边距内**：[120, 120, 1800, 960]（容差 1px）；
+   覆盖层（annotate / ring / edge / note）与出血层豁免；缩放过的审阅页与图版页
+   （`data-allow-void`）按目录版式处理。
+
+每条都有 `fix` 文案，`vk check` 逐条打印；gate 与 `tests/batch-gh.test.mjs` 读同一份判定。
+
+### 兼容性
+
+- **旧页面可能变红，这是审计的目的**：页眉里写 `hello.c`、正文贴着 96 顶带
+  （page 网格行）都会被 `vk check` 报出来。demo 的 11 页在批次 I 重排时一并处理。
+- `vk-icon` 装饰性名字（rocket / database / terminal …）现在构建期失败；
+  换成白名单里的语义名字，或改用 `src` 内联自己的 SVG（`src` 不受白名单限制）。
+- 其它标签、属性、像素不变。
+
 ## 14.4 · 版式与默认值（批次 E + F）
 
 这一批改的是**默认值**：库不再替作者做"每块都有框、每个标题都差不多大"的决定。

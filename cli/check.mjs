@@ -97,6 +97,12 @@ try {
       else if (x.type === 'missing') lines.push(`找不到文件：${x.what}`);
       else if (x.type === 'layer') lines.push(`${x.what}`);
       else if (x.type === 'void') lines.push(`留白：${x.what}`);
+      // ---- 批次 G/H：五条硬审计 ----
+      else if (x.type === 'accent') lines.push(`强调色：${x.what}`);
+      else if (x.type === 'dark') lines.push(`深色块：${x.what}`);
+      else if (x.type === 'icon') lines.push(`图标白名单：${x.what}`);
+      else if (x.type === 'header') lines.push(`页眉：${x.what}`);
+      else if (x.type === 'margin') lines.push(`120 边距：${x.what} ${x.box?.join(',') || ''}`);
       else lines.push(`${x.type}：${x.what || ''}`);
       if (x.fix) lines.push(`  ↳ ${x.fix}`);
     }

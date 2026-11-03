@@ -57,6 +57,8 @@ const ATTR_META = {
 
   tone: { label: '色调', group: 'appearance' },
   icon: { label: '图标', content: true },
+  kind: { label: '形态', group: 'appearance' },
+  place: { label: '位置', group: 'layout' },
   connector: { label: '连接线', group: 'appearance' },
   surface: { label: '表面', group: 'appearance' },
   variant: { label: '形态', group: 'appearance' },
@@ -178,7 +180,7 @@ const DEFAULTS = {
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
   'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
-  'vk-icon': { name: 'circle-help', size: 'md', ink: 'primary' },
+  'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
@@ -203,6 +205,8 @@ const DEFAULTS = {
     emphasis: 'soft',
     side: 'auto',
   },
+  // 注解原语：默认是"像书页边注"的那一种，不是气泡。
+  'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br' },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
@@ -326,11 +330,12 @@ export const TAGS = {
   'vk-icon': {
     name: '图标',
     layer: 'elements',
-    summary: '一个符号。全量 Lucide 名字；四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。',
+    summary:
+      '一个语义符号，不是装饰：名字必须在白名单里（check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right），构建期拒掉白名单外的名字。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。',
     content: {
       kind: 'text',
       target: 'vk-icon',
-      fields: [{ name: 'name', label: '图标名', type: 'text', attr: 'name' }],
+      fields: [{ name: 'name', label: '图标名（只能取语义白名单里的名字）', type: 'text', attr: 'name' }],
     },
     attrs: {
       'name': text(),
@@ -897,6 +902,45 @@ export const TAGS = {
       'y': { ...num({ min: -4000, max: 4000, step: 1 }), context: 'mode-note' },
     },
   },
+  /**
+   * 注解原语（批次 G1）：两种"不像气泡"的注解。
+   *
+   * 气泡是"画在内容上的东西"；边注与图例是"排进版面里的注解"：
+   *   margin —— 一条 1px 细线把目标与栏间空白里的一句话连起来，文字与正文基线对齐；
+   *   legend —— 目标角上一枚编号点，页角一张编号 + 说明的图例表。
+   *
+   * 它只画覆盖层，不改布局；也不占焦点名额（和 vk-label 一样是辅助信息）。
+   * 细线没有箭头：箭头只留给 vk-annotate mode="arrow" 的"指向关系"。
+   */
+  'vk-note': {
+    name: '注解',
+    layer: 'relations',
+    summary:
+      '边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。',
+    content: {
+      kind: 'text',
+      target: 'vk-note',
+      fields: [
+        { name: 'text', label: '边注文字（margin 形态）', type: 'textarea', text: true },
+        { name: 'items', label: '图例条目（legend 形态，一行一条 <li>）', type: 'lines', item: 'li' },
+      ],
+    },
+    attrs: {
+      // 两种形态：边注 / 编号图例。默认边注——它才是"高级注解"的默认长相。
+      'kind': { ...oneOf('margin', 'legend'), default: 'margin' },
+      // 目标：支持 #id@part:arg 与 CSS 选择器；legend 的多个目标用 ; 分隔，按顺序对应条目。
+      'for': sel(),
+      // 边注贴哪侧：默认 auto = 自动选有空间的一侧。
+      'side': { ...oneOf('left', 'right', 'auto'), default: 'auto' },
+      // 引线：line = 只有 1px 细线；dot = 细线 + 目标端一枚小圆点（没有箭头）。
+      'leader': { ...oneOf('line', 'dot'), default: 'line' },
+      // 图例落在页面哪一角：右下 / 左下 / 下方居中。
+      'place': { ...oneOf('br', 'bl', 'bottom'), default: 'br' },
+      // 边注宽（像素上限）；实际宽不会超过那一侧的空间。
+      'w': size({ min: 96, max: 600, step: 1 }),
+      'z': int({ min: 0, max: 99, step: 1 }),
+    },
+  },
 };
 
 /* ----------------------------------------------------------------- v10 共享语法
@@ -912,6 +956,7 @@ const CUSTOM = new Set([
   'vk-pin',
   'vk-ring',
   'vk-annotate',
+  'vk-note',
 ]);
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
@@ -1054,6 +1099,8 @@ export const CHILD_ATTRS = {
   'vk-list': ['state'],
   'vk-steps': [],
   'vk-table': [],
+  // 图例的每一条说明就是一项，不带任何属性；编号从 1 起按顺序生成。
+  'vk-note': [],
 };
 
 /**
@@ -1071,6 +1118,8 @@ export const CHILDREN = {
   'vk-bars': { kind: 'item', item: 'li' },
   'vk-bits': { kind: 'item', item: 'li' },
   'vk-timeline': { kind: 'item', item: 'li' },
+  // vk-note 两种形态的子节点不同（边注是裸文本、图例是 <li>），不登记单一模型；
+  // 图例的条目数与目标数由构建期单独校验（src/highlight.mjs）。
   'vk-table': { kind: 'wrapper', wrapper: 'table' },
   'vk-code': { kind: 'source' },
   'vk-diff': { kind: 'source' },
@@ -1124,6 +1173,14 @@ const ATTR_META_BY_TAG = {
   },
   'vk-pin': {
     w: { label: '气泡宽（像素，可写 200 或 200px）', group: 'layout' },
+  },
+  'vk-note': {
+    kind: { label: '形态（margin 边注 / legend 编号图例）', group: 'appearance' },
+    for: { label: '目标（多个用 ; 分隔，图例按顺序一一对应）', content: true },
+    side: { label: '边注贴哪侧（left / right / auto 自动选有空间的一侧）', group: 'layout' },
+    leader: { label: '引线（line 只有 1px 细线 / dot 细线 + 圆点）', group: 'appearance' },
+    place: { label: '图例位置（br 右下 / bl 左下 / bottom 下方居中）', group: 'layout' },
+    w: { label: '边注宽（像素上限；实际不会超过那一侧的空间）', group: 'layout' },
   },
   'vk-timeline': {
     value: { label: '主值（value 条目：大数字，压过 label）', content: true },

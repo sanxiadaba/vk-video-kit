@@ -129,6 +129,18 @@ export const PROBES = {
       why: 'w 只改气泡宽；宿主始终铺满整页，所以量 .vk-pin-bd 才对。',
     },
   },
+  'vk-note': {
+    for: {
+      values: ['#nt-code', '#nt-a'],
+      effect: { on: '.vk-note-m', kind: 'geometry', prop: 'x' },
+      why: '边注的落点由目标决定：换一个真实目标，.vk-note-m 的 x 必须跟着走（不是只改一个看不见的属性）。',
+    },
+    w: {
+      values: ['200', '320'],
+      effect: { on: '.vk-note-m', kind: 'geometry', prop: 'width' },
+      why: 'w 是边注的宽度上限；标本目标两侧都有空间，200 与 320 都放得下。',
+    },
+  },
   'vk-edge': {
     via: {
       values: ['100,100;300,100'],

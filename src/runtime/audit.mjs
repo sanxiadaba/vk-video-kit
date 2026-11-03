@@ -1,5 +1,6 @@
 import { resolveAnchor } from './base.mjs';
 import { LIMITS } from '../shared/limits.mjs';
+import { ICON_WHITELIST_HINT, isSemanticIcon } from '../shared/icons.mjs';
 
 /**
  * 页面自检：作者页与标本页共用同一份。
@@ -9,7 +10,23 @@ import { LIMITS } from '../shared/limits.mjs';
  *
  * 所有数值来自 shared/limits.mjs —— 这里不再有第二份定义。
  * 对比度分两档：正文 7:1，标注（ink="muted"，即 [data-meta] 里）4.5:1。
+ *
+ * 批次 G/H 追加了五条设计规则（不是事故）：强调色 ≤1、深色块 ≤1、图标白名单、
+ * 页眉不许含文件名/页号、内容必须在 120 边距内。它们的文案与 fix 在 fixFor 里。
  */
+
+/** 交付页的硬边距：120。与 --vk-margin 同一个决定，写在规则里而不是抄 token。 */
+const PAGE_MARGIN = 120;
+/** 一页最多几块深色区域。 */
+const DARK_LIMIT = 1;
+/** 深色判定：相对亮度低于它、且有 160×60 以上的可见面。语义色都在 0.05 以上。 */
+const DARK_LUM = 0.05;
+/** 页眉里不该出现的文件后缀（与构建期 highlight.mjs 同一张表）。 */
+const KICKER_FILE_EXT = /\.(?:c|s|exe|o|i)\b/i;
+/** 「第 3 页 / 3 帧」这类页号。 */
+const KICKER_PAGE_NO = /第\s*[0-9一二三四五六七八九十]+\s*[页帧]|\d+\s*\/\s*\d+\s*[页帧]/;
+/** 覆盖层：只画在内容上，不参与"内容边距"与深色块计数。 */
+const OVERLAY_SEL = 'vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, [data-vk-overlay]';
 
 const MIN_FONT = LIMITS.fontFloor;
 const CONTENT_FONT = LIMITS.fontBody;
@@ -18,7 +35,180 @@ const MUTED_RATIO = LIMITS.contrastMuted;
 const LARGE_RATIO = LIMITS.contrastLarge;
 const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
-const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-annotate']);
+const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-annotate', 'vk-note']);
+
+/* ------------------------------------------------- 批次 G/H 的五个判定 */
+
+const relLum = (c) => {
+  const f = (v) => {
+    v /= 255;
+    return v <= 0.03928 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4);
+  };
+  return 0.2126 * f(c.r) + 0.7152 * f(c.g) + 0.0722 * f(c.b);
+};
+
+const labelOf = (el) => {
+  const cls = String(el.className || '')
+    .trim()
+    .split(/\s+/)[0];
+  const base = cls || String(el.tagName || '').toLowerCase();
+  const text = (el.textContent || '').replace(/\s+/g, ' ').trim().slice(0, 12);
+  return text && !base.includes(text) ? `${base}「${text}」` : base;
+};
+
+/** 行内 / 文字宿主：文字在子 span 里，宿主自己才是"那一行字"。 */
+const INLINE_HOSTS = new Set(['VK-LABEL', 'VK-INLINE', 'VK-ICON', 'VK-TEXT']);
+
+const visibleBox = (el) => {
+  for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) return true;
+  const tag = el.tagName;
+  if (tag === 'IMG' || tag === 'CANVAS' || tag === 'VIDEO' || tag === 'svg' || tag === 'SVG') return true;
+  // 文字宿主（kicker / chip / 行内代码 / 图标 / 文字块）：字可能全在子 span 里，
+  // 但越界的是整行——报宿主比报它内部的 4px 色条有用得多。
+  if (INLINE_HOSTS.has(tag) && (el.textContent || '').trim()) return true;
+  const cs = getComputedStyle(el);
+  const bg = PARSE_RGB(cs.backgroundColor);
+  if (bg && bg.a > 0.06) return true;
+  if (cs.backgroundImage && cs.backgroundImage !== 'none') return true;
+  return ['borderTopWidth', 'borderBottomWidth', 'borderLeftWidth', 'borderRightWidth'].some((k) => parseFloat(cs[k]) >= 1);
+};
+
+/**
+ * H1 强调色：只数「答案级」元素 —— vk-text 与 vk-panel 上的 tone="focus"。
+ *
+ * vk-label 是导航、vk-icon 是符号，都不占强调名额；err / warn 是反例/警告，
+ * 也不在这里计数（它们不是"第二个答案"）。嵌套时只算最外层一次。
+ */
+function accentAnswers(stage) {
+  const hits = [];
+  for (const el of stage.querySelectorAll('vk-text[tone="focus"], vk-panel[tone="focus"]')) {
+    if (el.closest('template')) continue;
+    if (el.closest('vk-label, vk-icon') || el.closest(OVERLAY_SEL)) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    hits.push(el);
+  }
+  return hits.filter((el) => !hits.some((o) => o !== el && o.contains(el)));
+}
+
+/**
+ * G3 深色区域：按底色亮度识别，不靠类名。
+ *
+ * vk-panel variant="dark"、深色终端 / 字节窗、作者自己的 .vk-bg-dark 或内联深底
+ * 都会落进同一个判定。小于 160×60 的深色件（编号点、badge）不算"一块区域"。
+ */
+function darkRegions(stage) {
+  const found = [];
+  for (const el of stage.querySelectorAll('*')) {
+    if (el.closest('template') || el.closest('svg')) continue;
+    if (el.closest(OVERLAY_SEL)) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) < 0.2) continue;
+    const explicit = el.matches('vk-panel[variant="dark"], .vk-bg-dark, [data-vk-dark], [data-theme="dark"]');
+    const bg = PARSE_RGB(cs.backgroundColor);
+    const ownDark = !!bg && bg.a > 0.5 && relLum(bg) < DARK_LUM;
+    if (!explicit && !ownDark) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 160 || r.height < 60) continue;
+    found.push(el);
+  }
+  // 嵌在另一块深色里的子块不重复计数（深色分区的标题带也是深色）。
+  return found.filter((el) => !found.some((o) => o !== el && o.contains(el)));
+}
+
+/**
+ * H3 图标白名单（运行期兜底）。
+ *
+ * 构建期已经拒绝白名单外的 <vk-icon name>；这里拦的是"构建之后又改了 DOM"
+ * 或者旧产物直接跑新运行时的情况。自定义 src 的内联 SVG 不算——它是作者自己的图。
+ */
+function iconIssues(stage) {
+  const out = [];
+  for (const host of stage.querySelectorAll('vk-icon')) {
+    if (host.closest('template')) continue;
+    const inline = host.querySelector(':scope > .vk-icon[data-vk-inline]');
+    if (inline?.dataset.vkSrc) continue;
+    const name = (host.getAttribute('name') || inline?.dataset.vkName || '').trim();
+    if (!name) continue;
+    // 只按名字判：名字在白名单里就是合法语义图标（图标表没注入是另一件事，
+    // 由 data-vk-unknown 的 special 报）。
+    if (isSemanticIcon(name)) continue;
+    out.push({ type: 'icon', el: host, what: `「${name}」不在语义图标白名单里` });
+  }
+  return out;
+}
+
+/** H4 页眉：kicker 只讲工序，不讲文件名，也不讲页号。 */
+function headerIssues(stage) {
+  const out = [];
+  // kicker 是 vk-label 的默认变体：没写 variant 的也是页眉。
+  for (const el of stage.querySelectorAll('vk-label')) {
+    if (el.closest('template')) continue;
+    const variant = el.getAttribute('variant') || 'kicker';
+    if (variant !== 'kicker') continue;
+    const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
+    if (!text) continue;
+    const hit = KICKER_FILE_EXT.exec(text);
+    if (hit) {
+      out.push({ type: 'header', el, what: `页眉（kicker）"${text}" 里出现了文件名 ${hit[0]}` });
+    } else if (KICKER_PAGE_NO.test(text)) {
+      out.push({ type: 'header', el, what: `页眉（kicker）"${text}" 写的是页号 / 帧号` });
+    }
+  }
+  return out;
+}
+
+/**
+ * H5 内容必须在 120 边距内。
+ *
+ * 只查交付页（1920×1080、未缩放）：审阅页把帧缩小排在一起，坐标不是画布坐标；
+ * 标本台（.vk-stage）与图版页（data-allow-void）是目录版式，页骨架的 96 顶带
+ * 本来就是版式的一部分，120 边距是"交付帧"的规则。
+ *
+ * 覆盖层（annotate / ring / edge / note）与出血层不属内容；容器本身不算"可见"，
+ * 只报真正有字、有面、有边或替换元素的那一层，并只报最外层。
+ */
+function marginIssues(stage, pageRect, scale) {
+  if (!pageRect || Math.abs((scale || 1) - 1) > 0.02) return [];
+  if (pageRect.width < PAGE_MARGIN * 2 + 200 || pageRect.height < PAGE_MARGIN * 2 + 200) return [];
+  if (stage.classList?.contains('vk-stage') || stage.hasAttribute?.('data-allow-void') || stage.closest?.('[data-allow-void]')) return [];
+  const out = [];
+  const seen = new Set();
+  const covered = (el) => {
+    for (let p = el.parentElement; p; p = p.parentElement) if (seen.has(p)) return true;
+    return false;
+  };
+  const W = pageRect.width;
+  const H = pageRect.height;
+  for (const el of stage.querySelectorAll('*')) {
+    if (el === stage) continue;
+    if (el.closest('template, svg, .katex, .vk-page-bleed')) continue;
+    if (el.closest(OVERLAY_SEL)) continue;
+    if (el.matches('.vk-page-inner, .vk-page-bd, .vk-page-hd, .vk-page-ft')) continue;
+    const cs = getComputedStyle(el);
+    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    if (!visibleBox(el)) continue;
+    const box = [r.left - pageRect.left, r.top - pageRect.top, r.right - pageRect.left, r.bottom - pageRect.top];
+    const over = Math.max(
+      PAGE_MARGIN - box[0],
+      PAGE_MARGIN - box[1],
+      box[2] - (W - PAGE_MARGIN),
+      box[3] - (H - PAGE_MARGIN)
+    );
+    if (over <= 1) continue;
+    if (covered(el)) continue;
+    seen.add(el);
+    out.push({
+      type: 'margin',
+      el,
+      what: `内容越出 120 边距 ${Math.round(over)}px：${labelOf(el)}`,
+      box: box.map((v) => Math.round(v)),
+    });
+  }
+  return out;
+}
 
 /**
  * 从元素到文档根的累计 scaleX。
@@ -117,7 +307,7 @@ export function auditPage(root = document) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate');
+    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
     const inBleed = !!el.closest('.vk-page-bleed');
@@ -357,7 +547,7 @@ export function auditPage(root = document) {
   // w 是硬宽：量出来必须等于写的数字（容忍 1.5px）。
   // 覆盖层除外：vk-pin 的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
   for (const el of stage.querySelectorAll('[w]')) {
-    if (el.closest('vk-edge, vk-pin, vk-ring, vk-annotate')) continue;
+    if (el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note')) continue;
     const raw = (el.getAttribute('w') || '').trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
     const cs = getComputedStyle(el);
@@ -464,6 +654,44 @@ export function auditPage(root = document) {
   const focusNodes = focusRegions(stage);
   if (focusNodes.length > 1) out.push({ type: 'blue', count: focusNodes.length, what: '一帧出现多处焦点' });
 
+  /* ------------------------------------------------- 批次 G/H：五条硬审计
+     这几条不是"事故"，是设计规则：一页只有一个答案、一块"重"、一页只用语义图标、
+     页眉讲工序不讲文件名、内容永远在 120 边距里。它们都能被 `vk check` 打印，
+     gate 与测试读同一份判定（数值只有这里一处）。 */
+
+  // H1 强调色 ≤ 1：只数"答案级"的 tone="focus"（vk-text / vk-panel）。
+  // vk-label / vk-icon 是导航与符号，不算强调；err / warn 是反例/警告，也不占这个名额。
+  const accents = accentAnswers(stage);
+  if (accents.length > 1) {
+    out.push({
+      type: 'accent',
+      el: accents[1],
+      count: accents.length,
+      what: `一页出现 ${accents.length} 处强调色（tone="focus" 的答案级元素）`,
+    });
+  }
+
+  // G3 / H2 深色块 ≤ 1：一页只能有一块"重"。识别按底色亮度走，
+  // 所以 vk-panel variant="dark"、深色终端/字节窗、作者自己的 .vk-bg-dark 都算。
+  const darks = darkRegions(stage);
+  if (darks.length > 1) {
+    out.push({
+      type: 'dark',
+      el: darks[1],
+      count: darks.length,
+      what: `一页最多一块深色区域，它应该是本页唯一的"重"（本页 ${darks.length} 块）`,
+    });
+  }
+
+  // H3 图标白名单（运行期兜底）：构建期已经拦过 <vk-icon>，这里拦"直接改 DOM"的页面。
+  for (const icon of iconIssues(stage)) out.push(icon);
+
+  // H4 页眉不许含文件名 / 页号：kicker 讲"工序到哪了"。
+  for (const h of headerIssues(stage)) out.push(h);
+
+  // H5 内容必须在 120 边距内：交付页的硬边距（覆盖层与出血层不算内容）。
+  for (const m of marginIssues(stage, pageRect, cumulativeScaleX(stage))) out.push(m);
+
   // 预编译/素材状态。
   const special = [];
   if (stage.querySelector('[data-vk-unknown]')) special.push(`未知图标：${stage.querySelector('[data-vk-unknown]').dataset.vkUnknown}`);
@@ -508,6 +736,17 @@ function fixFor(x, safeRect) {
     return '格太窄：改成每行一条（换行），或改 ratio / 缩短标签；不要继续压值列';
   }
   if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
+  // ---- 批次 G/H：五条设计规则的"下一步" ----
+  if (x.type === 'accent')
+    return '强调色只留给唯一的答案：其余改成 ink="secondary" 或去掉 tone；反例/警告用 tone="err" / tone="warn"（它们不算第二处强调色）';
+  if (x.type === 'dark')
+    return '只留一块深色：其余改成 variant="inset" / plain，或把那一块移到下一页；深色是"重"，一页只能砸一次';
+  if (x.type === 'icon')
+    return `图标只表达"成立 / 注意 / 不成立 / 方向"，不是装饰；可用：${ICON_WHITELIST_HINT}`;
+  if (x.type === 'header')
+    return '页眉讲"工序到哪了"：用 index/total/section（工序 3/5 · 汇编）；文件名放进内容块，页号交给帧编号';
+  if (x.type === 'margin')
+    return '内缩到 120 边距：删内容 / 降一档间距；页眉页脚也要落在 120 以内（覆盖层不受此限）';
   if (x.type === 'safe' && x.box && safeRect) {
     const [l, t, r, b] = x.box;
     const over = Math.max(safeRect.left - l, t - safeRect.top, r - safeRect.right, b - safeRect.bottom);
@@ -556,7 +795,7 @@ export function metrics(root = document) {
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
-      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, [data-vk-overlay]'))
+      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -607,7 +846,7 @@ function bottomGap(holder, sr) {
 
   for (const el of holder.querySelectorAll('*')) {
     if (el.hasAttribute?.('data-vk-overlay')) continue;
-    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-annotate')) continue;
+    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note')) continue;
     if (el.closest?.('svg')) continue;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;

@@ -101,9 +101,10 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
 });
 
 test('图标构建期内联，未知图标仍然报错', async () => {
-  const out = await transformHtml('<vk-icon name="terminal"></vk-icon>', { file: 'icon.html', highlighter: hl });
+  // 用白名单里的名字：装饰性图标（terminal / rocket …）现在会在构建期被拒。
+  const out = await transformHtml('<vk-icon name="circle-check"></vk-icon>', { file: 'icon.html', highlighter: hl });
   assert.ok(out.html.includes('data-vk-inline'));
-  assert.ok(out.html.includes('data-vk-name="terminal"'));
+  assert.ok(out.html.includes('data-vk-name="circle-check"'));
   assert.ok(out.html.includes('<svg'));
 });
 

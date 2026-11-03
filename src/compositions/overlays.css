@@ -297,3 +297,101 @@ vk-annotate[data-mode='badge'] .vk-pin-bd:not(:has(.vk-pin-n:not([hidden])))::be
   border-radius: 50%;
   background: var(--vk-info);
 }
+
+/* ============================================================ vk-note
+   注解原语（批次 G1）：边注 / 编号图例。
+
+   它不是气泡：没有底、没有圆角、没有箭头。边注是"排进栏间的一行注"，
+   引线 1px；图例是"页角的一张对照表"，编号点是实心墨点。
+   字号/颜色只有一种写法（caption + ink-2），作者没有旋钮可调——
+   这正是它和 vk-annotate note（泡 / 引线标签 / 编号点）的分工。 */
+
+vk-note {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+vk-note .vk-note-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* 引线：1px 结构线，没有箭头。箭头只属于 vk-annotate mode="arrow" 的"指向关系"。 */
+vk-note .vk-note-line {
+  fill: none;
+  stroke: var(--vk-line-strong);
+  stroke-width: 1px;
+  stroke-linecap: butt;
+  vector-effect: non-scaling-stroke;
+}
+vk-note .vk-note-mark {
+  fill: var(--vk-ink-2);
+}
+
+/* 边注文字：caption（28）· ink secondary · 无底无框。 */
+vk-note .vk-note-m {
+  position: absolute;
+  box-sizing: border-box;
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-2);
+  text-wrap: pretty;
+}
+
+/* 图例：编号 + 说明的一张表；顶线 1px 是它的"表头"，不是装饰。 */
+vk-note .vk-note-legend {
+  position: absolute;
+  box-sizing: border-box;
+  padding-top: var(--vk-s1);
+  border-top: 1px solid var(--vk-line-3);
+}
+vk-note .vk-note-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-s1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+vk-note .vk-note-item {
+  display: flex;
+  align-items: baseline;
+  gap: var(--vk-s2);
+  margin: 0;
+}
+vk-note .vk-note-item .vk-note-n {
+  flex: 0 0 auto;
+  min-width: 24px;
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-caption);
+  line-height: var(--vk-lh-caption);
+}
+vk-note .vk-note-item .vk-note-t {
+  color: var(--vk-ink-2);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-caption);
+  line-height: var(--vk-lh-caption);
+}
+
+/* 目标角上的编号点：实心墨点 + 反白数字。它是编号，不是强调色（不占焦点名额）。 */
+vk-note .vk-note-dot {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--vk-ink-1);
+  color: var(--vk-paper-surface-1);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-caption);
+  font-weight: var(--vk-w-med);
+  line-height: 1;
+}

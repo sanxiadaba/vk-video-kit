@@ -413,6 +413,17 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   side: { on: 'vk-annotate', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
 });
 
+Object.assign((EFFECTS['vk-note'] ||= {}), {
+  // 注解原语（批次 G1）：宿主上的 data-* 是作者写法的镜像；
+  // 真正的落点在 draw() 的几何里，由 tests/batch-gh.test.mjs 逐条量。
+  kind: { on: 'vk-note', kind: 'attr', prop: 'data-kind', expectFromValue: 'raw' },
+  side: { on: 'vk-note', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
+  leader: { on: 'vk-note', kind: 'attr', prop: 'data-leader', expectFromValue: 'raw' },
+  place: { on: 'vk-note', kind: 'attr', prop: 'data-place', expectFromValue: 'raw' },
+  z: { on: 'vk-note', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
+  // for / w 的取值与几何断言在 tools/lib/contract-probes.mjs（要指到标本里的真实目标）。
+});
+
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
   emphasis: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },

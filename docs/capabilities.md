@@ -34,6 +34,12 @@
 | 终端 · 无壳不重复标题 | `vk-term.chrome`<br>`vk-term.title-show` | `specimen/vk-term.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 | 批注 · 显式落点与避让 | `vk-annotate.side` | `specimen/vk-annotate.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 | 对照 · 差异放大 | `vk-compare.zoom` | `specimen/vk-compare.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
+| 注解 · 边注 margin | `vk-note.kind`<br>`vk-note.side`<br>`vk-note.leader`<br>`vk-note.w`<br>`vk-note.for` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 注解 · 编号图例 legend | `vk-note.kind`<br>`vk-note.place` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 图标 · 语义白名单 | `vk-icon.name` | `specimen/vk-icon.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 · 一页一块深色 | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 · 强调色 ≤1 | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 · 内容在 120 边距内 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -211,6 +217,48 @@
 - 契约断言：`vk-compare.zoom`
 - 标本页：`_site/specimen/vk-compare.html` + 契约宿主 `_site/specimens/vk-compare.html`
 - 测试：`tests/gaps-six.test.mjs` · 「vk-compare zoom="mark"：生成差异放大块，内容与 mark 区域一致」
+
+### ✅ 注解 · 边注 margin
+
+- 能力：kind="margin"：一条 1px 细线从目标引出，文字落在栏间空白里，首行与目标正文同基线；side 自动选有空间的一侧，leader="dot" 在目标端加一枚小圆点。文字固定 caption（28）/ ink secondary，没有泡、没有底、没有箭头。
+- 契约断言：`vk-note.kind` · `vk-note.side` · `vk-note.leader` · `vk-note.w` · `vk-note.for`
+- 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
+- 测试：`tests/batch-gh.test.mjs` · 「vk-note kind="margin"：1px 细线、文字 caption、与目标正文同基线」；`tests/batch-gh.test.mjs` · 「vk-note 自动选边：有空间的一侧才放文字，显式 side 按指定侧」；`tests/batch-gh.test.mjs` · 「vk-note leader="dot"：细线 + 目标端圆点，没有箭头」
+
+### ✅ 注解 · 编号图例 legend
+
+- 能力：kind="legend"：每个目标角上一枚编号点（1 / 2 / 3），页角给一张编号 + 说明的图例表；place=br / bl / bottom 决定表落在哪一角。编号按 <li> 的顺序一一对应，构建期校验目标数与条目数相同。
+- 契约断言：`vk-note.kind` · `vk-note.place`
+- 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
+- 测试：`tests/batch-gh.test.mjs` · 「vk-note kind="legend"：编号点钉在目标右上角，页角图例表编号对齐」；`tests/batch-gh.test.mjs` · 「vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接报错」
+
+### ✅ 图标 · 语义白名单
+
+- 能力：vk-icon 只表达四类意思：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期报错并列出可用名；运行期 audit 再兜一层。
+- 契约断言：`vk-icon.name`
+- 标本页：`_site/specimen/vk-icon.html` + 契约宿主 `_site/specimens/vk-icon.html`
+- 测试：`tests/batch-gh.test.mjs` · 「vk-icon 白名单：名字在内通过，在外构建期报错并列出可用名」
+
+### ✅ 审计 · 一页一块深色
+
+- 能力：深色区域按底色亮度识别（vk-panel variant="dark"、深色终端 / 字节窗、.vk-bg-dark 都算）；一页超过 1 块时 audit 报错：一页最多一块深色区域，它应该是本页唯一的"重"。
+- 契约断言：`vk-panel.variant`
+- 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
+- 测试：`tests/batch-gh.test.mjs` · 「审计 · 深色块 ≤1：两块报错，一块通过」
+
+### ✅ 审计 · 强调色 ≤1
+
+- 能力：统计一页里 tone="focus" 的答案级元素（vk-text / vk-panel），超过 1 处报错；vk-label / vk-icon 不算强调，err / warn 作为反例/警告不占名额。
+- 契约断言：`vk-text.tone`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/batch-gh.test.mjs` · 「审计 · 强调色 ≤1：两处 tone="focus" 报错，第二处 err / warn 不算」
+
+### ✅ 审计 · 内容在 120 边距内
+
+- 能力：交付页（1920×1080、未缩放）的所有可见元素必须落在 [120, 120, 1800, 960] 内（容差 1px）；覆盖层（annotate / ring / edge / note）与出血层豁免。
+- 契约断言：`vk-page.align`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/batch-gh.test.mjs` · 「审计 · 内容必须在 120 边距内（覆盖层豁免）」
 
 ## 怎么判红
 

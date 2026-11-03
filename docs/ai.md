@@ -155,9 +155,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
   - 例：`<vk-inline variant="code">s[0]</vk-inline>`
-- **`vk-icon`** · 图标 — 一个符号。全量 Lucide 名字；四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
+- **`vk-icon`** · 图标 — 一个语义符号，不是装饰：名字必须在白名单里（check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right），构建期拒掉白名单外的名字。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
   - 属性：`name` · `tone` · `label` · `src` · `ink` · `size`
-  - 例：`<vk-icon name="terminal" size="lg">`
+  - 例：`<vk-icon name="check" size="lg">`
 - **`vk-img`** · 图片 — 一张图：比例、填充方式、焦点。加载失败有可见占位。
   - 属性：`src` · `alt` · `ratio` · `fit` · `radius` · `border` · `position`
   - 例：`<vk-img fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl">`
@@ -265,6 +265,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
   - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info">`
+- **`vk-note`** · 注解 — 边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
+  - 属性：`kind` · `for` · `side` · `leader` · `place` · `w` · `z`
+  - 例：`<vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 

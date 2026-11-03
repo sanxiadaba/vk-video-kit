@@ -300,6 +300,13 @@ for (const target of list) {
     if (e.type === 'w') fail(target.label, `w="${e.want}" 实际 ${e.got}px：${e.what}`);
     if (e.type === 'bleed-text') fail(target.label, `出血层里不能放正文：${e.what}`);
     if (e.type === 'collision') fail(target.label, `文本超出单元格：${e.what} (${e.sw} > ${e.cw})`);
+    // 批次 G/H：五条设计规则的硬审计（与 vk check 同一份判定）。
+    // 覆盖层 / 图版页的例外写在 audit.mjs 里，这里不重复。
+    if (e.type === 'accent') fail(target.label, `强调色超限：${e.what}`);
+    if (e.type === 'dark') fail(target.label, `深色块超限：${e.what}`);
+    if (e.type === 'icon') fail(target.label, `图标白名单：${e.what}`);
+    if (e.type === 'header') fail(target.label, `页眉：${e.what}`);
+    if (e.type === 'margin') fail(target.label, `120 边距：${e.what} ${(e.box || []).join(',')}`);
     // 格太窄不是"撞字"，但作者需要看见：只提醒，不当作画面错误。
     if (e.type === 'narrow') warn(target.label, e.fix || `格太窄：${e.what} (${e.sw} > ${e.cw})`);
     if (e.type === 'orphan') warn(target.label, `孤行 ${e.chars} 字：${e.what}`);

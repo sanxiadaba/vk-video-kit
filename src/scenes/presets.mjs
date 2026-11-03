@@ -197,4 +197,10 @@ export const PRESETS = {
     { label: '圈选', attrs: { mode: 'circle', for: '#pst-b', ring: 'ellipse', double: '' } },
     { label: '编号点', attrs: { mode: 'badge', for: '#pst-a', n: '2' } },
   ],
+  'vk-note': [
+    // 不造"编号图例"预设：图例的条目是 <li>，换形态等于换内容形状，不是外观预设。
+    { label: '贴左侧', attrs: { side: 'left' } },
+    { label: '圆点引线', attrs: { leader: 'dot' } },
+    { label: '更窄', attrs: { w: '160' } },
+  ],
 };

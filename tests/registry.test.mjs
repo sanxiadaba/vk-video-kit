@@ -15,7 +15,9 @@ test('registry 自检通过', () => {
 // 与 vk-box（无标题的面）是两个东西。上限跟着提一档，之后仍然只减不增。
 // 批次 C（关系/图示）经批准 +1：vk-annotate 把 vk-edge / vk-pin / vk-ring
 // 合成一个组件（旧标签保留为别名），净增 1。
-const TAG_CEILING = 32;
+// 批次 G（注解原语）经批准 +1：vk-note 是"边注 / 编号图例"，
+// 与 vk-annotate note（气泡 / 引线标签 / 编号点）是两种东西：一个排进版面，一个画在内容上。
+const TAG_CEILING = 33;
 
 test(`标签数不超过 ${TAG_CEILING}（只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);

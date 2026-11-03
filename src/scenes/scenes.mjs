@@ -316,37 +316,49 @@ export const SCENES = [
 
   {
     tag: 'vk-icon',
+    // 图标是语义符号，不是装饰：白名单只有四类意思（✓ / ! / ✗ / 方向）。
+    // 这一页按"意思"分组，而不是按"图标库"列一遍。
     body: s`
-<vk-stack direction="row" gap="2xl" align="center">
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="terminal" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">终端</vk-text>
+<vk-stack gap="xl">
+  <vk-stack direction="row" gap="2xl" align="center">
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="check" size="lg"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">成立</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="circle-check" size="lg" tone="ok"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">已完成</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="triangle-alert" size="lg" tone="warn"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">注意</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="info" size="lg"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">说明</vk-text>
+    </vk-stack>
   </vk-stack>
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="code" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">源码</vk-text>
-  </vk-stack>
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="circle-x" size="lg" tone="err"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">错误</vk-text>
-  </vk-stack>
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="rocket" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">运行</vk-text>
-  </vk-stack>
-</vk-stack>
-<vk-stack direction="row" gap="2xl" align="center">
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="database" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">数据</vk-text>
-  </vk-stack>
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="git-branch" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">分支</vk-text>
-  </vk-stack>
-  <vk-stack gap="xs" align="center">
-    <vk-icon name="settings" size="lg"></vk-icon>
-    <vk-text size="body" mono ink="tertiary">设置</vk-text>
+  <vk-stack direction="row" gap="2xl" align="center">
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="x" size="lg" tone="err"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">不成立</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="circle-x" size="lg" tone="err"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">越界</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="arrow-up" size="lg"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">向上</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="arrow-down" size="lg"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">向下</vk-text>
+    </vk-stack>
+    <vk-stack gap="xs" align="center">
+      <vk-icon name="arrow-right" size="lg"></vk-icon>
+      <vk-text size="body" mono ink="tertiary">下一步</vk-text>
+    </vk-stack>
   </vk-stack>
 </vk-stack>`,
   },
@@ -542,6 +554,32 @@ export const SCENES = [
   <vk-box id="pst-a" x="40" y="80" w="240" h="100" surface="soft" radius="lg"><vk-text size="body" mono align="center">hello.c</vk-text></vk-box>
   <vk-box id="pst-b" x="760" y="180" w="300" h="100" surface="paper" border="hair" radius="lg"><vk-text size="body" mono align="center">hello.exe</vk-text></vk-box>
   <vk-annotate mode="arrow" from="#pst-a@side:right" for="#pst-b@side:left" label="编译"></vk-annotate>
+</vk-canvas>`,
+  },
+
+  {
+    tag: 'vk-note',
+    // 两种"不像气泡"的注解，一页看全：
+    // 上半是边注（1px 细线 + 栏间空白里的一句话，与目标正文同基线），
+    // 下半是编号图例（目标角上 1 / 2，页角一张编号 + 说明的表）。
+    body: s`
+<vk-canvas w="1680" h="720">
+  <vk-box id="nt-code" x="380" y="40" w="560" h="200" surface="soft" border="hair" radius="lg" pad="md">
+    <vk-text size="body" mono>int main(void)</vk-text>
+    <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
+  </vk-box>
+  <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+
+  <vk-box id="nt-a" x="380" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
+    <vk-text size="body">预处理</vk-text>
+  </vk-box>
+  <vk-box id="nt-b" x="1040" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
+    <vk-text size="body">编译</vk-text>
+  </vk-box>
+  <vk-note kind="legend" for="#nt-a;#nt-b" place="br">
+    <li>只把 include 抄进来，不做语法检查</li>
+    <li>到这一步才检查语法并优化</li>
+  </vk-note>
 </vk-canvas>`,
   },
 

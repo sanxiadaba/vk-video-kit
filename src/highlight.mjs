@@ -22,6 +22,7 @@ import { TIER_ALIAS } from './shared/tier-alias.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
+import { ICON_WHITELIST_HINT, isSemanticIcon } from './shared/icons.mjs';
 import { diag } from './shared/diag.mjs';
 import { TAGS, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
 
@@ -211,8 +212,8 @@ const ANCHORS = {
 
 /** 子节点 <i> 的合法属性由 registry 的 CHILD_ATTRS 统一声明。 */
 const INDEX_PART = new Set(['cell', 'byte', 'bit', 'event', 'row', 'step', 'item']);
-/** 允许自由坐标的三个覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
-const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight', 'vk-annotate']);
+/** 允许自由坐标的覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
+const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight', 'vk-annotate', 'vk-note']);
 const Z_OK = new Set([...XY_OVERLAY, 'vk-edge']);
 
 const countTag = (node, tag) => {
@@ -606,6 +607,42 @@ function validateAuthorHtml(doc, file, html = '') {
       }
     }
 
+    // G1：注解原语的两条构建期契约 —— 目标必须能在构建期解析到。
+    // 运行期找不到目标只会"安静地不画"，那是最难查的一类错；宁可在构建期红。
+    if (tag === 'vk-note') {
+      const kind = (attrs.get('kind') || 'margin').trim() === 'legend' ? 'legend' : 'margin';
+      const where = `${file}:${lineOf(node)} <vk-note${kind === 'legend' ? ' kind="legend"' : ''}>`;
+      const targets = String(attrs.get('for') || '')
+        .split(';')
+        .map((s) => s.trim())
+        .filter(Boolean);
+      if (!targets.length) {
+        errors.push(
+          `${where} 缺 for：${kind === 'margin' ? '边注' : '图例的编号点'}必须指向一个目标；写 #id / .class / vk-标签`
+        );
+      }
+      const bad = targets.filter((v) => {
+        if (v.startsWith('#') || v.startsWith('.')) return false;
+        const head = v.match(/^(vk-[a-z0-9-]+)/)?.[1];
+        return !(head && TAGS[head]);
+      });
+      if (bad.length) {
+        errors.push(
+          `${where} 的 for="${bad.join('; ')}" 在构建期解析不到：写 #id / .class / vk-标签，或 #id@part:arg（复杂的 CSS 选择器构建期无法证明它指得到东西）`
+        );
+      }
+      if (kind === 'legend') {
+        const items = (node.childNodes || []).filter((c) => c.tagName === 'li').length;
+        if (!items) {
+          errors.push(`${where} 还没有说明：图例的每一条说明写成 <li>…</li>（编号按顺序从 1 起）`);
+        } else if (targets.length && items !== targets.length) {
+          errors.push(
+            `${where} 有 ${items} 条说明、${targets.length} 个目标：编号按顺序一一对应，数量必须相同`
+          );
+        }
+      }
+    }
+
     // 真轨道：只收 fr 与 auto，最多 6 条。px 会让安全区与溢出检查失真，所以直接拦。
     if (tag === 'vk-grid' && attrs.has('tracks')) {
       const raw = String(attrs.get('tracks')).trim();
@@ -973,6 +1010,14 @@ function validateAuthorHtml(doc, file, html = '') {
         const near = Object.keys(ICONS).filter((n) => n.includes(name) || name.includes(n)).slice(0, 3);
         const where = tag === 'vk-icon' ? '<vk-icon> 没有图标' : '<vk-label> 的 icon 没有图标';
         errors.push(`${file}:${lineOf(node)} ${where} "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
+      }
+      // G2：vk-icon 只是语义符号，不是装饰。白名单外的名字在这里就拦下——
+      // "看起来能跑、图标灰掉了"是最难发现的一类错。
+      if (tag === 'vk-icon' && name && ICONS[name] && !isSemanticIcon(name)) {
+        errors.push(
+          `${file}:${lineOf(node)} <vk-icon> 的 name="${name}" 不在语义图标白名单里；可用：${ICON_WHITELIST_HINT}。` +
+            `图标只用来表达"成立 / 注意 / 不成立 / 方向"，装饰请用版式与留白`
+        );
       }
     }
     if (tag === 'vk-steps' && attrs.has('current')) {
@@ -1727,9 +1772,10 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
       edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
       continue;
     }
-    const name = attr(node, 'name') || 'circle-help';
+    // 没写 name 时不是"随便一枚图标"，而是白名单里的 info（"!" 这一档）。
+    const name = attr(node, 'name') || 'info';
     if (ICONS[name]) iconNames.add(name);
-    const body = ICONS[name] || ICONS['circle-help'];
+    const body = ICONS[name] || ICONS['info'];
     const inner = `<span class="vk-icon" data-vk-inline data-vk-name="${esc(name)}"${aria}><svg viewBox="0 0 24 24">${body}</svg></span>`;
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }

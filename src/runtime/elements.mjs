@@ -1,10 +1,13 @@
 import { VK, esc, numAttr, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
+import { isSemanticIcon } from '../shared/icons.mjs';
 
 /**
- * vk-icon —— 一个符号。
- * 全量 Lucide；名字不认识时退到 circle-help，并在 dataset 上留痕，审计能查。
+ * vk-icon —— 一个语义符号，不是装饰。
+ *
+ * 名字必须在 ICON_SEMANTIC 白名单里（✓ / ! / ✗ / 方向）；构建期会拒掉白名单外的名字，
+ * 运行期这里只做兜底：不认识时退到 info，并在 dataset 上留痕，审计能查。
  */
 export class VkIcon extends VkElement {
   static watchSource = false;
@@ -21,10 +24,10 @@ export class VkIcon extends VkElement {
     // src 的自定义 SVG 由构建期内联；运行时保留构建产物，不再覆盖。
     if (this.hasAttribute('src')) return;
     const inline = this.querySelector(':scope > .vk-icon[data-vk-inline]');
-    if (inline && inline.dataset.vkName === (this.getAttribute('name') || 'circle-help')) return;
-    const raw = (this.getAttribute('name') || 'circle-help').trim();
-    const known = hasIcon(raw);
-    const body = known ? iconOf(raw) : iconOf('circle-help');
+    if (inline && inline.dataset.vkName === (this.getAttribute('name') || 'info')) return;
+    const raw = (this.getAttribute('name') || 'info').trim();
+    const known = hasIcon(raw) && isSemanticIcon(raw);
+    const body = known ? iconOf(raw) : iconOf('info');
     const label = this.getAttribute('label') || '';
 
     if (!known) this.dataset.vkUnknown = raw;

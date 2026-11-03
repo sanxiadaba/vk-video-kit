@@ -20,6 +20,7 @@ import { defineAsm } from './asm.mjs';
 import { defineTimeline } from './timeline.mjs';
 import { defineOverlays } from './overlays.mjs';
 import { defineAnnotate } from './annotate.mjs';
+import { defineNote } from './note.mjs';
 import { installAudit } from './audit.mjs';
 import { installDirector } from './director.mjs';
 import { installPose } from './pose.mjs';
@@ -34,6 +35,8 @@ defineAsm();
 defineTimeline();
 // 关系层：vk-annotate 是本体，vk-edge / vk-pin / vk-ring 是它的旧名字。
 defineAnnotate();
+// 注解原语：边注 / 编号图例（不是气泡）。
+defineNote();
 defineOverlays();
 installAudit(VK);
 installDirector(VK);
