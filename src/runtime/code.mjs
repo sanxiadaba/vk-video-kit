@@ -361,13 +361,30 @@ export class VkTerm extends VkElement {
       .join('');
 
     const chrome = this.getAttribute('chrome') || 'min';
+    // chrome="none" 时标题默认不渲染：外层的 panel 已经有标题带，终端再画一次
+    // 就是两个标题。title 只留作无障碍名；确实要显示，才写 title-show。
+    const showTitle = chrome === 'none' && this.hasAttribute('title-show') && !!title;
+    this.dataset.titleShow = this.hasAttribute('title-show') ? '' : '0';
+    if (chrome === 'none' && title) {
+      if (!this.hasAttribute('role')) {
+        this.setAttribute('role', 'group');
+        this._vkRole = true;
+      }
+      this.setAttribute('aria-label', title);
+      this._vkAria = true;
+    } else if (this._vkAria) {
+      this.removeAttribute('aria-label');
+      if (this._vkRole) this.removeAttribute('role');
+      this._vkAria = false;
+      this._vkRole = false;
+    }
 
     this.innerHTML = win({
       chrome,
       cls: 'vk-term',
       attrs: ` data-mass="${mass}"`,
-      head: title ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
-      inner: `<div class="vk-bd" data-vk-part="bd">${body}</div>`,
+      head: title && chrome !== 'none' ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
+      inner: `${showTitle ? `<div class="vk-term-title" data-meta>${esc(title)}</div>` : ''}<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });
 
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;

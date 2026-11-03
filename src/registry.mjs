@@ -160,6 +160,10 @@ const ATTR_META = {
   double: { label: '内外两圈', group: 'appearance' },
   width: { label: '线宽', group: 'appearance' },
   'mark-label': { label: '差异标签', content: true },
+  // 以下三项是「窄容器 / 地图页 / 无壳终端」的显式开关，都只改呈现，不改内容。
+  done: { label: '已完成态', group: 'state' },
+  'title-show': { label: '显示标题', group: 'appearance' },
+  zoom: { label: '差异放大', group: 'appearance' },
   header: { label: '页眉', content: true },
   footer: { label: '页脚', content: true },
 };
@@ -194,8 +198,9 @@ const DEFAULTS = {
     tone: 'neutral',
     size: 'body',
     emphasis: 'soft',
+    side: 'auto',
   },
-  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all' },
+  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
@@ -206,7 +211,7 @@ const DEFAULTS = {
   'vk-bars': { mass: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-cells': { cols: '0', mass: 'normal' },
-  'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow' },
+  'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow', done: 'auto' },
   'vk-page': { align: 'top' },
 };
 
@@ -507,6 +512,9 @@ export const TAGS = {
       'line': { ...lines(), hidden: true },
       'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
       'chrome': oneOf('none', 'min'),
+      // 无壳终端（chrome="none"）默认不显示标题：标题只留给 panel 的标题带，
+      // 这里只把 title 留作无障碍名。确实要在无壳终端上再显示一次，才写 title-show。
+      'title-show': bool(),
       'mass': oneOf('compact', 'normal', 'hero'),
     },
   },
@@ -564,7 +572,7 @@ export const TAGS = {
     name: '对照',
     layer: 'components',
     summary:
-      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。',
+      '前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。zoom="mark" 在下方生成一块差异放大（默认 ×2），也可以写 x1,y1,x2,y2 或只写倍数。',
     attrs: {
       'a': text(),
       'b': text(),
@@ -581,6 +589,9 @@ export const TAGS = {
       // 差异框：相对百分比坐标，多组用 ";"。split 下只画在所属的那一半。
       'mark': text(),
       'mark-label': text(),
+      // 差异放大：zoom="mark" 放大 mark 框住的那块；也可以写 x1,y1,x2,y2，
+      // 或只写倍数（2）。默认 ×2，块与小标题由组件给。
+      'zoom': text(),
     },
   },
   'vk-tree': {
@@ -655,7 +666,7 @@ export const TAGS = {
   'vk-steps': {
     name: '步骤',
     layer: 'components',
-    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）。',
+    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）；done="none" 连前面也不打勾，mark="N" 只强调第 N 步。',
     content: {
       kind: 'items',
       target: 'vk-steps',
@@ -664,6 +675,10 @@ export const TAGS = {
     attrs: {
       // -1 是合法值：地图页要"五步等权、不站在任何一步"，0 做不到。
       'current': int({ min: -1, max: 99, step: 1 }),
+      // done="none"：前面不再自动打勾；地图页五步等权，只有 current（或 mark）强调。
+      'done': { ...oneOf('auto', 'none'), default: 'auto' },
+      // mark="N"：只强调第 N 步（0 起，和 current 同一套坐标），不给别的步打勾。
+      'mark': int({ min: 0, max: 99, step: 1 }),
       'mass': oneOf('compact', 'normal', 'hero'),
     },
   },
@@ -865,6 +880,10 @@ export const TAGS = {
       'label': text(),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
+      // note 形态的显式落点：side 指定气泡在哪一侧，x/y 直接给覆盖层坐标（同旧 vk-pin）。
+      'side': { ...oneOf('auto', 'top', 'right', 'bottom', 'left'), default: 'auto' },
+      'x': { ...num({ min: -4000, max: 4000, step: 1 }), context: 'mode-note' },
+      'y': { ...num({ min: -4000, max: 4000, step: 1 }), context: 'mode-note' },
     },
   },
 };

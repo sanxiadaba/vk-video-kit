@@ -651,6 +651,23 @@ export class VkSteps extends VkElement {
       this._warnOnce('current', `的 current="${current}" 超过 ${items.length - 1}，按最后一步处理`);
       current = items.length - 1;
     }
+    // done="none"：不把 current 之前自动画成已完成。地图页要"五步等权"时，
+    // current="-1" 会让整页 0 强调色；这里保留 current 的高亮，只去掉前面的对勾。
+    const rawDone = (this.getAttribute('done') || 'auto').trim();
+    const doneMode = rawDone === 'none' ? 'none' : 'auto';
+    if (rawDone !== 'auto' && rawDone !== 'none') {
+      this._warnOnce('done', `的 done="${rawDone}" 不认识，按 auto 处理（可用：auto / none）`);
+    }
+    // mark="N"（0 起，与 current 同一套坐标）：只强调第 N 步，不给其它步打勾。
+    // 这是"地图上指出一处"的写法；有 mark 时不再自动标 done。
+    let mark = parseInt(this.getAttribute('mark') ?? '', 10);
+    const hasMark = Number.isFinite(mark);
+    if (hasMark && (mark < 0 || mark > items.length - 1)) {
+      this._warnOnce('mark', `的 mark="${mark}" 不在 0…${items.length - 1}，已忽略`);
+      mark = NaN;
+    }
+    const hasValidMark = Number.isFinite(mark);
+    const focusIdx = hasValidMark ? mark : current;
     // 连接线只有三种画法；写错就按默认箭头画，并在控制台说清楚。
     const rawConnector = this.getAttribute('connector');
     const connector = CONNECTORS.has(rawConnector) ? rawConnector : 'arrow';
@@ -660,10 +677,14 @@ export class VkSteps extends VkElement {
     const root = document.createElement('ol');
     root.className = 'vk-steps';
     root.dataset.connector = connector;
+    root.dataset.done = doneMode;
+    root.dataset.mark = hasValidMark ? String(mark) : '';
     items.forEach((it, i) => {
       const n = i + 1;
       // current = -1 时三个分支都不命中：五步同为 todo，等权的地图。
-      const state = i < current ? 'done' : i === current ? 'current' : 'todo';
+      // done="none" / 有 mark 时不再自动把前面几步画成 done。
+      const state =
+        i === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && i < current ? 'done' : 'todo';
       const step = document.createElement('li');
       step.className = 'vk-step';
       step.dataset.step = String(i);
@@ -690,7 +711,9 @@ export class VkSteps extends VkElement {
         line.className = 'vk-step-line';
         // 线的状态跟「它通向的那一步」走：done 绿、current 钴蓝、todo 灰。
         const next = i + 1;
-        line.dataset.conn = next < current ? 'done' : next === current ? 'current' : 'todo';
+        const nextState =
+          next === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && next < current ? 'done' : 'todo';
+        line.dataset.conn = nextState;
         line.setAttribute('role', 'presentation');
         line.setAttribute('aria-hidden', 'true');
         root.append(line);
@@ -1029,6 +1052,24 @@ function parseMarks(raw, warn) {
   return out;
 }
 
+/**
+ * object-position → 图像在盒子里的偏移（与 CSS 的百分比定位同一套算法）。
+ * free 是「盒子 - 图像渲染尺寸」：cover 时是负数（图比盒子大），contain 时是正数。
+ */
+function parseObjectPosition(value, freeX, freeY) {
+  const parts = String(value || '')
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+  const one = (v, free) => {
+    const raw = v ?? '50%';
+    if (raw.endsWith('%')) return (free * parseFloat(raw)) / 100;
+    if (raw.endsWith('px')) return parseFloat(raw);
+    return free / 2;
+  };
+  return { x: one(parts[0], freeX), y: one(parts[1] || parts[0], freeY) };
+}
+
 
 export class VkCompare extends VkElement {
   static watchSource = false;
@@ -1171,6 +1212,8 @@ export class VkCompare extends VkElement {
           `两张图尺寸比例不同（${A.naturalWidth}×${A.naturalHeight} vs ${B.naturalWidth}×${B.naturalHeight}）：对照会一边拉伸一边裁切`
         );
       }
+      // 图解码完成后才有 naturalWidth，放大块要等这一步才能算背景几何。
+      if (this._zoom) this._paintZoom(this._lastMode || 'split', this._lastSplit ?? 50);
     };
     for (const img of [this._imgA, this._imgB]) {
       if (img.complete) checkPair();
@@ -1190,6 +1233,136 @@ export class VkCompare extends VkElement {
 
     paintLabels();
     this._paintMarks(mode, split);
+    this._lastMode = mode;
+    this._lastSplit = split;
+    // zoom 只多画一块，不改对照本身的几何。
+    this.dataset.zoom = (this.getAttribute('zoom') || '').trim();
+    this._paintZoom(mode, split);
+    if (!this._zoomResize) {
+      this._zoomResize = () => this._paintZoom(this._lastMode || 'split', this._lastSplit ?? 50);
+      window.addEventListener('resize', this._zoomResize);
+    }
+  }
+
+  /**
+   * 差异放大：在对照下方画一块放大视图。
+   *
+   *   zoom="mark"            放大 mark 框住的第一块（最常用）
+   *   zoom="x1,y1,x2,y2"     放大任意百分比框
+   *   zoom="2"               倍数（框取 mark，没有 mark 就取整张）
+   *   zoom="mark@3"          框 + 非默认倍数
+   *
+   * 放大块只是同一张图的背景，用 background-size / background-position 把
+   * 框内区域放大 N 倍显示；不要求作者写任何 CSS。
+   */
+  _paintZoom(mode, split) {
+    const raw = (this.getAttribute('zoom') || '').trim();
+    if (!raw) {
+      this._zoom?.remove();
+      this._zoom = null;
+      return;
+    }
+    const spec = this._zoomSpec(raw);
+    if (!spec) {
+      this._zoom?.remove();
+      this._zoom = null;
+      return;
+    }
+    const { box, scale } = spec;
+    const center = box.x + box.w / 2;
+    const which = mode === 'split' ? (center < split ? 'a' : 'b') : 'a';
+    const img = which === 'a' ? this._imgA : this._imgB;
+    if (!this._zoom) {
+      const fig = document.createElement('figure');
+      fig.className = 'vk-cmp-zoom';
+      fig.setAttribute('role', 'img');
+      const view = document.createElement('div');
+      view.className = 'vk-cmp-zoom-v';
+      const cap = document.createElement('figcaption');
+      cap.className = 'vk-cmp-zoom-c';
+      cap.setAttribute('data-meta', '');
+      fig.append(view, cap);
+      this.append(fig);
+      this._zoom = fig;
+      this._zoomV = view;
+      this._zoomC = cap;
+    }
+    const title = `差异放大 ×${Number.isInteger(scale) ? scale : scale.toFixed(1)}`;
+    this._zoomC.textContent = title;
+    this._zoom.setAttribute('aria-label', title);
+
+    const nr = img.getBoundingClientRect();
+    if (!img.naturalWidth || nr.width < 1 || nr.height < 1) {
+      // 图还没解码出来：load 监听器会再调一次。
+      return;
+    }
+    const W = nr.width;
+    const H = nr.height;
+    const nw = img.naturalWidth;
+    const nh = img.naturalHeight;
+    const fit = getComputedStyle(img).objectFit === 'contain' ? 'contain' : 'cover';
+    // 与 <img> 的 object-fit 用同一套缩放：放大块才能和取景框逐像素对齐。
+    const s = fit === 'contain' ? Math.min(W / nw, H / nh) : Math.max(W / nw, H / nh);
+    const RW = nw * s;
+    const RH = nh * s;
+    const cs = getComputedStyle(img);
+    const pos = parseObjectPosition(cs.objectPosition, W - RW, H - RH);
+    const rx = (W * box.x) / 100;
+    const ry = (H * box.y) / 100;
+    const rw = (W * box.w) / 100;
+    const rh = (H * box.h) / 100;
+    const v = this._zoomV;
+    v.style.aspectRatio = `${rw} / ${rh}`;
+    v.style.backgroundImage = `url("${(img.currentSrc || img.src).replace(/"/g, '%22')}")`;
+    v.style.backgroundSize = `${RW * scale}px ${RH * scale}px`;
+    v.style.backgroundPosition = `${-(rx - pos.x) * scale}px ${-(ry - pos.y) * scale}px`;
+    v.dataset.source = which;
+    v.dataset.scale = String(scale);
+    v.dataset.zoomBox = `${box.x},${box.y},${box.w},${box.h}`;
+    this.dataset.zoom = raw;
+  }
+
+  /** zoom 的写法解析：mark / x1,y1,x2,y2 / 倍数 / 前两者 @倍数。 */
+  _zoomSpec(raw) {
+    let token = raw;
+    let scale = 2;
+    const numeric = /^\d+(?:\.\d+)?$/.test(raw);
+    const at = raw.lastIndexOf('@');
+    if (at > 0) {
+      const n = parseFloat(raw.slice(at + 1));
+      if (Number.isFinite(n)) {
+        scale = Math.max(1, Math.min(8, n));
+        token = raw.slice(0, at).trim();
+      }
+    } else if (numeric) {
+      scale = Math.max(1, Math.min(8, parseFloat(raw)));
+      token = 'mark';
+    }
+    const marks = this._marks || [];
+    if (token === 'mark') {
+      if (!marks.length) {
+        // 只写倍数时拿整张对照当框，不逼作者先写 mark。
+        if (numeric) return { box: { x: 0, y: 0, w: 100, h: 100 }, scale };
+        this._warnOnce('zoom', '的 zoom="mark" 没有对应的 mark 框：先写 mark="x1,y1,x2,y2"');
+        return null;
+      }
+      return { box: marks[0], scale };
+    }
+    const nums = token.split(',').map((s) => parseFloat(s.trim()));
+    if (nums.length !== 4 || nums.some((n) => !Number.isFinite(n))) {
+      this._warnOnce('zoom', `的 zoom="${raw}" 不是 mark、倍数或 x1,y1,x2,y2；已忽略`);
+      return null;
+    }
+    const [x1, y1, x2, y2] = nums.map((n) => Math.max(0, Math.min(100, n)));
+    const x = Math.min(x1, x2);
+    const y = Math.min(y1, y2);
+    const w = Math.abs(x2 - x1);
+    const h = Math.abs(y2 - y1);
+    if (w < 0.5 || h < 0.5) {
+      this._warnOnce('zoom', `的 zoom="${raw}" 框宽或高为 0；已忽略`);
+      return null;
+    }
+    return { box: { x, y, w, h }, scale };
   }
 
   /**
@@ -1208,6 +1381,8 @@ export class VkCompare extends VkElement {
     b.replaceChildren();
     this._shell.style.setProperty('--vk-cmp-split', split + '%');
     const marks = parseMarks(this.getAttribute('mark'), (msg) => this._warnOnce('mark', msg));
+    // zoom="mark" 读同一份框，避免两处解析规则漂移。
+    this._marks = marks;
     if (!marks.length) return;
     const labels = String(this.getAttribute('mark-label') || '')
       .split(';')

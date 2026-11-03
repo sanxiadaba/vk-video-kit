@@ -24,6 +24,11 @@
 | 标注 · 批注 note | `vk-annotate.note` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 | 标注 · 编号点 badge | `vk-annotate.n` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 | 对照 · 差异框 mark | `vk-compare.mark`<br>`vk-compare.mark-label` | `specimen/vk-compare.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 字节窗 · 窄容器逐格 | `vk-bytes.cols` | `specimen/vk-bytes.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
+| 步骤条 · 等权地图 | `vk-steps.done`<br>`vk-steps.mark` | `specimen/vk-steps.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
+| 终端 · 无壳不重复标题 | `vk-term.chrome`<br>`vk-term.title-show` | `specimen/vk-term.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
+| 批注 · 显式落点与避让 | `vk-annotate.side` | `specimen/vk-annotate.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
+| 对照 · 差异放大 | `vk-compare.zoom` | `specimen/vk-compare.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -131,6 +136,41 @@
 - 契约断言：`vk-compare.mark` · `vk-compare.mark-label`
 - 标本页：`_site/specimen/vk-compare.html` + 契约宿主 `_site/specimens/vk-compare.html`
 - 测试：`tests/annotate.test.mjs` · 「vk-compare mark：百分比换成像素，split 下只标在所属的一半」；`tests/annotate.test.mjs` · 「vk-compare mark：写错的坐标不画框，也不炸页面」
+
+### ✅ 字节窗 · 窄容器逐格
+
+- 能力：十六进制按单格换行，不再把整行当成一格去量：400px 的窄卡里 8 列照常读，只有连半行都放不下时才报“格太窄”，并给出减少 cols / 关掉 ascii / 换宽容器三条改法。
+- 契约断言：`vk-bytes.cols`
+- 标本页：`_site/specimen/vk-bytes.html` + 契约宿主 `_site/specimens/vk-bytes.html`
+- 测试：`tests/gaps-six.test.mjs` · 「vk-bytes 窄卡片：逐格测量，400px 8 列不报文本超出，200px 报格太窄」
+
+### ✅ 步骤条 · 等权地图
+
+- 能力：done="none" 时不再把 current 之前自动画成绿色对勾，只保留 current（或整页不标）；mark="N" 只强调第 N 步、不给其它步打勾。默认 done="auto" 与旧行为一字不差。
+- 契约断言：`vk-steps.done` · `vk-steps.mark`
+- 标本页：`_site/specimen/vk-steps.html` + 契约宿主 `_site/specimens/vk-steps.html`
+- 测试：`tests/gaps-six.test.mjs` · 「vk-steps done="none"：不标已完成，只有第 3 步是 current；默认行为不变」；`tests/gaps-six.test.mjs` · 「vk-steps mark="N"：只强调第 N 步，不给其它步打勾」
+
+### ✅ 终端 · 无壳不重复标题
+
+- 能力：chrome="none" 时 title 只作无障碍名（aria-label），不再渲染自己的窗头 / 文件名；确实要显示才写 title-show。默认 chrome="min" 的窗头不变。
+- 契约断言：`vk-term.chrome` · `vk-term.title-show`
+- 标本页：`_site/specimen/vk-term.html` + 契约宿主 `_site/specimens/vk-term.html`
+- 测试：`tests/gaps-six.test.mjs` · 「vk-term chrome="none"：title 只作无障碍名，title-show 才显示」
+
+### ✅ 批注 · 显式落点与避让
+
+- 能力：note 新增 side=top|right|bottom|left 与 x/y 坐标；自动选边把目标自身矩形也算成障碍，优先选引线不穿过目标的一侧，实在没有干净位置时说明并选压字最少的一侧。
+- 契约断言：`vk-annotate.side`
+- 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
+- 测试：`tests/gaps-six.test.mjs` · 「vk-annotate note：自动避让不压目标行、引线不穿行；side="bottom" 按指定侧」；`tests/gaps-six.test.mjs` · 「vk-annotate note：四个方向都不干净时警告，并选压字最少的一侧」
+
+### ✅ 对照 · 差异放大
+
+- 能力：zoom="mark" 在对照下方生成差异放大块（默认 ×2）：放大 mark 框住的那块，也可以写 x1,y1,x2,y2 或只写倍数；放大块样式与小标题由组件给，作者不写 CSS。
+- 契约断言：`vk-compare.zoom`
+- 标本页：`_site/specimen/vk-compare.html` + 契约宿主 `_site/specimens/vk-compare.html`
+- 测试：`tests/gaps-six.test.mjs` · 「vk-compare zoom="mark"：生成差异放大块，内容与 mark 区域一致」
 
 ## 怎么判红
 

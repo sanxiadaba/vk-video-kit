@@ -9,7 +9,7 @@ for (const def of Object.values(TAGS)) for (const name of Object.keys(def.attrs 
 for (const list of Object.values(CHILD_ATTRS)) for (const name of list) registryAttrs.add(name);
 
 // density 是 13.0 里的旧词：只在 base.mjs 的别名层读一次，registry 已经不声明它。
-const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text', 'bleed', 'density']);
+const ALLOW = new Set(['style', 'class', 'id', 'hidden', 'open', 'slot', 'viewBox', 'date', 'lane', 'at', 'text', 'bleed', 'density', 'role']);
 const IGNORE = (name) => name.startsWith('data-') || name.startsWith('aria-') || ALLOW.has(name);
 
 function walk(dir, out = []) {

@@ -200,6 +200,79 @@
           "name": "vk-compare mark：写错的坐标不画框，也不炸页面"
         }
       ]
+    },
+    {
+      "id": "bytes-narrow",
+      "name": "字节窗 · 窄容器逐格",
+      "what": "十六进制按单格换行，不再把整行当成一格去量：400px 的窄卡里 8 列照常读，只有连半行都放不下时才报“格太窄”，并给出减少 cols / 关掉 ascii / 换宽容器三条改法。",
+      "contracts": ["vk-bytes.cols"],
+      "specimen": "vk-bytes",
+      "tests": [
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-bytes 窄卡片：逐格测量，400px 8 列不报文本超出，200px 报格太窄"
+        }
+      ]
+    },
+    {
+      "id": "steps-equal-map",
+      "name": "步骤条 · 等权地图",
+      "what": "done=\"none\" 时不再把 current 之前自动画成绿色对勾，只保留 current（或整页不标）；mark=\"N\" 只强调第 N 步、不给其它步打勾。默认 done=\"auto\" 与旧行为一字不差。",
+      "contracts": ["vk-steps.done", "vk-steps.mark"],
+      "specimen": "vk-steps",
+      "tests": [
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-steps done=\"none\"：不标已完成，只有第 3 步是 current；默认行为不变"
+        },
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-steps mark=\"N\"：只强调第 N 步，不给其它步打勾"
+        }
+      ]
+    },
+    {
+      "id": "term-title-noshell",
+      "name": "终端 · 无壳不重复标题",
+      "what": "chrome=\"none\" 时 title 只作无障碍名（aria-label），不再渲染自己的窗头 / 文件名；确实要显示才写 title-show。默认 chrome=\"min\" 的窗头不变。",
+      "contracts": ["vk-term.chrome", "vk-term.title-show"],
+      "specimen": "vk-term",
+      "tests": [
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-term chrome=\"none\"：title 只作无障碍名，title-show 才显示"
+        }
+      ]
+    },
+    {
+      "id": "annotate-note-placement",
+      "name": "批注 · 显式落点与避让",
+      "what": "note 新增 side=top|right|bottom|left 与 x/y 坐标；自动选边把目标自身矩形也算成障碍，优先选引线不穿过目标的一侧，实在没有干净位置时说明并选压字最少的一侧。",
+      "contracts": ["vk-annotate.side"],
+      "specimen": "vk-annotate",
+      "tests": [
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-annotate note：自动避让不压目标行、引线不穿行；side=\"bottom\" 按指定侧"
+        },
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-annotate note：四个方向都不干净时警告，并选压字最少的一侧"
+        }
+      ]
+    },
+    {
+      "id": "compare-zoom",
+      "name": "对照 · 差异放大",
+      "what": "zoom=\"mark\" 在对照下方生成差异放大块（默认 ×2）：放大 mark 框住的那块，也可以写 x1,y1,x2,y2 或只写倍数；放大块样式与小标题由组件给，作者不写 CSS。",
+      "contracts": ["vk-compare.zoom"],
+      "specimen": "vk-compare",
+      "tests": [
+        {
+          "file": "tests/gaps-six.test.mjs",
+          "name": "vk-compare zoom=\"mark\"：生成差异放大块，内容与 mark 区域一致"
+        }
+      ]
     }
   ]
 }

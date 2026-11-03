@@ -189,8 +189,19 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after{ top: 0; }.vk-code .vk-l
   letter-spacing: 0.2em;
 }.vk-line.is-fold .vk-fold-text{ padding-left: var(--vk-s3); }vk-code[numbers='none'] .vk-ln{ display: none; }vk-code[numbers='none'] .vk-src{ padding-left: var(--vk-s4); }vk-code[long='wrap'] .vk-line{ align-items: flex-start; white-space: pre-wrap; }vk-code[long='wrap'] .vk-src{ white-space: pre-wrap; overflow-wrap: anywhere; }vk-code[long='wrap'] .vk-src{ padding-top: 0.18em; padding-bottom: 0.18em; }/* --------------------------------------------------------------- vk-term */
 
-vk-term{ display: block; }.vk-term .vk-bd{
-  overflow-y: hidden;
+vk-term{ display: block; }
+/* 无壳终端上作者显式要求的标题（title-show）。默认只有无障碍名，不占画面。 */
+.vk-term-title{
+  padding: var(--vk-s2) var(--vk-s3) 0;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  line-height: 1.2;
+  color: var(--vk-ink-3);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vk-term .vk-bd{  overflow-y: hidden;
   padding: var(--vk-s2) 0;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-body);
@@ -590,6 +601,7 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
 }/* -------------------------------------------------------------- vk-bytes */
 
 vk-bytes{ display: block; }.vk-bytes{
+  container-type: inline-size;
   padding: 0 var(--vk-s3);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);
@@ -598,7 +610,9 @@ vk-bytes{ display: block; }.vk-bytes{
   font-variant-ligatures: none;
 }.vk-bytes-row{
   display: grid;
-  grid-template-columns: 10ch max-content 8ch;
+  /* 中间是十六进制格：max-content 只在宽容器里成立。允许它被压到 0，
+     字节自己按格换行，绝不把整行当成一格去量。 */
+  grid-template-columns: 10ch minmax(0, max-content) 8ch;
   align-items: center;
   gap: var(--vk-s3);
   min-height: 70px;
@@ -610,7 +624,7 @@ vk-bytes{ display: block; }.vk-bytes{
   font-size: var(--vk-t-label);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
-}.vk-bytes-x{ display: flex; align-items: center; gap: 0; white-space: nowrap; }.vk-bytes-w{ display: inline-flex; align-items: center; gap: 0; }.vk-bytes-x[data-word='2'],
+}.vk-bytes-x{ display: flex; align-items: center; flex-wrap: wrap; min-width: 0; white-space: normal; gap: 0; }.vk-bytes-w{ display: inline-flex; align-items: center; gap: 0; }.vk-bytes-x[data-word='2'],
 .vk-bytes-x[data-word='4'],
 .vk-bytes-x[data-word='8']{ gap: 12px; }.vk-bytes-x[data-endian='little'] .vk-bytes-w{ flex-direction: row; }.vk-bytes-x i{
   display: inline-block;
@@ -628,9 +642,25 @@ vk-bytes{ display: block; }.vk-bytes{
   color: var(--vk-ink-1);
 }.vk-bytes-c{
   color: var(--vk-ink-2);
+  min-width: 0;
   white-space: pre;
   letter-spacing: 0;
-}.vk-bytes[data-cols='4'] .vk-bytes-row{ grid-template-columns: 10ch minmax(0, 1fr) 4ch; }.vk-keys{
+}.vk-bytes[data-cols='4'] .vk-bytes-row{ grid-template-columns: 10ch minmax(0, 1fr) 4ch; }
+/* 窄容器：地址 / 十六进制 / ASCII 各占一行。十六进制仍是逐格排，
+   一行放不下就换行；400px 的卡也读得完，不会把整行判成"文本超出单元格"。
+   阈值 560 低于 demo 的卡片宽度，宽卡里的单行布局一个像素都不动。 */
+@container (max-width: 560px){
+  .vk-bytes-row{
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-start;
+    column-gap: var(--vk-s3);
+    row-gap: var(--vk-s1);
+  }
+  .vk-bytes-a{ flex: 0 0 auto; }
+  .vk-bytes-x{ flex: 1 1 100%; }
+  .vk-bytes-c{ flex: 1 1 100%; white-space: pre-wrap; overflow-wrap: anywhere; }
+}.vk-keys{
   display: inline-flex;
   align-items: center;
   gap: var(--vk-s2);
@@ -1235,4 +1265,27 @@ vk-compare{ display: block; }.vk-cmp{
   line-height:1.2;
   color:var(--vk-ink-1);
   white-space:nowrap;
+}
+
+/* 差异放大：对照下方的一块独立视图；框与小标题都由组件给。 */
+.vk-cmp-zoom{
+  margin: var(--vk-s3) 0 0;
+  border: var(--vk-line-w) solid var(--vk-line-2);
+  border-radius: var(--vk-r-2);
+  overflow: hidden;
+  background: var(--vk-surface-2);
+}
+.vk-cmp-zoom-v{
+  width: 100%;
+  background-repeat: no-repeat;
+  background-color: var(--vk-surface-2);
+}
+.vk-cmp-zoom-c{
+  padding: var(--vk-s2) var(--vk-s3);
+  border-top: var(--vk-line-w) solid var(--vk-line-2);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  line-height: 1.2;
+  color: var(--vk-ink-3);
+  background: var(--vk-surface-1);
 }

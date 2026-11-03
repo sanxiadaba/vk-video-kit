@@ -341,6 +341,9 @@ export function auditPage(root = document) {
   // 组件级溢出（Frame 原语）：内容比盒子宽/高。
   if (typeof window !== 'undefined' && typeof window.vk?.auditOverflow === 'function') {
     for (const a of window.vk.auditOverflow(stage)) {
+      // vk-bytes 的十六进制是逐格排的：整块 .vk-bd 的宽度溢出不等于"文本超出单元格"。
+      // 它由下面的逐格测量单独判（真放不下时报"格太窄"），这里不重复报。
+      if (a.tag === 'vk-bytes') continue;
       let host = null;
       try {
         host = a.sel ? stage.querySelector(a.sel) : null;
@@ -393,6 +396,26 @@ export function auditPage(root = document) {
     if (el.scrollWidth > el.clientWidth + 3) {
       out.push({ type: 'narrow', el, what: 'vk-bars', sw: el.scrollWidth, cw: el.clientWidth });
     }
+  }
+
+  // 字节窗按「行」量，但行内是逐格排的：只有真的连半行都放不下（或行比容器宽）
+  // 才报"格太窄"。400px 的窄卡里字节会自己换行，不该被当成撞字。
+  for (const el of stage.querySelectorAll('vk-bytes')) {
+    if (el.closest('.vk-page-bleed')) continue;
+    let hit = null;
+    for (const row of el.querySelectorAll('.vk-bytes-row')) {
+      if (row.clientWidth < 8) continue;
+      const cell = row.querySelector('.vk-bytes-x i');
+      const cols = el.getAttribute('cols') === '4' ? 4 : 8;
+      const cellW = cell ? cell.getBoundingClientRect().width : 0;
+      // 8 列至少放得下 4 格、4 列至少 2 格：再窄就成"标签列"了，读不出字节行。
+      const need = cellW ? Math.ceil(cols / 2) * cellW : 0;
+      if (row.scrollWidth > row.clientWidth + 3 || (need > 0 && need > row.clientWidth + 1)) {
+        hit = row;
+        break;
+      }
+    }
+    if (hit) out.push({ type: 'narrow', el, what: 'vk-bytes', sw: Math.round(hit.scrollWidth), cw: hit.clientWidth });
   }
 
   // 孤行：多行文本的最后一行少于 4 个汉字宽，读起来像排版事故。
@@ -478,7 +501,12 @@ function fixFor(x, safeRect) {
   if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / mass="compact"`;
   if (x.type === 'clip') return `差 ${x.sw - x.cw}px：先试 long="wrap" / 删字符`;
   if (x.type === 'audit-overflow') return `差 ${Math.max(x.sw - x.cw, x.sh - x.ch)}px：先试 long="wrap" / mass="compact" / 删 1 行`;
-  if (x.type === 'narrow') return '格太窄：改成每行一条（换行），或改 ratio / 缩短标签；不要继续压值列';
+  if (x.type === 'narrow') {
+    if (x.what === 'vk-bytes') {
+      return '格太窄：减少 cols（改用 4 列）或关掉 ascii / 换宽容器；不要继续压字';
+    }
+    return '格太窄：改成每行一条（换行），或改 ratio / 缩短标签；不要继续压值列';
+  }
   if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
   if (x.type === 'safe' && x.box && safeRect) {
     const [l, t, r, b] = x.box;

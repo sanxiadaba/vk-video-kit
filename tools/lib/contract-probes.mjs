@@ -33,6 +33,11 @@ export const PROBES = {
       effect: { on: '.vk-cmp-mark-l', kind: 'text' },
       why: '角标文字直接落在 .vk-cmp-mark-l。',
     },
+    zoom: {
+      values: ['mark', '2'],
+      effect: { on: 'vk-compare', kind: 'attr', prop: 'data-zoom', expectFromValue: 'raw', skipVisual: true },
+      why: 'zoom 的一行字有两个合法写法：mark（放大 mark 框）和倍数。宿主上的 data-zoom 两种都要跟手。',
+    },
   },
   'vk-annotate': {
     for: {
@@ -139,6 +144,11 @@ export const PROBES = {
       values: ['vertical'],
       effect: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
       why: '横排/竖排的差异最终在 .vk-steps 的 flex-direction。',
+    },
+    mark: {
+      values: ['0', '2'],
+      effect: { on: 'vk-steps', kind: 'attr', prop: 'data-mark', expectFromValue: 'raw' },
+      why: 'mark 是 0 起的那一步；两个合法值落到宿主 data-mark 上，改哪个都得跟手。',
     },
   },
   'vk-img': {
@@ -323,6 +333,7 @@ export const EFFECT_OVERRIDES = {
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
   'vk-compare.mode': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
+  'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
   'vk-canvas.pad-px': '画布内缩只改子节点坐标，不产生新文字/颜色。',

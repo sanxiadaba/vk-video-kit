@@ -238,6 +238,9 @@ export class VkAnnotate extends VkElement {
     d.size = this.getAttribute('size') || 'body';
     d.emphasis = this.getAttribute('emphasis') || 'soft';
     d.n = String(this._num());
+    // side 是 note 的显式落点；arrow 形态也把请求值镜像出来，契约能读到"改了就变"。
+    const sideRaw = (this.getAttribute('side') || 'auto').trim();
+    d.side = ['top', 'right', 'bottom', 'left'].includes(sideRaw) ? sideRaw : 'auto';
   }
 
   /* --------------------------------------------------------------- 生命周期 */
@@ -638,16 +641,22 @@ export class VkAnnotate extends VkElement {
     const cs = getComputedStyle(this);
     const num = (name, fallback) => parseFloat(cs.getPropertyValue(name)) || fallback;
     const form = this._noteForm(mode);
+    const rawSide = (this.getAttribute('side') || 'auto').trim();
+    const side = NOTE_SIDES.has(rawSide) ? rawSide : 'auto';
+    if (rawSide !== side) {
+      this._warnOnce('side', `的 side="${rawSide}" 不认识，按 auto 处理（可用：top / right / bottom / left / auto）`);
+    }
     return {
       form,
       tone: this._tone(mode),
       gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 }),
       width: this._noteWidth(),
       z: numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }),
-      x: NaN,
-      y: NaN,
-      side: 'auto',
-      leader: 'elbow',
+      // x/y 与旧 vk-pin 同语义：覆盖层坐标，给了就不再自动找位置。
+      x: numAttr(this, 'x', { min: -4000, max: 4000, fallback: NaN }),
+      y: numAttr(this, 'y', { min: -4000, max: 4000, fallback: NaN }),
+      side,
+      leader: this.getAttribute('leader') || 'elbow',
       size: this.getAttribute('size') || 'body',
       emphasis: this.getAttribute('emphasis') || 'soft',
       n: this._num() || (form === 'badge' ? 1 : 0),
@@ -748,12 +757,19 @@ export class VkAnnotate extends VkElement {
     let left = cfg.x;
     let top = cfg.y;
     let anchor = null;
+    let side = cfg.side;
+    let targetBox = null;
 
     if (target) {
       anchor = this._box(target.rect, f.host, f.hr);
+      targetBox = {
+        left: anchor.x,
+        top: anchor.y,
+        right: anchor.x + anchor.w,
+        bottom: anchor.y + anchor.h,
+      };
       if (!Number.isFinite(left) || !Number.isFinite(top)) {
-        let side = cfg.side;
-        // 自动选边：先算四个候选位置，再按"压住多少字"排序。
+        // 自动选边：先算四个候选位置，再按"压住多少字 / 是否穿过目标"排序。
         if (side === 'auto') {
           // 正文矩形的坐标系是 viewport，候选位置是包含块局部坐标：
           // 画布不一定从 (0,0) 开始，两者混用会把"避让"算到别的地方。
@@ -764,18 +780,6 @@ export class VkAnnotate extends VkElement {
           const texts = [...f.host.querySelectorAll(this._avoidTextSelector())]
             .filter((el) => !el.closest('vk-pin, vk-annotate') && (el.textContent || '').trim())
             .map(localRect);
-          const cover = (x, y) => {
-            let area = 0;
-            for (const t of texts) {
-              const w = Math.min(x + bw, t.right) - Math.max(x, t.left);
-              const h = Math.min(y + bh, t.bottom) - Math.max(y, t.top);
-              if (w > 4 && h > 4) area += w * h;
-            }
-            // 出画也扣分：优先选既压不到字、又留在画布里的位置
-            const outX = Math.max(0, -x) + Math.max(0, x + bw - f.w);
-            const outY = Math.max(0, -y) + Math.max(0, y + bh - f.h);
-            return area + (outX + outY) * 400;
-          };
           const spots = {
             right: [anchor.x + anchor.w + cfg.gap, anchor.cy - bh / 2],
             left: [anchor.x - cfg.gap - bw, anchor.cy - bh / 2],
@@ -783,31 +787,42 @@ export class VkAnnotate extends VkElement {
             top: [anchor.cx - bw / 2, anchor.y - cfg.gap - bh],
           };
           const order = ['right', 'bottom', 'left', 'top'];
-          let best = order[0];
-          let bestScore = Infinity;
+          let bestClean = null;
+          let bestCleanScore = Infinity;
+          let bestAny = order[0];
+          let bestAnyScore = Infinity;
           for (const key of order) {
-            const score = cover(spots[key][0], spots[key][1]);
-            if (score < bestScore) {
-              bestScore = score;
-              best = key;
+            const [x, y] = spots[key];
+            const clean = noteSpotClean(key, x, y, bw, bh, anchor, targetBox, f);
+            const score = noteSpotScore(x, y, bw, bh, texts, targetBox, f);
+            if (clean && score < bestCleanScore) {
+              bestClean = key;
+              bestCleanScore = score;
             }
-            if (score === 0) break;
+            if (score < bestAnyScore) {
+              bestAny = key;
+              bestAnyScore = score;
+            }
           }
-          side = best;
+          if (bestClean) {
+            side = bestClean;
+          } else {
+            // 四个方向都会压住目标 / 把引线送进目标：说清楚，再退到压字最少的一侧。
+            this._warnOnce(
+              'note-fit',
+              '的批注找不到既避开正文、又不让引线穿过目标的位置：已选压字最少的一侧。缩小批注、给目标周围留白，或显式写 side / x / y'
+            );
+            side = bestAny;
+          }
         }
-        if (side === 'right') {
-          left = anchor.x + anchor.w + cfg.gap;
-          top = anchor.cy - bh / 2;
-        } else if (side === 'left') {
-          left = anchor.x - cfg.gap - bw;
-          top = anchor.cy - bh / 2;
-        } else if (side === 'bottom') {
-          left = anchor.cx - bw / 2;
-          top = anchor.y + anchor.h + cfg.gap;
-        } else {
-          left = anchor.cx - bw / 2;
-          top = anchor.y - cfg.gap - bh;
-        }
+        const [x, y] = {
+          right: [anchor.x + anchor.w + cfg.gap, anchor.cy - bh / 2],
+          left: [anchor.x - cfg.gap - bw, anchor.cy - bh / 2],
+          bottom: [anchor.cx - bw / 2, anchor.y + anchor.h + cfg.gap],
+          top: [anchor.cx - bw / 2, anchor.y - cfg.gap - bh],
+        }[side] || [anchor.cx - bw / 2, anchor.y - cfg.gap - bh];
+        left = x;
+        top = y;
       }
     } else if (!Number.isFinite(left) || !Number.isFinite(top)) {
       this._warnOnce('target', '没有 for 目标，也没有 x/y 坐标，批注不画');
@@ -821,22 +836,137 @@ export class VkAnnotate extends VkElement {
     bd.style.top = Math.round(top) + 'px';
 
     if (!anchor || cfg.leader === 'none') return;
-    // 气泡哪一边离目标近，就从哪一边出线；线只做"归属"，不做方向。
-    const bx = left + bw / 2;
-    const by = top + bh / 2;
-    const sx = bx < anchor.cx ? left + bw : left;
-    const sy = by;
-    const ex = anchor.cx;
-    const ey = anchor.cy;
-    const straight = cfg.leader === 'straight';
-    const d = straight
-      ? `M ${sx} ${sy} L ${ex} ${ey}`
-      : sx <= ex
-        ? `M ${sx} ${sy} L ${Math.round((sx + ex) / 2)} ${sy} L ${Math.round((sx + ex) / 2)} ${ey} L ${ex} ${ey}`
-        : `M ${sx} ${sy} L ${Math.round((sx + ex) / 2)} ${sy} L ${Math.round((sx + ex) / 2)} ${ey} L ${ex} ${ey}`;
-    this._svg.append(tag('path', { d, class: 'vk-pin-leader', fill: 'none' }));
-    this._svg.append(tag('circle', { cx: ex, cy: ey, r: 6, class: 'vk-pin-dot' }));
+    // 引线必须落在目标边上，而不是目标中心：从边上出线，线就不会横穿目标行。
+    // 显式 side 优先；x/y 或夹取把气泡挪到别处时，按最近的一侧重新选出口。
+    let leadSide = side;
+    if (leadSide === 'auto') leadSide = nearestNoteSide(left, top, bw, bh, anchor);
+    if (targetBox) {
+      const probe = noteLeaderPoints(leadSide, left, top, bw, bh, anchor, false);
+      if (noteCrossesRect(probe.points, targetBox)) leadSide = nearestNoteSide(left, top, bw, bh, anchor);
+    }
+    const leader = noteLeaderPoints(leadSide, left, top, bw, bh, anchor, cfg.leader === 'straight');
+    this._svg.append(tag('path', { d: leader.d, class: 'vk-pin-leader', fill: 'none', 'data-side': leadSide }));
+    this._svg.append(tag('circle', { cx: leader.ex, cy: leader.ey, r: 6, class: 'vk-pin-dot' }));
   }
+}
+
+const NOTE_SIDES = new Set(['auto', 'top', 'right', 'bottom', 'left']);
+
+/** 气泡与目标的矩形是否有实质重叠（>4px 才算，避免边框贴边误判）。 */
+function noteOverlap(x, y, w, h, r) {
+  const ox = Math.min(x + w, r.right) - Math.max(x, r.left);
+  const oy = Math.min(y + h, r.bottom) - Math.max(y, r.top);
+  return ox > 4 && oy > 4 ? ox * oy : 0;
+}
+
+/** 出画面积：出画的位置不可能是"干净"的。 */
+function noteOutside(x, y, w, h, f) {
+  const outX = Math.max(0, -x) + Math.max(0, x + w - f.w);
+  const outY = Math.max(0, -y) + Math.max(0, y + h - f.h);
+  return outX + outY;
+}
+
+/** 候选位置压住多少字 + 压住目标多少；压目标是硬伤，权重远高于普通正文。 */
+function noteSpotScore(x, y, bw, bh, texts, targetBox, f) {
+  let area = 0;
+  for (const t of texts) area += noteOverlap(x, y, bw, bh, t);
+  if (targetBox) area += noteOverlap(x, y, bw, bh, targetBox) * 8;
+  return area + noteOutside(x, y, bw, bh, f) * 400;
+}
+
+/**
+ * 「干净」= 不出画、不压目标、引线不穿过目标。
+ * 正文压字只影响排序，不算脏：批注在密集页面里总要压一点，否则会误报。
+ */
+function noteSpotClean(side, x, y, bw, bh, anchor, targetBox, f) {
+  if (noteOutside(x, y, bw, bh, f) > 0.5) return false;
+  if (noteOverlap(x, y, bw, bh, targetBox) > 0) return false;
+  return !noteCrossesRect(noteLeaderPoints(side, x, y, bw, bh, anchor, false).points, targetBox);
+}
+
+/** 气泡相对目标在哪个方向；显式 x/y 与夹取之后用它挑最近的边。 */
+function nearestNoteSide(left, top, bw, bh, anchor) {
+  if (top + bh <= anchor.y) return 'top';
+  if (top >= anchor.y + anchor.h) return 'bottom';
+  if (left + bw <= anchor.x) return 'left';
+  if (left >= anchor.x + anchor.w) return 'right';
+  const gap = {
+    top: anchor.y - (top + bh),
+    bottom: top - (anchor.y + anchor.h),
+    left: anchor.x - (left + bw),
+    right: left - (anchor.x + anchor.w),
+  };
+  return Object.keys(gap).sort((a, b) => gap[b] - gap[a])[0];
+}
+
+/** 引线：从气泡边到目标边。折线只在目标之外拐弯，因此不会穿过目标矩形。 */
+function noteLeaderPoints(side, left, top, bw, bh, anchor, straight) {
+  const bx = left + bw / 2;
+  const by = top + bh / 2;
+  let sx;
+  let sy;
+  let ex;
+  let ey;
+  if (side === 'top') {
+    sx = bx;
+    sy = top + bh;
+    ex = anchor.cx;
+    ey = anchor.y;
+  } else if (side === 'bottom') {
+    sx = bx;
+    sy = top;
+    ex = anchor.cx;
+    ey = anchor.y + anchor.h;
+  } else if (side === 'left') {
+    sx = left + bw;
+    sy = by;
+    ex = anchor.x;
+    ey = anchor.cy;
+  } else {
+    sx = left;
+    sy = by;
+    ex = anchor.x + anchor.w;
+    ey = anchor.cy;
+  }
+  let points;
+  if (straight) {
+    points = [
+      [sx, sy],
+      [ex, ey],
+    ];
+  } else if (side === 'top' || side === 'bottom') {
+    const mid = (sy + ey) / 2;
+    points = [
+      [sx, sy],
+      [sx, mid],
+      [ex, mid],
+      [ex, ey],
+    ];
+  } else {
+    const mid = (sx + ex) / 2;
+    points = [
+      [sx, sy],
+      [mid, sy],
+      [mid, ey],
+      [ex, ey],
+    ];
+  }
+  const d = points.map(([x, y], i) => `${i ? 'L' : 'M'} ${Math.round(x)} ${Math.round(y)}`).join(' ');
+  return { points, d, ex, ey };
+}
+
+/** 折线是否从矩形内部穿过（边界不算：引线本来就该落在边上）。 */
+function noteCrossesRect(points, rect) {
+  const inside = (x, y) => x > rect.left + 2 && x < rect.right - 2 && y > rect.top + 2 && y < rect.bottom - 2;
+  for (let i = 1; i < points.length; i++) {
+    const [x0, y0] = points[i - 1];
+    const [x1, y1] = points[i];
+    for (let k = 1; k <= 20; k++) {
+      const t = k / 20;
+      if (inside(x0 + (x1 - x0) * t, y0 + (y1 - y0) * t)) return true;
+    }
+  }
+  return false;
 }
 
 /**

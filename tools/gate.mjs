@@ -300,6 +300,8 @@ for (const target of list) {
     if (e.type === 'w') fail(target.label, `w="${e.want}" 实际 ${e.got}px：${e.what}`);
     if (e.type === 'bleed-text') fail(target.label, `出血层里不能放正文：${e.what}`);
     if (e.type === 'collision') fail(target.label, `文本超出单元格：${e.what} (${e.sw} > ${e.cw})`);
+    // 格太窄不是"撞字"，但作者需要看见：只提醒，不当作画面错误。
+    if (e.type === 'narrow') warn(target.label, e.fix || `格太窄：${e.what} (${e.sw} > ${e.cw})`);
     if (e.type === 'orphan') warn(target.label, `孤行 ${e.chars} 字：${e.what}`);
     if (e.type === 'blue') warn(target.label, `${e.count} 处焦点蓝：${e.what}`);
     if (e.type === 'pin-overlap') warn(target.label, e.what);

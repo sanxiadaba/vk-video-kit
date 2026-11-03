@@ -192,7 +192,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" mass="hero">`
 - **`vk-term`** · 终端 — 终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。
-  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `title-show` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" src="../assets/hello/build/steps.txt">`
 - **`vk-diff`** · 对比 — 对比：上下对照或左右两窗并排，词级标记 + 一句改了几行。
@@ -208,8 +208,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
-- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。
-  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `mark` · `mark-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。zoom="mark" 在下方生成一块差异放大（默认 ×2），也可以写 x1,y1,x2,y2 或只写倍数。
+  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `mark` · `mark-label` · `zoom` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
     label-a="gcc -O0 · 13 行" label-b="gcc -O2 · 10 行"
     mark="58,73,93,84" mark-label="少 3 行">`
@@ -226,8 +226,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `current` · `mass` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `word` · `endian`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-bytes src="../code/hello.bin" addr="0x7ffc" offset="0" length="48" current="0-5">`
-- **`vk-steps`** · 步骤 — 步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）。
-  - 属性：`current` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation` · `connector`
+- **`vk-steps`** · 步骤 — 步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）；done="none" 连前面也不打勾，mark="N" 只强调第 N 步。
+  - 属性：`current` · `done` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation` · `connector`
   - 子节点：条目写成 `<li>`
   - 例：`<vk-steps current="1">`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
@@ -263,7 +263,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`for` · `variant` · `dim` · `keep` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16">`
 - **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
-  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `gap-px` · `z` · `at` · `dur` · `enter` · `ease`
+  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info">`
 
 ### L5 页面 · 一整张 1920×1080 的画布

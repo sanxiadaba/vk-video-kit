@@ -31,6 +31,8 @@ export const EFFECTS = {
     current: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     // 出场：reveal=line 逐行、none 不参与；静态画面不变，data-reveal 是声明的证据。
     reveal: { on: 'vk-term', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
+    // 无壳终端的标题默认只作无障碍名；title-show 是显式打开可见标题的开关。
+    'title-show': { on: 'vk-term', kind: 'attr', prop: 'data-title-show', expectFromValue: 'raw' },
   },
 
 
@@ -376,6 +378,9 @@ Object.assign((EFFECTS['vk-compare'] ||= {}), {
   // 差异框：标注是真实 DOM（数量可数），标签是真实文字。
   mark: { on: '.vk-cmp-mark', kind: 'dom', prop: '.vk-cmp-mark' },
   'mark-label': { on: '.vk-cmp-mark-l', kind: 'text' },
+  // 差异放大：宿主上的 data-zoom 是作者写法的镜像；放大块本身由测试逐项量。
+  // 标本台里追加一块放大视图会超出安全区，视觉审计交给 zoom 用例。
+  zoom: { on: 'vk-compare', kind: 'attr', prop: 'data-zoom', expectFromValue: 'raw', skipVisual: true },
 });
 
 /**
@@ -403,6 +408,8 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   emphasis: { on: 'vk-annotate', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
   'gap-px': { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
   z: { on: 'vk-annotate', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
+  // note 形态的显式落点；arrow 形态也把请求的 side 镜像到宿主上，契约能读到。
+  side: { on: 'vk-annotate', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
@@ -459,6 +466,10 @@ Object.assign((EFFECTS['vk-steps'] ||= {}), {
   orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
   // 箭头 / 细线 / 不画：落到 .vk-steps 的 data-connector 上，由一条 CSS 决定。
   connector: { on: '.vk-steps', kind: 'attr', prop: 'data-connector' },
+  // 地图页：done="none" 不把前几步画成已完成；data-done 是声明的证据。
+  done: { on: 'vk-steps', kind: 'attr', prop: 'data-done', expectFromValue: 'raw' },
+  // 只强调某一步：data-mark 记的是 0 起的那一步；状态差异由测试守。
+  mark: { on: 'vk-steps', kind: 'attr', prop: 'data-mark', expectFromValue: 'raw' },
 });
 
 Object.assign(EFFECTS['vk-asm'], {
