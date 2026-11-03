@@ -24,7 +24,6 @@ const esc = (s) =>
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
 
-const LAYER_NAME = Object.fromEntries(LAYERS.map((l) => [l.id, l.label]));
 const LAYER_SHORT = { tokens: '值', elements: '原子', layout: '排布', components: '器械', relations: '关系', page: '页面' };
 const ORDER = [];
 for (const layer of LAYERS) for (const tag of byLayer(layer.id)) ORDER.push(tag);
@@ -58,7 +57,7 @@ a:hover{color:#1b3fd6}
 .spec-h560{height:560px}
 .spec-h240{display:flex;height:240px}
 .spec-pill{width:160px}
-/* 索引卡高度也是版式意图，落在作者 CSS 上。 */
+/* 索引卡高度也是版式意图，落在作者 CSS 上。卡高 352；缩略图留出名字一行（caption 48 → 64）。 */
 .spec-card{display:flex;flex-direction:column;height:352px}
 .spec-scale > *{zoom:.73}
 .spec-card-tag{white-space:nowrap;letter-spacing:-.06em}
@@ -66,7 +65,7 @@ a:hover{color:#1b3fd6}
 .spec-card-name,.spec-card-tag,.spec-card-name *,.spec-card-tag *{line-height:1!important;white-space:nowrap}
 /* 缩略图：vk-img 不受 w/h 约束，用 CSS 定高；contain 完整显示组件本体。
    留白必须是纸色——灰底会在卡片里画出一道"没内容"的框。 */
-vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:296px!important;background:#fff}
+vk-img.spec-thumb,vk-img.spec-thumb .vk-img{height:264px!important;background:#fff}
 vk-img.spec-thumb .vk-img{border-radius:0}
 /* 最后一页只有一张卡：放大成专题，不再是一张孤零零的小卡。 */
 .spec-lone{display:flex;justify-content:center;padding-top:24px}
@@ -204,7 +203,6 @@ function specPage(tag, no) {
     <vk-stack direction="row" justify="between" align="baseline">
       <vk-stack direction="row" gap="xs" align="baseline">
         <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
-        <vk-text size="label" mono ink="muted" data-meta>${esc(LAYER_NAME[def.layer])}</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>

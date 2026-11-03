@@ -136,11 +136,13 @@ export class VkAsm extends VkElement {
     /**
      * 列模板由「实际输出的列」推出来，不由 CSS 里的开关组合硬编码。
      * 地址列给 max-content：8 位 0x 地址在 40px 等宽下装不进 180px。
+     * 机器码列跟着字阶走（28px 字仍落在 500，旧页不变；56px 档给到 576），
+     * 否则 7 字节指令会被折成两行，一整张清单瞬间高出一倍。
      */
     const gridCols = [
       showOrder ? '84px' : '',
       showAddr ? 'minmax(180px, max-content)' : '',
-      showBytes ? '500px' : '',
+      showBytes ? 'max(500px, calc(var(--vk-t-label) * 12))' : '',
       '160px',
       'minmax(0, 1fr)',
     ]

@@ -45,7 +45,7 @@ after(async () => {
 
 /* --------------------------------------------------------------- timeline */
 
-test('vk-timeline：value 默认 224，value-size 三档严格递增（96 / 160 / 224）', async () => {
+test('vk-timeline：value 默认 280，value-size 三档严格递增（112 / 200 / 280）', async () => {
   const item = `<li date="1972" label="峰值" value="52,980">预处理前</li>`;
   const { tab } = await open(`
     <vk-timeline id="def">${item}</vk-timeline>
@@ -56,10 +56,10 @@ test('vk-timeline：value 默认 224，value-size 三档严格递增（96 / 160 
     return { def: fs('def'), title: fs('title'), sub: fs('sub') };
   });
 
-  assert.equal(r.def, 224, `不写 value-size 时必须还是 hero 224：${r.def}`);
-  assert.equal(r.sub, 96, `value-size="subhead" 要降到 96：${r.sub}`);
-  // 14.4：title 别名到 display 160；subhead 别名到 headline 96。
-  assert.equal(r.title, 160, `value-size="title" 是中间一档 160：${r.title}`);
+  assert.equal(r.def, 280, `不写 value-size 时必须还是 hero 280：${r.def}`);
+  assert.equal(r.sub, 112, `value-size="subhead" 要降到 112：${r.sub}`);
+  // title 别名到 display 200；subhead 别名到 headline 112。
+  assert.equal(r.title, 200, `value-size="title" 是中间一档 200：${r.title}`);
   assert.ok(r.sub < r.title && r.title < r.def, `三档必须严格递增：${r.sub} / ${r.title} / ${r.def}`);
 });
 
@@ -102,7 +102,7 @@ test('vk-compare：label-position="top" 时角标在图像内容区之外，默�
   });
 
   // top：两个角标的底边都在图像顶边之上 —— 一个字都不压。
-  assert.equal(r.top.pad, '64px', `top 要在图上让出一条 64px 的带：${r.top.pad}`);
+  assert.equal(r.top.pad, '88px', `top 要在图上让出一条 88px 的带（caption 48 × 1.5 + 16）：${r.top.pad}`);
   assert.ok(r.top.la.bottom <= r.top.a.top + 0.5, `label-a 压住了图像：${r.top.la.bottom} > ${r.top.a.top}`);
   assert.ok(r.top.lb.bottom <= r.top.b.top + 0.5, `label-b 压住了图像：${r.top.lb.bottom} > ${r.top.b.top}`);
   // 角标仍在框内：不是靠"画到框外"来避免重叠的。
@@ -163,9 +163,10 @@ test('vk-window：mass 三档真正压到 diff 行高，compact 不竖裁', asyn
     r.compact.win < r.normal.win && r.normal.win < r.hero.win,
     `窗的总高也要跟着变：${r.compact.win} / ${r.normal.win} / ${r.hero.win}`
   );
-  assert.equal(r.compact.line, 58, `compact 的 diff 行高应是 58：${r.compact.line}`);
-  assert.equal(r.normal.line, 70, `normal 仍是 70：${r.normal.line}`);
-  assert.equal(r.hero.line, 88, `hero 是 88：${r.hero.line}`);
+  // 15.x：56px 字下三档行高 = max(58/70/88, 56 × 1.35/1.55/1.9) → 76 / 87 / 106。
+  assert.equal(Math.round(r.compact.line), 76, `compact 的 diff 行高应是 76：${r.compact.line}`);
+  assert.equal(Math.round(r.normal.line), 87, `normal 是 87：${r.normal.line}`);
+  assert.equal(Math.round(r.hero.line), 106, `hero 是 106：${r.hero.line}`);
   // 竖裁：行盒比字矮时字会被 overflow:hidden 切掉上下沿。
   assert.ok(r.compact.inside, 'compact 下正文必须完整落在行盒里');
   assert.ok(r.compact.scroll <= 3, `compact 行盒的纵向溢出应可忽略：${r.compact.scroll}`);
@@ -274,18 +275,19 @@ test('vk-pin：w=240 的短批注按内容自适应到不折行，长批注封�
     return { short: read('short'), num: read('num'), long: read('long') };
   });
 
-  // 短批注：作者写的 240 装不下一行，按内容加宽；但不超过 360。
+  // 短批注：作者写的 240 装不下一行，按内容加宽；上限跟着字阶走（body × 9）。
+  const cap = await tab.evaluate(() => (window.vk.limits.fontBody || 56) * 9);
   assert.ok(r.short.w > 240, `短批注应从 240 加宽到一行装得下：${r.short.w}`);
-  assert.ok(r.short.w <= 360, `自适应加宽的上限是 360：${r.short.w}`);
+  assert.ok(r.short.w <= cap + 1, `自适应加宽的上限是 ${cap}：${r.short.w}`);
   assert.ok(r.short.textW <= r.short.w, `一行必须装得下：文本 ${r.short.textW} > 气泡 ${r.short.w}`);
   assert.equal(r.short.lines, 1, `短批注不该折行（实测 ${r.short.lines} 行）`);
 
   // 带编号时也要把编号算进一行：宽度先量、编号后填会把编号挤到第二行。
   assert.equal(r.num.badge, true, 'n="1" 的编号要显示');
   assert.equal(r.num.lines, 1, `带编号的短批注也不该折行（实测 ${r.num.lines} 行）`);
-  assert.ok(r.num.w <= 360, `带编号的气泡也不超过 360：${r.num.w}`);
+  assert.ok(r.num.w <= cap + 1, `带编号的气泡也不超过 ${cap}：${r.num.w}`);
 
-  // 长批注：内容再长也不无限变宽，封顶 360 后正常折行。
-  assert.equal(Math.round(r.long.w), 360, `长批注封顶 360：${r.long.w}`);
+  // 长批注：内容再长也不无限变宽，封顶后正常折行。
+  assert.equal(Math.round(r.long.w), cap, `长批注封顶 ${cap}：${r.long.w}`);
   assert.ok(r.long.lines > 1, '封顶之后该折行就折行，不能溢出气泡');
 });

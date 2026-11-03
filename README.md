@@ -3,16 +3,16 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 4-layer visual language of 33 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs, and the visual system is desktop-only, with a four-tier type scale (28 / 40 / 96 / 160) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 4-layer visual language of 33 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs. The baseline is phone landscape (1920 rendered at ≈780, 0.406×), with a four-tier type scale (48 / 56 / 112 / 200) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The library only judges objective errors; aesthetic rules (one accent, one dark block, icon whitelist, header wording, 120 margin) are an opt-in project preset (`vk check --style`), off by default. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**33 个原语标签、1920×1080，桌面 only，一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**33 个原语标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
 
 ![vk 标本册索引](docs/cover.png)
 
 ## 五个原则
 
 - **分则独立。** 每个标签离开兄弟节点也能成立：不伪造内容，不依赖父级上下文，不要求作者补一次性 CSS。
-- **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：正文 48 / 标注 36。
+- **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：正文 56 / 标注 48（手机横屏 ≈0.406× 下 22.7 / 19.5 设备像素）。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有转场，只有求值器：`seek(t)` 是纯函数，`poster` 逐像素等于静态页。
 - **文档也是库。** 33 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
@@ -185,18 +185,38 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / pin）用梅紫，其中 `em` 只画一条梅紫下划线，整块底高亮留给 `vk-mark`；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
 2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
 
-**字阶四档：28 / 40 / 96 / 160，名字是 `caption / body / headline / display`。**
+**字阶四档：200 / 112 / 56 / 48，名字是 `display / headline / body / caption`。**
+基准是**手机横屏**：1920 的帧在手机上实际渲染到约 780×439（0.406×），字号按这个尺度定。
 
-- `caption` 28：标签、单位、脚注——只给「不读第二遍」的字；
-- `body` 40：正文与等宽数据（手机横屏 0.38× 时 15.2px）；
-- `headline` 96：标题；
-- `display` 160：一页最多一次，只给「本页唯一的答案」。
+- `caption` 48：标签、单位、脚注——只给「不读第二遍」的字（手机 19.5px）；
+- `body` 56：正文与等宽数据（手机 22.7px）；
+- `headline` 112：标题（手机 45px）；
+- `display` 200：一页最多一次，只给「本页唯一的答案」（手机 81px）。
 
 旧名继续可用，全部别名到四档：`label` → `caption`、`data` → `body`、`subhead` → `headline`、
-`title` → `display`；`hero` 224 / `mega` 320 保留为补充档（一个数字 / 一个词当家，一帧最多一个）。
+`title` → `display`；`hero` 280 / `mega` 400 保留为补充档（一个数字 / 一个词当家，一帧最多一个）。
 `display-2xl` / `display-xl` / `heading` / `meta` 仍是一版别名。
 
-`vk-text` 默认按字号取行宽（body 25 字 → 1000px，display 1560px）；要铺满容器写 `measure="none"`。
+旧页（14.x 的 160 / 96 / 40 / 28 + 旧窗头）在 `<body class="vk-legacy">` 上逐像素留档：
+字号与窗头读的是同一张表，不会一个回旧值、一个留新值。
+
+`vk-text` 默认按字号取行宽（body 25 字 → 1400px，display 是版心上限 1680）；要铺满容器写 `measure="none"`。
+
+## 库判客观错误，审美判断留给项目
+
+`vk check` 默认只判「无论画什么都错」的事：溢出、裁切、覆盖层压住正文、非法枚举、
+锚点解析失败、组件渲染失败、空组件、素材过期。字阶地板 / 对比度 / 安全区也是硬门槛。
+
+强调色 ≤1、深色块 ≤1、页眉只讲工序、内容落在 120 边距里 —— 这四条是**版面主张**，
+默认**不跑**；要跑就显式开：
+
+```bash
+node bin/vk.mjs check frames/06.html --style
+node tools/style-preset.mjs frames/06.html   # 同一个 preset 的独立入口
+```
+
+图标白名单降级为**提醒**：装饰图标不再让页面变红，构建期也只打印一句提醒。
+详见 [`docs/style-preset.md`](docs/style-preset.md)。
 
 ## 规格页
 

@@ -331,7 +331,7 @@ export const TAGS = {
     name: '图标',
     layer: 'elements',
     summary:
-      '一个语义符号，不是装饰：名字必须在白名单里（check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right），构建期拒掉白名单外的名字。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。',
+      '一个符号：语义图标可用 check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。',
     content: {
       kind: 'text',
       target: 'vk-icon',
@@ -780,7 +780,7 @@ export const TAGS = {
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 224 / title 144 / subhead 96，默认 hero）。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 280 / title 200 / subhead 112，默认 hero）。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -795,7 +795,7 @@ export const TAGS = {
       'title': text(),
       'mass': oneOf('compact', 'normal', 'hero'),
       // value 是"主值"（大数字）。一帧放三个数字时 hero 会把整页撑爆，
-      // 所以给一档可选的体量：hero 224（默认，和引入前完全一致）/ title 144 / subhead 96。
+      // 所以给一档可选的体量：hero 280（默认，和引入前完全一致）/ title 200 / subhead 112。
       'value-size': oneOf('hero', 'title', 'subhead'),
     },
   },

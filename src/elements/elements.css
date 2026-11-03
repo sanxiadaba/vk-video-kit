@@ -210,47 +210,79 @@ vk-panel[variant='dark'][tone='err'] { --vk-panel-bg: var(--vk-dark-wash-err); -
 vk-panel[variant='dark'][tone='warn'] { --vk-panel-bg: var(--vk-dark-wash-warn); --vk-panel-hd-bg: var(--vk-dark-tint-warn); --vk-panel-line: var(--vk-dark-tint-warn); }
 
 /* ------------------------------------------------------- 兼容开关 legacy
-   14.4 改了默认值（四档字号、panel 默认无框无底）。旧页要逐像素留档时，
-   在 <body> 或 <vk-page> 上加 class="vk-legacy"，本页就回到旧默认；
-   显式写了的属性（size / tone / border / variant）仍然赢。 */
+   15.x 把手机横屏基准写进默认值（四档 200 / 112 / 56 / 48，窗头 56 / 72 / 88）。
+   旧页要逐像素留档时，在 <body> 或 <vk-page> 上加 class="vk-legacy"，本页就回到
+   14.x 的尺寸（160 / 96 / 40 / 28，窗头 40 / 56 / 72）；显式写了的属性仍然赢。
+
+   两个开关是同一张表：
+     · 字号 / 行高 / 行宽：下面这一组 --vk-t-* / --vk-lh-* / --vk-measure-*；
+     · 窗头（三点 / 窗头高 / 文件名 chip）：--vk-chrome-*-{mass} 与 --vk-file-*-{mass}。
+   组值只在 tokens.css 定义一次，legacy 只改值、不复制选择器，
+   所以"字号回到旧值、窗头还留在新值"这类半迁移不会发生。 */
 .vk-legacy {
-  --vk-t-display: 144px;
+  --vk-t-display: 160px;
   --vk-t-headline: 96px;
-  --vk-t-body: 48px;
-  --vk-t-caption: 36px;
-  /* 别名在 :root 上已经解析成 14.4 的值；只改主名不会让别名跟着回来。
+  --vk-t-body: 40px;
+  --vk-t-caption: 28px;
+  /* 别名在 :root 上已经解析成 15.x 的值；只改主名不会让别名跟着回来。
      legacy 必须把旧名也逐条写一遍。 */
-  --vk-t-label: 36px;
-  --vk-t-data: 40px; /* 旧 data 是 40，不跟 body 的 48 走 */
+  --vk-t-label: 28px;
+  --vk-t-data: 40px; /* 旧 data 是 40，不跟 body 走 */
   --vk-t-subhead: 96px;
-  --vk-t-title: 144px;
-  --vk-t-meta: 36px;
+  --vk-t-title: 160px;
+  --vk-t-meta: 28px;
   --vk-t-heading: 96px;
-  --vk-lh-label: 1.33;
-  --vk-lh-caption: 1.33;
-  --vk-lh-headline: 1.3; /* 旧 subhead 是 1.3（96 → 124.8），不是新的 1.25 */
-  --vk-lh-display: 1.1; /* 旧 title 是 1.1（144 → 158.4） */
-  --vk-lh-subhead: 1.3;
-  --vk-lh-tight: 1.1;
-  --vk-measure-subhead: 900px;
+  --vk-t-hero: 224px;
+  --vk-t-mega: 320px;
+  --vk-t-display-xl: var(--vk-t-hero);
+  --vk-t-display-2xl: var(--vk-t-mega);
+  --vk-lh-display: 1.05;
+  --vk-lh-headline: 1.25;
+  --vk-lh-body: 1.5;
+  --vk-lh-caption: 1.5;
+  --vk-lh-label: 1.5;
+  --vk-lh-data: 1.4;
+  --vk-lh-subhead: 1.25;
+  --vk-lh-tight: 1.05;
+  --vk-lh-hero: 1.05;
+  --vk-lh-mega: 1;
+  --vk-lh-snug: 1.3;
+  --vk-lh-code: 1.4;
+  --vk-lh-note: 1.35;
+  --vk-measure-display: 1560px;
+  --vk-measure-headline: 1200px;
+  --vk-measure-body: 1000px;
+  --vk-measure-caption: 1200px;
+  --vk-measure-label: 1200px;
+  --vk-measure-subhead: 1200px;
   --vk-measure-title: 1560px;
+  --vk-measure-hero: 900px;
+
+  /* 窗头：旧档是 8/12/16 与 40/56/72，chip 36/48/56、字号 28。 */
+  --vk-win-hd: 56px;
+  --vk-chrome-dot: 12px;
+  --vk-chrome-gap: 10px;
+  --vk-chrome-hd-compact: 40px;
+  --vk-chrome-hd-normal: 56px;
+  --vk-chrome-hd-hero: 72px;
+  --vk-chrome-dot-compact: 8px;
+  --vk-chrome-dot-normal: 12px;
+  --vk-chrome-dot-hero: 16px;
+  --vk-chrome-gap-compact: 6px;
+  --vk-chrome-gap-normal: 10px;
+  --vk-chrome-gap-hero: 12px;
+  --vk-file-h-compact: 36px;
+  --vk-file-h-normal: 48px;
+  --vk-file-h-hero: 56px;
+  --vk-file-fs-compact: 28px;
+  --vk-file-fs-normal: 28px;
+  --vk-file-fs-hero: 28px;
 }
-/* 旧的 kicker 是纯文字；色条与大写是 14.4 的新形状，legacy 页不该多出来。 */
-.vk-legacy vk-label[variant='kicker'] { text-transform: none; }
-.vk-legacy vk-label[variant='kicker'] .vk-label-rule { display: none; }
-/* 旧的三点固定 18px、旧网格默认 24；legacy 页恢复。 */
-.vk-legacy .vk-dots i { width: 18px; height: 18px; }
-.vk-legacy vk-grid { gap: var(--vk-s3); }
-.vk-legacy vk-panel:not([variant]):not([border]),
-.vk-legacy vk-panel[variant='plain']:not([border]) {
-  --vk-panel-bw: var(--vk-line-w);
-  --vk-panel-line: var(--vk-line-1);
-}
-.vk-legacy vk-panel:not([variant]):not([tone]),
-.vk-legacy vk-panel[variant='plain']:not([tone]) {
-  --vk-panel-bg: var(--vk-sf-0);
-  --vk-panel-hd-bg: var(--vk-sf-1);
-}
+/* legacy 只切「尺寸」：字号 / 行高 / 行宽 / 窗头。形状与默认值（kicker 的色条、
+   panel 的边框与底、grid 的沟槽）不跟着回退——那些是版式决定，旧页已经按新形状
+   排好了；把它们也退回去，等于把旧页重新排一遍。 */
+/* 旧页脚固定 56，不跟窗头一起长。 */
+.vk-legacy .vk-ft { height: 56px; }
 
 /* -------------------------------------------------------------- vk-text */
 

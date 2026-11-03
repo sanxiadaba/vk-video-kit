@@ -231,8 +231,8 @@ try {
   let errors = 0;
   for (const it of report.issues || []) {
     if (it.type === 'no-payload') lines.push(`缺预编译数据：${it.what}`);
-    else if (it.type === 'font') lines.push(`字号 ${it.fs} < 36：${it.what}`);
-    else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（应 ≥48）：${it.what}`);
+    else if (it.type === 'font') lines.push(`字号 ${it.fs} 低于地板：${it.what}`);
+    else if (it.type === 'font-content') lines.push(`正文落在 ${it.fs}（低于 body 档）：${it.what}`);
     else if (it.type === 'contrast') lines.push(`对比度 ${it.cr} < ${it.need}：${it.what}`);
     else if (it.type === 'safe') lines.push(`超出安全区：${it.what}`);
     else if (it.type === 'overflow') lines.push(`超出画布：${it.what}`);

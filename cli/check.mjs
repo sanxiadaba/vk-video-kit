@@ -4,9 +4,14 @@
  *
  *   node cli/check.mjs page.html
  *   node cli/check.mjs a.html b.html --json
+ *   node cli/check.mjs page.html --style     # 额外跑项目层审美 preset
  *
  * 和 `vk shot` 的区别：不出图，只跑 VK.auditPage() 并给退出码。
  * 多页共用一个浏览器；仍然要求先 `vk build`。
+ *
+ * 默认只判客观错误（溢出 / 遮挡 / 非法值 / 锚点 / 渲染失败 / 素材过期）。
+ * `--style` 才跑那五条版面上的主张（强调色 ≤1、深色块 ≤1、图标白名单提醒、
+ * 页眉只讲工序、120 边距）—— 它们属于项目，不属于库。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,11 +19,15 @@ import { pathToFileURL } from 'node:url';
 
 const args = process.argv.slice(2);
 const json = args.includes('--json');
+/** 审美 preset：默认关。打开了也只是加一组"项目层"判定，不改变库的默认。 */
+const styleOn = args.includes('--style');
 // 提醒类：放行但记账。layer = 声明了 elevation 的叠层；void = 安全区里的大块留白。
 const WARN_ALL = new Set(['layer', 'void']);
+/** 单条 issue 也可以自带 level="warn"（审美 preset 里的工具提醒），同样不算致命。 */
+const isWarn = (x) => WARN_ALL.has(x.type) || x.level === 'warn';
 const pages = args.filter((a) => !a.startsWith('-'));
 if (!pages.length) {
-  console.error('用法：node cli/check.mjs <page.html> [more.html...] [--json]');
+  console.error('用法：node cli/check.mjs <page.html> [more.html...] [--json] [--style]');
   process.exit(1);
 }
 
@@ -57,10 +66,10 @@ try {
       if (window.vk?.ready) await window.vk.ready();
       await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
     });
-    const report = await tab.evaluate(() => {
+    const report = await tab.evaluate((style) => {
       if (!window.vk) return { issues: [], special: ['缺少 vk.auditPage'] };
       if (window.vk.auditPages) {
-        const r = window.vk.auditPages();
+        const r = window.vk.auditPages(document, { style });
         if (r.pages.length > 1) {
           return {
             issues: r.issues.map((x) => ({
@@ -71,8 +80,8 @@ try {
           };
         }
       }
-      return window.vk.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] };
-    });
+      return window.vk.auditPage?.(document, { style }) || { issues: [], special: ['缺少 vk.auditPage'] };
+    }, styleOn);
     item.issues = report.issues || [];
     item.special = report.special || [];
     results.push(item);
@@ -81,9 +90,9 @@ try {
   const linesFor = (it) => {
     const lines = [];
     for (const x of it.issues) {
-      if (x.type === 'font') lines.push(`字号 ${x.fs} < 36：${x.what}`);
+      if (x.type === 'font') lines.push(`字号 ${x.fs} 低于地板：${x.what}`);
       else if (x.type === 'empty') lines.push(`空帧：${x.what}`);
-      else if (x.type === 'font-content') lines.push(`正文落在 ${x.fs}（应 ≥48）：${x.what}`);
+      else if (x.type === 'font-content') lines.push(`正文落在 ${x.fs}（低于 body 档）：${x.what}`);
       else if (x.type === 'contrast') lines.push(`对比度 ${x.cr} < ${x.need}：${x.what}`);
       else if (x.type === 'safe') lines.push(`超出安全区：${x.what} ${x.box?.join(',') || ''}`);
       else if (x.type === 'overflow') lines.push(`超出画布：${x.what} ${x.box?.join(',') || ''}`);
@@ -97,12 +106,12 @@ try {
       else if (x.type === 'missing') lines.push(`找不到文件：${x.what}`);
       else if (x.type === 'layer') lines.push(`${x.what}`);
       else if (x.type === 'void') lines.push(`留白：${x.what}`);
-      // ---- 批次 G/H：五条硬审计 ----
-      else if (x.type === 'accent') lines.push(`强调色：${x.what}`);
-      else if (x.type === 'dark') lines.push(`深色块：${x.what}`);
-      else if (x.type === 'icon') lines.push(`图标白名单：${x.what}`);
-      else if (x.type === 'header') lines.push(`页眉：${x.what}`);
-      else if (x.type === 'margin') lines.push(`120 边距：${x.what} ${x.box?.join(',') || ''}`);
+      // ---- 项目层审美 preset（只有 --style 才会出现） ----
+      else if (x.type === 'accent') lines.push(`风格·强调色：${x.what}`);
+      else if (x.type === 'dark') lines.push(`风格·深色块：${x.what}`);
+      else if (x.type === 'icon') lines.push(`提醒·图标白名单：${x.what}`);
+      else if (x.type === 'header') lines.push(`风格·页眉：${x.what}`);
+      else if (x.type === 'margin') lines.push(`风格·120 边距：${x.what} ${x.box?.join(',') || ''}`);
       else lines.push(`${x.type}：${x.what || ''}`);
       if (x.fix) lines.push(`  ↳ ${x.fix}`);
     }
@@ -112,10 +121,19 @@ try {
   };
 
   if (json) {
-    console.log(JSON.stringify(results.map((it) => ({ ...it, lines: linesFor(it) })), null, 2));
+    console.log(
+      JSON.stringify(
+        { style: styleOn, pages: results.map((it) => ({ ...it, lines: linesFor(it) })) },
+        null,
+        2
+      )
+    );
   } else {
-    const WARN = WARN_ALL;
-    const fatal = (it) => it.issues.filter((x) => !WARN.has(x.type)).length > 0 || it.special.length > 0;
+    const fatal = (it) => it.issues.filter((x) => !isWarn(x)).length > 0 || it.special.length > 0;
+    if (styleOn) {
+      // 默认不跑；跑的时候把"这是什么"写在最前面，不让人误以为库的要求变多了。
+      console.log('· --style：已开项目层审美 preset（5 条）。默认不跑；这是项目自己的版面主张。');
+    }
     for (const it of results) {
       const lines = linesFor(it);
       if (!lines.length) console.log(`✓ ${it.rel} 干净`);
@@ -127,7 +145,7 @@ try {
     const bad = results.filter((it) => fatal(it)).length;
     if (pages.length > 1) console.log(`\n${pages.length} 页 · ${bad} 页有问题`);
   }
-  process.exitCode = results.some((it) => it.issues.filter((x) => !WARN_ALL.has(x.type)).length > 0 || it.special.length > 0) ? 1 : 0;
+  process.exitCode = results.some((it) => it.issues.filter((x) => !isWarn(x)).length > 0 || it.special.length > 0) ? 1 : 0;
 } finally {
   await browser.close();
 }

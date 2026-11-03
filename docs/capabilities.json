@@ -61,7 +61,7 @@
     {
       "id": "type-scale",
       "name": "版式 · 四档字号",
-      "what": "四档主对比 display 160 / headline 96 / body 40 / caption 28；旧名 label/data/subhead/title 别名到新档，hero/mega 保留为补充档。160px 只有一个来源。",
+      "what": "四档主对比 display 200 / headline 112 / body 56 / caption 48（手机横屏 0.406× 基准）；旧名 label/data/subhead/title 别名到新档，hero 280 / mega 400 是补充档。200px 只有一个来源。",
       "contracts": [
         "vk-text.size"
       ],
@@ -77,7 +77,7 @@
         },
         {
           "file": "tests/batch-ef.test.mjs",
-          "name": "display 在全库唯一：160px 只出现在 --vk-t-display 一处"
+          "name": "display 在全库唯一：200px 只出现在 --vk-t-display 一处"
         }
       ]
     },
@@ -128,7 +128,7 @@
     {
       "id": "chrome-dots-scaling",
       "name": "组件 · 三点随 mass 缩放",
-      "what": "三点直径 compact 8 / normal 12 / hero 16，窗头高度 40 / 56 / 72，点间距同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量。",
+      "what": "三点直径 compact 12 / normal 16 / hero 20，窗头高度 56 / 72 / 88，点间距与文件名 chip 同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量，vk-legacy 只改这一组值就能整体回退。",
       "contracts": [
         "vk-code.mass",
         "vk-term.mass",
@@ -141,7 +141,7 @@
       "tests": [
         {
           "file": "tests/batch-ef.test.mjs",
-          "name": "三点直径随 mass 缩放：compact 8 / normal 12 / hero 16"
+          "name": "三点直径随 mass 缩放：compact 12 / normal 16 / hero 20"
         }
       ]
     },
@@ -517,7 +517,7 @@
     {
       "id": "icon-whitelist",
       "name": "图标 · 语义白名单",
-      "what": "vk-icon 只表达四类意思：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期报错并列出可用名；运行期 audit 再兜一层。",
+      "what": "vk-icon 的语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看（level=warn）。",
       "contracts": [
         "vk-icon.name"
       ],
@@ -525,14 +525,14 @@
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "vk-icon 白名单：名字在内通过，在外构建期报错并列出可用名"
+          "name": "vk-icon 白名单外：构建期只提醒，不再拦构建"
         }
       ]
     },
     {
       "id": "dark-limit",
-      "name": "审计 · 一页一块深色",
-      "what": "深色区域按底色亮度识别（vk-panel variant=\"dark\"、深色终端 / 字节窗、.vk-bg-dark 都算）；一页超过 1 块时 audit 报错：一页最多一块深色区域，它应该是本页唯一的\"重\"。",
+      "name": "审计 preset · 一页一块深色（默认关）",
+      "what": "项目层审美 preset（vk check --style / tools/style-preset.mjs 才跑）：深色区域按底色亮度识别（vk-panel variant=\"dark\"、深色终端 / 字节窗、.vk-bg-dark 都算）；一页超过 1 块时报一条。默认不跑——「一页只砸一块重」是版面主张，不是库的要求。",
       "contracts": [
         "vk-panel.variant"
       ],
@@ -540,14 +540,14 @@
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "审计 · 深色块 ≤1：两块报错，一块通过"
+          "name": "预设 · 深色块 ≤1：--style 下两块报一条，一块通过"
         }
       ]
     },
     {
       "id": "audit-accent-limit",
-      "name": "审计 · 强调色 ≤1",
-      "what": "统计一页里 tone=\"focus\" 的答案级元素（vk-text / vk-panel），超过 1 处报错；vk-label / vk-icon 不算强调，err / warn 作为反例/警告不占名额。",
+      "name": "审计 preset · 强调色 ≤1（默认关）",
+      "what": "项目层审美 preset（vk check --style 才跑）：统计一页里 tone=\"focus\" 的答案级元素（vk-text / vk-panel），超过 1 处报一条；vk-label / vk-icon 不算强调，err / warn 作为反例/警告不占名额。默认不跑。",
       "contracts": [
         "vk-text.tone"
       ],
@@ -555,14 +555,14 @@
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "审计 · 强调色 ≤1：两处 tone=\"focus\" 报错，第二处 err / warn 不算"
+          "name": "预设 · 强调色 ≤1：--style 下两处报一条，第二处 err / warn 不算"
         }
       ]
     },
     {
       "id": "audit-margin",
-      "name": "审计 · 内容在 120 边距内",
-      "what": "交付页（1920×1080、未缩放）的所有可见元素必须落在 [120, 120, 1800, 960] 内（容差 1px）；覆盖层（annotate / ring / edge / note）与出血层豁免。",
+      "name": "审计 preset · 内容在 120 边距内（默认关）",
+      "what": "项目层审美 preset（vk check --style 才跑）：交付页（1920×1080、未缩放）的可见元素必须落在 [120, 120, 1800, 960] 内（容差 1px）；覆盖层与出血层豁免。默认不跑——120 是这一集的交付边距，换个项目可以换。",
       "contracts": [
         "vk-page.align"
       ],
@@ -570,7 +570,7 @@
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "审计 · 内容必须在 120 边距内（覆盖层豁免）"
+          "name": "预设 · 内容落在 120 边距内（--style，覆盖层豁免）"
         }
       ]
     }

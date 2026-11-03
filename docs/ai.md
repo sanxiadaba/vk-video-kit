@@ -14,14 +14,14 @@
 ```
 
 - 从任意一个标签开始，不需要先搭 `vk-page`。
-- 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 25 字 → 1000px），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
+- 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 25 字 → 1400px），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
 - **只有一种材质：白纸。** 没有深色主题、深色代码窗、反色卡片；层次靠纸的明度（`sf-0..4`）与 `vk-panel` 的四档表面 / 语义淡底，不靠第二种材质。
 - 没有播放器、时间轴、逐行淡入；静止帧就是成品。
 
 ## 2 · 字号与颜色
 
-1. 字阶四档：`caption 28` · `body 40` · `headline 96` · `display 160`。`display` 一页最多一次，只给「本页唯一的答案」；`headline` 是标题；`body` 是正文与数据；`caption` 是标签、单位、脚注。旧名（`label` / `data` / `subhead` / `title`）别名到新档，`hero` 224 / `mega` 320 是「一个数字 / 一个词当家」的补充档，一帧最多一个。
-2. 要读懂的内容用 40；元数据、标签、密集 ASCII 数据用 28（`data-meta` 标记），任何可读文字不低于 28。
+1. 字阶四档（手机横屏基准，1920 实际渲染 ≈780 / 0.406×）：`caption 48` · `body 56` · `headline 112` · `display 200`。`display` 一页最多一次，只给「本页唯一的答案」；`headline` 是标题；`body` 是正文与数据；`caption` 是标签、单位、脚注。旧名（`label` / `data` / `subhead` / `title`）别名到新档，`hero` 280 / `mega` 400 是「一个数字 / 一个词当家」的补充档，一帧最多一个。
+2. 要读懂的内容用 56；元数据、标签、密集 ASCII 数据用 48（`data-meta` 标记），任何可读文字不低于 48（`vk-legacy` 旧页按旧地板 28 / 40 / 96）。
 3. 钴蓝只有一个含义：**正在讲这里**。它不做语法色——关键字与数字都是墨色 600，字符串是绿的。
 4. 语义色（对 / 错 / 注意）只出现在色条、底色、图标上，不写正文。
 5. 注意力只有一套词：`act` × `strength`。
@@ -155,7 +155,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
   - 例：`<vk-inline variant="code">s[0]</vk-inline>`
-- **`vk-icon`** · 图标 — 一个语义符号，不是装饰：名字必须在白名单里（check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right），构建期拒掉白名单外的名字。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
+- **`vk-icon`** · 图标 — 一个符号：语义图标可用 check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。
   - 属性：`name` · `tone` · `label` · `src` · `ink` · `size`
   - 例：`<vk-icon name="check" size="lg">`
 - **`vk-img`** · 图片 — 一张图：比例、填充方式、焦点。加载失败有可见占位。
@@ -243,9 +243,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-asm`** · 汇编 — 汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。
   - 属性：`lang` · `src` · `lines` · `file` · `current` · `reveal` · `focus` · `addr` · `title` · `bytes` · `address` · `mass` · `long` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `address-label` · `bytes-label` · `mnemonic-label` · `operands-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
-  - 例：`<vk-asm title="main.s" lines="1-13" current="6" bytes long="wrap"
-        order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">`
-- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 224 / title 144 / subhead 96，默认 hero）。
+  - 例：`<vk-asm title="main.s" lines="2-9" current="6" bytes order="1,2,3,4,5,6,7,8" long="wrap"
+        fence-after="4" fence-label="编译器屏障">`
+- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 280 / title 200 / subhead 112，默认 hero）。
   - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `value-size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
@@ -267,7 +267,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info">`
 - **`vk-note`** · 注解 — 边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
   - 属性：`kind` · `for` · `side` · `leader` · `place` · `w` · `z`
-  - 例：`<vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>`
+  - 例：`<vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 
@@ -313,11 +313,12 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 > `vk-grid tracks` 仍是真轨道：`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，px 会在构建期报错。等分用 `cols="1..12"`（12 是默认坐标系，沟槽 `--vk-grid-gutter: 32px`），两条路互斥。
 
-## 12 · 版式与默认值（14.4 / 批次 E + F）
+## 12 · 版式与默认值（15.x / 手机横屏基准）
 
-- **四档字号**：`caption 28` · `body 40` · `headline 96` · `display 160`。旧名 `label` / `data` / `subhead` / `title` 是别名；`hero` 224 / `mega` 320 是补充档。
+- **四档字号**：`caption 48` · `body 56` · `headline 112` · `display 200`。旧名 `label` / `data` / `subhead` / `title` 是别名；`hero` 280 / `mega` 400 是补充档。
 - **网格与版心**：`--vk-grid-cols: 12`、`--vk-grid-gutter: 32px`、`--vk-margin: 120px`；`.vk-frame` 是最宽 1680 的版心列，`.vk-safe` 是全宽容器的 120 边距。
-- **窗头**：`vk-term` / `vk-code` / `vk-asm` / `vk-tree` / `vk-bytes` / `vk-diff` 默认有三点 + 文件名/来源；`chrome="none"` 仍可用但构建期会提醒放到有上下文的容器里。三点随 `mass` 变 8 / 12 / 16px。
-- **页眉**：`<vk-label variant="kicker" index="3" total="5" section="汇编">` → `工序 3/5 · 汇编`（不是页号）；左侧 4px 焦点色条。
-- **兼容开关**：`<body class="vk-legacy">` 回到 14.3 的字号与 panel 默认。
+- **窗头**：`vk-term` / `vk-code` / `vk-asm` / `vk-tree` / `vk-bytes` / `vk-diff` 默认有三点 + 文件名/来源；`chrome="none"` 仍可用但构建期会提醒放到有上下文的容器里。三点随 `mass` 变 12 / 16 / 20px，窗头 56 / 72 / 88。
+- **页眉**：`<vk-label variant="kicker" index="3" total="5" section="汇编">` → `工序 3/5 · 汇编`（不是页号）；左侧 4px 焦点色条。这条只是建议，默认不审计；`--style` 才判。
+- **兼容开关**：`<body class="vk-legacy">` 只切尺寸——回到 14.x 的字号（160 / 96 / 40 / 28）与窗头（40 / 56 / 72），审计地板跟着切回 28 / 40 / 96；panel 的底 / 框、kicker 的色条、grid 沟槽不跟着回退。
+- **库 vs 项目**：库只判客观错误；强调色 ≤1 / 深色块 ≤1 / 页眉措辞 / 120 边距是项目层 preset，默认关，用 `vk check --style` 或 `tools/style-preset.mjs` 打开（见 `docs/style-preset.md`）。图标白名单只是提醒。
 

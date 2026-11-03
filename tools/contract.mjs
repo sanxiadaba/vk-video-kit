@@ -257,10 +257,12 @@ function visualInPage(tag) {
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText && opaque(el)) {
-      const L = window.vk?.limits || { fontFloor: 28, contrastText: 7, contrastMuted: 4.5, contrastLarge: 4.5, fontLarge: 96 };
+      const L = window.vk?.limits || { fontFloor: 48, contrastText: 7, contrastMuted: 4.5, contrastLarge: 4.5, fontLarge: 112 };
       const fs = parseFloat(cs.fontSize);
       const meta = el.closest?.('[data-meta]') || el.closest?.('[ink="muted"]');
-      if (!meta && fs < L.fontFloor) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
+      // 窗头 / 窗脚有自己的一套尺寸（点 / 窗头高 / chip 一起缩放），不受正文地板约束。
+      const inChromeText = !!el.closest?.('.vk-hd, .vk-ft');
+      if (!meta && !inChromeText && fs < L.fontFloor) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));

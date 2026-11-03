@@ -9,7 +9,7 @@ import { WASH_TOKENS, readHexTokens, rgbCss } from './lib/surface-tokens.mjs';
 /**
  * 批次 E + F：版式系统与组件默认值。
  *
- * E1 四档主对比：display 160 / headline 96 / body 40 / caption 28；
+ * E1 四档主对比：display 200 / headline 112 / body 56 / caption 48（手机横屏基准）；
  *    旧名（label / data / subhead / title）别名到新档，hero / mega 是补充档。
  * E2 网格与版心：--vk-grid-cols 12 / --vk-grid-gutter 32 / --vk-margin 120；
  *    vk-grid cols="12" 的每栏宽可算（1680 - 11×32）/12。
@@ -81,20 +81,20 @@ test('四档字号：display / headline / body / caption 的字号与行高', as
       ),
     };
   });
-  // 字号：四档分别是 160 / 96 / 40 / 28。
+  // 字号：四档分别是 200 / 112 / 56 / 48（手机横屏基准）。
   assert.deepEqual(
     [r.d.size, r.h.size, r.b.size, r.c.size],
-    ['160px', '96px', '40px', '28px'],
+    ['200px', '112px', '56px', '48px'],
     `四档字号不对：${JSON.stringify([r.d.size, r.h.size, r.b.size, r.c.size])}`
   );
-  // 行高：160→168 / 96→120 / 40→60 / 28→42。
+  // 行高：200→210 / 112→130 / 56→78 / 48→64。
   assert.deepEqual(
     [r.d.lh, r.h.lh, r.b.lh, r.c.lh],
-    ['168px', '120px', '60px', '42px'],
+    ['210px', '130px', '78px', '64px'],
     `四档行高不对：${JSON.stringify([r.d.lh, r.h.lh, r.b.lh, r.c.lh])}`
   );
-  assert.deepEqual(r.tokens, ['160px', '96px', '40px', '28px'], '四个 --vk-t-* token 必须是这四档');
-  assert.equal(r.d.weight, '600', 'display 是 bold（700 在 0.38× 下又黑又土）');
+  assert.deepEqual(r.tokens, ['200px', '112px', '56px', '48px'], '四个 --vk-t-* token 必须是这四档');
+  assert.equal(r.d.weight, '600', 'display 是 bold（700 在 0.4× 下又黑又土）');
 });
 
 test('旧字号名仍解析到合理档位（label / data / subhead / title / hero / mega）', async () => {
@@ -115,16 +115,16 @@ test('旧字号名仍解析到合理档位（label / data / subhead / title / he
   });
   assert.deepEqual(
     Object.fromEntries(Object.entries(r).map(([k, v]) => [k, v.size])),
-    { label: '28px', data: '40px', subhead: '96px', title: '160px', hero: '224px', mega: '320px' },
+    { label: '48px', data: '56px', subhead: '112px', title: '200px', hero: '280px', mega: '400px' },
     `旧名必须落到合理档位：${JSON.stringify(r)}`
   );
   assert.equal(r.data.mono, true, 'data 是 body 的字号 + 等宽字体（这是它和 body 的唯一区别）');
 });
 
-test('display 在全库唯一：160px 只出现在 --vk-t-display 一处', () => {
+test('display 在全库唯一：200px 只出现在 --vk-t-display 一处', () => {
   const css = fs.readFileSync('src/tokens/tokens.css', 'utf8');
-  const hits = [...css.matchAll(/^\s*(--vk-t-[\w-]+)\s*:\s*160px\s*;/gm)].map((m) => m[1]);
-  assert.deepEqual(hits, ['--vk-t-display'], `160px 只能有 --vk-t-display 一个来源：${JSON.stringify(hits)}`);
+  const hits = [...css.matchAll(/^\s*(--vk-t-[\w-]+)\s*:\s*200px\s*;/gm)].map((m) => m[1]);
+  assert.deepEqual(hits, ['--vk-t-display'], `200px 只能有 --vk-t-display 一个来源：${JSON.stringify(hits)}`);
 });
 
 /* --------------------------------------------------------------- E2 网格 */
@@ -190,13 +190,13 @@ test('六个内容组件默认都有三点窗头，vk-panel 没有', async () =>
   assert.equal(n, 0, 'vk-panel 是版面容器，永远不该带三点');
 });
 
-test('三点直径随 mass 缩放：compact 8 / normal 12 / hero 16', async () => {
+test('三点直径随 mass 缩放：compact 12 / normal 16 / hero 20', async () => {
   for (const tag of CONTENT) {
     const tab = await openSpecimen(tag);
     for (const [mass, dot, hd] of [
-      ['compact', '8px', '40px'],
-      ['normal', '12px', '56px'],
-      ['hero', '16px', '72px'],
+      ['compact', '12px', '56px'],
+      ['normal', '16px', '72px'],
+      ['hero', '20px', '88px'],
     ]) {
       await tab.evaluate(
         ({ t, m }) => {
@@ -263,19 +263,47 @@ test('vk-panel plain 默认无框无底，tone 才有 wash', async () => {
   assert.equal(r.border.border, '2px', `border="hair" 才出现描边：${r.border.border}`);
 });
 
-test('legacy 兼容开关：旧字号与旧 panel 边框回来', async () => {
-  const tab = await open(
-    '<vk-text id="b" size="body">旧正文</vk-text><vk-panel id="p" title="分区"><vk-text size="body">x</vk-text></vk-panel>',
-    'class="vk-legacy"'
-  );
-  const r = await tab.evaluate(() => ({
-    body: getComputedStyle(document.getElementById('b')).fontSize,
-    bg: getComputedStyle(document.getElementById('p')).backgroundColor,
-    border: getComputedStyle(document.getElementById('p')).borderTopWidth,
-  }));
-  assert.equal(r.body, '48px', `legacy 页的 body 应回到 48：${r.body}`);
-  assert.equal(r.bg, 'rgb(255, 255, 255)', `legacy 页的 plain panel 应回到白底：${r.bg}`);
-  assert.equal(r.border, '2px', `legacy 页的 plain panel 应回到发丝框：${r.border}`);
+test('legacy 兼容开关：旧字号与旧窗头一起回来（两个开关同一张表）', async () => {
+  const body =
+    '<vk-text id="b" size="body">旧正文</vk-text>' +
+    '<vk-panel id="p" title="分区"><vk-text size="body">x</vk-text></vk-panel>' +
+    '<vk-window id="w" title="a.txt"><vk-text size="body" mono>x</vk-text></vk-window>';
+  const legacyTab = await open(body, 'class="vk-legacy"');
+  const freshTab = await open(body);
+  const read = (tab) =>
+    tab.evaluate(() => {
+      const win = document.getElementById('w');
+      const root = win.querySelector('.vk-win');
+      const dot = win.querySelector('.vk-dots i');
+      const file = win.querySelector('.vk-file');
+      return {
+        body: getComputedStyle(document.getElementById('b')).fontSize,
+        bg: getComputedStyle(document.getElementById('p')).backgroundColor,
+        border: getComputedStyle(document.getElementById('p')).borderTopWidth,
+        dot: getComputedStyle(dot).width,
+        hd: getComputedStyle(root).getPropertyValue('--vk-win-hd').trim(),
+        fileH: getComputedStyle(file).height,
+        fileFs: getComputedStyle(file).fontSize,
+      };
+    });
+  const r = await read(legacyTab);
+  const fresh = await read(freshTab);
+  // 字号回到 14.x。
+  assert.equal(r.body, '40px', `legacy 页的 body 应回到 40：${r.body}`);
+  // legacy 只切尺寸：panel 的形状（默认无框无底）不跟着回退。
+  assert.equal(r.bg, 'rgba(0, 0, 0, 0)', `legacy 不改 panel 的底：${r.bg}`);
+  assert.equal(r.border, '0px', `legacy 不改 panel 的描边：${r.border}`);
+  // 窗头也回到 14.x：点 12 / 窗头 56 / chip 48 高 28 字。
+  assert.equal(r.dot, '12px', `legacy 的三点应回到 normal 12：${r.dot}`);
+  assert.equal(r.hd, '56px', `legacy 的窗头应回到 normal 56：${r.hd}`);
+  assert.equal(r.fileH, '48px', `legacy 的文件名 chip 应回到 48 高：${r.fileH}`);
+  assert.equal(r.fileFs, '28px', `legacy 的文件名 chip 应回到 28 字：${r.fileFs}`);
+  // 新页同一条链上是新值：两个开关不会一个回旧、一个留新。
+  assert.equal(fresh.body, '56px', `新页 body 应是 56：${fresh.body}`);
+  assert.equal(fresh.dot, '16px', `新页三点应是 normal 16：${fresh.dot}`);
+  assert.equal(fresh.hd, '72px', `新页窗头应是 normal 72：${fresh.hd}`);
+  assert.equal(fresh.fileH, '64px', `新页 chip 应是 64 高：${fresh.fileH}`);
+  assert.equal(fresh.fileFs, '48px', `新页 chip 应是 48 字：${fresh.fileFs}`);
 });
 
 /* --------------------------------------------------------------- F3 页眉 */
@@ -294,7 +322,7 @@ test('vk-kicker 工序进度：工序 3/5 · 汇编，色条 4px', async () => {
     };
   });
   assert.equal(r.text, '工序 3/5 · 汇编', `kicker 必须渲染成工序进度：${r.text}`);
-  assert.equal(r.size, '28px', `kicker 用 caption 档（28px）：${r.size}`);
+  assert.equal(r.size, '48px', `kicker 用 caption 档（48px）：${r.size}`);
   assert.equal(r.ruleW, '4px', `左侧色条必须是 4px：${r.ruleW}`);
   assert.equal(r.ruleBg, 'rgb(27, 63, 214)', `色条用焦点色：${r.ruleBg}`);
 });

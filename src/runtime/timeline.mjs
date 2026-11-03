@@ -22,7 +22,7 @@ const num = (v) => {
 };
 
 /**
- * value 的体量档：一帧放三个数字时，hero（224）会把整页撑到 864+
+ * value 的体量档：一帧放三个数字时，hero（280）会把整页撑到 864+
  * 所以给一档明确的降档词。词表是闭集，构建期也会拦（见 src/highlight.mjs）。
  */
 const VALUE_SIZES = new Set(['hero', 'title', 'subhead']);
@@ -62,7 +62,7 @@ export class VkTimeline extends VkElement {
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const mass = this.getAttribute('mass') || 'normal';
-    // 不写 = hero：引入 value-size 之前 value 就是 hero（224），一个像素都不许变。
+    // 不写 = hero：引入 value-size 之前 value 就是 hero（280），一个像素都不许变。
     const valueSizeRaw = (this.getAttribute('value-size') || 'hero').trim();
     const valueSize = VALUE_SIZES.has(valueSizeRaw) ? valueSizeRaw : 'hero';
     if (valueSizeRaw !== valueSize) {

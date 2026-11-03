@@ -14,6 +14,32 @@ export function visualToLocal(r, hr, layoutWidth = hr.width) {
   };
 }
 
+/**
+ * 从元素到文档根的累计 scaleX。
+ *
+ * getBoundingClientRect / Range 量到的是祖先 transform 之后的结果，
+ * 而 computed font-size 是没缩放的。连排页把每帧缩到 0.5 时，
+ * 直接拿"缩放后的行宽 ÷ 未缩放字号"会把正常的一行算成孤行；
+ * 120 边距的测量也要先知道自己是不是在缩放容器里。
+ * 只乘 scale：旋转/斜切不该改变"这一行有几个字"的判断。
+ */
+export function cumulativeScaleX(el) {
+  let scale = 1;
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const t = getComputedStyle(n).transform;
+    if (t && t !== 'none') {
+      const m = t.match(/^matrix(?:3d)?\(([^)]+)\)$/);
+      if (m) {
+        const p = m[1].split(',').map(Number);
+        const sx = Math.hypot(p[0] || 0, p[1] || 0);
+        if (sx > 0) scale *= sx;
+      }
+    }
+    if (n === document.documentElement) break;
+  }
+  return scale || 1;
+}
+
 /** 包含块：最近的定位祖先，连同它的缩放比 */
 /** 盒子上某个边的锚点 */
 export function pointOn(b, side, off = 0) {

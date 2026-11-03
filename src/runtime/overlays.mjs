@@ -62,20 +62,21 @@ export class VkPin extends VkAnnotate {
     return 'vk-text, p, h1, h2, h3, li';
   }
 
-  /** w 是气泡宽，不是宿主宽：宿主铺满整页，量它永远不等于 w。 */
+  /** w 是气泡宽，不是宿主宽：宿主铺满整页，量它永远不等于 w。
+   *  不写 w 时返回 null —— 和 vk-annotate 用同一个"按内容自适到 cap"的默认，
+   *  两个标签（本体与别名）因此逐像素一致。 */
   _noteWidth() {
     const wRaw = String(this.getAttribute('w') ?? '').trim();
+    if (!wRaw) return null;
     const wm = wRaw.match(/^(\d+(?:\.\d+)?)(?:px)?$/);
     let w = 360;
-    if (wRaw) {
-      if (!wm) {
-        this._warnOnce('w', `的 w="${wRaw}" 不是像素宽（写 200 或 200px），按 360 处理`);
-      } else {
-        const n = Number(wm[1]);
-        w = Math.min(900, Math.max(160, n));
-        if (w !== n) this._warnOnce('w', `的 w="${wRaw}" 超出 160…900，按 ${w} 处理`);
-      }
+    if (!wm) {
+      this._warnOnce('w', `的 w="${wRaw}" 不是像素宽（写 200 或 200px），按默认宽处理`);
+      return 360;
     }
+    const n = Number(wm[1]);
+    w = Math.min(900, Math.max(160, n));
+    if (w !== n) this._warnOnce('w', `的 w="${wRaw}" 超出 160…900，按 ${w} 处理`);
     return w;
   }
 

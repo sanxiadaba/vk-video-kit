@@ -64,8 +64,11 @@ const probeInPage = () => {
   };
 };
 
-const auditTypes = (tab) =>
-  tab.evaluate(() => (window.vk.auditPage?.().issues || []).map((x) => ({ ...x, fix: x.fix || '' })));
+const auditTypes = (tab, style = false) =>
+  tab.evaluate(
+    (s) => (window.vk.auditPage?.(document, { style: s }).issues || []).map((x) => ({ ...x, fix: x.fix || '' })),
+    style
+  );
 
 /* ------------------------------------------------------------- G1 边注 */
 
@@ -112,7 +115,7 @@ test('vk-note kind="margin"：1px 细线、文字 caption、与目标正文同�
   assert.equal(r.stroke, '1px', `细线必须是 1px：${r.stroke}`);
   assert.match(r.d, /^M /, `细线要有路径：${r.d}`);
   assert.equal(r.arrow, false, '边注不许出现箭头');
-  assert.equal(r.font, '28px', `边注文字用 caption（28）：${r.font}`);
+  assert.equal(r.font, '48px', `边注文字用 caption（48）：${r.font}`);
   assert.equal(r.color, 'rgb(51, 61, 75)', `文字用墨阶 secondary：${r.color}`);
   assert.equal(r.bg, 'rgba(0, 0, 0, 0)', '边注没有底色块');
   assert.equal(r.border, '0px', '边注没有描边');
@@ -249,7 +252,7 @@ test('vk-note kind="legend"：编号点钉在目标右上角，页角图例表�
     '图例的编号列与目标上的编号点同号'
   );
   assert.ok(r.items.every((x) => x.t.length > 4), '每条图例都有说明文字');
-  assert.equal(r.font, '28px', `图例也是 caption（28）：${r.font}`);
+  assert.equal(r.font, '48px', `图例也是 caption（48）：${r.font}`);
   assert.equal(r.bg, 'rgba(0, 0, 0, 0)', '图例没有底色块');
   assert.ok(Math.abs(r.host.w - 24 - r.legend.r) <= 2, `图例贴右下角（右）：${r.legend.r} vs ${r.host.w - 24}`);
   assert.ok(Math.abs(r.host.h - 24 - r.legend.b) <= 2, `图例贴右下角（下）：${r.legend.b} vs ${r.host.h - 24}`);
@@ -293,67 +296,74 @@ test('vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接
   assert.ok(ok.html.includes('<vk-note'), '找得到目标时构建通过');
 });
 
-test('vk-icon 白名单：名字在内通过，在外构建期报错并列出可用名', async () => {
+test('vk-icon 白名单外：构建期只提醒，不再拦构建', async () => {
   const ok = await transformHtml('<vk-icon name="check"></vk-icon>', { file: 'icon.html' });
   assert.ok(ok.html.includes('data-vk-name="check"'), '白名单内的图标要内联');
-  await assert.rejects(
-    () => transformHtml('<vk-icon name="rocket"></vk-icon>', { file: 'icon.html' }),
-    /语义图标白名单/,
-    '白名单外的图标必须构建期报错'
-  );
-  await assert.rejects(
-    () => transformHtml('<vk-icon name="rocket"></vk-icon>', { file: 'icon.html' }),
-    /check \/ circle-check \/ triangle-alert \/ info \/ x \/ circle-x \/ arrow-up \/ arrow-down \/ arrow-right/,
-    '报错文案要列出白名单'
-  );
+  const warn = console.warn;
+  const got = [];
+  console.warn = (...a) => got.push(a.join(' '));
+  let out;
+  try {
+    out = await transformHtml('<vk-icon name="rocket"></vk-icon>', { file: 'icon.html' });
+  } finally {
+    console.warn = warn;
+  }
+  assert.ok(out.html.includes('data-vk-name="rocket"'), '白名单外的图标也要内联，不拦构建');
+  assert.match(got.join('\n'), /不在语义图标白名单里（只是提醒，不拦构建）/, '构建期只留一句提醒');
   await assert.rejects(
     () => transformHtml('<vk-icon name="not-a-real-icon"></vk-icon>', { file: 'icon.html' }),
     /没有图标/,
-    '不存在的图标仍是"没有图标"'
+    '不存在的图标仍是"没有图标"（客观错误）'
   );
 });
 
-/* ------------------------------------------------------------- H 五条 */
+/* ------------------------------------------------- 项目层审美 preset（默认关） */
 
-test('审计 · 强调色 ≤1：两处 tone="focus" 报错，第二处 err / warn 不算', async () => {
+test('审美 preset 默认不跑：强调色 / 深色 / 页眉 / 120 边距都不进 auditPage', async () => {
+  const tab = await open(`
+<vk-text size="headline" tone="focus">第一处答案</vk-text>
+<vk-text size="headline" tone="focus">第二处答案</vk-text>
+<vk-panel variant="dark" pad="md"><vk-text size="body">第一块深色</vk-text></vk-panel>
+<vk-panel variant="dark" pad="md"><vk-text size="body">第二块深色</vk-text></vk-panel>
+<vk-label variant="kicker">源码 · hello.c</vk-label>`);
+  const types = (await auditTypes(tab)).map((x) => x.type);
+  assert.deepEqual(
+    types.filter((t) => ['accent', 'dark', 'icon', 'header', 'margin'].includes(t)),
+    [],
+    `默认路径里不该有审美判定：${JSON.stringify(types)}`
+  );
+});
+
+test('预设 · 强调色 ≤1：--style 下两处报一条，第二处 err / warn 不算', async () => {
   const two = await open(`
 <vk-stack gap="md">
   <vk-text size="headline" tone="focus">第一处答案</vk-text>
   <vk-text size="headline" tone="focus">第二处答案</vk-text>
 </vk-stack>`);
-  const bad = (await auditTypes(two)).filter((x) => x.type === 'accent');
+  const bad = (await auditTypes(two, true)).filter((x) => x.type === 'accent');
   assert.equal(bad.length, 1, '两处强调色要报一条');
   assert.equal(bad[0].count, 2, `报错要带处数：${JSON.stringify(bad[0])}`);
+  assert.equal(bad[0].rule, 'accent', '要带上规则 id');
   assert.ok(bad[0].fix.includes('tone="err"'), `fix 要说明 err/warn 的例外：${bad[0].fix}`);
 
   const one = await open(`
 <vk-stack gap="md">
   <vk-text size="headline" tone="focus">答案</vk-text>
   <vk-text size="body" tone="err">反例</vk-text>
-  <vk-panel tone="focus" border="hair"><vk-text size="body">分区里的答案</vk-text></vk-panel>
-</vk-stack>`);
-  // 第二处 focus 在 vk-panel 上是真的第二处；这里改成只有 label/err 不计数。
-  const one2 = await open(`
-<vk-stack gap="md">
-  <vk-text size="headline" tone="focus">答案</vk-text>
-  <vk-text size="body" tone="err">反例</vk-text>
   <vk-text size="body" tone="warn">警告</vk-text>
   <vk-label variant="kicker" tone="focus">页眉</vk-label>
 </vk-stack>`);
-  const clean = (await auditTypes(one2)).filter((x) => x.type === 'accent');
+  const clean = (await auditTypes(one, true)).filter((x) => x.type === 'accent');
   assert.equal(clean.length, 0, `一处答案 + err/warn + label 不算超限：${JSON.stringify(clean)}`);
-  // 明确：vk-panel 上的第二处 focus 仍然算超限。
-  const panelBad = (await auditTypes(one)).filter((x) => x.type === 'accent');
-  assert.equal(panelBad.length, 1, 'vk-text 与 vk-panel 各一处 focus 是两处');
 });
 
-test('审计 · 深色块 ≤1：两块报错，一块通过', async () => {
+test('预设 · 深色块 ≤1：--style 下两块报一条，一块通过', async () => {
   const two = await open(`
 <vk-stack gap="md">
   <vk-panel variant="dark" pad="md"><vk-text size="body" ink="primary">第一块深色</vk-text></vk-panel>
   <vk-panel variant="dark" pad="md"><vk-text size="body" ink="primary">第二块深色</vk-text></vk-panel>
 </vk-stack>`);
-  const bad = (await auditTypes(two)).filter((x) => x.type === 'dark');
+  const bad = (await auditTypes(two, true)).filter((x) => x.type === 'dark');
   assert.equal(bad.length, 1, '两块深色要报一条');
   assert.equal(bad[0].count, 2, `报错要带块数：${JSON.stringify(bad[0])}`);
   assert.ok(
@@ -366,47 +376,48 @@ test('审计 · 深色块 ≤1：两块报错，一块通过', async () => {
   <vk-panel variant="dark" pad="md"><vk-text size="body" ink="primary">唯一的深色</vk-text></vk-panel>
   <vk-panel variant="plain" border="hair" pad="md"><vk-text size="body">浅色分区</vk-text></vk-panel>
 </vk-stack>`);
-  const clean = (await auditTypes(one)).filter((x) => x.type === 'dark');
+  const clean = (await auditTypes(one, true)).filter((x) => x.type === 'dark');
   assert.equal(clean.length, 0, `一块深色必须通过：${JSON.stringify(clean)}`);
 });
 
-test('审计 · 图标白名单：DOM 里出现白名单外 svg 名字时提醒', async () => {
+test('预设 · 图标白名单降级为提醒（level=warn，不是错误）', async () => {
   const tab = await open('<vk-icon name="rocket" size="lg"></vk-icon>');
-  const bad = (await auditTypes(tab)).filter((x) => x.type === 'icon');
-  assert.equal(bad.length, 1, `白名单外的图标要提醒：${JSON.stringify(bad)}`);
+  const bad = (await auditTypes(tab, true)).filter((x) => x.type === 'icon');
+  assert.equal(bad.length, 1, `白名单外的图标只提醒一次：${JSON.stringify(bad)}`);
+  assert.equal(bad[0].level, 'warn', `图标提醒不能是 error：${bad[0].level}`);
   assert.ok(bad[0].what.includes('rocket'), `提醒要写出名字：${bad[0].what}`);
   assert.ok(bad[0].fix.includes('circle-check'), `fix 要给出可用名：${bad[0].fix}`);
 
   const ok = await open('<vk-icon name="check" size="lg"></vk-icon>');
-  const clean = (await auditTypes(ok)).filter((x) => x.type === 'icon');
+  const clean = (await auditTypes(ok, true)).filter((x) => x.type === 'icon');
   assert.equal(clean.length, 0, `白名单内的图标不该提醒：${JSON.stringify(clean)}`);
 });
 
-test('审计 · 页眉不许含文件名/页号', async () => {
+test('预设 · 页眉不许含文件名/页号（--style）', async () => {
   const file = await open('<vk-label variant="kicker">源码 · hello.c</vk-label>');
-  const f = (await auditTypes(file)).filter((x) => x.type === 'header');
+  const f = (await auditTypes(file, true)).filter((x) => x.type === 'header');
   assert.equal(f.length, 1, `页眉里的文件名要报：${JSON.stringify(f)}`);
   assert.ok(f[0].what.includes('hello.c'), f[0].what);
 
   const page = await open('<vk-label variant="kicker">第 3 页 · 汇编</vk-label>');
-  assert.equal((await auditTypes(page)).filter((x) => x.type === 'header').length, 1, '页眉里的页号要报');
+  assert.equal((await auditTypes(page, true)).filter((x) => x.type === 'header').length, 1, '页眉里的页号要报');
 
   const good = await open('<vk-label variant="kicker" index="3" total="5" section="汇编"></vk-label>');
-  const clean = (await auditTypes(good)).filter((x) => x.type === 'header');
+  const clean = (await auditTypes(good, true)).filter((x) => x.type === 'header');
   assert.equal(clean.length, 0, `工序进度不是页号：${JSON.stringify(clean)}`);
 });
 
-test('审计 · 内容必须在 120 边距内（覆盖层豁免）', async () => {
+test('预设 · 内容落在 120 边距内（--style，覆盖层豁免）', async () => {
   // 红：内容贴着 96 顶带（vk-page 的网格行），不在 120 以内。
   const bad = await open('<vk-text size="body">内容贴着顶带。</vk-text>');
-  const badIssues = (await auditTypes(bad)).filter((x) => x.type === 'margin');
+  const badIssues = (await auditTypes(bad, true)).filter((x) => x.type === 'margin');
   assert.equal(badIssues.length, 1, `贴着 96 顶带的正文要报：${JSON.stringify(badIssues)}`);
   assert.ok(badIssues[0].what.includes('120 边距'), badIssues[0].what);
   assert.ok(badIssues[0].fix.includes('120'), `fix 要指出改法：${badIssues[0].fix}`);
 
   // 绿：把内容压到 120 以内。
   const good = await open('<div style="height:24px"></div><vk-text size="body">内容在 120 以内。</vk-text>');
-  const clean = (await auditTypes(good)).filter((x) => x.type === 'margin');
+  const clean = (await auditTypes(good, true)).filter((x) => x.type === 'margin');
   assert.equal(clean.length, 0, `120 以内的内容不该报：${JSON.stringify(clean)}`);
 
   // 覆盖层豁免：边注文字故意落到 120 边距外，也不算"内容越界"。
@@ -416,6 +427,6 @@ test('审计 · 内容必须在 120 边距内（覆盖层豁免）', async () =>
   <vk-box id="mo" x="0" y="0" w="400" h="160" surface="soft" border="hair"></vk-box>
   <vk-note kind="margin" for="#mo" side="left" w="240">这段边注故意落在 120 边距外。</vk-note>
 </vk-canvas>`);
-  const overlayIssues = (await auditTypes(overlay)).filter((x) => x.type === 'margin');
+  const overlayIssues = (await auditTypes(overlay, true)).filter((x) => x.type === 'margin');
   assert.equal(overlayIssues.length, 0, `覆盖层不受 120 边距约束：${JSON.stringify(overlayIssues)}`);
 });

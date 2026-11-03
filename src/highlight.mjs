@@ -1011,12 +1011,12 @@ function validateAuthorHtml(doc, file, html = '') {
         const where = tag === 'vk-icon' ? '<vk-icon> 没有图标' : '<vk-label> 的 icon 没有图标';
         errors.push(`${file}:${lineOf(node)} ${where} "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
       }
-      // G2：vk-icon 只是语义符号，不是装饰。白名单外的名字在这里就拦下——
-      // "看起来能跑、图标灰掉了"是最难发现的一类错。
+      // 图标白名单只是提醒，不是错误（15.x）：图标可以表达语义，也可以只是装饰。
+      // 装饰图标不该让一整页构建失败——那是审美判断，属于项目，不属于库。
       if (tag === 'vk-icon' && name && ICONS[name] && !isSemanticIcon(name)) {
-        errors.push(
-          `${file}:${lineOf(node)} <vk-icon> 的 name="${name}" 不在语义图标白名单里；可用：${ICON_WHITELIST_HINT}。` +
-            `图标只用来表达"成立 / 注意 / 不成立 / 方向"，装饰请用版式与留白`
+        warnings.push(
+          `${file}:${lineOf(node)} <vk-icon name="${name}"> 不在语义图标白名单里（只是提醒，不拦构建）；可用：${ICON_WHITELIST_HINT}。` +
+            `需要装饰就用版式与留白，需要语义就用上面这几个`
         );
       }
     }

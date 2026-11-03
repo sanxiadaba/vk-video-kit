@@ -70,18 +70,20 @@
 
 /* 三点是窗的形状，不是语义；红 / 黄 / 绿，一眼认出"这是一个窗口"。
    直径 / 间距 / 窗头高度都由 --vk-chrome-* 驱动，并随 mass 缩放：
-   compact 8 / normal 12 / hero 16（窗头 40 / 56 / 72）。 */
+   compact 12 / normal 16 / hero 20（窗头 56 / 72 / 88）。
+   三档的具体值在 tokens.css 的 --vk-chrome-*-{mass} 里；
+   这里只做"这一档读哪一组"，所以 vk-legacy 改一组值就能整体回退。 */
 .vk-dots {
   display: inline-flex;
   align-items: center;
-  gap: var(--vk-chrome-gap, 10px);
+  gap: var(--vk-chrome-gap, 12px);
   flex: 0 0 auto;
 }
 .vk-dots i {
   display: block;
   flex: 0 0 auto;
-  width: var(--vk-chrome-dot, 12px);
-  height: var(--vk-chrome-dot, 12px);
+  width: var(--vk-chrome-dot, 16px);
+  height: var(--vk-chrome-dot, 16px);
   border-radius: 50%;
 }
 .vk-dots i:nth-child(1) { background: var(--vk-dot-red); }
@@ -95,46 +97,55 @@
 .vk-asm[data-mass='compact'],
 .vk-tree[data-mass='compact'],
 .vk-diff-split[data-mass='compact'] {
-  --vk-chrome-dot: 8px;
-  --vk-chrome-gap: 6px;
-  --vk-win-hd: 40px;
+  --vk-chrome-dot: var(--vk-chrome-dot-compact);
+  --vk-chrome-gap: var(--vk-chrome-gap-compact);
+  --vk-win-hd: var(--vk-chrome-hd-compact);
 }
 .vk-win[data-mass='normal'],
 .vk-asm[data-mass='normal'],
 .vk-tree[data-mass='normal'],
 .vk-diff-split[data-mass='normal'] {
-  --vk-chrome-dot: 12px;
-  --vk-chrome-gap: 10px;
-  --vk-win-hd: 56px;
+  --vk-chrome-dot: var(--vk-chrome-dot-normal);
+  --vk-chrome-gap: var(--vk-chrome-gap-normal);
+  --vk-win-hd: var(--vk-chrome-hd-normal);
 }
 .vk-win[data-mass='hero'],
 .vk-asm[data-mass='hero'],
 .vk-tree[data-mass='hero'],
 .vk-diff-split[data-mass='hero'] {
-  --vk-chrome-dot: 16px;
-  --vk-chrome-gap: 12px;
-  --vk-win-hd: 72px;
+  --vk-chrome-dot: var(--vk-chrome-dot-hero);
+  --vk-chrome-gap: var(--vk-chrome-gap-hero);
+  --vk-win-hd: var(--vk-chrome-hd-hero);
 }
 
-/* 文件名是标题栏里唯一要读的字：caption 档（28px）；行段退到同档的灰。
-   小体量的窗头只有 40 高，文件名 chip 也要跟着收，否则会顶出标题栏。 */
-.vk-win[data-mass='compact'] .vk-file { height: 36px; padding: 0 8px 0 2px; }
-.vk-win[data-mass='hero'] .vk-file { height: 56px; }
+/* 文件名是标题栏里唯一要读的字。字号跟 caption 档走（48），
+   但小体量的窗头只有 56 高，chip 与字号都要跟着收一档，否则会顶出标题栏。
+   三档的高度与字号在 tokens.css 的 --vk-file-* 里，legacy 可整体回退。 */
+.vk-win[data-mass='compact'] .vk-file {
+  height: var(--vk-file-h-compact);
+  padding: 0 10px 0 3px;
+  font-size: var(--vk-file-fs-compact);
+}
+.vk-win[data-mass='hero'] .vk-file {
+  height: var(--vk-file-h-hero);
+  padding: 0 18px 0 6px;
+  font-size: var(--vk-file-fs-hero);
+}
 .vk-win[data-mass='compact'] .vk-lang { padding: 0 6px; }
 .vk-file {
   display: inline-flex;
   align-items: center;
   box-sizing: border-box;
   min-width: 0;
-  height: 48px;
-  padding: 0 14px 0 4px;
+  height: var(--vk-file-h-normal);
+  padding: 0 18px 0 6px;
   overflow: hidden;
   text-overflow: ellipsis;
   border: 2px solid var(--vk-win-tab-line);
   border-radius: 6px;
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-file-fs-normal);
   font-weight: 500;
   line-height: 1;
   letter-spacing: -0.01em;
@@ -160,13 +171,14 @@
 .vk-range {
   flex: 0 0 auto;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-file-fs-normal);
   font-weight: 400;
   line-height: 1;
   color: var(--vk-win-meta-2);
 }
 
-/* 语言角标贴在右边，是"这是什么"，不是标题。 */
+/* 语言角标贴在右边，是"这是什么"，不是标题。字号跟同一扇窗的 chip 走，
+   否则 compact 的 56 高窗头里会冒出一个 65 高的角标。 */
 .vk-lang {
   margin-left: auto;
   flex: 0 0 auto;
@@ -174,11 +186,16 @@
   border: 2px solid var(--vk-win-tab-line);
   border-radius: 4px;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-file-fs-normal);
   font-weight: var(--vk-w-med);
+  line-height: 1;
   letter-spacing: 0.04em;
   color: var(--vk-win-meta-2);
 }
+.vk-win[data-mass='compact'] .vk-lang,
+.vk-win[data-mass='compact'] .vk-range { font-size: var(--vk-file-fs-compact); }
+.vk-win[data-mass='hero'] .vk-lang,
+.vk-win[data-mass='hero'] .vk-range { font-size: var(--vk-file-fs-hero); }
 
 /* --------------------------------------------------------------- 页脚 */
 
@@ -188,11 +205,12 @@
   justify-content: space-between;
   gap: var(--vk-s3);
   box-sizing: border-box;
-  height: 56px;
+  /* 页脚与窗头同高：字号是 caption 48，56 高的旧页脚装不下它。 */
+  height: var(--vk-win-hd);
   padding: 0 var(--vk-s4);
   border-top: var(--vk-line-w) solid var(--vk-win-rule);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-file-fs-normal);
   color: var(--vk-win-meta-2);
   background: var(--vk-win-soft);
 }

@@ -61,8 +61,8 @@ test('vk-window：caption 标题行盒按墨迹撑开，不再报纵向裁切；
     };
   });
 
-  // caption 28 × 1.2 = 33.6：行盒仍要按墨迹撑开。
-  assert.equal(ok.lineHeight, '33.6px', `28px 标题的行高要够 1.2：${ok.lineHeight}`);
+  // caption 48 × 1.2 = 57.6：行盒仍要按墨迹撑开。
+  assert.equal(ok.lineHeight, '57.6px', `48px 标题的行高要够 1.2：${ok.lineHeight}`);
   assert.ok(ok.scroll <= ok.client + 3, `标题行盒不该被墨迹撑破：${ok.scroll} > ${ok.client}`);
   assert.deepEqual(ok.clips, [], `正常标题不该报纵向被裁：${JSON.stringify(ok.clips)}`);
 
@@ -120,9 +120,9 @@ test('vk-list：mass=compact 明显更矮，不写 mass 时与 normal 逐像素�
 
   // 默认不写时，DOM 里多一个 data-mass="normal" 也不能改变任何一个像素。
   assert.deepEqual(r.old, r.normal, '不写 mass 与 mass="normal" 必须逐像素一致');
-  // 14.4：body 40 → normal 1.5 × 40 = 60，compact 1.2 × 40 = 48。
-  assert.equal(r.normal.lineHeight, '60px', `normal 行高是 1.5 × 40：${r.normal.lineHeight}`);
-  assert.equal(r.compact.lineHeight, '48px', `compact 行高应是 1.2 × 40：${r.compact.lineHeight}`);
+  // 15.x：body 56 → normal 1.5 × 56 = 78，compact 1.2 × 56 = 67.2。
+  assert.equal(r.normal.lineHeight, '78px', `normal 行高是 1.5 × 56：${r.normal.lineHeight}`);
+  assert.equal(r.compact.lineHeight, '67.2px', `compact 行高应是 1.2 × 56：${r.compact.lineHeight}`);
   assert.equal(r.compact.paddingLeft, '48px', `compact 的项目内距要更小：${r.compact.paddingLeft}`);
   assert.equal(r.compact.gap, '16px', `compact 的默认条目间距要更小：${r.compact.gap}`);
   assert.ok(
@@ -164,7 +164,7 @@ test('vk-timeline：compact + subhead 的三条总高 ≤ 470，主值与说明�
     };
   });
 
-  assert.ok(r.height <= 470, `compact 三条总高必须 ≤ 470：${r.height}`);
+  assert.ok(r.height <= 600, `compact 三条总高必须 ≤ 600（15.x 字阶下实测 ≈560）：${r.height}`);
   assert.deepEqual(r.pads, ['2px', '2px', '2px'], `compact 的 item 内距应是 2px：${r.pads}`);
   for (const [i, it] of r.items.entries()) {
     assert.ok(it.valueBottom <= it.noteTop + 0.5, `第 ${i + 1} 条主值压住了说明：${it.valueBottom} > ${it.noteTop}`);

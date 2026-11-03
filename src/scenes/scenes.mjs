@@ -107,33 +107,25 @@ export const SCENES = [
 <vk-grid cols="2" gap="sm">
   <vk-panel variant="plain" title="plain · 白纸">
     <vk-stack gap="2xs">
-      <vk-text size="data" mono>int main(void) {</vk-text>
       <vk-text size="data" mono>  puts("hello");</vk-text>
-      <vk-text size="data" mono>}</vk-text>
       <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
     </vk-stack>
   </vk-panel>
   <vk-panel variant="plain" tone="info" title="wash · 分区">
     <vk-stack gap="2xs">
-      <vk-text size="data" mono>int main(void) {</vk-text>
       <vk-text size="data" mono>  puts("hello");</vk-text>
-      <vk-text size="data" mono>}</vk-text>
       <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
     </vk-stack>
   </vk-panel>
   <vk-panel variant="inset" tone="focus" title="tint · 强调">
     <vk-stack gap="2xs">
-      <vk-text size="data" mono>int main(void) {</vk-text>
       <vk-text size="data" mono>  puts("hello");</vk-text>
-      <vk-text size="data" mono>}</vk-text>
       <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
     </vk-stack>
   </vk-panel>
   <vk-panel variant="dark" title="dark · 深色">
     <vk-stack gap="2xs">
-      <vk-text size="data" mono>int main(void) {</vk-text>
       <vk-text size="data" mono>  puts("hello");</vk-text>
-      <vk-text size="data" mono>}</vk-text>
       <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
     </vk-stack>
   </vk-panel>
@@ -142,9 +134,7 @@ export const SCENES = [
     strip: s`
 <vk-panel variant="plain" title="plain · 白纸">
   <vk-stack gap="2xs">
-    <vk-text size="data" mono>int main(void) {</vk-text>
     <vk-text size="data" mono>  puts("hello");</vk-text>
-    <vk-text size="data" mono>}</vk-text>
     <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
   </vk-stack>
 </vk-panel>`,
@@ -444,19 +434,18 @@ export const SCENES = [
   {
     tag: 'vk-asm',
     body: s`
-<vk-asm title="main.s" lines="1-13" current="6" bytes long="wrap"
-        order="4,1,2,3,5,6,7,8" fence-after="6" fence-label="编译器屏障">
+<vk-asm title="main.s" lines="2-9" current="6" bytes order="1,2,3,4,5,6,7,8" long="wrap"
+        fence-after="4" fence-label="编译器屏障">
   <script type="text/plain" data-vk-source>
 0000000000401136 <main>:
   401136: 55                    push   %rbp
   401137: 48 89 e5              mov    %rsp,%rbp
-  40113a: c7 45 fc 2a 00 00 00  movl   $0x2a,-0x4(%rbp)
-  401141: 8b 45 fc              mov    -0x4(%rbp),%eax
-  401144: 83 c0 01              add    $0x1,%eax
-  401147: 89 45 fc              mov    %eax,-0x4(%rbp)
-  40114a: b8 00 00 00 00        mov    $0x0,%eax
-  40114f: 5d                    pop    %rbp
-  401150: c3                    ret
+  40113a: eb 02                 jmp    40113e
+  40113c: 90                    nop
+  40113e: 83 ec 20              sub    $0x20,%esp
+  401141: 74 f4                 je     401137
+  401143: b8 00 00 00 00        mov    $0x0,%eax
+  401148: c3                    ret
   </script>
 </vk-asm>`,
   },
@@ -469,7 +458,6 @@ export const SCENES = [
   <li date="1989" lane="A" at="1" label="峰值" value="52,980" note="预处理前 · 字节"></li>
   <li date="1999" lane="B" at="2" label="事件三">说明三</li>
   <li date="2011" lane="A" at="3" label="事件四">说明四</li>
-  <li date="2018" lane="B" at="4" label="事件五">说明五</li>
 </vk-timeline>`,
   },
 
@@ -501,53 +489,25 @@ export const SCENES = [
   {
     tag: 'vk-annotate',
     // 四种形态各一例，全部用真实内容（hello.c 的前三行 + 一行终端输出）。
-    // 下半张是三种走线 × 实虚的对照：形状是几何，不是滤镜。
+    // 形状（straight / ortho / curve × 实虚）由 vk-annotate 的契约与预设覆盖，
+    // 这一页只留四种「关系」本身：箭头 / 圈选 / 批注 / 编号点。
     body: s`
-<vk-canvas w="1500" h="820">
-  <vk-code id="vka-src" x="40" y="20" w="660" lang="c" file="hello.c" src="../code/hello.c" lines="1-3" mass="compact"></vk-code>
-  <vk-box id="vka-out" x="820" y="20" w="460" border="hair" radius="lg" pad="md" surface="paper">
+<vk-canvas w="1680" h="660">
+  <vk-code id="vka-src" x="40" y="20" w="860" lang="c" file="hello.c" src="../code/hello.c" lines="1-3" mass="compact"></vk-code>
+  <vk-box id="vka-out" x="960" y="20" w="560" border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
       <vk-text size="label" mono ink="muted">$ ./hello.exe</vk-text>
       <vk-text size="body" mono>Hello, World!</vk-text>
     </vk-stack>
   </vk-box>
-  <vk-box id="vka-gap" x="820" y="250" w="460" h="140" border="hair" radius="lg" pad="md" surface="none">
+  <vk-box id="vka-gap" x="960" y="240" w="560" h="160" border="hair" radius="lg" pad="md" surface="none">
     <vk-text size="body" ink="secondary">这里空着</vk-text>
   </vk-box>
 
   <vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info"></vk-annotate>
   <vk-annotate id="vka-circle" mode="circle" for="#vka-src@line:3" ring="ellipse" double tone="focus"></vk-annotate>
-  <vk-annotate id="vka-note" mode="note" note="bubble" for="#vka-gap@side:left" tone="warn">-O2 少了 3 行</vk-annotate>
+  <vk-annotate id="vka-note" mode="note" note="bubble" for="#vka-gap@side:bottom" tone="warn">-O2 少了 3 行</vk-annotate>
   <vk-annotate id="vka-badge" mode="badge" for="#vka-gap@side:right" n="2"></vk-annotate>
-
-  <vk-text x="40" y="555" size="label" mono ink="muted">形状 × 虚实（左实 / 右虚）</vk-text>
-
-  <vk-text x="40" y="600" size="label" mono ink="muted">straight 实</vk-text>
-  <vk-box id="sh1a" x="320" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh1b" x="540" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="straight" from="#sh1a@side:right" to="#sh1b@side:left"></vk-annotate>
-  <vk-text x="760" y="600" size="label" mono ink="muted">straight 虚</vk-text>
-  <vk-box id="sh2a" x="1040" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh2b" x="1260" y="600" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="straight" dash="dashed" from="#sh2a@side:right" to="#sh2b@side:left"></vk-annotate>
-
-  <vk-text x="40" y="670" size="label" mono ink="muted">ortho 实</vk-text>
-  <vk-box id="sh3a" x="320" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh3b" x="540" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="ortho" from="#sh3a@side:right" to="#sh3b@side:left"></vk-annotate>
-  <vk-text x="760" y="670" size="label" mono ink="muted">ortho 虚</vk-text>
-  <vk-box id="sh4a" x="1040" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh4b" x="1260" y="670" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="ortho" dash="dashed" from="#sh4a@side:right" to="#sh4b@side:left"></vk-annotate>
-
-  <vk-text x="40" y="740" size="label" mono ink="muted">curve 实</vk-text>
-  <vk-box id="sh5a" x="320" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh5b" x="540" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="curve" from="#sh5a@side:right" to="#sh5b@side:left"></vk-annotate>
-  <vk-text x="760" y="740" size="label" mono ink="muted">curve 虚</vk-text>
-  <vk-box id="sh6a" x="1040" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">a</vk-text></vk-box>
-  <vk-box id="sh6b" x="1260" y="740" w="120" h="48" surface="soft" radius="md"><vk-text size="label" mono align="center">b</vk-text></vk-box>
-  <vk-annotate mode="arrow" shape="curve" dash="dashed" from="#sh6a@side:right" to="#sh6b@side:left"></vk-annotate>
 </vk-canvas>`,
     strip: s`
 <vk-canvas w="1200" h="360">
@@ -568,7 +528,7 @@ export const SCENES = [
     <vk-text size="body" mono>int main(void)</vk-text>
     <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
   </vk-box>
-  <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+  <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
 
   <vk-box id="nt-a" x="380" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
     <vk-text size="body">预处理</vk-text>

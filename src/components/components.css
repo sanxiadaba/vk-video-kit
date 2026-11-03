@@ -280,8 +280,8 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   align-items: center;
   /* 行高是变量：体量（diff 自己的 mass，或外层窗的 mass）只改这一个数，
      行盒、最小高、行距一起跟着走，不会出现"min-height 改了、height 还钉在 70"。
-     默认 70 与引入变量之前完全一致。 */
-  --vk-dline-h: 70px;
+     max(...) 让 40px 的旧档仍是 70（legacy 一像素不变），56px 的新档长到 87。 */
+  --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55));
   min-height: var(--vk-dline-h);
   height: var(--vk-dline-h);
   padding-right: var(--vk-s4);
@@ -432,7 +432,9 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   display: flex;
   align-items: center;
   min-width: 0;
-  height: 48px;
+  /* 地址栏也是窗头的一部分：字阶 48 时行盒 57.6，旧的 48px 高度会裁掉半行。
+     legacy（28px 字）仍落在 48px 上，形状不变。 */
+  height: max(48px, calc(var(--vk-t-label) * 1.3));
   line-height: 1.2;
   padding: 0 var(--vk-s3);
   border: 2px solid var(--vk-win-rule);
@@ -736,12 +738,14 @@ vk-cells{ display: block; }.vk-cells{
 }.vk-cell-byte{
   flex: 1 1 0;
   min-width: 0;
-  height: 50px;
+  /* 字节尺的行盒按字阶撑开：48px 的等宽字行盒约 59px，旧的 50px 高度会把它裁掉。
+     max(...) 让 legacy 页维持原来的 50px（28px 字够用），新页自动长到 63.6px。 */
+  height: max(50px, calc(var(--vk-t-label) * 1.2 + 6px));
   padding-top: 4px;
   border-top: 2px solid var(--vk-line-1);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);
-  line-height: 1;
+  line-height: 1.2;
   color: var(--vk-ink-3);
   text-align: center;
   white-space: nowrap;
@@ -1152,17 +1156,18 @@ vk-tree[grow] .vk-tree-row{ flex: 1 1 0; min-height: 0; }vk-tree[grow] > .vk-tre
 vk-table[mass='compact'] td{ padding: var(--vk-s1) var(--vk-s2); }vk-table[mass='hero'] th,
 vk-table[mass='hero'] td{ padding: var(--vk-s5) var(--vk-s6); font-size: var(--vk-t-body); }/* 体量三档：compact 收紧、normal 常规、hero 让块吃掉剩余高度。
    window / diff / tree / bits 是这轮才补上体量的——它们以前只跟着 density 走。 */
-vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .vk-tree-row{ min-height: 88px; }vk-diff[mass='compact'] .vk-dline{ --vk-dline-h: 58px; }vk-diff[mass='normal'] .vk-dline{ --vk-dline-h: 70px; }vk-diff[mass='hero'] .vk-dline{ --vk-dline-h: 88px; }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }/* 窗的体量必须落到内容行：只改自己的内距等于没压——窗里是 diff / 代码时，
+vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .vk-tree-row{ min-height: 88px; }vk-diff[mass='compact'] .vk-dline{ --vk-dline-h: max(58px, calc(var(--vk-t-body) * 1.35)); }vk-diff[mass='normal'] .vk-dline{ --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55)); }vk-diff[mass='hero'] .vk-dline{ --vk-dline-h: max(88px, calc(var(--vk-t-body) * 1.9)); }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }/* 窗的体量必须落到内容行：只改自己的内距等于没压——窗里是 diff / 代码时，
    行高还钉在 70，窗口就永远压不下去。内层自己写了 mass 时按内层（:not([mass])）。 */
-vk-window[mass='compact'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 58px; }vk-window[mass='normal'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 70px; }vk-window[mass='hero'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: 88px; }vk-window[mass='compact'] vk-code:not([mass]) .vk-line{ min-height: 58px; line-height: 58px; }vk-window[mass='normal'] vk-code:not([mass]) .vk-line{ min-height: 70px; line-height: 70px; }vk-window[mass='hero'] vk-code:not([mass]) .vk-line{ min-height: 88px; line-height: 88px; }vk-asm[mass='hero'] .vk-asm-row{ min-height: 88px; }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
+vk-window[mass='compact'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(58px, calc(var(--vk-t-body) * 1.35)); }vk-window[mass='normal'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55)); }vk-window[mass='hero'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(88px, calc(var(--vk-t-body) * 1.9)); }vk-window[mass='compact'] vk-code:not([mass]) .vk-line{ min-height: 58px; line-height: 58px; }vk-window[mass='normal'] vk-code:not([mass]) .vk-line{ min-height: 70px; line-height: 70px; }vk-window[mass='hero'] vk-code:not([mass]) .vk-line{ min-height: 88px; line-height: 88px; }vk-asm[mass='hero'] .vk-asm-row{ min-height: 88px; }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
 /* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
    对照的注意力应该落在差异上，而不是落在控件上。 */
 vk-compare{ display: block; }.vk-cmp{
   box-sizing: border-box;
   position: relative;
   width: 100%;
-  /* 角标顶置时让出来的那条带；64 = --vk-s6，够放一行 36 的角标。 */
-  --vk-cmp-band: var(--vk-s6);
+  /* 角标顶置时让出来的那条带。max(...)：40px 字仍是 64（legacy 不变），
+     48px 的 caption 行盒 64 + 内距 12，需要 80 才不压图。 */
+  --vk-cmp-band: max(var(--vk-s6), calc(var(--vk-t-caption) * 1.5 + 16px));
   overflow: hidden;
   border-radius: var(--vk-r-2);
   border: var(--vk-line-w) solid var(--vk-line-2);

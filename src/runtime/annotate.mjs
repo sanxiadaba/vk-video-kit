@@ -726,11 +726,16 @@ export class VkAnnotate extends VkElement {
     this._n.hidden = !(n > 0);
     this._n.textContent = n > 0 ? String(n) : '';
     // 批注只有一句话：w 太窄时它会折成三行，读起来像诗，不像注。
-    // 先量"一行到底要多少"，再按内容加宽到 360 为止；比 w 窄就不动。
+    // 先量"一行到底要多少"，再按内容加宽到 cap 为止；比 w 窄就不动。
+    // cap 跟着字阶走（40px 字 → 360，和引入变量之前一致）；下限固定 160：
+    // 再窄就只是"一枚编号 + 一个词"，作者写的 w 应该赢。
+    const fs = parseFloat(getComputedStyle(this._bd).fontSize) || 40;
+    const cap = Math.round(fs * 9);
+    const floor = 160;
     this._bd.style.width = 'max-content';
     const natural = Math.ceil(this._bd.getBoundingClientRect().width);
-    const w = cfg.width ?? 360;
-    const fitted = Math.min(900, Math.max(160, Math.max(w, Math.min(natural, 360))));
+    const w = cfg.width ?? cap;
+    const fitted = Math.min(900, Math.max(floor, Math.max(w, Math.min(natural, cap))));
     this._bd.style.width = fitted + 'px';
     this.draw();
     EDGES.add(this);

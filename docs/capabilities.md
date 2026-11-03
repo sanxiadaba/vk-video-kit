@@ -37,9 +37,9 @@
 | 注解 · 边注 margin | `vk-note.kind`<br>`vk-note.side`<br>`vk-note.leader`<br>`vk-note.w`<br>`vk-note.for` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 注解 · 编号图例 legend | `vk-note.kind`<br>`vk-note.place` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 图标 · 语义白名单 | `vk-icon.name` | `specimen/vk-icon.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 审计 · 一页一块深色 | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 审计 · 强调色 ≤1 | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 审计 · 内容在 120 边距内 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 preset · 一页一块深色（默认关） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 preset · 强调色 ≤1（默认关） | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 审计 preset · 内容在 120 边距内（默认关） | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -66,10 +66,10 @@
 
 ### ✅ 版式 · 四档字号
 
-- 能力：四档主对比 display 160 / headline 96 / body 40 / caption 28；旧名 label/data/subhead/title 别名到新档，hero/mega 保留为补充档。160px 只有一个来源。
+- 能力：四档主对比 display 200 / headline 112 / body 56 / caption 48（手机横屏 0.406× 基准）；旧名 label/data/subhead/title 别名到新档，hero 280 / mega 400 是补充档。200px 只有一个来源。
 - 契约断言：`vk-text.size`
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
-- 测试：`tests/batch-ef.test.mjs` · 「四档字号：display / headline / body / caption 的字号与行高」；`tests/batch-ef.test.mjs` · 「旧字号名仍解析到合理档位（label / data / subhead / title / hero / mega）」；`tests/batch-ef.test.mjs` · 「display 在全库唯一：160px 只出现在 --vk-t-display 一处」
+- 测试：`tests/batch-ef.test.mjs` · 「四档字号：display / headline / body / caption 的字号与行高」；`tests/batch-ef.test.mjs` · 「旧字号名仍解析到合理档位（label / data / subhead / title / hero / mega）」；`tests/batch-ef.test.mjs` · 「display 在全库唯一：200px 只出现在 --vk-t-display 一处」
 
 ### ✅ 版式 · 网格与版心
 
@@ -87,10 +87,10 @@
 
 ### ✅ 组件 · 三点随 mass 缩放
 
-- 能力：三点直径 compact 8 / normal 12 / hero 16，窗头高度 40 / 56 / 72，点间距同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量。
+- 能力：三点直径 compact 12 / normal 16 / hero 20，窗头高度 56 / 72 / 88，点间距与文件名 chip 同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量，vk-legacy 只改这一组值就能整体回退。
 - 契约断言：`vk-code.mass` · `vk-term.mass` · `vk-asm.mass` · `vk-tree.mass` · `vk-bytes.mass` · `vk-diff.mass`
 - 标本页：`_site/specimen/vk-code.html` + 契约宿主 `_site/specimens/vk-code.html`
-- 测试：`tests/batch-ef.test.mjs` · 「三点直径随 mass 缩放：compact 8 / normal 12 / hero 16」
+- 测试：`tests/batch-ef.test.mjs` · 「三点直径随 mass 缩放：compact 12 / normal 16 / hero 20」
 
 ### ✅ 页眉 · 工序进度 kicker
 
@@ -234,31 +234,31 @@
 
 ### ✅ 图标 · 语义白名单
 
-- 能力：vk-icon 只表达四类意思：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期报错并列出可用名；运行期 audit 再兜一层。
+- 能力：vk-icon 的语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看（level=warn）。
 - 契约断言：`vk-icon.name`
 - 标本页：`_site/specimen/vk-icon.html` + 契约宿主 `_site/specimens/vk-icon.html`
-- 测试：`tests/batch-gh.test.mjs` · 「vk-icon 白名单：名字在内通过，在外构建期报错并列出可用名」
+- 测试：`tests/batch-gh.test.mjs` · 「vk-icon 白名单外：构建期只提醒，不再拦构建」
 
-### ✅ 审计 · 一页一块深色
+### ✅ 审计 preset · 一页一块深色（默认关）
 
-- 能力：深色区域按底色亮度识别（vk-panel variant="dark"、深色终端 / 字节窗、.vk-bg-dark 都算）；一页超过 1 块时 audit 报错：一页最多一块深色区域，它应该是本页唯一的"重"。
+- 能力：项目层审美 preset（vk check --style / tools/style-preset.mjs 才跑）：深色区域按底色亮度识别（vk-panel variant="dark"、深色终端 / 字节窗、.vk-bg-dark 都算）；一页超过 1 块时报一条。默认不跑——「一页只砸一块重」是版面主张，不是库的要求。
 - 契约断言：`vk-panel.variant`
 - 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
-- 测试：`tests/batch-gh.test.mjs` · 「审计 · 深色块 ≤1：两块报错，一块通过」
+- 测试：`tests/batch-gh.test.mjs` · 「预设 · 深色块 ≤1：--style 下两块报一条，一块通过」
 
-### ✅ 审计 · 强调色 ≤1
+### ✅ 审计 preset · 强调色 ≤1（默认关）
 
-- 能力：统计一页里 tone="focus" 的答案级元素（vk-text / vk-panel），超过 1 处报错；vk-label / vk-icon 不算强调，err / warn 作为反例/警告不占名额。
+- 能力：项目层审美 preset（vk check --style 才跑）：统计一页里 tone="focus" 的答案级元素（vk-text / vk-panel），超过 1 处报一条；vk-label / vk-icon 不算强调，err / warn 作为反例/警告不占名额。默认不跑。
 - 契约断言：`vk-text.tone`
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
-- 测试：`tests/batch-gh.test.mjs` · 「审计 · 强调色 ≤1：两处 tone="focus" 报错，第二处 err / warn 不算」
+- 测试：`tests/batch-gh.test.mjs` · 「预设 · 强调色 ≤1：--style 下两处报一条，第二处 err / warn 不算」
 
-### ✅ 审计 · 内容在 120 边距内
+### ✅ 审计 preset · 内容在 120 边距内（默认关）
 
-- 能力：交付页（1920×1080、未缩放）的所有可见元素必须落在 [120, 120, 1800, 960] 内（容差 1px）；覆盖层（annotate / ring / edge / note）与出血层豁免。
+- 能力：项目层审美 preset（vk check --style 才跑）：交付页（1920×1080、未缩放）的可见元素必须落在 [120, 120, 1800, 960] 内（容差 1px）；覆盖层与出血层豁免。默认不跑——120 是这一集的交付边距，换个项目可以换。
 - 契约断言：`vk-page.align`
 - 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
-- 测试：`tests/batch-gh.test.mjs` · 「审计 · 内容必须在 120 边距内（覆盖层豁免）」
+- 测试：`tests/batch-gh.test.mjs` · 「预设 · 内容落在 120 边距内（--style，覆盖层豁免）」
 
 ## 怎么判红
 

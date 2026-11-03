@@ -42,9 +42,9 @@ test('measure 按字数算行宽，不随字号变', async () => {
   const b = await open('<vk-text id="a" size="title" measure="20">一行二十个字</vk-text>');
   const w2 = await maxW(b, '#a');
 
-  // 14.4：body 40、title 别名到 display 160（20 个字 = 20em）。
-  assert.equal(w1, '800px', `40px × 20 = 800px，实际 ${w1}`);
-  assert.equal(w2, '3200px', `160px × 20 = 3200px，实际 ${w2}`);
+  // 15.x：body 56、title 别名到 display 200（20 个字 = 20em）。
+  assert.equal(w1, '1120px', `56px × 20 = 1120px，实际 ${w1}`);
+  assert.equal(w2, '4000px', `200px × 20 = 4000px，实际 ${w2}`);
 });
 
 test('measure="none" 放开行宽', async () => {

@@ -169,8 +169,8 @@ test('vk-pin：w 只量气泡，接受 200 / 200px，vk check 不报硬宽', asy
     <vk-page><vk-stack gap="lg">
       <vk-box id="tgt" w="240" h="96" surface="soft"><vk-text size="body">目标</vk-text></vk-box>
     </vk-stack>
-    <vk-pin id="num" for="#tgt" side="right" w="200">数字宽</vk-pin>
-    <vk-pin id="px" for="#tgt" side="right" w="200px">带单位</vk-pin>
+    <vk-pin id="num" for="#tgt" side="right" w="200">数字</vk-pin>
+    <vk-pin id="px" for="#tgt" side="right" w="200px">单位</vk-pin>
     <vk-pin id="def" for="#tgt" side="right">默认宽</vk-pin>
     </vk-page>`);
   const r = await tab.evaluate(() => {
@@ -188,7 +188,9 @@ test('vk-pin：w 只量气泡，接受 200 / 200px，vk check 不报硬宽', asy
   });
   assert.equal(r.num, 200, `w="200" 应落到 .vk-pin-bd：${r.num}`);
   assert.equal(r.px, 200, `w="200px" 也应落到 .vk-pin-bd：${r.px}`);
-  assert.equal(r.def, 360, `不写 w 时仍是默认 360：${r.def}`);
+  // 不写 w：默认宽跟着字阶走（9em；40px 档 = 360，56px 档 = 504）。
+  const cap = await tab.evaluate(() => (window.vk.limits.fontBody || 56) * 9);
+  assert.equal(r.def, cap, `不写 w 时默认宽应是 ${cap}：${r.def}`);
   assert.ok(r.hostW > 1000, `pin 宿主本来就是整页宽，不能被当成 w 的载体：${r.hostW}`);
   assert.equal(r.hardWidth, 0, '覆盖层的 w 不该进硬宽检查');
   assert.doesNotMatch(logs.join('\n'), /w="200px" 不是/);
