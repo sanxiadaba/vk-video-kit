@@ -104,6 +104,60 @@ test('vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴
   );
 });
 
+test('vk-pair：fill 吃掉父容器剩余高度，内层高度与轴都贯穿；不写 fill 仍按内容高', async () => {
+  const tab = await open(`
+<div style="width:1200px;height:438px;display:flex;flex-direction:column">
+  <vk-pair id="filled" fill split="50" gap="48" axis="line" symbol="→">
+    <vk-text size="body">左</vk-text>
+    <vk-text size="body">右</vk-text>
+  </vk-pair>
+</div>
+<div style="width:1200px;height:438px;display:flex;flex-direction:column;margin-top:20px">
+  <vk-pair id="plain" split="50" gap="48" axis="line" symbol="→">
+    <vk-text size="body">左</vk-text>
+    <vk-text size="body">右</vk-text>
+  </vk-pair>
+</div>
+<div style="width:1200px;height:438px;margin-top:20px">
+  <vk-pair id="blockfill" fill split="50" gap="48" axis="line" symbol="→">
+    <vk-text size="body">左</vk-text>
+    <vk-text size="body">右</vk-text>
+  </vk-pair>
+</div>`);
+  const r = await tab.evaluate(() => {
+    const one = (id) => {
+      const host = document.getElementById(id);
+      const box = host.querySelector('.vk-pair');
+      const axis = host.querySelector('.vk-pair-axis');
+      const left = host.querySelector('.vk-pair-l');
+      const text = host.querySelector('vk-text');
+      return {
+        hostH: host.getBoundingClientRect().height,
+        boxH: box.getBoundingClientRect().height,
+        axisH: axis.getBoundingClientRect().height,
+        leftH: left.getBoundingClientRect().height,
+        textCenter: text.getBoundingClientRect().top + text.getBoundingClientRect().height / 2,
+        boxCenter: box.getBoundingClientRect().top + box.getBoundingClientRect().height / 2,
+      };
+    };
+    return { filled: one('filled'), plain: one('plain'), blockfill: one('blockfill') };
+  });
+  assert.ok(Math.abs(r.filled.boxH - 438) <= 1, `fill 时 .vk-pair 应撑满 438 宿主：${r.filled.boxH}`);
+  assert.ok(r.filled.axisH >= 430, `fill 时轴应贯穿整格（≥430）：${r.filled.axisH}`);
+  assert.ok(Math.abs(r.filled.leftH - 438) <= 1, `fill 时左块也应撑满 438：${r.filled.leftH}`);
+  assert.ok(
+    Math.abs(r.filled.textCenter - r.filled.boxCenter) <= 1,
+    `fill 后文字应在格内竖向居中：${r.filled.textCenter} vs ${r.filled.boxCenter}`
+  );
+  assert.ok(r.plain.boxH < 200, `不写 fill 时仍按内容高（今天的行为）：${r.plain.boxH}`);
+  assert.ok(Math.abs(r.plain.boxH - r.plain.axisH) <= 1, '不写 fill 时轴仍只跟着内容高');
+  assert.ok(
+    Math.abs(r.blockfill.boxH - 438) <= 1,
+    `fill 在普通 block 父级里也应撑满 438：${r.blockfill.boxH}`
+  );
+  assert.ok(r.blockfill.axisH >= 430, `普通 block 父级里轴也应贯穿：${r.blockfill.axisH}`);
+});
+
 test('vk-pair：symbol 的三种写法都出现，axis="none" 只剩空轴', async () => {
   const tab = await open(`
 <vk-page><div style="width:1200px">
@@ -174,6 +228,42 @@ test('vk-text fit="width"：780px 容器差 ≤2px，fit-max 封顶', async () =
   assert.equal(Math.round(r.capFs * 100) / 100, 40, `fit-max="40" 必须封顶，实际 ${r.capFs}`);
   assert.ok(r.capW <= r.fitBox + 1, '封顶后文本不应超过容器');
   assert.equal(r.plainFs, 56, '不写 fit 时字号行为不变');
+});
+
+test('vk-text fit="width"：scale(.5) 祖先下字号与 1:1 一致，视觉宽仍填满', async () => {
+  const tab = await open(`
+<vk-page>
+  <div style="width:780px"><vk-text id="one" mono fit="width" fit-max="200">printf("%s\\n", s);</vk-text></div>
+  <div style="width:780px;transform:scale(.5);transform-origin:0 0"><vk-text id="half" mono fit="width" fit-max="200">printf("%s\\n", s);</vk-text></div>
+  <div style="width:780px"><div style="transform:scale(.5);transform-origin:0 0"><vk-text id="nested" mono fit="width" fit-max="200">printf("%s\\n", s);</vk-text></div></div>
+</vk-page>`);
+  const r = await tab.evaluate(() => {
+    const textWidth = (el) => {
+      const range = document.createRange();
+      range.selectNodeContents(el);
+      return Math.max(...[...range.getClientRects()].filter((x) => x.width > 0.5).map((x) => x.width));
+    };
+    const one = (id) => {
+      const el = document.getElementById(id);
+      return {
+        fs: parseFloat(getComputedStyle(el).fontSize),
+        textW: textWidth(el),
+        boxW: el.getBoundingClientRect().width,
+      };
+    };
+    return { one: one('one'), half: one('half'), nested: one('nested') };
+  });
+  for (const id of ['half', 'nested']) {
+    assert.ok(
+      Math.abs(r[id].fs - r.one.fs) / r.one.fs <= 0.01,
+      `${id} 在 scale(.5) 祖先下的字号应与 1:1 一致：${r[id].fs} vs ${r.one.fs}`
+    );
+    assert.ok(
+      Math.abs(r[id].textW - r[id].boxW) <= 1,
+      `${id} 的视觉文字宽应等于视觉容器宽：${r[id].textW} vs ${r[id].boxW}`
+    );
+  }
+  assert.ok(Math.abs(r.one.textW - r.one.boxW) <= 2, `1:1 时文字也应填满：${r.one.textW} vs ${r.one.boxW}`);
 });
 
 test('vk-caption：左边界对齐目标块首字符（above / below）', async () => {

@@ -101,7 +101,10 @@ vk-stack[direction='row'] > [grow] { flex: 1 1 auto; min-width: 0; }
 /* fill 在竖排/分份容器里是"吃掉剩余高度"，不是"按内容高"。
    少了这两行，grid 会被内容撑出帧外——切片里实测到的 56px 溢出就是这个。 */
 vk-stack[fill],
-vk-grid[fill] { flex: 1 1 auto; min-height: 0; }
+vk-grid[fill],
+vk-pair[fill] { flex: 1 1 auto; min-height: 0; }
+/* fill 也要认普通 block 父级给的高度（固定高的 div 不是 flex，align-self 不生效）。 */
+vk-pair[fill] { height: 100%; }
 
 /* v12 硬失败：帧内竖排子项默认不可压扁。装不下就溢出到画布外，
    由 vk check 拦住；要压必须显式写 grow / fill。 */
@@ -118,7 +121,9 @@ vk-stack > :not([grow]):not([fill]) { flex-shrink: 0; }
      · 沟槽总宽 = 2×gap，轴在沟槽正中（所以轴 x = 左块宽 + gap）；
      · 轴是 1–4px 直线，贯穿容器高/宽；符号在轴中点，用纸色垫底把线断开。
    横向用 grid（列宽由百分比算得，高度随内容）；纵向用 flex + 运行期按
-   容器高度分配 —— 高度未定义时退到内容高，不伪造一个比例。 */
+   容器高度分配 —— 高度未定义时退到内容高，不伪造一个比例。
+   pair 是布局原语：宿主有确定高度（grow / fill / grid 格）时，内层 .vk-pair
+   跟着 100%，轴也就贯穿那一格；高度未定义时 100% 会退成 auto，仍是内容高。 */
 vk-pair {
   display: block;
   box-sizing: border-box;
@@ -133,6 +138,7 @@ vk-pair {
 
   position: relative;
   box-sizing: border-box;
+  height: 100%;
   display: grid;
   grid-template-columns:
     calc((100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split))
@@ -145,6 +151,11 @@ vk-pair {
 .vk-pair-l,
 .vk-pair-r {
   min-width: 0;
+  /* 填满一格时（fill / grow / grid 拉伸），内容在竖向居中：
+     否则 pair 一高，第一行就被顶到格子上沿，轴线全长落在文字下方。 */
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 /* 竖向：两块上下并置，轴横穿。split 仍按上面的语义分配高度；

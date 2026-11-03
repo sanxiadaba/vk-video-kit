@@ -1,4 +1,5 @@
 import { VK, esc, numAttr, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { cumulativeScaleX } from './geometry.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
 import { isSemanticIcon } from '../shared/icons.mjs';
@@ -279,18 +280,24 @@ export class VkText extends VkElement {
    * 只适用于单行等宽文本：CSS 在 vk-text[fit='width'] 上锁了 nowrap，
    * 所以 Range 宽度就是整行宽度。缩放两次：第一次按比例，第二次吸收
    * 字体 hinting / 小数像素的误差；目标与结果差 ≤ 2px。
+   *
+   * Range / getBoundingClientRect 量到的是祖先 transform 之后的视觉宽，
+   * 而 clientWidth 是布局宽。连排页把每帧缩到 0.5 时，直接拿视觉宽除
+   * 布局宽会把字号算大一倍；这里把量到的行宽折回布局空间再比。
    */
   _fitNow() {
     if (!this.isConnected) return;
     const target = this.clientWidth;
     if (!target) return;
+    const scale = cumulativeScaleX(this) || 1;
     const min = numAttr(this, 'fit-min', { min: 1, max: 400, fallback: 12 });
     const max = numAttr(this, 'fit-max', { min: 1, max: 400, fallback: 240 });
     const measure = () => {
       const range = document.createRange();
       range.selectNodeContents(this);
       const rects = [...range.getClientRects()].filter((r) => r.width > 0.5 && r.height > 0.5);
-      return rects.length ? Math.max(...rects.map((r) => r.width)) : 0;
+      const visual = rects.length ? Math.max(...rects.map((r) => r.width)) : 0;
+      return visual / scale;
     };
     const current = parseFloat(getComputedStyle(this).fontSize) || 0;
     const line = measure();
