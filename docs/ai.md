@@ -14,14 +14,14 @@
 ```
 
 - 从任意一个标签开始，不需要先搭 `vk-page`。
-- 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 52→1040），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
+- 块级组件默认填满父容器；`vk-text` 例外，默认按字号取行宽（body 25 字 → 1000px），要铺满写 `measure="none"`。要分栏用 `vk-grid` + 子项 `span`，要撑满用 `fill`。像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，写别处会在构建期报错。行内件（`icon` / `tag` / `mark` / `keys`）按内容宽。
 - **只有一种材质：白纸。** 没有深色主题、深色代码窗、反色卡片；层次靠纸的明度（`sf-0..4`）与 `vk-panel` 的四档表面 / 语义淡底，不靠第二种材质。
 - 没有播放器、时间轴、逐行淡入；静止帧就是成品。
 
 ## 2 · 字号与颜色
 
-1. 字阶七档：`label 36` · `data 40` · `body 48` · `subhead 96` · `title 144` · `hero 224` · `mega 320`。`hero`/`mega` 是「一个数字/一个词当家」的档，一帧最多一个，不要拿来当标题。旧名（display-2xl / display-xl / display / heading / meta）是别名，构建期会提示改名。
-2. 要读懂的内容用 48；元数据、标签、密集 ASCII 数据用 36–40（`data-meta` 标记），任何可读文字不低于 36。
+1. 字阶四档：`caption 28` · `body 40` · `headline 96` · `display 160`。`display` 一页最多一次，只给「本页唯一的答案」；`headline` 是标题；`body` 是正文与数据；`caption` 是标签、单位、脚注。旧名（`label` / `data` / `subhead` / `title`）别名到新档，`hero` 224 / `mega` 320 是「一个数字 / 一个词当家」的补充档，一帧最多一个。
+2. 要读懂的内容用 40；元数据、标签、密集 ASCII 数据用 28（`data-meta` 标记），任何可读文字不低于 28。
 3. 钴蓝只有一个含义：**正在讲这里**。它不做语法色——关键字与数字都是墨色 600，字符串是绿的。
 4. 语义色（对 / 错 / 注意）只出现在色条、底色、图标上，不写正文。
 5. 注意力只有一套词：`act` × `strength`。
@@ -150,7 +150,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>`
 - **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标。
-  - 属性：`variant` · `tone` · `ink` · `icon`
+  - 属性：`variant` · `tone` · `ink` · `index` · `total` · `section` · `icon`
   - 例：`<vk-label variant="kicker">第 3 步 · 汇编</vk-label>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
@@ -301,12 +301,20 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ## 11 · 表面与层次（14.1 / 批次 A）
 
 - **`vk-panel`**：一块**内容分区**。`<vk-panel tone="info" variant="inset" title="输出" pad="md" radius="lg" border="hair">…</vk-panel>`。
-  - 四档表面：`plain` 白纸 / `raised` 抬起（近白 + 投影）/ `inset` 凹下（灰）/ `dark` 深色（墨底白字）。
-  - `tone` 只染面：`plain`、`raised` 上落 **wash**（极淡，分区）；`inset` 上落 **tint**（稍深，强调块）；`dark` 上落**深色 wash / tint**。
+  - 四档表面：`plain` 是默认的**无框无底**（透明，只是一块版面区域）/ `raised` 抬起（近白 + 投影）/ `inset` 凹下（灰）/ `dark` 深色（墨底白字）。
+  - `tone` 只染面：`plain`、`raised` 上落 **wash**（极淡，分区）；`inset` 上落 **tint**（稍深，强调块）；`dark` 上落**深色 wash / tint**。描边只在显式 `border="hair|strong"` 时出现。
   - `title` 生成标题带，里面是一个 `vk-label`；标题带的底比内容再高一档。**它不排内容**——内容怎么排由你决定（`vk-stack` / `vk-grid`）。
   - 与 `vk-box` 的分工：`box` 是「没有标题的面」，`panel` 是「有标题、带语义的分区」。
 - **语义淡底**：`--vk-wash-*` / `--vk-tint-*`（浅色）与 `--vk-dark-wash-*` / `--vk-dark-tint-*`（深色），五色 × 两档。两档都由语义色与白/墨混合，色相不变；浅色版上的正文墨 ≥ 13:1，深色版上的白字 ≥ 14:1。
 - **能力矩阵**：`docs/capabilities.md` 记「能力」而不是标签；每条能力必须有契约断言 / 标本页 / 测试，缺一件 `npm test` 就红（`node tools/capabilities.mjs`）。
 
-> `vk-grid tracks` 仍是真轨道：`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，px 会在构建期报错。等分仍用 `cols="1..6"`，两条路互斥。
+> `vk-grid tracks` 仍是真轨道：`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，px 会在构建期报错。等分用 `cols="1..12"`（12 是默认坐标系，沟槽 `--vk-grid-gutter: 32px`），两条路互斥。
+
+## 12 · 版式与默认值（14.4 / 批次 E + F）
+
+- **四档字号**：`caption 28` · `body 40` · `headline 96` · `display 160`。旧名 `label` / `data` / `subhead` / `title` 是别名；`hero` 224 / `mega` 320 是补充档。
+- **网格与版心**：`--vk-grid-cols: 12`、`--vk-grid-gutter: 32px`、`--vk-margin: 120px`；`.vk-frame` 是最宽 1680 的版心列，`.vk-safe` 是全宽容器的 120 边距。
+- **窗头**：`vk-term` / `vk-code` / `vk-asm` / `vk-tree` / `vk-bytes` / `vk-diff` 默认有三点 + 文件名/来源；`chrome="none"` 仍可用但构建期会提醒放到有上下文的容器里。三点随 `mass` 变 8 / 12 / 16px。
+- **页眉**：`<vk-label variant="kicker" index="3" total="5" section="汇编">` → `工序 3/5 · 汇编`（不是页号）；左侧 4px 焦点色条。
+- **兼容开关**：`<body class="vk-legacy">` 回到 14.3 的字号与 panel 默认。
 

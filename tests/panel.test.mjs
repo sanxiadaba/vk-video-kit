@@ -57,14 +57,17 @@ const TOKEN_OF_BG = {
   dark: PANEL_BASE_TOKEN.dark,
 };
 
-/** 规范：tone 把底染成 wash / tint / 深色 wash；标题带抬一档。 */
+/**
+ * 规范：tone 把底染成 wash / tint / 深色 wash；标题带抬一档。
+ * plain 的 neutral 是 14.4 的新默认：没有底色（transparent），null 表示"必须透明"。
+ */
 function expectedBg(variant, tone) {
-  if (tone === 'neutral') return TOKEN_OF_BG[variant];
+  if (tone === 'neutral') return variant === 'plain' ? null : TOKEN_OF_BG[variant];
   if (variant === 'dark') return DARK_WASH_TOKENS[tone];
   return variant === 'inset' ? TINT_TOKENS[tone] : WASH_TOKENS[tone];
 }
 function expectedHd(variant, tone) {
-  if (tone === 'neutral') return PANEL_HEADER_BASE_TOKEN[variant];
+  if (tone === 'neutral') return variant === 'plain' ? null : PANEL_HEADER_BASE_TOKEN[variant];
   if (variant === 'dark') return DARK_TINT_TOKENS[tone];
   return TINT_TOKENS[tone];
 }
@@ -88,9 +91,11 @@ for (const [variant, name] of Object.entries(VARIANT_TESTS)) {
   test(name, async () => {
     const tab = await open(matrixBody(variant));
     for (const tone of TONES) {
-      const want = rgbCss(tokens[expectedBg(variant, tone)]);
+      const bgToken = expectedBg(variant, tone);
+      const want = bgToken ? rgbCss(tokens[bgToken]) : 'rgba(0, 0, 0, 0)';
       assert.equal(await bg(tab, `#p-${variant}-${tone}`), want, `${variant}/${tone} 的块底色应为 ${want}`);
-      const wantHd = rgbCss(tokens[expectedHd(variant, tone)]);
+      const hdToken = expectedHd(variant, tone);
+      const wantHd = hdToken ? rgbCss(tokens[hdToken]) : 'rgba(0, 0, 0, 0)';
       assert.equal(
         await bg(tab, `#p-${variant}-${tone} .vk-panel-hd`),
         wantHd,
@@ -131,8 +136,9 @@ test('vk-panel：标题带用 vk-label，title 变了就跟着变', async () => 
 });
 
 test('vk-panel：底不透明，能放进 vk-stack / vk-grid', async () => {
+  // plain 只有在显式 tone 时才有底（默认是透明的布局区域）。
   const tab = await open(
-    '<vk-grid cols="2" gap="sm"><vk-panel id="a" variant="plain"><vk-text size="body">a</vk-text></vk-panel>' +
+    '<vk-grid cols="2" gap="sm"><vk-panel id="a" variant="plain" tone="info"><vk-text size="body">a</vk-text></vk-panel>' +
       '<vk-panel id="b" variant="dark" tone="ok"><vk-text size="body">b</vk-text></vk-panel></vk-grid>'
   );
   for (const id of ['#a', '#b']) {
@@ -162,7 +168,7 @@ test('vk-panel：内距 / 圆角 / 描边按档位落到样式', async () => {
       const bd = getComputedStyle(el.querySelector('.vk-panel-bd'));
       return { pad: bd.paddingTop, radius: cs.borderTopLeftRadius, border: cs.borderTopWidth };
     }, sel);
-  assert.deepEqual(await read('#d'), { pad: '32px', radius: '12px', border: '2px' }, '默认：md / lg / hair');
+  assert.deepEqual(await read('#d'), { pad: '32px', radius: '12px', border: '0px' }, '默认：md / lg / 无框');
   assert.deepEqual(await read('#x'), { pad: '64px', radius: '0px', border: '4px' }, 'xl / none / strong');
   assert.equal((await read('#n')).border, '0px', 'border=none 必须真的没有边');
 });

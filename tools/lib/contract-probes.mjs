@@ -75,6 +75,13 @@ export const PROBES = {
       why: '轨道直接写在 grid-template-columns 上。',
     },
   },
+  'vk-label': {
+    total: {
+      values: ['5'],
+      effect: { on: '.vk-label-t', kind: 'text' },
+      why: 'total 单独写没有分子；registry 的 when 会先放 index="3"，于是文本变成「工序 3/5」。',
+    },
+  },
   'vk-stat': {
     // thousands 是默认态；只断两个非默认写法。
     format: {
@@ -272,6 +279,10 @@ export const PROBES = {
     'operands-label': { values: ['ARGS'], effect: { on: '.vk-asm-o', kind: 'text' }, why: '列头文字由属性覆盖。' },
   },
   'vk-text': {
+    size: {
+      values: ['display', 'headline', 'caption', 'label', 'subhead', 'title', 'hero', 'mega'],
+      why: 'data 是 body 的字号（40）+ 等宽字体，字号本来就不变；等宽由 tests/batch-ef.test.mjs 的旧名用例断言。',
+    },
     measure: {
       values: ['16', 'none'],
       effect: { on: 'vk-text', kind: 'style', prop: 'max-width' },
@@ -332,6 +343,7 @@ export const EFFECT_OVERRIDES = {
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
+  'vk-text.size': 'display 160 在 888 高的标本台里必然换行并超出安全区；四档字号与行高由 tests/batch-ef.test.mjs 用短文本单独守。',
   'vk-compare.mode': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
   'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',

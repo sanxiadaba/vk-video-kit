@@ -103,17 +103,17 @@ vk-box[x], vk-box[y] { position: absolute; }
    分工：vk-box 是「没有标题的面」，vk-panel 是「有标题、带语义的分区」。
    它只描述自己这一块——不认识兄弟、不排别人，排布仍然归 vk-stack / vk-grid。
 
-   底色是四档表面：plain 白纸 / raised 抬起 / inset 凹下 / dark 深色；
-   tone 把其中任意一档染成语义淡底：
-     plain·raised + tone → wash（极淡，分区）
-     inset       + tone → tint（稍深，强调块）
-     dark        + tone → 深色 wash / 标题带深色 tint
+   默认是 plain：**没有边框、没有底色**，只是一块版面上的布局区域。
+   底色与描边只在显式写 tone / border（或选了 raised / inset / dark）时出现：
+     tone             → 语义淡底（plain·raised 用 wash，inset 用 tint，dark 用深色 wash）
+     border="hair"    → 一条发丝描边
    底永远是实色（alpha=1），深色页上不会「透」出意外颜色。 */
 vk-panel {
-  --vk-panel-bg: var(--vk-sf-0);
-  --vk-panel-hd-bg: var(--vk-sf-1);
-  --vk-panel-line: var(--vk-line-1);
-  --vk-panel-bw: var(--vk-line-w);
+  /* plain 的默认：透明、无描边。tone / border / variant 谁写了谁把它填回来。 */
+  --vk-panel-bg: transparent;
+  --vk-panel-hd-bg: transparent;
+  --vk-panel-line: transparent;
+  --vk-panel-bw: 0px;
   --vk-panel-ink: var(--vk-ink-1);
   --vk-panel-pad: var(--vk-s4);
   --vk-panel-r: var(--vk-r-3);
@@ -162,13 +162,15 @@ vk-panel[radius='xl'] { --vk-panel-r: var(--vk-r-4); }
 vk-panel[radius='pill'] { --vk-panel-r: var(--vk-r-pill); }
 vk-panel[radius='none'] { --vk-panel-r: 0px; }
 
-/* 描边只管粗细；没有描边时标题带的分隔线也一起消失。 */
-vk-panel[border='hair'] { --vk-panel-bw: var(--vk-line-w); }
-vk-panel[border='strong'] { --vk-panel-bw: var(--vk-line-w-strong); }
+/* 描边只管粗细；没有描边时标题带的分隔线也一起消失。
+   默认就是没有描边：要框才写 border="hair" / "strong"。 */
+vk-panel[border='hair'] { --vk-panel-bw: var(--vk-line-w); --vk-panel-line: var(--vk-line-1); }
+vk-panel[border='strong'] { --vk-panel-bw: var(--vk-line-w-strong); --vk-panel-line: var(--vk-line-3); }
 vk-panel[border='none'] { --vk-panel-bw: 0px; --vk-panel-line: transparent; }
 
-/* 四种表面。白纸上的三档靠明度分开：白 / 近白 / 灰。 */
-vk-panel[variant='plain'] { --vk-panel-bg: var(--vk-sf-0); --vk-panel-hd-bg: var(--vk-sf-1); }
+/* 四种表面。plain 是默认的"没有面"：透明、无框；其余三档各自有底，
+   靠明度分开：近白 / 灰 / 墨。 */
+vk-panel[variant='plain'] { --vk-panel-bg: transparent; --vk-panel-hd-bg: transparent; }
 vk-panel[variant='raised'] {
   --vk-panel-bg: var(--vk-sf-1);
   --vk-panel-hd-bg: var(--vk-sf-2);
@@ -207,6 +209,49 @@ vk-panel[variant='dark'][tone='ok'] { --vk-panel-bg: var(--vk-dark-wash-ok); --v
 vk-panel[variant='dark'][tone='err'] { --vk-panel-bg: var(--vk-dark-wash-err); --vk-panel-hd-bg: var(--vk-dark-tint-err); --vk-panel-line: var(--vk-dark-tint-err); }
 vk-panel[variant='dark'][tone='warn'] { --vk-panel-bg: var(--vk-dark-wash-warn); --vk-panel-hd-bg: var(--vk-dark-tint-warn); --vk-panel-line: var(--vk-dark-tint-warn); }
 
+/* ------------------------------------------------------- 兼容开关 legacy
+   14.4 改了默认值（四档字号、panel 默认无框无底）。旧页要逐像素留档时，
+   在 <body> 或 <vk-page> 上加 class="vk-legacy"，本页就回到旧默认；
+   显式写了的属性（size / tone / border / variant）仍然赢。 */
+.vk-legacy {
+  --vk-t-display: 144px;
+  --vk-t-headline: 96px;
+  --vk-t-body: 48px;
+  --vk-t-caption: 36px;
+  /* 别名在 :root 上已经解析成 14.4 的值；只改主名不会让别名跟着回来。
+     legacy 必须把旧名也逐条写一遍。 */
+  --vk-t-label: 36px;
+  --vk-t-data: 40px; /* 旧 data 是 40，不跟 body 的 48 走 */
+  --vk-t-subhead: 96px;
+  --vk-t-title: 144px;
+  --vk-t-meta: 36px;
+  --vk-t-heading: 96px;
+  --vk-lh-label: 1.33;
+  --vk-lh-caption: 1.33;
+  --vk-lh-headline: 1.3; /* 旧 subhead 是 1.3（96 → 124.8），不是新的 1.25 */
+  --vk-lh-display: 1.1; /* 旧 title 是 1.1（144 → 158.4） */
+  --vk-lh-subhead: 1.3;
+  --vk-lh-tight: 1.1;
+  --vk-measure-subhead: 900px;
+  --vk-measure-title: 1560px;
+}
+/* 旧的 kicker 是纯文字；色条与大写是 14.4 的新形状，legacy 页不该多出来。 */
+.vk-legacy vk-label[variant='kicker'] { text-transform: none; }
+.vk-legacy vk-label[variant='kicker'] .vk-label-rule { display: none; }
+/* 旧的三点固定 18px、旧网格默认 24；legacy 页恢复。 */
+.vk-legacy .vk-dots i { width: 18px; height: 18px; }
+.vk-legacy vk-grid { gap: var(--vk-s3); }
+.vk-legacy vk-panel:not([variant]):not([border]),
+.vk-legacy vk-panel[variant='plain']:not([border]) {
+  --vk-panel-bw: var(--vk-line-w);
+  --vk-panel-line: var(--vk-line-1);
+}
+.vk-legacy vk-panel:not([variant]):not([tone]),
+.vk-legacy vk-panel[variant='plain']:not([tone]) {
+  --vk-panel-bg: var(--vk-sf-0);
+  --vk-panel-hd-bg: var(--vk-sf-1);
+}
+
 /* -------------------------------------------------------------- vk-text */
 
 vk-text {
@@ -220,15 +265,19 @@ vk-text {
   overflow-wrap: anywhere;
 }
 
-/* 七个档位，一条梯子：字号、行高、字重、行宽都从这里取。
-   以前这里同时存在 label（渲染成 48）和 meta（36）两套名字，同名不同义——13.0 只留这一套。 */
-vk-text[size='mega']    { font-size: var(--vk-t-mega);    line-height: 1.02; letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
-vk-text[size='hero']    { font-size: var(--vk-t-hero);    line-height: 1.04; letter-spacing: -0.035em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
-vk-text[size='title']   { font-size: var(--vk-t-title);   line-height: var(--vk-lh-tight); letter-spacing: var(--vk-ls-tight); font-weight: var(--vk-w-bold); max-width: var(--vk-measure-title); }
-vk-text[size='subhead'] { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-subhead); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-subhead); }
-vk-text[size='body']    { font-size: var(--vk-t-body);    max-width: var(--vk-measure-body); }
-vk-text[size='data']    { font-size: var(--vk-t-data);    line-height: var(--vk-lh-data); font-family: var(--vk-font-mono); }
-vk-text[size='label']   { font-size: var(--vk-t-label);   line-height: var(--vk-lh-label); max-width: var(--vk-measure-label); }
+/* 四档主对比：display / headline / body / caption。
+   旧名（title / subhead / label / data）与四档共用同一条规则——名字只是别名，
+   外观不允许分叉；hero / mega 是补充档，只给"一个数字 / 一个词当家"。 */
+vk-text[size='display'],
+vk-text[size='title']    { font-size: var(--vk-t-display); line-height: var(--vk-lh-display); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-display); }
+vk-text[size='headline'],
+vk-text[size='subhead']  { font-size: var(--vk-t-headline); line-height: var(--vk-lh-headline); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-headline); }
+vk-text[size='body']     { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); max-width: var(--vk-measure-body); }
+vk-text[size='caption'],
+vk-text[size='label']    { font-size: var(--vk-t-caption); line-height: var(--vk-lh-caption); max-width: var(--vk-measure-caption); }
+vk-text[size='data']     { font-size: var(--vk-t-data); line-height: var(--vk-lh-data); font-family: var(--vk-font-mono); }
+vk-text[size='hero']     { font-size: var(--vk-t-hero); line-height: var(--vk-lh-hero); letter-spacing: -0.035em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
+vk-text[size='mega']     { font-size: var(--vk-t-mega); line-height: var(--vk-lh-mega); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
 
 vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
@@ -263,13 +312,16 @@ vk-text[tone][data-strength='ghost'] {
 vk-text[align='center'] { text-align: center; margin-inline: auto; }
 vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
-/* 散文默认按字号取行宽；作者可以用 measure 覆盖。 */
+/* 散文默认按字号取行宽；作者可以用 measure 覆盖。
+   新名与旧名都给：measure 写的是"按哪一档的行宽"，不是第二个字号。 */
 vk-text { max-width: var(--vk-measure-body); }
-/* 标题也有默认行宽：长标题不该铺满 1680，measure=none 才会填满。 */
-vk-text[measure='label'] { max-width: var(--vk-measure-label); }
+vk-text[measure='caption'],
+vk-text[measure='label'] { max-width: var(--vk-measure-caption); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
-vk-text[measure='subhead'] { max-width: var(--vk-measure-subhead); }
-vk-text[measure='title'] { max-width: var(--vk-measure-title); }
+vk-text[measure='headline'],
+vk-text[measure='subhead'] { max-width: var(--vk-measure-headline); }
+vk-text[measure='display'],
+vk-text[measure='title'] { max-width: var(--vk-measure-display); }
 vk-text[measure='none'] { max-width: none; }
 
 /* ------------------------------------------------------------- vk-label */
@@ -330,8 +382,20 @@ vk-label[tone='err'] { --vk-label-tone: var(--vk-err-ink); --vk-label-wash: var(
 vk-label[tone='warn'] { --vk-label-tone: var(--vk-warn-ink); --vk-label-wash: var(--vk-warn-weak); }
 vk-label[tone] { color: var(--vk-label-tone); }
 
-/* kicker：纯文字。字距再松一点，读起来像「小标题」而不是「小字」。 */
-vk-label[variant='kicker'] { letter-spacing: 0.12em; }
+/* kicker：页眉。左边一条 4px 焦点色条，字距再松一点，读起来像「工序」而不是「小字」。
+   色条是 kicker 的形状，不是焦点标记——audit 的 focusRegions 把 vk-label 排除在外。 */
+vk-label[variant='kicker'] {
+  letter-spacing: 0.12em;
+  text-transform: uppercase; /* 中文不受影响；拉丁字母的工序名读起来更像页眉 */
+}
+vk-label[variant='kicker'] .vk-label-rule {
+  flex: 0 0 auto;
+  align-self: stretch;
+  width: 4px;
+  min-height: 1em;
+  border-radius: 1px;
+  background: var(--vk-focus);
+}
 
 /* chip：浅底、圆角，像一枚标签。底来自同一个语义色的 weak 档。 */
 vk-label[variant='chip'] .vk-label {

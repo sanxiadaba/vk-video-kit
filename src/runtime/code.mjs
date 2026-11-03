@@ -115,7 +115,8 @@ export class VkCode extends VkElement {
     const label = langLabel(lang);
     // 没有显式 file 时从 src 取文件名：窗头有 chip，读者才知道这段代码从哪来。
     const srcPath = this.getAttribute('src') || '';
-    const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '');
+    // 窗头必须有"来源"：file → src 的文件名 → "源码"。默认窗口不能只剩三个点。
+    const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '') || '源码';
     const chrome = this.getAttribute('chrome') || 'min';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
     const showNums = this.getAttribute('numbers') !== 'none';
@@ -304,6 +305,9 @@ export class VkTerm extends VkElement {
     const revealRaw = this.getAttribute('reveal');
     const reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';
     const title = this.getAttribute('title') || '';
+    // 窗头要有"来源"：title → src 的文件名 → 终端。默认窗口不能只剩三个点。
+    const srcName = (this.getAttribute('src') || '').split(/[\\/]/).pop() || '';
+    const headLabel = title || srcName || '终端';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
     // 声明写在宿主上，契约与 director 都读得见；静态像素不变。
@@ -383,7 +387,7 @@ export class VkTerm extends VkElement {
       chrome,
       cls: 'vk-term',
       attrs: ` data-mass="${mass}"`,
-      head: title && chrome !== 'none' ? `<span class="vk-file" data-meta>${esc(title)}</span>` : '',
+      head: chrome !== 'none' ? `<span class="vk-file" data-meta>${esc(headLabel)}</span>` : '',
       inner: `${showTitle ? `<div class="vk-term-title" data-meta>${esc(title)}</div>` : ''}<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });
 

@@ -74,7 +74,8 @@ export class VkAsm extends VkElement {
     const showBytes = this.hasAttribute('bytes') && hasBytes;
     const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
     const mass = this.getAttribute('mass') || 'normal';
-    const title = this.getAttribute('title') || d.file || '';
+    // 窗头是"这段东西从哪来"：没有 title 时退到构建期记下的文件名，再退到"汇编"。
+    const title = this.getAttribute('title') || d.file || '汇编';
     const hl = lineSet(this.getAttribute('current') || this.getAttribute('line') || '');
     const focus = lineSet(this.getAttribute('focus'));
     const revealRaw = this.getAttribute('reveal');

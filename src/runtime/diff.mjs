@@ -74,6 +74,8 @@ export class VkDiff extends VkElement {
     const nosum = this.getAttribute('summary') === 'none';
     const mode = (this.getAttribute('variant') || 'unified') === 'split' ? 'split' : 'unified';
     const lang = (this.getAttribute('lang') || this._hlLang || 'text').toLowerCase();
+    // 窗头的三点与高度跟体量走：mass 要落在窗根上，split 时落在 .vk-diff-split 上。
+    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
     const items = parseDiffItems(source);
     const rows = buildRows(items);
@@ -182,11 +184,11 @@ export class VkDiff extends VkElement {
         win({
           chrome,
           cls: 'vk-diff-pane',
-          attrs: ` data-label="${esc(label)}" role="group" aria-label="${esc(label)}"`,
+          attrs: ` data-mass="${esc(mass)}" data-label="${esc(label)}" role="group" aria-label="${esc(label)}"`,
           head: `${fileHead(file, '', this.getAttribute('lines') || '')}<span class="vk-dsplit-tag">${label}</span>`,
           inner: `<div class="vk-dbd">${body.join('')}</div>`,
         });
-      this.innerHTML = `<div class="vk-diff-split" data-chrome="${esc(chrome)}" role="group" aria-label="代码对比">${
+      this.innerHTML = `<div class="vk-diff-split" data-chrome="${esc(chrome)}" data-mass="${esc(mass)}" role="group" aria-label="代码对比">${
         nosum ? '' : `<div class="vk-dmeta">${changes} 行改动</div>`
       }<div class="vk-dsplit">${pane('改前', left)}${pane('改后', right)}</div></div>`;
       this.style.width = Number.isFinite(w) ? w + 'px' : '1680px';
@@ -194,6 +196,7 @@ export class VkDiff extends VkElement {
       this.innerHTML = win({
         chrome,
         cls: 'vk-diff',
+        attrs: ` data-mass="${esc(mass)}"`,
         head: fileHead(file, 'Diff', this.getAttribute('lines') || ''),
         inner: `${nosum ? '' : `<div class="vk-dmeta">${changes} 行改动</div>`}<div class="vk-dbd">${unified.join('')}</div>`,
       });

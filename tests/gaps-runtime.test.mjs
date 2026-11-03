@@ -180,12 +180,13 @@ test('① vk-cells 的 <li act="focus"> 真的渲染出焦点格，而不是只�
 });
 
 test('② audit 的孤行判定先除回祖先 scale：scale(.5) 不误报，未缩放也不误报', async () => {
-  // 16 个汉字、每行 6 字：最后一行 4 字。按"缩放过 ÷ 未缩放字号"会算成 2 字 → 孤行。
+  // 250px ÷ 40px 正文 = 每行 6 字；16 字 → 6/6/4，最后一行 4 字。
+  // 按"缩放过 ÷ 未缩放字号"会算成 2 字 → 假孤行。
   const text = '一二三四五六七八九十一二三四五六';
-  // 14 个汉字：最后一行 2 字，是真的孤行；修完也要继续报。
+  // 14 个汉字：6/6/2，最后一行 2 字，是真的孤行；修完也要继续报。
   const orphanText = '一二三四五六七八九十一二三四';
   const page = (scaled, t = text) => {
-    const body = `<vk-page><vk-text style="width:300px;text-wrap:wrap" size="body">${t}</vk-text></vk-page>`;
+    const body = `<vk-page><vk-text style="width:250px;text-wrap:wrap" size="body">${t}</vk-text></vk-page>`;
     return scaled
       ? `<div style="transform:scale(.5);transform-origin:0 0;width:3840px">${body}</div>`
       : body;

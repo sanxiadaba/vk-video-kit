@@ -356,14 +356,14 @@ export function applyMeasure(el) {
     return;
   }
   // 旧写法（label / body / subhead / title / hero）保留：它们的意思是「按那一档的行宽」，
-  // 直接引用 token，行为和 12.x 一致。
-  if (['label', 'body', 'subhead', 'title', 'hero'].includes(v)) {
+  // 直接引用 token，行为和 12.x 一致。新名（caption / headline / display）是同一件事。
+  if (['caption', 'label', 'body', 'headline', 'subhead', 'display', 'title', 'hero'].includes(v)) {
     el.style.maxWidth = `var(--vk-measure-${v})`;
     return;
   }
   const n = Number(v);
   if (Number.isInteger(n) && n >= 8 && n <= 60) el.style.maxWidth = n + 'em';
-  else el._warnOnce?.('measure', `的 measure="${v}" 只能是 none、8–60 的整数（一行几个字）或旧档名（label/body/subhead/title/hero）`);
+  else el._warnOnce?.('measure', `的 measure="${v}" 只能是 none、8–60 的整数（一行几个字）或档名（caption/body/headline/display，旧名照旧可用）`);
 }
 
 /* --------------------------------------------------------------- 生命周期 */

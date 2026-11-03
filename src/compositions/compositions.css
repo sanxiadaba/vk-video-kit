@@ -19,7 +19,8 @@ vk-page {
   position: relative;
   width: var(--pw, 1920px);
   height: var(--ph, 1080px);
-  padding: 0 var(--vk-safe-x);
+  /* 版心边距：与 --vk-grid-gutter 一起构成 E2 的版面坐标系。 */
+  padding: 0 var(--vk-margin);
   overflow: hidden;
   background: var(--vk-surface-1);
   color: var(--vk-ink-1);

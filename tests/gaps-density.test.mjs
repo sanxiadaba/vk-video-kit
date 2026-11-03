@@ -6,7 +6,7 @@ import { startServer } from '../cli/serve.mjs';
 /**
  * 附录页被 20 个组件挤出来的最后四个密度缺口：
  *
- *   1. vk-file-t 的行盒比 36px 字的墨迹矮 —— 任何 chrome="min" 的窗都假报竖裁；
+ *   1. vk-file-t 的行盒比 caption 字的墨迹矮 —— 任何 chrome="min" 的窗都假报竖裁；
  *   2. vk-list 没有密度档，作者只能页内把 li 压到 1.2；
  *   3. vk-timeline 的 compact 仍差 0.1px，三条约 494 进不了 470；
  *   4. vk-bars 的值列下限 176，窄格先裁数字，条压到 0 也不够。
@@ -46,7 +46,7 @@ after(async () => {
 
 /* --------------------------------------------------------------- vk-window */
 
-test('vk-window：36px 标题行盒按墨迹撑开，不再报纵向裁切；20px 容器仍报', async () => {
+test('vk-window：caption 标题行盒按墨迹撑开，不再报纵向裁切；20px 容器仍报', async () => {
   const { tab } = await open(`
     <vk-page>
       <vk-window id="ok" title="pair.diff"><vk-text size="body">窗口里的一行正文，用来避免空帧误报。</vk-text></vk-window>
@@ -61,7 +61,8 @@ test('vk-window：36px 标题行盒按墨迹撑开，不再报纵向裁切；20p
     };
   });
 
-  assert.equal(ok.lineHeight, '43.2px', `36px 标题的行高要够 1.2：${ok.lineHeight}`);
+  // caption 28 × 1.2 = 33.6：行盒仍要按墨迹撑开。
+  assert.equal(ok.lineHeight, '33.6px', `28px 标题的行高要够 1.2：${ok.lineHeight}`);
   assert.ok(ok.scroll <= ok.client + 3, `标题行盒不该被墨迹撑破：${ok.scroll} > ${ok.client}`);
   assert.deepEqual(ok.clips, [], `正常标题不该报纵向被裁：${JSON.stringify(ok.clips)}`);
 
@@ -119,8 +120,9 @@ test('vk-list：mass=compact 明显更矮，不写 mass 时与 normal 逐像素�
 
   // 默认不写时，DOM 里多一个 data-mass="normal" 也不能改变任何一个像素。
   assert.deepEqual(r.old, r.normal, '不写 mass 与 mass="normal" 必须逐像素一致');
-  assert.equal(r.normal.lineHeight, '72px', `normal 行高仍是 1.5 × 48：${r.normal.lineHeight}`);
-  assert.equal(r.compact.lineHeight, '57.6px', `compact 行高应是 1.2 × 48：${r.compact.lineHeight}`);
+  // 14.4：body 40 → normal 1.5 × 40 = 60，compact 1.2 × 40 = 48。
+  assert.equal(r.normal.lineHeight, '60px', `normal 行高是 1.5 × 40：${r.normal.lineHeight}`);
+  assert.equal(r.compact.lineHeight, '48px', `compact 行高应是 1.2 × 40：${r.compact.lineHeight}`);
   assert.equal(r.compact.paddingLeft, '48px', `compact 的项目内距要更小：${r.compact.paddingLeft}`);
   assert.equal(r.compact.gap, '16px', `compact 的默认条目间距要更小：${r.compact.gap}`);
   assert.ok(
@@ -237,7 +239,7 @@ test('vk-bars：400px 宽时值列完整可读、轨道被压短，不报文本�
 test('vk-bars：更窄时报"格太窄，建议换行 / 改 ratio"，不判文本超出', async () => {
   const { tab } = await open(`
     <vk-page>
-      <div style="width:240px"><vk-bars id="narrow" ratio-to="0">${BAR_ROWS}</vk-bars></div>
+      <div style="width:160px"><vk-bars id="narrow" ratio-to="0">${BAR_ROWS}</vk-bars></div>
     </vk-page>`);
   const r = await tab.evaluate(() => {
     const value = document.querySelector('#narrow .vk-bar-v');
@@ -250,7 +252,7 @@ test('vk-bars：更窄时报"格太窄，建议换行 / 改 ratio"，不判文�
 
   assert.ok(r.valueScroll <= r.valueClient + 1, `再窄也不能裁值列：${r.valueScroll} > ${r.valueClient}`);
   const narrow = r.issues.filter((x) => x.type === 'narrow');
-  assert.equal(narrow.length, 1, `240px 必须报一条格太窄：${JSON.stringify(r.issues)}`);
+  assert.equal(narrow.length, 1, `160px 必须报一条格太窄：${JSON.stringify(r.issues)}`);
   assert.match(narrow[0].fix, /格太窄[\s\S]*换行[\s\S]*ratio/, `修复建议要说人话：${narrow[0].fix}`);
   assert.equal(
     r.issues.filter((x) => x.type === 'collision').length,

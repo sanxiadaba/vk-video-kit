@@ -181,6 +181,38 @@ export class VkLabel extends VkElement {
   render() {
     // 渲染后 textContent 仍是标签文字（图标是 svg，不带字），所以每次都能从 DOM 取回原文。
     const text = (this.textContent || '').replace(/\s+/g, ' ').trim();
+    const variant = this.getAttribute('variant') || 'kicker';
+    // 工序进度：index/total 是"在整条流程里的位置"，不是页号。
+    // index="3" total="5" section="汇编" → 「工序 3/5 · 汇编」。
+    const indexRaw = (this.getAttribute('index') || '').trim();
+    const totalRaw = (this.getAttribute('total') || '').trim();
+    const index = /^\d+$/.test(indexRaw) ? Number(indexRaw) : NaN;
+    const total = /^\d+$/.test(totalRaw) ? Number(totalRaw) : NaN;
+    const section = (this.getAttribute('section') || '').trim();
+    const name = section || text;
+    const parts = [];
+    if (Number.isFinite(index) && index > 0) {
+      // total 写了就带上；index > total 是作者写错（构建期可另加提醒），
+      // 但不能静默吞掉 total——契约与读者都该看见"分母写的是什么"。
+      parts.push(Number.isFinite(total) && total > 0 ? `工序 ${index}/${total}` : `工序 ${index}`);
+    }
+    if (name) parts.push(name);
+    const labelText = parts.length ? parts.join(' · ') : text;
+
+    // 构建期也会提醒一次；运行时兜住直接改 DOM 的页面。
+    if (variant === 'kicker') {
+      const probe = name || text;
+      if (/\.(?:c|h|s|exe|o|obj|i|txt|md|json|html?|css|m?js|tsx?|py|asm|bin|diff|log|bat|ps1)\b/i.test(probe)) {
+        this._warnOnce(
+          'kicker-name',
+          '的 kicker 文本里出现了文件名（.c / .s / .exe 等）：页眉讲"工序到哪了"，文件名属于内容块'
+        );
+      }
+      if (/第\s*[0-9一二三四五六七八九十]+\s*[页帧]/.test(probe) || /\d+\s*\/\s*\d+\s*[页帧]/.test(probe)) {
+        this._warnOnce('kicker-page', '的 kicker 是工序进度，不是页号：不要写"第 N 页 / N 帧"');
+      }
+    }
+
     const raw = (this.getAttribute('icon') || '').trim();
     const known = raw ? hasIcon(raw) : false;
     if (raw && !known) this.dataset.vkUnknown = raw;
@@ -191,8 +223,10 @@ export class VkLabel extends VkElement {
           known ? raw : 'circle-help'
         )}</svg></span>`
       : '';
-    this.innerHTML = `<span class="vk-label" data-vk-part="label" data-meta>${icon}<span class="vk-label-t">${esc(
-      text
+    // kicker = 页眉：左边一条 4px 焦点色条。它不占焦点名额（audit 把 label 排除在外）。
+    const rule = variant === 'kicker' ? '<span class="vk-label-rule" aria-hidden="true"></span>' : '';
+    this.innerHTML = `<span class="vk-label" data-vk-part="label" data-meta>${rule}${icon}<span class="vk-label-t">${esc(
+      labelText
     )}</span></span>`;
   }
 }

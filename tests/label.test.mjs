@@ -132,11 +132,16 @@ test('vk-label：写 icon 才有图标槽，不写就没有', async () => {
   const withSlot = await tab.evaluate(() => {
     const el = document.querySelector('#with .vk-label');
     const slot = el.querySelector('.vk-label-ic');
-    return { slot: !!slot, svg: !!slot?.querySelector('svg'), first: el.firstElementChild?.className };
+    const kids = [...el.children];
+    return {
+      slot: !!slot,
+      svg: !!slot?.querySelector('svg'),
+      iconBeforeText: kids.indexOf(slot) >= 0 && kids.indexOf(slot) < kids.indexOf(el.querySelector('.vk-label-t')),
+    };
   });
   assert.ok(withSlot.slot, 'icon="circle-check" 必须出现 .vk-label-ic');
   assert.ok(withSlot.svg, '图标槽里必须真有 svg');
-  assert.equal(withSlot.first, 'vk-label-ic', '图标在文字前面');
+  assert.equal(withSlot.iconBeforeText, true, '图标在文字前面（kicker 的 4px 色条更前）');
   const without = await tab.evaluate(() => ({
     slot: !!document.querySelector('#without .vk-label-ic'),
     text: document.querySelector('#without .vk-label-t')?.textContent,

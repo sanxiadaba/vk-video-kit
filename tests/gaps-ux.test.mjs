@@ -223,7 +223,7 @@ test('vk-timeline：li 的 value/note 渲染大数字 + 小说明，并压过 la
   assert.equal(r.noteText, '预处理后', 'note 要当说明画出来');
   assert.ok(r.valueFs > r.noteFs, `数字要比说明大（actual ${r.valueFs} vs ${r.noteFs}）`);
   assert.ok(r.valueFs >= 144, `value 按 hero 级：${r.valueFs}`);
-  assert.ok(r.noteFs >= 36, `note 按 label 级：${r.noteFs}`);
+  assert.ok(r.noteFs >= 28, `note 按 caption 级（地板 28）：${r.noteFs}`);
   assert.equal(r.labelRendered, false, '有 value 时 label 不该再占主位');
   assert.equal(r.oldName, 'C 诞生', '不写 value/note 的旧条目行为不变');
   assert.equal(r.oldDesc, 'Dennis Ritchie');

@@ -1,5 +1,72 @@
 # 变更记录
 
+## 14.4 · 版式与默认值（批次 E + F）
+
+这一批改的是**默认值**：库不再替作者做"每块都有框、每个标题都差不多大"的决定。
+旧页面继续能开，但有几处观感会变；要逐像素留档，见下面的兼容开关。
+
+### E1 · 四档主对比
+
+- 新四档（token + `vk-text size`）：`display` 160 / `headline` 96 / `body` 40 / `caption` 28。
+  相邻比 1.43 / 2.4 / 1.67；`body` 从 48 调到 40，就是为了和 `headline` 拉开 2.4×。
+- `display` 一页最多一次，只给"本页唯一的答案"；`caption` 是地板（0.38× 后约 10.6px）。
+- 行高：160→168 / 96→120 / 40→60 / 28→42。
+- **旧名继续可用**：`label` → `caption`（28）、`data` → `body`（40）、`subhead` → `headline`（96）、
+  `title` → `display`（160）；`hero` 224 / `mega` 320 保留为**补充档**（一帧一个数字 / 一个词当家）。
+  `meta / heading / display-xl / display-2xl` 仍是别名。`--vk-t-display` 从旧别名（144）变成主名（160）。
+- `LIMITS.fontFloor` 36 → 28、`fontBody` 48 → 40；audit / gate / contract 同读这一份。
+
+### E2 · 网格与版心
+
+- 新 token：`--vk-grid-cols: 12`、`--vk-grid-gutter: 32px`、`--vk-margin: 120px`。
+  `--vk-safe-x` 成为 `--vk-margin` 的旧名。
+- `vk-grid` 的默认沟槽改为 `--vk-grid-gutter`（32），`cols` 扩到 1–12，`span` / `row-span` 扩到 1–12。
+  `cols="12"` 在 1680 版心里每栏 = (1680 − 11 × 32) / 12 = 110.67px。
+- 新工具类：`.vk-frame`（最宽 1680 的版心列）与 `.vk-safe`（全宽容器左右各留 120）。
+  `vk-page` 的默认内距改为 `var(--vk-margin)`。
+
+### F1 · 窗头规则
+
+- 六个"来自外部的内容"组件（`vk-term` / `vk-code` / `vk-asm` / `vk-tree` / `vk-bytes` / `vk-diff`）
+  默认都有三点 + 文件名/来源；没有 `file` / `title` 时退到 `src` 文件名，再退到"源码 / 终端 / 汇编"。
+- 三点与窗头随 `mass` 缩放：compact 8 / normal 12 / hero 16，窗头高 40 / 56 / 72，点间距同步。
+- `chrome="none"` 仍可用，但 `vk build` 会给一条提醒：
+  "无窗头的代码/终端应放在提供上下文的容器里（如 vk-panel 的 title）"。
+- `vk-panel` 永不带三点（它是版面容器，不是"外部内容"）。
+
+### F2 · vk-panel 默认无框无底
+
+- `variant="plain"`（默认）现在**透明、无边框**，只是一块布局区域。
+  底色只在显式 `tone`（wash/tint）、或 `variant="raised|inset|dark"` 时出现；
+  描边只在显式 `border="hair|strong"` 时出现。`DEFAULTS` 里 `border` 从 `hair` 改为 `none`。
+- 标题带跟着变透明；有 `tone` 时仍是该语义色的 tint。
+
+### F3 · 页眉 = 工序进度
+
+- `vk-label variant="kicker"` 新增 `index` / `total` / `section`：
+  `index="3" total="5" section="汇编"` → **`工序 3/5 · 汇编`**。
+  `index/total` 是"在整条流程中的位置"，**不是页号**。
+- kicker 左侧有 4px 焦点色条，字号用 `caption`（28px），字母转大写 + 字距 0.12em。
+- 构建期提醒：kicker 文本里出现文件名（`.c` / `.s` / `.exe` 等）或"第 N 页 / N 帧"时给 warning；
+  运行时也会在控制台提醒一次。
+
+### 能力矩阵
+
+- 新增 5 条：`type-scale` / `grid-tokens` / `chrome-default` / `chrome-dots-scaling` / `kicker-progress`；
+  原 `panel-plain` 升级为"默认无框无底"（同一 id，语义与测试都更新）。矩阵 20 → 25 条。
+
+### 旧页面会发生什么（逐条）
+
+- 用 `size="body"` / `size="label"` / `size="data"` 的页面：48 → 40、36 → 28、40 → 40（不变）。
+- 用 `size="title"` 的页面：144 → 160；`size="subhead"` 96 不变；`hero` / `mega` 不变。
+- 所有读 `--vk-t-label` 的地方（代码行号、文件名 chip、表头、字节地址…）36 → 28。
+- `vk-panel` 不写 `border` / `tone` / `variant` 的页面：从"白底 + 发丝框"变成透明无框。
+  写了 `variant="dark"` / `tone` 的块仍有底；写了 `border="hair"` 的仍有框。
+- `vk-grid` 不写 `gap` 的页面：24 → 32。
+- 没有 `file` / `title` 的 `vk-code` / `vk-term` 窗头会多出"源码" / "终端"（此前只有三点）。
+- **兼容开关**：在 `<body>` 或 `<vk-page>` 上加 `class="vk-legacy"`，本页回到旧字号
+  （body 48 / caption 36 / title 144）与旧 panel 默认（白底 + 发丝框）。显式属性仍然赢。
+
 ## 14.3 · 关系与图示（批次 C）
 
 箭头、圈选、批注、对照标记长期各管一半：`vk-edge` 只会三种走线，`vk-pin` 只有一个泡，

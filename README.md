@@ -3,7 +3,7 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 4-layer visual language of 32 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs, and the visual system is desktop-only, with a seven-step type ladder and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 4-layer visual language of 32 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs, and the visual system is desktop-only, with a four-tier type scale (28 / 40 / 96 / 160) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
 写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**32 个原语标签、1920×1080，桌面 only，一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
 
@@ -185,18 +185,18 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / pin）用梅紫，其中 `em` 只画一条梅紫下划线，整块底高亮留给 `vk-mark`；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
 2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
 
-**字阶七档：36 / 40 / 48 / 96 / 144 / 224 / 320，名字是 `label / data / body / subhead / title / hero / mega`。**
+**字阶四档：28 / 40 / 96 / 160，名字是 `caption / body / headline / display`。**
 
-- `label` 36：行号、单位、刻度、出处——只给「不读第二遍」的字；
-- `data` 40：等宽数据（代码、表格数字、地址、字节）；
-- `body` 48：要读懂的内容（手机横屏 0.38× 时 18.2px）；
-- `subhead` 96：小标题、提示框标题（0.38× 时 36.5px，刚好在可读线上）；
-- `title` 144：页标题；
-- `hero` 224 / `mega` 320：一个数字当家 / 一个词当家，一帧最多一个。
+- `caption` 28：标签、单位、脚注——只给「不读第二遍」的字；
+- `body` 40：正文与等宽数据（手机横屏 0.38× 时 15.2px）；
+- `headline` 96：标题；
+- `display` 160：一页最多一次，只给「本页唯一的答案」。
 
-旧名（`display-2xl` / `display-xl` / `display` / `heading` / `meta`）保留一版别名，构建期会提示改名；180 那一档已删除。
+旧名继续可用，全部别名到四档：`label` → `caption`、`data` → `body`、`subhead` → `headline`、
+`title` → `display`；`hero` 224 / `mega` 320 保留为补充档（一个数字 / 一个词当家，一帧最多一个）。
+`display-2xl` / `display-xl` / `heading` / `meta` 仍是一版别名。
 
-`vk-text` 默认按字号取行宽（body 52→1040，title 88→900）；要铺满容器写 `measure="none"`。
+`vk-text` 默认按字号取行宽（body 25 字 → 1000px，display 1560px）；要铺满容器写 `measure="none"`。
 
 ## 规格页
 

@@ -6,11 +6,16 @@
  * 14.0 连同这张表一起删。
  */
 
-/** 字号档位：旧名 → 七个语义名。只作用于文字类组件。 */
+/**
+ * 字号档位：旧名 → 现在的名字。只作用于文字类组件。
+ *
+ * 14.0 起 display 是四档主名之一（160px），不再折成 title；
+ * title / subhead / label / data 这些旧名在 tokens.css 里做了别名，
+ * 不需要在运行期改写属性——所以这张表只剩"从没进过词表"的旧别名。
+ */
 export const TIER_ALIAS = {
   'display-2xl': 'mega',
   'display-xl': 'hero',
-  display: 'title',
   heading: 'subhead',
   meta: 'label',
 };

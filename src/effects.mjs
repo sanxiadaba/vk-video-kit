@@ -113,7 +113,8 @@ export const EFFECTS = {
   },
 
   'vk-text': {
-    size: { on: 'vk-text', kind: 'style', prop: 'font-size' },
+    // display 160 在 888 高的标本台里必然换行超出；字号本身由 tests/batch-ef.test.mjs 四档守。
+    size: { on: 'vk-text', kind: 'style', prop: 'font-size', skipVisual: true },
     weight: { on: 'vk-text', kind: 'style', prop: 'font-weight' },
     ink: { on: 'vk-text', kind: 'style', prop: 'color' },
     tone: { on: 'vk-text', kind: 'style', prop: 'color' },
@@ -359,9 +360,9 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   variant: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-lanes' },
   steps: { kind: 'any', reason: '只在 lanes 模式下改变步数' },
   mass: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
-  // 三档：hero 224（默认）/ title 144 / subhead 96。标本写的是 subhead，
-  // 所以契约只探 title 一档（见 contract-probes 的 PROBES）。
-  'value-size': { on: '.vk-tl-value', kind: 'style', prop: 'font-size', expect: '144px' },
+  // 三档：hero 224（默认）/ title 160（display 别名）/ subhead 96（headline 别名）。
+  // 标本写的是 subhead，所以契约只探 title 一档（见 contract-probes 的 PROBES）。
+  'value-size': { on: '.vk-tl-value', kind: 'style', prop: 'font-size', expect: '160px' },
 });
 
 

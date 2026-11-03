@@ -11,7 +11,12 @@
 |---|---|---|---|---|
 | 语义淡底 · wash | `vk-panel.tone` | `specimen/vk-panel.html` | `tests/surfaces.test.mjs`<br>`tests/panel.test.mjs` | ✅ 绿 |
 | 语义淡底 · tint | `vk-panel.tone` | `specimen/vk-panel.html` | `tests/surfaces.test.mjs`<br>`tests/panel.test.mjs` | ✅ 绿 |
-| vk-panel · plain | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
+| vk-panel · plain（默认无框无底） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs`<br>`tests/batch-ef.test.mjs` | ✅ 绿 |
+| 版式 · 四档字号 | `vk-text.size` | `specimen/vk-text.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
+| 版式 · 网格与版心 | `vk-grid.cols`<br>`vk-grid.gap` | `specimen/vk-grid.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
+| 组件 · 内容组件默认窗头 | `vk-code.chrome`<br>`vk-term.chrome`<br>`vk-asm.chrome`<br>`vk-tree.chrome`<br>`vk-bytes.chrome`<br>`vk-diff.chrome` | `specimen/vk-code.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
+| 组件 · 三点随 mass 缩放 | `vk-code.mass`<br>`vk-term.mass`<br>`vk-asm.mass`<br>`vk-tree.mass`<br>`vk-bytes.mass`<br>`vk-diff.mass` | `specimen/vk-code.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
+| 页眉 · 工序进度 kicker | `vk-label.index`<br>`vk-label.total`<br>`vk-label.section` | `specimen/vk-label.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
 | vk-panel · raised | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · inset | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · dark | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
@@ -46,12 +51,47 @@
 - 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
 - 测试：`tests/surfaces.test.mjs` · 「语义淡底：五色 tint 齐全，比 wash 深、比实色浅」；`tests/panel.test.mjs` · 「vk-panel variant=inset：六种 tone 的底色」
 
-### ✅ vk-panel · plain
+### ✅ vk-panel · plain（默认无框无底）
 
-- 能力：白纸上一块平的区：靠明度与描边分开，不用第二套材质。
+- 能力：plain 是默认形态：透明、无边框，只是一块版面区域；底色与描边只在显式 tone / border（或 raised / inset / dark）时出现。
 - 契约断言：`vk-panel.variant`
 - 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
-- 测试：`tests/panel.test.mjs` · 「vk-panel variant=plain：六种 tone 的底色」
+- 测试：`tests/panel.test.mjs` · 「vk-panel variant=plain：六种 tone 的底色」；`tests/batch-ef.test.mjs` · 「vk-panel plain 默认无框无底，tone 才有 wash」
+
+### ✅ 版式 · 四档字号
+
+- 能力：四档主对比 display 160 / headline 96 / body 40 / caption 28；旧名 label/data/subhead/title 别名到新档，hero/mega 保留为补充档。160px 只有一个来源。
+- 契约断言：`vk-text.size`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/batch-ef.test.mjs` · 「四档字号：display / headline / body / caption 的字号与行高」；`tests/batch-ef.test.mjs` · 「旧字号名仍解析到合理档位（label / data / subhead / title / hero / mega）」；`tests/batch-ef.test.mjs` · 「display 在全库唯一：160px 只出现在 --vk-t-display 一处」
+
+### ✅ 版式 · 网格与版心
+
+- 能力：--vk-grid-cols 12 / --vk-grid-gutter 32 / --vk-margin 120；vk-grid cols="12" 在 1680 版心里每栏 = (1680 - 11×32)/12；.vk-frame 是最宽 1680 的版心列。
+- 契约断言：`vk-grid.cols` · `vk-grid.gap`
+- 标本页：`_site/specimen/vk-grid.html` + 契约宿主 `_site/specimens/vk-grid.html`
+- 测试：`tests/batch-ef.test.mjs` · 「vk-grid cols="12"：每栏宽 = (1680 - 11 × 32) / 12」；`tests/batch-ef.test.mjs` · 「版心：vk-page 内距 120，.vk-frame 宽 1680」
+
+### ✅ 组件 · 内容组件默认窗头
+
+- 能力：vk-term / vk-code / vk-asm / vk-tree / vk-bytes / vk-diff 默认都有三点 + 文件名/来源；chrome="none" 仍可用，但构建期提醒放到提供上下文的容器（如 vk-panel 的 title）。vk-panel 永不带三点。
+- 契约断言：`vk-code.chrome` · `vk-term.chrome` · `vk-asm.chrome` · `vk-tree.chrome` · `vk-bytes.chrome` · `vk-diff.chrome`
+- 标本页：`_site/specimen/vk-code.html` + 契约宿主 `_site/specimens/vk-code.html`
+- 测试：`tests/batch-ef.test.mjs` · 「六个内容组件默认都有三点窗头，vk-panel 没有」；`tests/batch-ef.test.mjs` · 「chrome="none" 构建期提醒放到有上下文的容器里」
+
+### ✅ 组件 · 三点随 mass 缩放
+
+- 能力：三点直径 compact 8 / normal 12 / hero 16，窗头高度 40 / 56 / 72，点间距同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量。
+- 契约断言：`vk-code.mass` · `vk-term.mass` · `vk-asm.mass` · `vk-tree.mass` · `vk-bytes.mass` · `vk-diff.mass`
+- 标本页：`_site/specimen/vk-code.html` + 契约宿主 `_site/specimens/vk-code.html`
+- 测试：`tests/batch-ef.test.mjs` · 「三点直径随 mass 缩放：compact 8 / normal 12 / hero 16」
+
+### ✅ 页眉 · 工序进度 kicker
+
+- 能力：vk-label variant="kicker" 写 index / total / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；index/total 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。
+- 契约断言：`vk-label.index` · `vk-label.total` · `vk-label.section`
+- 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
+- 测试：`tests/batch-ef.test.mjs` · 「vk-kicker 工序进度：工序 3/5 · 汇编，色条 4px」；`tests/batch-ef.test.mjs` · 「kicker 含文件名 / 页号时构建期给出提醒」
 
 ### ✅ vk-panel · raised
 

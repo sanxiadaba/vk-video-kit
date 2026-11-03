@@ -9,16 +9,26 @@ import { LIMITS } from '../src/shared/limits.mjs';
  * 这里锁住"CSS token 与 limits 一致"，防止有人改了一边忘了另一边。
  */
 
-const css = fs.readFileSync('src/tokens/tokens.css', 'utf8');
+// 注释里也会出现 token 写法（例如"不要写成 --vk-t-label: var(--vk-t-label)"），读数前先剥掉。
+const css = fs.readFileSync('src/tokens/tokens.css', 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+const raw = (name) => css.match(new RegExp(`${name}:\\s*([^;]+);`))?.[1].trim() || null;
+/** 读一个尺寸 token；允许一层 var() 别名（--vk-safe-x → --vk-margin）。 */
 const px = (name) => {
-  const m = css.match(new RegExp(`${name}:\\s*(\\d+)px`));
+  let v = raw(name);
+  for (let i = 0; i < 3 && v; i++) {
+    const alias = v.match(/^var\((--[\w-]+)\)$/);
+    if (!alias) break;
+    v = raw(alias[1]);
+  }
+  const m = String(v || '').match(/^(\d+)px$/);
   return m ? Number(m[1]) : null;
 };
 
 test('tokens.css 的字号与安全区 = limits', () => {
   assert.equal(px('--vk-t-label'), LIMITS.fontFloor, '--vk-t-label 应等于 fontFloor');
   assert.equal(px('--vk-t-body'), LIMITS.fontBody, '--vk-t-body 应等于 fontBody');
-  assert.equal(px('--vk-safe-x'), LIMITS.safe.x, '--vk-safe-x 应等于 safe.x');
+  assert.equal(px('--vk-margin'), LIMITS.safe.x, '--vk-margin 应等于 safe.x');
+  assert.equal(px('--vk-safe-x'), LIMITS.safe.x, '--vk-safe-x 应等于 safe.x（它是 --vk-margin 的旧名）');
   assert.equal(px('--vk-safe-y'), LIMITS.safe.y, '--vk-safe-y 应等于 safe.y');
 });
 

@@ -45,7 +45,7 @@ after(async () => {
 
 /* --------------------------------------------------------------- timeline */
 
-test('vk-timeline：value 默认 224，value-size 三档严格递增（96 / 144 / 224）', async () => {
+test('vk-timeline：value 默认 224，value-size 三档严格递增（96 / 160 / 224）', async () => {
   const item = `<li date="1972" label="峰值" value="52,980">预处理前</li>`;
   const { tab } = await open(`
     <vk-timeline id="def">${item}</vk-timeline>
@@ -58,7 +58,8 @@ test('vk-timeline：value 默认 224，value-size 三档严格递增（96 / 144 
 
   assert.equal(r.def, 224, `不写 value-size 时必须还是 hero 224：${r.def}`);
   assert.equal(r.sub, 96, `value-size="subhead" 要降到 96：${r.sub}`);
-  assert.equal(r.title, 144, `value-size="title" 是中间一档 144：${r.title}`);
+  // 14.4：title 别名到 display 160；subhead 别名到 headline 96。
+  assert.equal(r.title, 160, `value-size="title" 是中间一档 160：${r.title}`);
   assert.ok(r.sub < r.title && r.title < r.def, `三档必须严格递增：${r.sub} / ${r.title} / ${r.def}`);
 });
 

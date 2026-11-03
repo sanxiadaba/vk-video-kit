@@ -68,24 +68,59 @@
   white-space: nowrap;
 }
 
-/* 三点是窗的形状，不是语义；红 / 黄 / 绿，一眼认出"这是一个窗口"。 */
+/* 三点是窗的形状，不是语义；红 / 黄 / 绿，一眼认出"这是一个窗口"。
+   直径 / 间距 / 窗头高度都由 --vk-chrome-* 驱动，并随 mass 缩放：
+   compact 8 / normal 12 / hero 16（窗头 40 / 56 / 72）。 */
 .vk-dots {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--vk-chrome-gap, 10px);
   flex: 0 0 auto;
 }
 .vk-dots i {
   display: block;
-  width: 18px;
-  height: 18px;
+  flex: 0 0 auto;
+  width: var(--vk-chrome-dot, 12px);
+  height: var(--vk-chrome-dot, 12px);
   border-radius: 50%;
 }
 .vk-dots i:nth-child(1) { background: var(--vk-dot-red); }
 .vk-dots i:nth-child(2) { background: var(--vk-dot-yellow); }
 .vk-dots i:nth-child(3) { background: var(--vk-dot-green); }
 
-/* 文件名是标题栏里唯一要读的字：强调，40px；行段退成 28。 */
+/* 窗头的体量档：点是窗的一部分，随 mass 一起缩放；窗头高度同步。
+   变量落在渲染根上（.vk-win / .vk-asm / .vk-tree / .vk-diff-split），
+   所以 code / term / bytes / diff / asm / tree 六个内容组件共用一份表。 */
+.vk-win[data-mass='compact'],
+.vk-asm[data-mass='compact'],
+.vk-tree[data-mass='compact'],
+.vk-diff-split[data-mass='compact'] {
+  --vk-chrome-dot: 8px;
+  --vk-chrome-gap: 6px;
+  --vk-win-hd: 40px;
+}
+.vk-win[data-mass='normal'],
+.vk-asm[data-mass='normal'],
+.vk-tree[data-mass='normal'],
+.vk-diff-split[data-mass='normal'] {
+  --vk-chrome-dot: 12px;
+  --vk-chrome-gap: 10px;
+  --vk-win-hd: 56px;
+}
+.vk-win[data-mass='hero'],
+.vk-asm[data-mass='hero'],
+.vk-tree[data-mass='hero'],
+.vk-diff-split[data-mass='hero'] {
+  --vk-chrome-dot: 16px;
+  --vk-chrome-gap: 12px;
+  --vk-win-hd: 72px;
+}
+
+/* 文件名是标题栏里唯一要读的字：caption 档（28px）；行段退到同档的灰。
+   小体量的窗头只有 40 高，文件名 chip 也要跟着收，否则会顶出标题栏。 */
+.vk-win[data-mass='compact'] .vk-file { height: 36px; padding: 0 8px 0 2px; }
+.vk-win[data-mass='hero'] .vk-file { height: 56px; }
+.vk-win[data-mass='compact'] .vk-lang { padding: 0 6px; }
 .vk-file {
   display: inline-flex;
   align-items: center;

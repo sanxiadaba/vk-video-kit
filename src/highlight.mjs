@@ -503,6 +503,11 @@ function closestOf(word, list) {
   return bestD <= Math.max(2, Math.floor(String(word).length / 2)) ? best : null;
 }
 
+/** 六个"来自外部的内容"组件：默认都该有窗头（三点 + 文件名/来源）。 */
+const CONTENT_CHROME = new Set(['vk-code', 'vk-term', 'vk-asm', 'vk-tree', 'vk-bytes', 'vk-diff']);
+/** kicker 里不该出现的文件名后缀；写成集合是为了不把「3/5」误判成文件。 */
+const SOURCE_FILE_EXT = /\.(?:c|h|s|exe|o|obj|i|txt|md|json|html?|css|m?js|tsx?|py|asm|bin|diff|log|bat|ps1)\b/i;
+
 function validateAuthorHtml(doc, file, html = '') {
   const errors = [];
   const warnings = [];
@@ -571,6 +576,35 @@ function validateAuthorHtml(doc, file, html = '') {
       );
     }
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
+
+    // F1：六个"外部内容"组件默认有窗头。内联场景仍可 chrome="none"，
+    // 但构建期提醒一次：没有窗头就得由外面的容器提供上下文（panel 的 title）。
+    if (CONTENT_CHROME.has(tag) && attrs.get('chrome') === 'none') {
+      let panelTitle = '';
+      for (let p = node.parentNode; p; p = p.parentNode) {
+        if (p.tagName === 'vk-panel' && attr(p, 'title')) {
+          panelTitle = attr(p, 'title');
+          break;
+        }
+      }
+      warnings.push(
+        `${file}:${lineOf(node)} <${tag}> 没有窗头（chrome="none"）：无窗头的代码/终端应放在提供上下文的容器里（如 vk-panel 的 title）${
+          panelTitle ? `；当前在 vk-panel title="${panelTitle}" 里，上下文已由容器提供` : ''
+        }`
+      );
+    }
+
+    // F3：kicker 讲"工序到哪了"，不讲文件名，也不讲页号。
+    if (tag === 'vk-label' && (attrs.get('variant') || 'kicker') === 'kicker') {
+      const probe = `${collectText(node).text} ${attrs.get('section') || ''}`;
+      const where = `${file}:${lineOf(node)} <vk-label variant="kicker">`;
+      if (SOURCE_FILE_EXT.test(probe)) {
+        warnings.push(`${where} 的文本里出现了文件名（.c / .s / .exe 等）：页眉讲工序，文件名属于内容块`);
+      }
+      if (/第\s*[0-9一二三四五六七八九十]+\s*[页帧]/.test(probe) || /\d+\s*\/\s*\d+\s*[页帧]/.test(probe)) {
+        warnings.push(`${where} 写的是页号（第 N 页 / N 帧）：kicker 的 index/total 是工序进度，不是页号`);
+      }
+    }
 
     // 真轨道：只收 fr 与 auto，最多 6 条。px 会让安全区与溢出检查失真，所以直接拦。
     if (tag === 'vk-grid' && attrs.has('tracks')) {

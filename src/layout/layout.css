@@ -4,6 +4,24 @@
    间距只走 gap —— 本层以下不出现 margin。
    ========================================================================== */
 
+/* ----------------------------------------------------------- 版心（工具类）
+   版心 = 1920 减去左右各 120 的 1680 内容列。
+   vk-page 的默认内距就是 --vk-margin；这两个类给"不在 vk-page 里"的
+   全宽容器（出血层、外站嵌页）一个回到版心的办法。
+     .vk-frame  居中、最宽 1680（版心列）
+     .vk-safe   全宽容器，左右各留 120（等于 vk-page 的内距） */
+.vk-frame {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: calc(var(--vk-w) - var(--vk-margin) * 2);
+  margin-inline: auto;
+}
+.vk-safe {
+  box-sizing: border-box;
+  width: 100%;
+  padding-inline: var(--vk-margin);
+}
+
 /* -------------------------------------------------------------- vk-stack */
 
 vk-stack {
@@ -95,11 +113,13 @@ vk-stack > :not([grow]):not([fill]) { flex-shrink: 0; }
 
 /* --------------------------------------------------------------- vk-grid */
 
+/* 沟槽只有一个来源：--vk-grid-gutter（32）。gap="sm" 之类的档位是显式覆盖，
+   默认不再跟着"间距梯"漂移——12 栏的每栏宽才能算出来。 */
 vk-grid {
   box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: var(--vk-s3);
+  gap: var(--vk-grid-gutter);
   min-width: 0;
 }
 vk-grid[cols='1'] { grid-template-columns: minmax(0, 1fr); }
@@ -108,6 +128,12 @@ vk-grid[cols='3'] { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 vk-grid[cols='4'] { grid-template-columns: repeat(4, minmax(0, 1fr)); }
 vk-grid[cols='5'] { grid-template-columns: repeat(5, minmax(0, 1fr)); }
 vk-grid[cols='6'] { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+vk-grid[cols='7'] { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+vk-grid[cols='8'] { grid-template-columns: repeat(8, minmax(0, 1fr)); }
+vk-grid[cols='9'] { grid-template-columns: repeat(9, minmax(0, 1fr)); }
+vk-grid[cols='10'] { grid-template-columns: repeat(10, minmax(0, 1fr)); }
+vk-grid[cols='11'] { grid-template-columns: repeat(11, minmax(0, 1fr)); }
+vk-grid[cols='12'] { grid-template-columns: repeat(12, minmax(0, 1fr)); }
 
 /* 分份：容器切份，子项占份。离散的份数是求解器可判定的前提——
    写不出 37%，只可能在 n 等分里选。 */
@@ -127,6 +153,12 @@ vk-grid > [span='3'] { grid-column: span 3; }
 vk-grid > [span='4'] { grid-column: span 4; }
 vk-grid > [span='5'] { grid-column: span 5; }
 vk-grid > [span='6'] { grid-column: span 6; }
+vk-grid > [span='7'] { grid-column: span 7; }
+vk-grid > [span='8'] { grid-column: span 8; }
+vk-grid > [span='9'] { grid-column: span 9; }
+vk-grid > [span='10'] { grid-column: span 10; }
+vk-grid > [span='11'] { grid-column: span 11; }
+vk-grid > [span='12'] { grid-column: span 12; }
 
 /* 第二轴：跨行。分份是二维的，只给列不给行，跨行就只能靠嵌套。 */
 vk-grid > [row-span='2'] { grid-row: span 2; }
@@ -134,6 +166,12 @@ vk-grid > [row-span='3'] { grid-row: span 3; }
 vk-grid > [row-span='4'] { grid-row: span 4; }
 vk-grid > [row-span='5'] { grid-row: span 5; }
 vk-grid > [row-span='6'] { grid-row: span 6; }
+vk-grid > [row-span='7'] { grid-row: span 7; }
+vk-grid > [row-span='8'] { grid-row: span 8; }
+vk-grid > [row-span='9'] { grid-row: span 9; }
+vk-grid > [row-span='10'] { grid-row: span 10; }
+vk-grid > [row-span='11'] { grid-row: span 11; }
+vk-grid > [row-span='12'] { grid-row: span 12; }
 
 vk-grid[gap='2xs'] { gap: var(--vk-s1); }
 vk-grid[gap='group'] { gap: var(--vk-gap-group); }

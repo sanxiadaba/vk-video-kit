@@ -5,75 +5,234 @@
       "id": "surface-wash",
       "name": "语义淡底 · wash",
       "what": "五色各一档极淡底（浅色 + 深色），做分区背景；落在 vk-panel 上时是 plain / raised 的底。",
-      "contracts": ["vk-panel.tone"],
+      "contracts": [
+        "vk-panel.tone"
+      ],
       "specimen": "vk-panel",
       "tests": [
         {
           "file": "tests/surfaces.test.mjs",
           "name": "语义淡底：五色 wash 齐全，浅色/深色两套各自成阶"
         },
-        { "file": "tests/panel.test.mjs", "name": "vk-panel variant=plain：六种 tone 的底色" }
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=plain：六种 tone 的底色"
+        }
       ]
     },
     {
       "id": "surface-tint",
       "name": "语义淡底 · tint",
       "what": "五色各一档稍深的底（浅色 + 深色），做强调块；落在 vk-panel 上时是 inset 的底、也是标题带的高一档。",
-      "contracts": ["vk-panel.tone"],
+      "contracts": [
+        "vk-panel.tone"
+      ],
       "specimen": "vk-panel",
       "tests": [
         {
           "file": "tests/surfaces.test.mjs",
           "name": "语义淡底：五色 tint 齐全，比 wash 深、比实色浅"
         },
-        { "file": "tests/panel.test.mjs", "name": "vk-panel variant=inset：六种 tone 的底色" }
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=inset：六种 tone 的底色"
+        }
       ]
     },
     {
       "id": "panel-plain",
-      "name": "vk-panel · plain",
-      "what": "白纸上一块平的区：靠明度与描边分开，不用第二套材质。",
-      "contracts": ["vk-panel.variant"],
+      "name": "vk-panel · plain（默认无框无底）",
+      "what": "plain 是默认形态：透明、无边框，只是一块版面区域；底色与描边只在显式 tone / border（或 raised / inset / dark）时出现。",
+      "contracts": [
+        "vk-panel.variant"
+      ],
       "specimen": "vk-panel",
-      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=plain：六种 tone 的底色" }]
+      "tests": [
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=plain：六种 tone 的底色"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "vk-panel plain 默认无框无底，tone 才有 wash"
+        }
+      ]
+    },
+    {
+      "id": "type-scale",
+      "name": "版式 · 四档字号",
+      "what": "四档主对比 display 160 / headline 96 / body 40 / caption 28；旧名 label/data/subhead/title 别名到新档，hero/mega 保留为补充档。160px 只有一个来源。",
+      "contracts": [
+        "vk-text.size"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "四档字号：display / headline / body / caption 的字号与行高"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "旧字号名仍解析到合理档位（label / data / subhead / title / hero / mega）"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "display 在全库唯一：160px 只出现在 --vk-t-display 一处"
+        }
+      ]
+    },
+    {
+      "id": "grid-tokens",
+      "name": "版式 · 网格与版心",
+      "what": "--vk-grid-cols 12 / --vk-grid-gutter 32 / --vk-margin 120；vk-grid cols=\"12\" 在 1680 版心里每栏 = (1680 - 11×32)/12；.vk-frame 是最宽 1680 的版心列。",
+      "contracts": [
+        "vk-grid.cols",
+        "vk-grid.gap"
+      ],
+      "specimen": "vk-grid",
+      "tests": [
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "vk-grid cols=\"12\"：每栏宽 = (1680 - 11 × 32) / 12"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "版心：vk-page 内距 120，.vk-frame 宽 1680"
+        }
+      ]
+    },
+    {
+      "id": "chrome-default",
+      "name": "组件 · 内容组件默认窗头",
+      "what": "vk-term / vk-code / vk-asm / vk-tree / vk-bytes / vk-diff 默认都有三点 + 文件名/来源；chrome=\"none\" 仍可用，但构建期提醒放到提供上下文的容器（如 vk-panel 的 title）。vk-panel 永不带三点。",
+      "contracts": [
+        "vk-code.chrome",
+        "vk-term.chrome",
+        "vk-asm.chrome",
+        "vk-tree.chrome",
+        "vk-bytes.chrome",
+        "vk-diff.chrome"
+      ],
+      "specimen": "vk-code",
+      "tests": [
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "六个内容组件默认都有三点窗头，vk-panel 没有"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "chrome=\"none\" 构建期提醒放到有上下文的容器里"
+        }
+      ]
+    },
+    {
+      "id": "chrome-dots-scaling",
+      "name": "组件 · 三点随 mass 缩放",
+      "what": "三点直径 compact 8 / normal 12 / hero 16，窗头高度 40 / 56 / 72，点间距同步；六个内容组件的窗头共用同一组 --vk-chrome-* 变量。",
+      "contracts": [
+        "vk-code.mass",
+        "vk-term.mass",
+        "vk-asm.mass",
+        "vk-tree.mass",
+        "vk-bytes.mass",
+        "vk-diff.mass"
+      ],
+      "specimen": "vk-code",
+      "tests": [
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "三点直径随 mass 缩放：compact 8 / normal 12 / hero 16"
+        }
+      ]
+    },
+    {
+      "id": "kicker-progress",
+      "name": "页眉 · 工序进度 kicker",
+      "what": "vk-label variant=\"kicker\" 写 index / total / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；index/total 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。",
+      "contracts": [
+        "vk-label.index",
+        "vk-label.total",
+        "vk-label.section"
+      ],
+      "specimen": "vk-label",
+      "tests": [
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "vk-kicker 工序进度：工序 3/5 · 汇编，色条 4px"
+        },
+        {
+          "file": "tests/batch-ef.test.mjs",
+          "name": "kicker 含文件名 / 页号时构建期给出提醒"
+        }
+      ]
     },
     {
       "id": "panel-raised",
       "name": "vk-panel · raised",
       "what": "抬起一档：近白底 + 投影，表示“浮在纸面上的一层”。",
-      "contracts": ["vk-panel.variant"],
+      "contracts": [
+        "vk-panel.variant"
+      ],
       "specimen": "vk-panel",
-      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=raised：六种 tone 的底色" }]
+      "tests": [
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=raised：六种 tone 的底色"
+        }
+      ]
     },
     {
       "id": "panel-inset",
       "name": "vk-panel · inset",
       "what": "凹下一档：灰底；带 tone 时落到 tint，成为强调块。",
-      "contracts": ["vk-panel.variant"],
+      "contracts": [
+        "vk-panel.variant"
+      ],
       "specimen": "vk-panel",
-      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=inset：六种 tone 的底色" }]
+      "tests": [
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=inset：六种 tone 的底色"
+        }
+      ]
     },
     {
       "id": "panel-dark",
       "name": "vk-panel · dark",
       "what": "深色块：墨底 + 白字 + 深色 wash/tint；同一套语义色在深色上也成立。",
-      "contracts": ["vk-panel.variant"],
+      "contracts": [
+        "vk-panel.variant"
+      ],
       "specimen": "vk-panel",
-      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel variant=dark：六种 tone 的底色" }]
+      "tests": [
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel variant=dark：六种 tone 的底色"
+        }
+      ]
     },
     {
       "id": "panel-title",
       "name": "vk-panel · 标题带",
       "what": "title 生成一条标题带，里面是一个 vk-label；没 title 就不留空带。",
-      "contracts": ["vk-panel.title"],
+      "contracts": [
+        "vk-panel.title"
+      ],
       "specimen": "vk-panel",
-      "tests": [{ "file": "tests/panel.test.mjs", "name": "vk-panel：标题带用 vk-label，title 变了就跟着变" }]
+      "tests": [
+        {
+          "file": "tests/panel.test.mjs",
+          "name": "vk-panel：标题带用 vk-label，title 变了就跟着变"
+        }
+      ]
     },
     {
       "id": "term-shell-lexicon",
       "name": "终端 · shell 词法",
       "what": "一行 transcript 拆成 prompt / cmd / flag / path / string / num / out / err 并各自上色；认不出就落 out，绝不整行丢色。词法只有一份（src/shared/shell.mjs），构建期与运行期共用；lang=\"none\" 是同一段文本的未上色对照。",
-      "contracts": ["vk-term.lang"],
+      "contracts": [
+        "vk-term.lang"
+      ],
       "specimen": "vk-term",
       "tests": [
         {
@@ -90,7 +249,9 @@
       "id": "asm-tokenize",
       "name": "汇编 · 五色 token",
       "what": "助记符 / 寄存器 / 立即数 / 地址 / 注释各一色，和终端用同一张语义 token 表（不新增色相）；objdump 的机器码列不会被涂成助记符。契约能探到的是行级视觉（focus / 行底），token 本身由单测与标本页守着。",
-      "contracts": ["vk-asm.focus"],
+      "contracts": [
+        "vk-asm.focus"
+      ],
       "specimen": "vk-asm",
       "tests": [
         {
@@ -107,7 +268,12 @@
       "id": "reveal-line",
       "name": "逐行浮现 · reveal",
       "what": "reveal=\"all|line|none\"：all 是现状整块出现；line 按 at + stagger 逐行浮现（复用 director 的 plan/seek，不新写引擎）；none 整块不参与。current / line 让一行处于 focus，供讲解时指。不是打字机。",
-      "contracts": ["vk-term.reveal", "vk-code.reveal", "vk-asm.reveal", "vk-term.current"],
+      "contracts": [
+        "vk-term.reveal",
+        "vk-code.reveal",
+        "vk-asm.reveal",
+        "vk-term.current"
+      ],
       "specimen": "vk-term",
       "tests": [
         {
@@ -132,7 +298,12 @@
       "id": "annotate-arrow",
       "name": "标注 · 连线 arrow",
       "what": "mode=\"arrow\"：从一个元素（或 x,y 坐标）指向另一个。shape=straight|ortho|curve 决定走线，dash 决定实虚，width 改线宽，head=arrow|dot|none 决定端点。旧 vk-edge 是它的别名，走线与 13.x 逐像素一致。",
-      "contracts": ["vk-annotate.shape", "vk-annotate.head", "vk-annotate.dash", "vk-annotate.width"],
+      "contracts": [
+        "vk-annotate.shape",
+        "vk-annotate.head",
+        "vk-annotate.dash",
+        "vk-annotate.width"
+      ],
       "specimen": "vk-annotate",
       "tests": [
         {
@@ -149,7 +320,10 @@
       "id": "annotate-circle",
       "name": "标注 · 圈选 circle",
       "what": "mode=\"circle\"：圈出目标，ring=ellipse|rect 决定椭圆或矩形，double 再画一圈内环。旧 vk-ring（含 dim 压暗）是它的别名。",
-      "contracts": ["vk-annotate.ring", "vk-annotate.double"],
+      "contracts": [
+        "vk-annotate.ring",
+        "vk-annotate.double"
+      ],
       "specimen": "vk-annotate",
       "tests": [
         {
@@ -162,7 +336,9 @@
       "id": "annotate-note",
       "name": "标注 · 批注 note",
       "what": "mode=\"note\"：note=bubble|label|badge 三种写法，都复用 vk-pin 的自动避让（先算四个候选位置，再按压住多少正文排序），所以批注不遮正文。旧 vk-pin 是它的别名。",
-      "contracts": ["vk-annotate.note"],
+      "contracts": [
+        "vk-annotate.note"
+      ],
       "specimen": "vk-annotate",
       "tests": [
         {
@@ -175,7 +351,9 @@
       "id": "annotate-badge",
       "name": "标注 · 编号点 badge",
       "what": "mode=\"badge\"：编号点（①②③）钉在任意锚点上，n 是编号。位置由锚点决定，不手摆坐标。",
-      "contracts": ["vk-annotate.n"],
+      "contracts": [
+        "vk-annotate.n"
+      ],
       "specimen": "vk-annotate",
       "tests": [
         {
@@ -188,7 +366,10 @@
       "id": "compare-mark",
       "name": "对照 · 差异框 mark",
       "what": "vk-compare 的 mark 在对照图上标出一处或多处差异：x1,y1,x2,y2（相对百分比，多组用 ;），细框 + 角标；mark-label 一一对应。split 下每处只标在所属的那一半（框心决定 A/B），side/stack 下标在 a 上。",
-      "contracts": ["vk-compare.mark", "vk-compare.mark-label"],
+      "contracts": [
+        "vk-compare.mark",
+        "vk-compare.mark-label"
+      ],
       "specimen": "vk-compare",
       "tests": [
         {
@@ -205,7 +386,9 @@
       "id": "bytes-narrow",
       "name": "字节窗 · 窄容器逐格",
       "what": "十六进制按单格换行，不再把整行当成一格去量：400px 的窄卡里 8 列照常读，只有连半行都放不下时才报“格太窄”，并给出减少 cols / 关掉 ascii / 换宽容器三条改法。",
-      "contracts": ["vk-bytes.cols"],
+      "contracts": [
+        "vk-bytes.cols"
+      ],
       "specimen": "vk-bytes",
       "tests": [
         {
@@ -218,7 +401,10 @@
       "id": "steps-equal-map",
       "name": "步骤条 · 等权地图",
       "what": "done=\"none\" 时不再把 current 之前自动画成绿色对勾，只保留 current（或整页不标）；mark=\"N\" 只强调第 N 步、不给其它步打勾。默认 done=\"auto\" 与旧行为一字不差。",
-      "contracts": ["vk-steps.done", "vk-steps.mark"],
+      "contracts": [
+        "vk-steps.done",
+        "vk-steps.mark"
+      ],
       "specimen": "vk-steps",
       "tests": [
         {
@@ -235,7 +421,10 @@
       "id": "term-title-noshell",
       "name": "终端 · 无壳不重复标题",
       "what": "chrome=\"none\" 时 title 只作无障碍名（aria-label），不再渲染自己的窗头 / 文件名；确实要显示才写 title-show。默认 chrome=\"min\" 的窗头不变。",
-      "contracts": ["vk-term.chrome", "vk-term.title-show"],
+      "contracts": [
+        "vk-term.chrome",
+        "vk-term.title-show"
+      ],
       "specimen": "vk-term",
       "tests": [
         {
@@ -248,7 +437,9 @@
       "id": "annotate-note-placement",
       "name": "批注 · 显式落点与避让",
       "what": "note 新增 side=top|right|bottom|left 与 x/y 坐标；自动选边把目标自身矩形也算成障碍，优先选引线不穿过目标的一侧，实在没有干净位置时说明并选压字最少的一侧。",
-      "contracts": ["vk-annotate.side"],
+      "contracts": [
+        "vk-annotate.side"
+      ],
       "specimen": "vk-annotate",
       "tests": [
         {
@@ -265,7 +456,9 @@
       "id": "compare-zoom",
       "name": "对照 · 差异放大",
       "what": "zoom=\"mark\" 在对照下方生成差异放大块（默认 ×2）：放大 mark 框住的那块，也可以写 x1,y1,x2,y2 或只写倍数；放大块样式与小标题由组件给，作者不写 CSS。",
-      "contracts": ["vk-compare.zoom"],
+      "contracts": [
+        "vk-compare.zoom"
+      ],
       "specimen": "vk-compare",
       "tests": [
         {

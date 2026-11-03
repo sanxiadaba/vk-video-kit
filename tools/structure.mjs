@@ -21,7 +21,7 @@ import fs from 'node:fs';
 import { pathToFileURL } from 'node:url';
 import { chromium } from 'playwright-core';
 
-/** 大字行盒的下限：36 是标注档，装饰小字（单位、角标、页脚）不该算成主角。 */
+/** 大字行盒的下限：body 40 起算，caption（28，单位/角标/页脚）不该算成主角。 */
 const MIN_LINE_BOX_FONT = 40;
 
 const BLOCK_SELECTOR =

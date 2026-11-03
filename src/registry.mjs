@@ -31,7 +31,9 @@ const ATTR_META = {
   fig: { label: '图号', content: true },
   url: { label: '地址', content: true },
   prompt: { label: '提示符', content: true },
-  index: { label: '序号', content: true },
+  index: { label: '序号（在整条流程里的位置，不是页号）', content: true },
+  total: { label: '总步骤数（工序进度的分母）', content: true },
+  section: { label: '工序名 / 分区名', content: true },
   eyebrow: { label: '眉题', content: true },
   sub: { label: '副题', content: true },
   ratio: { label: '比例', group: 'appearance' },
@@ -171,7 +173,8 @@ const ATTR_META = {
 /** 组件默认值：属性参考与组件页的“默认”列都读它。 */
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
-  'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'hair' },
+  // plain 默认无框无底：要框必须显式写 border。
+  'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none' },
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
   'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
@@ -270,7 +273,8 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'size': oneOf('label', 'data', 'body', 'subhead', 'title', 'hero', 'mega'),
+      // 四档主对比 + 旧名（别名到新档）；hero / mega 是补充档。
+      'size': oneOf('display', 'headline', 'body', 'caption', 'label', 'data', 'subhead', 'title', 'hero', 'mega'),
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
@@ -295,6 +299,12 @@ export const TAGS = {
       'variant': oneOf('kicker', 'chip', 'badge'),
       'tone': oneOf('info', 'focus', 'ok', 'err', 'warn'),
       'ink': oneOf('primary', 'secondary', 'tertiary', 'muted'),
+      // 工序进度：index/total 是在整条流程里的位置，不是页号；section 是工序名。
+      // 写 index/total 时 kicker 渲染成「工序 3/5 · 汇编」，左侧带 4px 焦点色条。
+      'index': { ...int({ min: 1, max: 99, step: 1 }), content: true },
+      // total 单独写不改变画面（没有 index 就没有分子）；契约探针先放一个 index。
+      'total': { ...int({ min: 1, max: 99, step: 1 }), content: true, when: { index: ['3'] } },
+      'section': { ...text(), content: true },
       // 内联图标：只收 Lucide 名字，构建期校验；不写就没有图标槽。
       'icon': text(),
     },
@@ -350,8 +360,8 @@ export const TAGS = {
       'border': oneOf('none', 'hair', 'strong'),
       'w': { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
       'h': { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child', layout: true },
-      'span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
-      'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
+      'span': { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
+      'row-span': { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
     },
   },
   'vk-rule': {
@@ -396,7 +406,8 @@ export const TAGS = {
     layer: 'layout',
     summary: '分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。',
     attrs: {
-      'cols': oneOf('1', '2', '3', '4', '5', '6'),
+      // 1–12 等分；12 是版面默认坐标系（--vk-grid-cols），默认沟槽 32（--vk-grid-gutter）。
+      'cols': oneOf('1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12'),
       'tracks': text(),
       'rows': { ...oneOf('1', '2', '3', '4', '5', '6'), context: 'bounded-height' },
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
@@ -905,8 +916,9 @@ const CUSTOM = new Set([
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
   h: { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child', layout: true },
-  span: { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
-  'row-span': { ...int({ min: 1, max: 6, step: 1 }), context: 'grid-child', layout: true },
+  // 12 栏网格：一个子项最多占满 12 份。
+  span: { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
+  'row-span': { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
   z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child', layout: true },
   grow: { ...bool(), layout: true },
   fill: { ...bool(), layout: true },

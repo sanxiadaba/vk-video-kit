@@ -209,7 +209,9 @@ vk-term{ display: block; }
 }
 /* 体量三档同时改行高与字号：hero 要让"上屏"那一行明显压过其它行。
    字号只到 1.5×正文（72px）：再大，标本页 1680 宽里的 32 字符命令行会溢出。 */
-.vk-term[data-mass='compact'] .vk-bd{ font-size: var(--vk-t-data); line-height: 1.25; }
+/* compact 要比 normal 小一档：data 已别名到 body（40），所以这里按比例收，
+   不再借一个"明天可能改"的字号 token。 */
+.vk-term[data-mass='compact'] .vk-bd{ font-size: calc(var(--vk-t-body) * 0.9); line-height: 1.25; }
 .vk-term[data-mass='normal'] .vk-bd{ font-size: var(--vk-t-body); line-height: var(--vk-lh-code); }
 .vk-term[data-mass='hero'] .vk-bd{ font-size: calc(var(--vk-t-body) * 1.5); line-height: 1.35; }.vk-term .vk-line{
   display: flex;
@@ -459,10 +461,13 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   line-height: 44px;
 }.vk-tree-hd{
   display: flex;
-  align-items: baseline;
+  align-items: center;
   justify-content: space-between;
   gap: var(--vk-s3);
-  padding-bottom: var(--vk-s2);
+  /* 窗头高度跟 mass 走；三点与标题在同一条基线上。
+     border-box：min-height 就是"整条标题栏"的高度，不把内距再叠上去。 */
+  box-sizing: border-box;
+  min-height: var(--vk-win-hd, 56px);
   margin-bottom: var(--vk-s2);
   border-bottom: var(--vk-line-w) solid var(--vk-line-1);
   font-size: var(--vk-t-label);

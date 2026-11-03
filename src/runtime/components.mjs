@@ -111,6 +111,7 @@ export class VkWindow extends VkElement {
     const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
     const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'lg';
     const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
+    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
     const title = this.getAttribute('title') || '';
     const url = this.getAttribute('url') || '';
 
@@ -134,6 +135,7 @@ export class VkWindow extends VkElement {
 
     this._shell.dataset.chrome = chrome;
     this._shell.dataset.pad = pad;
+    this._shell.dataset.mass = mass;
     if (tone) this._shell.dataset.tone = tone;
     else delete this._shell.dataset.tone;
 
@@ -264,6 +266,7 @@ export class VkTree extends VkElement {
   render() {
     const tree = this._raw;
     const title = this.getAttribute('title') || '';
+    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
     const currentSet = new Set((this.getAttribute('current') || '').split(',').map((s) => s.trim()).filter(Boolean));
     const maxDepth = this.hasAttribute('depth')
       ? Math.min(8, Math.max(0, parseInt(this.getAttribute('depth'), 10) || 0))
@@ -363,7 +366,7 @@ export class VkTree extends VkElement {
     const meta = this.getAttribute('summary') === 'none' ? '' : `${files} 文件 · ${dirs} 目录`;
 
     this.innerHTML = `
-      <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}">
+      <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}" data-mass="${esc(mass)}">
         <div class="vk-tree-hd" data-vk-part="tree-hd">
         ${DOTS}
           <span class="vk-tree-title">${esc(label)}</span>
@@ -452,6 +455,8 @@ export class VkBytes extends VkElement {
     const rowsHtml = rows.join('');
     this.innerHTML = win({
       chrome: this.getAttribute('chrome') === 'none' ? 'none' : 'min',
+      // 三点与窗头高度要跟体量走：mass 放在窗根上，不是只放在内容 div 上。
+      attrs: ` data-mass="${esc(mass)}"`,
       head: fileHead(file, 'bytes', range),
       inner: `<div class="vk-bd" data-vk-part="bd"><div class="vk-bytes" data-mass="${esc(mass)}" data-cols="${cols}" data-word="${word}" data-endian="${endian}">${rowsHtml || '<div class="vk-bytes-row"><span class="vk-bytes-c">（空）</span></div>'}</div></div>`,
     });

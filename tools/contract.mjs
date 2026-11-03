@@ -257,7 +257,7 @@ function visualInPage(tag) {
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
     if (hasText && opaque(el)) {
-      const L = window.vk?.limits || { fontFloor: 36, contrastText: 7, contrastMuted: 4.5, contrastLarge: 4.5, fontLarge: 96 };
+      const L = window.vk?.limits || { fontFloor: 28, contrastText: 7, contrastMuted: 4.5, contrastLarge: 4.5, fontLarge: 96 };
       const fs = parseFloat(cs.fontSize);
       const meta = el.closest?.('[data-meta]') || el.closest?.('[ink="muted"]');
       if (!meta && fs < L.fontFloor) out.push({ type: 'font', what: (el.className || el.tagName).toString().slice(0, 50), fs });
