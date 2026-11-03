@@ -113,7 +113,7 @@ node bin/vk.mjs build . --force # 忽略缓存
 node bin/vk.mjs check page.html # 结构自检；有错退出码 1
 node bin/vk.mjs check a.html b.html # 多页共用一个浏览器
 node bin/vk.mjs shot page.html  # 1920×1080 诊断图；--strict 遇 error 删图
-node bin/vk.mjs tags            # 39 个标签
+node bin/vk.mjs tags            # 全部标签（数字从 registry 取，不写死）
 node bin/vk.mjs doc vk-code     # 属性 / 枚举 / 默认值；--all 带布局协议
 node bin/vk.mjs icons arrow     # 搜图标名
 ```
@@ -147,7 +147,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`tone` · `variant` · `title` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-panel variant="plain" title="plain · 白纸">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。
-  - 属性：`size` · `weight` · `mono` · `align` · `format` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
+  - 属性：`size` · `weight` · `mono` · `align` · `format` · `fit` · `fit-min` · `fit-max` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>`
 - **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标。
   - 属性：`variant` · `tone` · `ink` · `index` · `total` · `section` · `icon`
@@ -176,6 +176,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
   - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
+- **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。
+  - 属性：`split` · `axis` · `axis-width` · `symbol` · `symbol-size` · `gap` · `orientation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 例：`<vk-pair split="50" gap="48" axis="line" axis-width="2" symbol="→" symbol-size="80">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
   - 属性：`w` · `h` · `pad-px` · `grid` · `overflow`
   - 例：`<vk-canvas w="1200" h="420">`
@@ -188,13 +191,13 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="sm">`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮；reveal="line" 逐行浮现。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers` · `numbering`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `surface` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers` · `numbering`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" mass="hero">`
 - **`vk-term`** · 终端 — 终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。
-  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `title-show` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `title-show` · `mass` · `surface` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
-  - 例：`<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" src="../assets/hello/build/steps.txt">`
+  - 例：`<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" surface="dark" current="6" src="../assets/hello/build/steps.txt">`
 - **`vk-diff`** · 对比 — 对比：上下对照或左右两窗并排，词级标记 + 一句改了几行。
   - 属性：`mass` · `lang` · `src` · `lines` · `file` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant` · `numbers` · `summary`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
@@ -268,6 +271,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-note`** · 注解 — 边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
   - 属性：`kind` · `for` · `side` · `leader` · `place` · `w` · `z`
   - 例：`<vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>`
+- **`vk-caption`** · 归属说明 — 贴在目标块上方（或下方）的一行归属说明：caption 字号、墨阶 secondary，左边界与目标块的首字符对齐，不占正文布局。
+  - 属性：`for` · `anchor`
+  - 例：`<vk-caption for="#cap-a" anchor="above">你写的</vk-caption>`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 

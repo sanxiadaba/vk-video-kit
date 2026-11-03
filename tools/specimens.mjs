@@ -52,11 +52,14 @@ a:hover{color:#1b3fd6}
 .spec-w1120{width:1120px}
 .spec-w1100{width:1100px}
 .spec-w1000{width:1000px}
+.spec-w780{width:780px}
 .spec-w600{width:600px}
 .spec-w520{width:520px}
 .spec-h560{height:560px}
 .spec-h240{display:flex;height:240px}
 .spec-pill{width:160px}
+.spec-pad-top{padding-top:96px}
+.spec-indent{margin-left:120px}
 /* 索引卡高度也是版式意图，落在作者 CSS 上。卡高 352；缩略图留出名字一行（caption 48 → 64）。 */
 .spec-card{display:flex;flex-direction:column;height:352px}
 .spec-scale > *{zoom:.73}
@@ -105,7 +108,7 @@ function nav(no, tag) {
   const next = ORDER[i + 1];
   const link = (t, label) =>
     t ? `<a href="${t}.html"><vk-text size="label" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
-  return `<vk-stack direction="row" gap="sm" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
+  return `<vk-stack direction="row" gap="xs" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
     next,
     (next || '') + ' →'
   )}</vk-stack>`;
@@ -208,7 +211,7 @@ function specPage(tag, no) {
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
       </vk-stack>
-      <vk-stack direction="row" gap="md" align="baseline">
+      <vk-stack direction="row" gap="sm" align="baseline">
         ${nav(no, tag)}
         <vk-text size="label" mono ink="muted" data-meta>${meta}</vk-text>
       </vk-stack>

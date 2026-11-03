@@ -70,6 +70,14 @@ const ATTR_META = {
   radius: { label: '圆角', group: 'appearance' },
   border: { label: '描边', group: 'appearance' },
   fit: { label: '填充', group: 'appearance' },
+  'fit-min': { label: '最小字号（像素）', group: 'appearance' },
+  'fit-max': { label: '最大字号（像素）', group: 'appearance' },
+  split: { label: '占比（%）', group: 'layout' },
+  axis: { label: '中轴', group: 'appearance' },
+  'axis-width': { label: '轴宽（像素）', group: 'appearance' },
+  symbol: { label: '轴上符号', group: 'appearance' },
+  'symbol-size': { label: '符号字号', group: 'appearance' },
+  anchor: { label: '附着位置', group: 'layout' },
   chrome: { label: '窗头', group: 'appearance' },
   stripe: { label: '斑马', group: 'appearance' },
   bare: { label: '无外壳', group: 'appearance' },
@@ -177,7 +185,7 @@ const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   // plain 默认无框无底：要框必须显式写 border。
   'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none' },
-  'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary' },
+  'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary', 'fit-min': 12, 'fit-max': 240 },
   'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
@@ -185,10 +193,11 @@ const DEFAULTS = {
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
+  'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', 'symbol-size': 48, gap: 24, orientation: 'horizontal' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
-  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all' },
+  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all', surface: 'paper' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min', reveal: 'all' },
   'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
@@ -207,7 +216,9 @@ const DEFAULTS = {
   },
   // 注解原语：默认是"像书页边注"的那一种，不是气泡。
   'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br' },
-  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false' },
+  // 归属说明：默认贴在目标块上方，左边界对齐首字符。
+  'vk-caption': { anchor: 'above' },
+  'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false', surface: 'paper' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
@@ -288,6 +299,12 @@ export const TAGS = {
       'wrap': { ...oneOf('balance', 'pretty', 'nowrap'), layout: true },
       // 数值写法（原 vk-stat 的唯一机制）：52980 → 52,980。排版归配方。
       'format': oneOf('none', 'thousands', 'bytes', 'hex'),
+      // 单行塞满：字号自动缩放到「这一行文本恰好填满容器宽」，只给单行等宽文本。
+      // 不写 fit 时行为与旧版逐像素一致（字号仍只由 size 档决定）。
+      'fit': oneOf('width'),
+      // fit 的边界；只在 fit="width" 时生效。fit-max 优先于 fit-min（两个都写反时以 max 为准）。
+      'fit-min': { ...num({ min: 8, max: 240, step: 1 }), when: { fit: ['width'] } },
+      'fit-max': { ...num({ min: 8, max: 400, step: 1 }), when: { fit: ['width'] } },
     },
   },
   'vk-label': {
@@ -421,6 +438,32 @@ export const TAGS = {
       'align': oneOf('start', 'center', 'end', 'stretch'),
     },
   },
+  /**
+   * 并置对照：两块内容左右（或上下）并置，中间一条轴。
+   *
+   * 它不是 vk-grid 的特例：grid 解决"分几份"，pair 解决"两块对着看"，
+   * 轴是两者的关系（一个可选的符号），不是第三块内容。
+   * 子节点顺序即位置：第一个在左 / 上，第二个在右 / 下。
+   * 不写 symbol 时，轴只是一条线；axis="none" 时连线和符号都不画。
+   */
+  'vk-pair': {
+    name: '并置',
+    layer: 'layout',
+    summary: '两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。',
+    attrs: {
+      // 左块占内容区的百分比；右块自动吃掉剩下的。上下并置时是上块占比。
+      'split': num({ min: 5, max: 95, step: 1 }),
+      // line = 画一条 1–4px 的轴；none = 不画轴（也不画符号）。
+      'axis': oneOf('line', 'none'),
+      'axis-width': num({ min: 1, max: 4, step: 1 }),
+      // 轴上的符号：→ / = / vs；none 就是一条干净的线。
+      'symbol': oneOf('→', '=', 'vs', 'none'),
+      'symbol-size': num({ min: 12, max: 200, step: 1 }),
+      // 块与轴之间的留白（像素）；沟槽总宽 = 2 × gap。
+      'gap': num({ min: 8, max: 200, step: 1 }),
+      'orientation': oneOf('horizontal', 'vertical'),
+    },
+  },
   'vk-canvas': {
     name: '坐标画布',
     layer: 'layout',
@@ -497,6 +540,9 @@ export const TAGS = {
       'chrome': oneOf('min', 'none'),
       'mark': text(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // 表面：paper = 白纸（默认，旧行为）；inset = 浅灰凹面；dark = 深色底 + 反白。
+      // 深色不是"只把背景刷黑"：窗头、行号、语法、提示符、当前行都在同一层适配。
+      'surface': oneOf('paper', 'dark', 'inset'),
       // all = 整块出现（默认，和以前一样）；line = 按 at + stagger 逐行浮现；none = 不参与出场。
       'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
     },
@@ -532,6 +578,8 @@ export const TAGS = {
       // 这里只把 title 留作无障碍名。确实要在无壳终端上再显示一次，才写 title-show。
       'title-show': bool(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // 表面：paper = 白纸（默认）；inset = 浅灰凹面；dark = 深色底 + 反白。
+      'surface': oneOf('paper', 'dark', 'inset'),
     },
   },
   'vk-diff': {
@@ -941,6 +989,30 @@ export const TAGS = {
       'z': int({ min: 0, max: 99, step: 1 }),
     },
   },
+  /**
+   * 归属说明：贴在某个块上方（或下方）的一行小字。
+   *
+   * 它不是 vk-label 的另一种形态：label 是"块里的一枚标签"，caption 是
+   * "这一块是谁给的"——位置由目标块决定，左边界对齐目标的首字符（不是容器左边）。
+   * 只画覆盖层，不参与正文布局；字号/墨色固定 caption + ink secondary。
+   */
+  'vk-caption': {
+    name: '归属说明',
+    layer: 'relations',
+    summary:
+      '贴在目标块上方（或下方）的一行归属说明：caption 字号、墨阶 secondary，左边界与目标块的首字符对齐，不占正文布局。',
+    content: {
+      kind: 'text',
+      target: 'vk-caption',
+      fields: [{ name: 'text', label: '说明文字', type: 'textarea', text: true }],
+    },
+    attrs: {
+      // 目标块：支持 #id（含 @part）与 CSS 选择器。
+      'for': sel(),
+      // above = 目标上方；below = 目标下方。
+      'anchor': oneOf('above', 'below'),
+    },
+  },
 };
 
 /* ----------------------------------------------------------------- v10 共享语法
@@ -957,6 +1029,7 @@ const CUSTOM = new Set([
   'vk-ring',
   'vk-annotate',
   'vk-note',
+  'vk-caption',
 ]);
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },

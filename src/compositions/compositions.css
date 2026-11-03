@@ -12,6 +12,8 @@ vk-page {
   width: 100%;
   min-width: 0;
   max-width: 100%;
+  /* 画布宿主也是纸：空文档里不留下浏览器/项目层的灰底。 */
+  background: var(--vk-paper-sf-0);
 }
 
 .vk-page {
@@ -22,7 +24,8 @@ vk-page {
   /* 版心边距：与 --vk-grid-gutter 一起构成 E2 的版面坐标系。 */
   padding: 0 var(--vk-margin);
   overflow: hidden;
-  background: var(--vk-surface-1);
+  /* 纸就是白的。项目层要 tint 自己写；库不把 --vk-surface-1 的别名当默认。 */
+  background: var(--vk-paper-sf-0);
   color: var(--vk-ink-1);
   font-family: var(--vk-font-sans);
   -webkit-font-smoothing: antialiased;

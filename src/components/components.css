@@ -256,7 +256,96 @@ vk-term{ display: block; }
   flex: 0 0 40px;
   text-align: center;
   font-weight: var(--vk-w-bold);
-}.vk-term .is-ok{ background: var(--vk-win-ok-bg); box-shadow: inset 4px 0 0 var(--vk-win-ok); }.vk-term .is-ok .vk-sign{ color: var(--vk-win-ok); }.vk-term .is-warn{ background: var(--vk-win-warn-bg); box-shadow: inset 4px 0 0 var(--vk-win-warn); }.vk-term .is-warn .vk-sign{ color: var(--vk-win-warn); }.vk-term .is-err{ background: var(--vk-win-err-bg); box-shadow: inset 4px 0 0 var(--vk-win-err); }.vk-term .is-err .vk-sign{ color: var(--vk-win-err); }/* --------------------------------------------------------------- vk-diff */
+}.vk-term .is-ok{ background: var(--vk-win-ok-bg); box-shadow: inset 4px 0 0 var(--vk-win-ok); }.vk-term .is-ok .vk-sign{ color: var(--vk-win-ok); }.vk-term .is-warn{ background: var(--vk-win-warn-bg); box-shadow: inset 4px 0 0 var(--vk-win-warn); }.vk-term .is-warn .vk-sign{ color: var(--vk-win-warn); }.vk-term .is-err{ background: var(--vk-win-err-bg); box-shadow: inset 4px 0 0 var(--vk-win-err); }.vk-term .is-err .vk-sign{ color: var(--vk-win-err); }
+
+/* ----------------------------------------------------- surface（纸 / 灰 / 墨）
+   surface 不是"只刷一层背景"：窗材质由 .vk-win 上的 --vk-win-* 一组变量定义，
+   换表面就是换这一组。深色把窗头、行号、语法、提示符、结果行、当前行一起翻过来；
+   inset 只是把同一张纸压暗一档，字仍是墨色。默认 paper 没有任何规则——
+   旧页不写 surface 时逐像素不变。 */
+.vk-win[data-surface='inset'] {
+  --vk-win-bg: var(--vk-sf-2);
+  --vk-win-soft: var(--vk-sf-3);
+  --vk-win-edge: var(--vk-line-3);
+  --vk-win-rule: var(--vk-line-3);
+  --vk-win-tab-line: var(--vk-line-strong);
+}
+/* chrome="none" 原本会把窗底去掉；显式选了 surface 时，底是表面的一部分，不能一起消失。 */
+.vk-win[data-surface='dark'][data-chrome='none'],
+.vk-win[data-surface='inset'][data-chrome='none'] {
+  background: var(--vk-win-bg);
+}
+
+.vk-win[data-surface='dark'] {
+  --vk-win-bg: var(--vk-dark-surface-0);
+  --vk-win-soft: var(--vk-dark-surface-1);
+  --vk-win-fg: var(--vk-dark-fg);
+  --vk-win-fg-2: var(--vk-dark-fg-2);
+  --vk-win-meta: var(--vk-dark-meta);
+  --vk-win-meta-2: var(--vk-dark-meta-2);
+  --vk-win-rule: var(--vk-dark-rule);
+  --vk-win-edge: var(--vk-dark-rule);
+  --vk-win-tab-line: var(--vk-dark-tab);
+
+  /* 语法：深色底上重新给一档亮度，色相仍来自同一套词表。 */
+  --vk-win-k: var(--vk-dark-syn-keyword);
+  --vk-win-f: var(--vk-dark-syn-function);
+  --vk-win-s: var(--vk-dark-syn-string);
+  --vk-win-n: var(--vk-dark-syn-number);
+  --vk-win-b: var(--vk-dark-syn-builtin);
+  --vk-win-o: var(--vk-dark-syn-operator);
+  --vk-win-p: var(--vk-dark-syn-punct);
+  --vk-win-c: var(--vk-dark-syn-comment);
+
+  /* 结果行 / 增删行的语义底与边：浅色 wash 在墨底上会变成"没上色"。 */
+  --vk-win-ok: var(--vk-dark-ok);
+  --vk-win-err: var(--vk-dark-err);
+  --vk-win-warn: var(--vk-dark-warn);
+  --vk-win-ok-bg: var(--vk-dark-wash-ok);
+  --vk-win-err-bg: var(--vk-dark-wash-err);
+  --vk-win-warn-bg: var(--vk-dark-wash-warn);
+  --vk-win-add-line: var(--vk-dark-ok);
+  --vk-win-del-line: var(--vk-dark-err);
+}
+
+/* 终端 token：浅色纸上的墨阶在墨底上读不出来，深色表面用更亮的一档。 */
+.vk-win[data-surface='dark'] .vk-tok-prompt { color: var(--vk-dark-meta); }
+.vk-win[data-surface='dark'] .vk-tok-cmd { color: var(--vk-dark-fg); }
+.vk-win[data-surface='dark'] .vk-tok-flag,
+.vk-win[data-surface='dark'] .vk-tok-var { color: var(--vk-dark-info); }
+.vk-win[data-surface='dark'] .vk-tok-path,
+.vk-win[data-surface='dark'] .vk-tok-reg { color: var(--vk-dark-focus); }
+.vk-win[data-surface='dark'] .vk-tok-str,
+.vk-win[data-surface='dark'] .vk-tok-imm { color: var(--vk-dark-syn-string); }
+.vk-win[data-surface='dark'] .vk-tok-num { color: var(--vk-dark-fg-2); }
+.vk-win[data-surface='dark'] .vk-tok-out { color: var(--vk-dark-fg-2); }
+.vk-win[data-surface='dark'] .vk-tok-err { color: var(--vk-dark-err); }
+.vk-win[data-surface='dark'] .vk-tok-comment,
+.vk-win[data-surface='dark'] .vk-tok-punct,
+.vk-win[data-surface='dark'] .vk-tok-addr { color: var(--vk-dark-meta); }
+
+/* title-show 的可见标题是窗头之外的一行小字，也必须跟着表面走。 */
+.vk-win[data-surface='dark'] .vk-term-title { color: var(--vk-dark-meta); }
+
+/* 当前行：反白底上不能沿用 16% 的钴蓝（会糊成一块黑蓝）。
+   用更亮的蓝 + 更高的 alpha，行号与左缘条一起换成同一支亮蓝。 */
+.vk-win[data-surface='dark'] .vk-line.is-hl {
+  background: var(--vk-dark-focus-soft);
+}
+.vk-win[data-surface='dark'] .vk-line.is-hl .vk-ln {
+  color: var(--vk-dark-focus);
+}
+.vk-win[data-surface='dark'] .vk-line.is-hl .vk-src,
+.vk-win[data-surface='dark'] .vk-line.is-hl .vk-txt {
+  box-shadow: inset 4px 0 0 var(--vk-dark-focus);
+}
+.vk-win[data-surface='dark'] .vk-code .vk-tok {
+  background: var(--vk-dark-focus-soft);
+  border-bottom-color: var(--vk-dark-focus);
+}
+/* 深色窗的三点仍是红/黄/绿：它们是窗的识别符，不参与表面明度。 */
+
+/* --------------------------------------------------------------- vk-diff */
 
 vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行对照，不再并排铺满色块。 */
 .vk-dmeta{

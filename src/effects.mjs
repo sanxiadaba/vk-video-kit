@@ -22,6 +22,8 @@ export const EFFECTS = {
 
   'vk-term': {
     chrome: { on: 'vk-term', kind: 'dom', prop: '.vk-hd' },
+    // 表面换的是 .vk-win 上的一整组材质变量；底色是最直接的证据。
+    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
     w: { on: 'vk-term', kind: 'geometry', prop: 'width' },
@@ -102,6 +104,18 @@ export const EFFECTS = {
     align: { on: 'vk-grid', kind: 'style', prop: 'align-items' },
   },
 
+  'vk-pair': {
+    // 左块宽 = (容器宽 - 2×gap) × split；几何断言直接量它。
+    split: { on: '.vk-pair-l', kind: 'geometry', prop: 'width', expect: { not: '0px' } },
+    axis: { on: 'vk-pair', kind: 'attr', prop: 'data-axis', expectFromValue: 'raw' },
+    'axis-width': { on: '.vk-pair-axis', kind: 'style', prop: 'width', expectFromValue: 'px' },
+    symbol: { on: 'vk-pair', kind: 'attr', prop: 'data-symbol', expectFromValue: 'raw' },
+    'symbol-size': { on: '.vk-pair-sym', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
+    // gap 落在 .vk-pair 的 --vk-pair-gap 上；沟槽是它的两倍。
+    gap: { on: '.vk-pair', kind: 'style', prop: '--vk-pair-gap', expectFromValue: 'px' },
+    orientation: { on: 'vk-pair', kind: 'attr', prop: 'data-orientation', expectFromValue: 'raw' },
+  },
+
   'vk-canvas': {
     w: { on: 'vk-canvas', kind: 'geometry', prop: 'width', skipVisual: true, expectFromValue: 'raw' },
     h: { on: 'vk-canvas', kind: 'geometry', prop: 'height', skipVisual: true, expectFromValue: 'raw' },
@@ -121,6 +135,10 @@ export const EFFECTS = {
     mono: { on: 'vk-text', kind: 'style', prop: 'font-family', expect: /mono/i },
     align: { on: 'vk-text', kind: 'style', prop: 'text-align' },
     measure: { on: 'vk-text', kind: 'style', prop: 'max-width' },
+    // fit="width" 会改写 inline font-size；fit-max / fit-min 是它的两个边界。
+    fit: { on: 'vk-text', kind: 'style', prop: 'font-size', expect: { not: '56px' }, skipVisual: true },
+    'fit-min': { on: 'vk-text', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
+    'fit-max': { on: 'vk-text', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
   },
 
   'vk-label': {
@@ -233,9 +251,13 @@ export const EFFECTS = {
   },
 
   'vk-code': {
+    // current 是公开名（line 是它的隐藏别名）；highlight 是旧声明名，保留一版。
+    current: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     highlight: { on: '.vk-line', kind: 'style', prop: 'background-color' },
     focus: { on: '.vk-line', kind: 'style', prop: 'opacity' },
     fold: { on: 'svg', kind: 'dom', prop: '.vk-line' },
+    // 表面换的是 .vk-win 上的一整组材质变量；底色是最直接的证据。
+    surface: { on: '.vk-win', kind: 'style', prop: 'background-color' },
     // 逐行浮现 / 不参与出场：静态画面不变，data-reveal 是声明的证据。
     reveal: { on: 'vk-code', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
     mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
@@ -246,6 +268,13 @@ export const EFFECTS = {
     w: { on: 'vk-code', kind: 'geometry', prop: 'width' },
     mark: { on: '.vk-tok', kind: 'style', prop: 'background-color' },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
+  },
+
+  'vk-caption': {
+    // 换目标：说明框的 x 跟着目标首字符走。
+    for: { on: '.vk-caption', kind: 'geometry', prop: 'x', expect: { not: '0px' } },
+    // above / below 落在宿主的 data-anchor 上；实际 top 由 draw() 算。
+    anchor: { on: 'vk-caption', kind: 'attr', prop: 'data-anchor', expectFromValue: 'raw' },
   },
 };
 
@@ -263,7 +292,7 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-rule',
+  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-pair', 'vk-rule',
   'vk-list', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',

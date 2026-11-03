@@ -7,6 +7,13 @@ import { lexShellLine, looksLikePrompt, shellLang, shellLines, tokensToHtml } fr
 import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
 
+/** 表面：paper 是默认（旧页逐像素不变）；dark / inset 是显式选择。 */
+const SURFACES = new Set(['dark', 'inset']);
+const surfaceOf = (el) => {
+  const v = el.getAttribute('surface');
+  return SURFACES.has(v) ? v : 'paper';
+};
+
 /**
  * 采集来的终端文本可能带 ANSI 转义（`\x1b[31m`）。
  * 颜色由设计系统决定，不由终端决定：渲染前剥掉，并只提示一次。
@@ -204,7 +211,7 @@ export class VkCode extends VkElement {
       win({
         chrome,
         cls: 'vk-code',
-        attrs: ` data-mass="${mass}"`,
+        attrs: ` data-mass="${mass}" data-surface="${surfaceOf(this)}"`,
         head: fileHead(file, label, this.getAttribute('lines') || ''),
         inner: `<div class="vk-bd" data-vk-part="bd">${rows.join('')}</div>`,
       });
@@ -386,7 +393,7 @@ export class VkTerm extends VkElement {
     this.innerHTML = win({
       chrome,
       cls: 'vk-term',
-      attrs: ` data-mass="${mass}"`,
+      attrs: ` data-mass="${mass}" data-surface="${surfaceOf(this)}"`,
       head: chrome !== 'none' ? `<span class="vk-file" data-meta>${esc(headLabel)}</span>` : '',
       inner: `${showTitle ? `<div class="vk-term-title" data-meta>${esc(title)}</div>` : ''}<div class="vk-bd" data-vk-part="bd">${body}</div>`,
     });

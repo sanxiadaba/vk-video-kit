@@ -134,10 +134,13 @@ body {
 .spec-w1120{width:1120px}
 .spec-w1100{width:1100px}
 .spec-w1000{width:1000px}
+.spec-w780{width:780px}
 .spec-w600{width:600px}
 .spec-h560{height:560px}
 .spec-h240{display:flex;height:240px}
 .spec-pill{width:160px}
+.spec-pad-top{padding-top:96px}
+.spec-indent{margin-left:120px}
 `,
   check
 );

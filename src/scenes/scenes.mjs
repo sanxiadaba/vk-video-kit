@@ -1,5 +1,5 @@
 /**
- * 30 个场景 = 展台上唯一的真源。
+ * 35 个场景 = 展台上唯一的真源。
  *
  * specimen、工作台、可复制代码、参考表都从这里生成：
  * 一份内容，四处使用，改一处就全对。
@@ -24,8 +24,9 @@ export const SCENES = [
     // 真实采集产物（assets/hello/build/steps.txt）：四步编译 + 一行输出。
     // 默认就上色；lang="none" 是「同一段 transcript，未上色」的对照。
     // reveal="line" 让 6 行按 at + stagger 逐行浮现（标本页 dur=2.2，可 seek 出三帧）。
+    // surface="dark" + current="6"：深色底与当前行高亮同时成立，标本页一眼看全。
     body: s`
-<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" src="../assets/hello/build/steps.txt"></vk-term>`,
+<vk-term title="steps.txt" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" surface="dark" current="6" src="../assets/hello/build/steps.txt"></vk-term>`,
   },
 
 
@@ -41,6 +42,7 @@ export const SCENES = [
     body: s`
 <vk-box class="spec-w1120" surface="none">
   <vk-text size="body" measure="body">52,980 字节。这一段只展示字号、行高和行宽，也展示数值写法。</vk-text>
+  <vk-text mono fit="width" fit-max="120" class="spec-w780">printf("%s\n", s);</vk-text>
 </vk-box>`,
   },
 
@@ -254,6 +256,18 @@ export const SCENES = [
     </vk-stack>
   </vk-box>
 </vk-grid>
+</vk-box>`,
+  },
+
+  {
+    tag: 'vk-pair',
+    // 并置对照：左边你写的，右边编译器给的。三种符号在标本页的预设里各看一次。
+    body: s`
+<vk-box class="spec-w1680" surface="none">
+  <vk-pair split="50" gap="48" axis="line" axis-width="2" symbol="→" symbol-size="80">
+    <vk-text size="body" mono>printf("%s\n", s);</vk-text>
+    <vk-text size="body" mono>call 4026cc &lt;_puts&gt;</vk-text>
+  </vk-pair>
 </vk-box>`,
   },
 
@@ -541,6 +555,22 @@ export const SCENES = [
     <li>到这一步才检查语法并优化</li>
   </vk-note>
 </vk-canvas>`,
+  },
+
+  {
+    tag: 'vk-caption',
+    // 归属说明贴在块上：左边界对齐目标块的首字符（块有 48px 内距，所以不是容器左边）。
+    // 两个目标给契约换 for 用；上方的说明跟着 #cap-a 走。
+    body: s`
+<vk-stack class="spec-w1200 spec-pad-top" gap="lg">
+  <vk-box id="cap-a" surface="none" pad="lg">
+    <vk-text size="headline" mono>printf("%s\n", s);</vk-text>
+  </vk-box>
+  <vk-box id="cap-b" class="spec-indent" surface="none" pad="lg">
+    <vk-text size="body" mono>call 4026cc &lt;_puts&gt;</vk-text>
+  </vk-box>
+  <vk-caption for="#cap-a" anchor="above">你写的</vk-caption>
+</vk-stack>`,
   },
 
   {

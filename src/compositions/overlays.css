@@ -395,3 +395,24 @@ vk-note .vk-note-dot {
   font-weight: var(--vk-w-med);
   line-height: 1;
 }
+
+/* ============================================================ vk-caption
+   归属说明：贴在块上（或下）的一行小字，不是块里的标签。
+   位置由目标块的首字符决定（运行期量 Range），所以它和块共享左边界，
+   而不是和容器共享左边界。字号 / 墨色固定，作者没有旋钮。 */
+vk-caption {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+vk-caption .vk-caption {
+  position: absolute;
+  box-sizing: border-box;
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-2);
+  white-space: nowrap;
+  pointer-events: none;
+}

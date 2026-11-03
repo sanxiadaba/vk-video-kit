@@ -28,6 +28,9 @@ export const PRESETS = {
     { label: '居中', attrs: { align: 'center' } },
     { label: '加粗', attrs: { weight: 'bold' } },
     { label: '语义色', attrs: { tone: 'ok' } },
+    // fit="width"：标本里的长句会被缩到容器宽；780px 的代码行会放大到接近上限。
+    { label: '塞满一行', attrs: { fit: 'width', 'fit-max': '120' } },
+    { label: '封顶 64', attrs: { fit: 'width', 'fit-max': '64' } },
   ],
   'vk-label': [
     { label: '标签', attrs: { variant: 'chip' } },
@@ -67,6 +70,13 @@ export const PRESETS = {
     { label: '宽行距', attrs: { 'gap-y': 'xl' } },
     { label: '居中', attrs: { align: 'center' } },
   ],
+  'vk-pair': [
+    { label: '等号', attrs: { symbol: '=' } },
+    { label: '对置', attrs: { symbol: 'vs' } },
+    { label: '只留一条线', attrs: { symbol: 'none' } },
+    { label: '偏左 30%', attrs: { split: '30' } },
+    { label: '上下并置', attrs: { orientation: 'vertical' } },
+  ],
   'vk-edge': [
     { label: '曲线', attrs: { variant: 'curve' } },
     { label: '直线', attrs: { variant: 'line' } },
@@ -92,6 +102,8 @@ export const PRESETS = {
     { label: '缺口', attrs: { fold: '4' } },
     { label: '标记词', attrs: { mark: 'int,char' } },
     { label: '隐藏行号', attrs: { numbers: 'none' } },
+    { label: '深色表面', attrs: { surface: 'dark' } },
+    { label: '凹面', attrs: { surface: 'inset' } },
     { label: '折叠说明', attrs: { fold: '4-7', 'fold-note': '省略 4 行' } },
   ],
   'vk-term': [
@@ -101,6 +113,9 @@ export const PRESETS = {
     { label: '不上色', attrs: { lang: 'none' } },
     // 讲解时指一行：整行 focus 底 + 左缘一条蓝（与 vk-code 的 current 同一条规则）。
     { label: '指第 3 行', attrs: { current: '3' } },
+    // 默认标本是深色；这两张把同一段 transcript 放回白纸 / 灰凹面。
+    { label: '白纸', attrs: { surface: 'paper' } },
+    { label: '凹面', attrs: { surface: 'inset' } },
   ],
   'vk-diff': [
     { label: '并排', attrs: { variant: 'split' } },
@@ -202,5 +217,10 @@ export const PRESETS = {
     { label: '贴左侧', attrs: { side: 'left' } },
     { label: '圆点引线', attrs: { leader: 'dot' } },
     { label: '更窄', attrs: { w: '160' } },
+  ],
+  'vk-caption': [
+    { label: '贴下方', attrs: { anchor: 'below' } },
+    // 换一个真实目标：说明跟着走，左边界仍对齐那个块的首字符。
+    { label: '跟着第二块', attrs: { for: '#cap-b' } },
   ],
 };

@@ -573,6 +573,97 @@
           "name": "预设 · 内容落在 120 边距内（--style，覆盖层豁免）"
         }
       ]
+    },
+    {
+      "id": "pair-axis",
+      "name": "并置 · vk-pair",
+      "what": "两块内容左右（或上下）并置，中间一条 1–4px 的轴；split 决定左块占比，axis 可关掉轴，symbol 可在轴中点放 → / = / vs，也可什么都不放。两块宽度和 = 容器宽 - 2×gap，轴在 2×gap 沟槽的正中。",
+      "contracts": [
+        "vk-pair.split",
+        "vk-pair.axis",
+        "vk-pair.axis-width",
+        "vk-pair.symbol",
+        "vk-pair.symbol-size",
+        "vk-pair.gap",
+        "vk-pair.orientation"
+      ],
+      "specimen": "vk-pair",
+      "tests": [
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点"
+        },
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-pair：symbol 的三种写法都出现，axis=\"none\" 只剩空轴"
+        }
+      ]
+    },
+    {
+      "id": "text-fit-width",
+      "name": "文字 · 塞满一行 fit=\"width\"",
+      "what": "单行等宽文本按容器宽度自动缩放字号：fit=\"width\" 时这一行恰好填满容器（测到差 ≤2px），fit-min / fit-max 是上下边界，fit-max 优先。不写 fit 时字号仍只由 size 档决定。",
+      "contracts": [
+        "vk-text.fit",
+        "vk-text.fit-min",
+        "vk-text.fit-max"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-text fit=\"width\"：780px 容器差 ≤2px，fit-max 封顶"
+        }
+      ]
+    },
+    {
+      "id": "caption-anchor",
+      "name": "归属说明 · vk-caption",
+      "what": "「你写的 / 编译器给的」这种归属说明：贴在目标块上方（anchor=\"above\"）或下方（anchor=\"below\"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。",
+      "contracts": [
+        "vk-caption.for",
+        "vk-caption.anchor"
+      ],
+      "specimen": "vk-caption",
+      "tests": [
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-caption：左边界对齐目标块首字符（above / below）"
+        }
+      ]
+    },
+    {
+      "id": "term-surface-dark",
+      "name": "代码窗 / 终端 · surface 与当前行",
+      "what": "surface=\"paper|dark|inset\" 换的是整组窗材质变量：dark 是真正的深色底 + 反白文字，窗头、行号、语法、提示符、结果行一起适配；current 指的那一行在深色底上用更亮的蓝，不与该表面打架。",
+      "contracts": [
+        "vk-term.surface",
+        "vk-code.surface",
+        "vk-term.current",
+        "vk-code.current"
+      ],
+      "specimen": "vk-term",
+      "tests": [
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-term / vk-code surface=\"dark\"：反白底 + current 高亮同时成立"
+        }
+      ]
+    },
+    {
+      "id": "paper-is-white",
+      "name": "纸 · 默认底色是纯白",
+      "what": "库的默认页面底色就是 #fff：html / body 与 vk-page 宿主、内层画布都是纯白，不把任何项目级 tint 当默认。项目层要灰底自己写（unlayered 作者样式永远压过库的层）。",
+      "contracts": [
+        "vk-page.align"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/batch-primitives.test.mjs",
+          "name": "vk-page / body：空文档里的默认底色是纯白"
+        }
+      ]
     }
   ]
 }

@@ -111,6 +111,127 @@ vk-stack > :not([grow]):not([fill]) { flex-shrink: 0; }
 [measure='title'] { max-width: var(--vk-measure-title); }
 [overflow='clip'] { overflow: hidden; }
 
+/* ------------------------------------------------------------- vk-pair */
+/* 两块并置 + 一条中轴。
+   几何定义（测试与契约共用这一条）：
+     · 两块各占内容区的 split% / (100-split)%，两块宽度和 = 容器宽 - 2×gap；
+     · 沟槽总宽 = 2×gap，轴在沟槽正中（所以轴 x = 左块宽 + gap）；
+     · 轴是 1–4px 直线，贯穿容器高/宽；符号在轴中点，用纸色垫底把线断开。
+   横向用 grid（列宽由百分比算得，高度随内容）；纵向用 flex + 运行期按
+   容器高度分配 —— 高度未定义时退到内容高，不伪造一个比例。 */
+vk-pair {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.vk-pair {
+  --vk-pair-gap: 24px;
+  --vk-pair-split: 0.5;
+  --vk-pair-axis-w: 2px;
+  --vk-pair-symbol-size: 48px;
+
+  position: relative;
+  box-sizing: border-box;
+  display: grid;
+  grid-template-columns:
+    calc((100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split))
+    calc((100% - 2 * var(--vk-pair-gap)) * (1 - var(--vk-pair-split)));
+  column-gap: calc(2 * var(--vk-pair-gap));
+  align-items: stretch;
+  min-width: 0;
+}
+
+.vk-pair-l,
+.vk-pair-r {
+  min-width: 0;
+}
+
+/* 竖向：两块上下并置，轴横穿。split 仍按上面的语义分配高度；
+   运行期在 place() 里按容器实测高度写两块的高度（无确定高度时退回内容高）。 */
+.vk-pair[data-orientation='vertical'] {
+  display: flex;
+  flex-direction: column;
+  row-gap: calc(2 * var(--vk-pair-gap));
+}
+.vk-pair[data-orientation='vertical'] .vk-pair-l,
+.vk-pair[data-orientation='vertical'] .vk-pair-r {
+  width: 100%;
+}
+
+/* 有符号时给轴留出可见的两截：符号自己的纸色垫底会盖住中线附近的一段线，
+   单行内容（78px 高）若没有这点余量，整条线会被符号的 1em 盒完全吃掉。 */
+.vk-pair[data-symbol]:not([data-symbol='none']):not([data-orientation='vertical']) {
+  min-height: calc(var(--vk-pair-symbol-size) + 48px);
+}
+
+.vk-pair-axis {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc(
+    (100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split) + var(--vk-pair-gap)
+  );
+  width: var(--vk-pair-axis-w);
+  transform: translateX(-50%);
+  background: var(--vk-ink-2);
+  pointer-events: none;
+}
+.vk-pair[data-axis='none'] .vk-pair-axis {
+  display: none;
+}
+
+.vk-pair-sym {
+  position: absolute;
+  left: calc(
+    (100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split) + var(--vk-pair-gap)
+  );
+  top: 50%;
+  z-index: 1;
+  transform: translate(-50%, -50%);
+  /* 符号的盒子必须和字号一样高：inline 行盒会被字体墨迹撑到 1.12em，
+     把并置块（一行高）的标本台顶出安全区。 */
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 1em;
+  /* 只有横向留白：竖向内距会把符号撑出并置块的高度（标本台只有一行高）。 */
+  padding: 0 0.18em;
+  background: var(--vk-paper-sf-0);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-pair-symbol-size);
+  font-weight: var(--vk-w-bold);
+  line-height: 1;
+  color: var(--vk-focus);
+  pointer-events: none;
+  white-space: nowrap;
+}
+/* 不写 symbol / 轴关掉：都不留符号。 */
+.vk-pair[data-symbol='none'] .vk-pair-sym,
+.vk-pair[data-axis='none'] .vk-pair-sym {
+  display: none;
+}
+
+/* 竖排时轴变成横向：位置由分割线决定，符号仍在轴中点。 */
+.vk-pair[data-orientation='vertical'] .vk-pair-axis {
+  left: 0;
+  right: 0;
+  top: calc(
+    (100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split) + var(--vk-pair-gap)
+  );
+  bottom: auto;
+  width: auto;
+  height: var(--vk-pair-axis-w);
+  transform: translateY(-50%);
+}
+.vk-pair[data-orientation='vertical'] .vk-pair-sym {
+  left: 50%;
+  top: calc(
+    (100% - 2 * var(--vk-pair-gap)) * var(--vk-pair-split) + var(--vk-pair-gap)
+  );
+  transform: translate(-50%, -50%);
+}
+
 /* --------------------------------------------------------------- vk-grid */
 
 /* 沟槽只有一个来源：--vk-grid-gutter（32）。gap="sm" 之类的档位是显式覆盖，

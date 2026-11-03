@@ -5,7 +5,7 @@
 
 **English.** vk is a 4-layer visual language of 33 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs. The baseline is phone landscape (1920 rendered at ≈780, 0.406×), with a four-tier type scale (48 / 56 / 112 / 200) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The library only judges objective errors; aesthetic rules (one accent, one dark block, icon whitelist, header wording, 120 margin) are an opt-in project preset (`vk check --style`), off by default. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**33 个原语标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**35 个原语标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
 
 ![vk 标本册索引](docs/cover.png)
 
@@ -72,7 +72,7 @@ node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/�
 node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 node bin/vk.mjs shot page.html    # 出一张 1920×1080
 node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
-node bin/vk.mjs tags              # 33 个标签
+node bin/vk.mjs tags              # 全部标签（35 个）
 node bin/vk.mjs doc vk-code       # 某个标签的属性
 node bin/vk.mjs brief             # 33 行契约摘要（AI 入口）
 node bin/vk.mjs icons arrow       # 搜图标名

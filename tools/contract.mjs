@@ -131,7 +131,7 @@ function snapshotInPage({ tag, props }) {
     'grid-template-columns', 'row-gap', 'column-gap', 'list-style-type',
     'flex-wrap', 'align-items', 'align-self', 'justify-content', 'justify-items', 'flex-direction', 'flex-grow', 'grid-template-rows',
     'overflow', 'overflow-x', 'overflow-y', 'left', 'top', 'background-image', 'background-size',
-    '--vk-box-line', '--vk-box-bg', '--vk-mark-fill', '--vk-icon-size',
+    '--vk-box-line', '--vk-box-bg', '--vk-mark-fill', '--vk-icon-size', '--vk-pair-gap',
   ];
   const pathOf = (el, root) => {
     const parts = [];

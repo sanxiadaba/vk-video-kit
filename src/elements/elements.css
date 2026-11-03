@@ -311,6 +311,16 @@ vk-text[size='data']     { font-size: var(--vk-t-data); line-height: var(--vk-lh
 vk-text[size='hero']     { font-size: var(--vk-t-hero); line-height: var(--vk-lh-hero); letter-spacing: -0.035em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
 vk-text[size='mega']     { font-size: var(--vk-t-mega); line-height: var(--vk-lh-mega); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
 
+/* fit="width"：单行等宽文本塞满容器宽。
+   字号由运行期量出来的真实行宽决定（见 VkText._fitNow），这里只负责
+   "不许换行、不许被 measure 截窄"——否则量到的目标宽不是容器的宽。 */
+vk-text[fit='width'] {
+  white-space: nowrap;
+  text-wrap: nowrap;
+  overflow-wrap: normal;
+  max-width: none;
+}
+
 vk-text[weight='regular'] { font-weight: var(--vk-w-reg); }
 vk-text[weight='medium'] { font-weight: var(--vk-w-med); }
 vk-text[weight='bold'] { font-weight: var(--vk-w-bold); }

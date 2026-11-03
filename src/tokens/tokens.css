@@ -369,6 +369,34 @@
   --vk-panel-dark-line: var(--vk-ink-3);
   --vk-panel-dark-ink: var(--vk-sf-0);
 
+  /* 深色表面（vk-code / vk-term 的 surface="dark"）：
+     底是墨，抬起一档的窗头 / 沟槽是两档深灰；正文、元信息、语法、强调各有一档。
+     反白底上不能继续用浅色纸的焦点蓝（#1b3fd6 在墨底上只有 2.2:1），
+     所以焦点蓝单独给一档更亮的蓝；当前行是「更亮的强调」，不是同一块蓝的透明版。 */
+  --vk-dark-surface-0: #0b0f14;
+  --vk-dark-surface-1: #141a22;
+  --vk-dark-surface-2: #1c242f;
+  --vk-dark-fg: var(--vk-paper-sf-0);
+  --vk-dark-fg-2: #dbe3ee;
+  --vk-dark-meta: #b9c7d7;
+  --vk-dark-meta-2: #8b97a8;
+  --vk-dark-rule: #333d4b;
+  --vk-dark-tab: #4b5563;
+  --vk-dark-focus: #7aa2ff;
+  --vk-dark-focus-soft: rgba(122, 162, 255, 0.22);
+  --vk-dark-info: #c6d4f8;
+  --vk-dark-ok: #8fe3c0;
+  --vk-dark-err: #ffb4ad;
+  --vk-dark-warn: #f5c97a;
+  --vk-dark-syn-keyword: #f7f9fc;
+  --vk-dark-syn-string: #8fe3c0;
+  --vk-dark-syn-number: #dbe3ee;
+  --vk-dark-syn-function: #c6d4f8;
+  --vk-dark-syn-builtin: #c6d4f8;
+  --vk-dark-syn-operator: #c9d2df;
+  --vk-dark-syn-punct: #b9c7d7;
+  --vk-dark-syn-comment: #8b97a8;
+
   --vk-line-1: var(--vk-paper-line-1);
   --vk-line-2: var(--vk-paper-line-2);
   --vk-line-3: var(--vk-paper-line-3);
@@ -408,6 +436,15 @@
   /* diff 的整行底色：之前引用了两个不存在的 token，行底色一直是空的。 */
   --vk-add-row: var(--vk-add-paper-weak);
   --vk-del-row: var(--vk-del-paper-weak);
+}
+
+/* 纸就是白的。
+   浏览器默认背景虽然也是白，但"默认"必须是一条库里的声明：项目层要 tint
+   就自己写（unlayered 的作者样式永远压过本层），库绝不把浅灰当默认。
+   vk-page 宿主与内层画布都读同一个纸色，空文档里也不会出现第二种底。 */
+html,
+body {
+  background: var(--vk-paper-sf-0);
 }
 
 

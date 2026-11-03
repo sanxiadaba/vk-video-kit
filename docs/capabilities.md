@@ -40,6 +40,11 @@
 | 审计 preset · 一页一块深色（默认关） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 强调色 ≤1（默认关） | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 内容在 120 边距内（默认关） | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 并置 · vk-pair | `vk-pair.split`<br>`vk-pair.axis`<br>`vk-pair.axis-width`<br>`vk-pair.symbol`<br>`vk-pair.symbol-size`<br>`vk-pair.gap`<br>`vk-pair.orientation` | `specimen/vk-pair.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 文字 · 塞满一行 fit="width" | `vk-text.fit`<br>`vk-text.fit-min`<br>`vk-text.fit-max` | `specimen/vk-text.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 归属说明 · vk-caption | `vk-caption.for`<br>`vk-caption.anchor` | `specimen/vk-caption.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 代码窗 / 终端 · surface 与当前行 | `vk-term.surface`<br>`vk-code.surface`<br>`vk-term.current`<br>`vk-code.current` | `specimen/vk-term.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 纸 · 默认底色是纯白 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -259,6 +264,41 @@
 - 契约断言：`vk-page.align`
 - 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
 - 测试：`tests/batch-gh.test.mjs` · 「预设 · 内容落在 120 边距内（--style，覆盖层豁免）」
+
+### ✅ 并置 · vk-pair
+
+- 能力：两块内容左右（或上下）并置，中间一条 1–4px 的轴；split 决定左块占比，axis 可关掉轴，symbol 可在轴中点放 → / = / vs，也可什么都不放。两块宽度和 = 容器宽 - 2×gap，轴在 2×gap 沟槽的正中。
+- 契约断言：`vk-pair.split` · `vk-pair.axis` · `vk-pair.axis-width` · `vk-pair.symbol` · `vk-pair.symbol-size` · `vk-pair.gap` · `vk-pair.orientation`
+- 标本页：`_site/specimen/vk-pair.html` + 契约宿主 `_site/specimens/vk-pair.html`
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点」；`tests/batch-primitives.test.mjs` · 「vk-pair：symbol 的三种写法都出现，axis="none" 只剩空轴」
+
+### ✅ 文字 · 塞满一行 fit="width"
+
+- 能力：单行等宽文本按容器宽度自动缩放字号：fit="width" 时这一行恰好填满容器（测到差 ≤2px），fit-min / fit-max 是上下边界，fit-max 优先。不写 fit 时字号仍只由 size 档决定。
+- 契约断言：`vk-text.fit` · `vk-text.fit-min` · `vk-text.fit-max`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-text fit="width"：780px 容器差 ≤2px，fit-max 封顶」
+
+### ✅ 归属说明 · vk-caption
+
+- 能力：「你写的 / 编译器给的」这种归属说明：贴在目标块上方（anchor="above"）或下方（anchor="below"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。
+- 契约断言：`vk-caption.for` · `vk-caption.anchor`
+- 标本页：`_site/specimen/vk-caption.html` + 契约宿主 `_site/specimens/vk-caption.html`
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-caption：左边界对齐目标块首字符（above / below）」
+
+### ✅ 代码窗 / 终端 · surface 与当前行
+
+- 能力：surface="paper|dark|inset" 换的是整组窗材质变量：dark 是真正的深色底 + 反白文字，窗头、行号、语法、提示符、结果行一起适配；current 指的那一行在深色底上用更亮的蓝，不与该表面打架。
+- 契约断言：`vk-term.surface` · `vk-code.surface` · `vk-term.current` · `vk-code.current`
+- 标本页：`_site/specimen/vk-term.html` + 契约宿主 `_site/specimens/vk-term.html`
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-term / vk-code surface="dark"：反白底 + current 高亮同时成立」
+
+### ✅ 纸 · 默认底色是纯白
+
+- 能力：库的默认页面底色就是 #fff：html / body 与 vk-page 宿主、内层画布都是纯白，不把任何项目级 tint 当默认。项目层要灰底自己写（unlayered 作者样式永远压过库的层）。
+- 契约断言：`vk-page.align`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-page / body：空文档里的默认底色是纯白」
 
 ## 怎么判红
 

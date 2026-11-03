@@ -242,14 +242,72 @@ export class VkText extends VkElement {
     // 14.0：vk-stat 的"数值写法"搬到这里。排版（标签/单位放哪）归配方，
     // 而"52980 写成 52,980"是文本机制，跟着文字走。
     const format = this.getAttribute('format');
-    if (!format || format === 'none') return;
-    const raw = (this.textContent || '').trim();
-    if (!raw || this._formatted) return;
-    const next = formatNumber(raw, format);
-    if (next !== raw) {
-      this._formatted = true;
-      this.textContent = next;
+    if (format && format !== 'none') {
+      const raw = (this.textContent || '').trim();
+      if (raw && !this._formatted) {
+        const next = formatNumber(raw, format);
+        if (next !== raw) {
+          this._formatted = true;
+          this.textContent = next;
+        }
+      }
     }
+    // fit="width"：单行文本的"塞满一行"。控件字号仍是作者写的 size；
+    // 只有显式 fit 时才由运行期改写 inline font-size。
+    const fit = this.getAttribute('fit') === 'width';
+    if (fit) {
+      this.dataset.vkPlace = '';
+      this._fitNow();
+    } else {
+      delete this.dataset.vkPlace;
+      if (this._fitted) {
+        this.style.fontSize = '';
+        this.style.lineHeight = '';
+        this._fitted = false;
+      }
+    }
+  }
+
+  /** 排版一遍后按真实行宽重算；容器变宽 / 字体晚到时也会再进这里。 */
+  place() {
+    if (this.getAttribute('fit') === 'width') this._fitNow();
+  }
+
+  /**
+   * 量当前这一行的真实宽度（Range 的 client rect），按比例缩放字号。
+   *
+   * 只适用于单行等宽文本：CSS 在 vk-text[fit='width'] 上锁了 nowrap，
+   * 所以 Range 宽度就是整行宽度。缩放两次：第一次按比例，第二次吸收
+   * 字体 hinting / 小数像素的误差；目标与结果差 ≤ 2px。
+   */
+  _fitNow() {
+    if (!this.isConnected) return;
+    const target = this.clientWidth;
+    if (!target) return;
+    const min = numAttr(this, 'fit-min', { min: 1, max: 400, fallback: 12 });
+    const max = numAttr(this, 'fit-max', { min: 1, max: 400, fallback: 240 });
+    const measure = () => {
+      const range = document.createRange();
+      range.selectNodeContents(this);
+      const rects = [...range.getClientRects()].filter((r) => r.width > 0.5 && r.height > 0.5);
+      return rects.length ? Math.max(...rects.map((r) => r.width)) : 0;
+    };
+    const current = parseFloat(getComputedStyle(this).fontSize) || 0;
+    const line = measure();
+    if (!current || !line) return;
+    // fit-max 优先于 fit-min：两个边界写反时以 max 为准，避免出现"最小字号把行撑破"。
+    const clamp = (v) => Math.min(max, Math.max(min, v));
+    const next = clamp(current * (target / line));
+    if (Math.abs(next - current) < 0.01 && this._fitted) return;
+    this.style.fontSize = next.toFixed(2) + 'px';
+    this.style.lineHeight = '1.1';
+    this._fitted = true;
+
+    const line2 = measure();
+    if (!line2) return;
+    const applied = parseFloat(getComputedStyle(this).fontSize) || next;
+    const refined = clamp(applied * (target / line2));
+    if (Math.abs(refined - applied) > 0.01) this.style.fontSize = refined.toFixed(2) + 'px';
   }
 }
 

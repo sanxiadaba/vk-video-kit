@@ -141,6 +141,13 @@ export const PROBES = {
       why: 'w 是边注的宽度上限；标本目标两侧都有空间，200 与 320 都放得下。',
     },
   },
+  'vk-caption': {
+    for: {
+      values: ['#cap-a', '#cap-b'],
+      effect: { on: '.vk-caption', kind: 'geometry', prop: 'x', expect: { not: '0px' } },
+      why: '说明的左边界由目标首字符决定；两个目标横向错开 120px，换一个真实目标 x 必须跟着走。',
+    },
+  },
   'vk-edge': {
     via: {
       values: ['100,100;300,100'],
@@ -190,6 +197,11 @@ export const PROBES = {
     },
   },
   'vk-code': {
+    current: {
+      values: ['2'],
+      effect: { on: '.vk-line', kind: 'style', prop: 'background-color' },
+      why: 'current 指一行：与 vk-term 的 current 同一条视觉规则；标本默认指第 4 行，探针换到第 2 行。',
+    },
     highlight: {
       values: ['3'],
       effect: { on: '.vk-line', kind: 'style', prop: 'background-color' },
@@ -295,6 +307,21 @@ export const PROBES = {
       values: ['display', 'headline', 'caption', 'label', 'subhead', 'title', 'hero', 'mega'],
       why: 'data 是 body 的字号（40）+ 等宽字体，字号本来就不变；等宽由 tests/batch-ef.test.mjs 的旧名用例断言。',
     },
+    fit: {
+      values: ['width'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'font-size', expect: { not: '56px' }, skipVisual: true },
+      why: 'fit="width" 把这一行缩放到容器宽；标本里既有长句（会缩）也有 780px 的代码行（会放），两处都不该停在 body 56。',
+    },
+    'fit-min': {
+      values: ['96', '120'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
+      why: '780px 的代码行自然 fit 约 72，所以 96 / 120 都会把字号抬到恰好等于边界值。',
+    },
+    'fit-max': {
+      values: ['24', '32'],
+      effect: { on: 'vk-text', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
+      why: '长句在 1120 里的自然 fit 约 37.3，所以 24 / 32 都会把字号压到恰好等于边界值。',
+    },
     measure: {
       values: ['16', 'none'],
       effect: { on: 'vk-text', kind: 'style', prop: 'max-width' },
@@ -355,7 +382,11 @@ export const EFFECT_OVERRIDES = {
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
+  'vk-pair.symbol-size': '轴符号是装饰件（aria-hidden / data-meta），12–200 的极端字号会超出并置块的高度；符号大小与中点位置由 tests/batch-primitives.test.mjs 单独守。',
   'vk-text.size': 'display 160 在 888 高的标本台里必然换行并超出安全区；四档字号与行高由 tests/batch-ef.test.mjs 用短文本单独守。',
+  'vk-text.fit': 'fit 是为了"单行塞满"，字号可能被压到正文地板以下；填充精度由 tests/batch-primitives.test.mjs 的 780px 用例单独守。',
+  'vk-text.fit-min': '边界值会把字号钉在 48 / 56，标本里的长句会因此换行；字号是否恰好等于边界由 tests/batch-primitives.test.mjs 单独守。',
+  'vk-text.fit-max': '边界值会把 780px 的代码行压到 64 / 72，视觉审计只关心默认态；边界是否生效由 tests/batch-primitives.test.mjs 单独守。',
   'vk-compare.mode': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
   'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',

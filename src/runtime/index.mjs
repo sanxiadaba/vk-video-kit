@@ -12,6 +12,7 @@
 import { VK } from './base.mjs';
 import { defineElements } from './elements.mjs';
 import { defineLayout } from './layout.mjs';
+import { definePair } from './pair.mjs';
 import { defineCode } from './code.mjs';
 import { defineDiff } from './diff.mjs';
 import { defineComponents } from './components.mjs';
@@ -21,12 +22,14 @@ import { defineTimeline } from './timeline.mjs';
 import { defineOverlays } from './overlays.mjs';
 import { defineAnnotate } from './annotate.mjs';
 import { defineNote } from './note.mjs';
+import { defineCaption } from './caption.mjs';
 import { installAudit } from './audit.mjs';
 import { installDirector } from './director.mjs';
 import { installPose } from './pose.mjs';
 
 defineElements();
 defineLayout();
+definePair();
 defineCode();
 defineDiff();
 defineComponents();
@@ -37,6 +40,8 @@ defineTimeline();
 defineAnnotate();
 // 注解原语：边注 / 编号图例（不是气泡）。
 defineNote();
+// 归属说明：贴在块上（或下）的一行小字。
+defineCaption();
 defineOverlays();
 installAudit(VK);
 installDirector(VK);

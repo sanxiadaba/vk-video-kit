@@ -29,7 +29,7 @@ const MUTED_RATIO = LIMITS.contrastMuted;
 const LARGE_RATIO = LIMITS.contrastLarge;
 const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
-const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-annotate', 'vk-note']);
+const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-annotate', 'vk-note', 'vk-caption']);
 
 /** 旧页读旧地板：legacy 是"尺寸开关"，审计跟着它走，不另开一个开关。 */
 function limitsFor(stage) {
@@ -114,7 +114,7 @@ export function auditPage(root = document, options = {}) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note');
+    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-caption');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
     const inBleed = !!el.closest('.vk-page-bleed');
@@ -357,7 +357,7 @@ export function auditPage(root = document, options = {}) {
   // w 是硬宽：量出来必须等于写的数字（容忍 1.5px）。
   // 覆盖层除外：vk-pin 的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
   for (const el of stage.querySelectorAll('[w]')) {
-    if (el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note')) continue;
+    if (el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-caption')) continue;
     const raw = (el.getAttribute('w') || '').trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
     const cs = getComputedStyle(el);
@@ -564,7 +564,7 @@ export function metrics(root = document) {
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
-      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, [data-vk-overlay]'))
+      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-caption, [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -615,7 +615,7 @@ function bottomGap(holder, sr) {
 
   for (const el of holder.querySelectorAll('*')) {
     if (el.hasAttribute?.('data-vk-overlay')) continue;
-    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note')) continue;
+    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-caption')) continue;
     if (el.closest?.('svg')) continue;
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
