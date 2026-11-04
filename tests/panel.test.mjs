@@ -1,6 +1,5 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import { chromium } from 'playwright-core';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
@@ -12,6 +11,7 @@ import {
   DARK_TINT_TOKENS,
   PANEL_BASE_TOKEN,
   PANEL_HEADER_BASE_TOKEN,
+  readTokenCss,
   readHexTokens,
   rgbCss,
 } from './lib/surface-tokens.mjs';
@@ -26,7 +26,7 @@ import {
  *   5. 非法 tone / variant 在构建期报错，不静默失效。
  */
 
-const tokens = readHexTokens(fs.readFileSync('src/tokens/tokens.css', 'utf8'));
+const tokens = readHexTokens(readTokenCss());
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
 const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
 const opened = [];

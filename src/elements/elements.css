@@ -506,7 +506,7 @@ vk-label[variant='badge'] .vk-label {
   padding: 0 var(--vk-s2);
   border-radius: var(--vk-r-2);
   background: var(--vk-label-tone, var(--vk-ink-1));
-  color: #fff;
+  color: var(--vk-on-accent);
   font-family: var(--vk-font-mono);
   letter-spacing: 0;
 }

@@ -266,6 +266,72 @@ const ALIAS_ORDER = [...new Set(Object.values(ALIASES).map((a) => a.to))]
   .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
   .flatMap((to) => Object.keys(ALIASES).filter((alias) => ALIASES[alias].to === to));
 
+/* --------------------------------------------------------------- 主题标本页
+   同一块内容并排三次：三套主题只换颜色。这一页是主题层的相册；"几何逐项相等"
+   由 tests/theme-geometry.test.mjs 量包围盒与字号，不靠眼睛。 */
+const THEME_COLS = [
+  { id: 'paper', scene: '现在的样子' },
+  { id: 'graphite', scene: '长时间看' },
+  { id: 'blueprint', scene: '讲结构' },
+];
+
+/** 主题页自己的版式（作者 CSS）；色块直接引用 --vk-theme-*，就是文档里教的写法。
+ *  版面上所有字都 ≥ caption 48（tag 档用 vk-label 的 36）：门禁的"字号地板"不看
+ *  是不是标本页——这一页也得按交付标准排。 */
+const THEME_CSS = `<style>
+.theme-page{display:flex;flex-direction:column;gap:24px;height:100%}
+.theme-cols{display:grid;grid-template-columns:repeat(3,1fr);gap:32px;flex:1 1 auto;min-height:0}
+.theme-col{display:flex;flex-direction:column;gap:14px;min-width:0;overflow:hidden;padding:20px;border-radius:12px;background:var(--vk-paper-sf-0);border:1px solid var(--vk-line-1)}
+.theme-col-hd{display:flex;align-items:baseline;justify-content:space-between;gap:12px;min-width:0}
+.theme-name{font-family:var(--vk-font-mono);font-size:48px;line-height:1.1;font-weight:500;color:var(--vk-ink-1);white-space:nowrap}
+.theme-swatch{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:auto}
+.theme-sw{min-width:0}
+.theme-sw i{display:block;height:40px;border-radius:6px;border:1px solid var(--vk-line-1)}
+.theme-sw b{display:block;margin-top:6px;font-family:var(--vk-font-mono);font-size:48px;line-height:1.15;font-weight:400;color:var(--vk-ink-3);white-space:nowrap}
+</style>`;
+
+const SWATCHES = [
+  ['纸', '--vk-theme-paper'],
+  ['墨', '--vk-theme-ink-1'],
+  ['表面', '--vk-theme-surface-2'],
+  ['强调', '--vk-theme-accent'],
+];
+
+function themeColumn(c) {
+  return `<div class="theme-col" data-theme="${c.id}">
+      <div class="theme-col-hd"><span class="theme-name">${esc(c.id)}</span><vk-label variant="tag">${esc(c.scene)}</vk-label></div>
+      <vk-text size="headline">纸与墨</vk-text>
+      <vk-text size="body" ink="secondary">换纸，不换版。</vk-text>
+      <vk-stack direction="row" gap="xs" wrap>
+        <vk-label variant="chip" tone="ok">成立</vk-label>
+        <vk-label variant="chip" tone="warn">注意</vk-label>
+        <vk-label variant="chip" tone="err">失败</vk-label>
+      </vk-stack>
+      <vk-code chrome="min" mass="compact" lang="py" surface="dark" numbers="none" size="caption">def rank(x):</vk-code>
+      <div class="theme-swatch">
+${SWATCHES.map(([label, token]) => `        <div class="theme-sw"><i style="background:var(${token})"></i><b>${label}</b></div>`).join('\n')}
+      </div>
+    </div>`;
+}
+
+function themePage() {
+  const page = `<vk-page align="top" data-allow-void>
+  <div class="theme-page">
+    <div class="spec-hd">
+      <div class="spec-hd-l">
+        <a href="../index.html">← 索引</a><span class="spec-dot">·</span><span>主题</span><span class="spec-dot">·</span><span class="spec-name">三套调色板</span>
+      </div>
+      <div class="spec-hd-r"><span class="spec-no">只换颜色 · docs/themes.md</span></div>
+    </div>
+    <div class="spec-rule"></div>
+    <div class="theme-cols">
+${THEME_COLS.map(themeColumn).join('\n')}
+    </div>
+  </div>
+</vk-page>`;
+  return shell(`vk · 主题 · 三套调色板`, `<!-- vk:spec:${hash32(JSON.stringify(['theme', hash32(themePage.toString()), hash32(themeColumn.toString()), hash32(shell.toString()), hash32(RESET), hash32(THEME_CSS), hash32(JSON.stringify(SWATCHES)), JSON.stringify(THEME_COLS)]))} -->\n${THEME_CSS}\n${page}`);
+}
+
 /** 主帧最多展示的状态数：1 个状态示例 + 至多 2 个外观预设，合计 ≤3。 */
 const MAX_STATES = 3;
 
@@ -372,7 +438,7 @@ function indexPage(n) {
         <vk-text class="spec-card-name" size="label">${ORDER.length} 个组件</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
       </vk-stack>
-      <vk-stack direction="row" gap="md" align="baseline">${prev}${next}</vk-stack>
+      <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 3 套 →</vk-text></a>${prev}${next}</vk-stack>
     </vk-stack>
     <vk-box border="strong"></vk-box>
 ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
@@ -383,6 +449,8 @@ ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols=
 
 const files = new Map();
 ORDER.forEach((tag, i) => files.set(`${SITE}/specimen/${tag}.html`, specPage(tag, i + 1)));
+// 主题页：同一块内容并排展示三套主题（索引页链到它，不是孤儿页）。
+files.set(`${SITE}/specimen/theme.html`, themePage());
 // 旧名页：一页一句"已合并到谁"，并链回新标签；新标签页底部也链回来（不是孤儿页）。
 for (const alias of ALIAS_ORDER) files.set(`${SITE}/specimen/${alias}.html`, aliasPage(alias));
 for (let n = 1; n <= PAGES; n++) files.set(`${SITE}/${pageHref(n)}`, indexPage(n));

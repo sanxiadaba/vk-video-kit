@@ -519,7 +519,7 @@ vk-table tr[data-em] td:first-child{ box-shadow: inset calc(var(--vk-cs) * 4 / 5
   padding: 4px 12px;
   border-radius: 6px;
   background: var(--vk-err);
-  color: #fff;
+  color: var(--vk-on-accent);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);
   line-height: 1.2;
@@ -950,11 +950,11 @@ vk-steps {
   color: var(--vk-ink-3);
   overflow-wrap: anywhere;
 }
-/* 当前步：实心钴蓝。全库只有这一个「正在讲这里」的信号。 */
+/* 当前步：实心强调色。全库只有这一个「正在讲这里」的信号。 */
 .vk-step[data-state='current'] .vk-step-n {
   border-color: var(--vk-focus);
   background: var(--vk-focus);
-  color: #fff;
+  color: var(--vk-on-accent);
 }
 .vk-step[data-state='current'] .vk-step-t {
   color: var(--vk-ink-1);
@@ -1304,7 +1304,7 @@ vk-compare{ display: block; }.vk-cmp{
   width: var(--vk-line-w-strong);
   transform: translateX(-50%);
   background: var(--vk-surface-1);
-  box-shadow: 0 0 0 2px rgba(11, 15, 20, 0.12);
+  box-shadow: 0 0 0 2px var(--vk-theme-shadow-mid);
   z-index: 2;
 }.vk-cmp-la,
 .vk-cmp-lb{

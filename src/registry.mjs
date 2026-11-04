@@ -56,6 +56,7 @@ const ATTR_META = {
   to: { label: '终点', content: true },
 
   tone: { label: '色调', group: 'appearance' },
+  theme: { label: '主题（调色板）', group: 'appearance' },
   icon: { label: '图标', content: true },
   kind: { label: '形态', group: 'appearance' },
   place: { label: '位置', group: 'layout' },
@@ -245,7 +246,7 @@ const DEFAULTS = {
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
   'vk-cells': { cols: '0', mass: 'normal' },
   'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow', done: 'auto' },
-  'vk-page': { align: 'top' },
+  'vk-page': { align: 'top', theme: 'paper' },
   // 叠层：不写 tone 就是中性；可读性保护默认开。
   'vk-layer': { tone: 'neutral', readable: 'on' },
 };
@@ -967,9 +968,13 @@ export const TAGS = {
   'vk-page': {
     name: '页面',
     layer: 'page',
-    summary: '坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。',
+    summary:
+      '坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。theme 换整套调色板（只换颜色，不动尺寸）。',
     attrs: {
       'align': oneOf('top', 'center', 'bottom'),
+      /* 主题：三套内置调色板，见 src/tokens/themes.css。运行期镜像到 data-theme，
+         所以写在祖先上的 data-theme 也一样生效；不写 = paper。 */
+      'theme': oneOf('paper', 'graphite', 'blueprint'),
       /* 场次：一页 = 一段时间。dur 为 0 时就是一张静帧。 */
       'dur': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
       'beat': { ...num({ min: 0.1, max: 4, step: 0.05 }), motion: true },

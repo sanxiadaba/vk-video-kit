@@ -401,13 +401,15 @@ test('vk-page / body：空文档里的默认底色是纯白', async () => {
       body: css(document.body),
       host: css(page),
       canvas: css(page.querySelector('.vk-page')),
-      token: getComputedStyle(document.documentElement).getPropertyValue('--vk-paper-sf-0').trim(),
+      token: getComputedStyle(document.documentElement).getPropertyValue('--vk-theme-paper').trim(),
     };
   });
   assert.equal(r.body, 'rgb(255, 255, 255)', `body 默认底色应为纯白，实际 ${r.body}`);
   assert.equal(r.host, 'rgb(255, 255, 255)', `vk-page 宿主默认底色应为纯白，实际 ${r.host}`);
   assert.equal(r.canvas, 'rgb(255, 255, 255)', `vk-page 画布默认底色应为纯白，实际 ${r.canvas}`);
-  assert.equal(r.token, '#ffffff', '纸色 token 本身必须是 #ffffff');
+  // 15.x 之后纸色分两层：--vk-theme-paper 是字面值，--vk-paper-sf-0 是它的别名
+  // （别名读出来是 "var(--vk-theme-surface-0)"，所以这里断言主题层的字面值和真正落地的背景色）。
+  assert.equal(r.token, '#ffffff', '默认主题的纸色 token 必须是 #ffffff');
 });
 
 after(async () => {

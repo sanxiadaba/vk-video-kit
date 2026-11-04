@@ -1,8 +1,12 @@
 /* ============================================================================
    L0 · 值
    ----------------------------------------------------------------------------
-   这一层只放"数"：画多大、字多大、线多粗、颜色是什么。
+   这一层只放"数"：画多大、字多大、线多粗、间距多少。
    上层读它，不重新发明它。
+
+   颜色是另一个来源：这一层的颜色名（--vk-paper-* / --vk-ink-* / --vk-wash-* …）
+   全部 = var(--vk-theme-*)，值在 themes.css。本文件底部那一段专门讲为什么
+   颜色别名要同时挂在 `:root` 和 `[data-theme]` 上。
 
    观看条件：1920×1080 出片，观众在手机横屏上看，真实缩放 0.36–0.40（高度受限），按 0.38 设计。
    字号不是"能在 1920 上放下"，而是"在 1920×1080 缩到 730×410 时读得动"。
@@ -28,158 +32,8 @@
   --vk-grid-cols: 12;
   --vk-grid-gutter: 32px;
 
-  /* ---------------------------------------------------------------- 墨 */
-  --vk-paper-ink-1: #0b0f14; /* 18.9:1 主叙述 */
-  --vk-paper-ink-2: #333d4b; /* 10.7:1 次要 */
-  --vk-paper-ink-3: #4b5563; /*  7.6:1 元信息 */
-  --vk-paper-ink-4: #5c6674; /*  5.6:1 弱化，仍是可读的字 */
-
-  /* ---------------------------------------------------------------- 面阶 */
-  /* 五档明度。面用来「装东西」（panel / band / 底板），不是第二种主题。
-     相邻 ≥1.06，跨三档 ≥1.3；surface-1..3 是 sf-0..2 的别名。 */
-  --vk-paper-sf-0: #ffffff;
-  --vk-paper-sf-1: #f7f9fc;
-  --vk-paper-sf-2: #eef2f7;
-  --vk-paper-sf-3: #e2e9f2;
-  --vk-paper-sf-4: #cfd9e6;
-
-  --vk-paper-surface-1: var(--vk-paper-sf-0);
-  --vk-paper-surface-2: var(--vk-paper-sf-1);
-  --vk-paper-surface-3: var(--vk-paper-sf-2);
-
-  /* 语义淡底：每个语义色两档，做「面」的浓度，不是第二种主题。
-     · wash 极淡 —— 分区背景（和纸只差一档，够分开又不抢字）
-     · tint 稍深 —— 强调块（一块内容比周围重，但仍读得清）
-
-     两档都由该语义色与白（浅色版）/ 与墨 #0b0f14（深色版）按比例混合，不新增色相。
-     浅色两档与 --vk-info/-focus/-ok/-err/-warn 同色相；深色两档混入的是带一点冷调的墨，
-     色相随底色轻微偏移（≤16°），仍是同一支色。
-     固定 hex、alpha 恒为 1：出片时不会因为底下垫了什么而变色。
-
-     对比度（WCAG，正文墨 #0b0f14 / 深色块上的白字）：
-       浅色 wash：墨 16.6–16.8:1；tint：墨 13.2–13.7:1
-       深色 wash：白 17.3–17.9:1；tint：白 14.2–16.0:1
-     两档之间的亮度差：wash→tint 1.23–1.26:1；深色 1.12–1.21:1。 */
-  --vk-wash-info: #edeef0;
-  --vk-tint-info: #d4d6d9;
-  --vk-wash-focus: #eaeefb;
-  --vk-tint-focus: #cdd5f6;
-  --vk-wash-ok: #e9f2f0;
-  --vk-tint-ok: #c9deda;
-  --vk-wash-err: #f8ebeb;
-  --vk-tint-err: #eecfce;
-  --vk-wash-warn: #f4efe8;
-  --vk-tint-warn: #e5d7c7;
-
-  /* 深色块上的同一套淡底：给 vk-panel variant="dark" 用。
-     wash 是深色分区，tint 是深色强调块；白字对比度见上。 */
-  --vk-dark-wash-info: #13171e;
-  --vk-dark-tint-info: #1c222b;
-  --vk-dark-wash-focus: #0e1733;
-  --vk-dark-tint-focus: #11205a;
-  --vk-dark-wash-ok: #0b1e1f;
-  --vk-dark-tint-ok: #0b302c;
-  --vk-dark-wash-err: #261316;
-  --vk-dark-tint-err: #471718;
-  --vk-dark-wash-warn: #1f1911;
-  --vk-dark-tint-warn: #39250d;
-
-  /* 旧名保留一版：mark 就是 tint 的别名（14.0 之前没有任何样式引用它们）。
-     不复制色值，也不允许再出现另一组「标记色」。 */
-  --vk-mark-info: var(--vk-tint-info);
-  --vk-mark-focus: var(--vk-tint-focus);
-  --vk-mark-ok: var(--vk-tint-ok);
-  --vk-mark-err: var(--vk-tint-err);
-  --vk-mark-warn: var(--vk-tint-warn);
-
-  /* 顺序阶：把「数量」变成一个维度（bars / 密度） */
-  --vk-seq-1: #e9eefc;
-  --vk-seq-2: #c6d4f8;
-  --vk-seq-3: #93aeee;
-  --vk-seq-4: #5b7ee3;
-  --vk-seq-5: #1b3fd6;
-
-  /* 材质：影子永不用纯黑；scrim 是遮罩的墨色 */
-  --vk-scrim: #0b0f14;
-  --vk-elev-1: 0 1px 2px rgba(11, 15, 20, 0.06), 0 0 0 1px rgba(11, 15, 20, 0.04);
-  --vk-elev-2: 0 24px 64px -32px rgba(11, 15, 20, 0.24);
+  /* 画布网格的步长（参考线用），不是间距 */
   --vk-grid-step: 48px;
-
-  /* ---------------------------------------------------------------- 线 */
-  --vk-paper-line-1: #d8e2ee; /* 分区 */
-  --vk-paper-line-2: #edf2f8; /* 更弱的分区 */
-  --vk-paper-line-3: #b9c7d7; /* 看得见的发丝线 */
-  --vk-paper-line-strong: #8b97a8; /* 结构线 */
-
-  /* ---------------------------------------------------------------- 焦点 */
-  /* 蓝：当前/焦点。只在"现在讲到这里"时出现。 */
-  --vk-paper-focus: #1b3fd6;
-  --vk-paper-focus-soft: rgba(27, 63, 214, 0.16);
-  --vk-paper-focus-mark: rgba(27, 63, 214, 0.24);
-
-  /* ---------------------------------------------------------------- 标注 */
-  /* 石墨：作者加的注（em / callout / tag / ring / pin / 表格强调行）。
-     原来是洋红 #86198f —— 那是全库唯一的紫色，却没有语义上的理由：
-     一帧里只要出现圈选或强调行，就会凭空多出第二种彩色，
-     和"白纸 + 一个焦点蓝"打架（08/10 两帧实测：灰蓝的格子旁边飞一根洋红箭头）。
-     标注是"人写上去的字"，不是"状态"，所以用石墨；彩色只留给 focus 与 ok/warn/err。 */
-  --vk-paper-info: #3a4454;
-  --vk-paper-info-soft: rgba(58, 68, 84, 0.1);
-  --vk-paper-info-mark: rgba(58, 68, 84, 0.22);
-
-  /* ---------------------------------------------------------------- 语义 */
-  --vk-ok-paper: #0a6b57;
-  --vk-ok-paper-weak: rgba(10, 107, 87, 0.08);
-  --vk-ok-paper-mark: rgba(10, 107, 87, 0.22);
-
-  --vk-err-paper: #b3261e;
-  --vk-err-paper-weak: rgba(179, 38, 30, 0.08);
-  --vk-err-paper-mark: rgba(179, 38, 30, 0.2);
-
-  --vk-warn-paper: #8a4b00;
-  --vk-warn-paper-weak: rgba(138, 75, 0, 0.08);
-  --vk-warn-paper-mark: rgba(138, 75, 0, 0.22);
-
-  /* 语义色的「文字档」：同一组色相，深到能当正文（≥7:1）。
-     底/线/图标用上面的原色（3:1 就够），文字用这一组——
-     值和词表都来自同一个语义色，不是第二套调色板。
-     info / focus 原色已经过 7:1，直接别名，不复制色值。 */
-  --vk-info-ink: var(--vk-info);
-  --vk-focus-ink: var(--vk-focus);
-  --vk-ok-ink: #07544a; /* 8.6:1 */
-  --vk-err-ink: #8f1d17; /* 8.9:1 */
-  --vk-warn-ink: #6e3c00; /* 9.1:1 */
-
-  /* 修订：只给 diff / 文件树，不参与"对错" */
-  --vk-add-paper: #0f7a3d;
-  --vk-add-paper-weak: rgba(15, 122, 61, 0.1);
-  --vk-add-paper-mark: rgba(15, 122, 61, 0.22);
-
-  --vk-del-paper: #b3261e;
-  --vk-del-paper-weak: rgba(179, 38, 30, 0.09);
-  --vk-del-paper-mark: rgba(179, 38, 30, 0.2);
-
-  /* 三种棕并成一种：warn 与 mod 同值。数字已回墨阶，琥珀只表示"注意"。 */
-  --vk-mod-paper: #8a4b00;
-  --vk-mod-paper-weak: rgba(138, 90, 0, 0.1);
-  --vk-mod-paper-mark: rgba(138, 90, 0, 0.22);
-
-  /* ---------------------------------------------------------------- 语法 */
-  /* 钴蓝不参与语法。关键字与函数靠字重（600）区分，数字退到墨阶；
-     蓝只出现在"当前行 / 当前格 / 当前这一块"，全库只有一个含义：正在讲这里。 */
-  --vk-syn-keyword: #0b0f14;
-  --vk-syn-string: #0b6b4f;
-  --vk-syn-number: #333d4b;
-  --vk-syn-function: #0b0f14;
-  --vk-syn-builtin: #344054;
-  --vk-syn-operator: #475467;
-  --vk-syn-punct: #475467;
-  --vk-syn-comment: #667085;
-
-  /* 窗口三点：红 / 黄 / 绿，观众一眼认出"这是窗口"。 */
-  --vk-dot-red: #ff5f57;
-  --vk-dot-yellow: #febc2e;
-  --vk-dot-green: #28c840;
 
   /* ---------------------------------------------------------------- 连线 */
   --vk-edge-w: 4px;
@@ -191,6 +45,10 @@
   --vk-edge-gap: 36px;
   --vk-edge-min: 64px;
   --vk-edge-cap: 14px;
+
+  /* 线的粗细是尺寸，不随主题变 */
+  --vk-line-w: 2px;
+  --vk-line-w-strong: 4px;
 
   /* ---------------------------------------------------------------- 流程
      步骤条由组件画：编号方块一个尺寸，连接线一个长度。
@@ -350,9 +208,186 @@
   --vk-file-fs-compact: 36px;
   --vk-file-fs-normal: var(--vk-t-caption);
   --vk-file-fs-hero: 56px;
+}
 
-  /* ---------------------------------------------------------------- 材质：只有 paper
-     白纸是唯一材质。soft 是同一张纸上的极浅灰，用来分区，不是第二种主题。 */
+/* ---------------------------------------------------------------------------
+   颜色：最终名 = 主题 token
+   ---------------------------------------------------------------------------
+   为什么这一组的写法是 `:root, [data-theme]` 而不是只写 :root：
+
+   var() 在「声明它的元素」上求值。如果这些别名只写在 :root 上，
+   子树里挂 data-theme 只改了 --vk-theme-*，而继承下来的 --vk-paper-* 早就
+   按默认主题算好了，不会重新求值。把同一组别名也挂在 [data-theme] 上，
+   换主题的那一层就就地重算，后代继承到的是新值。
+
+   :root 也在选择器里，所以「只覆盖 --vk-theme-*」的自定义主题照旧生效
+   （见 themes.css 顶部的写法）。尺寸、字号、间距不在这里：它们不随主题走。
+   --------------------------------------------------------------------------- */
+
+:root,
+[data-theme] {
+  /* ---------------------------------------------------------------- 墨 */
+  /* 值在主题层（themes.css 的 --vk-theme-ink-*）。这里只是最终名：
+     页面、组件、审计都读这一层，主题换的是上游。
+     默认主题 paper 的对比度：18.9 / 11.0 / 7.6 / 5.8:1。 */
+  --vk-paper-ink-1: var(--vk-theme-ink-1); /* 主叙述 ≥7:1 */
+  --vk-paper-ink-2: var(--vk-theme-ink-2); /* 次要 ≥7:1 */
+  --vk-paper-ink-3: var(--vk-theme-ink-3); /* 元信息 ≥7:1 */
+  --vk-paper-ink-4: var(--vk-theme-ink-4); /* 弱化 ≥4.5:1，仍是可读的字 */
+
+  /* ---------------------------------------------------------------- 面阶 */
+  /* 五档明度。面用来「装东西」（panel / band / 底板），不是第二种主题。
+     surface-0 就是纸：主题里写成 var(--vk-theme-paper)，所以改纸会一起改它。
+     相邻 ≥1.06，跨三档 ≥1.3；surface-1..3 是 sf-0..2 的别名。 */
+  --vk-paper-sf-0: var(--vk-theme-surface-0);
+  --vk-paper-sf-1: var(--vk-theme-surface-1);
+  --vk-paper-sf-2: var(--vk-theme-surface-2);
+  --vk-paper-sf-3: var(--vk-theme-surface-3);
+  --vk-paper-sf-4: var(--vk-theme-surface-4);
+
+  --vk-paper-surface-1: var(--vk-paper-sf-0);
+  --vk-paper-surface-2: var(--vk-paper-sf-1);
+  --vk-paper-surface-3: var(--vk-paper-sf-2);
+
+  /* 语义淡底：每个语义色两档，做「面」的浓度，不是第二种主题。
+     · wash 极淡 —— 分区背景（和纸只差一档，够分开又不抢字）
+     · tint 稍深 —— 强调块（一块内容比周围重，但仍读得清）
+
+     值由主题层按同一条公式混出：wash = 纸 + 语义色 9%，tint = 22%
+     （深色版 = 墨 1 + 语义色 16% / 36%）。所以换主题时两档会跟着纸和墨走，
+     不需要第二套淡底。alpha 恒为 1：出片时不会因为底下垫了什么而变色。
+
+     默认主题 paper 的对比度（WCAG，正文墨 / 深色块上的白字）：
+       浅色 wash：墨 16.6–16.8:1；tint：墨 13.2–13.7:1
+       深色 wash：白 17.3–17.9:1；tint：白 14.2–16.0:1
+     两档之间的亮度差：wash→tint 1.23–1.26:1；深色 1.12–1.21:1。 */
+  --vk-wash-info: var(--vk-theme-wash-info);
+  --vk-tint-info: var(--vk-theme-tint-info);
+  --vk-wash-focus: var(--vk-theme-wash-focus);
+  --vk-tint-focus: var(--vk-theme-tint-focus);
+  --vk-wash-ok: var(--vk-theme-wash-ok);
+  --vk-tint-ok: var(--vk-theme-tint-ok);
+  --vk-wash-err: var(--vk-theme-wash-err);
+  --vk-tint-err: var(--vk-theme-tint-err);
+  --vk-wash-warn: var(--vk-theme-wash-warn);
+  --vk-tint-warn: var(--vk-theme-tint-warn);
+
+  /* 深色块上的同一套淡底：给 vk-panel variant="dark" 用。
+     wash 是深色分区，tint 是深色强调块；白字对比度见上。 */
+  --vk-dark-wash-info: var(--vk-theme-dark-wash-info);
+  --vk-dark-tint-info: var(--vk-theme-dark-tint-info);
+  --vk-dark-wash-focus: var(--vk-theme-dark-wash-focus);
+  --vk-dark-tint-focus: var(--vk-theme-dark-tint-focus);
+  --vk-dark-wash-ok: var(--vk-theme-dark-wash-ok);
+  --vk-dark-tint-ok: var(--vk-theme-dark-tint-ok);
+  --vk-dark-wash-err: var(--vk-theme-dark-wash-err);
+  --vk-dark-tint-err: var(--vk-theme-dark-tint-err);
+  --vk-dark-wash-warn: var(--vk-theme-dark-wash-warn);
+  --vk-dark-tint-warn: var(--vk-theme-dark-tint-warn);
+
+  /* 旧名保留一版：mark 就是 tint 的别名（14.0 之前没有任何样式引用它们）。
+     不复制色值，也不允许再出现另一组「标记色」。 */
+  --vk-mark-info: var(--vk-tint-info);
+  --vk-mark-focus: var(--vk-tint-focus);
+  --vk-mark-ok: var(--vk-tint-ok);
+  --vk-mark-err: var(--vk-tint-err);
+  --vk-mark-warn: var(--vk-tint-warn);
+
+  /* 顺序阶：把「数量」变成一个维度（bars / 密度）。
+     五档由主题给的同一支色相渐深，最后一档就是强调色。 */
+  --vk-seq-1: var(--vk-theme-seq-1);
+  --vk-seq-2: var(--vk-theme-seq-2);
+  --vk-seq-3: var(--vk-theme-seq-3);
+  --vk-seq-4: var(--vk-theme-seq-4);
+  --vk-seq-5: var(--vk-theme-seq-5);
+
+  /* 材质：影子永不用纯黑；scrim 是遮罩的墨色。
+     影的 rgb 跟主题的墨 1 走，alpha 固定：石墨主题的影子不会是冷蓝的。 */
+  --vk-scrim: var(--vk-theme-scrim);
+  --vk-elev-1: 0 1px 2px var(--vk-theme-shadow-soft), 0 0 0 1px var(--vk-theme-shadow-hair);
+  --vk-elev-2: 0 24px 64px -32px var(--vk-theme-shadow-deep);
+
+  /* ---------------------------------------------------------------- 线 */
+  --vk-paper-line-1: var(--vk-theme-line-1); /* 分区 */
+  --vk-paper-line-2: var(--vk-theme-line-2); /* 更弱的分区 */
+  --vk-paper-line-3: var(--vk-theme-line-3); /* 看得见的发丝线 */
+  --vk-paper-line-strong: var(--vk-theme-line-strong); /* 结构线 */
+
+  /* ---------------------------------------------------------------- 焦点 */
+  /* 蓝：当前/焦点。只在"现在讲到这里"时出现。
+     主题把这一支叫 accent：paper 钴蓝 / graphite 琥珀 / blueprint 亮蓝。
+     三个名字（focus / accent / 焦点色）是同一个值，不是三种颜色。 */
+  --vk-paper-focus: var(--vk-theme-accent);
+  --vk-paper-focus-soft: var(--vk-theme-accent-soft);
+  --vk-paper-focus-mark: var(--vk-theme-accent-mark);
+
+  /* ---------------------------------------------------------------- 标注 */
+  /* 石墨：作者加的注（em / callout / tag / ring / pin / 表格强调行）。
+     原来是洋红 #86198f —— 那是全库唯一的紫色，却没有语义上的理由：
+     一帧里只要出现圈选或强调行，就会凭空多出第二种彩色，
+     和"白纸 + 一个焦点蓝"打架（08/10 两帧实测：灰蓝的格子旁边飞一根洋红箭头）。
+     标注是"人写上去的字"，不是"状态"，所以用石墨；彩色只留给 focus 与 ok/warn/err。 */
+  --vk-paper-info: var(--vk-theme-info);
+  --vk-paper-info-soft: var(--vk-theme-info-soft);
+  --vk-paper-info-mark: var(--vk-theme-info-mark);
+
+  /* ---------------------------------------------------------------- 语义 */
+  --vk-ok-paper: var(--vk-theme-ok);
+  --vk-ok-paper-weak: var(--vk-theme-ok-weak);
+  --vk-ok-paper-mark: var(--vk-theme-ok-mark);
+
+  --vk-err-paper: var(--vk-theme-err);
+  --vk-err-paper-weak: var(--vk-theme-err-weak);
+  --vk-err-paper-mark: var(--vk-theme-err-mark);
+
+  --vk-warn-paper: var(--vk-theme-warn);
+  --vk-warn-paper-weak: var(--vk-theme-warn-weak);
+  --vk-warn-paper-mark: var(--vk-theme-warn-mark);
+
+  /* 语义色的「文字档」：同一组色相，深到能当正文（≥7:1）。
+     底/线/图标用上面的原色（3:1 就够），文字用这一组——
+     值和词表都来自同一个语义色，不是第二套调色板。
+     info / focus 原色已经过 7:1，直接别名，不复制色值。 */
+  --vk-info-ink: var(--vk-info);
+  --vk-focus-ink: var(--vk-focus);
+  --vk-ok-ink: var(--vk-theme-ok-ink);
+  --vk-err-ink: var(--vk-theme-err-ink);
+  --vk-warn-ink: var(--vk-theme-warn-ink);
+
+  /* 修订：只给 diff / 文件树，不参与"对错" */
+  --vk-add-paper: var(--vk-theme-add);
+  --vk-add-paper-weak: var(--vk-theme-add-weak);
+  --vk-add-paper-mark: var(--vk-theme-add-mark);
+
+  --vk-del-paper: var(--vk-theme-del);
+  --vk-del-paper-weak: var(--vk-theme-del-weak);
+  --vk-del-paper-mark: var(--vk-theme-del-mark);
+
+  /* 三种棕并成一种：warn 与 mod 同值。数字已回墨阶，琥珀只表示"注意"。 */
+  --vk-mod-paper: var(--vk-theme-mod);
+  --vk-mod-paper-weak: var(--vk-theme-mod-weak);
+  --vk-mod-paper-mark: var(--vk-theme-mod-mark);
+
+  /* ---------------------------------------------------------------- 语法 */
+  /* 钴蓝不参与语法。关键字与函数靠字重（600）区分，数字退到墨阶；
+     蓝只出现在"当前行 / 当前格 / 当前这一块"，全库只有一个含义：正在讲这里。 */
+  --vk-syn-keyword: var(--vk-theme-ink-1);
+  --vk-syn-string: var(--vk-theme-syn-string);
+  --vk-syn-number: var(--vk-theme-ink-2);
+  --vk-syn-function: var(--vk-theme-ink-1);
+  --vk-syn-builtin: var(--vk-theme-syn-builtin);
+  --vk-syn-operator: var(--vk-theme-syn-operator);
+  --vk-syn-punct: var(--vk-theme-syn-punct);
+  --vk-syn-comment: var(--vk-theme-syn-comment);
+
+  /* 窗口三点：红 / 黄 / 绿，观众一眼认出"这是窗口"。 */
+  --vk-dot-red: var(--vk-theme-dot-red);
+  --vk-dot-yellow: var(--vk-theme-dot-yellow);
+  --vk-dot-green: var(--vk-theme-dot-green);
+
+  /* ---------------------------------------------------------------- 材质别名
+     页面/组件平时写的是这两个短名（--vk-ink-1 / --vk-sf-0），它们在每套主题里
+     都等于同一张纸上的墨与面；换主题时跟着走，不是另一套命名。 */
   --vk-ink-1: var(--vk-paper-ink-1);
   --vk-ink-2: var(--vk-paper-ink-2);
   --vk-ink-3: var(--vk-paper-ink-3);
@@ -376,43 +411,44 @@
 
   /* 深色表面（vk-code / vk-term 的 surface="dark"）：
      底是墨，抬起一档的窗头 / 沟槽是两档深灰；正文、元信息、语法、强调各有一档。
-     反白底上不能继续用浅色纸的焦点蓝（#1b3fd6 在墨底上只有 2.2:1），
-     所以焦点蓝单独给一档更亮的蓝；当前行是「更亮的强调」，不是同一块蓝的透明版。 */
-  --vk-dark-surface-0: #0b0f14;
-  --vk-dark-surface-1: #141a22;
-  --vk-dark-surface-2: #1c242f;
-  --vk-dark-fg: var(--vk-paper-sf-0);
-  --vk-dark-fg-2: #dbe3ee;
-  --vk-dark-meta: #b9c7d7;
-  --vk-dark-meta-2: #8b97a8;
-  --vk-dark-rule: #333d4b;
-  --vk-dark-tab: #4b5563;
-  --vk-dark-focus: #7aa2ff;
-  --vk-dark-focus-soft: rgba(122, 162, 255, 0.22);
-  --vk-dark-info: #c6d4f8;
-  --vk-dark-ok: #8fe3c0;
-  --vk-dark-err: #ffb4ad;
-  --vk-dark-warn: #f5c97a;
-  --vk-dark-syn-keyword: #f7f9fc;
-  --vk-dark-syn-string: #8fe3c0;
-  --vk-dark-syn-number: #dbe3ee;
-  --vk-dark-syn-function: #c6d4f8;
-  --vk-dark-syn-builtin: #c6d4f8;
-  --vk-dark-syn-operator: #c9d2df;
-  --vk-dark-syn-punct: #b9c7d7;
-  --vk-dark-syn-comment: #8b97a8;
+     反白底上不能继续用浅色纸的焦点蓝（paper 的 #1b3fd6 在墨底上只有 2.2:1），
+     所以焦点蓝单独一档更亮的蓝（主题里的 code-accent）；当前行是「更亮的强调」，
+     不是同一块蓝的透明版。 */
+  --vk-dark-surface-0: var(--vk-theme-code-bg);
+  --vk-dark-surface-1: var(--vk-theme-code-bg-1);
+  --vk-dark-surface-2: var(--vk-theme-code-bg-2);
+  --vk-dark-fg: var(--vk-theme-code-fg);
+  --vk-dark-fg-2: var(--vk-theme-code-fg-2);
+  --vk-dark-meta: var(--vk-theme-code-meta);
+  --vk-dark-meta-2: var(--vk-theme-code-meta-2);
+  --vk-dark-rule: var(--vk-theme-code-rule);
+  --vk-dark-tab: var(--vk-theme-code-tab);
+  --vk-dark-focus: var(--vk-theme-code-accent);
+  --vk-dark-focus-soft: var(--vk-theme-code-accent-soft);
+  --vk-dark-info: var(--vk-theme-code-info);
+  --vk-dark-ok: var(--vk-theme-code-ok);
+  --vk-dark-err: var(--vk-theme-code-err);
+  --vk-dark-warn: var(--vk-theme-code-warn);
+  --vk-dark-syn-keyword: var(--vk-theme-code-syn-keyword);
+  --vk-dark-syn-string: var(--vk-theme-code-ok);
+  --vk-dark-syn-number: var(--vk-theme-code-fg-2);
+  --vk-dark-syn-function: var(--vk-theme-code-info);
+  --vk-dark-syn-builtin: var(--vk-theme-code-info);
+  --vk-dark-syn-operator: var(--vk-theme-code-syn-operator);
+  --vk-dark-syn-punct: var(--vk-theme-code-meta);
+  --vk-dark-syn-comment: var(--vk-theme-code-meta-2);
 
   --vk-line-1: var(--vk-paper-line-1);
   --vk-line-2: var(--vk-paper-line-2);
   --vk-line-3: var(--vk-paper-line-3);
   --vk-line-strong: var(--vk-paper-line-strong);
-  --vk-line-w: 2px;
-  --vk-line-w-strong: 4px;
 
   --vk-focus: var(--vk-paper-focus);
   --vk-focus-soft: var(--vk-paper-focus-soft);
   --vk-focus-mark: var(--vk-paper-focus-mark);
   --vk-focus-line: var(--vk-paper-focus);
+  /* 实色块上的反白字：不是随手写的 #fff，是主题给的那一档（三套都是白）。 */
+  --vk-on-accent: var(--vk-theme-on-accent);
 
   --vk-info: var(--vk-paper-info);
   --vk-info-soft: var(--vk-paper-info-soft);

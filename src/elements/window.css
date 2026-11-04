@@ -18,7 +18,7 @@
   --vk-win-edge: var(--vk-line-1);
   --vk-win-tab-line: var(--vk-line-3);
 
-  --vk-win-hl-bg: rgba(27, 63, 214, 0.12);
+  --vk-win-hl-bg: var(--vk-theme-accent-hl);
   --vk-win-hl-line: var(--vk-focus-line);
 
   --vk-win-k: var(--vk-syn-keyword);

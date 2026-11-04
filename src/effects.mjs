@@ -138,6 +138,8 @@ export const EFFECTS = {
 
   'vk-page': {
     align: { on: 'vk-page', kind: 'style', prop: 'justify-content' },
+    // 主题镜像到 data-theme：契约读得到"改了就变"，颜色本身由 tests/theme.test.mjs 量。
+    theme: { on: 'vk-page', kind: 'attr', prop: 'data-theme', expectFromValue: 'raw' },
   },
 
   'vk-text': {

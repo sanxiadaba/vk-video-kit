@@ -61,6 +61,7 @@
 | 构图 · 铺满 fill | `vk-img.fill` | `specimen/vk-img.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 构图 · 叠层 vk-layer | `vk-layer.readable` | `specimen/vk-layer.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 颜色 · 五档底 surface | `vk-panel.surface` | `specimen/vk-panel.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
+| 主题 · 三套调色板 | `vk-page.theme` | `specimen/vk-page.html` | `tests/theme-tokens.test.mjs`<br>`tests/theme-geometry.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -434,6 +435,13 @@
 - 契约断言：`vk-panel.surface`
 - 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
 - 测试：`tests/mechanism.test.mjs` · 「五档底色 surface：paper / wash / tint / dark / accent 的底与字色」
+
+### ✅ 主题 · 三套调色板
+
+- 能力：一套主题 = 98 个 --vk-theme-*：纸 / 四档墨 / 强调 / 语义 / 五档表面 / 线 / 两档淡底 × 浅深 / 代码底与字。挂在 vk-page（theme 属性）或 body / 任意祖先（data-theme）上；换主题只换颜色，字号、间距、包围盒逐项不变。三套内置主题（paper / graphite / blueprint）的正文对比度都 ≥ 7:1；默认主题与 15.x 逐像素相同。
+- 契约断言：`vk-page.theme`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/theme-tokens.test.mjs` · 「主题 · 三套主题的正文对比度 ≥ 7:1」；`tests/theme-tokens.test.mjs` · 「主题 · 三套主题都完整（98 个 --vk-theme-*，不靠继承）」；`tests/theme-geometry.test.mjs` · 「主题 · 三套主题下同一页面的几何与字号逐项相等」
 
 ## 怎么判红
 

@@ -155,7 +155,7 @@ vk-asm { display: block; }
   box-shadow: inset calc(var(--vk-cs) * 4 / 48) 0 0 var(--vk-focus);
 }
 .vk-asm-row.is-hl .vk-asm-a { color: var(--vk-focus); font-weight: var(--vk-w-med); }
-.vk-asm-row.is-hl .vk-asm-order { background: var(--vk-focus); color: #fff; box-shadow: 0 0 0 calc(var(--vk-cs) * 4 / 48) var(--vk-surface-1); }
+.vk-asm-row.is-hl .vk-asm-order { background: var(--vk-focus); color: var(--vk-on-accent); box-shadow: 0 0 0 calc(var(--vk-cs) * 4 / 48) var(--vk-surface-1); }
 .vk-asm-row.is-dim { opacity: var(--vk-dim); }
 .vk-asm[data-mass='compact'] .vk-asm-row { min-height: calc(var(--vk-cs) * 48 / 48); }
 .vk-asm[data-mass='compact'] .vk-asm-cols-hd { min-height: calc(var(--vk-cs) * 36 / 48); }

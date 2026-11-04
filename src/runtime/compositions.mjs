@@ -2,6 +2,9 @@ import { VkElement, define, takeSlot, fillSlot } from './base.mjs';
 
 /* ------------------------------------------------------------------- page */
 
+/** 三套内置主题。名字与 src/tokens/themes.css 的 [data-theme] 一一对应。 */
+const THEMES = new Set(['paper', 'graphite', 'blueprint']);
+
 /**
  * 一页 1080p 的画布工具：固定 1920×1080，按容器宽度等比缩放。
  */
@@ -17,6 +20,13 @@ export class VkPage extends VkElement {
     const h = 1080;
     const rawAlign = this.getAttribute('align');
     const align = rawAlign === 'center' || rawAlign === 'bottom' ? rawAlign : 'top';
+
+    // 主题：只换颜色，不改尺寸。写在宿主上的 data-theme 让整棵子树读同一套
+    // --vk-theme-*；不写 theme 就继承外层（body / html）的主题。
+    // 无效值由构建期拦（registry 的枚举），运行期退回"不写"。
+    const rawTheme = (this.getAttribute('theme') || '').trim();
+    if (THEMES.has(rawTheme)) this.dataset.theme = rawTheme;
+    else if (this.dataset.theme) delete this.dataset.theme;
 
     if (!this._shell) {
       const body = takeSlot(this);

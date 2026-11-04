@@ -268,8 +268,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 ### L5 页面 · 一整张 1920×1080 的画布
 
-- **`vk-page`** · 页面 — 坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。
-  - 属性：`align` · `dur` · `beat` · `poster`
+- **`vk-page`** · 页面 — 坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。theme 换整套调色板（只换颜色，不动尺寸）。
+  - 属性：`align` · `theme` · `dur` · `beat` · `poster`
   - 例：`<vk-page align="center">`
 
 ### 旧名（已合并，仍可用）
@@ -328,3 +328,12 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **兼容开关**：`<body class="vk-legacy">` 只切尺寸——回到 14.x 的字号（160 / 96 / 40 / 28）与窗头（40 / 56 / 72），审计地板跟着切回 28 / 40 / 96；panel 的底 / 框、kicker 的色条、grid 沟槽不跟着回退。
 - **库 vs 项目**：库只判客观错误；强调色 ≤1 / 深色块 ≤1 / 页眉措辞 / 120 边距是项目层 preset，默认关，用 `vk check --style` 或 `tools/style-preset.mjs` 打开（见 `docs/style-preset.md`）。图标白名单只是提醒。
 
+## 13 · 主题（16.0 · 调色板）
+
+- **三套内置主题**：`paper`（默认，纯白 / 冷墨 / 钴蓝，与 15.x 逐像素相同）· `graphite`（近白 / 暖墨 / 琥珀，适合长时间看）· `blueprint`（极浅蓝 / 深蓝墨 / 亮蓝，适合讲结构）。
+- **怎么挂**：`<vk-page theme="graphite">`，或 `<body data-theme="graphite">`，或任意祖先 `<div data-theme="blueprint">`（只影响这一块）。不写 = paper。
+- **只换颜色**：主题不动字号 / 行距 / 间距 / 圆角 / 线宽。三套主题下同一页面的包围盒与字号逐项相等（`tests/theme-geometry.test.mjs`）。
+- **对比度**：三套主题的正文都 ≥ 7:1，`ink="muted"` 标注 ≥ 4.5:1（`tests/theme-tokens.test.mjs`）。不要为了配色把墨提亮：主题里已经算好了。
+- **作者不写颜色**：页面里不出现 hex / rgba。要强调用 `tone` / `act` / `surface`，要换一整套色就覆盖 `--vk-theme-*`（或在带 `data-theme` 的元素上覆盖）。
+- **自定义主题**：复制一套 `[data-theme="…"]` 块改值；规则（wash 9% / tint 22% / 深 wash 16% / 深 tint 36%）见 `src/tokens/themes.css` 顶部与 `docs/themes.md`。
+- **别做的事**：一帧只用一套主题；局部 `data-theme` 只给「对照」这类明确的构图（标本册的 theme 页是例外）。

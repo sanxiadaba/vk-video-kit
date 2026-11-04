@@ -4,7 +4,7 @@ import fs from 'node:fs';
 import { chromium } from 'playwright-core';
 import { startServer } from '../cli/serve.mjs';
 import { transformHtml } from '../src/highlight.mjs';
-import { WASH_TOKENS, readHexTokens, rgbCss } from './lib/surface-tokens.mjs';
+import { WASH_TOKENS, readTokenCss, readHexTokens, rgbCss } from './lib/surface-tokens.mjs';
 
 /**
  * 批次 E + F：版式系统与组件默认值。
@@ -18,7 +18,7 @@ import { WASH_TOKENS, readHexTokens, rgbCss } from './lib/surface-tokens.mjs';
  * F3 kicker 是工序进度（工序 3/5 · 汇编），4px 焦点色条；不许写文件名 / 页号。
  */
 
-const tokens = readHexTokens(fs.readFileSync('src/tokens/tokens.css', 'utf8'));
+const tokens = readHexTokens(readTokenCss());
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
 const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
 const opened = [];

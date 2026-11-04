@@ -941,6 +941,29 @@
           "name": "五档底色 surface：paper / wash / tint / dark / accent 的底与字色"
         }
       ]
+    },
+    {
+      "id": "theme-system",
+      "name": "主题 · 三套调色板",
+      "what": "一套主题 = 98 个 --vk-theme-*：纸 / 四档墨 / 强调 / 语义 / 五档表面 / 线 / 两档淡底 × 浅深 / 代码底与字。挂在 vk-page（theme 属性）或 body / 任意祖先（data-theme）上；换主题只换颜色，字号、间距、包围盒逐项不变。三套内置主题（paper / graphite / blueprint）的正文对比度都 ≥ 7:1；默认主题与 15.x 逐像素相同。",
+      "contracts": [
+        "vk-page.theme"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/theme-tokens.test.mjs",
+          "name": "主题 · 三套主题的正文对比度 ≥ 7:1"
+        },
+        {
+          "file": "tests/theme-tokens.test.mjs",
+          "name": "主题 · 三套主题都完整（98 个 --vk-theme-*，不靠继承）"
+        },
+        {
+          "file": "tests/theme-geometry.test.mjs",
+          "name": "主题 · 三套主题下同一页面的几何与字号逐项相等"
+        }
+      ]
     }
   ]
 }

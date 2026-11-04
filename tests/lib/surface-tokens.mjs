@@ -1,15 +1,31 @@
 /**
  * 表面色阶的测试侧读数（不启动浏览器）。
  *
- * 只做两件事：
- *  1. 从 src/tokens/tokens.css 读「语义淡底」的实色值；
- *  2. 把 vk-panel 的 variant × tone → 底色的规范写在这里。
+ * 做三件事：
+ *  1. 从 src/tokens/themes.css + src/tokens/tokens.css 读颜色；
+ *  2. 把 var() 别名链解开（最终名 → 主题 token），默认主题 = paper；
+ *  3. 把 vk-panel 的 variant × tone → 底色的规范写在这里。
  *
- * 第 2 条故意与 CSS 分开写：如果 CSS 改错了，测试读的是规范而不是实现。
+ * 第 3 条故意与 CSS 分开写：如果 CSS 改错了，测试读的是规范而不是实现。
  * 改映射必须同时改 src/elements/elements.css 与本文件——两边不一致就红。
+ *
+ * 为什么现在要解 var()：15.x 之前颜色是写死的 hex，直接正则抓；
+ * 现在最终名全部 = var(--vk-theme-*)，literal 只在主题层。
+ * 解链用的是「最终计算值」的语义：:root 给默认，[data-theme] 覆盖。
  */
+import fs from 'node:fs';
 
 export const TONES = ['info', 'focus', 'ok', 'err', 'warn'];
+
+/** 三套内置主题：名字必须与 src/tokens/themes.css 的 [data-theme] 一致。 */
+export const THEME_NAMES = ['paper', 'graphite', 'blueprint'];
+
+/** 两个文件是一层：主题（literal）+ 值（别名）。读的时候按这个顺序拼。 */
+export const THEME_FILES = ['src/tokens/themes.css', 'src/tokens/tokens.css'];
+
+export function readTokenCss() {
+  return THEME_FILES.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+}
 
 /** 语义色的实色：文字/图标用文字档，面用这一组原色。 */
 export const SOLID_TOKENS = {
@@ -47,21 +63,91 @@ export const PANEL_HEADER_BASE_TOKEN = {
   dark: '--vk-ink-2',
 };
 
-/** @returns {Record<string,string>} 自定义属性名 → 6 位 hex */
-export function readHexTokens(css) {
-  const out = {};
-  const re = /(--vk-[a-z0-9-]+)\s*:\s*(#[0-9a-fA-F]{6})\s*;/g;
-  let m;
-  while ((m = re.exec(css))) out[m[1]] = m[2].toLowerCase();
+/* --------------------------------------------------------------- 解析 */
+
+const stripComments = (css) => css.replace(/\/\*[\s\S]*?\*\//g, '');
+
+/** 选择器块：[{ selectors: string[], decls: Map }]。token 文件里没有嵌套规则。 */
+export function readBlocks(css) {
+  const out = [];
+  const text = stripComments(css);
+  for (const m of text.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+    const selectors = m[1]
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    const decls = new Map();
+    for (const d of m[2].matchAll(/(--vk-[\w-]+)\s*:\s*([^;]+);/g)) decls.set(d[1], d[2].trim());
+    if (decls.size) out.push({ selectors, decls });
+  }
   return out;
 }
+
+const isDefault = (sel) => sel === ':root' || sel === '[data-theme="paper"]';
+const isTheme = (sel, theme) => sel === `[data-theme="${theme}"]`;
+
+/**
+ * 一套主题的最终声明表：:root（默认 = paper）+ 该主题的覆盖块。
+ * @returns {Map<string,string>} 未解 var() 的原始值
+ */
+export function readVariables(css, theme = 'paper') {
+  const blocks = readBlocks(css);
+  const map = new Map();
+  for (const b of blocks) {
+    if (!b.selectors.some(isDefault)) continue;
+    for (const [k, v] of b.decls) map.set(k, v);
+  }
+  if (theme !== 'paper') {
+    for (const b of blocks) {
+      if (!b.selectors.some((s) => isTheme(s, theme))) continue;
+      for (const [k, v] of b.decls) map.set(k, v);
+    }
+  }
+  return map;
+}
+
+/** 解开 var() 链；解不开（缺 token）时返回 null，让测试报红而不是静默。 */
+export function resolveVar(map, name, depth = 0) {
+  const raw = map.get(name);
+  if (raw === undefined) return null;
+  const alias = raw.match(/^var\(\s*(--vk-[\w-]+)\s*(?:,[^)]*)?\)$/);
+  if (alias) {
+    if (depth > 8) throw new Error(`var() 链太深：${name}`);
+    return resolveVar(map, alias[1], depth + 1);
+  }
+  return raw;
+}
+
+/** 所有能解成 hex 的自定义属性（旧接口：测试只关心最终色值）。 */
+export function readHexTokens(css, { theme = 'paper' } = {}) {
+  const map = readVariables(css, theme);
+  const out = {};
+  for (const name of map.keys()) {
+    const v = resolveVar(map, name);
+    if (v && /^#[0-9a-fA-F]{6}$/.test(v)) out[name] = v.toLowerCase();
+  }
+  return out;
+}
+
+/** 所有颜色（hex + rgba），给主题测试用。 */
+export function readColorTokens(css, { theme = 'paper' } = {}) {
+  const map = readVariables(css, theme);
+  const out = {};
+  for (const name of map.keys()) {
+    const v = resolveVar(map, name);
+    if (v && /^(#[0-9a-fA-F]{6}|rgba?\([^)]+\))$/.test(v)) out[name] = v;
+  }
+  return out;
+}
+
+/* --------------------------------------------------------------- 色值 */
 
 /** 所有 --vk-*wash* / --vk-*tint* 自定义属性（用来抓「野生色」）。 */
 export function surfaceTokenNames(css) {
   const names = new Set();
   const re = /(--vk-(?:dark-)?(?:wash|tint)-[a-z0-9-]+)\s*:/g;
   let m;
-  while ((m = re.exec(css))) names.add(m[1]);
+  while ((m = re.exec(stripComments(css)))) names.add(m[1]);
   return names;
 }
 
@@ -72,6 +158,24 @@ export const rgb = (hex) => [
 ];
 
 export const rgbCss = (hex) => `rgb(${rgb(hex).join(', ')})`;
+
+/** 读 rgba(...) 的 { rgb: [r,g,b], rgbHex, a }；hex 也行（a=1）。 */
+export function parseColor(value) {
+  if (/^#[0-9a-fA-F]{6}$/.test(value)) return { rgb: rgb(value), rgbHex: value.toLowerCase(), a: 1 };
+  const m = String(value).match(/^rgba?\(([^)]+)\)$/);
+  if (!m) return null;
+  const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+  const [r, g, b, a = 1] = p;
+  const hex = '#' + [r, g, b].map((v) => v.toString(16).padStart(2, '0')).join('');
+  return { rgb: [r, g, b], rgbHex: hex, a };
+}
+
+/** 在 sRGB 里把 color 按 t 混进 base（与主题层的派生公式同一个写法）。 */
+export function mixHex(base, color, t) {
+  const b = rgb(base);
+  const c = rgb(color);
+  return '#' + b.map((v, i) => Math.round(Math.max(0, Math.min(255, v + (c[i] - v) * t))).toString(16).padStart(2, '0')).join('');
+}
 
 export function luminance(hex) {
   const [r, g, b] = rgb(hex).map((v) => {

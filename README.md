@@ -185,6 +185,38 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 
 写错会在 `vk build` 报错。
 
+## 主题（调色板）
+
+颜色只有一个来源：`src/tokens/themes.css` 里的 `--vk-theme-*`（一套主题 98 个值）。
+三套内置主题挂在 `vk-page` / `body` / 任意祖先上，**只换颜色，不换版**：
+
+| 主题 | 纸 | 墨 | 强调 | 场景 | 正文对比度 |
+|---|---|---|---|---|---|
+| `paper`（默认） | 纯白 | 冷墨 | 钴蓝 | 现在的样子 | 19.2:1 |
+| `graphite` | 近白 | 暖墨 | 琥珀 | 更“纸感”，适合长时间看 | 17.4:1 |
+| `blueprint` | 极浅蓝 | 深蓝墨 | 亮蓝 | 工程图感，适合“讲结构” | 16.1:1 |
+
+```html
+<vk-page theme="graphite">…</vk-page>   <!-- 属性写法（运行期 = data-theme） -->
+<body data-theme="blueprint">…</body>   <!-- 整页 -->
+<div data-theme="paper">…</div>         <!-- 局部：只影响这一块 -->
+```
+
+自定义 = 覆盖 `--vk-theme-*`，不用改库：
+
+```css
+[data-theme="sepia"]{
+  --vk-theme-paper:  #f6efe2;
+  --vk-theme-ink-1:  #201a12;
+  --vk-theme-accent: #7a3b00;
+}
+```
+
+三层：`--vk-theme-*`（库里唯一出现 hex 的地方）→ 语义名（`--vk-paper-*` / `--vk-ink-*` /
+`--vk-wash-*` / `--vk-focus-*` …，全部 = `var(--vk-theme-*)`）→ 组件（不写颜色）。
+默认主题与 15.x 逐像素相同（31 页 / 6428 万像素，0 差异）；三套主题下同一块内容的
+包围盒与字号逐项相等。完整变量表与派生公式见 [`docs/themes.md`](docs/themes.md)。
+
 ## 两条视觉规则
 
 1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / pin）用梅紫，其中 `em` 只画一条梅紫下划线，整块底高亮留给 `vk-mark`；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。

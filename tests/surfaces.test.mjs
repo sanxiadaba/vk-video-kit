@@ -1,6 +1,5 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import fs from 'node:fs';
 import {
   TONES,
   SOLID_TOKENS,
@@ -8,6 +7,7 @@ import {
   TINT_TOKENS,
   DARK_WASH_TOKENS,
   DARK_TINT_TOKENS,
+  readTokenCss,
   readHexTokens,
   surfaceTokenNames,
   tintTable,
@@ -31,7 +31,8 @@ import {
  * 不写用例的色不进 tokens：第 4 条同时把「野生 wash/tint 名」判红。
  */
 
-const css = fs.readFileSync('src/tokens/tokens.css', 'utf8');
+// 主题层给 literal，值层给最终名；两层一起读才能解出实色（默认主题 paper）。
+const css = readTokenCss();
 const tokens = readHexTokens(css);
 const rows = tintTable(tokens);
 
