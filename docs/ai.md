@@ -179,6 +179,10 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。
   - 属性：`split` · `axis` · `axis-width` · `symbol` · `symbol-size` · `gap` · `orientation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-pair split="50" gap="48" axis="line" axis-width="2" symbol="→" symbol-size="80">`
+- **`vk-flow`** · 流程 — 多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），容器窄于 1100px 自动竖排。
+  - 属性：`gap` · `arrow` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 子节点：条目写成 `<li>`
+  - 例：`<vk-flow arrow gap="48">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
   - 属性：`w` · `h` · `pad-px` · `grid` · `overflow`
   - 例：`<vk-canvas w="1200" h="420">`

@@ -272,6 +272,18 @@ export const SCENES = [
   },
 
   {
+    tag: 'vk-flow',
+    // 三块 + 两条箭头：源码 → 编译 → 产物。等宽、标签在上、箭头画在间隙正中。
+    // 标本用短词：等宽代码在 528 块里 fit 到 398 宽，长句会被压到 48px 地板以下。
+    body: s`
+<vk-flow arrow gap="48">
+  <li label="源码" tone="info"><vk-text mono>hello.c</vk-text></li>
+  <li label="编译" tone="neutral"><vk-text mono>gcc</vk-text></li>
+  <li label="产物" tone="ok"><vk-text mono>hello</vk-text></li>
+</vk-flow>`,
+  },
+
+  {
     tag: 'vk-compare',
     // 真实截图对：gcc -O0（13 行）vs -O2（10 行）。mark 标出 -O2 少掉的那 3 行，
     // 坐标是相对取景框的百分比；split 下只画在所属的那一侧（这里是右半的 b）。

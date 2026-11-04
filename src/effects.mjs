@@ -292,7 +292,7 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-pair', 'vk-rule',
+  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-pair', 'vk-flow', 'vk-rule',
   'vk-list', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
   'vk-math', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',

@@ -19,7 +19,9 @@ test('registry 自检通过', () => {
 // 与 vk-annotate note（气泡 / 引线标签 / 编号点）是两种东西：一个排进版面，一个画在内容上。
 // 批次 R（根因原语）经批准 +2：vk-pair 是"两块并置 + 中轴"（grid 只分份，不表达关系）；
 // vk-caption 是"贴在目标块上的归属说明"（label 是块内标签，caption 属于目标块）。
-const TAG_CEILING = 35;
+// 批次 N（流程原语）经批准 +1：vk-flow 是"N 块 + N-1 箭头"（pair 只有两块一条轴，
+// 表达对照；flow 表达"东西怎么变的"）。
+const TAG_CEILING = 36;
 
 test(`标签数不超过 ${TAG_CEILING}（只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);
