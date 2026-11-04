@@ -445,7 +445,8 @@ export const TAGS = {
   'vk-stack': {
     name: '竖排',
     layer: 'layout',
-    summary: '纵向节奏。只给间距和对齐，不画任何东西。',
+    summary:
+      '纵向节奏。只给间距和对齐，不画任何东西。默认等距；写 weights="1 2 1" 时按权重分剩余高度（ratio 是它的别名）。',
     attrs: {
       'gap': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl', 'group', 'section', 'plate'),
       // direction: 竖排（默认）或横排。14.0 把 vk-row 并了进来——
@@ -455,6 +456,10 @@ export const TAGS = {
       'justify': oneOf('start', 'center', 'end', 'between'),
       'wrap': { ...bool(), context: 'direction-row' },
       'grow': { ...bool(), hidden: true },
+      // 权重分的是「剩余高度」：按顺序对应前 N 个直接子项；列表之外的孩子
+      // 保持内容高（96px 字幕带就是这么留白的）。容器要有确定高度。
+      'weights': { type: 'text', context: 'bounded-height' },
+      'ratio': { type: 'text', context: 'bounded-height' },
     },
   },
   'vk-grid': {
@@ -1360,6 +1365,10 @@ const ATTR_META_BY_TAG = {
   },
   'vk-panel': {
     chrome: { label: '窗头（dots 三点 + 标题 / none 干净分区）', group: 'appearance' },
+  },
+  'vk-stack': {
+    weights: { label: '高度权重（如 "1 2 1"：按顺序分给前 N 个直接子项；其余保持内容高）', group: 'layout' },
+    ratio: { label: '高度权重（weights 的别名）', group: 'layout' },
   },
   'vk-note': {
     kind: { label: '形态（margin 边注 / bubble 气泡 / legend 编号图例）', group: 'appearance' },

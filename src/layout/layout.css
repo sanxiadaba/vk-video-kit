@@ -110,6 +110,21 @@ vk-pair[fill] { height: 100%; }
    由 vk check 拦住；要压必须显式写 grow / fill。 */
 vk-stack > :not([grow]):not([fill]) { flex-shrink: 0; }
 .vk-page-bd > :not([grow]):not([fill]) { flex-shrink: 0; }
+
+/* --------------------------------------------------------- vk-stack 权重
+   等距是默认。写 weights="1 2 1"（ratio 是同一个属性的别名）时，
+   前 N 个直接子项按权重分「剩余高度」：基础高 0、按 grow 分剩余，
+   于是 1:2:1 就是 1/4·1/2·1/4。
+   没有写进权重列表的子项不参与分配，保持内容高——96px 的字幕带就是
+   靠这一条留白的。
+   前提：容器有确定高度（grow / fill / h）。没有高度的 stack 里
+   flex-basis: 0 会把子项压成 0；运行期（VkStack._weights）只在有
+   高度约束时才给子项打 data-vk-weight，所以下面这条规则不会误伤自动高。 */
+vk-stack[weights] > [data-vk-weight],
+vk-stack[ratio] > [data-vk-weight] {
+  flex: var(--vk-stack-weight, 1) 1 0;
+  min-height: 0;
+}
 [measure='body'] { max-width: var(--vk-measure-body); }
 [measure='title'] { max-width: var(--vk-measure-title); }
 [overflow='clip'] { overflow: hidden; }

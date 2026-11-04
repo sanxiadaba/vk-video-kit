@@ -580,7 +580,10 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   display: flex;
   align-items: center;
   gap: var(--vk-s2);
-  height: 56px;
+  /* 行高按内容算：15.x 的 caption/body 字阶（48/56）行盒是 60/78，
+     固定的 56px 会让每一行都比自己的字矮 5px，树在 0.38 交付尺度上会挤。
+     min-height 保住旧的密度，行高随字阶长。 */
+  min-height: 56px;
   padding-left: calc(var(--depth, 0) * 40px + 4px);
   padding-right: var(--vk-s2);
   border-bottom: 2px solid var(--vk-line-2);
@@ -615,8 +618,9 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
 }.vk-tree-more{
   display: flex;
   align-items: center;
-  height: 52px;
-  line-height: 52px;
+  /* 与 .vk-tree-row 同一条规矩：行高按内容长，不给字阶留 1–3px 的溢出。 */
+  min-height: 52px;
+  line-height: 1.25;
   padding-left: 24px;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);

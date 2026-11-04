@@ -163,8 +163,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 ### L2 排布 · 只决定在哪、多大
 
-- **`vk-stack`** · 竖排 — 纵向节奏。只给间距和对齐，不画任何东西。
-  - 属性：`gap` · `direction` · `align` · `justify` · `wrap` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-stack`** · 竖排 — 纵向节奏。只给间距和对齐，不画任何东西。默认等距；写 weights="1 2 1" 时按权重分剩余高度（ratio 是它的别名）。
+  - 属性：`gap` · `direction` · `align` · `justify` · `wrap` · `weights` · `ratio` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-stack gap="sm">`
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
   - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`

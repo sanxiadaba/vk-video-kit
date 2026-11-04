@@ -135,6 +135,71 @@ export class VkGrid extends VkElement {
   }
 }
 
+/* ---------------------------------------------------------------- 竖排 */
+
+/**
+ * vk-stack：默认等距。写 weights（或它的别名 ratio）时按权重分「剩余高度」。
+ *
+ *   <vk-stack grow weights="1 2 1">
+ *     <vk-stack>上</vk-stack>   ← 1 份
+ *     <vk-stack>中</vk-stack>   ← 2 份
+ *     <vk-stack>下</vk-stack>   ← 1 份
+ *     <vk-box h="96"></vk-box>  ← 不在列表里：保持 96，剩余给上面三份
+ *   </vk-stack>
+ *
+ * 权重列表按顺序对应直接子项；列表之外的孩子保持内容高。
+ * weights 只给"分高度"，不给"分宽度"——横排里没有剩余高度的概念。
+ * 容器必须有确定高度（grow / fill / h）；自动高的 stack 里 flex-basis: 0
+ * 会把孩子压成 0，所以这里宁可不做，也不悄悄改坏一张页。
+ */
+export class VkStack extends VkElement {
+  static watchSource = false;
+
+  onAttr(name) {
+    if (name === 'weights' || name === 'ratio' || name === 'grow' || name === 'fill' || name === 'h') {
+      this._weights();
+    }
+  }
+
+  render() {
+    this._weights();
+  }
+
+  _weights() {
+    const raw = (this.getAttribute('weights') ?? this.getAttribute('ratio') ?? '').trim();
+    const list = raw ? raw.split(/[\s,]+/).filter(Boolean).map(Number) : [];
+    const bounded = this.hasAttribute('grow') || this.hasAttribute('fill') || this.hasAttribute('h');
+    const usable = bounded && list.length > 0 && list.every((n) => Number.isFinite(n) && n > 0);
+
+    // 先撤掉上一次的分配：属性被删掉 / 改成非法值时页面要回到等距。
+    for (const el of this.children) {
+      if (!el.hasAttribute('data-vk-weight')) continue;
+      el.removeAttribute('data-vk-weight');
+      el.style.removeProperty('--vk-stack-weight');
+    }
+    // 权重写在横排上没有意义：这里是"分高度"，横排没有可分的剩余高度。
+    if (raw && this.getAttribute('direction') === 'row') {
+      this._warnOnce('weights-row', '写成横排（direction="row"）时 weights 不生效：它分的是高度');
+      return;
+    }
+    if (!usable) {
+      if (raw && !bounded) {
+        this._warnOnce('weights-h', '写了 weights，但容器没有确定高度（grow / fill / h）：按内容高排，不分配');
+      }
+      return;
+    }
+    const kids = [...this.children].filter(
+      (el) => el.tagName !== 'VK-EDGE' && !el.hasAttribute('data-vk-overlay')
+    );
+    kids.forEach((el, i) => {
+      const weight = list[i];
+      if (weight == null) return;
+      el.setAttribute('data-vk-weight', '');
+      el.style.setProperty('--vk-stack-weight', String(weight));
+    });
+  }
+}
+
 /* ---------------------------------------------------------------- 注册 */
 
 export function defineLayout() {
@@ -145,6 +210,6 @@ export function defineLayout() {
     static watchSource = false;
     render() {}
   };
-  define('vk-stack', flow());
+  define('vk-stack', VkStack);
   define('vk-grid', VkGrid);
 }
