@@ -158,7 +158,7 @@ test('vk-pair：fill 吃掉父容器剩余高度，内层高度与轴都贯穿�
   assert.ok(r.blockfill.axisH >= 430, `普通 block 父级里轴也应贯穿：${r.blockfill.axisH}`);
 });
 
-test('vk-pair：symbol 的三种写法都出现，axis="none" 只剩空轴', async () => {
+test('vk-pair：symbol 的三种写法都出现，axis="none" 只关分隔线', async () => {
   const tab = await open(`
 <vk-page><div style="width:1200px">
   <vk-pair id="arrow" symbol="→"><vk-text size="body">a</vk-text><vk-text size="body">b</vk-text></vk-pair>
@@ -186,7 +186,8 @@ test('vk-pair：symbol 的三种写法都出现，axis="none" 只剩空轴', asy
   assert.equal(r.eq.sym, '=');
   assert.equal(r.vs.sym, 'vs');
   assert.equal(r.bare.sym, null, 'symbol="none" 不生成符号节点');
-  assert.equal(r.off.sym, null, 'axis="none" 时连符号也不画');
+  assert.equal(r.off.sym, '→', 'axis="none" 只关分隔线，符号仍保留');
+  assert.equal(r.off.symVisible, true, 'axis="none" 时符号仍可见');
   assert.equal(r.off.axisVisible, false, 'axis="none" 时轴不可见');
   assert.equal(r.off.axisAttr, 'none');
   for (const id of ['arrow', 'eq', 'vs']) {

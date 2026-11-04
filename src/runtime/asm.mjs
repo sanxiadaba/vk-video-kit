@@ -141,7 +141,7 @@ export class VkAsm extends VkElement {
      * 否则 7 字节指令会被折成两行，一整张清单瞬间高出一倍。
      */
     const gridCols = [
-      showOrder ? 'calc(var(--vk-cs) * 84 / 48)' : '',
+      showOrder ? 'calc(var(--vk-cs) * 120 / 48)' : '',
       showAddr ? 'minmax(calc(var(--vk-cs) * 180 / 48), max-content)' : '',
       showBytes ? 'max(calc(var(--vk-cs) * 500 / 48), calc(var(--vk-cs) * 12))' : '',
       'calc(var(--vk-cs) * 160 / 48)',

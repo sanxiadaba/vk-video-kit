@@ -35,19 +35,40 @@ body{display:block;min-height:100vh}
 a{color:inherit;text-decoration:none}
 a:hover{color:#1b3fd6}
 .vk-page{width:1920px;margin:0 auto}
-/* 标本页 = 纸 + 帧板：帧板 1080 在上，状态带与最小写法在下。 */
+/* 标本页 = 纸 + 居中舞台：帧板 1080 在上，状态带与最小写法在下。
+   舞台占满 1680×888 安全区；主帧内容在舞台里水平、垂直居中，并按可用高度等比放大。 */
+.spec-stage{width:1680px;height:888px;display:flex;flex-direction:column;min-width:0;max-width:100%}
+.spec-hd{display:flex;justify-content:space-between;align-items:baseline;gap:32px;min-width:0;max-width:100%;white-space:nowrap;font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.25;color:var(--vk-ink-3)}
+.spec-hd a{color:inherit}
+.spec-hd a:hover{color:var(--vk-focus)}
+.spec-hd-l,.spec-hd-r{display:flex;align-items:baseline;gap:10px;min-width:0}
+.spec-hd-l{flex:1 1 auto;overflow:hidden}
+.spec-hd-l .spec-name{overflow:hidden;text-overflow:ellipsis}
+.spec-hd-r{flex:0 0 auto}
+.spec-hd .spec-dot{opacity:.55}
+.spec-nav{padding:0 6px}
+.spec-rule{flex:0 0 auto;height:1px;margin:14px 0 0;background:var(--vk-line-strong)}
+.spec-body{flex:1 1 auto;min-height:0;min-width:0;max-width:100%;display:flex;align-items:center;justify-content:center}
+/* 主帧按组件的原生尺寸居中，不缩放。
+   宽度 100% 的子项靠 stretch 撑满舞台；有 spec-w* 的组件由作者 CSS 定宽。 */
+.spec-fit{display:flex;flex-direction:column;align-items:center;gap:20px;width:1680px;max-width:1680px;min-width:0}
+.spec-fit>*{width:100%;max-width:100%;min-width:0}
+/* vk-page 自己就是画布：缩到 1400 宽再交给舞台放大，虚线标出 1920×1080 的边界。 */
+.spec-page-view{width:1920px;max-width:none;zoom:.7291667;outline:2px dashed var(--vk-line-strong);outline-offset:0;flex:0 0 auto}
 .vk-sheet{width:1680px;margin:48px auto 96px}
 .vk-sheet-hd{display:flex;justify-content:space-between;align-items:baseline;margin-top:48px;padding:16px 0;border-top:2px solid var(--vk-line-strong)}
-.vk-states{display:flex;flex-direction:column;gap:40px;margin-top:8px}
-.vk-state{border-top:1px solid var(--vk-line-1);padding-top:16px}
-.vk-state-meta{font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.4;color:var(--vk-ink-3);margin-bottom:16px}
-.vk-state-body{width:100%}
-.vk-snippet{margin:8px 0 0;padding:24px 32px;border:1px solid var(--vk-line-1);border-radius:8px;background:#fff;font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.5;color:var(--vk-ink-1);white-space:pre-wrap;word-break:break-word}
+.state-strip{display:flex;flex-direction:column;gap:40px;margin-top:8px}
+.state-strip>.vk-state{border-top:1px solid var(--vk-line-1);padding-top:16px;min-width:0;max-width:100%}
+.vk-state-meta{font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.4;color:var(--vk-ink-3);margin-bottom:16px;overflow-wrap:anywhere}
+.vk-state-body{width:100%;min-width:0;max-width:100%;overflow:hidden}
+.vk-snippet{margin:8px 0 0;padding:24px 32px;border:1px solid var(--vk-line-1);border-radius:8px;background:#fff;font-family:var(--vk-font-mono);font-size:var(--vk-t-meta);line-height:1.5;color:var(--vk-ink-1);white-space:pre-wrap;word-break:break-word;max-width:100%}
 .spec-scale{width:1400px}
 /* 标本页的宽度是版面意图，用作者 CSS 表达——组件不再接受像素 w/h。 */
+.spec-w,.spec-w1680,.spec-w1360,.spec-w1200,.spec-w1120,.spec-w1100,.spec-w1000,.spec-w900,.spec-w780,.spec-w600,.spec-w520{min-width:0}
 .spec-w{width:1400px}
 .spec-w1680{width:1680px}
 .spec-w1360{width:1360px}
+.spec-w900{width:900px}
 .spec-w1200{width:1200px}
 .spec-w1120{width:1120px}
 .spec-w1100{width:1100px}
@@ -103,16 +124,20 @@ ${body}
 `;
 }
 
-function nav(no, tag) {
+/**
+ * 页眉只留一行：左边是当前位置，右边是「上一页 / 下一页 + 编号」。
+ * 标本页很多，全名并排会把 1680 撑爆（vk-edge 曾经折成两行）；
+ * 箭头带 title / aria-label，鼠标悬停与读屏都能拿到全名。
+ */
+function nav(tag) {
   const i = ORDER.indexOf(tag);
   const prev = ORDER[i - 1];
   const next = ORDER[i + 1];
-  const link = (t, label) =>
-    t ? `<a href="${t}.html"><vk-text size="label" mono ink="muted" data-meta>${esc(label)}</vk-text></a>` : '';
-  return `<vk-stack direction="row" gap="xs" align="baseline">${link(prev, '← ' + (prev || ''))}${link(
-    next,
-    (next || '') + ' →'
-  )}</vk-stack>`;
+  const link = (t, label, arrow) =>
+    t
+      ? `<a class="spec-nav" href="${t}.html" title="${esc(label)}" aria-label="${esc(label)}">${arrow}</a>`
+      : `<span class="spec-nav" aria-hidden="true">${arrow}</span>`;
+  return `${link(prev, '上一个：' + (prev || ''), '←')}${link(next, '下一个：' + (next || ''), '→')}`;
 }
 
 function applyPreset(body, tag, attrs = {}) {
@@ -189,10 +214,9 @@ function scopeIds(html, prefix) {
 const SCENE_DUR = { 'vk-term': '2.2' };
 
 const STATE_STRIP = {
-  'vk-cells': `<vk-cells cols="4"><li value="1" label="a[0]" state="current"></li><li value="2" label="a[1]" state="mark"></li><li value="3" label="a[2]" state="err"></li><li value="0" label="a[3]" state="ok"></li></vk-cells>`,
-  'vk-table': `<vk-table variant="matrix"><table><thead><tr><th>i\\j</th><th>0</th><th>1</th></tr></thead><tbody><tr><th>0</th><td state="current">1</td><td state="mark">2</td></tr><tr><th>1</th><td>3</td><td state="err">4</td></tr></tbody></table></vk-table>`,
-  'vk-list': `<vk-list variant="check"><li state="ok">这一条成立</li><li state="warn">这一条要再看</li><li state="err">这一条不成立</li></vk-list>`,
-  'vk-timeline': `<vk-timeline start="1972" end="2018"><li date="1972" label="当前节点" state="current">说明一</li><li date="1999" label="标注节点" state="mark">说明二</li><li date="2018" label="普通节点">说明三</li></vk-timeline>`,
+  'vk-cells': `<vk-cells cols="4" addr="0x404064"><li value="'h'" label="s[0]" state="ok"></li><li value="'e'" label="s[1]" state="mark"></li><li value="0x2a" label="int x" state="warn"></li><li value="0xff" label="y" state="err"></li></vk-cells>`,
+  'vk-table': `<vk-table variant="matrix"><table><thead><tr><th>i\\j</th><th>0</th><th>1</th></tr></thead><tbody><tr><th>0</th><td state="current">52,980</td><td state="mark">635</td></tr><tr><th>1</th><td>760</td><td state="err">43,956</td></tr></tbody></table></vk-table>`,
+  'vk-list': `<vk-list variant="check"><li state="ok">hello.i 是 52,980 字节</li><li state="warn">hello.s 只有 635 字节</li><li state="err">s[5] 漏掉 \\0</li></vk-list>`,
 };
 
 /** 旧名 → 新标签的示例属性：别名页给"旧写法 / 新写法"对照。 */
@@ -242,6 +266,9 @@ const ALIAS_ORDER = [...new Set(Object.values(ALIASES).map((a) => a.to))]
   .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
   .flatMap((to) => Object.keys(ALIASES).filter((alias) => ALIASES[alias].to === to));
 
+/** 主帧最多展示的状态数：1 个状态示例 + 至多 2 个外观预设，合计 ≤3。 */
+const MAX_STATES = 3;
+
 function specPage(tag, no) {
   const def = TAGS[tag];
   const rawBody = sceneOf.get(tag) || `<vk-text size="body">（没有标准形态）</vk-text>`;
@@ -249,48 +276,50 @@ function specPage(tag, no) {
   const presets = PRESETS[tag] || [];
   const meta = `${String(no).padStart(3, '0')} / ${String(ORDER.length).padStart(3, '0')}`;
   const sceneDur = SCENE_DUR[tag] ? ` dur="${SCENE_DUR[tag]}"` : '';
-  const plate = `<vk-page align="top" data-allow-void${sceneDur}>
-  <vk-stack gap="2xs">
-    <vk-stack direction="row" justify="between" align="baseline" wrap>
-      <vk-stack direction="row" gap="xs" align="baseline" wrap>
-        <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
-        <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text>
-        <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
-        <vk-text size="label" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
-      </vk-stack>
-      <vk-stack direction="row" gap="sm" align="baseline" wrap>
-        ${nav(no, tag)}
-        <vk-text size="label" mono ink="muted" data-meta>${meta}</vk-text>
-      </vk-stack>
-    </vk-stack>
-    <vk-box border="hair"></vk-box>
-<div class="spec-body">${tag === 'vk-page' ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
-  </vk-stack>
+
+  // 一页 = 1680×888 的居中舞台：页眉钉在舞台顶部，主帧在剩余空间里水平 + 垂直居中。
+  // 舞台尺寸就是安全区，所以内容无论多大都不会越过 1920×1080 的纸。
+  const plate = `<vk-page align="center" data-allow-void${sceneDur}>
+  <div class="spec-stage">
+    <div class="spec-hd">
+      <div class="spec-hd-l">
+        <a href="../index.html">← 索引</a><span class="spec-dot">·</span><span class="spec-tag">${esc(tag)}</span><span class="spec-dot">·</span><span class="spec-name">${esc(def.name)}</span>
+      </div>
+      <div class="spec-hd-r">${nav(tag)}<span class="spec-no">${meta}</span></div>
+    </div>
+    <div class="spec-rule"></div>
+    <div class="spec-body"><div class="spec-fit">${rawBody}</div></div>
+  </div>
 </vk-page>`;
 
-  const stateCount = presets.length + (STATE_STRIP[tag] ? 1 : 0);
-  const stateExample = STATE_STRIP[tag]
-    ? `<div class="vk-state">
-  <div class="vk-state-meta">状态 · state="current|mark|ok|warn|err"（作者手写条目）</div>
-  <div class="vk-state-body">${STATE_STRIP[tag]}</div>
+  const stateEntries = [];
+  if (STATE_STRIP[tag]) {
+    stateEntries.push({
+      meta: '状态 · state="current|mark|ok|warn|err"（作者手写条目）',
+      html: STATE_STRIP[tag],
+    });
+  }
+  for (const p of presets) {
+    if (stateEntries.length >= MAX_STATES) break;
+    const values = Object.entries(p.attrs || {})
+      .map(([k, v]) => (v === null ? `−${k}` : `${k}="${v}"`))
+      .join(' · ');
+    stateEntries.push({
+      meta: `预设 · ${esc(p.label)}${values ? `　${esc(values)}` : ''}`,
+      html: scopeIds(applyPreset(stripBody, tag, p.attrs || {}), `s${stateEntries.length}-`),
+    });
+  }
+  const stateCount = stateEntries.length;
+  const states = stateCount
+    ? stateEntries
+        .map(
+          (entry) => `<div class="vk-state">
+  <div class="vk-state-meta">${entry.meta}</div>
+  <div class="vk-state-body">${entry.html}</div>
 </div>`
-    : '';
-  const states = `${stateExample}${presets.length
-    ? presets
-        .map((p, si) => {
-          const values = Object.entries(p.attrs || {})
-            .map(([k, v]) => (v === null ? `−${k}` : `${k}="${v}"`))
-            .join(' · ');
-          return `<div class="vk-state">
-  <div class="vk-state-meta">预设 · ${esc(p.label)}${values ? `　${esc(values)}` : ''}</div>
-  <div class="vk-state-body">${scopeIds(applyPreset(stripBody, tag, p.attrs || {}), `s${si}-`)}</div>
-</div>`;
-        })
+        )
         .join('\n')
-    : STATE_STRIP[tag]
-      ? ''
-      : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`}`;
+    : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`;
 
   const aliases = aliasesOf(tag);
   const aliasBlock = aliases.length
@@ -300,8 +329,8 @@ function specPage(tag, no) {
     .join('')}</vk-stack>`
     : '';
   const sheet = `<section class="vk-sheet">
-  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>状态</vk-text><vk-text size="label" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档` : '无'}</vk-text></div>
-  <div class="vk-states">${states}</div>
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>状态</vk-text><vk-text size="label" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档 · 其余属性见 reference` : '无'}</vk-text></div>
+  <div class="state-strip">${states}</div>
   <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>最小写法</vk-text><vk-text size="label" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
   <pre class="vk-snippet">${snippetOf(rawBody, tag)}</pre>
   ${aliasBlock}
@@ -369,6 +398,7 @@ function specHash(tag, rawBody, presets) {
       hash32(shell.toString()),hash32(RESET),
       hash32(specPage.toString()),
       hash32(applyPreset.toString()),hash32(stripDefaults.toString()),hash32(unwrapSpec.toString()),hash32(scopeIds.toString()),
+      hash32(JSON.stringify(STATE_STRIP)), MAX_STATES,
       tag,
       TAGS[tag].summary,
       TAGS[tag].name,

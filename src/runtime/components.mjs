@@ -817,7 +817,7 @@ export class VkBits extends VkElement {
     }
     // 位数据补上之后要把上一轮的 stale 清掉：错误状态不能粘住。
     delete this.dataset.vkStale;
-    const index = ['0-7', 'none'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
+    const index = ['0-7', 'none', 'sparse'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
     const tone = this.getAttribute('tone') === 'info' ? 'info' : 'neutral';
     const bytes = this.hasAttribute('bytes');
@@ -888,13 +888,14 @@ export class VkBits extends VkElement {
               .split('')
               .map((b, i) => {
                 const abs = hi - i;
-                const n = index === 'none' ? null : index === '0-7' ? lo + i : abs;
+                const n =
+                  index === 'none' ? null : index === '0-7' ? lo + i : index === 'sparse' && abs % 4 !== 0 && abs !== 31 ? null : abs;
                 const isSign = sign && r === 0 && ci === 0 && i === 0;
                 const byteGap = bytes && abs % 8 === 0 && abs !== 0;
                 const groupGap = group > 1 && abs % group === 0 && abs !== 0;
                 const fieldStart = useFields && fieldStarts.has(abs);
                 const bitId = multi || chunks.length > 1 ? `${bitRow}:${abs}` : String(abs);
-                return `<div class="vk-bit-col"${byteGap || groupGap ? ' data-gap' : ''}${byteGap ? ' data-byte' : ''}${fieldStart ? ' data-field-start' : ''}>${n === null ? '' : `<span class="vk-bit-i" data-meta>${n}</span>`}<span class="vk-bit${isSign ? ' is-sign' : ''}" data-bit="${bitId}">${b}</span></div>`;
+                return `<div class="vk-bit-col"${byteGap || groupGap ? ' data-gap' : ''}${byteGap ? ' data-byte' : ''}${fieldStart ? ' data-field-start' : ''}><span class="vk-bit-i" data-meta>${n ?? ''}</span><span class="vk-bit${isSign ? ' is-sign' : ''}" data-bit="${bitId}">${b}</span></div>`;
               })
               .join('');
 

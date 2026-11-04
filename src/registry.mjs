@@ -588,7 +588,7 @@ export const TAGS = {
       'emphasis': oneOf('solid', 'ghost'),
       'arrow': oneOf('end', 'start', 'both', 'none'),
       'arrow-style': oneOf('solid', 'open', 'thin'),
-      'arrow-size': num({ min: 8, max: 48, step: 1 }),
+      'arrow-size': num({ min: 8, max: 64, step: 1 }),
       'dash': bool(),
       'gap-px': num({ min: 0, max: 200, step: 1, when: { variant: ['ortho'] } }),
       'bend': num({ min: -200, max: 200, step: 1, when: { variant: ['ortho'] } }),
@@ -875,7 +875,7 @@ export const TAGS = {
     attrs: {
       'mass': oneOf('compact', 'normal', 'hero'),
       'value': text(),
-      'index': oneOf('7-0', '0-7', 'none'),
+      'index': oneOf('7-0', '0-7', 'none', 'sparse'),
       'group': oneOf('1', '4', '8'),
       'sign': bool(),
       'label': text(),

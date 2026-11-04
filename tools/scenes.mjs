@@ -134,8 +134,11 @@ body {
 .spec-w1120{width:1120px}
 .spec-w1100{width:1100px}
 .spec-w1000{width:1000px}
+.spec-w900{width:900px}
 .spec-w780{width:780px}
 .spec-w600{width:600px}
+.spec-w520{width:520px}
+.spec-w900,.spec-w520,.spec-w1200,.spec-w1680{min-width:0}
 .spec-h560{height:560px}
 .spec-h540{height:540px}
 .spec-h240{display:flex;height:240px}

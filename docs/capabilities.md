@@ -286,7 +286,7 @@
 - 能力：两块内容左右（或上下）并置，中间一条 1–4px 的轴；split 决定左块占比，axis 可关掉轴，symbol 可在轴中点放 → / = / vs，也可什么都不放。两块宽度和 = 容器宽 - 2×gap，轴在 2×gap 沟槽的正中。
 - 契约断言：`vk-pair.split` · `vk-pair.axis` · `vk-pair.axis-width` · `vk-pair.symbol` · `vk-pair.symbol-size` · `vk-pair.gap` · `vk-pair.orientation`
 - 标本页：`_site/specimen/vk-pair.html` + 契约宿主 `_site/specimens/vk-pair.html`
-- 测试：`tests/batch-primitives.test.mjs` · 「vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点」；`tests/batch-primitives.test.mjs` · 「vk-pair：symbol 的三种写法都出现，axis="none" 只剩空轴」
+- 测试：`tests/batch-primitives.test.mjs` · 「vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点」；`tests/batch-primitives.test.mjs` · 「vk-pair：symbol 的三种写法都出现，axis="none" 只关分隔线」
 
 ### ✅ 文字 · 塞满一行 fit="width"
 

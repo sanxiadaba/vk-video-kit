@@ -103,7 +103,7 @@ export class VkEdge extends VkAnnotate {
         start: arrow === 'start' || arrow === 'both',
         dot: this.getAttribute('cap') === 'dot' ? 'start' : null,
         style: this.getAttribute('arrow-style') || 'solid',
-        size: numAttr(this, 'arrow-size', { min: 8, max: 48, fallback: num('--vk-edge-tip', 18) }),
+        size: numAttr(this, 'arrow-size', { min: 8, max: 64, fallback: num('--vk-edge-tip', 18) }),
       },
       gap: numAttr(this, 'gap-px', { min: 0, max: 200, fallback: num('--vk-edge-gap', 32) }),
       bend: numAttr(this, 'bend', { min: -200, max: 200, fallback: 0 }),

@@ -937,14 +937,18 @@ vk-steps {
   border: 2px solid var(--vk-line-3);
   border-radius: var(--vk-r-2);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
+  /* 序号是"块的编号"，不是正文：56 的两数字在 64 的方框里会顶出 7px。 */
+  font-size: var(--vk-t-label);
   color: var(--vk-ink-3);
   background: var(--vk-surface-1);
 }
 .vk-step-t {
+  display: block;
+  min-width: 0;
   font-size: var(--vk-t-body);
   line-height: 1.3;
   color: var(--vk-ink-3);
+  overflow-wrap: anywhere;
 }
 /* 当前步：实心钴蓝。全库只有这一个「正在讲这里」的信号。 */
 .vk-step[data-state='current'] .vk-step-n {
@@ -984,7 +988,7 @@ vk-steps {
 .vk-step-line::after {
   content: '';
   position: absolute;
-  right: -2px;
+  right: 0;
   top: 50%;
   transform: translateY(-50%);
   border-left: var(--vk-step-tip) solid var(--vk-line-3);
@@ -1097,7 +1101,9 @@ vk-bits{ display: block; }.vk-bits-wrap{
   font-size: var(--vk-t-label);
   line-height: 1;
   color: var(--vk-ink-4);
-  letter-spacing: -0.04em;
+  /* 32 个位号并排时，两位数是 48px 等宽里最宽的一格；-.08em 让 52px
+     的"31"收回 50px 的列宽里，缩到 780 也不会连成一片。 */
+  letter-spacing: -0.08em;
 }.vk-bit{
   display: flex;
   align-items: center;
@@ -1151,7 +1157,7 @@ vk-bits{ display: block; }.vk-bits-wrap{
 vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: var(--vk-s3); padding-right: var(--vk-s2); container-type: inline-size; }.vk-bar{
   display: grid;
   /* 值列必须完整：max-content 比 176px 的下限更硬。窄格先压条，不压数字。 */
-  grid-template-columns: minmax(0, 220px) minmax(0, 1fr) max-content;
+  grid-template-columns: minmax(0, 300px) minmax(0, 1fr) max-content;
   align-items: center;
   gap: var(--vk-s2);
   font-size: var(--vk-t-body);

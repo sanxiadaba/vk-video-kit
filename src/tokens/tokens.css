@@ -183,8 +183,10 @@
 
   /* ---------------------------------------------------------------- 连线 */
   --vk-edge-w: 4px;
-  --vk-edge-tip: 36px;
-  --vk-edge-tip-angle: 0.4;
+  /* 箭头要压得住 4px 的线：头长 52、半角 .46（约 26°），远看才是一个尖，
+     不是线末端的一个点。 */
+  --vk-edge-tip: 52px;
+  --vk-edge-tip-angle: 0.46;
   --vk-edge-r: 16px;
   --vk-edge-gap: 36px;
   --vk-edge-min: 64px;

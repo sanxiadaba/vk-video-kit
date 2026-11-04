@@ -515,16 +515,16 @@ export class VkAnnotate extends VkElement {
     const arrowStyle = cfg.head.style;
     let tipSize = cfg.head.size;
     if (cfg.scaled) {
-      // 箭头和线宽同比：旧公式让头 ≈ 线的 10 倍，远看是一支"方块箭头"。
-      // 3.6 倍（夹 22…48）是工程图里"线带一个尖"的比例，缩到 780 也认得出来。
+      // 箭头和线宽同比：头太小会读成"线上的一个点"。
+      // 6 倍（夹 34…72）是"线末端带一个尖"的比例，缩到 780 也认得出方向。
       const lineW = cfg.width ?? Math.max(2, num('--vk-edge-w', 4));
-      const head = Math.max(22, Math.min(48, lineW * 3.6));
+      const head = Math.max(34, Math.min(72, lineW * 6));
       // 头不能比最后一段直线还长：终点前只剩 12px 时，头会盖住整个弯。
       const before = g.points[g.points.length - 2] || g.points[0];
       const lastRun = Math.hypot(g.tip.x - before.x, g.tip.y - before.y);
-      tipSize = Math.max(16, Math.min(head, lastRun * 1.15));
+      tipSize = Math.max(24, Math.min(head, lastRun * 1.05));
     }
-    if (arrowStyle === 'thin') tipSize *= 0.72;
+    if (arrowStyle === 'thin') tipSize *= 0.8;
     const tipHalf = num('--vk-edge-tip-angle', 0.42);
     const tip = arrowStyle === 'open' ? tipOpenPath : tipPath;
 

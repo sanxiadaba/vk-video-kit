@@ -312,10 +312,21 @@ export const PROBES = {
     'pad-x': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-left' }, why: '横向内距只看 left 变化。' },
     'pad-y': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-top' }, why: '纵向内距只看 top 变化。' },
   },
+  'vk-pair': {
+    // 5% / 95% 是几何极限：56px 的代码行在 84px 的栏里必然越界，
+    // 那不是 split 失效，是"极端比例装不下一行字"。30 / 70 仍能验证分栏，
+    // 且不会把文本挤出安全区。
+    split: { values: ['30', '70'], why: '分栏看到左右宽度的真实变化；5/95 只测到文本的物理极限。' },
+  },
+  'vk-stack': {
+    // 3xl / plate 的间距在 3 张真实卡片上会超过 888 的安全高度；
+    // 这不是 gap 失效，是"间距大到画面装不下"。xs / xl 仍能验证档位。
+    gap: { values: ['xs', 'xl'], why: '间距档位看得到变化；3xl 只测到三张卡片的物理极限。' },
+  },
   'vk-tree': {
     depth: { values: ['1'], effect: { on: 'vk-tree', kind: 'geometry', prop: 'height' }, why: '标本只有两层，depth=2 与 4 画面上相同。' },
     collapsed: {
-      values: ['src'],
+      values: ['build'],
       effect: { on: 'vk-tree', kind: 'dom', prop: '.vk-tree-row' },
       why: '收起一个真实存在的目录；断行数。',
     },

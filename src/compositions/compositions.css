@@ -14,7 +14,11 @@ vk-page {
   max-width: 100%;
   /* 画布宿主也是纸：空文档里不留下浏览器/项目层的灰底。 */
   background: var(--vk-paper-sf-0);
+  /* align="center" 是竖向排版协议，不是 HTML 的 text-align。
+     不复位会让整页文字（文件树、代码外的说明）继承居中。 */
+  text-align: start;
 }
+vk-page[align] { text-align: start; }
 
 .vk-page {
   box-sizing: border-box;

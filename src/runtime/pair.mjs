@@ -27,7 +27,9 @@ export class VkPair extends VkElement {
     const orientation = this.getAttribute('orientation') === 'vertical' ? 'vertical' : 'horizontal';
     const axis = this.getAttribute('axis') === 'none' ? 'none' : 'line';
     const rawSymbol = (this.getAttribute('symbol') || 'none').trim();
-    const symbol = axis === 'none' ? 'none' : SYMBOLS.has(rawSymbol) ? rawSymbol : 'none';
+    // axis="none" 只关掉那条分隔线，不连带关掉符号：
+    // 「两块 + 中间一个 →」本身就是一个完整写法，符号不需要一根竖线垫底。
+    const symbol = SYMBOLS.has(rawSymbol) ? rawSymbol : 'none';
     const split = clamp(numAttr(this, 'split', { min: 5, max: 95, fallback: 50 }), 5, 95);
     const gap = numAttr(this, 'gap', { min: 8, max: 200, fallback: 24 });
     const axisWidth = numAttr(this, 'axis-width', { min: 1, max: 4, fallback: 2 });

@@ -199,7 +199,10 @@ vk-timeline { display: block; }
   column-gap: 24px;
   align-items: start;
   padding: 14px 0;
+  /* 轴模式是竖排清单：一条事件一条线，避免三行字飘在一起读不出边界。 */
+  border-bottom: 1px solid var(--vk-line-1);
 }
+.vk-tl-item:last-child { border-bottom: 0; }
 .vk-tl-item[data-mark] { background: var(--vk-info-soft); }
 .vk-tl-item[data-state='current'] { background: var(--vk-focus-soft); }
 .vk-tl-item[data-state='ok'] { background: var(--vk-ok-weak); }

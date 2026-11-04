@@ -256,9 +256,9 @@ vk-pair {
   pointer-events: none;
   white-space: nowrap;
 }
-/* 不写 symbol / 轴关掉：都不留符号。 */
-.vk-pair[data-symbol='none'] .vk-pair-sym,
-.vk-pair[data-axis='none'] .vk-pair-sym {
+/* 只有 symbol="none" 才不留符号。axis="none" 只关分隔线：
+   两块 + 中间一个 → 不需要一条竖线垫底。 */
+.vk-pair[data-symbol='none'] .vk-pair-sym {
   display: none;
 }
 
@@ -731,7 +731,9 @@ vk-edge .vk-edge-path {
   fill: none;
   stroke: var(--vk-ink-3);
   stroke-width: var(--vk-edge-w);
-  stroke-linecap: round;
+  /* 平头收在线尖：圆头会在三角形尖端多戳出一个 2px 的圆点，
+     看起来就像箭头后面还拖着一小截线。 */
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 vk-edge .vk-edge-tip {
@@ -810,5 +812,6 @@ vk-edge[label-size='meta'] .vk-edge-label { font-size: var(--vk-t-label); }
 /* `align` 与 HTML 遗留提示 [align=center]{text-align:center} 撞名：
    布局原语必须自己把文字对齐复位，否则整个子树的文字会被居中。 */
 vk-stack, vk-grid, vk-canvas { text-align: start; }
+
 
 

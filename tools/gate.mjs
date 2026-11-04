@@ -27,7 +27,7 @@ import { startServer } from '../cli/serve.mjs';
 import { cacheEnabled, cacheKey, isCached, markCached, pageHash, sharedHash } from './lib/check-cache.mjs';
 import { SITE } from './lib/paths.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
-import { TAGS } from '../src/registry.mjs';
+import { TAGS, ALIASES } from '../src/registry.mjs';
 
 import { LIMITS } from '../src/shared/limits.mjs';
 
@@ -237,6 +237,52 @@ function diffRatio(aBuf, bBuf) {
   return n / (a.width * a.height);
 }
 
+/* ---------------------------------------------------------------- 墨迹占比 */
+/**
+ * 有效内容 = 非纸色像素的包围盒面积 / 1920×1080。
+ *
+ * 只量"画面事实"：内容缩在左上角时，下面 60%–80% 是白，观看者会觉得
+ * 这一帧没做完。阈值 60% 只提醒、不判死——有的组件本来就窄，硬凑面积
+ * 会把内容放大到失真；门禁负责把数字和"太散 / 太小"的下一步说出来。
+ */
+const INK_MIN = 0.6;
+const INK_ALPHA = 6;
+
+function inkBox(buf, bg) {
+  const png = PNG.sync.read(buf);
+  const { width, height, data } = png;
+  let minX = width;
+  let minY = height;
+  let maxX = -1;
+  let maxY = -1;
+  let count = 0;
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const i = (y * width + x) * 4;
+      if (
+        Math.abs(data[i] - bg[0]) > INK_ALPHA ||
+        Math.abs(data[i + 1] - bg[1]) > INK_ALPHA ||
+        Math.abs(data[i + 2] - bg[2]) > INK_ALPHA
+      ) {
+        count++;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+  }
+  if (maxX < 0) return { count: 0, box: null, ratio: 0, density: 0 };
+  const w = maxX - minX + 1;
+  const h = maxY - minY + 1;
+  return {
+    count,
+    box: [minX, minY, maxX, maxY],
+    ratio: (w * h) / (1920 * 1080),
+    density: count / (w * h),
+  };
+}
+
 /** 对当前页面上的 tag 逐个套预设，截图和默认态比较。 */
 async function presetDiff(tag, baseShot, targetSel = tag) {
   const presets = PRESETS[tag] || [];
@@ -336,10 +382,34 @@ for (const target of list) {
     else if (Math.abs(r - 1) > 0.01) fail(target.label, `KaTeX 字号是 ${r.toFixed(2)}em，应为 1em`);
   }
 
-  // 预设只对"成品"镜头有意义：其余四个镜头里这块元件是隐藏的，改了也拍不到。
-  if (checkPresets && target.kind === 'specimen') {
-    const baseShot = await page.screenshot();
-    await presetDiff(target.tag, baseShot);
+  // 标本页：先量墨迹包围盒（只提醒），再拿同一张静帧跑预设像素差。
+  let baseShot = null;
+  if (target.kind === 'specimen' && target.path.startsWith('specimen/')) {
+    await page.evaluate(() => window.vk?.freeze?.());
+    baseShot = await page.screenshot();
+    // 旧名页只有一句迁移说明，不参与"组件主帧"口径。
+    if (!ALIASES[target.tag]) {
+      const bg = await page.evaluate(() => {
+        const el = document.querySelector('.vk-page');
+        const m = el ? getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/) : null;
+        const parts = m ? m[1].split(/[ ,/]+/).filter(Boolean).map(Number) : [255, 255, 255];
+        const a = parts[3] === undefined ? 1 : parts[3];
+        return [0, 1, 2].map((i) => Math.round(parts[i] * a + 255 * (1 - a)));
+      });
+      const ink = inkBox(baseShot, bg);
+      if (ink.ratio < INK_MIN) {
+        const why = ink.density < 0.06 ? '内容太散' : '内容太小';
+        const size = ink.box ? `${ink.box[2] - ink.box[0] + 1}×${ink.box[3] - ink.box[1] + 1}` : '空';
+        warn(
+          target.label,
+          `有效内容 ${(ink.ratio * 100).toFixed(1)}% < 60%（${why}：墨迹 ${size}，密度 ${(ink.density * 100).toFixed(1)}%）：把主帧放大或收掉四周留白`
+        );
+      }
+    }
+  }
+  // 预设只对"成品"镜头有意义：其余镜头里这块元件是隐藏的，改了也拍不到。
+  if (checkPresets && target.kind === 'specimen' && target.path.startsWith('specimen/')) {
+    await presetDiff(target.tag, baseShot || (await page.screenshot()));
   }
 
   // 只数"真的失败了的"：void 这类记账项不该把一行变成 ✗。
@@ -373,4 +443,5 @@ if (!checked) {
     `\n门禁全绿（${seen}/${total} 个检查对象${cacheHits ? `，${cacheHits} 个缓存命中` : ''}，预设像素差${checkPresets ? '已跑' : '已跳过'}）。`
   );
 }
+
 

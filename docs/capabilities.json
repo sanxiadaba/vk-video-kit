@@ -599,7 +599,7 @@
         },
         {
           "file": "tests/batch-primitives.test.mjs",
-          "name": "vk-pair：symbol 的三种写法都出现，axis=\"none\" 只剩空轴"
+          "name": "vk-pair：symbol 的三种写法都出现，axis=\"none\" 只关分隔线"
         }
       ]
     },

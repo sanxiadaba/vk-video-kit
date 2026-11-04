@@ -191,7 +191,8 @@ vk-annotate .vk-edge-path {
   fill: none;
   stroke: var(--vk-ink-3);
   stroke-width: var(--vk-edge-w);
-  stroke-linecap: round;
+  /* 平头收在线尖，别让圆头在箭头尖上多出一个点。 */
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 vk-annotate .vk-edge-tip {
@@ -454,3 +455,4 @@ vk-label[for] .vk-label.vk-caption {
   white-space: nowrap;
   pointer-events: none;
 }
+
