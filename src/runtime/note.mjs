@@ -32,8 +32,8 @@ const MIN_W = 96;
 const DEFAULT_W = 280;
 /** 贴到容器边时的最小留白。 */
 const PAD = 8;
-/** 编号点直径（CSS 里写 40，几何用同一个数）。 */
-const DOT = 40;
+/** 编号点直径（CSS 里写 48，几何用同一个数）。 */
+const DOT = 48;
 
 /* ------------------------------------------------------------------ 坐标系 */
 
@@ -102,6 +102,13 @@ function baselineOffset(el) {
 }
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
+
+/** 边注盒子与目标矩形有没有实质重叠（>2px 才算：贴边不算压住）。 */
+function boxHitsRect(box, r) {
+  const ox = Math.min(box.left + box.w, r.x + r.w) - Math.max(box.left, r.x);
+  const oy = Math.min(box.top + box.h, r.y + r.h) - Math.max(box.top, r.y);
+  return ox > 2 && oy > 2;
+}
 
 /* ------------------------------------------------------------------ 组件 */
 
@@ -372,42 +379,113 @@ export class VkNote extends VkAnnotate {
     box.style.display = '';
     const b = local(t.rect);
 
-    // 边注宽度：不超过那一侧真正空出来的地方；显式 side 无空间时夹回容器内。
-    const sideAttr = this.getAttribute('side') || 'auto';
-    const spaceRight = W - (b.x + b.w) - GAP - PAD * 2;
-    const spaceLeft = b.x - GAP - PAD * 2;
-    const side = sideAttr === 'left' || sideAttr === 'right' ? sideAttr : spaceRight >= spaceLeft ? 'right' : 'left';
+    // 宽度先落、高度后量。反过来（旧实现）量到的还是上一帧的一行高，
+    // 纵向 clamp 按错的高度算，多行边注就会被放到画布外面去。
     const want = numAttr(this, 'w', { min: MIN_W, max: 600, fallback: DEFAULT_W });
-    const width = Math.round(Math.max(MIN_W, Math.min(want, Math.max(MIN_W, side === 'right' ? spaceRight : spaceLeft))));
+    const gap = numAttr(this, 'gap-px', { min: 0, max: 240, fallback: GAP });
+    const space = {
+      right: W - (b.x + b.w) - gap - PAD,
+      left: b.x - gap - PAD,
+    };
+    const fit = (s) => Math.round(Math.max(MIN_W, Math.min(want, Math.max(MIN_W, space[s]))));
+    const measure = (w) => {
+      box.style.width = w + 'px';
+      return box.offsetHeight || 0;
+    };
 
-    let left = side === 'right' ? b.x + b.w + GAP : b.x - GAP - width;
-    left = clamp(Math.round(left), PAD, Math.max(PAD, W - width - PAD));
+    // 选边：作者写的一侧优先；那一侧连 MIN_W 都放不下时翻到另一侧
+    // （"文字只放在有空间的一侧"——目标贴边时不许把边注挤到画布外）。
+    const sideAttr = (this.getAttribute('side') || 'auto').trim();
+    const other = (s) => (s === 'right' ? 'left' : 'right');
+    const prefer = sideAttr === 'left' || sideAttr === 'right' ? sideAttr : space.right >= space.left ? 'right' : 'left';
+    const side =
+      space[prefer] >= MIN_W
+        ? prefer
+        : space[other(prefer)] >= MIN_W
+          ? other(prefer)
+          : space[other(prefer)] > space[prefer]
+            ? other(prefer)
+            : prefer;
 
     // 与目标正文同一个基线：先量目标的基线，再把边注首行的基线对上去。
     const targetBaseline = (baselineOf(t.el) - hr.top) / scale;
     const offset = baselineOffset(box);
-    let top = Math.round(targetBaseline - offset);
-    const boxH = box.offsetHeight || 0;
-    top = clamp(top, PAD, Math.max(PAD, H - boxH - PAD));
+    const baselineTop = (h) => clamp(Math.round(targetBaseline - offset), PAD, Math.max(PAD, H - h - PAD));
 
-    box.style.left = left + 'px';
-    box.style.top = top + 'px';
-    box.style.width = width + 'px';
+    // 左右各试一次；两边都会压住目标时退到上方 / 下方（横着没地方就竖着放）。
+    const spots = [];
+    for (const s of [side, other(side)]) {
+      const w = fit(s);
+      const h = measure(w);
+      const left = clamp(
+        Math.round(s === 'right' ? b.x + b.w + gap : b.x - gap - w),
+        PAD,
+        Math.max(PAD, W - w - PAD)
+      );
+      spots.push({ side: s, w, h, left, top: baselineTop(h) });
+    }
+    let spot = spots.find((c) => !boxHitsRect(c, b));
+    if (!spot) {
+      const w = Math.round(Math.max(MIN_W, Math.min(want, W - PAD * 2)));
+      const h = measure(w);
+      const above = b.y - gap - h >= PAD || b.y + b.h + gap + h > H - PAD;
+      spot = {
+        side: above ? 'top' : 'bottom',
+        w,
+        h,
+        left: clamp(Math.round(b.cx - w / 2), PAD, Math.max(PAD, W - w - PAD)),
+        top: clamp(
+          Math.round(above ? b.y - gap - h : b.y + b.h + gap),
+          PAD,
+          Math.max(PAD, H - h - PAD)
+        ),
+      };
+    }
 
-    // 引线画在边注首行的中线：不是基线，也不是盒子中心。
+    box.style.left = spot.left + 'px';
+    box.style.top = spot.top + 'px';
+    box.style.width = spot.w + 'px';
+
+    // 引线：两端都落在真实边上。目标端不是"和目标同 x 的空白"，
+    // 而是目标边线上的一点（边注被纵向挤开时，靠一段贴边的竖线接回来）。
     const line = firstLine(this._t);
-    const y = line ? Math.round(((line.rect.top + line.rect.height / 2 - hr.top) / scale) * 10) / 10 : top + Math.round(offset);
-    const x1 = side === 'right' ? Math.round(b.x + b.w) : Math.round(b.x);
-    const x2 = side === 'right' ? left : left + width;
-    this._line?.setAttribute('d', `M ${x1} ${y} L ${x2} ${y}`);
-    this._line?.setAttribute('data-side', side);
+    const mid = line ? (line.rect.top + line.rect.height / 2 - hr.top) / scale : spot.top + offset;
+    let pts;
+    if (spot.side === 'top' || spot.side === 'bottom') {
+      const x = clamp(Math.round(b.cx), Math.round(b.x) + 1, Math.round(b.x + b.w) - 1);
+      const edge = spot.side === 'top' ? Math.round(b.y) : Math.round(b.y + b.h);
+      const from = spot.side === 'top' ? spot.top + spot.h : spot.top;
+      pts = [
+        [x, edge],
+        [x, from],
+      ];
+    } else {
+      const x1 = Math.round(spot.side === 'right' ? b.x + b.w : b.x);
+      const x2 = spot.side === 'right' ? spot.left : spot.left + spot.w;
+      const ey = clamp(mid, b.y + 1, b.y + b.h - 1);
+      // 终点在边注的纵向范围内 → 一条水平线就够；否则先水平到目标边、再沿边竖一小段。
+      pts =
+        ey >= spot.top && ey <= spot.top + spot.h
+          ? [
+              [x1, ey],
+              [x2, ey],
+            ]
+          : [
+              [x1, Math.round(ey)],
+              [x1, Math.round(mid)],
+              [x2, Math.round(mid)],
+            ];
+    }
+    const d = pts.map(([x, y], i) => `${i ? 'L' : 'M'} ${Math.round(x)} ${Math.round(y)}`).join(' ');
+    this._line?.setAttribute('d', d);
+    this._line?.setAttribute('data-side', spot.side);
     if (this._mark) {
       const isDot = this.getAttribute('leader') === 'dot';
       this._mark.style.display = isDot ? '' : 'none';
       if (isDot) {
-        // 圆点永远落在目标端（x1），不落在文字那一端。
-        this._mark.setAttribute('cx', x1);
-        this._mark.setAttribute('cy', y);
+        // 圆点永远落在目标端（pts[0]），不落在文字那一端。
+        this._mark.setAttribute('cx', Math.round(pts[0][0]));
+        this._mark.setAttribute('cy', Math.round(pts[0][1]));
       }
     }
   }

@@ -508,6 +508,12 @@ export const EFFECT_ANY = [
     attr: 'href',
     reason: 'href 只在点击时导航；静态帧没有视觉变化。',
   },
+  {
+    tag: 'vk-annotate',
+    attr: 'gap-px',
+    reason:
+      '默认的曲线箭头不吃间隙（曲线两端直接落在盒边上）；gap-px 只作用于 ortho 折线的起步与批注气泡的落点，单场景量不到。折线间隙由 vk-edge 的契约覆盖。',
+  },
 ];
 export const EFFECT_ANY_BUDGET = 12;
 

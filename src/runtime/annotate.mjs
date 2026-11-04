@@ -25,6 +25,10 @@ import {
 } from './geometry.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
+/** 双圈的内环半径（外圈是 _ringConfig().pad）。 */
+const RING_INNER = 2;
+/** 编号点钉进目标时的内距：目标左上角 + 12px（手机上一眼能看清它贴着哪一块）。 */
+const BADGE_INSET = 12;
 const tag = (name, attrs = {}) => {
   const n = document.createElementNS(NS, name);
   for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, String(v));
@@ -183,10 +187,12 @@ export class VkAnnotate extends VkElement {
     return this.getAttribute('mode') || 'arrow';
   }
 
-  /** 连线的形状：新词 straight / ortho / curve；旧词 line 在别名的子类里折过来。 */
+  /** 连线的形状：新词 straight / ortho / curve；旧词 line 在别名的子类里折过来。
+   *  默认 curve：一条线的价值是"指过去"，不是画三个直角。折线是旧 vk-edge 的相貌，
+   *  新标签要么直线、要么一条顺滑的弯，不再默认给人看"管道"。 */
   _shape() {
-    const v = this.getAttribute('shape') || 'ortho';
-    return v === 'straight' || v === 'curve' ? v : 'ortho';
+    const v = this.getAttribute('shape') || 'curve';
+    return v === 'straight' || v === 'ortho' ? v : 'curve';
   }
 
   _dashOn() {
@@ -350,6 +356,12 @@ export class VkAnnotate extends VkElement {
     if (!this._svg) {
       this._svg = document.createElementNS(NS, 'svg');
       this._svg.setAttribute('class', 'vk-edge-svg');
+      // 纸色"垫层"：先画一条更粗的白线，箭头就从任何底色上浮起来。
+      // 只有新标签有——旧 vk-edge 的逐像素不变是硬约定。
+      if (!this.constructor.legacy) {
+        this._halo = document.createElementNS(NS, 'path');
+        this._halo.setAttribute('class', 'vk-edge-halo');
+      }
       this._path = document.createElementNS(NS, 'path');
       this._path.setAttribute('class', 'vk-edge-path');
       this._tip = document.createElementNS(NS, 'path');
@@ -359,7 +371,7 @@ export class VkAnnotate extends VkElement {
       this._cap = document.createElementNS(NS, 'circle');
       this._cap.setAttribute('class', 'vk-edge-cap');
       this._cap.setAttribute('r', '5');
-      this._svg.append(this._path, this._tip, this._tip2, this._cap);
+      this._svg.append(...(this._halo ? [this._halo] : []), this._path, this._tip, this._tip2, this._cap);
       this.appendChild(this._svg);
     }
     // arrow-label 是「中轴挂一个词」的新写法；旧页的 label 仍然有效，新词优先。
@@ -496,12 +508,23 @@ export class VkAnnotate extends VkElement {
     this._svg.setAttribute('preserveAspectRatio', 'none');
 
     this._path.setAttribute('d', g.d);
+    if (this._halo) this._halo.setAttribute('d', g.d);
 
     // 线宽 / 箭头尺寸 / 半角都来自令牌：几何与样式必须是同一份数字
     const num = (name, fallback) => parseFloat(cs.getPropertyValue(name)) || fallback;
     const arrowStyle = cfg.head.style;
-    const arrowSize = cfg.head.size;
-    const tipSize = arrowStyle === 'thin' ? arrowSize * 0.72 : arrowSize;
+    let tipSize = cfg.head.size;
+    if (cfg.scaled) {
+      // 箭头和线宽同比：旧公式让头 ≈ 线的 10 倍，远看是一支"方块箭头"。
+      // 3.6 倍（夹 22…48）是工程图里"线带一个尖"的比例，缩到 780 也认得出来。
+      const lineW = cfg.width ?? Math.max(2, num('--vk-edge-w', 4));
+      const head = Math.max(22, Math.min(48, lineW * 3.6));
+      // 头不能比最后一段直线还长：终点前只剩 12px 时，头会盖住整个弯。
+      const before = g.points[g.points.length - 2] || g.points[0];
+      const lastRun = Math.hypot(g.tip.x - before.x, g.tip.y - before.y);
+      tipSize = Math.max(16, Math.min(head, lastRun * 1.15));
+    }
+    if (arrowStyle === 'thin') tipSize *= 0.72;
     const tipHalf = num('--vk-edge-tip-angle', 0.42);
     const tip = arrowStyle === 'open' ? tipOpenPath : tipPath;
 
@@ -533,10 +556,12 @@ export class VkAnnotate extends VkElement {
       this._path.style.strokeWidth = cfg.width + 'px';
       this._tip.style.strokeWidth = cfg.width + 'px';
       this._tip2.style.strokeWidth = cfg.width + 'px';
+      if (this._halo) this._halo.style.strokeWidth = cfg.width + 6 + 'px';
     } else {
       this._path.style.strokeWidth = '';
       this._tip.style.strokeWidth = '';
       this._tip2.style.strokeWidth = '';
+      if (this._halo) this._halo.style.strokeWidth = '';
     }
     if (cfg.dash) this._svg.dataset.dash = '1';
     else delete this._svg.dataset.dash;
@@ -660,12 +685,48 @@ export class VkAnnotate extends VkElement {
 
     for (const a of targets) {
       const b = this._box(a.rect, this._frameHost, this._frameRect);
-      this._svg.append(this._circleShape(cfg.figure, b, cfg.pad));
+      // 圈选 = 目标矩形 + pad，但不许越出目标自己的容器：一行代码的 rect 把
+      // 行号沟也算进去了，pad 会把椭圆推到代码框外面（"圈比比框还宽"）。
+      const outer = this._ringBox(a, b, cfg.pad);
+      this._svg.append(this._circleShape(cfg.figure, outer, 0));
       if (cfg.double) {
-        // 内外两圈：外圈 12px，内圈 2px；两圈同心，读起来是"双重强调"。
-        this._svg.append(this._circleShape(cfg.figure, b, 2, ' vk-annot-ring-inner'));
+        // 内外两圈：外圈 12px，内圈 2px。内环从外环缩进去量（不是另算一次目标 + 2），
+        // 两圈才同心——否则贴边收紧时圆心会各偏几像素。
+        const d = cfg.pad - RING_INNER;
+        this._svg.append(
+          this._circleShape(cfg.figure, insetBox(outer, d), 0, ' vk-annot-ring-inner')
+        );
       }
     }
+  }
+
+  /**
+   * 圈选的外框：目标矩形 + pad，再 clamp 进"目标自己的容器"（父元素）与画布。
+   *
+   * 两条边只在有富余时才收：clamp 不会把圈夹到目标里面——贴边写到底也不会圈不住。
+   */
+  _ringBox(a, b, pad) {
+    let x0 = b.x - pad;
+    let y0 = b.y - pad;
+    let x1 = b.x + b.w + pad;
+    let y1 = b.y + b.h + pad;
+    const host = this._frameHost;
+    const hr = this._frameRect;
+    if (host && hr) {
+      const limits = [{ x: 0, y: 0, w: host.offsetWidth, h: host.offsetHeight }];
+      const parent = a.el && a.el !== host ? a.el.parentElement : null;
+      if (parent && parent !== host) limits.push(visualToLocal(parent.getBoundingClientRect(), hr, host.offsetWidth));
+      for (const L of limits) {
+        if (!(L.w > 0) || !(L.h > 0)) continue;
+        x0 = Math.max(x0, Math.min(L.x, b.x));
+        y0 = Math.max(y0, Math.min(L.y, b.y));
+        x1 = Math.min(x1, Math.max(L.x + L.w, b.x + b.w));
+        y1 = Math.min(y1, Math.max(L.y + L.h, b.y + b.h));
+      }
+    }
+    const w = x1 - x0;
+    const h = y1 - y0;
+    return { x: x0, y: y0, w, h, cx: x0 + w / 2, cy: y0 + h / 2 };
   }
 
   /* ------------------------------------------------------------------- note */
@@ -797,6 +858,7 @@ export class VkAnnotate extends VkElement {
     let anchor = null;
     let side = cfg.side;
     let targetBox = null;
+    let pinned = false;
 
     if (target) {
       anchor = this._box(target.rect, f.host, f.hr);
@@ -806,7 +868,15 @@ export class VkAnnotate extends VkElement {
         right: anchor.x + anchor.w,
         bottom: anchor.y + anchor.h,
       };
-      if (!Number.isFinite(left) || !Number.isFinite(top)) {
+      // 编号点钉在目标里：它指的就是"这一块"，坐标 = 目标左上角 + 内距。
+      // 写了 @side: / side= 的仍按指定侧放到外面（旧 vk-pin 的摆放不再改动）。
+      pinned = cfg.form === 'badge' && !target.side && cfg.side === 'auto' && !Number.isFinite(cfg.x) && !Number.isFinite(cfg.y);
+      if (pinned) {
+        const room = (Math.min(anchor.w, anchor.h) - Math.min(bw, bh)) / 2;
+        const inset = Math.max(0, Math.min(BADGE_INSET, room));
+        left = clampInto(anchor.x + inset, anchor.x, anchor.x + anchor.w - bw);
+        top = clampInto(anchor.y + inset, anchor.y, anchor.y + anchor.h - bh);
+      } else if (!Number.isFinite(left) || !Number.isFinite(top)) {
         // 自动选边：先算四个候选位置，再按"压住多少字 / 是否穿过目标"排序。
         if (side === 'auto') {
           // 正文矩形的坐标系是 viewport，候选位置是包含块局部坐标：
@@ -868,12 +938,13 @@ export class VkAnnotate extends VkElement {
       return;
     }
 
-    left = Math.max(8, Math.min(f.w - bw - 8, left));
-    top = Math.max(8, Math.min(f.h - bh - 8, top));
-    bd.style.left = Math.round(left) + 'px';
-    bd.style.top = Math.round(top) + 'px';
+    left = Math.round(Math.max(8, Math.min(f.w - bw - 8, left)));
+    top = Math.round(Math.max(8, Math.min(f.h - bh - 8, top)));
+    bd.style.left = left + 'px';
+    bd.style.top = top + 'px';
 
-    if (!anchor || cfg.leader === 'none') return;
+    // 编号点就在目标里，没有"从泡到目标"的引线可画：再画就是一条穿进目标的短线。
+    if (!anchor || cfg.leader === 'none' || pinned) return;
     // 引线必须落在目标边上，而不是目标中心：从边上出线，线就不会横穿目标行。
     // 显式 side 优先；x/y 或夹取把气泡挪到别处时，按最近的一侧重新选出口。
     let leadSide = side;
@@ -884,11 +955,24 @@ export class VkAnnotate extends VkElement {
     }
     const leader = noteLeaderPoints(leadSide, left, top, bw, bh, anchor, cfg.leader === 'straight');
     this._svg.append(tag('path', { d: leader.d, class: 'vk-pin-leader', fill: 'none', 'data-side': leadSide }));
-    this._svg.append(tag('circle', { cx: leader.ex, cy: leader.ey, r: 6, class: 'vk-pin-dot' }));
+    // 端点圆点：r=9（缩到 780 还有 3.7px）。6 在手机上只剩一粒灰，看不出"就是这里"。
+    this._svg.append(tag('circle', { cx: leader.ex, cy: leader.ey, r: 9, class: 'vk-pin-dot' }));
   }
 }
 
 const NOTE_SIDES = new Set(['auto', 'top', 'right', 'bottom', 'left']);
+
+/** 夹进 [lo, hi]；区间反了（目标比标注还小）就取 lo——坐标至少还在目标里。 */
+function clampInto(v, lo, hi) {
+  return hi < lo ? lo : Math.max(lo, Math.min(hi, v));
+}
+
+/** 盒子里缩 d 像素（同心）：双圈的内环用同一个圆心。 */
+function insetBox(b, d) {
+  const w = Math.max(0, b.w - d * 2);
+  const h = Math.max(0, b.h - d * 2);
+  return { x: b.x + d, y: b.y + d, w, h, cx: b.cx, cy: b.cy };
+}
 
 /** 气泡与目标的矩形是否有实质重叠（>4px 才算，避免边框贴边误判）。 */
 function noteOverlap(x, y, w, h, r) {

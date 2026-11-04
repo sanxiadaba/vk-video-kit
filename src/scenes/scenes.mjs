@@ -64,7 +64,7 @@ export const SCENES = [
     <vk-label tone="info" icon="circle-alert">注意</vk-label>
     <vk-label ink="secondary" icon="arrow-right">下一步</vk-label>
   </vk-stack>
-  <vk-stack class="spec-w1200" gap="sm">
+  <vk-stack class="spec-w1200 spec-pad-top" gap="sm">
     <vk-box id="lab-a" surface="none" pad="sm">
       <vk-text size="subhead" mono>printf("%s\n", s);</vk-text>
     </vk-box>
@@ -446,21 +446,21 @@ export const SCENES = [
     // 这一页只留四种「关系」本身：箭头 / 圈选 / 批注 / 编号点。
     body: s`
 <vk-canvas w="1680" h="660">
-  <vk-code id="vka-src" x="40" y="20" w="860" lang="c" file="hello.c" src="../code/hello.c" lines="1-3" mass="compact"></vk-code>
-  <vk-box id="vka-out" x="960" y="20" w="560" border="hair" radius="lg" pad="md" surface="paper">
+  <vk-code id="vka-src" x="40" y="24" w="760" lang="c" file="hello.c" src="../code/hello.c" lines="1-3" mass="compact"></vk-code>
+  <vk-box id="vka-out" x="1100" y="24" w="540" border="hair" radius="lg" pad="md" surface="paper">
     <vk-stack gap="2xs">
       <vk-text size="label" mono ink="muted">$ ./hello.exe</vk-text>
       <vk-text size="body" mono>Hello, World!</vk-text>
     </vk-stack>
   </vk-box>
-  <vk-box id="vka-gap" x="960" y="240" w="560" h="160" border="hair" radius="lg" pad="md" surface="none">
-    <vk-text size="body" ink="secondary">这里空着</vk-text>
+  <vk-box id="vka-gap" x="1100" y="300" w="540" h="160" border="hair" radius="lg" pad="md" surface="soft">
+    <vk-text size="body" ink="secondary" class="spec-indent">这里空着</vk-text>
   </vk-box>
 
   <vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info"></vk-annotate>
-  <vk-annotate id="vka-circle" mode="circle" for="#vka-src@line:3" ring="ellipse" double tone="focus"></vk-annotate>
+  <vk-annotate id="vka-circle" mode="circle" for="#vka-src@line:3" ring="ellipse" width="5" tone="focus"></vk-annotate>
   <vk-annotate id="vka-note" mode="note" note="bubble" for="#vka-gap@side:bottom" tone="warn">-O2 少了 3 行</vk-annotate>
-  <vk-annotate id="vka-badge" mode="badge" for="#vka-gap@side:right" n="2"></vk-annotate>
+  <vk-annotate id="vka-badge" mode="badge" for="#vka-gap" n="2"></vk-annotate>
 </vk-canvas>`,
     strip: s`
 <vk-canvas w="1200" h="360">
@@ -482,7 +482,6 @@ export const SCENES = [
     <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
   </vk-box>
   <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
-  <vk-note kind="bubble" for="#nt-code@side:right" side="right" n="1" tone="warn">这一段只讲入口</vk-note>
 
   <vk-box id="nt-a" x="380" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
     <vk-text size="body">预处理</vk-text>

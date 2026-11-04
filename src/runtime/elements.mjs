@@ -180,6 +180,8 @@ export class VkPanel extends VkElement {
 
 /** 说明与目标盒之间的净空。 */
 const CAPTION_GAP = 16;
+/** 净空地板：再近，标签的墨迹就贴到目标正文上了（12 是"还看得出是一条缝"的下限）。 */
+const MIN_CAPTION_GAP = 12;
 
 /** 覆盖层只认一个坐标系：最近的定位祖先（没有就退回 body）。 */
 function captionHostOf(el) {
@@ -251,6 +253,7 @@ export class VkLabel extends VkElement {
     // for / anchor 在块里的标签上只是作者的写法镜像（不生效，但契约要能读到"改了"）。
     this.dataset.for = this.getAttribute('for') || '';
     this.dataset.anchor = this.getAttribute('anchor') || '';
+    this.dataset.gap = String(numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP }));
     this.style.zIndex = '';
     this._span = null;
 
@@ -354,8 +357,12 @@ export class VkLabel extends VkElement {
     const cr = firstCharRect(target);
     const box = span.getBoundingClientRect();
     const above = this.getAttribute('anchor') !== 'below';
+    // 净空可配（gap-px），但不会小于 12：标签与目标正文必须留出一条缝。
+    const gap = numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP });
+    this.dataset.gap = String(gap);
+    // 左边界对齐目标首字符；1px 内距在 span 内部（纸色底比字宽 2px，字仍对着首字符）。
     const left = cr.left - hr.left;
-    const top = above ? tr.top - hr.top - box.height - CAPTION_GAP : tr.bottom - hr.top + CAPTION_GAP;
+    const top = above ? tr.top - hr.top - box.height - gap : tr.bottom - hr.top + gap;
     span.style.left = left.toFixed(2) + 'px';
     span.style.top = top.toFixed(2) + 'px';
     span.style.visibility = 'visible';

@@ -165,6 +165,9 @@ export const EFFECTS = {
     // 契约才读得到"改了就变"）；真正的落点由 draw() 的几何算。
     for: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
     anchor: { on: 'vk-label', kind: 'attr', prop: 'data-anchor', expectFromValue: 'raw' },
+    // 净空：先镜像到宿主（块里的标签也镜像，契约才读得到"改了就变"）；
+    // 真正的落点由 draw() 算，几何在 tests/fix-three.test.mjs 逐条量。
+    'gap-px': { on: 'vk-label', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
   },
 
   'vk-icon': {
@@ -465,7 +468,8 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   n: { on: 'vk-annotate', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
   size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
   emphasis: { on: 'vk-annotate', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
-  'gap-px': { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
+  // gap-px 只作用于 ortho 折线的起步与批注气泡的落点：默认的曲线箭头不吃间隙，
+  // 单场景量不到 → 登记在 EFFECT_ANY（理由写在那里），折线那份由 vk-edge 覆盖。
   z: { on: 'vk-annotate', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
   // note 形态的显式落点；arrow 形态也把请求的 side 镜像到宿主上，契约能读到。
   side: { on: 'vk-annotate', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },

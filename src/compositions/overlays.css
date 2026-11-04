@@ -86,9 +86,10 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
 .vk-pin-bd[data-tone='ok'] .vk-pin-n { background: var(--vk-ok); }
 .vk-pin-bd[data-tone='warn'] .vk-pin-n { background: var(--vk-warn); }
 .vk-pin-t { display: inline; }
+/* 气泡引线：4 → 5px。手上的手机屏缩到 780，4px 只剩 1.6px，接不住两端的点。 */
 .vk-pin-leader {
   stroke: var(--vk-info);
-  stroke-width: 4px;
+  stroke-width: 5px;
   stroke-linecap: round;
   stroke-linejoin: round;
   fill: none;
@@ -179,6 +180,13 @@ vk-annotate .vk-edge-svg {
   inset: 0;
   overflow: visible;
 }
+vk-annotate .vk-edge-halo {
+  fill: none;
+  stroke: var(--vk-paper-sf-0);
+  stroke-width: calc(var(--vk-edge-w, 4px) + 6px);
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
 vk-annotate .vk-edge-path {
   fill: none;
   stroke: var(--vk-ink-3);
@@ -225,11 +233,15 @@ vk-annotate[tone='warn'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-warn
 vk-annotate .vk-edge-svg[data-dash] .vk-edge-path { stroke-dasharray: 20 14; }
 
 /* 标签是给观众读的：40px、墨色、白底把线切断。位置由几何决定，不靠手摆。 */
+/* 标签是"箭头上的一枚小牌"：纸底 + 发丝边 + 4 圆角，把线在字下切断。
+   不是贴在线上的裸字——手机缩到 780 时，裸字会和线糊成一道。 */
 vk-annotate .vk-edge-label {
   position: absolute;
-  transform: translate(-50%, calc(-100% - var(--vk-s1)));
-  padding: 0 var(--vk-s1);
+  transform: translate(-50%, calc(-100% - var(--vk-s2)));
+  padding: 2px var(--vk-s2);
+  border-radius: var(--vk-r-2, 8px);
   background: var(--vk-surface-1);
+  box-shadow: 0 0 0 1px var(--vk-line-1);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-body);
   font-weight: var(--vk-w-med);
@@ -272,10 +284,12 @@ vk-annotate[data-note='label'] .vk-pin-bd {
 }
 vk-annotate[data-note='label'] .vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); }
 vk-annotate[data-note='label'] .vk-pin-bd[data-size='subhead'] { font-size: var(--vk-t-subhead); }
+/* 编号点：手机上（整帧 780 宽）它只剩 20 来个像素，所以给足尺寸与纸色环——
+   实色圆 + 反白数字 + 一圈纸（把底下的笔画切开），远看是"一个点"，不是"一粒灰"。 */
 vk-annotate[data-note='badge'] .vk-pin-bd,
 vk-annotate[data-mode='badge'] .vk-pin-bd {
-  width: 40px !important;
-  height: 40px;
+  width: 48px !important;
+  height: 48px;
   padding: 0;
   border: 0;
   background: none;
@@ -286,13 +300,15 @@ vk-annotate[data-note='badge'] .vk-pin-bd .vk-pin-t,
 vk-annotate[data-mode='badge'] .vk-pin-bd .vk-pin-t { display: none; }
 vk-annotate[data-note='badge'] .vk-pin-bd .vk-pin-n,
 vk-annotate[data-mode='badge'] .vk-pin-bd .vk-pin-n {
-  width: 40px;
-  height: 40px;
-  min-width: 40px;
+  width: 48px;
+  height: 48px;
+  min-width: 48px;
   margin: 0;
   padding: 0;
   border-radius: 50%;
   display: flex;
+  font-size: var(--vk-t-tag, 36px);
+  box-shadow: 0 0 0 4px var(--vk-paper-sf-0);
 }
 vk-annotate[data-mode='badge'] .vk-pin-bd:not(:has(.vk-pin-n:not([hidden])))::before {
   content: '';
@@ -338,10 +354,15 @@ vk-note .vk-note-mark {
   fill: var(--vk-ink-2);
 }
 
-/* 边注文字：caption（28）· ink secondary · 无底无框。 */
+/* 边注文字：caption（28）· ink secondary · 无底无框。
+   max-width + overflow-wrap:anywhere 是硬规则：一行代码里常有
+   `-fno-stack-protector` 这种长 token，没有它就会顶穿卡片、跑到画布外。
+   宽度由几何算（note.mjs 先定宽再量高），这里只兜住"永远不许超出容器"。 */
 vk-note .vk-note-m {
   position: absolute;
   box-sizing: border-box;
+  max-width: 100%;
+  overflow-wrap: anywhere;
   font-family: var(--vk-font-sans);
   font-size: var(--vk-t-caption);
   line-height: var(--vk-lh-caption);
@@ -353,6 +374,7 @@ vk-note .vk-note-m {
 vk-note .vk-note-legend {
   position: absolute;
   box-sizing: border-box;
+  max-width: calc(100% - var(--vk-s2) * 2);
   padding-top: var(--vk-s1);
   border-top: 1px solid var(--vk-line-3);
 }
@@ -385,17 +407,19 @@ vk-note .vk-note-item .vk-note-t {
   line-height: var(--vk-lh-caption);
 }
 
-/* 目标角上的编号点：实心墨点 + 反白数字。它是编号，不是强调色（不占焦点名额）。 */
+/* 目标角上的编号点：实心墨点 + 反白数字。它是编号，不是强调色（不占焦点名额）。
+   48px + 4px 纸色环：缩到 780 还有 20px，压在卡片描边上也分得开。 */
 vk-note .vk-note-dot {
   position: absolute;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   background: var(--vk-ink-1);
   color: var(--vk-paper-surface-1);
+  box-shadow: 0 0 0 4px var(--vk-paper-sf-0);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-caption);
   font-weight: var(--vk-w-med);
@@ -419,6 +443,10 @@ vk-caption .vk-caption,
 vk-label[for] .vk-label.vk-caption {
   position: absolute;
   box-sizing: border-box;
+  /* 纸色底 + 1px 内距：标签常常压在上一行的字上，让它"挖掉一块纸"，
+     而不是和正文的笔画粘成一团墨。底色取纸本身，不是灰。 */
+  padding: 1px;
+  background: var(--vk-paper-sf-0);
   font-family: var(--vk-font-sans);
   font-size: var(--vk-t-caption);
   line-height: var(--vk-lh-caption);

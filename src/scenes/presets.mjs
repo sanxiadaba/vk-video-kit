@@ -189,8 +189,9 @@ export const PRESETS = {
     { label: '从 1989 起', attrs: { start: '1989' } },
   ],
   'vk-annotate': [
+    // 默认已经是曲线（一条顺滑的弯）：预设要给"另一种相貌"才拍得出像素差。
+    { label: '折线', attrs: { shape: 'ortho' } },
     { label: '直线', attrs: { shape: 'straight' } },
-    { label: '曲线', attrs: { shape: 'curve' } },
     { label: '虚线', attrs: { dash: 'dashed', tone: 'info' } },
     { label: '圆点端点', attrs: { head: 'dot', tone: 'info' } },
     { label: '圈选', attrs: { mode: 'circle', for: '#pst-b', ring: 'ellipse', double: '' } },

@@ -215,7 +215,8 @@ const DEFAULTS = {
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
   'vk-annotate': {
     mode: 'arrow',
-    shape: 'ortho',
+    // 默认一条顺滑的弯：折线是旧 vk-edge 的相貌，新标签不再默认画三个直角。
+    shape: 'curve',
     dash: 'solid',
     head: 'arrow',
     note: 'bubble',
@@ -359,6 +360,8 @@ export const TAGS = {
       // 左边界对齐目标块的首字符；不写就是块里的一枚标签。
       'for': sel(),
       'anchor': oneOf('above', 'below'),
+      // 贴块时的净空。默认 16；地板 12 是硬的——再近，标签的墨就碰到正文了。
+      'gap-px': int({ min: 12, max: 240, step: 4, default: 16 }),
     },
   },
   'vk-inline': {
