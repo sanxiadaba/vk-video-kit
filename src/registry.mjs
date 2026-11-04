@@ -194,6 +194,8 @@ const DEFAULTS = {
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', 'symbol-size': 48, gap: 24, orientation: 'horizontal' },
+  // 步距默认 48：三块并排时刚好是「一块小留白」，不是三等分的缝。箭头默认不画。
+  'vk-flow': { gap: 48, arrow: 'false' },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
@@ -462,6 +464,26 @@ export const TAGS = {
       // 块与轴之间的留白（像素）；沟槽总宽 = 2 × gap。
       'gap': num({ min: 8, max: 200, step: 1 }),
       'orientation': oneOf('horizontal', 'vertical'),
+    },
+  },
+  /**
+   * 流程：N 步 + N-1 根箭头。
+   *
+   * 它不是 vk-steps 的另一种形态：steps 是"工序到哪了"的进度地图，
+   * flow 是"东西怎么变的"——每一步一块，块之间用箭头连接。
+   * 子节点顺序即流程顺序：<li label="…" tone="…">…</li>；
+   * 每步等宽，窄于 1100px 自动竖排（箭头朝下）。
+   */
+  'vk-flow': {
+    name: '流程',
+    layer: 'layout',
+    summary:
+      '多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），容器窄于 1100px 自动竖排。',
+    attrs: {
+      // 步距（像素）：既是块距，也是箭头占的轨道宽/高。
+      'gap': num({ min: 8, max: 200, step: 1 }),
+      // 箭头默认不画：写 arrow / arrow="true" 才画；arrow="false" 关掉。
+      'arrow': bool(),
     },
   },
   'vk-canvas': {
@@ -1171,6 +1193,8 @@ export const CHILD_ATTRS = {
   'vk-bars': ['label', 'value', 'state'],
   'vk-list': ['state'],
   'vk-steps': [],
+  // 流程的每一步是「标签 + 内容」：label 是块上方那行小字，tone 只染这一块。
+  'vk-flow': ['label', 'tone'],
   'vk-table': [],
   // 图例的每一条说明就是一项，不带任何属性；编号从 1 起按顺序生成。
   'vk-note': [],
@@ -1187,6 +1211,8 @@ export const CHILD_ATTRS = {
 export const CHILDREN = {
   'vk-list': { kind: 'item', item: 'li' },
   'vk-steps': { kind: 'item', item: 'li' },
+  // 一步一个 <li>：顺序就是流程顺序，内容写在 <li> 里。
+  'vk-flow': { kind: 'item', item: 'li' },
   'vk-cells': { kind: 'item', item: 'li' },
   'vk-bars': { kind: 'item', item: 'li' },
   'vk-bits': { kind: 'item', item: 'li' },

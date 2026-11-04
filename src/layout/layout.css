@@ -243,6 +243,161 @@ vk-pair {
   transform: translate(-50%, -50%);
 }
 
+/* ------------------------------------------------------------- vk-flow */
+/* N 步流程：每步一块（上方小标签 + 内容块），块之间用箭头连接。
+   几何定义（测试与契约共用这一条）：
+     · 每步 flex: 1 1 0 —— N 块等宽，宽度和 = 容器宽 - (N-1) × gap；
+     · gap 既是块距，也是箭头的轨道宽/高，箭头画在轨道正中；
+     · 宿主窄于 1100px 时由 place() 切竖排，同一条轨道换方向（箭头朝下）。
+   和 vk-pair 一样是布局原语：宿主有确定高度（grow / fill / grid 格）时块高撑满，
+   高度未定义时退回内容高——不伪造一个比例。 */
+vk-flow {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+}
+/* fill = 吃掉剩余高度（flex 父级）或认 block 父级给的高度（同 vk-pair 的规矩）。 */
+vk-flow[fill] {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.vk-flow {
+  --vk-flow-gap: 48px;
+  /* 连接线用结构线，不是发丝线：它要能在一屏里被看见。 */
+  --vk-flow-conn: var(--vk-line-strong);
+  --vk-flow-tip: 10px;
+
+  display: flex;
+  align-items: stretch;
+  box-sizing: border-box;
+  height: 100%;
+  min-width: 0;
+}
+
+/* 一步：标签在上，块在下；块吃掉这一步剩下的高度。 */
+.vk-flow-step {
+  display: flex;
+  flex: 1 1 0;
+  flex-direction: column;
+  gap: var(--vk-s3);
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.vk-flow-label {
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-t-meta);
+  font-weight: var(--vk-w-med);
+  line-height: 1.3;
+  color: var(--vk-ink-3);
+}
+
+/* 块：浅色底 + 1px 描边 + 大圆角 + s6 内距。
+   内容在块里竖向居中：块被 fill 拉高时不至于全挤在上沿。 */
+.vk-flow-box {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  justify-content: center;
+  box-sizing: border-box;
+  min-width: 0;
+  min-height: 0;
+  padding: var(--vk-s6);
+  border: 1px solid var(--vk-flow-line, var(--vk-line-3));
+  border-radius: var(--vk-r-lg, var(--vk-r-3));
+  background: var(--vk-flow-bg, var(--vk-paper-sf-1));
+}
+
+/* 语义色只染"面"：底用 wash（极淡），描边用 tint（同一支色，深一档）。
+   neutral 不上色：一块纸灰底 + 发丝线，读起来就是"没有语义"。 */
+.vk-flow-step[data-tone='neutral'] {
+  --vk-flow-bg: var(--vk-paper-sf-1);
+  --vk-flow-line: var(--vk-line-3);
+}
+.vk-flow-step[data-tone='info'] {
+  --vk-flow-bg: var(--vk-wash-info);
+  --vk-flow-line: var(--vk-tint-info);
+}
+.vk-flow-step[data-tone='focus'] {
+  --vk-flow-bg: var(--vk-wash-focus);
+  --vk-flow-line: var(--vk-tint-focus);
+}
+.vk-flow-step[data-tone='ok'] {
+  --vk-flow-bg: var(--vk-wash-ok);
+  --vk-flow-line: var(--vk-tint-ok);
+}
+.vk-flow-step[data-tone='warn'] {
+  --vk-flow-bg: var(--vk-wash-warn);
+  --vk-flow-line: var(--vk-tint-warn);
+}
+.vk-flow-step[data-tone='err'] {
+  --vk-flow-bg: var(--vk-wash-err);
+  --vk-flow-line: var(--vk-tint-err);
+}
+
+/* 箭头：轨道宽 = gap，线在轨道正中，三角在线末端。
+   横排时是一条横线 + 右向三角；竖排时是一条竖线 + 下向三角。
+   它是装饰：块从左到右的顺序已经把关系说清楚了，读屏不该读到它。 */
+.vk-flow-arrow {
+  position: relative;
+  flex: 0 0 var(--vk-flow-gap);
+  align-self: stretch;
+  pointer-events: none;
+}
+.vk-flow-arrow::before {
+  content: '';
+  position: absolute;
+  top: calc(50% - 1px);
+  right: var(--vk-flow-tip);
+  left: 0;
+  height: 2px;
+  background: var(--vk-flow-conn);
+}
+.vk-flow-arrow::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  right: 0;
+  transform: translateY(-50%);
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-left: var(--vk-flow-tip) solid var(--vk-flow-conn);
+  border-right: 0;
+}
+
+/* 竖排：块上下排开，箭头在块之间朝下（gap 变成轨道高）。 */
+.vk-flow[data-orientation='vertical'] {
+  flex-direction: column;
+}
+.vk-flow[data-orientation='vertical'] .vk-flow-step {
+  flex: 1 1 auto;
+}
+.vk-flow[data-orientation='vertical'] .vk-flow-arrow {
+  flex: 0 0 var(--vk-flow-gap);
+  width: 100%;
+}
+.vk-flow[data-orientation='vertical'] .vk-flow-arrow::before {
+  top: 0;
+  bottom: var(--vk-flow-tip);
+  left: calc(50% - 1px);
+  right: auto;
+  width: 2px;
+  height: auto;
+}
+.vk-flow[data-orientation='vertical'] .vk-flow-arrow::after {
+  top: auto;
+  bottom: 0;
+  left: 50%;
+  right: auto;
+  transform: translateX(-50%);
+  border-top: var(--vk-flow-tip) solid var(--vk-flow-conn);
+  border-right: 7px solid transparent;
+  border-left: 7px solid transparent;
+  border-bottom: 0;
+}
+
 /* --------------------------------------------------------------- vk-grid */
 
 /* 沟槽只有一个来源：--vk-grid-gutter（32）。gap="sm" 之类的档位是显式覆盖，
