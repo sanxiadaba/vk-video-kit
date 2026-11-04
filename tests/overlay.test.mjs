@@ -78,7 +78,7 @@ test('vk-ring 的 dim 与 keep', async () => {
   assert.ok(Math.abs(r.a - 0.55) < 0.02, `dim 应该被读成 0.55（实际 ${r.a}）`);
   assert.ok(r.c > 0.99, `keep 里的节点不退后（实际 ${r.c}）`);
 });
-test('底部空带：量到的是最后一点墨，且不算覆盖层', async () => {
+test('内容底量的是最后一点墨，且不算覆盖层', async () => {
   await page.setContent(
     SHELL(`<vk-page>
       <vk-stack gap="md">
@@ -90,14 +90,13 @@ test('底部空带：量到的是最后一点墨，且不算覆盖层', async ()
   );
   await ready();
   const out = await page.evaluate(() => {
+    // 底部空带不再判定（那是版式主张）；metrics 仍要给出内容底。
     const issues = window.vk.auditPage().issues.filter((x) => x.type === 'void');
     const m = window.vk.metrics()[0];
-    return { issues, safeH: m.safeH, contentBottom: m.contentBottom, contentRight: m.contentRight };
+    return { issues, safeH: m.safeH, contentBottom: m.contentBottom };
   });
   assert.equal(out.safeH, 888, '安全区高 888');
-  assert.equal(out.issues.length, 1, `应报一条留白，实际 ${JSON.stringify(out.issues)}`);
-  const band = out.issues[0].box[3];
-  assert.ok(band > 700, `空带应接近整页高，实际 ${band}`);
+  assert.equal(out.issues.length, 0, `留白不再进默认审计：${JSON.stringify(out.issues)}`);
   // vk-edge 的 svg 铺满整张纸；它要是被算进内容，contentBottom 就是 888。
   assert.ok(out.contentBottom < 400, `覆盖层不该抬高内容底（实际 ${out.contentBottom}）`);
 });
@@ -119,7 +118,7 @@ test('有一句话的页不报 empty', async () => {
   assert.equal(out.length, 0, `不该报 empty：${JSON.stringify(out)}`);
 });
 
-test('底部空带：贴底的页不报', async () => {
+test('贴底的页：metrics 内容底贴到底边，且不报留白', async () => {
   await page.setContent(
     SHELL(`<vk-page align="bottom">
       <vk-text size="body">这一行贴着安全区底边，下面不该再报留白。</vk-text>

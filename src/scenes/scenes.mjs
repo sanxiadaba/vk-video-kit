@@ -142,7 +142,14 @@ export const SCENES = [
       <vk-text size="label" mono>$ ./hello  →  hello</vk-text>
     </vk-stack>
   </vk-panel>
-</vk-grid>`,
+</vk-grid>
+<vk-stack direction="row" gap="sm">
+  <vk-panel surface="paper" pad="sm"><vk-label variant="chip">paper</vk-label></vk-panel>
+  <vk-panel surface="wash" tone="info" pad="sm"><vk-label variant="chip">wash</vk-label></vk-panel>
+  <vk-panel surface="tint" tone="focus" pad="sm"><vk-label variant="chip">tint</vk-label></vk-panel>
+  <vk-panel surface="dark" pad="sm"><vk-label variant="chip">dark</vk-label></vk-panel>
+  <vk-panel surface="accent" tone="ok" pad="sm"><vk-label variant="chip">accent · ok</vk-label></vk-panel>
+</vk-stack>`,
     // 预设从一块开始：raised / 语义色 / 强边各自只看一块，不在四联格里叠。
     strip: s`
 <vk-panel variant="plain" title="plain · 白纸">
@@ -265,6 +272,14 @@ export const SCENES = [
       <vk-text size="label" mono ink="muted">最大值</vk-text>
       <vk-text size="body" weight="bold">21 亿</vk-text>
     </vk-stack>
+  </vk-box>
+</vk-grid>
+<vk-grid cols="3" gap="sm">
+  <vk-box span="2" border="hair" radius="lg" pad="md" surface="paper">
+    <vk-text size="body" weight="bold">2 / 3 · span="2"</vk-text>
+  </vk-box>
+  <vk-box border="hair" radius="lg" pad="md" surface="paper">
+    <vk-text size="body" weight="bold">1 / 3</vk-text>
   </vk-box>
 </vk-grid>
 </vk-box>`,
@@ -480,6 +495,16 @@ export const SCENES = [
     <li>到这一步才检查语法并优化</li>
   </vk-note>
 </vk-canvas>`,
+  },
+
+  {
+    tag: 'vk-layer',
+    // 第一张图铺底，第二行字叠在上面；readable 默认开，纸色描边让字在图上读得清。
+    body: s`
+<vk-layer class="spec-w1680 spec-h540" surface="wash">
+  <vk-img src="../assets/img/sample.svg" alt="铺底的一张图" fill="cover" radius="none"></vk-img>
+  <vk-text size="headline" weight="bold">叠在图上的一句话</vk-text>
+</vk-layer>`,
   },
 
   {

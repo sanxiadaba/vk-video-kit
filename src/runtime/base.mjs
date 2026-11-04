@@ -366,6 +366,112 @@ export function applyMeasure(el) {
   else el._warnOnce?.('measure', `的 measure="${v}" 只能是 none、8–60 的整数（一行几个字）或档名（caption/body/headline/display，旧名照旧可用）`);
 }
 
+/* --------------------------------------------------------------- 内容字号 */
+
+/** size 允许的语义档：数值是像素，名字是同一套字号 token。 */
+const CONTENT_SIZE_TIERS = new Set([
+  'display',
+  'headline',
+  'body',
+  'caption',
+  'label',
+  'data',
+  'subhead',
+  'title',
+  'hero',
+  'mega',
+]);
+
+/**
+ * 内容组件的字号：size="160" 是像素，size="body" 是语义档。
+ *
+ * 只写一个宿主变量 --vk-cs；行高、行号、内距、语法色块都在 CSS 里从它派生，
+ * 所以不会出现"字放大了、行号还是 48"这种半缩放。不写 size 时不动变量，
+ * 宿主 CSS 的默认值就是今天的样子（逐像素不变）。
+ */
+export function applyContentSize(el) {
+  const raw = (el.getAttribute?.('size') || '').trim();
+  const fit = el.getAttribute?.('fit') === 'width';
+  if (raw) {
+    const n = Number(raw);
+    if (Number.isFinite(n) && n > 0) el.style.setProperty('--vk-cs', n + 'px');
+    else if (CONTENT_SIZE_TIERS.has(raw)) el.style.setProperty('--vk-cs', `var(--vk-t-${raw})`);
+    else {
+      el.style.removeProperty('--vk-cs');
+      el._warnOnce?.('size', `的 size="${raw}" 不是像素数，也不是字号档名（body / headline / caption …），已忽略`);
+    }
+  } else {
+    el.style.removeProperty('--vk-cs');
+  }
+  if (raw) el.dataset.contentSize = raw;
+  else delete el.dataset.contentSize;
+  // 契约读 data-fit；它同时也是"这一块靠运行期铺满"的声明。
+  if (fit) el.dataset.fit = 'width';
+  else delete el.dataset.fit;
+  if (fit) el.dataset.vkPlace = '';
+  else if (el.hasAttribute('data-vk-place')) {
+    el.removeAttribute('data-vk-place');
+    el._unregisterPlace?.();
+  }
+}
+
+/**
+ * fit="width" 的内容块：把最宽的一行放大/缩小到容器宽。
+ *
+ * 做法和 vk-text 的 fit 同一个思路（量自然宽 → 按比例改字号），只是量的是
+ * 整块内容：临时把内容根设成 max-content，量完还原。行高/内距也随字号走，
+ * 所以第一次按比例算就能收敛，再做一次只吸收 subpixel 误差。
+ */
+export function fitContent(el, rootSel) {
+  if (!HAS_DOM || !el.isConnected || el.getAttribute?.('fit') !== 'width') return;
+  const root = el.querySelector(rootSel);
+  if (!root) return;
+  const target = root.parentElement?.clientWidth || el.clientWidth;
+  if (!target) return;
+
+  const naturalWidth = () => {
+    const prev = [root.style.width, root.style.maxWidth, root.style.overflow];
+    root.style.width = 'max-content';
+    root.style.maxWidth = 'none';
+    root.style.overflow = 'visible';
+    const w = root.offsetWidth;
+    [root.style.width, root.style.maxWidth, root.style.overflow] = prev;
+    return w;
+  };
+
+  const fitOnce = () => {
+    const natural = naturalWidth();
+    if (!natural) return false;
+    const current = parseFloat(getComputedStyle(root).fontSize) || 0;
+    if (!current) return false;
+    const next = Math.max(8, current * (target / natural));
+    el.style.setProperty('--vk-cs', next.toFixed(2) + 'px');
+    return Math.abs(next - current) > 0.05;
+  };
+
+  fitOnce();
+  // 第二遍只吸收 hinting / 小数像素的误差；不会来回震荡。
+  const natural = naturalWidth();
+  if (natural) {
+    const current = parseFloat(getComputedStyle(root).fontSize) || 0;
+    if (current) el.style.setProperty('--vk-cs', Math.max(8, current * (target / natural)).toFixed(2) + 'px');
+  }
+}
+
+/* --------------------------------------------------------------- 出血 */
+
+/**
+ * 出血：通用属性 bleed="x|y|all|none"。
+ *
+ * 真正的几何在 CSS 里（负 margin + 100% + 2×版心边距），这里只把作者写的值
+ * 镜像到 data-bleed：运行时改属性也能立刻生效，契约也能读到"改了就变"。
+ */
+export function applyBleed(el) {
+  const raw = (el.getAttribute?.('bleed') || '').trim();
+  if (!raw || raw === 'none') delete el.dataset.bleed;
+  else el.dataset.bleed = raw;
+}
+
 /* --------------------------------------------------------------- 生命周期 */
 
 /**
@@ -399,6 +505,7 @@ export class VkElement extends Base {
     // 折完再往下走，所以 CSS、文档、契约都只认一套词。
     normalizeTier(this);
     applyMeasure(this);
+    applyBleed(this);
     this._registerPlace();
     if (this._done) {
       this._attachObserver();
@@ -539,6 +646,7 @@ export class VkElement extends Base {
     if (!this._done || oldValue === newValue) return;
     // 行宽是纯样式，不重建子树，属性一变就立刻重算。
     if (name === 'measure') applyMeasure(this);
+    if (name === 'bleed') applyBleed(this);
     if (!this.isConnected) {
       this._dirty = true;
       this._dirtyAttrs.push([name, newValue]);

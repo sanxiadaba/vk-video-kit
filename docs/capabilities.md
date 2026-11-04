@@ -56,6 +56,11 @@
 | 注解 · 气泡 bubble | `vk-note.kind` | `specimen/vk-note.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 分区 · 窗头 chrome | `vk-panel.chrome` | `specimen/vk-panel.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 旧名 · 六个标签的转发 | `vk-text.icon`<br>`vk-box.ring`<br>`vk-label.for`<br>`vk-note.kind`<br>`vk-panel.chrome` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/registry.test.mjs` | ✅ 绿 |
+| 内容组件 · 放大 size / fit | `vk-code.size` | `specimen/vk-code.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
+| 构图 · 出血 bleed | `vk-panel.bleed` | `specimen/vk-panel.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
+| 构图 · 铺满 fill | `vk-img.fill` | `specimen/vk-img.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
+| 构图 · 叠层 vk-layer | `vk-layer.readable` | `specimen/vk-layer.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
+| 颜色 · 五档底 surface | `vk-panel.surface` | `specimen/vk-panel.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -394,6 +399,41 @@
 - 契约断言：`vk-text.icon` · `vk-box.ring` · `vk-label.for` · `vk-note.kind` · `vk-panel.chrome`
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
 - 测试：`tests/merged-six.test.mjs` · 「六个旧标签是别名：转发到新标签并给一条构建期提示」；`tests/registry.test.mjs` · 「别名只转发到一个公开标签，且不在清单里单列」
+
+### ✅ 内容组件 · 放大 size / fit
+
+- 能力：vk-code / vk-term / vk-asm / vk-table / vk-diff / vk-tree 的正文不再被 56px 钉死：size 收像素数（160）或语义档（body/headline），行高、行号、内距、语法色块从同一个 --vk-cs 一起缩放；fit="width" 把最宽一行铺满容器。不写 size 时逐像素不变，没有上限。
+- 契约断言：`vk-code.size`
+- 标本页：`_site/specimen/vk-code.html` + 契约宿主 `_site/specimens/vk-code.html`
+- 测试：`tests/mechanism.test.mjs` · 「内容组件 size：160px 字号与行高成比例，不写 size 像素不变」
+
+### ✅ 构图 · 出血 bleed
+
+- 能力：通用属性 bleed="x|y|all|none"：负 margin + 100% + 2×版心边距，让元素越过 vk-page 的默认边距铺到画布边缘；x 补左右 --vk-margin，y 补上下 --vk-safe-y，none 与不写完全一样。
+- 契约断言：`vk-panel.bleed`
+- 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
+- 测试：`tests/mechanism.test.mjs` · 「出血 bleed="x"：元素左右边到画布 0」
+
+### ✅ 构图 · 铺满 fill
+
+- 能力：vk-img 与 vk-panel 新增 fill="cover|contain"：图片用 object-fit 铺满（cover 裁切、contain 完整放下，都不拉伸）；panel 的 cover 同时吃满宽高、contain 只吃满宽。不写 fill 时沿用旧的 fit / 布尔 fill。
+- 契约断言：`vk-img.fill`
+- 标本页：`_site/specimen/vk-img.html` + 契约宿主 `_site/specimens/vk-img.html`
+- 测试：`tests/mechanism.test.mjs` · 「铺满 fill：cover 的图用 object-fit 填满且不变形」
+
+### ✅ 构图 · 叠层 vk-layer
+
+- 能力：vk-layer 的子元素绝对定位铺满：第一个铺底、其余按 DOM 顺序叠上；vk-text 放在上面时默认加 1px 纸色描边（readable="off" 关掉），surface 给这一层五档底色。
+- 契约断言：`vk-layer.readable`
+- 标本页：`_site/specimen/vk-layer.html` + 契约宿主 `_site/specimens/vk-layer.html`
+- 测试：`tests/mechanism.test.mjs` · 「叠层 vk-layer：第一个铺底、其余叠上，文字有可读性保护」
+
+### ✅ 颜色 · 五档底 surface
+
+- 能力：surface="paper|wash|tint|dark|accent" 落在 vk-panel / vk-layer / vk-box 上：五档底各自带对应的正文字色，dark 与 accent 反白；accent 与 tone 组合是实色强调块（如 accent + tone=ok → 实色底 + 反白字）。
+- 契约断言：`vk-panel.surface`
+- 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
+- 测试：`tests/mechanism.test.mjs` · 「五档底色 surface：paper / wash / tint / dark / accent 的底与字色」
 
 ## 怎么判红
 

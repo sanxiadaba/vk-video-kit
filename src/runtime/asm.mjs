@@ -4,7 +4,7 @@
  * 构建期把 objdump -d 或普通 .s 解析成 data-vk-asm；运行时只摆行。
  * 每行同时带 data-line（源行）与 data-addr（指令地址），两种锚点都能指。
  */
-import { VkElement, define, esc, lineSet } from './base.mjs';
+import { VkElement, define, esc, lineSet, applyContentSize, fitContent } from './base.mjs';
 import { splitInsn } from '../shared/asm.mjs';
 import { tokenizeAsm, tokensToHtml } from '../shared/shell.mjs';
 import { DOTS } from './window.mjs';
@@ -49,6 +49,7 @@ export class VkAsm extends VkElement {
       this.innerHTML = raw
         ? `<pre class="vk-asm vk-asm-raw" data-stale>${esc(raw)}</pre>`
         : '<div class="vk-asm" data-empty>缺少汇编数据</div>';
+      applyContentSize(this);
       return;
     }
     const hasAddr = d.rows.some((r) => r.addr);
@@ -140,10 +141,10 @@ export class VkAsm extends VkElement {
      * 否则 7 字节指令会被折成两行，一整张清单瞬间高出一倍。
      */
     const gridCols = [
-      showOrder ? '84px' : '',
-      showAddr ? 'minmax(180px, max-content)' : '',
-      showBytes ? 'max(500px, calc(var(--vk-t-label) * 12))' : '',
-      '160px',
+      showOrder ? 'calc(var(--vk-cs) * 84 / 48)' : '',
+      showAddr ? 'minmax(calc(var(--vk-cs) * 180 / 48), max-content)' : '',
+      showBytes ? 'max(calc(var(--vk-cs) * 500 / 48), calc(var(--vk-cs) * 12))' : '',
+      'calc(var(--vk-cs) * 160 / 48)',
       'minmax(0, 1fr)',
     ]
       .filter(Boolean)
@@ -151,6 +152,11 @@ export class VkAsm extends VkElement {
     this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-chrome="${chrome}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, '.vk-asm-bd');
   }
 }
 

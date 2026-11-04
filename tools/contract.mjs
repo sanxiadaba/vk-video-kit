@@ -253,6 +253,8 @@ function visualInPage(tag) {
     const cs = getComputedStyle(el);
     if (cs.display === 'none' || cs.visibility === 'hidden') continue;
     const inChrome = !!el.closest('.vk-hd');
+    // 出血是显式意图：它本来就要越过版心到画布边，不能再按安全区判。
+    const inBleed = !!el.closest('[data-bleed]');
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
@@ -271,10 +273,10 @@ function visualInPage(tag) {
         if (cr < need) out.push({ type: 'contrast', what: (el.className || el.tagName).toString().slice(0, 50), cr: +cr.toFixed(2), need });
       }
     }
-    if (r.left < -4 || r.top < -4 || r.right > 1924 || r.bottom > 1084) {
+    if (!inBleed && (r.left < -4 || r.top < -4 || r.right > 1924 || r.bottom > 1084)) {
       out.push({ type: 'overflow', what: (el.className || el.tagName).toString().slice(0, 50) });
     }
-    if (!inChrome && sr.width && (r.left < sr.left - 2 || r.right > sr.right + 2 || r.top < sr.top - 2 || r.bottom > sr.bottom + 2)) {
+    if (!inBleed && !inChrome && sr.width && (r.left < sr.left - 2 || r.right > sr.right + 2 || r.top < sr.top - 2 || r.bottom > sr.bottom + 2)) {
       out.push({ type: 'safe', what: (el.className || el.tagName).toString().slice(0, 50) });
     }
     const ox = cs.overflowX === 'hidden' || cs.overflowX === 'clip';

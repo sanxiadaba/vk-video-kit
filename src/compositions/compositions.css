@@ -69,3 +69,9 @@ vk-page {
   width: 1920px;
   height: 1080px;
 }
+/* 已经在出血层里的元素本就是满画布：通用 bleed 的负 margin 不能再叠一次。 */
+.vk-page-bleed > [data-bleed] {
+  margin: 0;
+  width: 1920px;
+  height: 1080px;
+}

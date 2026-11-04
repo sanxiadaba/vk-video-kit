@@ -30,7 +30,9 @@ export class VkImg extends VkElement {
     const ratioRaw = this.getAttribute('ratio') || '';
     const ratio = /^\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*$/.test(ratioRaw) ? ratioRaw : '';
     if (ratioRaw && !ratio) this._warnOnce('ratio', `的 ratio="${ratioRaw}" 不合法，按图片原比例显示`);
-    const fit = this.getAttribute('fit') || 'cover';
+    // fill=cover|contain 是新的显式铺满写法；不写时沿用旧的 fit（默认 cover）。
+    const fill = this.getAttribute('fill');
+    const fit = fill === 'cover' || fill === 'contain' ? fill : this.getAttribute('fit') || 'cover';
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
     const radius = this.getAttribute('radius') || '';
 

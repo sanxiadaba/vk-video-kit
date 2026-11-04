@@ -1,4 +1,4 @@
-import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot, applyContentSize, fitContent } from './base.mjs';
 import { VkPanel } from './elements.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf } from './icons.mjs';
@@ -398,6 +398,11 @@ export class VkTree extends VkElement {
         }</ul>
       </div>
     `;
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, '.vk-tree-bd');
   }
 }
 
@@ -1460,6 +1465,7 @@ export class VkTable extends VkElement {
       // 不画空框，直接说清楚怎么补。
       this.innerHTML = '';
       this.stale('这个表还没有行：在 <table> 里写 <tr><td>…</td></tr>（表头也算行）', { build: false });
+      applyContentSize(this);
       return;
     }
     delete this.dataset.vkStale;
@@ -1469,6 +1475,11 @@ export class VkTable extends VkElement {
         if (cell.tagName === 'TD' || cell.tagName === 'TH') cell.dataset.cell = `${r},${c}`;
       });
     });
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, 'table');
   }
 }
 

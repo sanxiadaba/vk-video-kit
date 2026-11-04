@@ -1,6 +1,6 @@
 import {
   esc, dedent, warnIfParsed, fetchSource, hash32, langKey, langLabel, lineSet,
-  precompiledSource, numAttr, VkElement, define,
+  precompiledSource, numAttr, VkElement, define, applyContentSize, fitContent,
 } from './base.mjs';
 import { indexRanges, sliceLines, stripAnsi } from '../shared/code.mjs';
 import { lexShellLine, looksLikePrompt, shellLang, shellLines, tokensToHtml } from '../shared/shell.mjs';
@@ -243,6 +243,12 @@ export class VkCode extends VkElement {
 
     // 长行不静默裁切：同步量一次，clip 时给右缘渐隐；wrap/scroll 是作者显式选择。
     this._watchOverflow();
+    // 内容字号 / 铺满：只写宿主变量，所有行内尺寸都从它派生。
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, '.vk-bd');
   }
 }
 
@@ -400,6 +406,11 @@ export class VkTerm extends VkElement {
 
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
     this.style.width = Number.isFinite(w) ? w + 'px' : '';
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, '.vk-bd');
   }
 }
 

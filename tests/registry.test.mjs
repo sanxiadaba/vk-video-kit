@@ -24,7 +24,9 @@ test('registry 自检通过', () => {
 // 减法第一波经批准 -6：vk-icon / vk-rule / vk-caption / vk-pin / vk-ring / vk-window
 // 并进 vk-text / vk-box / vk-label / vk-note / vk-box / vk-panel，旧名保留为别名，
 // 标签清单不再单列（TAG_NAMES 30）。
-const TAG_CEILING = 30;
+// 构图批次经批准 +1：vk-layer 是"谁压在谁上面"的叠层容器（pair 表达对照，grid 分份），
+// 不排内容，所以是新的一个东西。
+const TAG_CEILING = 31;
 
 test(`标签数不超过 ${TAG_CEILING}（别名不单列，只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);

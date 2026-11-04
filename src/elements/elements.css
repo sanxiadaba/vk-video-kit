@@ -689,6 +689,111 @@ vk-rule[dash][tone='focus'][orientation='vertical'] {
   background-image: repeating-linear-gradient(180deg, var(--vk-focus-line) 0 20px, transparent 20px 34px);
 }
 
+/* --------------------------------------------------- 五档底 surface（15.x）
+   同一套底用在 vk-panel / vk-layer / vk-box 上：
+     paper 纯白 / wash 极淡 / tint 稍深 / dark 深墨 / accent 实色强调。
+   深色与实色底一律反白；wash / tint 可以带 tone，不带 tone 就是纸阶。
+   这些规则写在所有 variant / tone 之后，作者显式写 surface 时以它为准。 */
+vk-panel[surface][surface='paper'] {
+  --vk-panel-bg: var(--vk-paper-sf-0);
+  --vk-panel-hd-bg: var(--vk-paper-sf-1);
+  --vk-panel-line: var(--vk-line-1);
+  --vk-panel-ink: var(--vk-ink-1);
+}
+vk-panel[surface][surface='wash'] {
+  --vk-panel-bg: var(--vk-paper-sf-1);
+  --vk-panel-hd-bg: var(--vk-paper-sf-0);
+  --vk-panel-ink: var(--vk-ink-1);
+}
+vk-panel[surface][surface='tint'] {
+  --vk-panel-bg: var(--vk-paper-sf-2);
+  --vk-panel-hd-bg: var(--vk-paper-sf-1);
+  --vk-panel-ink: var(--vk-ink-1);
+}
+vk-panel[surface][surface='dark'] {
+  --vk-panel-bg: var(--vk-ink-1);
+  --vk-panel-hd-bg: var(--vk-ink-2);
+  --vk-panel-line: var(--vk-ink-3);
+  --vk-panel-ink: var(--vk-paper-sf-0);
+}
+vk-panel[surface][surface='accent'] {
+  --vk-panel-bg: var(--vk-focus);
+  --vk-panel-hd-bg: var(--vk-focus);
+  --vk-panel-line: var(--vk-focus);
+  --vk-panel-ink: var(--vk-paper-sf-0);
+}
+vk-panel[surface][surface='wash'][tone='info'] { --vk-panel-bg: var(--vk-wash-info); }
+vk-panel[surface][surface='wash'][tone='focus'] { --vk-panel-bg: var(--vk-wash-focus); }
+vk-panel[surface][surface='wash'][tone='ok'] { --vk-panel-bg: var(--vk-wash-ok); }
+vk-panel[surface][surface='wash'][tone='warn'] { --vk-panel-bg: var(--vk-wash-warn); }
+vk-panel[surface][surface='wash'][tone='err'] { --vk-panel-bg: var(--vk-wash-err); }
+vk-panel[surface][surface='tint'][tone='info'] { --vk-panel-bg: var(--vk-tint-info); }
+vk-panel[surface][surface='tint'][tone='focus'] { --vk-panel-bg: var(--vk-tint-focus); }
+vk-panel[surface][surface='tint'][tone='ok'] { --vk-panel-bg: var(--vk-tint-ok); }
+vk-panel[surface][surface='tint'][tone='warn'] { --vk-panel-bg: var(--vk-tint-warn); }
+vk-panel[surface][surface='tint'][tone='err'] { --vk-panel-bg: var(--vk-tint-err); }
+vk-panel[surface][surface='accent'][tone='info'] { --vk-panel-bg: var(--vk-info); --vk-panel-hd-bg: var(--vk-info); --vk-panel-line: var(--vk-info); }
+vk-panel[surface][surface='accent'][tone='focus'] { --vk-panel-bg: var(--vk-focus); --vk-panel-hd-bg: var(--vk-focus); --vk-panel-line: var(--vk-focus); }
+vk-panel[surface][surface='accent'][tone='ok'] { --vk-panel-bg: var(--vk-ok); --vk-panel-hd-bg: var(--vk-ok); --vk-panel-line: var(--vk-ok); }
+vk-panel[surface][surface='accent'][tone='warn'] { --vk-panel-bg: var(--vk-warn); --vk-panel-hd-bg: var(--vk-warn); --vk-panel-line: var(--vk-warn); }
+vk-panel[surface][surface='accent'][tone='err'] { --vk-panel-bg: var(--vk-err); --vk-panel-hd-bg: var(--vk-err); --vk-panel-line: var(--vk-err); }
+/* 强调块里的标题带也反白。 */
+vk-panel[surface='accent'] .vk-panel-hd vk-label,
+vk-panel[surface='dark'] .vk-panel-hd vk-label { color: inherit; }
+
+vk-box[surface][surface='paper'] { --vk-box-bg: var(--vk-paper-sf-0); color: var(--vk-ink-1); }
+vk-box[surface][surface='wash'] { --vk-box-bg: var(--vk-paper-sf-1); color: var(--vk-ink-1); }
+vk-box[surface][surface='tint'] { --vk-box-bg: var(--vk-paper-sf-2); color: var(--vk-ink-1); }
+vk-box[surface][surface='dark'] { --vk-box-bg: var(--vk-ink-1); color: var(--vk-paper-sf-0); }
+vk-box[surface][surface='accent'] { --vk-box-bg: var(--vk-focus); color: var(--vk-paper-sf-0); }
+vk-box[surface][surface='wash'][tone='ok'] { --vk-box-bg: var(--vk-wash-ok); }
+vk-box[surface][surface='tint'][tone='ok'] { --vk-box-bg: var(--vk-tint-ok); }
+vk-box[surface][surface='accent'][tone='ok'] { --vk-box-bg: var(--vk-ok); }
+vk-box[surface][surface='wash'][tone='warn'] { --vk-box-bg: var(--vk-wash-warn); }
+vk-box[surface][surface='tint'][tone='warn'] { --vk-box-bg: var(--vk-tint-warn); }
+vk-box[surface][surface='accent'][tone='warn'] { --vk-box-bg: var(--vk-warn); }
+vk-box[surface][surface='wash'][tone='err'] { --vk-box-bg: var(--vk-wash-err); }
+vk-box[surface][surface='tint'][tone='err'] { --vk-box-bg: var(--vk-tint-err); }
+vk-box[surface][surface='accent'][tone='err'] { --vk-box-bg: var(--vk-err); }
+vk-box[surface][surface='accent'][tone='info'] { --vk-box-bg: var(--vk-info); }
+vk-box[surface][surface='accent'][tone='focus'] { --vk-box-bg: var(--vk-focus); }
+/* paper 上仍认 tone（这是 box 的旧行为）：tone 只染面，不换材质。 */
+vk-box[surface][surface='paper'][tone='ok'] { --vk-box-bg: var(--vk-ok-weak); }
+vk-box[surface][surface='paper'][tone='warn'] { --vk-box-bg: var(--vk-warn-weak); }
+vk-box[surface][surface='paper'][tone='err'] { --vk-box-bg: var(--vk-err-weak); }
+
+/* 深色 / 实色底上的正文必须反白：显式 ink 是"浅色纸上的墨阶"，不能把深色底上的字压回墨色。
+   label 不动：chip / badge 有自己的浅底，反白反而会变成白字白底。 */
+vk-box[surface][surface='dark'] vk-text,
+vk-box[surface][surface='accent'] vk-text,
+vk-panel[surface][surface='dark'] vk-text,
+vk-panel[surface][surface='accent'] vk-text,
+vk-layer[surface='dark'] vk-text,
+vk-layer[surface='accent'] vk-text {
+  color: inherit;
+}
+
+/* vk-panel 的铺满：cover 同时吃满宽高；contain 只吃满宽，高按内容。
+   空值 / 不写仍是旧的布尔 fill（align-self: stretch），旧页不变。 */
+vk-panel[fill='cover'] {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+vk-panel[fill='cover'] > .vk-panel-bd {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+vk-panel[fill='contain'] {
+  width: 100%;
+  height: auto;
+}
+
 /* 断行策略：标题默认 balance，正文默认 pretty；nowrap 用于"不许断"的短句。 */
 vk-text[wrap='balance'] { text-wrap: balance; }
 vk-text[wrap='pretty'] { text-wrap: pretty; }

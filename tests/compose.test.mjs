@@ -37,7 +37,7 @@ async function mount(body) {
   await page.waitForTimeout(120);
   return page.evaluate(() => {
     const a = window.vk.auditPage();
-    const hard = a.issues.filter((i) => ['font', 'contrast', 'safe', 'clip', 'overlap', 'empty'].includes(i.type));
+    const hard = a.issues.filter((i) => ['font', 'contrast', 'clip', 'overlap', 'empty'].includes(i.type));
     return { issues: hard, focus: window.vk.focusRegions(document).length };
   });
 }

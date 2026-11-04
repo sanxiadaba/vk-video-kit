@@ -309,6 +309,7 @@ const COMMON = {
   h: { on: '@', kind: 'geometry', prop: 'height' },
   grow: { on: '@', kind: 'style', prop: 'flex-grow', expect: { to: '1' } },
   fill: { on: '@', kind: 'attr', prop: 'fill', expect: { to: '' } },
+  bleed: { on: '@', kind: 'attr', prop: 'data-bleed', expectFromValue: 'raw' },
   overflow: { on: '@', kind: 'style', prop: 'overflow' },
   measure: { on: '@', kind: 'style', prop: 'max-width', expect: { not: 'none' } },
 };
@@ -555,6 +556,43 @@ Object.assign(EFFECTS['vk-asm'], {
   'bytes-label': { on: '.vk-asm-b', kind: 'text' },
   'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
   'operands-label': { on: '.vk-asm-o', kind: 'text' },
+});
+
+/* ------------------------------------------------- 15.x 机制层：放大 / 构图 / 色阶 */
+
+/* 内容组件：size 改的是宿主变量派生的字号（行高/行号/内距一起走），
+   fit="width" 由运行期把最宽一行缩放到容器宽。两者都可能超出标本台，视觉单测守。 */
+for (const [tag, root] of [
+  ['vk-code', '.vk-bd'],
+  ['vk-term', '.vk-bd'],
+  ['vk-asm', '.vk-asm-bd'],
+  ['vk-table', 'table'],
+  ['vk-diff', '.vk-dbd'],
+  ['vk-tree', '.vk-tree-bd'],
+]) {
+  const own = EFFECTS[tag] || {};
+  own.size = { on: `${tag} ${root}`, kind: 'style', prop: 'font-size', expect: '160px', skipVisual: true };
+  own.fit = { on: tag, kind: 'attr', prop: 'data-fit', expectFromValue: 'raw', skipVisual: true };
+  EFFECTS[tag] = own;
+}
+
+Object.assign((EFFECTS['vk-panel'] ||= {}), {
+  // 五档底：surface 是显式材质，优先于 variant / tone。
+  surface: { on: 'vk-panel', kind: 'style', prop: 'background-color' },
+  // 铺满：cover 同时吃满宽高（display:flex）；contain 只吃满宽。
+  fill: { on: 'vk-panel', kind: 'style', prop: 'display', expect: 'flex' },
+});
+Object.assign((EFFECTS['vk-img'] ||= {}), {
+  // 新写法 fill=cover|contain；旧 fit 仍可用。
+  fill: { on: 'vk-img img', kind: 'style', prop: 'object-fit' },
+});
+
+Object.assign((EFFECTS['vk-layer'] ||= {}), {
+  surface: { on: 'vk-layer', kind: 'style', prop: 'background-color' },
+  tone: { on: 'vk-layer', kind: 'style', prop: 'background-color' },
+  readable: { on: 'vk-layer vk-text', kind: 'style', prop: 'text-shadow' },
+  grow: { on: 'vk-layer', kind: 'style', prop: 'flex-grow', expect: { to: '1' } },
+  bleed: { on: 'vk-layer', kind: 'attr', prop: 'data-bleed', expectFromValue: 'raw' },
 });
 
 

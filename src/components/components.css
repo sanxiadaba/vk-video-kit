@@ -122,14 +122,30 @@ vk-list{ display: block; }.vk-list{
   padding-left: 48px;
 }/* --------------------------------------------------------------- vk-code */
 
+/* 内容字号只有一个来源：--vk-cs。size="160" 时运行期把它写成 160px；
+   不写 size 时它就是正文/标签的原值，所以旧页逐像素不变。
+   行高、行号、内距、语法色块全部从这里派生，避免 transform 缩放整块。 */
+vk-code,
+vk-term,
+vk-diff,
+vk-table {
+  --vk-cs: var(--vk-t-body);
+}
+/* 树的正文是 label 档（48）：size 量的是这一行主文字，和 tree 现在的样子对齐。 */
+vk-tree {
+  --vk-cs: var(--vk-t-label);
+}
+vk-asm {
+  --vk-cs: var(--vk-t-label);
+}
 vk-code{ display: block; }.vk-code .vk-bd{
   position: relative;
   overflow-x: hidden;
   overflow-y: hidden;
   scrollbar-width: thin;
-  padding: var(--vk-s2) 0;
+  padding: calc(var(--vk-cs) * 16 / 56) 0;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   line-height: var(--vk-lh-code);
 }/* long：clip 是默认（视频里滚动没有意义）；wrap 是显式选择。 */
 vk-code[long='wrap'] .vk-bd{ overflow-x: hidden; }/* 溢出：右缘一层很淡的渐隐，提示“这里被切了”，不假装完整。 */
@@ -148,53 +164,53 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after{ top: 0; }.vk-code .vk-l
   position: relative;
   display: flex;
   align-items: center;
-  min-height: 70px;
-  padding-right: var(--vk-s4);
+  min-height: calc(var(--vk-cs) * 70 / 56);
+  padding-right: calc(var(--vk-cs) * 32 / 56);
   white-space: pre;
-}.vk-code .vk-src{ min-width: 0; overflow-wrap: anywhere; }.vk-code .vk-tok{ background: var(--vk-focus-soft); border-bottom: 3px solid var(--vk-focus-line); }.vk-code[data-mass='hero'] .vk-line{ min-height: 81px; }.vk-ln{
+}.vk-code .vk-src{ min-width: 0; overflow-wrap: anywhere; }.vk-code .vk-tok{ background: var(--vk-focus-soft); border-bottom: calc(var(--vk-cs) * 3 / 56) solid var(--vk-focus-line); }.vk-code[data-mass='hero'] .vk-line{ min-height: calc(var(--vk-cs) * 81 / 56); }.vk-ln{
   box-sizing: border-box;
   /* 行号栏收窄一档，分隔线随之外移；数字不再悬在空白里。 */
-  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s1));
-  padding-right: var(--vk-s1);
-  margin-right: var(--vk-s1);
-  border-right: 2px solid var(--vk-win-rule);
+  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-cs) * 8 / 56);
+  padding-right: calc(var(--vk-cs) * 8 / 56);
+  margin-right: calc(var(--vk-cs) * 8 / 56);
+  border-right: calc(var(--vk-cs) * 2 / 56) solid var(--vk-win-rule);
   background: transparent;
   box-shadow: none;
   text-shadow: none;
   text-align: right;
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   font-variant-numeric: tabular-nums;
   color: var(--vk-win-meta-2);
   user-select: none;
 }.vk-code .vk-k,
-.vk-code .vk-f{ font-weight: 600; }.vk-code .vk-bd{ padding-left: var(--vk-s4); }.vk-code .vk-ln{ text-align: left; }.vk-src{ padding-left: var(--vk-s3); tab-size: 4; }.vk-term .vk-txt{ tab-size: 4; }.vk-dsrc{ tab-size: 4; }/* 当前行：整行 16% 冷蓝 + 左侧 4px 实心蓝条，行号也跟着变蓝。
+.vk-code .vk-f{ font-weight: 600; }.vk-code .vk-bd{ padding-left: calc(var(--vk-cs) * 32 / 56); }.vk-code .vk-ln{ text-align: left; }.vk-src{ padding-left: calc(var(--vk-cs) * 24 / 56); tab-size: 4; }.vk-term .vk-txt{ tab-size: 4; }.vk-dsrc{ tab-size: 4; }/* 当前行：整行 16% 冷蓝 + 左侧 4px 实心蓝条，行号也跟着变蓝。
    蓝只做这一件事，所以它必须比任何语法色都响。 */
 .vk-line.is-hl{
   background: var(--vk-focus-soft);
   box-shadow: none;
-}.vk-line.is-hl .vk-ln{ color: var(--vk-focus); font-weight: var(--vk-w-bold); }.vk-line.is-hl .vk-src{ box-shadow: inset 4px 0 0 var(--vk-focus); }/* 聚光：其余行真的退下去，不是 0.84 的"几乎没变"。高亮行不参与压暗。 */
+}.vk-line.is-hl .vk-ln{ color: var(--vk-focus); font-weight: var(--vk-w-bold); }.vk-line.is-hl .vk-src{ box-shadow: inset calc(var(--vk-cs) * 4 / 56) 0 0 var(--vk-focus); }/* 聚光：其余行真的退下去，不是 0.84 的"几乎没变"。高亮行不参与压暗。 */
 .vk-line.is-dim{ --vk-line-opacity: var(--vk-dim); opacity: var(--vk-line-opacity); }.vk-line.is-hl.is-dim{ opacity: 1; }/* 缺口：告诉观众"中间省略了行"，而不是假装连续。 */
 .vk-line.is-fold{
-  min-height: 48px;
-  margin: var(--vk-s1) 0;
-  border-top: 2px dashed var(--vk-win-rule);
-  border-bottom: 2px dashed var(--vk-win-rule);
+  min-height: calc(var(--vk-cs) * 48 / 56);
+  margin: calc(var(--vk-cs) * 8 / 56) 0;
+  border-top: calc(var(--vk-cs) * 2 / 56) dashed var(--vk-win-rule);
+  border-bottom: calc(var(--vk-cs) * 2 / 56) dashed var(--vk-win-rule);
   background: var(--vk-win-soft);
   color: var(--vk-win-meta);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
 }.vk-line.is-fold .vk-fold-mark{
-  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-s3));
-  padding-right: var(--vk-s3);
+  flex: 0 0 calc(var(--vk-digits, 1) * 1ch + var(--vk-cs) * 24 / 56);
+  padding-right: calc(var(--vk-cs) * 24 / 56);
   text-align: right;
   letter-spacing: 0.2em;
-}.vk-line.is-fold .vk-fold-text{ padding-left: var(--vk-s3); }vk-code[numbers='none'] .vk-ln{ display: none; }vk-code[numbers='none'] .vk-src{ padding-left: var(--vk-s4); }vk-code[long='wrap'] .vk-line{ align-items: flex-start; white-space: pre-wrap; }vk-code[long='wrap'] .vk-src{ white-space: pre-wrap; overflow-wrap: anywhere; }vk-code[long='wrap'] .vk-src{ padding-top: 0.18em; padding-bottom: 0.18em; }/* --------------------------------------------------------------- vk-term */
+}.vk-line.is-fold .vk-fold-text{ padding-left: calc(var(--vk-cs) * 24 / 56); }vk-code[numbers='none'] .vk-ln{ display: none; }vk-code[numbers='none'] .vk-src{ padding-left: calc(var(--vk-cs) * 32 / 56); }vk-code[long='wrap'] .vk-line{ align-items: flex-start; white-space: pre-wrap; }vk-code[long='wrap'] .vk-src{ white-space: pre-wrap; overflow-wrap: anywhere; }vk-code[long='wrap'] .vk-src{ padding-top: 0.18em; padding-bottom: 0.18em; }/* --------------------------------------------------------------- vk-term */
 
 vk-term{ display: block; }
 /* 无壳终端上作者显式要求的标题（title-show）。默认只有无障碍名，不占画面。 */
 .vk-term-title{
-  padding: var(--vk-s2) var(--vk-s3) 0;
+  padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 24 / 56) 0;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   line-height: 1.2;
   color: var(--vk-ink-3);
   white-space: nowrap;
@@ -202,26 +218,26 @@ vk-term{ display: block; }
   text-overflow: ellipsis;
 }
 .vk-term .vk-bd{  overflow-y: hidden;
-  padding: var(--vk-s2) 0;
+  padding: calc(var(--vk-cs) * 16 / 56) 0;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   line-height: var(--vk-lh-code);
 }
 /* 体量三档同时改行高与字号：hero 要让"上屏"那一行明显压过其它行。
    字号只到 1.5×正文（72px）：再大，标本页 1680 宽里的 32 字符命令行会溢出。 */
 /* compact 要比 normal 小一档：data 已别名到 body（40），所以这里按比例收，
    不再借一个"明天可能改"的字号 token。 */
-.vk-term[data-mass='compact'] .vk-bd{ font-size: calc(var(--vk-t-body) * 0.9); line-height: 1.25; }
-.vk-term[data-mass='normal'] .vk-bd{ font-size: var(--vk-t-body); line-height: var(--vk-lh-code); }
-.vk-term[data-mass='hero'] .vk-bd{ font-size: calc(var(--vk-t-body) * 1.5); line-height: 1.35; }.vk-term .vk-line{
+.vk-term[data-mass='compact'] .vk-bd{ font-size: calc(var(--vk-cs) * 0.9); line-height: 1.25; }
+.vk-term[data-mass='normal'] .vk-bd{ font-size: var(--vk-cs); line-height: var(--vk-lh-code); }
+.vk-term[data-mass='hero'] .vk-bd{ font-size: calc(var(--vk-cs) * 1.5); line-height: 1.35; }.vk-term .vk-line{
   display: flex;
   align-items: baseline;
-  gap: var(--vk-s2);
-  min-height: 70px;
-  padding: 0 var(--vk-s4);
-}.vk-code[data-mass='compact'] .vk-line{ min-height: 64px; }.vk-term[data-mass='compact'] .vk-line{ min-height: 64px; }.vk-term[data-mass='hero'] .vk-line{ min-height: 81px; }.vk-prompt{
+  gap: calc(var(--vk-cs) * 16 / 56);
+  min-height: calc(var(--vk-cs) * 70 / 56);
+  padding: 0 calc(var(--vk-cs) * 32 / 56);
+}.vk-code[data-mass='compact'] .vk-line{ min-height: calc(var(--vk-cs) * 64 / 56); }.vk-term[data-mass='compact'] .vk-line{ min-height: calc(var(--vk-cs) * 64 / 56); }.vk-term[data-mass='hero'] .vk-line{ min-height: calc(var(--vk-cs) * 81 / 56); }.vk-prompt{
   flex: 0 0 auto;
-  min-width: 40px;
+  min-width: calc(var(--vk-cs) * 40 / 56);
   max-width: 40%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -253,7 +269,7 @@ vk-term{ display: block; }
    term 的正文在 .vk-txt 里，没有 .vk-src，所以左缘条要单独落到它身上。 */
 .vk-term .vk-line.is-hl .vk-txt{ box-shadow: inset 4px 0 0 var(--vk-focus); }/* 结果行：整行一条语义底，glyph 说明是哪一种。色盲也能读。 */
 .vk-sign{
-  flex: 0 0 40px;
+  flex: 0 0 calc(var(--vk-cs) * 40 / 56);
   text-align: center;
   font-weight: var(--vk-w-bold);
 }.vk-term .is-ok{ background: var(--vk-win-ok-bg); box-shadow: inset 4px 0 0 var(--vk-win-ok); }.vk-term .is-ok .vk-sign{ color: var(--vk-win-ok); }.vk-term .is-warn{ background: var(--vk-win-warn-bg); box-shadow: inset 4px 0 0 var(--vk-win-warn); }.vk-term .is-warn .vk-sign{ color: var(--vk-win-warn); }.vk-term .is-err{ background: var(--vk-win-err-bg); box-shadow: inset 4px 0 0 var(--vk-win-err); }.vk-term .is-err .vk-sign{ color: var(--vk-win-err); }
@@ -349,17 +365,17 @@ vk-term{ display: block; }
 
 vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行对照，不再并排铺满色块。 */
 .vk-dmeta{
-  padding: var(--vk-s2) var(--vk-s4);
+  padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 32 / 56);
   border-bottom: var(--vk-line-w) solid var(--vk-win-rule);
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   letter-spacing: var(--vk-ls-wide);
   color: var(--vk-win-meta);
 }.vk-dbd{
-  padding: var(--vk-s1) 0;
+  padding: calc(var(--vk-cs) * 8 / 56) 0;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   line-height: var(--vk-lh-code);
   color: var(--vk-win-fg);
   overflow-x: auto;
@@ -370,10 +386,10 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   /* 行高是变量：体量（diff 自己的 mass，或外层窗的 mass）只改这一个数，
      行盒、最小高、行距一起跟着走，不会出现"min-height 改了、height 还钉在 70"。
      max(...) 让 40px 的旧档仍是 70（legacy 一像素不变），56px 的新档长到 87。 */
-  --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55));
+  --vk-dline-h: max(calc(var(--vk-cs) * 70 / 56), calc(var(--vk-cs) * 1.55));
   min-height: var(--vk-dline-h);
   height: var(--vk-dline-h);
-  padding-right: var(--vk-s4);
+  padding-right: calc(var(--vk-cs) * 32 / 56);
   white-space: pre;
   overflow: hidden;
   line-height: var(--vk-dline-h);
@@ -388,25 +404,25 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   white-space: nowrap;
   border: 0;
 }.vk-dsign{
-  flex: 0 0 48px;
+  flex: 0 0 calc(var(--vk-cs) * 48 / 56);
   text-align: center;
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   font-weight: var(--vk-w-bold);
   line-height: 1;
   color: var(--vk-win-meta);
   user-select: none;
 }.vk-dline .vk-ln{
-  flex: 0 0 var(--vk-dnum-w, 56px);
+  flex: 0 0 var(--vk-dnum-w, calc(var(--vk-cs) * 56 / 56));
   margin-right: 0;
   border-right: 0;
-  padding-right: var(--vk-s3);
+  padding-right: calc(var(--vk-cs) * 24 / 56);
   text-align: right;
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   color: var(--vk-win-meta-2);
 }.vk-dnums{
   display: inline-flex;
-  flex: 0 0 calc(var(--vk-dnum-w, 56px) * 2);
-}.vk-dnums .vk-ln{ flex: 0 0 var(--vk-dnum-w, 56px); }.vk-dsrc{ min-width: 0; overflow: hidden; }/* 三种信号：行首 − / +、左侧 4px 色条、被改 token 的 3px 下划线。 */
+  flex: 0 0 calc(var(--vk-dnum-w, calc(var(--vk-cs) * 56 / 56)) * 2);
+}.vk-dnums .vk-ln{ flex: 0 0 var(--vk-dnum-w, calc(var(--vk-cs) * 56 / 56)); }.vk-dsrc{ min-width: 0; overflow: hidden; }/* 三种信号：行首 − / +、左侧 4px 色条、被改 token 的 3px 下划线。 */
 .vk-dline.is-ctx{ color: var(--vk-win-fg-2); }.vk-dline.is-del{ background: var(--vk-del-row); box-shadow: inset 4px 0 0 var(--vk-win-del-line); }.vk-dline.is-add{ background: var(--vk-add-row); box-shadow: inset 4px 0 0 var(--vk-win-add-line); }.vk-dline.is-del .vk-dsign{ color: var(--vk-win-del-line); }.vk-dline.is-add .vk-dsign{ color: var(--vk-win-add-line); }.vk-dline.is-del .vk-ln,
 .vk-dline.is-add .vk-ln{ color: var(--vk-win-fg-2); }.vk-dline.is-empty{ background: var(--vk-win-soft); }/* 并排：两个真正的代码窗，行数一一对应。 */
 .vk-diff-split{
@@ -415,16 +431,16 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   --vk-win-rule: var(--vk-line-2);
   --vk-win-meta: var(--vk-ink-3);
 }.vk-dsplit{ display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--vk-s3); align-items: stretch; }.vk-diff-pane{ width: 100%; min-width: 0; }/* 并排时每列只有一半宽：代码退到 44 地板，换来 24 个字符不被裁。 */
-.vk-diff-pane .vk-dbd{ font-size: var(--vk-t-label); }.vk-diff-split[data-chrome='none'] .vk-diff-pane::before{
+.vk-diff-pane .vk-dbd{ font-size: calc(var(--vk-cs) * 48 / 56); }.vk-diff-split[data-chrome='none'] .vk-diff-pane::before{
   content: attr(data-label);
   display: flex;
   align-items: center;
-  height: 56px;
-  padding: 0 var(--vk-s4);
+  height: calc(var(--vk-cs) * 56 / 56);
+  padding: 0 calc(var(--vk-cs) * 32 / 56);
   border-bottom: var(--vk-line-w) solid var(--vk-win-rule);
   background: var(--vk-win-soft);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   color: var(--vk-win-meta);
 }.vk-dsplit-tag{
   margin-left: auto;
@@ -433,67 +449,67 @@ vk-diff{ display: block; }/* 一句话说明改了几行；正文是上下两行
   border: 2px solid var(--vk-win-tab-line);
   border-radius: 6px;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   font-weight: var(--vk-w-med);
   letter-spacing: 0.08em;
   color: var(--vk-win-meta-2);
 }.vk-dw{
   color: var(--vk-ink-1);
   background: var(--vk-del-mark);
-  box-shadow: inset 0 -6px 0 var(--vk-win-del-line);
+  box-shadow: inset 0 calc(var(--vk-cs) * -6 / 56) 0 var(--vk-win-del-line);
 }.is-add .vk-dw{
   background: var(--vk-add-mark);
-  box-shadow: inset 0 -6px 0 var(--vk-win-add-line);
+  box-shadow: inset 0 calc(var(--vk-cs) * -6 / 56) 0 var(--vk-win-add-line);
 }/* -------------------------------------------------------------- vk-table */
 
-vk-table{ display: block; font-size: var(--vk-t-body); color: var(--vk-ink-1); max-width: 100%; overflow-x: hidden; }/* 表格是静态帧：不提供横向滚动。 */
-vk-table > :not(table){ font-size: var(--vk-t-body); }vk-table table{
+vk-table{ display: block; font-size: var(--vk-cs); color: var(--vk-ink-1); max-width: 100%; overflow-x: hidden; }/* 表格是静态帧：不提供横向滚动。 */
+vk-table > :not(table){ font-size: var(--vk-cs); }vk-table table{
   width: 100%;
   border-collapse: collapse;
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-1);
 }vk-table caption{
-  padding-bottom: var(--vk-s2);
+  padding-bottom: calc(var(--vk-cs) * 16 / 56);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   color: var(--vk-ink-3);
   text-align: start;
   caption-side: top;
 }vk-table th,
 vk-table td{ overflow-wrap: anywhere; }vk-table th{ white-space: normal; }vk-table[mono] table{ font-family: var(--vk-font-mono); }vk-table th{
-  padding: var(--vk-s2) var(--vk-s3);
+  padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 24 / 56);
   border-bottom: var(--vk-line-w-strong) solid var(--vk-line-strong);
   font-weight: var(--vk-w-med);
-  font-size: var(--vk-t-body);
+  font-size: var(--vk-cs);
   line-height: 1.3;
   color: var(--vk-ink-2);
   text-align: left;
   white-space: normal;
 }vk-table td{
-  padding: var(--vk-s3);
+  padding: calc(var(--vk-cs) * 24 / 56);
   border-bottom: var(--vk-line-w) solid var(--vk-line-3);
   color: var(--vk-ink-1);
   vertical-align: baseline;
 }vk-table th[align='right'],
 vk-table td[align='right']{ text-align: right; white-space: nowrap; }vk-table th[align='center'],
 vk-table td[align='center']{ text-align: center; }vk-table td[align='right'],
-vk-table th[align='right']{ font-variant-numeric: tabular-nums; }vk-table[mass='compact'] th{ padding: var(--vk-s1) var(--vk-s3); }vk-table[mass='compact'] td{ padding: var(--vk-s2) var(--vk-s3); }vk-table[mass='compact'] th,
-vk-table[mass='compact'] td{ padding: 8px 16px; }vk-table[stripe] tbody tr:nth-child(even){ background: var(--vk-surface-2); }vk-table tr[data-em] td{ background: var(--vk-info-soft); }vk-table tr[data-em] td:first-child{ box-shadow: inset 4px 0 0 var(--vk-info-line); }/* 规格：密集、等宽、只有表头一条线。 */
-vk-table[variant='spec'] table{ font-family: var(--vk-font-mono); font-size: var(--vk-t-body); }vk-table[variant='spec'] th{
+vk-table th[align='right']{ font-variant-numeric: tabular-nums; }vk-table[mass='compact'] th{ padding: var(--vk-s1) calc(var(--vk-cs) * 24 / 56); }vk-table[mass='compact'] td{ padding: var(--vk-s2) calc(var(--vk-cs) * 24 / 56); }vk-table[mass='compact'] th,
+vk-table[mass='compact'] td{ padding: calc(var(--vk-cs) * 8 / 56) calc(var(--vk-cs) * 16 / 56); }vk-table[stripe] tbody tr:nth-child(even){ background: var(--vk-surface-2); }vk-table tr[data-em] td{ background: var(--vk-info-soft); }vk-table tr[data-em] td:first-child{ box-shadow: inset calc(var(--vk-cs) * 4 / 56) 0 0 var(--vk-info-line); }/* 规格：密集、等宽、只有表头一条线。 */
+vk-table[variant='spec'] table{ font-family: var(--vk-font-mono); font-size: var(--vk-cs); }vk-table[variant='spec'] th{
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: calc(var(--vk-cs) * 48 / 56);
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  padding: var(--vk-s1) var(--vk-s3);
-}vk-table[variant='spec'] td{ padding: var(--vk-s1) var(--vk-s3); border-bottom: 0; }/* 对照：没有行线，靠留白与一列重音。 */
-vk-table[variant='compare'] td{ border-bottom: 0; padding: var(--vk-s4) var(--vk-s3); }vk-table[variant='compare'] th{ border-bottom: 4px solid var(--vk-ink-1); }vk-table[variant='compare'] tbody td:first-child{ font-weight: var(--vk-w-med); }/* 矩阵 / DP 表：等宽列、居中数字；状态写在 tr / td 上。 */
+  padding: calc(var(--vk-cs) * 8 / 56) calc(var(--vk-cs) * 24 / 56);
+}vk-table[variant='spec'] td{ padding: calc(var(--vk-cs) * 8 / 56) calc(var(--vk-cs) * 24 / 56); border-bottom: 0; }/* 对照：没有行线，靠留白与一列重音。 */
+vk-table[variant='compare'] td{ border-bottom: 0; padding: calc(var(--vk-cs) * 32 / 56) calc(var(--vk-cs) * 24 / 56); }vk-table[variant='compare'] th{ border-bottom: 4px solid var(--vk-ink-1); }vk-table[variant='compare'] tbody td:first-child{ font-weight: var(--vk-w-med); }/* 矩阵 / DP 表：等宽列、居中数字；状态写在 tr / td 上。 */
 vk-table[variant='matrix'] table{ table-layout: fixed; }vk-table[variant='matrix'] th,
-vk-table[variant='matrix'] td{ text-align: center; padding: var(--vk-s2) var(--vk-s2); }vk-table[variant='matrix'] td{ font-variant-numeric: tabular-nums; }/* 统一 state：行与格共用一套视觉；正文仍回墨色。 */
+vk-table[variant='matrix'] td{ text-align: center; padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 16 / 56); }vk-table[variant='matrix'] td{ font-variant-numeric: tabular-nums; }/* 统一 state：行与格共用一套视觉；正文仍回墨色。 */
 vk-table tr[state='mark'] td,
 vk-table tr[data-em] td{ background: var(--vk-info-soft); }vk-table tr[state='mark'] td:first-child,
-vk-table tr[data-em] td:first-child{ box-shadow: inset 4px 0 0 var(--vk-info-line); }vk-table tr[state='current'] td{ background: var(--vk-focus-soft); }vk-table tr[state='current'] td:first-child{ box-shadow: inset 4px 0 0 var(--vk-focus); }vk-table tr[state='ok'] td{ background: var(--vk-ok-weak); }vk-table tr[state='warn'] td{ background: var(--vk-warn-weak); }vk-table tr[state='err'] td{ background: var(--vk-err-weak); }vk-table td[state='current']{ background: var(--vk-focus-soft); box-shadow: inset 0 0 0 2px var(--vk-focus); }vk-table td[state='mark']{ background: var(--vk-info-soft); box-shadow: inset 0 0 0 2px var(--vk-info-line); }vk-table td[state='ok']{ background: var(--vk-ok-weak); }vk-table td[state='warn']{ background: var(--vk-warn-weak); }vk-table td[state='err']{ background: var(--vk-err-weak); box-shadow: inset 0 0 0 2px var(--vk-err); }/* 预编译数据过期：不能只在 console 里说。 */
+vk-table tr[data-em] td:first-child{ box-shadow: inset calc(var(--vk-cs) * 4 / 56) 0 0 var(--vk-info-line); }vk-table tr[state='current'] td{ background: var(--vk-focus-soft); }vk-table tr[state='current'] td:first-child{ box-shadow: inset calc(var(--vk-cs) * 4 / 56) 0 0 var(--vk-focus); }vk-table tr[state='ok'] td{ background: var(--vk-ok-weak); }vk-table tr[state='warn'] td{ background: var(--vk-warn-weak); }vk-table tr[state='err'] td{ background: var(--vk-err-weak); }vk-table td[state='current']{ background: var(--vk-focus-soft); box-shadow: inset 0 0 0 2px var(--vk-focus); }vk-table td[state='mark']{ background: var(--vk-info-soft); box-shadow: inset 0 0 0 2px var(--vk-info-line); }vk-table td[state='ok']{ background: var(--vk-ok-weak); }vk-table td[state='warn']{ background: var(--vk-warn-weak); }vk-table td[state='err']{ background: var(--vk-err-weak); box-shadow: inset 0 0 0 2px var(--vk-err); }/* 预编译数据过期：不能只在 console 里说。 */
 [data-vk-stale]{ position: relative; }[data-vk-stale]::after{
   content: '构建数据过期';
   position: absolute;
@@ -544,12 +560,12 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   padding: 0;
   list-style: none;
 }.vk-tree-item{ list-style: none; }.vk-tree-fold{
-  height: 44px;
-  padding-left: calc(var(--depth, 0) * 40px + 44px);
+  height: calc(var(--vk-cs) * 44 / 48);
+  padding-left: calc(var(--depth, 0) * var(--vk-cs) * 40 / 48 + var(--vk-cs) * 44 / 48);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   color: var(--vk-ink-4);
-  line-height: 44px;
+  line-height: calc(var(--vk-cs) * 44 / 48);
 }.vk-tree-hd{
   display: flex;
   align-items: center;
@@ -558,10 +574,10 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   /* 窗头高度跟 mass 走；三点与标题在同一条基线上。
      border-box：min-height 就是"整条标题栏"的高度，不把内距再叠上去。 */
   box-sizing: border-box;
-  min-height: var(--vk-win-hd, 56px);
-  margin-bottom: var(--vk-s2);
+  min-height: calc(var(--vk-cs) * 72 / 48);
+  margin-bottom: calc(var(--vk-cs) * 16 / 48);
   border-bottom: var(--vk-line-w) solid var(--vk-line-1);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   letter-spacing: 0.04em;
   color: var(--vk-ink-3);
 }.vk-tree-meta{
@@ -579,14 +595,14 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   position: relative;
   display: flex;
   align-items: center;
-  gap: var(--vk-s2);
+  gap: calc(var(--vk-cs) * 16 / 48);
   /* 行高按内容算：15.x 的 caption/body 字阶（48/56）行盒是 60/78，
      固定的 56px 会让每一行都比自己的字矮 5px，树在 0.38 交付尺度上会挤。
      min-height 保住旧的密度，行高随字阶长。 */
-  min-height: 56px;
-  padding-left: calc(var(--depth, 0) * 40px + 4px);
-  padding-right: var(--vk-s2);
-  border-bottom: 2px solid var(--vk-line-2);
+  min-height: calc(var(--vk-cs) * 56 / 48);
+  padding-left: calc(var(--depth, 0) * var(--vk-cs) * 40 / 48 + var(--vk-cs) * 4 / 48);
+  padding-right: calc(var(--vk-cs) * 16 / 48);
+  border-bottom: calc(var(--vk-cs) * 2 / 48) solid var(--vk-line-2);
 }.vk-tree-name{
   flex: 1 1 auto;
   min-width: 0;
@@ -596,11 +612,11 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
 }.vk-tree-size,
 .vk-tree-tag{ flex: 0 0 auto; }.vk-tree-guides{
   position: absolute;
-  left: 12px;
+  left: calc(var(--vk-cs) * 12 / 48);
   top: 0;
   bottom: 0;
-  width: max(0px, calc(var(--depth, 0) * 40px));
-  background: repeating-linear-gradient(to right, var(--vk-line-1) 0 1px, transparent 1px 40px);
+  width: max(0px, calc(var(--depth, 0) * var(--vk-cs) * 40 / 48));
+  background: repeating-linear-gradient(to right, var(--vk-line-1) 0 1px, transparent 1px calc(var(--vk-cs) * 40 / 48));
   pointer-events: none;
 }.vk-tree-row[data-empty] .vk-tree-chevron{ visibility: hidden; }.vk-tree-chevron:not(.is-file)::before{
   content: '';
@@ -619,13 +635,13 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   display: flex;
   align-items: center;
   /* 与 .vk-tree-row 同一条规矩：行高按内容长，不给字阶留 1–3px 的溢出。 */
-  min-height: 52px;
+  min-height: calc(var(--vk-cs) * 52 / 48);
   line-height: 1.25;
-  padding-left: 24px;
+  padding-left: calc(var(--vk-cs) * 24 / 48);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   color: var(--vk-ink-4);
-  border-bottom: 2px solid var(--vk-line-2);
+  border-bottom: calc(var(--vk-cs) * 2 / 48) solid var(--vk-line-2);
 }/* 文件类型是结构，不是标注：图标统一墨阶，靠形状而不是色相区分。 */
 .vk-tree-row[data-ext='py'] .vk-ic,
 .vk-tree-row[data-ext='js'] .vk-ic,
@@ -642,13 +658,13 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
 .vk-tree-row[data-ext='tokens'] .vk-ic,
 .vk-tree-row[data-ext='sh'] .vk-ic,
 .vk-tree-row[data-ext='bash'] .vk-ic{ color: var(--vk-ink-3); }.vk-tree-chevron{
-  width: 16px;
-  height: 16px;
+  width: calc(var(--vk-cs) * 16 / 48);
+  height: calc(var(--vk-cs) * 16 / 48);
   flex: 0 0 auto;
   position: relative;
 }.vk-tree-row .vk-ic{
-  width: 44px;
-  height: 44px;
+  width: calc(var(--vk-cs) * 44 / 48);
+  height: calc(var(--vk-cs) * 44 / 48);
   flex: 0 0 auto;
   color: var(--vk-ink-3);
 }.vk-tree-name{
@@ -656,27 +672,27 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   line-height: 1.25;
   color: var(--vk-ink-1);
   white-space: nowrap;
 }.vk-tree-size{
   flex: 0 0 auto;
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   color: var(--vk-ink-3);
   font-variant-numeric: tabular-nums;
 }.vk-tree-row[data-current]{
   background: var(--vk-focus-soft);
-  box-shadow: inset 4px 0 0 var(--vk-focus-line);
+  box-shadow: inset calc(var(--vk-cs) * 4 / 48) 0 0 var(--vk-focus-line);
 }.vk-tree-row[data-current] .vk-tree-name{ font-weight: var(--vk-w-med); }.vk-tree-row[data-flag] .vk-tree-name{ color: var(--vk-ink-1); }.vk-tree-tag{
-  margin-left: var(--vk-s2);
+  margin-left: calc(var(--vk-cs) * 16 / 48);
   display: inline-flex;
   align-items: center;
-  height: 48px;
-  padding: 0 12px;
-  border: 2px solid var(--vk-line-3);
-  border-radius: 6px;
-  font-size: var(--vk-t-label);
+  height: calc(var(--vk-cs) * 48 / 48);
+  padding: 0 calc(var(--vk-cs) * 12 / 48);
+  border: calc(var(--vk-cs) * 2 / 48) solid var(--vk-line-3);
+  border-radius: calc(var(--vk-cs) * 6 / 48);
+  font-size: var(--vk-cs);
   line-height: 1;
   color: var(--vk-ink-3);
 }.vk-tree-row[data-dir='1']{ cursor: pointer; }.vk-tree-row[data-dir='1']:focus-visible{ outline: 2px solid var(--vk-focus); outline-offset: -2px; border-radius: var(--vk-r-1); }.vk-tree-row[data-dir='1'] .vk-ic{ color: var(--vk-ink-2); }.vk-tree-row[data-dir='1'] .vk-tree-name{ font-weight: var(--vk-w-med); }.vk-tree-row[data-flag='add'] .vk-tree-tag{ border-color: var(--vk-add); background: var(--vk-add-weak); color: var(--vk-ink-1); }.vk-tree-row[data-flag='mod'] .vk-tree-tag{ border-color: var(--vk-mod); background: var(--vk-mod-weak); color: var(--vk-ink-1); }.vk-tree-row[data-flag='del'] .vk-tree-tag{ border-color: var(--vk-del); background: var(--vk-del-weak); color: var(--vk-ink-1); }.vk-tree-row[data-node='1'] .vk-tree-name{
@@ -685,16 +701,16 @@ vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-wid
   letter-spacing: 0;
 }.vk-tree-row[data-node='1'] .vk-ic{ color: var(--vk-ink-3); }.vk-tree-kind{
   flex: 0 0 auto;
-  margin-left: var(--vk-s2);
+  margin-left: calc(var(--vk-cs) * 16 / 48);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   color: var(--vk-ink-3);
   letter-spacing: 0;
 }.vk-tree-val{
   flex: 0 0 auto;
-  margin-left: var(--vk-s2);
+  margin-left: calc(var(--vk-cs) * 16 / 48);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-label);
+  font-size: var(--vk-cs);
   color: var(--vk-ink-2);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
@@ -1196,7 +1212,7 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
 }/* 窄格子（展示站的小镜头）里地址退到元信息档；单元格自己是容器，规则才真的会命中。 */
 .vk-cell{ container-type: inline-size; }@container (max-width: 150px){.vk-cell-a{ font-size: var(--vk-t-label); letter-spacing: -0.04em; }
 }/* 强度只留三档底色；没有第二种材质。 */
-.vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: var(--vk-s2) var(--vk-s4); }vk-table[mass='hero'] td{ padding: var(--vk-s4) var(--vk-s5); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
+.vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 32 / 56); }vk-table[mass='hero'] td{ padding: calc(var(--vk-cs) * 32 / 56) calc(var(--vk-cs) * 48 / 56); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
 
 /* 图号是窗头里的一枚 chip，不能比窗头高。 */
 .vk-fig-fig{
@@ -1245,13 +1261,13 @@ vk-tree[grow] .vk-tree-row{ flex: 1 1 0; min-height: 0; }vk-tree[grow] > .vk-tre
   flex-direction: column;
   justify-content: space-between;
   padding-block: var(--vk-s2);
-}vk-code[mass='hero'] .vk-line{ min-height: 0; flex: 1 1 0; line-height: 1.3; }vk-cells[mass='compact'] .vk-cell{ min-height: 112px; padding: var(--vk-s1) var(--vk-s2); }vk-cells[mass='compact'] .vk-cell-v{ font-size: var(--vk-t-data); }vk-cells[mass='hero'] .vk-cell{ min-height: 300px; padding: var(--vk-s4) var(--vk-s3); }vk-cells[mass='hero'] .vk-cell-v{ font-size: var(--vk-t-subhead); line-height: 1.1; }vk-cells[mass='hero'] .vk-cell-l{ font-size: var(--vk-t-data); }vk-term[mass='compact'] .vk-line{ min-height: 48px; }vk-term[mass='normal'] .vk-line{ min-height: 64px; }vk-term[mass='hero'] > .vk-term{ min-height: 560px; display: flex; flex-direction: column; }vk-term[mass='hero'] .vk-bd{ flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; }vk-term[mass='hero'] .vk-line{ min-height: 0; flex: 1 1 0; }vk-table[mass='compact'] th,
-vk-table[mass='compact'] td{ padding: var(--vk-s1) var(--vk-s2); }vk-table[mass='hero'] th,
-vk-table[mass='hero'] td{ padding: var(--vk-s5) var(--vk-s6); font-size: var(--vk-t-body); }/* 体量三档：compact 收紧、normal 常规、hero 让块吃掉剩余高度。
+}vk-code[mass='hero'] .vk-line{ min-height: 0; flex: 1 1 0; line-height: 1.3; }vk-cells[mass='compact'] .vk-cell{ min-height: 112px; padding: var(--vk-s1) var(--vk-s2); }vk-cells[mass='compact'] .vk-cell-v{ font-size: var(--vk-t-data); }vk-cells[mass='hero'] .vk-cell{ min-height: 300px; padding: var(--vk-s4) var(--vk-s3); }vk-cells[mass='hero'] .vk-cell-v{ font-size: var(--vk-t-subhead); line-height: 1.1; }vk-cells[mass='hero'] .vk-cell-l{ font-size: var(--vk-t-data); }vk-term[mass='compact'] .vk-line{ min-height: calc(var(--vk-cs) * 48 / 56); }vk-term[mass='normal'] .vk-line{ min-height: calc(var(--vk-cs) * 64 / 56); }vk-term[mass='hero'] > .vk-term{ min-height: 560px; display: flex; flex-direction: column; }vk-term[mass='hero'] .vk-bd{ flex: 1 1 auto; display: flex; flex-direction: column; justify-content: space-between; }vk-term[mass='hero'] .vk-line{ min-height: 0; flex: 1 1 0; }vk-table[mass='compact'] th,
+vk-table[mass='compact'] td{ padding: calc(var(--vk-cs) * 8 / 56) calc(var(--vk-cs) * 16 / 56); }vk-table[mass='hero'] th,
+vk-table[mass='hero'] td{ padding: calc(var(--vk-cs) * 48 / 56) calc(var(--vk-cs) * 64 / 56); font-size: var(--vk-cs); }/* 体量三档：compact 收紧、normal 常规、hero 让块吃掉剩余高度。
    window / diff / tree / bits 是这轮才补上体量的——它们以前只跟着 density 走。 */
-vk-tree[mass='compact'] .vk-tree-row{ min-height: 48px; }vk-tree[mass='hero'] .vk-tree-row{ min-height: 88px; }vk-diff[mass='compact'] .vk-dline{ --vk-dline-h: max(58px, calc(var(--vk-t-body) * 1.35)); }vk-diff[mass='normal'] .vk-dline{ --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55)); }vk-diff[mass='hero'] .vk-dline{ --vk-dline-h: max(88px, calc(var(--vk-t-body) * 1.9)); }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }/* 窗的体量必须落到内容行：只改自己的内距等于没压——窗里是 diff / 代码时，
+vk-tree[mass='compact'] .vk-tree-row{ min-height: calc(var(--vk-cs) * 48 / 48); }vk-tree[mass='hero'] .vk-tree-row{ min-height: calc(var(--vk-cs) * 88 / 48); }vk-diff[mass='compact'] .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 58 / 56), calc(var(--vk-cs) * 1.35)); }vk-diff[mass='normal'] .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 70 / 56), calc(var(--vk-cs) * 1.55)); }vk-diff[mass='hero'] .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 88 / 56), calc(var(--vk-cs) * 1.9)); }vk-bits[mass='compact'] .vk-bit-row{ min-height: 48px; }vk-bits[mass='hero'] .vk-bit-row{ min-height: 88px; }vk-window[mass='compact'] .vk-hd{ padding-block: var(--vk-s1); }vk-window[mass='hero'] .vk-hd{ padding-block: var(--vk-s3); }/* 窗的体量必须落到内容行：只改自己的内距等于没压——窗里是 diff / 代码时，
    行高还钉在 70，窗口就永远压不下去。内层自己写了 mass 时按内层（:not([mass])）。 */
-vk-window[mass='compact'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(58px, calc(var(--vk-t-body) * 1.35)); }vk-window[mass='normal'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(70px, calc(var(--vk-t-body) * 1.55)); }vk-window[mass='hero'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(88px, calc(var(--vk-t-body) * 1.9)); }vk-window[mass='compact'] vk-code:not([mass]) .vk-line{ min-height: 58px; line-height: 58px; }vk-window[mass='normal'] vk-code:not([mass]) .vk-line{ min-height: 70px; line-height: 70px; }vk-window[mass='hero'] vk-code:not([mass]) .vk-line{ min-height: 88px; line-height: 88px; }vk-asm[mass='hero'] .vk-asm-row{ min-height: 88px; }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
+vk-window[mass='compact'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 58 / 56), calc(var(--vk-cs) * 1.35)); }vk-window[mass='normal'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 70 / 56), calc(var(--vk-cs) * 1.55)); }vk-window[mass='hero'] vk-diff:not([mass]) .vk-dline{ --vk-dline-h: max(calc(var(--vk-cs) * 88 / 56), calc(var(--vk-cs) * 1.9)); }vk-window[mass='compact'] vk-code:not([mass]) .vk-line{ min-height: calc(var(--vk-cs) * 58 / 56); line-height: calc(var(--vk-cs) * 58 / 56); }vk-window[mass='normal'] vk-code:not([mass]) .vk-line{ min-height: calc(var(--vk-cs) * 70 / 56); line-height: calc(var(--vk-cs) * 70 / 56); }vk-window[mass='hero'] vk-code:not([mass]) .vk-line{ min-height: calc(var(--vk-cs) * 88 / 56); line-height: calc(var(--vk-cs) * 88 / 56); }vk-asm[mass='hero'] .vk-asm-row{ min-height: calc(var(--vk-cs) * 88 / 48); }vk-bytes[mass='hero'] .vk-bytes-row{ line-height: 2; }/* --------------------------------------------------------------- compare */
 /* 两张图叠在同一个框里：下面对照后、上面裁前。divider 与角标只用石墨——
    对照的注意力应该落在差异上，而不是落在控件上。 */
 vk-compare{ display: block; }.vk-cmp{

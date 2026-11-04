@@ -1,19 +1,20 @@
 import { resolveAnchor } from './base.mjs';
-import { cumulativeScaleX } from './geometry.mjs';
 import { LIMITS } from '../shared/limits.mjs';
 import { auditStyle, STYLE_RULES } from './style-preset.mjs';
 
 /**
  * 页面自检：作者页与标本页共用同一份。
  *
- * 只看客观错误：字号地板、对比度、安全区、溢出、裁切、重叠、空锚点、
- * 组件渲染失败、空组件、素材过期。这些都是"无论你画什么，它都错"的事。
+ * 只看客观错误：字号地板、对比度、溢出、裁切、遮挡正文、非法值、
+ * 空锚点、组件渲染失败、空组件、素材过期。这些都是"无论你画什么，它都错"的事。
  *
- * 审美判断不在这里。强调色 ≤1、深色块 ≤1、图标白名单、页眉只讲工序、
- * 120 边距都是**项目层**的版面主张，默认不跑；要跑就显式打开：
+ * 审美判断不在这里：强调色 ≤1、深色块 ≤1、图标白名单、页眉只讲工序、
+ * 120 边距、字幕句长、孤行、焦点数量都是**项目层**的版面主张，默认不跑；
+ * 要跑就显式打开：
  *   vk check --style ...      /  node tools/style-preset.mjs ...
  *   vk.auditPage(root, { style: true })
  * 判定与文案在 runtime/style-preset.mjs（STYLE_RULES 是唯一清单）。
+ * 安全区（120 边距）、底部空带、字数、元素数量都不再是默认审计的一部分。
  *
  * 所有数值来自 shared/limits.mjs —— 这里不再有第二份定义。
  * 对比度分两档：正文 7:1，标注（ink="muted"，即 [data-meta] 里）4.5:1。
@@ -47,7 +48,6 @@ export function auditPage(root = document, options = {}) {
   const limits = limitsFor(stage);
   const safe = safeBox(stage);
   const pageRect = stage.getBoundingClientRect();
-  const safeRect = safe?.getBoundingClientRect();
 
   const parse = (s) => {
     const m = String(s).match(/rgba?\(([^)]+)\)/);
@@ -100,7 +100,6 @@ export function auditPage(root = document, options = {}) {
   };
   const clip = (s) => (s || '').toString().slice(0, 60);
   const overSeen = new Set();
-  const safeSeen = new Set();
   const covered = (el, set) => {
     for (let p = el.parentElement; p; p = p.parentElement) if (set.has(p)) return true;
     return false;
@@ -116,13 +115,9 @@ export function auditPage(root = document, options = {}) {
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
     const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], vk-caption');
     const inSideNav = !!el.closest('[data-side-nav]');
-    const inPageChrome = !!el.closest('.vk-page-hd, .vk-page-ft');
     const inBleed = !!el.closest('.vk-page-bleed');
-    const pageScaffold = el.matches('.vk-page-inner, .vk-page-bd, .vk-page-hd, .vk-page-ft, .vk-page-bleed');
 
     const hasText = [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim());
-    // 出血层只收图/面：正文放进去会绕过安全区，直接报。
-    if (hasText && inBleed) out.push({ type: 'bleed-text', what: clip(el.textContent || el.tagName) });
     const isMeta = !!(el.closest && (el.closest('[data-meta]') || el.closest('[ink="muted"]')));
     // 窗头 / 窗脚是「窗自己的字」：它有独立的尺寸表（点、窗头高、chip 一起缩放），
     // 不受正文地板约束。页面的四档字号只管内容，不管一扇窗的标题栏。
@@ -139,11 +134,6 @@ export function auditPage(root = document, options = {}) {
       const fs = parseFloat(cs.fontSize);
       // caption 是硬地板，data-meta 也不能破：元数据只放宽对比度与句长，不放宽字号。
       if (!inChrome && fs < fontFloor) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
-      if (!inChrome && !inTag && !isMeta && fs < limits.body) {
-        const text = (el.textContent || '').replace(/\s+/g, '');
-        const isSentence = /[\u4e00-\u9fff]/.test(text) && text.length > 12;
-        if (isSentence) out.push({ type: 'font-content', what: clip(text.slice(0, 18)), fs });
-      }
       const fg = parse(cs.color);
       if (fg) {
         const cr = ratio(fg, bgOf(el));
@@ -158,24 +148,6 @@ export function auditPage(root = document, options = {}) {
         overSeen.add(el);
         out.push({
           type: 'overflow',
-          el,
-          what: clip(el.className || el.tagName),
-          box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
-        });
-      }
-    }
-
-    if (safeRect && !inOverlay && !inSideNav && !inPageChrome && !pageScaffold && !inBleed) {
-      if (
-        (r.left < safeRect.left - 2 ||
-          r.right > safeRect.right + 2 ||
-          r.top < safeRect.top - 2 ||
-          r.bottom > safeRect.bottom + 2) &&
-        !covered(el, safeSeen)
-      ) {
-        safeSeen.add(el);
-        out.push({
-          type: 'safe',
           el,
           what: clip(el.className || el.tagName),
           box: [Math.round(r.left), Math.round(r.top), Math.round(r.right), Math.round(r.bottom)],
@@ -283,33 +255,12 @@ export function auditPage(root = document, options = {}) {
     }
   }
 
-  // 底部空带：这一页下半空了多少。
-  //
-  // 只测量，不判定：一整集里"每帧下半空一半"是分镜问题，不是组件问题，
-  // 但作者需要一个数字才会去改。量的是「最低的一点墨到安全区底边」，
-  // 不是"最大空块"——标题右侧的空白也会算成空块，那是正常版面，
-  // 而这里要回答的是一个具体问题：内容到底沉到多高就没东西了。
-  //
-  // 跳过的两种页：vk-stage（组件标本台，只摆一个元件）与
-  // 标了 data-allow-void 的纸（文献页/图版，空白是版式的一部分）。
-  const voidExempt = stage.classList?.contains('vk-stage') || stage.hasAttribute?.('data-allow-void') || stage.closest?.('[data-allow-void]');
-  if (safeRect && safeRect.height > 0 && !voidExempt) {
-    const band = bottomGap(safe || stage, safeRect);
-    if (band >= safeRect.height * 0.25) {
-      out.push({
-        type: 'void',
-        what: `底部空 ${band}px（安全区 ${Math.round((band / safeRect.height) * 100)}%）`,
-        box: [0, Math.round(safeRect.height - band), Math.round(safeRect.width), band],
-        fix: '主角再大一档 / vk-page align="center" / 补一条撑住下半页的物证',
-      });
-    }
-  }
-
   // 空帧：一个组件都没渲染出来、或整页只剩背景时，上面所有检查都会沉默——
   // 因为没有任何东西可以不合格。这一条把"没画面"从"没问题"里分出来。
   //
   // 例外是"故意空"的页：标本台（.vk-stage）、文献页/图版（data-allow-void）。
   // 它们本来就只有一个元件或大片留白，拿空帧去拦它是错的。
+  const voidExempt = stage.classList?.contains('vk-stage') || stage.hasAttribute?.('data-allow-void') || stage.closest?.('[data-allow-void]');
   if (!voidExempt) {
     const body = stage.querySelector('.vk-page-bd') || stage;
     const chars = (body.innerText || '').replace(/\s+/g, '').length;
@@ -422,33 +373,6 @@ export function auditPage(root = document, options = {}) {
     if (hit) out.push({ type: 'narrow', el, what: 'vk-bytes', sw: Math.round(hit.scrollWidth), cw: hit.clientWidth });
   }
 
-  // 孤行：多行文本的最后一行少于 4 个汉字宽，读起来像排版事故。
-  for (const el of stage.querySelectorAll('vk-text, .r-title-sub, .r-callout-bd, .vk-list li')) {
-    if (el.closest('[data-meta]') || el.closest('svg')) continue;
-    const text = (el.textContent || '').replace(/\s+/g, '').trim();
-    if (text.length < 12) continue;
-    const fs = parseFloat(getComputedStyle(el).fontSize) || 40;
-    // 行盒与行距都是缩放后的像素；判断"几个字"时要把祖先 scale 除回去。
-    const scale = cumulativeScaleX(el);
-    const range = document.createRange();
-    range.selectNodeContents(el);
-    const rects = [...range.getClientRects()].filter((r) => r.width > 2 && r.height > 2);
-    if (rects.length < 2) continue;
-    const rows = [];
-    for (const r of rects) {
-      // 同一行的判定也用缩放后的字高，否则缩得太小时两行会被并成一行。
-      const row = rows.find((x) => Math.abs(x.top - r.top) < fs * scale * 0.6);
-      if (row) {
-        row.left = Math.min(row.left, r.left);
-        row.right = Math.max(row.right, r.right);
-      } else rows.push({ top: r.top, left: r.left, right: r.right });
-    }
-    if (rows.length < 2) continue;
-    const last = rows[rows.length - 1];
-    const chars = (last.right - last.left) / (fs * scale);
-    if (chars < 3.2) out.push({ type: 'orphan', what: clip(text.slice(0, 18)), chars: +chars.toFixed(1) });
-  }
-
   // pin 之间互相压住：auto 只选边，不承诺避让。
   const pinBoxes = [...stage.querySelectorAll('.vk-pin-bd')].map((el) => el.getBoundingClientRect());
   for (let i = 0; i < pinBoxes.length; i++) {
@@ -460,13 +384,6 @@ export function auditPage(root = document, options = {}) {
       }
     }
   }
-
-  // 一帧最多一处焦点蓝。焦点是 region，不是 node：
-  // 五个高亮字节、两行表格、一段圈选都只算 1 处。
-  // 旧实现的手维护并集里写着 `.vk-cell.is-hl` / `.vk-byte.is-hl`，而 DOM 发的是
-  // data-state / data-hl —— 所以 07 帧的五个字节、cells 的 current 从来没被数过。
-  const focusNodes = focusRegions(stage);
-  if (focusNodes.length > 1) out.push({ type: 'blue', count: focusNodes.length, what: '一帧出现多处焦点' });
 
   /* ------------------------------------------------- 项目层 preset（可选）
      强调色 / 深色块 / 图标白名单 / 页眉 / 120 边距都是版面上的主张，不是事故。
@@ -491,7 +408,7 @@ export function auditPage(root = document, options = {}) {
 
   // 容量类问题：父级的 safe / overflow 往往只是子级裁切连带出来的。
   // 只报最里层根因，并给一个可执行的改法；不要让人先去修一个不存在的裁切。
-  const CAP = new Set(['safe', 'overflow', 'clip', 'clip-y', 'content-clip', 'audit-overflow']);
+  const CAP = new Set(['overflow', 'clip', 'clip-y', 'content-clip', 'audit-overflow']);
   const capIssues = out.filter((x) => x.el && CAP.has(x.type));
   for (const x of capIssues) {
     const child = capIssues.find((y) => y !== x && x.el !== y.el && x.el.contains(y.el));
@@ -500,7 +417,7 @@ export function auditPage(root = document, options = {}) {
   const issues = out
     .filter((x) => !x.cascadeOf)
     .map(({ el, ...rest }) => {
-      const fix = fixFor(rest, safeRect);
+      const fix = fixFor(rest);
       return fix ? { ...rest, fix } : rest;
     });
 
@@ -508,7 +425,7 @@ export function auditPage(root = document, options = {}) {
 }
 
 /** 容量问题的下一步：只给可执行的旋钮，不替作者做审美判断。 */
-function fixFor(x, safeRect) {
+function fixFor(x) {
   if (x.type === 'content-clip') return `差 ${x.sh - x.ch}px：先试 gap 降一档 / mass="compact" / 删 1 条`;
   if (x.type === 'clip-y') return `差 ${x.sh - x.ch}px：先试 long="wrap" / mass="compact"`;
   if (x.type === 'clip') return `差 ${x.sw - x.cw}px：先试 long="wrap" / 删字符`;
@@ -520,11 +437,6 @@ function fixFor(x, safeRect) {
     return '格太窄：改成每行一条（换行），或改 ratio / 缩短标签；不要继续压值列';
   }
   if (x.type === 'overflow') return '先删内容或降一档间距；不要缩字';
-  if (x.type === 'safe' && x.box && safeRect) {
-    const [l, t, r, b] = x.box;
-    const over = Math.max(safeRect.left - l, t - safeRect.top, r - safeRect.right, b - safeRect.bottom);
-    return `超出 ${Math.round(over)}px：先试 title 降一档 / gap 降一档 / 删 1 行`;
-  }
   return null;
 }
 
@@ -590,62 +502,6 @@ export function metrics(root = document) {
 
 function safeBox(stage) {
   return stage.querySelector?.('.vk-page-bd') || stage.querySelector?.('.vk-stage') || stage;
-}
-
-const PARSE_RGB = (s) => {
-  const m = String(s).match(/rgba?\(([^)]+)\)/);
-  if (!m) return null;
-  const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
-  return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
-};
-
-/**
- * 底部空带：内容最低的一点墨到安全区底边还有多少。
- *
- * 只量一件事——"这页是不是一半空着"。什么算墨：
- *   · 文字（用 Range 取行盒，不看块级盒子；段落不会因为盒子高就算满）
- *   · 替换元素（img / canvas / video / svg）
- *   · 有面的块（背景色或背景图）
- *   · 只有边框的块（按边框算，框里是空的不算墨）
- * 覆盖层（聚光/圈选/连线）不算：那是"压暗"，不是内容。
- */
-function bottomGap(holder, sr) {
-  let inkBottom = 0;
-  const mark = (left, top, right, bottom) => {
-    if (right - left < 0.5 || bottom - top < 0.5) return;
-    const b = Math.min(bottom, sr.bottom) - sr.top;
-    if (b > inkBottom) inkBottom = b;
-  };
-
-  for (const el of holder.querySelectorAll('*')) {
-    if (el.hasAttribute?.('data-vk-overlay')) continue;
-    if (el.closest?.('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], vk-caption')) continue;
-    if (el.closest?.('svg')) continue;
-    const cs = getComputedStyle(el);
-    if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-    if (parseFloat(cs.opacity) < 0.15) continue;
-
-    for (const n of el.childNodes) {
-      if (n.nodeType !== 3 || !n.textContent.trim()) continue;
-      const range = document.createRange();
-      range.selectNodeContents(n);
-      for (const r of range.getClientRects()) mark(r.left, r.top, r.right, r.bottom);
-    }
-
-    const tag = el.tagName;
-    const replaced = tag === 'IMG' || tag === 'CANVAS' || tag === 'VIDEO' || tag === 'svg';
-    const bg = PARSE_RGB(cs.backgroundColor);
-    const hasBg = (bg && bg.a > 0.06) || (cs.backgroundImage && cs.backgroundImage !== 'none');
-    const bw = (s) => parseFloat(cs[s]) || 0;
-    const hasBorder = bw('borderBottomWidth') >= 1 && (PARSE_RGB(cs.borderBottomColor)?.a || 0) > 0.05;
-
-    if (replaced || hasBg || hasBorder) {
-      const r = el.getBoundingClientRect();
-      mark(r.left, r.top, r.right, r.bottom);
-    }
-  }
-
-  return Math.round(Math.max(0, sr.height - inkBottom));
 }
 
 /**

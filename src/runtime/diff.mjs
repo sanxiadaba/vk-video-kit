@@ -1,4 +1,4 @@
-import { esc, warnIfParsed, VkElement, define, dedent, hash32, langKey, fetchSource, precompiledSource, numAttr } from './base.mjs';
+import { esc, warnIfParsed, VkElement, define, dedent, hash32, langKey, fetchSource, precompiledSource, numAttr, applyContentSize, fitContent } from './base.mjs';
 import { buildRows, parseDiffItems, tokenDiff, sliceLines } from '../shared/code.mjs';
 import { wrapRange } from './code-utils.mjs';
 import { win, fileHead } from './window.mjs';
@@ -176,7 +176,7 @@ export class VkDiff extends VkElement {
 
     const changes = Math.max(adds, dels);
     const dnum = String(Math.max(lnL, lnR, 1)).length;
-    this.style.setProperty('--vk-dnum-w', `calc(${dnum} * 1ch + var(--vk-s3))`);
+    this.style.setProperty('--vk-dnum-w', `calc(${dnum} * 1ch + calc(var(--vk-cs) * 24 / 56))`);
     const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1920, fallback: 0 }) : NaN;
 
     if (mode === 'split') {
@@ -230,6 +230,11 @@ export class VkDiff extends VkElement {
         applyRanges(pair.add, rb);
       }
     }
+    applyContentSize(this);
+  }
+
+  place() {
+    fitContent(this, '.vk-dbd');
   }
 }
 

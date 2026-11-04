@@ -58,32 +58,23 @@ test('坏页 2：超宽的字 → 溢出/裁切', async () => {
   );
 });
 
-test('坏页 3：两处焦点 → blue 报告 2 处', async () => {
-  await page.setContent(
-    SHELL(`<vk-page align="top">
-      <vk-text class="a" act="focus">第一处焦点，这里在讲它。</vk-text>
-      <vk-text class="b" act="focus">第二处焦点，这里也在讲它。</vk-text>
-    </vk-page>`),
-    { waitUntil: 'load' }
-  );
-  await ready();
-  const list = await issues();
-  const blue = list.find((i) => i.type === 'blue');
-  assert.ok(blue, `两处焦点必须报 blue：${JSON.stringify(list)}`);
-});
-
-test('坏页 4：压到安全区外 → safe', async () => {
+test('已撤的风格规则：两处焦点 / 越 120 都不再进 auditPage', async () => {
+  // 这两条曾经是"门禁必须失败"的坏页；现在它们属于项目层的版面主张，
+  // 默认审计只留客观错误（溢出、裁切、遮挡、非法值、锚点、渲染、素材）。
   await page.setContent(
     SHELL(`<vk-page align="top">
       <vk-stack style="margin-left:-60px">
-        <vk-text size="body">这一行故意往左顶出安全区，门禁必须拦住它。</vk-text>
+        <vk-text class="a" act="focus">第一处焦点，这一行还故意顶出 120 边距。</vk-text>
+        <vk-text class="b" act="focus">第二处焦点，同样不在安全区里。</vk-text>
       </vk-stack>
     </vk-page>`),
     { waitUntil: 'load' }
   );
   await ready();
   const list = await issues();
-  assert.ok(list.some((i) => i.type === 'safe'), `越安全区必须报 safe：${JSON.stringify(list)}`);
+  assert.equal(list.filter((i) => i.type === 'blue').length, 0, `不再报 blue：${JSON.stringify(list)}`);
+  assert.equal(list.filter((i) => i.type === 'safe').length, 0, `不再报 safe：${JSON.stringify(list)}`);
+  assert.equal(list.filter((i) => i.type === 'font-content').length, 0, `不再报字数：${JSON.stringify(list)}`);
 });
 
 test('坏页 5：灰字太浅 → contrast（正文门槛 7:1）', async () => {

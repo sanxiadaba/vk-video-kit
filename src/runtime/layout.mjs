@@ -200,11 +200,29 @@ export class VkStack extends VkElement {
   }
 }
 
+/* ---------------------------------------------------------------- 叠层 */
+
+/**
+ * vk-layer —— 叠放容器。
+ *
+ * 子元素全部绝对定位铺满这一层，DOM 顺序就是叠放顺序（第一个铺底）。
+ * 它不排内容、不搬节点；文字的可读性保护由 CSS 按 readable 属性决定。
+ */
+export class VkLayer extends VkElement {
+  static watchSource = false;
+
+  render() {
+    this.dataset.vkLayer = '';
+    VK._invalidate();
+  }
+}
+
 /* ---------------------------------------------------------------- 注册 */
 
 export function defineLayout() {
   define('vk-canvas', VkCanvas);
   define('vk-edge', VkEdge);
+  define('vk-layer', VkLayer);
   // L2 流：纯 CSS + Frame；每个标签一个独立构造器（customElements 不允许复用同一构造器）
   const flow = () => class extends VkElement {
     static watchSource = false;

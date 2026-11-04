@@ -866,6 +866,81 @@
           "name": "别名只转发到一个公开标签，且不在清单里单列"
         }
       ]
+    },
+    {
+      "id": "content-size",
+      "name": "内容组件 · 放大 size / fit",
+      "what": "vk-code / vk-term / vk-asm / vk-table / vk-diff / vk-tree 的正文不再被 56px 钉死：size 收像素数（160）或语义档（body/headline），行高、行号、内距、语法色块从同一个 --vk-cs 一起缩放；fit=\"width\" 把最宽一行铺满容器。不写 size 时逐像素不变，没有上限。",
+      "contracts": [
+        "vk-code.size"
+      ],
+      "specimen": "vk-code",
+      "tests": [
+        {
+          "file": "tests/mechanism.test.mjs",
+          "name": "内容组件 size：160px 字号与行高成比例，不写 size 像素不变"
+        }
+      ]
+    },
+    {
+      "id": "bleed",
+      "name": "构图 · 出血 bleed",
+      "what": "通用属性 bleed=\"x|y|all|none\"：负 margin + 100% + 2×版心边距，让元素越过 vk-page 的默认边距铺到画布边缘；x 补左右 --vk-margin，y 补上下 --vk-safe-y，none 与不写完全一样。",
+      "contracts": [
+        "vk-panel.bleed"
+      ],
+      "specimen": "vk-panel",
+      "tests": [
+        {
+          "file": "tests/mechanism.test.mjs",
+          "name": "出血 bleed=\"x\"：元素左右边到画布 0"
+        }
+      ]
+    },
+    {
+      "id": "fill-mode",
+      "name": "构图 · 铺满 fill",
+      "what": "vk-img 与 vk-panel 新增 fill=\"cover|contain\"：图片用 object-fit 铺满（cover 裁切、contain 完整放下，都不拉伸）；panel 的 cover 同时吃满宽高、contain 只吃满宽。不写 fill 时沿用旧的 fit / 布尔 fill。",
+      "contracts": [
+        "vk-img.fill"
+      ],
+      "specimen": "vk-img",
+      "tests": [
+        {
+          "file": "tests/mechanism.test.mjs",
+          "name": "铺满 fill：cover 的图用 object-fit 填满且不变形"
+        }
+      ]
+    },
+    {
+      "id": "layer-overlay",
+      "name": "构图 · 叠层 vk-layer",
+      "what": "vk-layer 的子元素绝对定位铺满：第一个铺底、其余按 DOM 顺序叠上；vk-text 放在上面时默认加 1px 纸色描边（readable=\"off\" 关掉），surface 给这一层五档底色。",
+      "contracts": [
+        "vk-layer.readable"
+      ],
+      "specimen": "vk-layer",
+      "tests": [
+        {
+          "file": "tests/mechanism.test.mjs",
+          "name": "叠层 vk-layer：第一个铺底、其余叠上，文字有可读性保护"
+        }
+      ]
+    },
+    {
+      "id": "surface-tones",
+      "name": "颜色 · 五档底 surface",
+      "what": "surface=\"paper|wash|tint|dark|accent\" 落在 vk-panel / vk-layer / vk-box 上：五档底各自带对应的正文字色，dark 与 accent 反白；accent 与 tone 组合是实色强调块（如 accent + tone=ok → 实色底 + 反白字）。",
+      "contracts": [
+        "vk-panel.surface"
+      ],
+      "specimen": "vk-panel",
+      "tests": [
+        {
+          "file": "tests/mechanism.test.mjs",
+          "name": "五档底色 surface：paper / wash / tint / dark / accent 的底与字色"
+        }
+      ]
     }
   ]
 }

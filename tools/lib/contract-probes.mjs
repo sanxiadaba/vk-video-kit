@@ -97,8 +97,14 @@ export const PROBES = {
       why: '贴块（原 vk-caption）：for 先镜像到宿主（块里的标签也镜像）；真正的落点由 draw() 按目标首字符算，几何由 tests/merged-six.test.mjs 量。',
     },
   },
-  'vk-flow': {
-    arrow: {
+  'vk-panel': {
+    fill: {
+      values: ['cover'],
+      effect: { on: 'vk-panel', kind: 'style', prop: 'display', expect: 'flex' },
+      why: 'cover 才把 panel 变成吃满宽高的 flex；contain 与默认块级是同一个 display，单靠 display 量不出来。',
+    },
+  },
+  'vk-flow': {    arrow: {
       values: ['false'],
       effect: { on: 'vk-flow', kind: 'attr', prop: 'data-arrow', expect: 'false' },
       why: 'arrow 现在默认开，契约探针改成显式关：只有 arrow="false" 才该变成 false。',
@@ -214,6 +220,11 @@ export const PROBES = {
       values: ['30% 70%'],
       effect: { on: 'vk-img img', kind: 'style', prop: 'object-position', expect: /30%\s+70%/ },
       why: '焦点偏移落在内部 img 的 object-position。',
+    },
+    fill: {
+      values: ['cover'],
+      effect: { on: 'vk-img img', kind: 'style', prop: 'object-fit', expect: 'cover' },
+      why: '标本里的 vk-img 已经 fit="contain"；只有 fill="cover" 会改变 object-fit，contain 与默认态相同。',
     },
   },
   'vk-term': {
@@ -438,6 +449,18 @@ export const VISUAL_EXEMPT = {
   'vk-tree.mass': 'hero 档把文件树撑到整帧，标本台放不下；只断言行高变了。',
   'vk-bits.mass': 'hero 档把位图行撑高，标本台放不下；只断言行高变了。',
   'vk-asm.mass': 'hero 档把反汇编撑高，标本台装不下；只断言行高变了。',
+  'vk-code.size': '160px 的内容字号会把标本台撑高；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
+  'vk-term.size': '160px 的终端会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
+  'vk-asm.size': '160px 的汇编会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
+  'vk-table.size': '160px 的表格会超出标本台；行距与字号由 tests/mechanism.test.mjs 量。',
+  'vk-diff.size': '160px 的对比会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
+  'vk-tree.size': '160px 的文件树会超出标本台；行高与字号由 tests/mechanism.test.mjs 量。',
+  'vk-code.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/mechanism.test.mjs 的 vk-asm 用例守。',
+  'vk-term.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
+  'vk-asm.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/mechanism.test.mjs 的 vk-asm 用例守。',
+  'vk-table.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
+  'vk-diff.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
+  'vk-tree.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
 };
 
 /**
@@ -492,6 +515,7 @@ export const EFFECT_ANY_BUDGET = 12;
 export const SHARED_VALUES = {
   w: ['1200', '1000'],
   h: ['400'],
+  size: ['160'],
   cols: ['4'],
   title: ['VKPROBE'],
   url: ['VKPROBE'],

@@ -56,6 +56,7 @@ a:hover{color:#1b3fd6}
 .spec-w600{width:600px}
 .spec-w520{width:520px}
 .spec-h560{height:560px}
+.spec-h540{height:540px}
 .spec-h240{display:flex;height:240px}
 .spec-pill{width:160px}
 .spec-pad-top{padding-top:96px}

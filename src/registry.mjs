@@ -61,6 +61,8 @@ const ATTR_META = {
   place: { label: '位置', group: 'layout' },
   connector: { label: '连接线', group: 'appearance' },
   surface: { label: '表面', group: 'appearance' },
+  readable: { label: '可读性保护', group: 'appearance' },
+  bleed: { label: '出血（越过版心到画布边）', group: 'layout' },
   variant: { label: '形态', group: 'appearance' },
   mass: { label: '体量', group: 'appearance' },
   size: { label: '尺寸', group: 'appearance' },
@@ -243,6 +245,8 @@ const DEFAULTS = {
   'vk-cells': { cols: '0', mass: 'normal' },
   'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow', done: 'auto' },
   'vk-page': { align: 'top' },
+  // 叠层：不写 tone 就是中性；可读性保护默认开。
+  'vk-layer': { tone: 'neutral', readable: 'on' },
 };
 
 export const LAYERS = [
@@ -478,6 +482,29 @@ export const TAGS = {
     },
   },
   /**
+   * 叠层：子元素绝对定位叠放，第一个铺底、其余按顺序叠上。
+   *
+   * 它不排内容（排布归 stack / grid），只回答"谁压在谁上面"。
+   * vk-text 放在上面时默认加一圈纸色描边（readable="off" 关掉）；
+   * surface 是这一层的底色，跟 vk-panel / vk-box 共用同一套五档。
+   */
+  'vk-layer': {
+    name: '叠层',
+    layer: 'layout',
+    summary:
+      '叠放容器：第一个子元素铺满当底，其余按顺序绝对定位叠在上面；vk-text 放在最上面时默认加纸色描边（readable="off" 关），surface 给这一层上五档底色。',
+    attrs: {
+      // 五档底：纸 / 极淡 / 稍深 / 深色 / 实色强调（tone 决定强调色）。
+      'surface': oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
+      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
+      // 叠在照片/深色块上的字默认加保护；显式 off 才关。
+      'readable': { ...oneOf('on', 'off'), default: 'on' },
+      'grow': bool(),
+      // 通用出血：让这一层越过版心到画布边。
+      'bleed': { ...oneOf('x', 'y', 'all', 'none'), default: 'none', layout: true },
+    },
+  },
+  /**
    * 并置对照：两块内容左右（或上下）并置，中间一条轴。
    *
    * 它不是 vk-grid 的特例：grid 解决"分几份"，pair 解决"两块对着看"，
@@ -607,6 +634,11 @@ export const TAGS = {
       'chrome': oneOf('min', 'none'),
       'mark': text(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // 内容字号：像素数（160）或语义档（body / headline / caption …）。
+      // 行高、行号、内距、语法下划线都从同一个 --vk-cs 派生，不设上限。
+      'size': text(),
+      // 自动铺满容器宽：按内容自然宽反算字号（复用 vk-text 的 fit 规矩）。
+      'fit': oneOf('width'),
       // 表面：paper = 白纸（默认，旧行为）；inset = 浅灰凹面；dark = 深色底 + 反白。
       // 深色不是"只把背景刷黑"：窗头、行号、语法、提示符、当前行都在同一层适配。
       'surface': oneOf('paper', 'dark', 'inset'),
@@ -645,6 +677,9 @@ export const TAGS = {
       // 这里只把 title 留作无障碍名。确实要在无壳终端上再显示一次，才写 title-show。
       'title-show': bool(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // 与 vk-code 同一套内容字号 / 铺满（行高、提示符、内距一起缩放）。
+      'size': text(),
+      'fit': oneOf('width'),
       // 表面：paper = 白纸（默认）；inset = 浅灰凹面；dark = 深色底 + 反白。
       'surface': oneOf('paper', 'dark', 'inset'),
     },
@@ -664,6 +699,9 @@ export const TAGS = {
       'lines': text(),
       'file': text(),
       'chrome': oneOf('min', 'none'),
+      // 内容字号 / 铺满（行号、增删色块、内距一起缩放）。
+      'size': text(),
+      'fit': oneOf('width'),
     },
   },
   'vk-table': {
@@ -683,6 +721,9 @@ export const TAGS = {
       'stripe': bool(),
       'mono': bool(),
       'mass': oneOf('compact', 'normal', 'hero'),
+      // 内容字号 / 铺满（表头、行距、内距一起缩放）。
+      'size': text(),
+      'fit': oneOf('width'),
     },
   },
   'vk-math': {
@@ -748,6 +789,9 @@ export const TAGS = {
       'summary': oneOf('all', 'none'),
       'depth': int({ min: 0, max: 8, step: 1 }),
         'chrome': oneOf('min', 'none'),
+      // 内容字号 / 铺满（行高、图标、缩进一起缩放）。
+      'size': text(),
+      'fit': oneOf('width'),
     },
   },
   'vk-cells': {
@@ -890,6 +934,9 @@ export const TAGS = {
       'bytes-label': text(),
       'mnemonic-label': text(),
       'operands-label': text(),
+      // 内容字号 / 铺满（列宽、行高、内距一起缩放）。
+      'size': text(),
+      'fit': oneOf('width'),
     },
   },
   'vk-timeline': {
@@ -1116,6 +1163,7 @@ const CUSTOM = new Set([
   'vk-annotate',
   'vk-note',
   'vk-caption',
+  'vk-layer',
 ]);
 const COMMON = {
   w: { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
@@ -1126,6 +1174,9 @@ const COMMON = {
   z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child', layout: true },
   grow: { ...bool(), layout: true },
   fill: { ...bool(), layout: true },
+  // 出血：负 margin 把这一块推到画布边（与 vk-page 的版心内距配合）。
+  // x / y / all / none；none 是默认，旧页不写时逐像素不变。
+  bleed: { ...oneOf('x', 'y', 'all', 'none'), default: 'none', layout: true },
   overflow: { ...oneOf('visible', 'clip'), default: 'visible', layout: true },
   /* L6 导演层：时刻 → 姿态。不进布局、不改尺寸，所以不参与几何审计。 */
   at: { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
@@ -1148,11 +1199,35 @@ for (const [tag, def] of Object.entries(TAGS)) {
 /* 竖线要长度：vk-rule 保留 COMMON 的 h；横线的 h 组件自己忽略（线不是面）。 */
 
 const EXTRA = {
-  'vk-box': { surface: oneOf('none', 'paper', 'soft', 'sf-1', 'sf-2', 'sf-3', 'sf-4') },
+  'vk-box': {
+    surface: oneOf(
+      'none',
+      'paper',
+      'soft',
+      'sf-1',
+      'sf-2',
+      'sf-3',
+      'sf-4',
+      'wash',
+      'tint',
+      'dark',
+      'accent'
+    ),
+  },
   'vk-text': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
     // 语义色：与 vk-icon 同一套词表（info / focus / ok / err / warn），不写就是纯墨阶。
     tone: oneOf('info', 'focus', 'ok', 'err', 'warn'),
+  },
+  'vk-panel': {
+    // 五档底：纸 / 极淡 / 稍深 / 深色 / 实色强调。tone 只给 accent（和 wash/tint）上色。
+    surface: oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
+    // 铺满父容器：cover 同时吃满宽高；contain 只吃满宽、高按内容。
+    // 空值仍是旧的布尔 fill（align-self: stretch），旧页不用改。
+    fill: { type: 'text', values: ['cover', 'contain', ''], layout: true },
+  },
+  'vk-layer': {
+    surface: oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
   },
   'vk-icon': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
@@ -1163,6 +1238,8 @@ const EXTRA = {
     variant: oneOf('unified', 'split'),
     numbers: oneOf('all', 'none'),
     summary: oneOf('all', 'none'),
+    size: text(),
+    fit: oneOf('width'),
   },
   'vk-mark': { variant: oneOf('highlight', 'underline', 'strike', 'circle') },
   'vk-rule': { variant: oneOf('thin', 'strong'), tone: oneOf('neutral', 'info', 'focus'), dash: bool() },
@@ -1171,12 +1248,22 @@ const EXTRA = {
     numbers: oneOf('all', 'none'),
     numbering: oneOf('slice', 'file'),
     mass: oneOf('compact', 'normal', 'hero'),
+    size: text(),
+    fit: oneOf('width'),
   },
   'vk-term': {
     mass: oneOf('compact', 'normal', 'hero'),
+    size: text(),
+    fit: oneOf('width'),
   },
-  'vk-table': {},
-  'vk-callout': { mass: oneOf('compact', 'normal', 'hero') },
+  'vk-table': {
+    size: text(),
+    fit: oneOf('width'),
+  },
+  'vk-asm': {
+    size: text(),
+    fit: oneOf('width'),
+  },
   'vk-steps': {
     mass: oneOf('compact', 'normal', 'hero'),
     orientation: oneOf('horizontal', 'vertical'),
@@ -1197,13 +1284,19 @@ const EXTRA = {
   'vk-img': {
     position: text(),
     border: oneOf('none', 'hair', 'strong'),
+    // 铺满：cover 裁切填满、contain 完整放下（object-fit，不拉伸）。
+    // fill 优先于旧的 fit；不写 fill 时行为完全不变。
+    fill: oneOf('cover', 'contain'),
   },
   'vk-figure': { position: text() },
   'vk-tree': {
     collapsed: text(),
     current: text(),
     summary: oneOf('all', 'none'),
+    size: text(),
+    fit: oneOf('width'),
   },
+  'vk-callout': { mass: oneOf('compact', 'normal', 'hero') },
   'vk-edge': {
     'label-size': oneOf('label', 'meta'),
     'label-dx': num({ min: -400, max: 400, step: 1 }),

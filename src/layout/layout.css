@@ -581,6 +581,113 @@ vk-grid[justify='center'] { justify-items: center; }
 vk-grid[justify='end'] { justify-items: end; }
 vk-grid[justify='stretch'] { justify-items: stretch; }
 
+/* ------------------------------------------------------------- vk-layer */
+/* 叠层：子元素全部绝对定位铺满，DOM 顺序即叠放顺序（第一个铺底）。
+   surface 与 panel / box 共用五档底；vk-text 默认加一圈 1px 纸色描边，
+   readable="off" 关掉。 */
+vk-layer {
+  --vk-layer-bg: transparent;
+  --vk-layer-ink: var(--vk-ink-1);
+  --vk-layer-readable: var(--vk-paper-sf-0);
+  display: block;
+  box-sizing: border-box;
+  position: relative;
+  isolation: isolate;
+  min-width: 0;
+  background: var(--vk-layer-bg);
+  color: var(--vk-layer-ink);
+}
+vk-layer[grow] { flex: 1 1 auto; min-height: 0; }
+vk-layer > * {
+  position: absolute;
+  inset: 0;
+  box-sizing: border-box;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+vk-layer > *:nth-child(1) { z-index: 1; }
+vk-layer > *:nth-child(2) { z-index: 2; }
+vk-layer > *:nth-child(3) { z-index: 3; }
+vk-layer > *:nth-child(4) { z-index: 4; }
+vk-layer > *:nth-child(5) { z-index: 5; }
+vk-layer > *:nth-child(6) { z-index: 6; }
+vk-layer > *:nth-child(7) { z-index: 7; }
+vk-layer > *:nth-child(8) { z-index: 8; }
+/* 压在图上的一行字：默认落在左下，留出与画框一致的呼吸。 */
+vk-layer > vk-text {
+  display: flex;
+  align-items: flex-end;
+  padding: var(--vk-s5);
+}
+/* 可读性保护：纸色描边 + 一点发光，都是 1px 量级，不改变字号与位置。 */
+vk-layer:not([readable='off']) > vk-text {
+  text-shadow:
+    1px 0 0 var(--vk-layer-readable),
+    -1px 0 0 var(--vk-layer-readable),
+    0 1px 0 var(--vk-layer-readable),
+    0 -1px 0 var(--vk-layer-readable),
+    0 0 3px var(--vk-layer-readable);
+}
+/* 五档底：纸 / 极淡 / 稍深 / 深色 / 实色强调。 */
+vk-layer[surface='paper'] {
+  --vk-layer-bg: var(--vk-paper-sf-0);
+  --vk-layer-ink: var(--vk-ink-1);
+}
+vk-layer[surface='wash'] {
+  --vk-layer-bg: var(--vk-paper-sf-1);
+  --vk-layer-ink: var(--vk-ink-1);
+}
+vk-layer[surface='tint'] {
+  --vk-layer-bg: var(--vk-paper-sf-2);
+  --vk-layer-ink: var(--vk-ink-1);
+}
+vk-layer[surface='dark'] {
+  --vk-layer-bg: var(--vk-ink-1);
+  --vk-layer-ink: var(--vk-sf-0);
+  --vk-layer-readable: var(--vk-ink-1);
+}
+vk-layer[surface='wash'][tone='info'] { --vk-layer-bg: var(--vk-wash-info); }
+vk-layer[surface='wash'][tone='focus'] { --vk-layer-bg: var(--vk-wash-focus); }
+vk-layer[surface='wash'][tone='ok'] { --vk-layer-bg: var(--vk-wash-ok); }
+vk-layer[surface='wash'][tone='warn'] { --vk-layer-bg: var(--vk-wash-warn); }
+vk-layer[surface='wash'][tone='err'] { --vk-layer-bg: var(--vk-wash-err); }
+vk-layer[surface='tint'][tone='info'] { --vk-layer-bg: var(--vk-tint-info); }
+vk-layer[surface='tint'][tone='focus'] { --vk-layer-bg: var(--vk-tint-focus); }
+vk-layer[surface='tint'][tone='ok'] { --vk-layer-bg: var(--vk-tint-ok); }
+vk-layer[surface='tint'][tone='warn'] { --vk-layer-bg: var(--vk-tint-warn); }
+vk-layer[surface='tint'][tone='err'] { --vk-layer-bg: var(--vk-tint-err); }
+/* 强调块：实色底 + 反白字。默认焦点蓝，tone 换成对应语义色。 */
+vk-layer[surface='accent'] {
+  --vk-layer-bg: var(--vk-focus);
+  --vk-layer-ink: var(--vk-sf-0);
+  --vk-layer-readable: var(--vk-ink-1);
+}
+vk-layer[surface='accent'][tone='info'] { --vk-layer-bg: var(--vk-info); }
+vk-layer[surface='accent'][tone='focus'] { --vk-layer-bg: var(--vk-focus); }
+vk-layer[surface='accent'][tone='ok'] { --vk-layer-bg: var(--vk-ok); }
+vk-layer[surface='accent'][tone='warn'] { --vk-layer-bg: var(--vk-warn); }
+vk-layer[surface='accent'][tone='err'] { --vk-layer-bg: var(--vk-err); }
+
+/* ------------------------------------------------------------- 出血 */
+/* 通用属性 bleed="x|y|all"：负 margin 把这一块推出 vk-page 的版心，
+   宽度补回两侧的 --vk-margin；y 方向补的是上下 --vk-safe-y。
+   不写 / none 时没有任何规则，旧页逐像素不变。 */
+[data-bleed='x'],
+[data-bleed='all'] {
+  box-sizing: border-box;
+  margin-left: calc(var(--vk-margin) * -1);
+  margin-right: calc(var(--vk-margin) * -1);
+  width: calc(100% + var(--vk-margin) * 2);
+  max-width: none;
+}
+[data-bleed='y'],
+[data-bleed='all'] {
+  margin-top: calc(var(--vk-safe-y) * -1);
+  margin-bottom: calc(var(--vk-safe-y) * -1);
+  min-height: calc(100% + var(--vk-safe-y) * 2);
+}
+
 /* ------------------------------------------------------------- vk-canvas */
 
 vk-canvas[overflow='clip'] { overflow: hidden; }

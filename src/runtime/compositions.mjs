@@ -20,8 +20,10 @@ export class VkPage extends VkElement {
 
     if (!this._shell) {
       const body = takeSlot(this);
-      // 出血层：page 的直接子节点写 bleed，就铺满整帧、排在内容层后面。
-      const bleed = body.filter((n) => n.nodeType === 1 && n.hasAttribute('bleed'));
+      // 出血层：只收旧写法（写 bleed 不带值）——它表示"铺满整帧的背景层"。
+      // 新写法 bleed="x|y|all|none" 是通用负 margin，留在正文流里由 CSS 处理。
+      const oldBleed = (n) => n.nodeType === 1 && n.hasAttribute('bleed') && !String(n.getAttribute('bleed') || '').trim();
+      const bleed = body.filter(oldBleed);
       const rest = body.filter((n) => !bleed.includes(n));
       // 坐标系根：只有 1920×1080 与安全区。全库只有白纸一种材质。
       this.innerHTML = `<div class="vk-page" data-align="top" style="--pw:${w}px;--ph:${h}px">
