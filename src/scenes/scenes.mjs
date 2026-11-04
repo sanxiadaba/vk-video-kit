@@ -10,6 +10,7 @@
  */
 
 import { C } from './corpus.mjs';
+import { ALL_SLOTS_BODY } from './combos.mjs';
 
 const s = String.raw;
 
@@ -515,6 +516,13 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
     </vk-stack>
   </vk-stack>
 </vk-page>`,
+  },
+
+  {
+    tag: 'vk-scene',
+    // 契约宿主：五个 kind 的槽一次放全，契约逐个试 kind 时都能量到排布。
+    // 标本页只展示其中一种；五个动作各有自己的标本页（src/scenes/combos.mjs）。
+    body: ALL_SLOTS_BODY,
   },
 ];
 

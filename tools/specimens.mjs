@@ -11,6 +11,7 @@
 import fs from 'node:fs';
 import { TAGS, TAG_NAMES, ALIASES, LAYERS, byLayer } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
+import { COMBOS } from '../src/scenes/combos.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { checkMode } from './lib/io.mjs';
 import { SITE } from './lib/paths.mjs';
@@ -25,8 +26,13 @@ const esc = (s) =>
     .replace(/"/g, '&quot;');
 
 const LAYER_SHORT = { tokens: '值', elements: '原子', layout: '排布', components: '器械', relations: '关系', page: '页面' };
-const ORDER = [];
-for (const layer of LAYERS) for (const tag of byLayer(layer.id)) ORDER.push(tag);
+const ALL_ORDER = [];
+for (const layer of LAYERS) for (const tag of byLayer(layer.id)) ALL_ORDER.push(tag);
+// vk-scene 是组合容器，不是「又一个元件」：它的五个动作各有自己的标本页，
+// 不占 31 张单件标本的编号 / 上下页，所以现有 31 页逐像素不变。
+const COMBO_PREFIX = 'vk-scene-';
+const COMBO_FILES = COMBOS.map((c) => `${COMBO_PREFIX}${c.kind}.html`);
+const ORDER = ALL_ORDER.filter((tag) => tag !== 'vk-scene');
 const sceneOf = new Map(SCENES.map((s) => [s.tag, s.body.trim()]));
 const stripOf = new Map(SCENES.map((s) => [s.tag, (s.strip || s.body).trim()]));
 
@@ -47,6 +53,7 @@ a:hover{color:#1b3fd6}
 .spec-hd-r{flex:0 0 auto}
 .spec-hd .spec-dot{opacity:.55}
 .spec-nav{padding:0 6px}
+.spec-cur{color:var(--vk-ink-1)}
 .spec-rule{flex:0 0 auto;height:1px;margin:14px 0 0;background:var(--vk-line-strong)}
 .spec-body{flex:1 1 auto;min-height:0;min-width:0;max-width:100%;display:flex;align-items:center;justify-content:center}
 /* 主帧按组件的原生尺寸居中，不缩放。
@@ -526,6 +533,66 @@ function specPage(tag, no) {
   return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${plate}\n${sheet}`);
 }
 
+/**
+ * 五个讲解动作的标本页。
+ *
+ * 和单件标本页同一套舞台（1680×888、页眉、状态带、最小写法），
+ * 但主帧是一整个 vk-scene；五个动作各自一页，互不挤在一张纸上。
+ */
+function comboPage(combo, no, { main = false } = {}) {
+  const body = combo.body.trim();
+  const hrefOf = (kind) => `${COMBO_PREFIX}${kind}.html`;
+  const kindNav = COMBOS.map((c) =>
+    c.kind === combo.kind
+      ? `<span class="spec-cur">${esc(c.title)}</span>`
+      : `<a href="${hrefOf(c.kind)}">${esc(c.title)}</a>`
+  ).join('<span class="spec-dot">·</span>');
+  const meta = main ? '总览' : `${String(no).padStart(3, '0')} / 005`;
+  const title = main ? '五个动作' : combo.title;
+  const kindLinks = COMBOS.map((c) =>
+    !main && c.kind === combo.kind
+      ? `<span class="spec-cur">${esc(c.title)}</span>`
+      : `<a href="${hrefOf(c.kind)}">${esc(c.title)}</a>`
+  ).join('<span class="spec-dot">·</span>');
+
+  const plate = `<vk-page align="center" data-allow-void>
+  <div class="spec-stage">
+    <div class="spec-hd">
+      <div class="spec-hd-l">
+        <a href="../index.html">← 索引</a><span class="spec-dot">·</span><span class="spec-name">${esc(title)}</span>
+      </div>
+      <div class="spec-hd-r">${main ? '' : kindNav}${main ? '' : '<span class="spec-dot">·</span>'}<span class="spec-no">${meta}</span></div>
+    </div>
+    <div class="spec-rule"></div>
+    <div class="spec-body"><div class="spec-fit">${body}</div></div>
+  </div>
+</vk-page>`;
+
+  const sheet = `<section class="vk-sheet">
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>cue 分段</vk-text><vk-text size="label" mono ink="muted" data-meta>与视频维度同一条轨道</vk-text></div>
+  <div class="state-strip">
+    <div class="vk-state">
+      <div class="vk-state-meta">每个槽都可以写 cue="1"、cue="2" 或 cue="0:06-0:09"：没讲到时隐藏，讲到时全亮，讲完退到 55%。槽本身还是那个槽，分段不另写一套时间。</div>
+      <div class="vk-state-body"><vk-stack direction="row" gap="sm" wrap>
+        <vk-label variant="chip" tone="info">cue="1"</vk-label>
+        <vk-label variant="chip" tone="info">cue="2"</vk-label>
+        <vk-label variant="chip" tone="focus">cue="3"</vk-label>
+        <vk-label variant="chip">after · 55%</vk-label>
+      </vk-stack></div>
+    </div>
+  </div>
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>最小写法</vk-text><vk-text size="label" mono ink="muted" data-meta>作者只填槽内容</vk-text></div>
+  <pre class="vk-snippet">${esc(body)}</pre>
+  <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>五个动作</vk-text><a href="vk-scene.html"><vk-text size="label" mono ink="muted" data-meta>返回总览 →</vk-text></a></div>
+  <vk-stack direction="row" gap="md" align="baseline">${kindLinks}</vk-stack>
+</section>`;
+
+  return shell(
+    `vk · ${main ? '图示 · 五个动作' : `vk-scene · ${combo.title}`}`,
+    `<!-- vk:spec:${specHash('vk-scene', body, [{ label: combo.title }])} -->\n${plate}\n${sheet}`
+  );
+}
+
 function card(tag, no) {
   const def = TAGS[tag];
   // 索引 = 缩略图 + 名字。缩略图是组件本体（不是整页），卡片端 contain 完整显示。
@@ -559,7 +626,7 @@ function indexPage(n) {
         <vk-text class="spec-card-name" size="label">${ORDER.length} 个组件</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
       </vk-stack>
-      <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/vk-cues.html"><vk-text size="label" mono ink="muted" data-meta>视频 · 字幕驱动 →</vk-text></a><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 3 套 →</vk-text></a>${prev}${next}</vk-stack>
+      <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/vk-scene.html"><vk-text size="label" mono ink="muted" data-meta>图示 →</vk-text></a><a href="specimen/vk-cues.html"><vk-text size="label" mono ink="muted" data-meta>视频 →</vk-text></a><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 →</vk-text></a>${prev}${next}</vk-stack>
     </vk-stack>
     <vk-box border="strong"></vk-box>
 ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap="sm">${cards}</vk-grid>`}
@@ -570,6 +637,11 @@ ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols=
 
 const files = new Map();
 ORDER.forEach((tag, i) => files.set(`${SITE}/specimen/${tag}.html`, specPage(tag, i + 1)));
+// 图示语汇：五个动作各一页；总览页（vk-scene.html）复用 compare 的内容，
+// 让能力矩阵与索引都有一个稳定入口，同时不占单件标本的编号。
+const COMPARE_COMBO = COMBOS.find((c) => c.kind === 'compare') || COMBOS[0];
+COMBOS.forEach((combo, i) => files.set(`${SITE}/specimen/${COMBO_PREFIX}${combo.kind}.html`, comboPage(combo, i + 1)));
+files.set(`${SITE}/specimen/vk-scene.html`, comboPage(COMPARE_COMBO, 1, { main: true }));
 // 主题页：同一块内容并排展示三套主题（索引页链到它，不是孤儿页）。
 files.set(`${SITE}/specimen/theme.html`, themePage());
 // 视频维度示例页：3 条字幕 + 可播放的字幕轨。索引页链到它，也是 vk capture --cues 的样本。
@@ -614,6 +686,8 @@ let stale = 0;
 const live = new Set([...TAG_NAMES, ...ALIAS_ORDER].map((t) => `${t}.html`));
 // 视频维度示例页不是标签独照，但同样由本生成器维护；不能当成"已删除标签"清掉。
 live.add('vk-cues.html');
+// 五个讲解动作的标本页也不是 tag 独照：它们是 vk-scene 的组合页。
+for (const f of COMBO_FILES) live.add(f);
 for (const dir of [`${SITE}/specimen`, `${SITE}/specimens`]) {
   if (!fs.existsSync(dir)) continue;
   for (const name of fs.readdirSync(dir)) {

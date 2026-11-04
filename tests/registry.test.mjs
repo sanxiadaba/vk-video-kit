@@ -26,7 +26,10 @@ test('registry 自检通过', () => {
 // 标签清单不再单列（TAG_NAMES 30）。
 // 构图批次经批准 +1：vk-layer 是"谁压在谁上面"的叠层容器（pair 表达对照，grid 分份），
 // 不排内容，所以是新的一个东西。
-const TAG_CEILING = 31;
+// 图示语汇经批准 +1：vk-scene 不是"又一枚图形"，是五个讲解动作的组合容器
+// （compare / steps / locate / measure / cause）；它把已有的 pair / flow / steps /
+// cells / bars 收成一套可复用的默认版式，作者只填槽内容。
+const TAG_CEILING = 32;
 
 test(`标签数不超过 ${TAG_CEILING}（别名不单列，只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);

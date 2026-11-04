@@ -17,12 +17,14 @@ import { TAGS, TAG_NAMES } from '../src/registry.mjs';
 
 /* ------------------------------------------------------------- 1 · 度量 */
 
-test('15.2 收敛：不同属性名从 160 降到 140', () => {
+test('15.2 收敛：不同属性名从 160 降到 141（图示语汇 +1）', () => {
   const names = new Set();
   for (const tag of TAG_NAMES) {
     for (const name of Object.keys(TAGS[tag].attrs || {})) names.add(name);
   }
-  assert.ok(names.size <= 140, `属性名还有 ${names.size} 个，目标 ≤140`);
+  // 141 = 140 + vk-scene.kind。五个讲解动作必须有一个正式的 kind 属性；
+  // 不是又一套形态词，而是「这一个容器今天是哪一种组合」。
+  assert.ok(names.size <= 141, `属性名还有 ${names.size} 个，目标 ≤141`);
   for (const old of [
     'numbers',
     'ascii',

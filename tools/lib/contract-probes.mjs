@@ -516,6 +516,18 @@ export const PROBES = {
       why: '断行策略落在真正装字的那一层。',
     },
   },
+  'vk-scene': {
+    labels: {
+      values: ['改前|改后', '现象|结果'],
+      effect: { on: 'vk-scene', kind: 'attr', prop: 'data-labels', expectFromValue: 'raw' },
+      why: 'labels 先镜像到 data-labels；五个动作各自的标签落点由 tests/scene.test.mjs 量。',
+    },
+    arrow: {
+      values: ['label:因为 include', 'label:因为 gcc -E'],
+      effect: { on: 'vk-scene', kind: 'attr', prop: 'data-arrow', expectFromValue: 'raw' },
+      why: 'arrow 的整串先镜像到 data-arrow；中间那条带词的箭头由 tests/scene.test.mjs 量。',
+    },
+  },
 };
 
 /** 覆盖 src/effects.mjs 里不准确的效果声明；键是 `${tag}.${attr}`。 */

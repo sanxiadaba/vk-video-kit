@@ -461,7 +461,9 @@ export function normalizeVocab(el) {
 
   /* ------------------------------------------------------ 形态 / 强度 / 位置 */
   fold('emphasis', 'strength');
-  fold('kind', 'variant');
+  // kind → variant 是旧名迁移；但 vk-scene 的 kind 是正式属性（五个讲解动作），
+  // 不能被折成 variant。判据只有一条：声明面里真的有 kind 就不折。
+  if (!TAGS[tag]?.attrs?.kind) fold('kind', 'variant');
   if (tag === 'vk-compare') fold('mode', 'variant');
   fold('anchor', 'side', (v) => ({ above: 'top', below: 'bottom' })[v.trim()] ?? v);
   fold('place', 'side', (v) => ({ br: 'bottom-right', bl: 'bottom-left', bottom: 'bottom' })[v.trim()] ?? v);

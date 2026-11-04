@@ -1,0 +1,216 @@
+/* ============================================================================
+   L4 · 图示语汇（vk-scene）
+   ----------------------------------------------------------------------------
+   五个讲解动作共用一层容器。这里只写「默认版式」：
+   两块怎么并置、N 步怎么排、地址与容器怎么连、数字与对比条怎么落、因果怎么对齐。
+   内容由槽给，颜色由 tone 给，出场由 cue 给 —— 这一层不新增状态。
+
+   槽位命名（作者唯一需要记住的东西）：
+     compare  slot="a" "b"
+     steps    slot="step"
+     locate   slot="where" "map"
+     measure  slot="value" "chart" "ratio"
+     cause    slot="a" "b" "why"
+   ========================================================================== */
+
+vk-scene {
+  display: block;
+  box-sizing: border-box;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.vk-scene {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-s5);
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* ------------------------------------------------------------- compare */
+.vk-scene[data-kind='compare'] {
+  gap: 0;
+}
+
+.vk-scene-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-s3);
+  min-width: 0;
+}
+
+.vk-scene-label {
+  align-self: flex-start;
+  max-width: 100%;
+}
+
+.vk-scene-slot {
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 图示里的内存格：current 格的淡底会把地址/标签压到 4.45:1；
+   组件本体不能改（旧页逐像素不变），在这一层把格内元信息退一档墨色。 */
+.vk-scene .vk-cell[data-state='current'] .vk-cell-l,
+.vk-scene .vk-cell[data-state='current'] .vk-cell-a {
+  color: var(--vk-ink-3);
+}
+
+/* --------------------------------------------------------------- steps */
+.vk-scene[data-kind='steps'] {
+  gap: var(--vk-s5);
+}
+
+.vk-scene-flow {
+  display: flex;
+  min-width: 0;
+}
+
+.vk-scene-flow vk-flow {
+  width: 100%;
+}
+
+.vk-scene-track {
+  flex: 0 0 auto;
+  padding-top: var(--vk-s4);
+  border-top: 1px solid var(--vk-line-2);
+}
+
+.vk-scene-track vk-steps {
+  width: min(100%, 1440px);
+  margin-inline: auto;
+}
+
+/* 当前步高亮，其余降墨。current="-1" 时一条规则都不生效：五步等权。
+   不做过渡：静态帧就是最终帧，截图 / 门禁读到的 opacity 就是这里的值。 */
+.vk-scene[data-kind='steps']:not([data-current='-1']) .vk-flow-step {
+  opacity: 0.45;
+}
+.vk-scene[data-kind='steps']:not([data-current='-1']) .vk-flow-step[data-current] {
+  opacity: 1;
+}
+.vk-scene[data-kind='steps'] .vk-flow-step[data-current] .vk-flow-box {
+  border-color: var(--vk-focus);
+  box-shadow: 0 0 0 2px var(--vk-focus-soft);
+}
+
+/* -------------------------------------------------------------- locate */
+.vk-scene[data-kind='locate'] {
+  align-items: center;
+  gap: 0;
+}
+
+.vk-scene-where {
+  display: flex;
+  width: 100%;
+  align-items: baseline;
+  justify-content: center;
+  text-align: center;
+}
+
+.vk-scene-where vk-text {
+  text-align: center;
+}
+
+.vk-scene-leader {
+  position: relative;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 72px;
+  margin: var(--vk-s3) 0;
+}
+.vk-scene-leader::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 20px;
+  left: 50%;
+  width: var(--vk-line-w-strong, 4px);
+  transform: translateX(-50%);
+  background: var(--vk-ink-2);
+}
+.vk-scene-leader::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  border-left: 14px solid transparent;
+  border-right: 14px solid transparent;
+  border-top: 20px solid var(--vk-ink-2);
+}
+
+.vk-scene-map {
+  display: flex;
+  width: 100%;
+  justify-content: center;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------- measure */
+.vk-scene[data-kind='measure'] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: var(--vk-s7);
+  align-items: center;
+}
+.vk-scene[data-kind='measure'][data-ratio='0'] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.vk-scene-main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-s4);
+  min-width: 0;
+}
+
+.vk-scene-value {
+  line-height: 1;
+  min-width: 0;
+}
+
+.vk-scene-value vk-text {
+  line-height: 1;
+}
+
+.vk-scene-chart {
+  width: 100%;
+  min-width: 0;
+}
+
+.vk-scene-ratio {
+  box-sizing: border-box;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 0;
+  padding: var(--vk-s4);
+  border: 1px solid var(--vk-tint-focus);
+  border-radius: var(--vk-r-3);
+  background: var(--vk-wash-focus);
+}
+
+/* --------------------------------------------------------------- cause */
+.vk-scene[data-kind='cause'] {
+  position: relative;
+}
+
+/* 箭头上的词：压在两条并置块之间，纸色底把箭头垫断。 */
+.vk-scene-why {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  width: 320px;
+  transform: translate(-50%, 1.15em);
+  pointer-events: none;
+}
+.vk-scene-why vk-label {
+  padding: 0 0.2em;
+  background: var(--vk-paper-sf-0);
+}

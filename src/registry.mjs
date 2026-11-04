@@ -298,6 +298,8 @@ export const DEFAULTS = {
   // current 不写 = -1：不替作者宣称「现在停在第 1 步」；要做进度就显式写 current="2"。
   'vk-steps': { current: '-1', mass: 'normal', direction: 'horizontal', connector: 'arrow', done: 'auto' },
   'vk-page': { align: 'top', theme: 'paper' },
+  // 图示容器：不写 kind 就是对比；不写 current 就不宣称「现在停在第几步」。
+  'vk-scene': { kind: 'compare', current: '-1' },
   // 叠层：不写 tone 就是中性；可读性保护默认开。
   'vk-layer': { tone: 'neutral', readable: 'on' },
 };
@@ -1055,6 +1057,45 @@ export const TAGS = {
       'focus-transition': { ...oneOf('on', 'off'), default: 'on' },
     },
   },
+  /**
+   * 图示语汇：五个「讲解动作」的组合容器。
+   *
+   * 它不新增任何图形原语：compare 用 pair，steps 用 flow + steps，
+   * locate 用 cells/bytes/img，measure 用 bars/table，cause 用 pair + 标签。
+   * 作者只填 slot 内容；默认版式由 scene.css 给，分段出现由全库同一套 cue 给。
+   */
+  'vk-scene': {
+    name: '图示',
+    layer: 'page',
+    summary:
+      '五种讲解动作的组合容器：kind="compare|steps|locate|measure|cause"，按 kind 自动排布命名槽位（a/b、step、where/map、value/chart/ratio、a/b/why），作者只填内容。',
+    slots: [
+      { name: 'a', note: 'compare 左块 / cause 现象' },
+      { name: 'b', note: 'compare 右块 / cause 结果' },
+      { name: 'label-a', note: 'compare / cause 左侧标签（可选）' },
+      { name: 'label-b', note: 'compare / cause 右侧标签（可选）' },
+      { name: 'step', note: 'steps 的每一步（可重复 N 次）' },
+      { name: 'where', note: 'locate 的地址 / 坐标' },
+      { name: 'map', note: 'locate 下方的 cells / bytes / img' },
+      { name: 'value', note: 'measure 的主数字' },
+      { name: 'chart', note: 'measure 下方的 bars / table' },
+      { name: 'ratio', note: 'measure 右侧的倍数牌' },
+      { name: 'why', note: 'cause 箭头上的词（富内容写法）' },
+    ],
+    attrs: {
+      'kind': { ...oneOf('compare', 'steps', 'locate', 'measure', 'cause'), default: 'compare' },
+      // 步骤条 / 进度轨的当前项：1 起；-1 = 不标（五步等权）。
+      'current': int({ min: -1, max: 99, step: 1 }),
+      // 两侧标签：compare / cause 用 "左|右"；steps 用它兜底每一步的名字。
+      'labels': { ...text(), content: true },
+      // 两侧分色：与 vk-pair 同一套写法 "左,右"；labels 的 tone 也读它。
+      'tone': tone({ list: true }),
+      // 因果页中间箭头上的词：arrow="label:因为 include"；槽 why 是它的富内容写法。
+      'arrow': { ...text(), content: true },
+      // 整块出场：与全库所有元件同一条字幕维度（槽上也可以写 cue）。
+      'cue': { ...text(), motion: true },
+    },
+  },
   'vk-pin': {
     name: '批注泡',
     layer: 'relations',
@@ -1241,6 +1282,7 @@ export const TAGS = {
 const INLINE = new Set(['vk-icon', 'vk-inline', 'vk-label']);
 const CUSTOM = new Set([
   'vk-page',
+  'vk-scene',
   'vk-edge',
   'vk-canvas',
   'vk-img',

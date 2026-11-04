@@ -1256,6 +1256,85 @@
           "name": "--cues：按字幕时间点逐段截图并写清单"
         }
       ]
+    },
+    {
+      "id": "scene-compare",
+      "name": "图示 · 对比 compare",
+      "what": "改前 / 改后、A / B：两块等宽，中轴留 48，上方各一枚 vk-label；labels=\"左|右\"，tone=\"info,ok\" 给标签上色。",
+      "contracts": [
+        "vk-scene.kind",
+        "vk-scene.labels",
+        "vk-scene.tone"
+      ],
+      "specimen": "vk-scene",
+      "tests": [
+        {
+          "file": "tests/scene.test.mjs",
+          "name": "compare：左右等宽、中轴 48、标签在上、tone 生效"
+        }
+      ]
+    },
+    {
+      "id": "scene-steps",
+      "name": "图示 · 分步 steps",
+      "what": "一步一步来：横向 N 步（复用 vk-flow），当前步高亮、其余降墨，底部一条 vk-steps 进度轨；current=\"2\" 是 1 起的当前步，-1 = 不标。",
+      "contracts": [
+        "vk-scene.kind",
+        "vk-scene.current"
+      ],
+      "specimen": "vk-scene",
+      "tests": [
+        {
+          "file": "tests/scene.test.mjs",
+          "name": "steps：N 步等宽、当前步高亮、其余降墨、进度轨同步"
+        }
+      ]
+    },
+    {
+      "id": "scene-locate",
+      "name": "图示 · 定位 locate",
+      "what": "在哪儿：上方地址/坐标大字（slot=\"where\"），下方一块 cells/bytes/img（slot=\"map\"），中央一条指向线。",
+      "contracts": [
+        "vk-scene.kind"
+      ],
+      "specimen": "vk-scene",
+      "tests": [
+        {
+          "file": "tests/scene.test.mjs",
+          "name": "locate：地址在上、容器在下、指向线在两者之间"
+        }
+      ]
+    },
+    {
+      "id": "scene-measure",
+      "name": "图示 · 数量 measure",
+      "what": "多大、差多少：上方一个 ≥240px 的数字（slot=\"value\"），下方一条对比条或表格（slot=\"chart\"），右侧一个倍数牌（slot=\"ratio\"）。",
+      "contracts": [
+        "vk-scene.kind"
+      ],
+      "specimen": "vk-scene",
+      "tests": [
+        {
+          "file": "tests/scene.test.mjs",
+          "name": "measure：数字 ≥240px、对比条在下、倍数牌在右"
+        }
+      ]
+    },
+    {
+      "id": "scene-cause",
+      "name": "图示 · 因果 cause",
+      "what": "为什么会这样：左边现象、右边结果，中间一条带词的箭头（arrow=\"label:因为…\"，或 slot=\"why\"）；标签可上色，槽可写 cue 分段出现。",
+      "contracts": [
+        "vk-scene.kind",
+        "vk-scene.arrow"
+      ],
+      "specimen": "vk-scene",
+      "tests": [
+        {
+          "file": "tests/scene.test.mjs",
+          "name": "cause：现象在左、结果在右、箭头上的词在中间"
+        }
+      ]
     }
   ]
 }

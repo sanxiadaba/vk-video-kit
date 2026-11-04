@@ -590,6 +590,19 @@ Object.assign((EFFECTS['vk-layer'] ||= {}), {
   bleed: { on: 'vk-layer', kind: 'attr', prop: 'data-bleed', expectFromValue: 'raw' },
 });
 
+/**
+ * 图示容器：kind 换一套骨架，labels / tone / arrow 换标签与箭头上的词。
+ * 四条都镜像到宿主或标签上，契约读得到「改了就变」；
+ * 真正的版式（等宽、中轴 48、当前步降墨）由 tests/scene.test.mjs 逐条量。
+ */
+Object.assign((EFFECTS['vk-scene'] ||= {}), {
+  kind: { on: 'vk-scene', kind: 'attr', prop: 'data-kind', expectFromValue: 'raw' },
+  current: { on: 'vk-scene', kind: 'attr', prop: 'data-current', expectFromValue: 'raw' },
+  labels: { on: 'vk-scene', kind: 'attr', prop: 'data-labels', expectFromValue: 'raw' },
+  tone: { on: '.vk-scene-label', kind: 'style', prop: 'color' },
+  arrow: { on: 'vk-scene', kind: 'attr', prop: 'data-arrow', expectFromValue: 'raw' },
+});
+
 
 
 

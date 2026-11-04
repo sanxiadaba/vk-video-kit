@@ -18,6 +18,7 @@ import { defineCode } from './code.mjs';
 import { defineDiff } from './diff.mjs';
 import { defineComponents } from './components.mjs';
 import { defineCompositions } from './compositions.mjs';
+import { defineScene } from './scene.mjs';
 import { defineAsm } from './asm.mjs';
 import { defineTimeline } from './timeline.mjs';
 import { defineOverlays } from './overlays.mjs';
@@ -37,6 +38,8 @@ defineCode();
 defineDiff();
 defineComponents();
 defineCompositions();
+// 图示语汇：五种讲解动作的组合容器（pair / flow / steps 的组合层）。
+defineScene();
 defineAsm();
 defineTimeline();
 // 关系层：vk-annotate 是本体，vk-edge 是它的旧名。

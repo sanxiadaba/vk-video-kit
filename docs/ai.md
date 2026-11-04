@@ -271,6 +271,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-page`** · 页面 — 坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。theme 换整套调色板（只换颜色，不动尺寸）。
   - 属性：`align` · `theme` · `dur` · `beat` · `poster` · `cues` · `states` · `transition` · `focus-duration` · `focus-transition`
   - 例：`<vk-page align="center">`
+- **`vk-scene`** · 图示 — 五种讲解动作的组合容器：kind="compare|steps|locate|measure|cause"，按 kind 自动排布命名槽位（a/b、step、where/map、value/chart/ratio、a/b/why），作者只填内容。
+  - 属性：`kind` · `current` · `labels` · `tone` · `arrow` · `cue`
+  - 例：`<vk-scene kind="compare" labels="改前|改后" tone="info,ok" arrow="label:因为 include">`
 
 ### 旧名（已合并，仍可用）
 

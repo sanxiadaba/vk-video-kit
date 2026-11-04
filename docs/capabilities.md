@@ -80,6 +80,11 @@
 | 视频 · 焦点跟随 data-focus | `vk-page.focus-duration`<br>`vk-page.focus-transition` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
 | 视频 · 同页多态 states | `vk-page.states` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
 | 视频 · 页间转场 transition | `vk-page.transition` | `specimen/vk-page.html` | `tests/cues.test.mjs`<br>`tests/capture.test.mjs` | ✅ 绿 |
+| 图示 · 对比 compare | `vk-scene.kind`<br>`vk-scene.labels`<br>`vk-scene.tone` | `specimen/vk-scene.html` | `tests/scene.test.mjs` | ✅ 绿 |
+| 图示 · 分步 steps | `vk-scene.kind`<br>`vk-scene.current` | `specimen/vk-scene.html` | `tests/scene.test.mjs` | ✅ 绿 |
+| 图示 · 定位 locate | `vk-scene.kind` | `specimen/vk-scene.html` | `tests/scene.test.mjs` | ✅ 绿 |
+| 图示 · 数量 measure | `vk-scene.kind` | `specimen/vk-scene.html` | `tests/scene.test.mjs` | ✅ 绿 |
+| 图示 · 因果 cause | `vk-scene.kind`<br>`vk-scene.arrow` | `specimen/vk-scene.html` | `tests/scene.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -586,6 +591,41 @@
 - 契约断言：`vk-page.transition`
 - 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
 - 测试：`tests/cues.test.mjs` · 「页间转场：fade 有过渡，cut 立即切页」；`tests/capture.test.mjs` · 「--cues：按字幕时间点逐段截图并写清单」
+
+### ✅ 图示 · 对比 compare
+
+- 能力：改前 / 改后、A / B：两块等宽，中轴留 48，上方各一枚 vk-label；labels="左|右"，tone="info,ok" 给标签上色。
+- 契约断言：`vk-scene.kind` · `vk-scene.labels` · `vk-scene.tone`
+- 标本页：`_site/specimen/vk-scene.html` + 契约宿主 `_site/specimens/vk-scene.html`
+- 测试：`tests/scene.test.mjs` · 「compare：左右等宽、中轴 48、标签在上、tone 生效」
+
+### ✅ 图示 · 分步 steps
+
+- 能力：一步一步来：横向 N 步（复用 vk-flow），当前步高亮、其余降墨，底部一条 vk-steps 进度轨；current="2" 是 1 起的当前步，-1 = 不标。
+- 契约断言：`vk-scene.kind` · `vk-scene.current`
+- 标本页：`_site/specimen/vk-scene.html` + 契约宿主 `_site/specimens/vk-scene.html`
+- 测试：`tests/scene.test.mjs` · 「steps：N 步等宽、当前步高亮、其余降墨、进度轨同步」
+
+### ✅ 图示 · 定位 locate
+
+- 能力：在哪儿：上方地址/坐标大字（slot="where"），下方一块 cells/bytes/img（slot="map"），中央一条指向线。
+- 契约断言：`vk-scene.kind`
+- 标本页：`_site/specimen/vk-scene.html` + 契约宿主 `_site/specimens/vk-scene.html`
+- 测试：`tests/scene.test.mjs` · 「locate：地址在上、容器在下、指向线在两者之间」
+
+### ✅ 图示 · 数量 measure
+
+- 能力：多大、差多少：上方一个 ≥240px 的数字（slot="value"），下方一条对比条或表格（slot="chart"），右侧一个倍数牌（slot="ratio"）。
+- 契约断言：`vk-scene.kind`
+- 标本页：`_site/specimen/vk-scene.html` + 契约宿主 `_site/specimens/vk-scene.html`
+- 测试：`tests/scene.test.mjs` · 「measure：数字 ≥240px、对比条在下、倍数牌在右」
+
+### ✅ 图示 · 因果 cause
+
+- 能力：为什么会这样：左边现象、右边结果，中间一条带词的箭头（arrow="label:因为…"，或 slot="why"）；标签可上色，槽可写 cue 分段出现。
+- 契约断言：`vk-scene.kind` · `vk-scene.arrow`
+- 标本页：`_site/specimen/vk-scene.html` + 契约宿主 `_site/specimens/vk-scene.html`
+- 测试：`tests/scene.test.mjs` · 「cause：现象在左、结果在右、箭头上的词在中间」
 
 ## 怎么判红
 
