@@ -7,6 +7,7 @@
  * 也给 tools/shots.mjs 复用：startServer({ port: 0 })。
  */
 import http from 'node:http';
+import net from 'node:net';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
@@ -73,21 +74,8 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
   const selfRestart = () => {
     if (noRestart || restarting) return;
     restarting = true;
-    setTimeout(() => {
-      // 先在 close 回调里放手，再拉起新进程占同一个端口——顺序反了会 EADDRINUSE。
-      server.close(() => {
-        try {
-          spawn(process.execPath, process.argv.slice(1), {
-            cwd: process.cwd(),
-            detached: true,
-            stdio: 'inherit',
-          }).unref();
-        } catch {
-          // 起不来就保持原样：下一次请求还会再提示
-        }
-        process.exit(0);
-      });
-    }, 400);
+    // 不自己 spawn：以 42 退出，由监护进程在端口释放后拉起新 worker。
+    setTimeout(() => process.exit(42), 400);
   };
   let highlighterPromise = null;
   const highlighter = () => (highlighterPromise ||= createVkHighlighter());
@@ -253,7 +241,32 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
 }
 
 /** CLI 入口：bin/vk.mjs 调这个，不要把端口丢掉 */
+function portBusy(port) {
+  return new Promise((resolve) => {
+    const probe = net.connect({ port, host: '127.0.0.1' });
+    probe.once('connect', () => { probe.destroy(); resolve(true); });
+    probe.once('error', () => resolve(false));
+  });
+}
+
 export async function main(port = 8099, root = process.cwd()) {
+  // 监护进程：自己不持端口，只负责"拉 worker、等它死、再拉一个"。
+  // 库变了时 worker 以 42 退出；监护进程先等端口真正释放，再拉起新 worker。
+  // 这样不会再出现"旧进程关了、新进程抢不到端口、服务就没了"。
+  if (!process.argv.includes('--worker')) {
+    for (;;) {
+      const child = spawn(process.execPath, [process.argv[1], ...process.argv.slice(2), '--worker'], {
+        stdio: 'inherit',
+        env: process.env,
+      });
+      const code = await new Promise((resolve) => child.on('exit', (c) => resolve(c)));
+      if (code !== 42) process.exit(code ?? 0);
+      for (let i = 0; i < 20; i++) {
+        await new Promise((r) => setTimeout(r, 150 * Math.min(i + 1, 6)));
+        if (!(await portBusy(port))) break;
+      }
+    }
+  }
   const { base } = await startServer({ port, root });
   console.log(`serving ${root} on ${base} · lib ${computeStamp()}`);
 }
