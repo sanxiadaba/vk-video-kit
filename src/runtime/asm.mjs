@@ -7,6 +7,7 @@
 import { VkElement, define, esc, lineSet, applyContentSize, fitContent } from './base.mjs';
 import { splitInsn } from '../shared/asm.mjs';
 import { tokenizeAsm, tokensToHtml } from '../shared/shell.mjs';
+import { parseColumns, parseFence } from '../shared/vocab.mjs';
 import { DOTS } from './window.mjs';
 
 /**
@@ -73,7 +74,9 @@ export class VkAsm extends VkElement {
       delete this.dataset.vkUnmerged;
     }
     const showBytes = this.hasAttribute('bytes') && hasBytes;
-    const showAddr = this.getAttribute('address') !== 'none' && hasAddr;
+    // 列开关：地址列由 columns 决定（默认打开）；列标题也写在 columns。
+    const columnSpec = parseColumns('vk-asm', this.getAttribute('columns'));
+    const showAddr = columnSpec.on.has('address') && hasAddr;
     const mass = this.getAttribute('mass') || 'normal';
     // 窗头是"这段东西从哪来"：没有 title 时退到构建期记下的文件名，再退到"汇编"。
     const title = this.getAttribute('title') || d.file || '汇编';
@@ -87,8 +90,10 @@ export class VkAsm extends VkElement {
       .filter(Boolean);
     const showOrder = orderList.length > 0;
     let insn = 0;
-    const fenceAfter = this.getAttribute('fence-after') || '';
-    const fenceLabel = this.getAttribute('fence-label') || '内存屏障';
+    // 屏障：fence="after:4,label:编译器屏障"（旧 fence-after / fence-label 是别名）。
+    const fence = parseFence(this.getAttribute('fence'));
+    const fenceAfter = fence.after;
+    const fenceLabel = fence.label;
     const rows = d.rows
       .map((r) => {
         if (r.kind === 'label') {
@@ -113,11 +118,11 @@ export class VkAsm extends VkElement {
         return row;
       })
       .join('');
-    // 列标题：none 关掉；all/不写用默认名；写 "地址|机器码|指令|操作数" 就逐列替换。
-    // 以前的 address-label / bytes-label / mnemonic-label / operands-label 四个名字并成这一个。
-    const labelsRaw = (this.getAttribute('labels') || '').trim();
-    const labelsOn = labelsRaw.toLowerCase() !== 'none';
-    const labelParts = labelsRaw.includes('|') ? labelsRaw.split('|').map((s) => s.trim()) : [];
+    // 列标题：columns 的 titles: 段；不写 = 默认名，titles:none 关掉整行。
+    // 以前 address-label / bytes-label / mnemonic-label / operands-label 四个名字并成 labels，
+    // 15.2 又把 labels 并进 columns —— 旧写法都是别名。
+    const labelsOn = columnSpec.titles !== 'none';
+    const labelParts = Array.isArray(columnSpec.titles) ? columnSpec.titles : [];
     const label = (col, fallback) => labelParts[col] || fallback;
     // chrome 只有 min / none：none = 不要窗，不是只要窗头不要。
     // 这一块自己画壳（.vk-asm 有边框和底色），所以要把 chrome 写进 DOM，

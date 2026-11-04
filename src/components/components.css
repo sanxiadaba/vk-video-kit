@@ -203,7 +203,7 @@ vk-diff[data-vk-overflow][chrome='none'] .vk-win::after{ top: 0; }.vk-code .vk-l
   padding-right: calc(var(--vk-cs) * 24 / 56);
   text-align: right;
   letter-spacing: 0.2em;
-}.vk-line.is-fold .vk-fold-text{ padding-left: calc(var(--vk-cs) * 24 / 56); }vk-code[numbers='none'] .vk-ln{ display: none; }vk-code[numbers='none'] .vk-src{ padding-left: calc(var(--vk-cs) * 32 / 56); }vk-code[long='wrap'] .vk-line{ align-items: flex-start; white-space: pre-wrap; }vk-code[long='wrap'] .vk-src{ white-space: pre-wrap; overflow-wrap: anywhere; }vk-code[long='wrap'] .vk-src{ padding-top: 0.18em; padding-bottom: 0.18em; }/* --------------------------------------------------------------- vk-term */
+}.vk-line.is-fold .vk-fold-text{ padding-left: calc(var(--vk-cs) * 24 / 56); }vk-code[data-numbers='none'] .vk-ln{ display: none; }vk-code[data-numbers='none'] .vk-src{ padding-left: calc(var(--vk-cs) * 32 / 56); }vk-code[long='wrap'] .vk-line{ align-items: flex-start; white-space: pre-wrap; }vk-code[long='wrap'] .vk-src{ white-space: pre-wrap; overflow-wrap: anywhere; }vk-code[long='wrap'] .vk-src{ padding-top: 0.18em; padding-bottom: 0.18em; }/* --------------------------------------------------------------- vk-term */
 
 vk-term{ display: block; }
 /* 无壳终端上作者显式要求的标题（title-show）。默认只有无障碍名，不占画面。 */

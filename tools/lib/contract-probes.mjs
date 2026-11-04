@@ -73,10 +73,10 @@ export const PROBES = {
       effect: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
       why: 'neutral 是默认墨色（不写 tone 时），只断五个语义色。',
     },
-    'arrow-label': {
-      values: ['gcc'],
-      effect: { on: '.vk-edge-label', kind: 'text' },
-      why: 'arrow-label 优先于旧 label：换词，标签文本必须跟着换。',
+    arrow: {
+      values: ['none', 'end,cap:end'],
+      effect: { on: 'vk-annotate', kind: 'attr', prop: 'data-head' },
+      why: '端点并进 arrow：none → 无、end,cap:end → 圆点；规范化结果落在 data-head。',
     },
     size: {
       values: ['label', 'subhead'],
@@ -96,24 +96,14 @@ export const PROBES = {
       effect: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns' },
       why: '轨道直接写在 grid-template-columns 上。',
     },
-    // 标本宿主是 gap="sm"（24px），所以 gap-x/gap-y 的 sm 与基线相同、测不出变化；
-    // 这两条只探真正会改列距/行距的档位。
-    'gap-x': {
-      values: ['lg', 'xl'],
-      effect: { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
-      why: '横向沟槽只改 column-gap；sm 与宿主 gap 简写相同，不重复探。',
-    },
-    'gap-y': {
-      values: ['lg', 'xl'],
-      effect: { on: 'vk-grid', kind: 'style', prop: 'row-gap' },
-      why: '纵向沟槽只改 row-gap；sm 与宿主 gap 简写相同，不重复探。',
-    },
+    // 标本宿主是 gap="sm"（24px）；只探两个安全档位（plate 会把三张卡片撑出标本台）。
+    gap: { values: ['xs', 'lg'], effect: { on: 'vk-grid', kind: 'style', prop: 'column-gap' }, why: '一档一值：列距 = 行距；双值写法由 vk-box.pad 的探针与像素收敛用例守。' },
   },
   'vk-label': {
-    total: {
-      values: ['5'],
+    counter: {
+      values: ['3/5', '7'],
       effect: { on: '.vk-label-t', kind: 'text' },
-      why: 'total 单独写没有分子；registry 的 when 会先放 index="3"，于是文本变成「工序 3/5」。',
+      why: 'counter="3/5" 渲染成「工序 3/5」；只写分子也合法。',
     },
     variant: {
       values: ['tag'],
@@ -133,15 +123,11 @@ export const PROBES = {
       why: 'cover 才把 panel 变成吃满宽高的 flex；contain 与默认块级是同一个 display，单靠 display 量不出来。',
     },
   },
-  'vk-flow': {    arrow: {
+  'vk-flow': {
+    arrow: {
       values: ['false'],
       effect: { on: 'vk-flow', kind: 'attr', prop: 'data-arrow', expect: 'false' },
-      why: 'arrow 现在默认开，契约探针改成显式关：只有 arrow="false" 才该变成 false。',
-    },
-    'arrow-label': {
-      values: ['gcc'],
-      effect: { on: '.vk-flow-arrow-label .vk-label-t', kind: 'text' },
-      why: '中轴词是真实文字：换词，标签里的文本必须跟着换。',
+      why: 'arrow 默认开，契约探针改成显式关：只有 arrow="false" 才该变成 false。',
     },
   },
   'vk-stat': {
@@ -215,6 +201,7 @@ export const PROBES = {
     },
   },
   'vk-edge': {
+    arrow: { values: ['both', 'none'], effect: { on: 'svg path', kind: 'attr', prop: 'd' }, why: 'arrow 的端点写法改 path 几何（both 加一根、none 全不画）。' },
     via: {
       values: ['100,100;300,100'],
       effect: { on: 'svg path', kind: 'attr', prop: 'd' },
@@ -279,6 +266,13 @@ export const PROBES = {
       why: 'prompt 决定命令行前缀字符，直接落在 .vk-prompt 的文字上。',
     },
   },
+  'vk-diff': {
+    columns: {
+      values: ['none'],
+      effect: { on: '.vk-ln', kind: 'dom', prop: '.vk-ln' },
+      why: 'columns="none" 同时关掉行号与摘要。',
+    },
+  },
   'vk-code': {
     current: {
       values: ['2'],
@@ -310,12 +304,22 @@ export const PROBES = {
       effect: { on: 'vk-code', kind: 'dom', prop: '.vk-tok' },
       why: 'mark 是代码里真实存在的标识符；断高亮出来的 token 数。',
     },
+    columns: {
+      values: ['none'],
+      effect: { on: '.vk-ln', kind: 'dom', prop: '.vk-ln' },
+      why: 'columns="none" 关掉行号列。',
+    },
   },
   'vk-bytes': {
     highlight: {
       values: ['9-12'],
       effect: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
       why: '高亮字节会换一组 i 的背景色；断言背景而不是 data-hl 标记。',
+    },
+    columns: {
+      values: ['address'],
+      effect: { on: '.vk-bytes-c', kind: 'dom', prop: '.vk-bytes-c' },
+      why: 'columns="address" 关掉 ASCII 列。',
     },
   },
   'vk-asm': {
@@ -362,10 +366,15 @@ export const PROBES = {
       effect: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell[data-state="current"]' },
       why: 'current 是第 N 格（1 起）：落成那一格的 data-state="current"，与 li 上的 act="focus" 同一条渲染路径。',
     },
+    columns: {
+      values: ['ruler'],
+      effect: { on: '.vk-cell-byte', kind: 'dom', prop: '.vk-cell[data-ruler]' },
+      why: 'columns="ruler" 给每一格加对齐括号（data-ruler）；offsets 的字节尺由默认值用例与像素用例守。',
+    },
   },
   'vk-box': {
-    'pad-x': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-left' }, why: '横向内距只看 left 变化。' },
-    'pad-y': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-top' }, why: '纵向内距只看 top 变化。' },
+    // pad 的档位由 space 词表逐档探；这里只补一个 "x y" 双值证明两轴独立。
+    pad: { values: ['lg 2xs'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-top' }, why: '双值写法先左右后上下；top 必须是 y = 2xs。' },
   },
   'vk-pair': {
     // 5% / 95% 是几何极限：56px 的代码行在 84px 的栏里必然越界，
@@ -386,6 +395,7 @@ export const PROBES = {
     },
   },
   'vk-tree': {
+    columns: { values: ['none'], effect: { on: '.vk-tree-meta', kind: 'style', prop: 'display' }, why: 'columns="none" 关掉顶部统计。' },
     depth: { values: ['1'], effect: { on: 'vk-tree', kind: 'geometry', prop: 'height' }, why: '标本只有两层，depth=2 与 4 画面上相同。' },
     collapsed: {
       values: ['build'],
@@ -418,12 +428,15 @@ export const PROBES = {
     highlight: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'background-color' }, why: '高亮行必须有背景色差。' },
     focus: { values: ['2'], effect: { on: '.vk-asm-row', kind: 'style', prop: 'opacity' }, why: '聚光让非目标行透明度下降。' },
     order: { values: ['1,2,3'], effect: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' }, why: '顺序徽标个数跟着 order 变。' },
-    'fence-after': { values: ['7'], effect: { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' }, why: '屏障行跟着 fence-after 换位置。' },
-    'fence-label': { values: ['屏障'], effect: { on: '.vk-asm-fence', kind: 'text' }, why: '屏障文字在 .vk-asm-fence。' },
-    labels: {
-      values: ['ADDR|BYTES|OP|ARGS'],
-      effect: { on: '.vk-asm-a', kind: 'text' },
-      why: '列头文字由 labels="地址|机器码|指令|操作数" 一次覆盖四列。',
+    fence: {
+      values: ['after:7,label:屏障'],
+      effect: { on: '.vk-asm-fence', kind: 'text' },
+      why: '屏障的位置与文字都写在 fence="after:7,label:屏障"。',
+    },
+    columns: {
+      values: ['none'],
+      effect: { on: '.vk-asm-a', kind: 'dom', prop: '.vk-asm-a' },
+      why: 'columns="none" 关掉地址列；列标题的 titles: 段由像素收敛用例守。',
     },
     long: {
       values: ['wrap', 'clip'],
@@ -525,7 +538,7 @@ export const VISUAL_EXEMPT = {
   'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
-  'vk-canvas.pad-px': '画布内缩只改子节点坐标，不产生新文字/颜色。',
+  'vk-canvas.pad': '画布内缩只改子节点坐标，不产生新文字/颜色。',
   'vk-canvas.overflow': '裁切是作者显式选择；画布内容的安全区由真实帧负责。',
   'vk-grid.cols': '列数变化只改几何；子节点本身的视觉在默认态已检查。',
   'vk-canvas.w': '坐标画布只改几何，不产生新文字/颜色。',
@@ -591,9 +604,9 @@ export const EFFECT_ANY = [
   },
   {
     tag: 'vk-annotate',
-    attr: 'gap-px',
+    attr: 'gap',
     reason:
-      '默认的曲线箭头不吃间隙（曲线两端直接落在盒边上）；gap-px 只作用于 ortho 折线的起步与批注气泡的落点，单场景量不到。折线间隙由 vk-edge 的契约覆盖。',
+      '默认的曲线箭头不吃间隙（曲线两端直接落在盒边上）；gap 只作用于 ortho 折线的起步与批注气泡的落点，单场景量不到。折线间隙由 vk-edge 的契约覆盖。',
   },
 ];
 export const EFFECT_ANY_BUDGET = 12;

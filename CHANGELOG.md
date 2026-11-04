@@ -1,5 +1,23 @@
 # 变更记录
 
+## 15.2 · 属性收敛第二步：列开关 / 间距 / 箭头 / 一次性属性
+
+接 15.0 的审计清单（`docs/convergence-15.md` §5）。标签数不变（31），**默认画面不变**
+（31 张标本页逐像素比 64,281,600 px，0 差异），旧写法全部保留为别名。
+
+- **列开关 6 → 1**：`numbers / ascii / address / offsets / ruler / summary` 并成
+  `columns="numbers,summary"`（`all` / `none` / `-name`；asm 的 `labels` 并成 `titles:` 段）。
+- **间距 6 → 2**：`gap-px / gap-x / gap-y` → `gap`，`pad-px / pad-x / pad-y` → `pad`；
+  一个值两轴同值，两个值先左右后上下（`gap="sm lg"`）。
+- **箭头 6 → 1**：`arrow-style / arrow-size / cap / arrow-scale / arrow-label / head` 并成
+  `arrow="end:open,size:40,scale:0.12,label:gcc,cap:start"`。
+- **一次性属性**：`fence-after` + `fence-label` → `fence="after:4,label:…"`；
+  compare 的 `a` / `b` → `labels="a,b|左|右"`；`index` + `total` → `counter="3/5"`。
+- 结果：属性名 **160 → 140**，声明 **696 → 677**；按 15.0 文档口径相当于 **154 → 134**。
+- 迁移与映射表：[docs/convergence-15b.md](docs/convergence-15b.md)。
+
+---
+
 ## 15.0 · 概念收敛：属性层减法（批次 K）
 
 审计（`docs/audit-architecture.md`）的结论是：标签层做了减法，**属性层没做** ——

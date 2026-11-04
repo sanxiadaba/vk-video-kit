@@ -3,6 +3,7 @@ import { cumulativeScaleX } from './geometry.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
 import { isSemanticIcon } from '../shared/icons.mjs';
+import { parseCounter } from '../shared/vocab.mjs';
 
 /**
  * vk-icon —— 旧名，转发到 vk-text。
@@ -254,19 +255,16 @@ export class VkLabel extends VkElement {
     // for / anchor 在块里的标签上只是作者的写法镜像（不生效，但契约要能读到"改了"）。
     this.dataset.for = this.getAttribute('for') || '';
     this.dataset.side = this.getAttribute('side') || '';
-    this.dataset.gap = String(numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP }));
+    this.dataset.gap = String(numAttr(this, 'gap', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP }));
     this.style.zIndex = '';
     this._span = null;
 
     // 渲染后 textContent 仍是标签文字（图标是 svg，不带字），所以每次都能从 DOM 取回原文。
     const text = (this.textContent || '').replace(/\s+/g, ' ').trim();
     const variant = this.getAttribute('variant') || 'kicker';
-    // 工序进度：index/total 是"在整条流程里的位置"，不是页号。
-    // index="3" total="5" section="汇编" → 「工序 3/5 · 汇编」。
-    const indexRaw = (this.getAttribute('index') || '').trim();
-    const totalRaw = (this.getAttribute('total') || '').trim();
-    const index = /^\d+$/.test(indexRaw) ? Number(indexRaw) : NaN;
-    const total = /^\d+$/.test(totalRaw) ? Number(totalRaw) : NaN;
+    // 工序进度：counter="3/5" 是"在整条流程里的位置"，不是页号。
+    // counter="3/5" section="汇编" → 「工序 3/5 · 汇编」。
+    const { index, total } = parseCounter(this.getAttribute('counter'));
     const section = (this.getAttribute('section') || '').trim();
     const name = section || text;
     const parts = [];
@@ -359,7 +357,7 @@ export class VkLabel extends VkElement {
     const box = span.getBoundingClientRect();
     const above = this.getAttribute('side') !== 'bottom';
     // 净空可配（gap-px），但不会小于 12：标签与目标正文必须留出一条缝。
-    const gap = numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP });
+    const gap = numAttr(this, 'gap', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP });
     this.dataset.gap = String(gap);
     // 左边界对齐目标首字符；1px 内距在 span 内部（纸色底比字宽 2px，字仍对着首字符）。
     const left = cr.left - hr.left;

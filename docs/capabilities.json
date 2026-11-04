@@ -148,10 +148,9 @@
     {
       "id": "kicker-progress",
       "name": "页眉 · 工序进度 kicker",
-      "what": "vk-label variant=\"kicker\" 写 index / total / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；index/total 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。",
+      "what": "vk-label variant=\"kicker\" 写 counter / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；counter 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。",
       "contracts": [
-        "vk-label.index",
-        "vk-label.total",
+        "vk-label.counter",
         "vk-label.section"
       ],
       "specimen": "vk-label",
@@ -297,10 +296,10 @@
     {
       "id": "annotate-arrow",
       "name": "标注 · 连线 arrow",
-      "what": "mode=\"arrow\"：从一个元素（或 x,y 坐标）指向另一个。shape=straight|ortho|curve 决定走线，dash 决定实虚，width 改线宽，head=arrow|dot|none 决定端点。旧 vk-edge 是它的别名，走线与 13.x 逐像素一致。",
+      "what": "连线形态：shape 给直线 / 折线 / 曲线，dash 给虚实；端点、样式、缩放、中轴词都收在 arrow 一个词里（arrow=\"end:open,scale:0.12,label:gcc\"）。",
       "contracts": [
         "vk-annotate.shape",
-        "vk-annotate.head",
+        "vk-annotate.arrow",
         "vk-annotate.dash",
         "vk-annotate.width"
       ],
@@ -676,10 +675,9 @@
     {
       "id": "flow-arrow-scale",
       "name": "流程 · 箭头按块高缩放 + 中轴词",
-      "what": "vk-flow 的箭头不再是固定 14px 三角：尺寸 = 容器高 × arrow-scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow 默认开，arrow=\"false\" 才关。arrow-label 会在中轴那根箭头上挂一个词，字号 = caption × 0.75（36），纸色底把轴线垫断。",
+      "what": "vk-flow 的箭头不是固定 14px 三角：尺寸 = 容器高 × scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow=\"false\" 关掉；arrow=\"true,scale:0.2,label:gcc\" 一次写缩放与中轴词（旧 arrow-scale / arrow-label 是别名）。",
       "contracts": [
-        "vk-flow.arrow-scale",
-        "vk-flow.arrow-label"
+        "vk-flow.arrow"
       ],
       "specimen": "vk-flow",
       "tests": [
@@ -1125,9 +1123,9 @@
     {
       "id": "canvas-pad-grid",
       "name": "布局 · vk-canvas 坐标系与栅格",
-      "what": "vk-canvas 的 pad-px 把坐标原点向内缩（子节点 x=0 落在内距之后），grid 在画布上铺一层等距栅格；w/h 定画布尺寸。",
+      "what": "vk-canvas 的 pad 把坐标原点向内缩（子节点 x=0 落在内距之后），grid 在画布上铺一层等距栅格；w/h 定画布尺寸。",
       "contracts": [
-        "vk-canvas.pad-px",
+        "vk-canvas.pad",
         "vk-canvas.grid"
       ],
       "specimen": "vk-canvas",
@@ -1172,10 +1170,10 @@
     {
       "id": "diff-split",
       "name": "数据 · vk-diff 两窗对照",
-      "what": "vk-diff 默认统一视图（旧/新双行号）；variant=\"split\" 换成左右两窗（改前 / 改后）并排，两窗各自完整；summary=\"none\" 关掉「N 行改动」计数。",
+      "what": "vk-diff 默认统一视图（旧/新双行号）；variant=\"split\" 换成左右两窗（改前 / 改后）并排，两窗各自完整；columns=\"numbers\" 关掉「N 行改动」计数。",
       "contracts": [
         "vk-diff.variant",
-        "vk-diff.summary"
+        "vk-diff.columns"
       ],
       "specimen": "vk-diff",
       "tests": [

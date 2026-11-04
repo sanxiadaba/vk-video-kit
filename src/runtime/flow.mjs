@@ -15,6 +15,7 @@
  * 每一步只搬一次节点（移动，不序列化），之后改属性只换壳。
  */
 import { VK, numAttr, VkElement, define } from './base.mjs';
+import { parseArrow } from '../shared/vocab.mjs';
 
 /** 每步的底：neutral 是纸灰，其余是语义 wash（与 vk-panel 同一组 token）。 */
 const TONES = ['neutral', 'info', 'focus', 'ok', 'warn', 'err'];
@@ -69,11 +70,15 @@ export class VkFlow extends VkElement {
     // 写了 arrow-label 时轨道至少 200px：36px 的词 + 两截线 + 三角都要有位置，
     // 48px 的默认轨道会被词的纸色底完全吃掉，箭头就"消失"了。
     const gap = numAttr(this, 'gap', { min: 8, max: 200, fallback: 48 });
-    const arrowScale = numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 });
-    const arrowLabel = (this.getAttribute('arrow-label') || '').trim();
+    // 箭头一个词：arrow="false" 关掉；scale:0.12 缩放；label:gcc 挂中轴词。
+    const rawArrow = this.getAttribute('arrow');
+    const arrowCfg = parseArrow(rawArrow);
+    const arrowScale = Number.isFinite(arrowCfg.scale)
+      ? Math.min(0.6, Math.max(0.02, arrowCfg.scale))
+      : 0.12;
+    const arrowLabel = (arrowCfg.label || '').trim();
     // 默认画箭头：只有显式写 arrow="false" / 0 / off / none / no 才关。
     // （旧页面写 arrow / arrow="true" 也照旧；不写 arrow 的现在默认有箭头。）
-    const rawArrow = this.getAttribute('arrow');
     const arrowOn = rawArrow === null || !OFF.has(rawArrow.trim().toLowerCase());
     // 契约与自检读这一个标记，不靠猜 CSS。
     this.dataset.arrow = arrowOn ? 'true' : 'false';
@@ -151,7 +156,8 @@ export class VkFlow extends VkElement {
     const box = this._box;
     if (!box || !box.isConnected) return;
     const h = box.clientHeight || this.clientHeight || 0;
-    const scale = numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 });
+    const cfg = parseArrow(this.getAttribute('arrow'));
+    const scale = Number.isFinite(cfg.scale) ? Math.min(0.6, Math.max(0.02, cfg.scale)) : 0.12;
     // 还没布局时先按 28 画：有尺寸就能看见，place() 随后按真实高度校正。
     const size = Math.max(28, Math.min(64, (h || 0) * scale || 28));
     const line = Math.max(2, size * 0.1);

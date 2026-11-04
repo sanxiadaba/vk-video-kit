@@ -307,7 +307,7 @@ function themeColumn(c) {
         <vk-label variant="chip" tone="warn">注意</vk-label>
         <vk-label variant="chip" tone="err">失败</vk-label>
       </vk-stack>
-      <vk-code chrome="min" mass="compact" lang="py" surface="dark" numbers="none" size="caption">def rank(x):</vk-code>
+      <vk-code chrome="min" mass="compact" lang="py" surface="dark" columns="none" size="caption">def rank(x):</vk-code>
       <div class="theme-swatch">
 ${SWATCHES.map(([label, token]) => `        <div class="theme-sw"><i style="background:var(${token})"></i><b>${label}</b></div>`).join('\n')}
       </div>
@@ -562,7 +562,7 @@ function indexPage(n) {
       <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/vk-cues.html"><vk-text size="label" mono ink="muted" data-meta>视频 · 字幕驱动 →</vk-text></a><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 3 套 →</vk-text></a>${prev}${next}</vk-stack>
     </vk-stack>
     <vk-box border="strong"></vk-box>
-${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
+${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap="sm">${cards}</vk-grid>`}
   </vk-stack>
 </vk-page>`;
   return shell(`vk · 组件索引 ${n}/${PAGES}`, `<!-- vk:spec:${hash32(JSON.stringify([hash32(card.toString()), hash32(indexPage.toString()), hash32(RESET), n, slice]))} -->\n${page}`, 0);
@@ -598,7 +598,8 @@ function specHash(tag, rawBody, presets) {
       ORDER.length,
       rawBody,
       stripOf.get(tag) || '',
-      presets.map((p) => p.label),
+      // 预设是输入：属性写法和文字都要进指纹，否则改了 attrs 页面还停在旧版。
+      JSON.stringify(presets),
     ])
   );
 }

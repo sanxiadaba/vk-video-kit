@@ -54,7 +54,7 @@ export class VkPin extends VkNote {
     cfg.side = this.getAttribute('side') || 'auto';
     cfg.leader = this.getAttribute('leader') || 'elbow';
     cfg.z = numAttr(this, 'z', { min: 0, max: 99, fallback: 60 });
-    cfg.gap = numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 });
+    cfg.gap = numAttr(this, 'gap', { min: 0, max: 240, fallback: 24 });
     return cfg;
   }
 }
@@ -122,7 +122,7 @@ export class VkRing extends VkBox {
     }
     this.style.display = '';
     const b = visualToLocal(anchor.rect, hr, host.offsetWidth);
-    const pad = numAttr(this, 'pad-px', { min: 0, max: 80, fallback: 8 });
+    const pad = numAttr(this, 'pad', { min: 0, max: 80, fallback: 8 });
     const stroke = numAttr(this, 'stroke', { min: 1, max: 12, fallback: 4 });
     const tone = RING_TONE[this.getAttribute('tone')] || RING_TONE.focus;
     const dash = this.hasAttribute('dash') ? 'dashed' : 'solid';

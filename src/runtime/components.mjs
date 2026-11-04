@@ -1,7 +1,7 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot, applyContentSize, fitContent } from './base.mjs';
 import { VkPanel } from './elements.mjs';
 import { formatNumber } from '../shared/format.mjs';
-import { TONES } from '../shared/vocab.mjs';
+import { TONES, hasColumn, parseCompareLabels } from '../shared/vocab.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead, DOTS } from './window.mjs';
 
@@ -390,7 +390,8 @@ export class VkTree extends VkElement {
     }
 
     const label = title || root || '文件树';
-    const meta = this.getAttribute('summary') === 'none' ? '' : `${files} 文件 · ${dirs} 目录`;
+    // 顶部统计是一列（旧名 summary）：columns="none" 关掉。
+    const meta = hasColumn(this, 'vk-tree', 'summary') ? `${files} 文件 · ${dirs} 目录` : '';
 
     this.innerHTML = `
       <div class="vk-tree" data-chrome="${this.getAttribute('chrome') === 'none' ? 'none' : 'min'}" data-mass="${esc(mass)}">
@@ -446,8 +447,9 @@ export class VkBytes extends VkElement {
     const group = Math.max(1, Math.min(8, parseInt(this.getAttribute('group'), 10) || 1));
     const word = [1, 2, 4, 8].includes(parseInt(this.getAttribute('word'), 10)) ? parseInt(this.getAttribute('word'), 10) : 1;
     const endian = this.getAttribute('endian') === 'big' ? 'big' : 'little';
-    const ascii = this.getAttribute('ascii') !== 'none';
-    const address = this.getAttribute('address') !== 'none';
+    // 列开关：地址列 / ASCII 列（columns 的默认是两列都开）。
+    const ascii = hasColumn(this, 'vk-bytes', 'ascii');
+    const address = hasColumn(this, 'vk-bytes', 'address');
     const mass = this.getAttribute('mass') || 'normal';
     const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
     const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
@@ -619,7 +621,10 @@ export class VkCells extends VkElement {
     if (curIdx >= 0 && curIdx >= items.length) {
       this._warnOnce('current', `的 current="${curRaw}" 超过 ${items.length} 格，已忽略`);
     }
-    const byteMode = this.hasAttribute('offsets') || this.hasAttribute('ruler') || this.getAttribute('direction') === 'rtl';
+    // 列开关：字节尺（offsets）/ 对齐括号（ruler）；direction=rtl 也进字节模式。
+    const offsetsOn = hasColumn(this, 'vk-cells', 'offsets');
+    const rulerOn = hasColumn(this, 'vk-cells', 'ruler');
+    const byteMode = offsetsOn || rulerOn || this.getAttribute('direction') === 'rtl';
     const direction = this.getAttribute('direction') === 'rtl' ? 'rtl' : 'ltr';
 
     // 地址按"这个字段从第几个字节开始"算：跨格字段后面的字段要跳过它占的宽度。
@@ -644,7 +649,7 @@ export class VkCells extends VkElement {
               return `<span class="vk-cell-byte" data-byte="${byteOff}" data-meta>${addr ? fmtAddr(base + byteOff) : `+${byteOff}`}</span>`;
             }).join('')}</span>`
           : '';
-        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${this.hasAttribute('ruler') ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks}${it.act ? ` act="${esc(it.act)}"` : ''}${it.strength ? ` strength="${esc(it.strength)}"` : ''} role="listitem">
+        return `<div class="vk-cell" data-vk-part="cell" data-cell="${i}" data-span="${span}"${byteMode ? ' data-bytes="1"' : ''}${rulerOn ? ' data-ruler="1"' : ''}${span > 1 ? ` style="grid-column: span ${span}"` : ''}${marks}${it.act ? ` act="${esc(it.act)}"` : ''}${it.strength ? ` strength="${esc(it.strength)}"` : ''} role="listitem">
           ${label ? `<span class="vk-cell-l" data-meta data-ellipsis>${esc(label)}</span>` : ''}
           <span class="vk-cell-v">${esc(it.value)}</span>
           ${ruler}
@@ -1130,8 +1135,11 @@ export class VkCompare extends VkElement {
   static watchSource = false;
 
   render() {
-    const a = this.getAttribute('a') || '';
-    const b = this.getAttribute('b') || '';
+    // 两张图与两个角标都写在 labels：labels="a,b" / labels="a,b|左|右"。
+    // 旧写法 a / b 与 label-a / label-b 在运行期折进这里（见 base.mjs）。
+    const pair = parseCompareLabels(this.getAttribute('labels'));
+    const a = pair.a;
+    const b = pair.b;
     // 形态：variant（旧名 mode 已并进来）。
     const modeRaw = (this.getAttribute('variant') || 'split').trim();
     const mode = modeRaw === 'side' || modeRaw === 'stack' ? modeRaw : 'split';
@@ -1200,7 +1208,7 @@ export class VkCompare extends VkElement {
     const current = (this._srcs = this._srcs || { a: null, b: null });
     const paintLabels = () => {
       // 每次现读属性：监听器是绑一次的，标签可能后来才改。
-      const [la, lb] = (this.getAttribute('labels') || '').split('|').map((v) => v.trim());
+      const { la, lb } = parseCompareLabels(this.getAttribute('labels'));
       const la2 = failed.a ? `${la || '图 A'} · 未加载` : la;
       const lb2 = failed.b ? `${lb || '图 B'} · 未加载` : lb;
       this._la.textContent = la2;

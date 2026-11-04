@@ -296,11 +296,11 @@ test('vk-compare：缺一张图在构建期就报错', async () => {
   // 少写 b 的时候画面只剩一块空灰板：看起来像"对照"，其实什么都没有。
   await assert.rejects(
     () => transformHtml('<vk-compare a="assets/sample-grid.svg"></vk-compare>', { file: 'cmp.html', highlighter: hl }),
-    /需要 a 和 b 两张图（缺 b）/
+    /需要两张图：labels="a,b"（缺 b）/
   );
   await assert.rejects(
     () => transformHtml('<vk-compare b="assets/sample-grid.svg"></vk-compare>', { file: 'cmp.html', highlighter: hl }),
-    /需要 a 和 b 两张图（缺 a）/
+    /需要两张图：labels="a,b"（缺 a）/
   );
 });
 

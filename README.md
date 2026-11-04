@@ -108,7 +108,7 @@ int main(void) { return 0; }
 - **行号只有一个基准：源文件行号。** `lines="4-6"` 时 gutter 是 4/5/6，`current` / `focus` / `fold` 也写 4/5/6（`numbering` 已退役：没有第二套基准）。
 - `current="4"` 标出第 4 行（可写 `current="4-6"` 标一段）；`focus="4"` 让其余行退到 0.28；`fold="4"` 隐藏第 4 行，`fold="4-7"` 隐藏 4–7 行，只在开头留一条“中间省略”。
 - `long="clip"`（默认）长行裁切并给右缘渐隐；`long="wrap"` 换行。`mass` 只改体量（行高与留白），不改字号；`size` 只改字号。
-- `chrome="none"` 去窗头；`numbers="none"` 单独关行号。
+- `chrome="none"` 去窗头；`columns="none"` 单独关行号（旧名 `numbers="none"` 仍是别名）。
 - `current` / `focus` / `fold` 落在片段外会在构建期报错——写错的行段只会让重点消失，画面看起来仍然正常，所以必须硬拦。
 
 终端读真实 transcript，命令行以 `$` 开头，结果行用显式前缀 `✓` / `!` / `✗`：
@@ -117,7 +117,7 @@ int main(void) { return 0; }
 <vk-term title="zsh" src="code/hello.term"></vk-term>
 ```
 
-diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary="none"` 关计数，`chrome="none"` 去窗头。diff 没有 `current` / `focus`——它表达“改了什么”，不是“正在讲哪行”；要指某一行用 `vk-ring` / `vk-spotlight` 的 `@line` 锚点。
+diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns="numbers"` 关计数，`chrome="none"` 去窗头。diff 没有 `current` / `focus`——它表达“改了什么”，不是“正在讲哪行”；要指某一行用 `vk-ring` / `vk-spotlight` 的 `@line` 锚点。
 
 ### 数据形状
 

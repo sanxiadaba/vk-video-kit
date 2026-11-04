@@ -184,7 +184,7 @@ export class VkNote extends VkAnnotate {
     d.side = attr('side', cfg.side || 'auto');
     d.leader = attr('leader', kind === 'bubble' ? 'elbow' : 'line');
     d.place = this._place();
-    d.gap = attr('gap-px', String(cfg.gap ?? 24));
+    d.gap = attr('gap', String(cfg.gap ?? 24));
     d.w = attr('w', cfg.width == null ? '' : String(Math.round(cfg.width)));
     d.x = attr('x', Number.isFinite(cfg.x) ? String(cfg.x) : '');
     d.y = attr('y', Number.isFinite(cfg.y) ? String(cfg.y) : '');
@@ -251,7 +251,7 @@ export class VkNote extends VkAnnotate {
         n: parseInt(this.getAttribute('n') || '0', 10) || 0,
         side,
         leader,
-        gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 }),
+        gap: numAttr(this, 'gap', { min: 0, max: 240, fallback: 24 }),
         width: null,
         x: NaN,
         y: NaN,
@@ -383,7 +383,7 @@ export class VkNote extends VkAnnotate {
     // 宽度先落、高度后量。反过来（旧实现）量到的还是上一帧的一行高，
     // 纵向 clamp 按错的高度算，多行边注就会被放到画布外面去。
     const want = numAttr(this, 'w', { min: MIN_W, max: 600, fallback: DEFAULT_W });
-    const gap = numAttr(this, 'gap-px', { min: 0, max: 240, fallback: GAP });
+    const gap = numAttr(this, 'gap', { min: 0, max: 240, fallback: GAP });
     const space = {
       right: W - (b.x + b.w) - gap - PAD,
       left: b.x - gap - PAD,

@@ -1,5 +1,6 @@
 import { VK, EDGES, numAttr, VkElement, define, plain, resolveAnchor } from './base.mjs';
 import { VkAnnotate } from './annotate.mjs';
+import { parseArrow } from '../shared/vocab.mjs';
 
 /* ------------------------------------------------------------------ 摆位 */
 
@@ -54,8 +55,8 @@ export class VkCanvas extends VkElement {
       box.h = Math.max(box.h, y + s.h);
     }
 
-    // pad-px：子节点是绝对定位的，padding 不会自动内缩；手动平移，宽度再补回两侧。
-    const pad = numAttr(this, 'pad-px', { min: 0, max: 200, fallback: 0 });
+    // pad：子节点是绝对定位的，padding 不会自动内缩；手动平移，宽度再补回两侧。
+    const pad = numAttr(this, 'pad', { min: 0, max: 200, fallback: 0 });
     if (pad) {
       for (const el of nodes) {
         el.style.left = (parseFloat(el.style.left) || 0) + pad + 'px';
@@ -98,7 +99,8 @@ export class VkEdge extends VkAnnotate {
     const cs = getComputedStyle(this);
     const num = (name, fallback) => parseFloat(cs.getPropertyValue(name)) || fallback;
     const variant = this.getAttribute('variant') || 'ortho';
-    const arrow = this.getAttribute('arrow') || 'end';
+    // 箭头只有一个词：arrow="end" / "both:open" / "end,size:40" / "end,cap:start"。
+    const cfg = parseArrow(this.getAttribute('arrow'));
     return {
       from: this.getAttribute('from'),
       to: this.getAttribute('to'),
@@ -106,13 +108,13 @@ export class VkEdge extends VkAnnotate {
       dash: this.hasAttribute('dash'),
       width: null,
       head: {
-        end: arrow === 'end' || arrow === 'both',
-        start: arrow === 'start' || arrow === 'both',
-        dot: this.getAttribute('cap') === 'dot' ? 'start' : null,
-        style: this.getAttribute('arrow-style') || 'solid',
-        size: numAttr(this, 'arrow-size', { min: 8, max: 64, fallback: num('--vk-edge-tip', 18) }),
+        end: cfg.end,
+        start: cfg.start,
+        dot: cfg.dot,
+        style: cfg.style,
+        size: cfg.size != null ? Math.max(8, Math.min(64, cfg.size)) : num('--vk-edge-tip', 18),
       },
-      gap: numAttr(this, 'gap-px', { min: 0, max: 200, fallback: num('--vk-edge-gap', 32) }),
+      gap: numAttr(this, 'gap', { min: 0, max: 200, fallback: num('--vk-edge-gap', 32) }),
       bend: numAttr(this, 'bend', { min: -200, max: 200, fallback: 0 }),
       tension: numAttr(this, 'tension', { min: 5, max: 120, fallback: 42 }) / 100,
       r: num('--vk-edge-r', 16),

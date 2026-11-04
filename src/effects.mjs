@@ -100,8 +100,6 @@ export const EFFECTS = {
     cols: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns', skipVisual: true },
     tracks: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns', skipVisual: true },
     gap: { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
-    'gap-x': { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
-    'gap-y': { on: 'vk-grid', kind: 'style', prop: 'row-gap' },
     align: { on: 'vk-grid', kind: 'style', prop: 'align-items' },
   },
 
@@ -124,16 +122,12 @@ export const EFFECTS = {
     gap: { on: '.vk-flow', kind: 'style', prop: '--vk-flow-gap', expectFromValue: 'px' },
     // 箭头是运行期按属性建的 DOM：开/关镜像到宿主。
     arrow: { on: 'vk-flow', kind: 'attr', prop: 'data-arrow', expectFromValue: 'raw' },
-    // 缩放比例镜像到宿主；算出来的尺寸在 data-arrow-size（place() 写）。
-    'arrow-scale': { on: 'vk-flow', kind: 'attr', prop: 'data-arrow-scale', expectFromValue: 'raw' },
-    // 中轴词落在真正的文字节点上。
-    'arrow-label': { on: '.vk-flow-arrow-label .vk-label-t', kind: 'text' },
   },
 
   'vk-canvas': {
     w: { on: 'vk-canvas', kind: 'geometry', prop: 'width', skipVisual: true, expectFromValue: 'raw' },
     h: { on: 'vk-canvas', kind: 'geometry', prop: 'height', skipVisual: true, expectFromValue: 'raw' },
-    'pad-px': { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
+    pad: { on: 'vk-canvas vk-box', kind: 'geometry', prop: 'x', skipVisual: true },
   },
 
   'vk-page': {
@@ -176,7 +170,7 @@ export const EFFECTS = {
     side: { on: 'vk-label', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
     // 净空：先镜像到宿主（块里的标签也镜像，契约才读得到"改了就变"）；
     // 真正的落点由 draw() 算，几何在 tests/fix-three.test.mjs 逐条量。
-    'gap-px': { on: 'vk-label', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
+    gap: { on: 'vk-label', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
   },
 
   'vk-icon': {
@@ -205,15 +199,14 @@ export const EFFECTS = {
     mass: { on: '.vk-tree-row', kind: 'style', prop: 'min-height', skipVisual: true },
 
     depth: { on: 'vk-tree', kind: 'geometry', prop: 'height' },
-    summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
+    columns: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
     chrome: { on: '.vk-tree-hd', kind: 'style', prop: 'display' },
   },
 
   'vk-bytes': {
     cols: { on: '.vk-bytes-row', kind: 'style', prop: 'grid-template-columns' },
     group: { on: '.vk-bytes-x', kind: 'attr', prop: 'data-group' },
-    ascii: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-c' },
-    address: { on: 'vk-bytes', kind: 'dom', prop: '.vk-bytes-a' },
+    columns: { on: '.vk-bytes-c', kind: 'dom', prop: '.vk-bytes-c' },
     highlight: { on: '.vk-bytes-x i', kind: 'style', prop: 'background-color' },
     mass: { on: '.vk-bytes-row', kind: 'style', prop: 'line-height' },
     chrome: { on: 'vk-bytes', kind: 'dom', prop: '.vk-hd' },
@@ -236,8 +229,6 @@ export const EFFECTS = {
     surface: { on: 'vk-box', kind: 'style', prop: 'background-color' },
     tone: { on: 'vk-box', kind: 'style', prop: 'background-color' },
     pad: { on: 'vk-box', kind: 'style', prop: 'padding-top' },
-    'pad-x': { on: 'vk-box', kind: 'style', prop: 'padding-left' },
-    'pad-y': { on: 'vk-box', kind: 'style', prop: 'padding-top' },
     radius: { on: 'vk-box', kind: 'style', prop: 'border-radius' },
     border: { on: 'vk-box', kind: 'style', prop: 'border-top-width' },
     // 描边环（原 vk-ring）：一圈 box-shadow，不占布局。
@@ -271,18 +262,15 @@ export const EFFECTS = {
   'vk-edge': {
     variant: { on: 'svg path', kind: 'attr', prop: 'd' },
     tension: { on: 'svg path', kind: 'attr', prop: 'd' },
-    'gap-px': { on: 'svg path', kind: 'attr', prop: 'd' },
+    gap: { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
     strength: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
     'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
     'to-side': { kind: 'any', reason: '同上：只有目标在那一侧时才生效。' },
     arrow: { on: 'svg path', kind: 'attr', prop: 'd' },
-    'arrow-style': { on: '.vk-edge-tip', kind: 'attr', prop: 'data-style' },
-    'arrow-size': { on: 'svg path', kind: 'attr', prop: 'd' },
     dash: { on: 'svg path', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
     label: { on: '.vk-edge-label', kind: 'text' },
-    cap: { on: 'svg circle', kind: 'style', prop: 'display' },
     z: { on: 'vk-edge', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
   },
 
@@ -298,7 +286,7 @@ export const EFFECTS = {
     reveal: { on: 'vk-code', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
     mass: { on: '.vk-line', kind: 'style', prop: 'min-height', skipVisual: true },
     chrome: { on: 'vk-code', kind: 'dom', prop: '.vk-hd' },
-    numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
+    columns: { on: '.vk-ln', kind: 'dom', prop: '.vk-ln' },
     // fit 是内容相关状态：换行后高度由内容决定，只验证 white-space 变了。
     long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
     w: { on: 'vk-code', kind: 'geometry', prop: 'width' },
@@ -372,12 +360,11 @@ Object.assign(EFFECTS['vk-list'], {
 Object.assign(EFFECTS['vk-diff'], {
   variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },
   long: { on: '.vk-dsrc', kind: 'style', prop: 'white-space', skipVisual: true },
-  numbers: { on: 'vk-diff', kind: 'dom', prop: '.vk-ln' },
-  summary: { on: '.vk-dmeta', kind: 'style', prop: 'display' },
+  columns: { on: '.vk-ln', kind: 'dom', prop: '.vk-ln' },
 });
 Object.assign(EFFECTS['vk-code'], {
   long: { on: '.vk-src', kind: 'style', prop: 'white-space', skipVisual: true },
-  numbers: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
+  columns: { on: 'vk-code', kind: 'dom', prop: '.vk-ln' },
 });
 Object.assign(EFFECTS['vk-term'], {
   long: { on: '.vk-txt', kind: 'style', prop: 'white-space', skipVisual: true },
@@ -399,7 +386,7 @@ Object.assign(EFFECTS['vk-edge'], {
   'label-offset': { on: '.vk-edge-label', kind: 'style', prop: 'left' },
 });
 Object.assign(EFFECTS['vk-tree'], {
-  summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
+  columns: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
 });
 Object.assign(EFFECTS['vk-canvas'], {
   overflow: { on: 'vk-canvas', kind: 'style', prop: 'overflow-x', skipVisual: true },
@@ -411,7 +398,7 @@ Object.assign(EFFECTS['vk-canvas'], {
 Object.assign((EFFECTS['vk-asm'] ||= {}), {
   title: { on: '.vk-asm-file', kind: 'text' },
   bytes: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-b', expect: { not: '0' } },
-  address: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-a' },
+  columns: { on: '.vk-asm-a', kind: 'dom', prop: '.vk-asm-a' },
   mass: { on: '.vk-asm-row', kind: 'style', prop: 'min-height', skipVisual: true },
   chrome: { on: '.vk-asm-hd', kind: 'style', prop: 'display' },
   highlight: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-row.is-hl' },
@@ -419,8 +406,7 @@ Object.assign((EFFECTS['vk-asm'] ||= {}), {
   addr: { on: '.vk-asm-range', kind: 'text' },
   lang: { kind: 'any', reason: '语法在构建期确定，运行时只显示产物' },
   order: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' },
-  'fence-after': { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' },
-  'fence-label': { on: '.vk-asm-fence', kind: 'text' },
+  fence: { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' },
   // 逐行浮现的声明证据：静态画面不变，data-reveal 说明它参不参与出场。
   reveal: { on: 'vk-asm', kind: 'attr', prop: 'data-reveal', expectFromValue: 'raw' },
 });
@@ -469,16 +455,13 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   shape: { on: '.vk-edge-path', kind: 'attr', prop: 'd' },
   dash: { on: '.vk-edge-path', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
   width: { on: '.vk-edge-path', kind: 'style', prop: 'stroke-width', expectFromValue: 'px' },
-  head: { on: '.vk-edge-svg', kind: 'attr', prop: 'data-head', expectFromValue: 'raw' },
+  // 端点 / 样式 / 缩放 / 中轴词都并进 arrow；data-head 是规范化后的端点。
+  arrow: { on: '.vk-edge-svg', kind: 'attr', prop: 'data-head' },
   note: { on: 'vk-annotate', kind: 'attr', prop: 'data-note', expectFromValue: 'raw' },
   ring: { on: 'vk-annotate', kind: 'attr', prop: 'data-ring', expectFromValue: 'raw' },
   double: { on: 'vk-annotate', kind: 'attr', prop: 'data-double', expect: '2' },
   tone: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
   label: { on: '.vk-edge-label', kind: 'text' },
-  // 中轴词：新写法优先于 label，落在同一个标签节点上。
-  'arrow-label': { on: '.vk-edge-label', kind: 'text' },
-  // 缩放比例镜像到宿主；尺寸本身写进 data-arrow-size（draw() 按容器高算）。
-  'arrow-scale': { on: 'vk-annotate', kind: 'attr', prop: 'data-arrow-scale', expectFromValue: 'raw' },
   n: { on: 'vk-annotate', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
   size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
   strength: { on: 'vk-annotate', kind: 'attr', prop: 'data-strength', expectFromValue: 'raw' },
@@ -501,7 +484,7 @@ Object.assign((EFFECTS['vk-note'] ||= {}), {
   strength: { on: 'vk-note', kind: 'attr', prop: 'data-strength', expectFromValue: 'raw' },
   size: { on: 'vk-note', kind: 'attr', prop: 'data-size', expectFromValue: 'raw' },
   n: { on: 'vk-note', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
-  'gap-px': { on: 'vk-note', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
+  gap: { on: 'vk-note', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
   w: { on: 'vk-note', kind: 'attr', prop: 'data-w', expectFromValue: 'raw' },
   x: { on: 'vk-note', kind: 'attr', prop: 'data-x', expectFromValue: 'raw' },
   y: { on: 'vk-note', kind: 'attr', prop: 'data-y', expectFromValue: 'raw' },
@@ -511,7 +494,7 @@ Object.assign((EFFECTS['vk-note'] ||= {}), {
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
   strength: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
-  'gap-px': { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
+  gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
   n: { on: '.vk-pin-n', kind: 'text' },
@@ -524,7 +507,7 @@ Object.assign((EFFECTS['vk-pin'] ||= {}), {
 
 Object.assign((EFFECTS['vk-ring'] ||= {}), {
   variant: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
-  'pad-px': { on: '.vk-ring-shape', kind: 'geometry', prop: 'width' },
+  pad: { on: 'vk-ring', kind: 'geometry', prop: 'width' },
   tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
   dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
   width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
@@ -540,9 +523,8 @@ Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
 });
 
 Object.assign(EFFECTS['vk-cells'], {
-  offsets: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell-byte', expect: { not: '0' } },
+  columns: { on: '.vk-cell-byte', kind: 'dom', prop: '.vk-cell[data-ruler]' },
   direction: { kind: 'any', reason: '只在字节模式下改变字节尺方向' },
-  ruler: { kind: 'any', reason: '只在字节模式下画对齐括号' },
 });
 
 Object.assign(EFFECTS['vk-bytes'], {
@@ -568,9 +550,8 @@ Object.assign((EFFECTS['vk-steps'] ||= {}), {
   mark: { on: 'vk-steps', kind: 'attr', prop: 'data-mark', expectFromValue: 'raw' },
 });
 
-Object.assign(EFFECTS['vk-asm'], {
-  labels: { on: '.vk-asm-a', kind: 'text' },
-});
+/* 15.2：asm 的列标题并进 columns 的 titles 段（表头文字由 tests 的收敛用例逐像素守）；
+   columns 的显隐证据是 .vk-asm-a 的节点数（见上面的 columns 条目）。 */
 
 /* ------------------------------------------------- 15.x 机制层：放大 / 构图 / 色阶 */
 

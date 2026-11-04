@@ -19,13 +19,38 @@ import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { lexShellLine, shellLang, shellLines } from './shared/shell.mjs';
 import { TIER_ALIAS } from './shared/tier-alias.mjs';
-import { ATTR_ALIAS, CURRENT_RULE, FILL_TAGS, MASS, SIZE_TIERS, TONE_HINT, toneValue } from './shared/vocab.mjs';
+import {
+  ATTR_ALIAS,
+  COLUMNS,
+  CURRENT_RULE,
+  FILL_TAGS,
+  MASS,
+  SIZE_TIERS,
+  TONE_HINT,
+  parseColumns,
+  parseCompareLabels,
+  toneValue,
+} from './shared/vocab.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
 import { ICON_WHITELIST_HINT, isSemanticIcon } from './shared/icons.mjs';
 import { diag } from './shared/diag.mjs';
 import { TAGS, TAG_NAMES, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
+
+/* ------------------------------------------------------- 15.2 列开关 / 对照 */
+
+/** 从 parse5 节点上取属性值（不区分"没写"与空串的场合用 ??）。 */
+const attrOf = (node, name) => (node.attrs || []).find((a) => a.name === name)?.value ?? null;
+
+/** 这个节点上 columns 开了某一列吗？（不写 = 该组件的默认列） */
+const columnOnOf = (node, name) => parseColumns(node?.tagName, attrOf(node, 'columns')).on.has(name);
+
+/** 对照的两张图：新写法在 labels 的 sources 段，旧写法还在 a / b 上。 */
+const compareSources = (node) => {
+  const parsed = parseCompareLabels(attrOf(node, 'labels'));
+  return { a: parsed.a || attrOf(node, 'a') || '', b: parsed.b || attrOf(node, 'b') || '' };
+};
 
 /* ------------------------------------------------------------------ 主题 */
 
@@ -277,10 +302,14 @@ function anchorCapacity(node, file) {
       .map((el) => parseInt((el.attrs || []).find((a) => a.name === 'span')?.value || '1', 10))
       .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
     const total = spans.reduce((a, b) => a + b, 0);
-    // @cell 指字段；@byte 指字节，只有开了字节尺（offsets / ruler / direction=rtl）才存在。
-    const byteMode = node.attrs?.some(
-      (x) => x.name === 'offsets' || x.name === 'ruler' || (x.name === 'direction' && x.value === 'rtl')
-    );
+    // @cell 指字段；@byte 指字节，只有开了字节尺（columns 的 offsets / ruler，
+    // 或旧的 offsets / ruler 别名，或 direction=rtl）才存在。
+    const byteMode =
+      columnOnOf(node, 'offsets') ||
+      columnOnOf(node, 'ruler') ||
+      attrOf(node, 'offsets') != null ||
+      attrOf(node, 'ruler') != null ||
+      attrOf(node, 'direction') === 'rtl';
     const cellCap = Math.max(n, spans.length) - 1;
     const max = byteMode ? Math.max(cellCap, total - 1) : cellCap;
     return max >= 0 ? { from: 0, to: max } : null;
@@ -406,10 +435,14 @@ function validateRefs(doc, file, errors) {
         errors.push(`${where}：#${id} 是 <${host.tagName}>，不支持 @${part}${allowed.length ? `；支持 ${allowed.join(' / ')}` : '；没有内部锚点'}`);
         continue;
       }
-      if (part === 'byte' && host.tagName === 'vk-cells' && !host.attrs?.some(
-        (x) => x.name === 'offsets' || x.name === 'ruler' || (x.name === 'direction' && x.value === 'rtl')
+      if (part === 'byte' && host.tagName === 'vk-cells' && !(
+        columnOnOf(host, 'offsets') ||
+        columnOnOf(host, 'ruler') ||
+        attrOf(host, 'offsets') != null ||
+        attrOf(host, 'ruler') != null ||
+        attrOf(host, 'direction') === 'rtl'
       )) {
-        errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 offsets / ruler / direction="rtl"`);
+        errors.push(`${where}：#${id} 没有字节尺，@byte 不存在；先写 columns="offsets" / columns="ruler" / direction="rtl"`);
         continue;
       }
       const cap = anchorCapacity(host, file);
@@ -1017,7 +1050,87 @@ function validateAuthorHtml(doc, file, html = '') {
         );
         continue;
       }
-      if (spec.values && !spec.values.includes(raw) && !(name === 'size' && TIER_ALIAS[raw])) {
+      // 15.2 的新词表：columns / space / arrow / fence / counter。
+      if (spec.type === 'columns') {
+        const allowed = COLUMNS[tag]?.all || [];
+        for (const piece of String(raw).split(',')) {
+          const tok = piece.trim();
+          if (!tok) continue;
+          const low = tok.toLowerCase();
+          if (low === 'all' || low === 'none') continue;
+          if (low.startsWith('titles:')) {
+            if (tag !== 'vk-asm') {
+              errors.push(`${file}:${lineOf(node)} <${tag}> 的 columns="${raw}"：titles: 只用于 vk-asm 的列标题`);
+              break;
+            }
+            continue;
+          }
+          const col = (tok.startsWith('-') ? tok.slice(1) : tok).trim().toLowerCase();
+          if (!allowed.includes(col)) {
+            errors.push(
+              `${file}:${lineOf(node)} <${tag}> 的 columns="${raw}" 里有不认识的列 "${tok}"；可用：${['all', 'none', ...allowed].join(' / ')}${
+                tag === 'vk-cells' ? '（另可写 -name 关掉）' : ''
+              }`
+            );
+            break;
+          }
+        }
+      }
+      if (spec.type === 'space') {
+        const parts = String(raw)
+          .split(/[\s,]+/)
+          .filter(Boolean);
+        const allow = new Set([...(spec.values || []), 'none']);
+        const bad = parts.find((t) => !allow.has(t.toLowerCase()) && !/^\d+(?:\.\d+)?(?:px)?$/.test(t));
+        if (!parts.length || parts.length > 2 || bad) {
+          errors.push(
+            `${file}:${lineOf(node)} <${tag}> 的 ${name}="${raw}" 只接受一个档位/像素，或 "x y" 两个值（先左右后上下）；可用：${[
+              ...(spec.values || []),
+              '24',
+            ].join(' / ')}`
+          );
+        }
+      }
+      if (name === 'arrow' && tag === 'vk-edge') {
+        const tokens = String(raw)
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const shaped = tokens.every((tok) =>
+          /^(?:(?:end|start|both|none)(?::(?:triangle|solid|open|thin))?|style:(?:solid|open|thin)|size:\d+|scale:\d*\.?\d+|label:.+|cap:(?:none|start|end|both|dot))$/i.test(tok)
+        );
+        if (!tokens.length || !shaped) {
+          errors.push(
+            `${file}:${lineOf(node)} <vk-edge> 的 arrow="${raw}" 不认识；写 end / start / both / none，可加 :triangle / :open / :thin，或 size:40、cap:start（逗号分隔）`
+          );
+        }
+      }
+      if (name === 'fence' && tag === 'vk-asm') {
+        const parts = raw
+          .split(',')
+          .map((s) => s.trim())
+          .filter(Boolean);
+        const bad = parts.find((tok) => {
+          const low = tok.toLowerCase();
+          if (/^\d+$/.test(tok) || low === 'none' || low === 'off') return false;
+          const at = tok.indexOf(':');
+          if (at < 0) return true;
+          const key = tok.slice(0, at).trim().toLowerCase();
+          const value = tok.slice(at + 1).trim();
+          if (key === 'after') return !/^\d+$/.test(value);
+          if (key === 'label') return !value;
+          return true;
+        });
+        if (bad) {
+          errors.push(
+            `${file}:${lineOf(node)} <vk-asm> 的 fence="${raw}" 不认识；写 fence="after:4,label:编译器屏障"（label 可省，none 关掉）`
+          );
+        }
+      }
+      if (name === 'counter' && tag === 'vk-label' && !/^\d+(?:\/\d+)?$/.test(String(raw).trim())) {
+        errors.push(`${file}:${lineOf(node)} <vk-label> 的 counter="${raw}" 不是工序进度；写 counter="3/5"（或只写 "3"）`);
+      }
+      if (spec.values && spec.type !== 'space' && spec.type !== 'columns' && !spec.values.includes(raw) && !(name === 'size' && TIER_ALIAS[raw])) {
         // 13.0 改过档位名：旧名一版内仍然生效（运行期会折成新名），所以只提示、不拦构建。
         if (name === 'size' && TIER_ALIAS[raw]) {
           warnings.push(
@@ -1202,10 +1315,10 @@ function validateImages(doc, file, errors) {
     const tag = node.tagName;
     if (tag === 'vk-compare') {
       // 对照是"两张图叠在一起"：缺一张就没有对照，画面上只剩一块空灰板。
-      const [a, b] = [attr(node, 'a') || '', attr(node, 'b') || ''];
+      const { a, b } = compareSources(node);
       const lack = [!a && 'a', !b && 'b'].filter(Boolean);
       if (lack.length) {
-        errors.push(`${file}:${lineOf(node)} <vk-compare> 需要 a 和 b 两张图（缺 ${lack.join(' 和 ')}）`);
+        errors.push(`${file}:${lineOf(node)} <vk-compare> 需要两张图：labels="a,b"（缺 ${lack.join(' 和 ')}）`);
       }
       for (const [side, src] of [
         ['a', a],

@@ -5,6 +5,7 @@ import {
 import { indexRanges, sliceLines, stripAnsi } from '../shared/code.mjs';
 import { lexShellLine, looksLikePrompt, shellLang, shellLines, tokensToHtml } from '../shared/shell.mjs';
 import { markTerms, wrapCharRange } from './code-utils.mjs';
+import { hasColumn } from '../shared/vocab.mjs';
 import { win, fileHead } from './window.mjs';
 
 /** 表面：paper 是默认（旧页逐像素不变）；dark / inset 是显式选择。 */
@@ -126,7 +127,10 @@ export class VkCode extends VkElement {
     const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '') || '源码';
     const chrome = this.getAttribute('chrome') || 'min';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
-    const showNums = this.getAttribute('numbers') !== 'none';
+    // 列开关：columns="numbers" / "none"（旧名 numbers 是别名）。
+    // data-numbers 是规范化镜像：CSS 用它切行号列（不靠已改名的旧属性）。
+    const showNums = hasColumn(this, 'vk-code', 'numbers');
+    this.dataset.numbers = showNums ? 'all' : 'none';
     const marks = (this.getAttribute('mark') || '').split(',').map((s) => s.trim()).filter(Boolean);
     const revealRaw = this.getAttribute('reveal');
     this.dataset.reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';

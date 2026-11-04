@@ -58,7 +58,7 @@ export const PRESETS = {
     { label: '虚线', attrs: { dash: '', tone: 'info' } },
     { label: '双向', attrs: { arrow: 'both', tone: 'info' } },
   ],
-  'vk-canvas': [{ label: '内缩', attrs: { 'pad-px': '48' } }],
+  'vk-canvas': [{ label: '内缩', attrs: { pad: '48' } }],
   'vk-list': [
     { label: '清单', attrs: { variant: 'check' } },
     { label: '定义', attrs: { variant: 'define' } },
@@ -76,8 +76,8 @@ export const PRESETS = {
   ],
   'vk-diff': [
     { label: '并排', attrs: { variant: 'split' } },
-    { label: '无摘要', attrs: { summary: 'none' } },
-    { label: '无行号', attrs: { numbers: 'none' } },
+    { label: '无摘要', attrs: { columns: 'numbers' } },
+    { label: '无行号', attrs: { columns: 'summary' } },
   ],
   'vk-table': [
     { label: '斑马', attrs: { stripe: '' } },
@@ -91,16 +91,16 @@ export const PRESETS = {
   'vk-tree': [
     { label: '收起 build', attrs: { collapsed: 'build' } },
     { label: '只看顶层', attrs: { depth: '0' } },
-    { label: '隐藏统计', attrs: { summary: 'none' } },
+    { label: '隐藏统计', attrs: { columns: 'none' } },
   ],
   'vk-bytes': [
     { label: '四列', attrs: { cols: '4' } },
     { label: '大端', attrs: { word: '4', endian: 'big' } },
-    { label: '不要 ASCII', attrs: { ascii: 'none' } },
+    { label: '不要 ASCII', attrs: { columns: 'address' } },
   ],
   'vk-cells': [
     { label: '四列', attrs: { cols: '4' } },
-    { label: '字节尺', attrs: { offsets: '', ruler: '' } },
+    { label: '字节尺', attrs: { columns: 'offsets,ruler' } },
   ],
   'vk-steps': [
     { label: '第一步', attrs: { current: '1' } },
@@ -119,8 +119,8 @@ export const PRESETS = {
   ],
   'vk-asm': [
     { label: '无机器码', attrs: { bytes: null } },
-    { label: '无地址列', attrs: { address: 'none' } },
-    { label: '无屏障', attrs: { 'fence-after': null } },
+    { label: '无地址列', attrs: { columns: 'none' } },
+    { label: '无屏障', attrs: { fence: null } },
   ],
   'vk-timeline': [
     { label: '正常体量', attrs: { mass: null } },

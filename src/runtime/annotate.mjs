@@ -23,6 +23,7 @@ import {
   tipPath,
   visualToLocal,
 } from './geometry.mjs';
+import { parseArrow } from '../shared/vocab.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 /** 双圈的内环半径（外圈是 _ringConfig().pad）。 */
@@ -207,8 +208,12 @@ export class VkAnnotate extends VkElement {
   }
 
   _head() {
-    const v = this.getAttribute('head') || 'arrow';
-    return v === 'dot' || v === 'none' ? v : 'arrow';
+    // 端点写进 arrow：arrow="end" 箭头 / "none,cap:end" 圆点 / "none" 无。
+    const cfg = parseArrow(this.getAttribute('arrow'));
+    if (cfg.dot === 'end' || cfg.dot === 'both') return 'dot';
+    if (cfg.dot === 'start' && !cfg.end) return 'dot';
+    if (cfg.end || cfg.start) return 'arrow';
+    return 'none';
   }
 
   _ringFigure() {
@@ -249,7 +254,7 @@ export class VkAnnotate extends VkElement {
     d.strength = this.getAttribute('strength') || 'soft';
     d.n = String(this._num());
     // arrow 的缩放比例也镜像到宿主上：契约读它，不猜 CSS。
-    if (mode === 'arrow') d.arrowScale = String(numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 }));
+    if (mode === 'arrow') d.arrowScale = String(parseArrow(this.getAttribute('arrow')).scale ?? 0.12);
     else delete d.arrowScale;
     // side 是 note 的显式落点；arrow 形态也把请求值镜像出来，契约能读到"改了就变"。
     const sideRaw = (this.getAttribute('side') || 'auto').trim();
@@ -326,7 +331,7 @@ export class VkAnnotate extends VkElement {
   _arrowConfig() {
     const cs = getComputedStyle(this);
     const num = (name, fallback) => parseFloat(cs.getPropertyValue(name)) || fallback;
-    const head = this._head();
+    const arrowCfg = parseArrow(this.getAttribute('arrow'));
     return {
       from: this.getAttribute('from'),
       // for 是「要标注谁」，arrow 形态把它当终点用；显式 to 优先。
@@ -334,12 +339,18 @@ export class VkAnnotate extends VkElement {
       shape: this._shape(),
       dash: this._dashOn(),
       width: this._widthPx(),
-      head: { end: head === 'arrow', start: false, dot: head === 'dot' ? 'end' : null, style: 'solid', size: num('--vk-edge-tip', 18) },
-      // arrow 的箭头按「所在容器高 × arrow-scale」缩放（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
+      head: {
+        end: arrowCfg.end,
+        start: arrowCfg.start,
+        dot: arrowCfg.dot,
+        style: arrowCfg.style,
+        size: arrowCfg.size != null ? Math.max(8, Math.min(64, arrowCfg.size)) : num('--vk-edge-tip', 18),
+      },
+      // arrow 的箭头按「所在容器高 × scale」缩放（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
       // 旧标签 vk-edge 在自己的 _arrowConfig 里覆盖整套，不读这两个值，逐像素不动。
-      scale: numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 }),
+      scale: Number.isFinite(arrowCfg.scale) ? Math.min(0.6, Math.max(0.02, arrowCfg.scale)) : 0.12,
       scaled: true,
-      gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: num('--vk-edge-gap', 32) }),
+      gap: numAttr(this, 'gap', { min: 0, max: 240, fallback: num('--vk-edge-gap', 32) }),
       bend: 0,
       tension: 0.42,
       r: num('--vk-edge-r', 16),
@@ -374,8 +385,9 @@ export class VkAnnotate extends VkElement {
       this._svg.append(...(this._halo ? [this._halo] : []), this._path, this._tip, this._tip2, this._cap);
       this.appendChild(this._svg);
     }
-    // arrow-label 是「中轴挂一个词」的新写法；旧页的 label 仍然有效，新词优先。
-    const label = this.getAttribute('arrow-label') || this.getAttribute('label');
+    // 中轴词并进 arrow 的 label: 段；旧页的 label 仍然有效，新词优先。
+    const arrowWord = parseArrow(this.getAttribute('arrow')).label;
+    const label = arrowWord || this.getAttribute('label');
     if (label && !this._label) {
       this._label = document.createElement('span');
       this._label.className = 'vk-edge-label vk-annot-label';
@@ -385,7 +397,7 @@ export class VkAnnotate extends VkElement {
       this._label.textContent = label || '';
       // 新词走 tag 档（36 / .08em）；旧 label 保持原来的 body 档，旧页不变。
       // data-meta 让 36px 的词按「标注」判对比度，而不是按正文地板。
-      const isArrowLabel = !!this.getAttribute('arrow-label');
+      const isArrowLabel = !!arrowWord;
       this._label.toggleAttribute('data-arrow-label', isArrowLabel);
       this._label.toggleAttribute('data-meta', isArrowLabel);
     }
@@ -401,8 +413,9 @@ export class VkAnnotate extends VkElement {
     this._tip2?.setAttribute('d', '');
     if (this._cap) this._cap.style.display = 'none';
     if (this._label) {
-      this._label.textContent = this.getAttribute('arrow-label') || this.getAttribute('label') || '';
-      const isArrowLabel = !!this.getAttribute('arrow-label');
+      const arrowWord = parseArrow(this.getAttribute('arrow')).label;
+      this._label.textContent = arrowWord || this.getAttribute('label') || '';
+      const isArrowLabel = !!arrowWord;
       this._label.toggleAttribute('data-arrow-label', isArrowLabel);
       this._label.toggleAttribute('data-meta', isArrowLabel);
     }
@@ -743,7 +756,7 @@ export class VkAnnotate extends VkElement {
     return {
       form,
       tone: this._tone(mode),
-      gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 }),
+      gap: numAttr(this, 'gap', { min: 0, max: 240, fallback: 24 }),
       width: this._noteWidth(),
       z: numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }),
       // x/y 与旧 vk-pin 同语义：覆盖层坐标，给了就不再自动找位置。

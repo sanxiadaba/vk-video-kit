@@ -63,31 +63,9 @@ vk-box {
   font-family: var(--vk-font-sans);
 }
 
-/* 内距 */
-vk-box[pad='2xs'] { padding: var(--vk-s1); }
-vk-box[pad='xs'] { padding: var(--vk-s2); }
-vk-box[pad='sm'] { padding: var(--vk-s3); }
-vk-box[pad='md'] { padding: var(--vk-s4); }
-vk-box[pad='lg'] { padding: var(--vk-s5); }
-vk-box[pad='xl'] { padding: var(--vk-s6); }
-vk-box[pad='2xl'] { padding: var(--vk-s7); }
-vk-box[pad='3xl'] { padding: var(--vk-s8); }
-vk-box[pad-x='2xs'] { padding-left: var(--vk-s1); padding-right: var(--vk-s1); }
-vk-box[pad-x='xs'] { padding-left: var(--vk-s2); padding-right: var(--vk-s2); }
-vk-box[pad-x='sm'] { padding-left: var(--vk-s3); padding-right: var(--vk-s3); }
-vk-box[pad-x='md'] { padding-left: var(--vk-s4); padding-right: var(--vk-s4); }
-vk-box[pad-x='lg'] { padding-left: var(--vk-s5); padding-right: var(--vk-s5); }
-vk-box[pad-x='xl'] { padding-left: var(--vk-s6); padding-right: var(--vk-s6); }
-vk-box[pad-x='2xl'] { padding-left: var(--vk-s7); padding-right: var(--vk-s7); }
-vk-box[pad-x='3xl'] { padding-left: var(--vk-s8); padding-right: var(--vk-s8); }
-vk-box[pad-y='2xs'] { padding-top: var(--vk-s1); padding-bottom: var(--vk-s1); }
-vk-box[pad-y='xs'] { padding-top: var(--vk-s2); padding-bottom: var(--vk-s2); }
-vk-box[pad-y='sm'] { padding-top: var(--vk-s3); padding-bottom: var(--vk-s3); }
-vk-box[pad-y='md'] { padding-top: var(--vk-s4); padding-bottom: var(--vk-s4); }
-vk-box[pad-y='lg'] { padding-top: var(--vk-s5); padding-bottom: var(--vk-s5); }
-vk-box[pad-y='xl'] { padding-top: var(--vk-s6); padding-bottom: var(--vk-s6); }
-vk-box[pad-y='2xl'] { padding-top: var(--vk-s7); padding-bottom: var(--vk-s7); }
-vk-box[pad-y='3xl'] { padding-top: var(--vk-s8); padding-bottom: var(--vk-s8); }
+/* 内距：pad / pad-x / pad-y 已并成 `pad`（可写 "md" 或 "md 2xs"，先左右后上下）。
+   两个轴的 8×8 组合没法用属性选择器表达，运行期由 applySpacing() 写到 inline
+   padding-* 上，值仍是 var(--vk-sN) 令牌（见 src/runtime/base.mjs）。 */
 
 /* 圆角 */
 vk-box[radius='sm'] { border-radius: var(--vk-r-1); }

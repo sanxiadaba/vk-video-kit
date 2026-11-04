@@ -15,7 +15,7 @@
 | 版式 · 网格与版心 | `vk-grid.cols`<br>`vk-grid.gap` | `specimen/vk-grid.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
 | 组件 · 内容组件默认窗头 | `vk-code.chrome`<br>`vk-term.chrome`<br>`vk-asm.chrome`<br>`vk-tree.chrome`<br>`vk-bytes.chrome`<br>`vk-diff.chrome` | `specimen/vk-code.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
 | 组件 · 三点随 mass 缩放 | `vk-code.mass`<br>`vk-term.mass`<br>`vk-asm.mass`<br>`vk-tree.mass`<br>`vk-bytes.mass`<br>`vk-diff.mass` | `specimen/vk-code.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
-| 页眉 · 工序进度 kicker | `vk-label.index`<br>`vk-label.total`<br>`vk-label.section` | `specimen/vk-label.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
+| 页眉 · 工序进度 kicker | `vk-label.counter`<br>`vk-label.section` | `specimen/vk-label.html` | `tests/batch-ef.test.mjs` | ✅ 绿 |
 | vk-panel · raised | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · inset | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · dark | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs` | ✅ 绿 |
@@ -23,7 +23,7 @@
 | 终端 · shell 词法 | `vk-term.lang` | `specimen/vk-term.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
 | 汇编 · 五色 token | `vk-asm.focus` | `specimen/vk-asm.html` | `tests/shell.test.mjs`<br>`tests/shell-dom.test.mjs` | ✅ 绿 |
 | 逐行浮现 · reveal | `vk-term.reveal`<br>`vk-code.reveal`<br>`vk-asm.reveal`<br>`vk-term.current` | `specimen/vk-term.html` | `tests/shell-dom.test.mjs` | ✅ 绿 |
-| 标注 · 连线 arrow | `vk-annotate.shape`<br>`vk-annotate.head`<br>`vk-annotate.dash`<br>`vk-annotate.width` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
+| 标注 · 连线 arrow | `vk-annotate.shape`<br>`vk-annotate.arrow`<br>`vk-annotate.dash`<br>`vk-annotate.width` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 | 标注 · 圈选 circle | `vk-annotate.ring`<br>`vk-annotate.double` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 | 标注 · 批注 note | `vk-annotate.note` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
 | 标注 · 编号点 badge | `vk-annotate.n` | `specimen/vk-annotate.html` | `tests/annotate.test.mjs` | ✅ 绿 |
@@ -44,7 +44,7 @@
 | 归属说明 · vk-label[for] | `vk-label.for`<br>`vk-label.side` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 代码窗 / 终端 · surface 与当前行 | `vk-term.surface`<br>`vk-code.surface`<br>`vk-term.current`<br>`vk-code.current` | `specimen/vk-term.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 纸 · 默认底色是纯白 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
-| 流程 · 箭头按块高缩放 + 中轴词 | `vk-flow.arrow-scale`<br>`vk-flow.arrow-label` | `specimen/vk-flow.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 流程 · 箭头按块高缩放 + 中轴词 | `vk-flow.arrow` | `specimen/vk-flow.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 标签 · variant="tag" 专门档位 | `vk-label.variant` | `specimen/vk-label.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 并置 · 左右分色 tone | `vk-pair.tone` | `specimen/vk-pair.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文字 · fit 的硬地板 fit-min | `vk-text.fit-min` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
@@ -72,10 +72,10 @@
 | 数据 · vk-bits 位宽与符号位 | `vk-bits.bit-width`<br>`vk-bits.sign` | `specimen/vk-bits.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 数据 · vk-bars 零线与倍率 | `vk-bars.max`<br>`vk-bars.ratio-to` | `specimen/vk-bars.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 数据 · vk-timeline 泳道 | `vk-timeline.variant`<br>`vk-timeline.current` | `specimen/vk-timeline.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
-| 布局 · vk-canvas 坐标系与栅格 | `vk-canvas.pad-px`<br>`vk-canvas.grid` | `specimen/vk-canvas.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 布局 · vk-canvas 坐标系与栅格 | `vk-canvas.pad`<br>`vk-canvas.grid` | `specimen/vk-canvas.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 数据 · vk-tree 截断保护 | `vk-tree.limit` | `specimen/vk-tree.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 原子 · vk-img 比例与失败占位 | `vk-img.ratio`<br>`vk-img.fill` | `specimen/vk-img.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
-| 数据 · vk-diff 两窗对照 | `vk-diff.variant`<br>`vk-diff.summary` | `specimen/vk-diff.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-diff 两窗对照 | `vk-diff.variant`<br>`vk-diff.columns` | `specimen/vk-diff.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 视频 · 字幕驱动 cue | `vk-page.cues`<br>`vk-page.states` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
 | 视频 · 焦点跟随 data-focus | `vk-page.focus-duration`<br>`vk-page.focus-transition` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
 | 视频 · 同页多态 states | `vk-page.states` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
@@ -134,8 +134,8 @@
 
 ### ✅ 页眉 · 工序进度 kicker
 
-- 能力：vk-label variant="kicker" 写 index / total / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；index/total 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。
-- 契约断言：`vk-label.index` · `vk-label.total` · `vk-label.section`
+- 能力：vk-label variant="kicker" 写 counter / section 时渲染成「工序 3/5 · 汇编」，左侧 4px 焦点色条，caption 档 28px；counter 是整条流程的位置，不是页号。文本里出现文件名或「第 N 页/N 帧」时构建期提醒。
+- 契约断言：`vk-label.counter` · `vk-label.section`
 - 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
 - 测试：`tests/batch-ef.test.mjs` · 「vk-kicker 工序进度：工序 3/5 · 汇编，色条 4px」；`tests/batch-ef.test.mjs` · 「kicker 含文件名 / 页号时构建期给出提醒」
 
@@ -190,8 +190,8 @@
 
 ### ✅ 标注 · 连线 arrow
 
-- 能力：mode="arrow"：从一个元素（或 x,y 坐标）指向另一个。shape=straight|ortho|curve 决定走线，dash 决定实虚，width 改线宽，head=arrow|dot|none 决定端点。旧 vk-edge 是它的别名，走线与 13.x 逐像素一致。
-- 契约断言：`vk-annotate.shape` · `vk-annotate.head` · `vk-annotate.dash` · `vk-annotate.width`
+- 能力：连线形态：shape 给直线 / 折线 / 曲线，dash 给虚实；端点、样式、缩放、中轴词都收在 arrow 一个词里（arrow="end:open,scale:0.12,label:gcc"）。
+- 契约断言：`vk-annotate.shape` · `vk-annotate.arrow` · `vk-annotate.dash` · `vk-annotate.width`
 - 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
 - 测试：`tests/annotate.test.mjs` · 「vk-annotate arrow：三种 shape 各走一种路径，实虚/线宽/端点各自生效」；`tests/annotate.test.mjs` · 「旧标签是别名：vk-edge / vk-pin 与 vk-annotate 同几何；vk-ring 变成带环的面」
 
@@ -337,8 +337,8 @@
 
 ### ✅ 流程 · 箭头按块高缩放 + 中轴词
 
-- 能力：vk-flow 的箭头不再是固定 14px 三角：尺寸 = 容器高 × arrow-scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow 默认开，arrow="false" 才关。arrow-label 会在中轴那根箭头上挂一个词，字号 = caption × 0.75（36），纸色底把轴线垫断。
-- 契约断言：`vk-flow.arrow-scale` · `vk-flow.arrow-label`
+- 能力：vk-flow 的箭头不是固定 14px 三角：尺寸 = 容器高 × scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow="false" 关掉；arrow="true,scale:0.2,label:gcc" 一次写缩放与中轴词（旧 arrow-scale / arrow-label 是别名）。
+- 契约断言：`vk-flow.arrow`
 - 标本页：`_site/specimen/vk-flow.html` + 契约宿主 `_site/specimens/vk-flow.html`
 - 测试：`tests/batch-native.test.mjs` · 「vk-flow 箭头：默认画，尺寸 = 容器高 × arrow-scale（28–64），线宽 = 尺寸 × 0.1」；`tests/batch-native.test.mjs` · 「vk-flow arrow-label：中轴挂词，字号 36（caption × 0.75），纸色底垫断轴线」
 
@@ -533,8 +533,8 @@
 
 ### ✅ 布局 · vk-canvas 坐标系与栅格
 
-- 能力：vk-canvas 的 pad-px 把坐标原点向内缩（子节点 x=0 落在内距之后），grid 在画布上铺一层等距栅格；w/h 定画布尺寸。
-- 契约断言：`vk-canvas.pad-px` · `vk-canvas.grid`
+- 能力：vk-canvas 的 pad 把坐标原点向内缩（子节点 x=0 落在内距之后），grid 在画布上铺一层等距栅格；w/h 定画布尺寸。
+- 契约断言：`vk-canvas.pad` · `vk-canvas.grid`
 - 标本页：`_site/specimen/vk-canvas.html` + 契约宿主 `_site/specimens/vk-canvas.html`
 - 测试：`tests/matrix-behavior.test.mjs` · 「vk-canvas：pad-px 内缩坐标原点，grid 画出栅格」
 
@@ -554,8 +554,8 @@
 
 ### ✅ 数据 · vk-diff 两窗对照
 
-- 能力：vk-diff 默认统一视图（旧/新双行号）；variant="split" 换成左右两窗（改前 / 改后）并排，两窗各自完整；summary="none" 关掉「N 行改动」计数。
-- 契约断言：`vk-diff.variant` · `vk-diff.summary`
+- 能力：vk-diff 默认统一视图（旧/新双行号）；variant="split" 换成左右两窗（改前 / 改后）并排，两窗各自完整；columns="numbers" 关掉「N 行改动」计数。
+- 契约断言：`vk-diff.variant` · `vk-diff.columns`
 - 标本页：`_site/specimen/vk-diff.html` + 契约宿主 `_site/specimens/vk-diff.html`
 - 测试：`tests/matrix-behavior.test.mjs` · 「vk-diff：split 生成两窗，summary=none 关掉计数」
 

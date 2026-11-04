@@ -544,33 +544,9 @@ vk-grid > [row-span='10'] { grid-row: span 10; }
 vk-grid > [row-span='11'] { grid-row: span 11; }
 vk-grid > [row-span='12'] { grid-row: span 12; }
 
-vk-grid[gap='2xs'] { gap: var(--vk-s1); }
-vk-grid[gap='group'] { gap: var(--vk-gap-group); }
-vk-grid[gap='section'] { gap: var(--vk-gap-section); }
-vk-grid[gap='plate'] { gap: var(--vk-gap-plate); }
-vk-grid[gap='xs'] { gap: var(--vk-s2); }
-vk-grid[gap='sm'] { gap: var(--vk-s3); }
-vk-grid[gap='md'] { gap: var(--vk-s4); }
-vk-grid[gap='lg'] { gap: var(--vk-s5); }
-vk-grid[gap='xl'] { gap: var(--vk-s6); }
-vk-grid[gap='2xl'] { gap: var(--vk-s7); }
-vk-grid[gap='3xl'] { gap: var(--vk-s8); }
-vk-grid[gap-x='2xs'] { column-gap: var(--vk-s1); }
-vk-grid[gap-x='xs'] { column-gap: var(--vk-s2); }
-vk-grid[gap-x='sm'] { column-gap: var(--vk-s3); }
-vk-grid[gap-x='md'] { column-gap: var(--vk-s4); }
-vk-grid[gap-x='lg'] { column-gap: var(--vk-s5); }
-vk-grid[gap-x='xl'] { column-gap: var(--vk-s6); }
-vk-grid[gap-x='2xl'] { column-gap: var(--vk-s7); }
-vk-grid[gap-x='3xl'] { column-gap: var(--vk-s8); }
-vk-grid[gap-y='2xs'] { row-gap: var(--vk-s1); }
-vk-grid[gap-y='xs'] { row-gap: var(--vk-s2); }
-vk-grid[gap-y='sm'] { row-gap: var(--vk-s3); }
-vk-grid[gap-y='md'] { row-gap: var(--vk-s4); }
-vk-grid[gap-y='lg'] { row-gap: var(--vk-s5); }
-vk-grid[gap-y='xl'] { row-gap: var(--vk-s6); }
-vk-grid[gap-y='2xl'] { row-gap: var(--vk-s7); }
-vk-grid[gap-y='3xl'] { row-gap: var(--vk-s8); }
+/* 间距：gap / gap-x / gap-y 已并成 `gap`（"md" 或 "sm lg"，先左右后上下）。
+   两个轴的组合由 applySpacing() 写到 inline column-gap / row-gap 上，值仍是
+   var(--vk-sN) 令牌；不写 gap 时保留上面的 --vk-grid-gutter 默认。 */
 
 vk-grid[align='start'] { align-items: start; }
 vk-grid[align='center'] { align-items: center; }

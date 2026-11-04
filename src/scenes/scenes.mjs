@@ -67,7 +67,7 @@ export const SCENES = [
   <vk-box id="lab-a" surface="none" pad="sm">
     <vk-text size="subhead" mono>printf("%s\n", s);</vk-text>
   </vk-box>
-  <vk-label variant="kicker" index="3" total="4" section="汇编">汇编</vk-label>
+  <vk-label variant="kicker" counter="3/4" section="汇编">汇编</vk-label>
   <vk-text size="label" mono ink="muted">kicker 只讲工序，文件名交给代码块</vk-text>
 </vk-stack>`,
   },
@@ -182,19 +182,19 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     tag: 'vk-canvas',
     body: s`
 <vk-canvas w="1200" h="540">
-  <vk-box id="name-a" x="0" y="120" w="240" radius="pill" pad-y="xs" surface="soft">
+  <vk-box id="name-a" x="0" y="120" w="240" radius="pill" pad="0 xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">s</vk-text>
   </vk-box>
-  <vk-box id="obj-1" x="560" y="120" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-1" x="560" y="120" w="640" border="strong" radius="lg" pad="md xs" surface="paper">
     <vk-stack gap="2xs">
       <vk-text size="body" mono weight="medium">"${C.output}"</vk-text>
       <vk-text size="label" mono ink="muted">${C.address}</vk-text>
     </vk-stack>
   </vk-box>
-  <vk-box id="name-b" x="0" y="340" w="240" radius="pill" pad-y="xs" surface="soft">
+  <vk-box id="name-b" x="0" y="340" w="240" radius="pill" pad="0 xs" surface="soft">
     <vk-text size="body" weight="bold" mono align="center">p</vk-text>
   </vk-box>
-  <vk-box id="obj-2" x="560" y="340" w="640" border="strong" radius="lg" pad-x="md" pad-y="xs" surface="paper">
+  <vk-box id="obj-2" x="560" y="340" w="640" border="strong" radius="lg" pad="md xs" surface="paper">
     <vk-stack gap="2xs">
       <vk-text size="body" mono weight="medium">s + 0</vk-text>
       <vk-text size="label" mono ink="muted">${C.address}</vk-text>
@@ -211,13 +211,13 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     body: s`
 <vk-canvas w="1400" h="700">
   <vk-text x="0" y="0" size="body" weight="bold">${C.stages[0].out} → ${C.address}</vk-text>
-  <vk-box id="buf" x="0" y="120" w="400" radius="lg" pad-y="sm" surface="soft">
+  <vk-box id="buf" x="0" y="120" w="400" radius="lg" pad="0 sm" surface="soft">
     <vk-text size="body" mono align="center">${C.stages[0].out}</vk-text>
   </vk-box>
-  <vk-box id="mem" x="840" y="440" w="520" border="strong" radius="lg" pad-y="sm" surface="paper">
+  <vk-box id="mem" x="840" y="440" w="520" border="strong" radius="lg" pad="0 sm" surface="paper">
     <vk-text size="body" mono align="center">${C.address}</vk-text>
   </vk-box>
-  <vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="编译" tension="42" arrow-style="solid" arrow-size="52"></vk-edge>
+  <vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="编译" tension="42" arrow="end,size:52"></vk-edge>
   <vk-text x="0" y="640" size="label" mono ink="muted">gcc -c · ${C.bytes.object}</vk-text>
 </vk-canvas>`,
   },
@@ -303,7 +303,7 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     body: s`
 <vk-stack gap="md" class="spec-w1680">
   <vk-text size="body" weight="bold">${C.file} → ${C.stages[0].out}</vk-text>
-  <vk-flow arrow arrow-label="gcc" gap="48">
+  <vk-flow arrow="true,label:gcc" gap="48">
     <li label="源码" tone="info"><vk-text mono>${C.file}</vk-text></li>
     <li label="预处理" tone="neutral"><vk-text mono>gcc -E</vk-text></li>
     <li label="产物" tone="ok"><vk-text mono>${C.stages[0].out}</vk-text></li>
@@ -318,8 +318,8 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     // 真实截图对：gcc -O0（13 行）vs -O2（10 行）。mark 标出 -O2 少掉的那 3 行。
     body: s`
 <vk-grid cols="3">
-  <vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
-    labels="gcc -O0 · 13 行|gcc -O2 · 10 行"
+  <vk-compare span="2" ratio="1440 / 900" split="46"
+    labels="../assets/hello/o0.png,../assets/hello/o2.png|gcc -O0 · 13 行|gcc -O2 · 10 行"
     mark="58,73,93,84" mark-label="少 3 行"></vk-compare>
 </vk-grid>`,
   },
@@ -344,7 +344,7 @@ ${tree}
   {
     tag: 'vk-cells',
     body: s`
-<vk-cells cols="6" addr="${C.address}" offsets>
+<vk-cells cols="6" addr="${C.address}" columns="offsets">
 ${C.memory.cells.map((cell) => `  <li value="${cell.value}" label="${cell.label}"${cell.span ? ` span="${cell.span}"` : ''}${cell.filled ? ' filled' : ''}${cell.state ? ` state="${cell.state}"` : ''}></li>`).join('\n')}
 </vk-cells>`,
   },
@@ -407,7 +407,7 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
     tag: 'vk-asm',
     body: s`
 <vk-asm title="hello.s" lines="2-9" current="6" bytes order="1,2,3,4,5,6,7,8" long="wrap"
-        fence-after="4" fence-label="编译器屏障">
+        fence="after:4,label:编译器屏障">
   <script type="text/plain" data-vk-source>
 0000000000401136 <main>:
   401136: 55                    push   %rbp

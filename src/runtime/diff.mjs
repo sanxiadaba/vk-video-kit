@@ -1,6 +1,7 @@
 import { esc, warnIfParsed, VkElement, define, dedent, hash32, langKey, fetchSource, precompiledSource, numAttr, applyContentSize, fitContent } from './base.mjs';
 import { buildRows, parseDiffItems, tokenDiff, sliceLines } from '../shared/code.mjs';
 import { wrapRange } from './code-utils.mjs';
+import { hasColumn } from '../shared/vocab.mjs';
 import { win, fileHead } from './window.mjs';
 
 /**
@@ -70,8 +71,9 @@ export class VkDiff extends VkElement {
     const source = this._raw ? sliceLines(full, this.getAttribute('lines')) : full;
     const file = this.getAttribute('file') || '';
     const chrome = this.getAttribute('chrome') || 'min';
-    const showNums = this.getAttribute('numbers') !== 'none';
-    const nosum = this.getAttribute('summary') === 'none';
+    // 列开关：行号 / 摘要都写 columns（旧名 numbers / summary 是别名）。
+    const showNums = hasColumn(this, 'vk-diff', 'numbers');
+    const nosum = !hasColumn(this, 'vk-diff', 'summary');
     const mode = (this.getAttribute('variant') || 'unified') === 'split' ? 'split' : 'unified';
     const lang = (this.getAttribute('lang') || this._hlLang || 'text').toLowerCase();
     // 窗头的三点与高度跟体量走：mass 要落在窗根上，split 时落在 .vk-diff-split 上。

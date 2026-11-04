@@ -50,6 +50,30 @@ const checkPresets = args.includes('--presets') || process.env.VK_GATE_PRESETS =
 /* ------------------------------------------------------------- 预检：预设 */
 // 跑像素差时，预设本身必须先合法：属性存在、值合法、不能是空卡。
 
+/** 列表型属性（columns / space）按 token 验，其余按整值验。 */
+function presetValueOk(spec, raw) {
+  const value = String(raw);
+  if (spec.type === 'columns') {
+    for (const piece of value.split(',')) {
+      const tok = piece.trim();
+      if (!tok) continue;
+      const low = tok.toLowerCase();
+      if (low === 'all' || low === 'none' || low.startsWith('titles:')) continue;
+      const name = (tok.startsWith('-') ? tok.slice(1) : tok).trim().toLowerCase();
+      if (!(spec.values || []).includes(name)) return false;
+    }
+    return true;
+  }
+  if (spec.type === 'space') {
+    const parts = value.split(/[\s,]+/).filter(Boolean);
+    if (!parts.length || parts.length > 2) return false;
+    return parts.every(
+      (t) => t === 'none' || (spec.values || []).includes(t.toLowerCase()) || /^\d+(?:\.\d+)?(?:px)?$/.test(t)
+    );
+  }
+  return !spec.values || spec.values.includes(value);
+}
+
 if (checkPresets) {
   const presetFailures = [];
   for (const [tag, presets] of Object.entries(PRESETS)) {
@@ -66,7 +90,7 @@ if (checkPresets) {
           presetFailures.push(`${tag}「${p.label}」引用了不存在的属性 ${k}`);
           continue;
         }
-        if (v !== null && spec.values && !spec.values.includes(v)) {
+        if (v !== null && !presetValueOk(spec, v)) {
           presetFailures.push(`${tag}「${p.label}」的 ${k}="${v}" 不在枚举里`);
         }
       }
