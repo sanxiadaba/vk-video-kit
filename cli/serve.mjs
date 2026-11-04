@@ -52,6 +52,10 @@ const TYPES = {
   '.txt': 'text/plain; charset=utf-8',
   '.diff': 'text/plain; charset=utf-8',
   '.tex': 'text/plain; charset=utf-8',
+  // 字幕轨：浏览器按文本读，不能当下载。
+  '.srt': 'text/plain; charset=utf-8',
+  '.vtt': 'text/vtt; charset=utf-8',
+  '.cue': 'text/plain; charset=utf-8',
 };
 
 const escHtml = (s) =>

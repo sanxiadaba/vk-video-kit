@@ -108,6 +108,13 @@ const ATTR_META = {
   cap: { label: '端点', group: 'appearance' },
   current: { label: '当前项（序号 1 起；-1 = 没有当前）', group: 'state' },
   focus: { label: '聚光行', group: 'state' },
+  // 视频维度：字幕轨驱动。cue 写在任意元件上；cues / states / transition 写在 vk-page 上。
+  cue: { label: '字幕驱动（第 N 条，或 0:06-0:09 时间段）', group: 'state' },
+  cues: { label: '字幕轨（cue.json / .srt 路径，也可内联 JSON）', group: 'state' },
+  states: { label: '同页状态（逗号分隔，如 a,b,c）', group: 'state' },
+  transition: { label: '页间转场（cut / fade / push）', group: 'appearance' },
+  'focus-duration': { label: '焦点过渡时长（毫秒；0 = 立即）', group: 'appearance' },
+  'focus-transition': { label: '焦点过渡开关（on / off）', group: 'state' },
   fold: { label: '折叠行', group: 'state' },
   span: { label: '占几份', group: 'layout' },
   omit: { label: '字符区间', content: true },
@@ -1027,6 +1034,17 @@ export const TAGS = {
       'dur': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
       'beat': { ...num({ min: 0.1, max: 4, step: 0.05 }), motion: true },
       'poster': { ...num({ min: 0, max: 600, step: 0.01 }), motion: true },
+      /* ---- 视频维度：字幕 / 焦点 / 多态 / 页间转场 ---- */
+      // 字幕轨：cue.json / .srt 的路径；也接受直接写 JSON 数组。
+      'cues': { ...text(), content: true },
+      // 同页多态：声明名字；每一态的 DOM 属性 / 内联样式写在
+      // <script type="application/json" data-vk-states> 里。
+      'states': { ...text(), content: true },
+      // 页间转场：cut 是视频里最常用的默认值（不拖泥带水）。
+      'transition': { ...oneOf('cut', 'fade', 'push'), default: 'cut' },
+      // 焦点跟随的过渡：默认 200ms；写 0 就是立即，写 none 连过渡属性都不挂。
+      'focus-duration': { ...num({ min: 0, max: 2000, step: 1 }), default: 200 },
+      'focus-transition': { ...oneOf('on', 'off'), default: 'on' },
     },
   },
   'vk-pin': {
@@ -1248,6 +1266,9 @@ const COMMON = {
   enter: { ...oneOf('rise', 'fade', 'scale', 'wipe', 'none'), default: 'none', motion: true },
   ease: { ...oneOf('linear', 'out-cubic', 'out-quint', 'out-expo', 'in-cubic', 'in-out-sine'), motion: true },
   stagger: { ...num({ min: 0, max: 2, step: 0.01 }), motion: true },
+  /* 视频维度：cue="3" / cue="0:06-0:09" 让元件跟着字幕出现、高亮；
+     它只改 data-vk-cue-state，不改布局，所以契约不逐条探针（由 cues 测试覆盖）。 */
+  cue: { ...text(), motion: true },
   /* L5 姿态层：act 是「做什么动作」，strength 是「多响」。两者都由运行期一遍写成
      data-act / data-strength，不改变子树结构，所以不进契约的子树探针，由 pose 测试覆盖。 */
   act: { ...oneOf('focus', 'context', 'mark'), pose: true },

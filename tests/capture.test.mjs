@@ -59,3 +59,18 @@ test('--verify 认得出"素材被改过"', () => {
   fs.appendFileSync(out, '手写的一行\n');
   assert.equal(run(['--verify', out, '--quiet']).status, 1, '改过素材却没被发现');
 });
+
+test('--cues：按字幕时间点逐段截图并写清单', () => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vk-cues-shots-'));
+  const r = run(['--cues', '_site/specimen/vk-cues.html', '--out-dir', dir, '--quiet']);
+  assert.equal(r.status, 0, r.stderr);
+  const manifest = JSON.parse(fs.readFileSync(path.join(dir, 'cues.json'), 'utf8'));
+  assert.equal(manifest.kind, 'cues');
+  assert.equal(manifest.cues.length, 3, '示例页应有 3 条字幕');
+  for (const cue of manifest.cues) {
+    const file = path.join(dir, cue.file);
+    assert.ok(fs.existsSync(file), `缺少截图 ${file}`);
+    assert.ok(fs.statSync(file).size > 1024, `截图是空的 ${file}`);
+    assert.ok(cue.t >= cue.start && cue.t <= cue.end, '截图时间点要落在这一段里');
+  }
+});

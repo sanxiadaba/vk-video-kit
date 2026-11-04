@@ -26,6 +26,7 @@ import { defineNote } from './note.mjs';
 import { defineCaption } from './caption.mjs';
 import { installAudit } from './audit.mjs';
 import { installDirector } from './director.mjs';
+import { installCues } from './cues.mjs';
 import { installPose } from './pose.mjs';
 
 defineElements();
@@ -48,6 +49,8 @@ defineCaption();
 defineOverlays();
 installAudit(VK);
 installDirector(VK);
+// 视频维度：字幕轨驱动焦点 / 同页多态 / 页间转场。装在 director 之后，包住 seek。
+installCues(VK);
 installPose(VK);
 
 export { VK };

@@ -30,6 +30,9 @@ export class VkPage extends VkElement {
 
     if (!this._shell) {
       const body = takeSlot(this);
+      // 视频维度的数据脚本（data-vk-cues / data-vk-states）不是正文：
+      // 先留住它们，等画布外壳搭好再挂回宿主，否则 innerHTML 会把它们一起清掉。
+      this._videoScripts = [...this.children].filter((n) => n.tagName === 'SCRIPT');
       // 出血层：只收旧写法（写 bleed 不带值）——它表示"铺满整帧的背景层"。
       // 新写法 bleed="x|y|all|none" 是通用负 margin，留在正文流里由 CSS 处理。
       const oldBleed = (n) => n.nodeType === 1 && n.hasAttribute('bleed') && !String(n.getAttribute('bleed') || '').trim();
@@ -43,13 +46,45 @@ export class VkPage extends VkElement {
       this._shell = this.querySelector('.vk-page');
       this._bd = this.querySelector('.vk-page-bd');
       this._bleed = this.querySelector('.vk-page-bleed');
+      for (const script of this._videoScripts) this.appendChild(script);
       fillSlot(this._bleed, bleed);
       fillSlot(this._bd, rest);
       this.dataset.vkPlace = '';
     }
 
     this._shell.dataset.align = align;
+    this._syncVideo();
     this._apply();
+  }
+
+  /**
+   * 视频维度属性先镜像成 data-*：契约读到的是「改了就变」，
+   * 作者样式也能用 [data-state] / [data-transition] 选中当前页。
+   */
+  _syncVideo() {
+    const set = (attr, key, fallback) => {
+      const raw = this.getAttribute(attr);
+      const value = raw == null || raw === '' ? fallback : raw;
+      if (value == null || value === '') delete this.dataset[key];
+      else this.dataset[key] = value;
+    };
+    set('cues', 'cues');
+    set('states', 'states');
+    set('transition', 'transition', 'cut');
+    set('focus-duration', 'focusDuration', '200');
+    set('focus-transition', 'focusTransition', 'on');
+    const duration = Number(this.getAttribute('focus-duration'));
+    this.style.setProperty('--vk-focus-ms', `${Number.isFinite(duration) && duration >= 0 ? duration : 200}ms`);
+  }
+
+  onAttr(name, value) {
+    if (['cues', 'states', 'transition', 'focus-duration', 'focus-transition'].includes(name)) {
+      this._syncVideo();
+      // 运行期的 cues / states 变化需要重新读轨道；告诉字幕控制器一次。
+      if (this.isConnected) {
+        this.dispatchEvent(new CustomEvent('vk:page-video', { bubbles: true, detail: { name, value } }));
+      }
+    }
   }
 
   connectedCallback() {

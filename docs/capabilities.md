@@ -76,6 +76,10 @@
 | 数据 · vk-tree 截断保护 | `vk-tree.limit` | `specimen/vk-tree.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 原子 · vk-img 比例与失败占位 | `vk-img.ratio`<br>`vk-img.fill` | `specimen/vk-img.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 | 数据 · vk-diff 两窗对照 | `vk-diff.variant`<br>`vk-diff.summary` | `specimen/vk-diff.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 视频 · 字幕驱动 cue | `vk-page.cues`<br>`vk-page.states` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
+| 视频 · 焦点跟随 data-focus | `vk-page.focus-duration`<br>`vk-page.focus-transition` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
+| 视频 · 同页多态 states | `vk-page.states` | `specimen/vk-page.html` | `tests/cues.test.mjs` | ✅ 绿 |
+| 视频 · 页间转场 transition | `vk-page.transition` | `specimen/vk-page.html` | `tests/cues.test.mjs`<br>`tests/capture.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -554,6 +558,34 @@
 - 契约断言：`vk-diff.variant` · `vk-diff.summary`
 - 标本页：`_site/specimen/vk-diff.html` + 契约宿主 `_site/specimens/vk-diff.html`
 - 测试：`tests/matrix-behavior.test.mjs` · 「vk-diff：split 生成两窗，summary=none 关掉计数」
+
+### ✅ 视频 · 字幕驱动 cue
+
+- 能力：<vk-page cues="…"> 读 cue.json / .srt；任意元件写 cue="3" 或 cue="0:06-0:09"，就在那段时间里出现 / 高亮（before / on / after）。轨道由 vk.seek(t) 求值，vk.play() / vk.pause() 供录屏。
+- 契约断言：`vk-page.cues` · `vk-page.states`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/cues.test.mjs` · 「字幕 cue：按时间点 seek 后目标可见、其它降墨」；`tests/cues.test.mjs` · 「字幕源：JSON / SRT 解析成同一条轨道，focus / state 进 cue」
+
+### ✅ 视频 · 焦点跟随 data-focus
+
+- 能力：cue 里的 focus="#id" 把目标标成 data-focus="on"，同层不含目标的兄弟标成 off 并降墨（filter 0.35）；默认 200ms 过渡，focus-duration="0" / focus-transition="off" 可关。
+- 契约断言：`vk-page.focus-duration` · `vk-page.focus-transition`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/cues.test.mjs` · 「焦点过渡：默认 200ms 完成，focus-transition="off" 可关」；`tests/cues.test.mjs` · 「字幕 cue：按时间点 seek 后目标可见、其它降墨」
+
+### ✅ 视频 · 同页多态 states
+
+- 能力：<vk-page states="a,b,c"> 声明状态；<script type="application/json" data-vk-states> 给每一态一组 DOM 属性 / 内联样式（显示隐藏、当前项、尺寸）。cue 的 state="b" 切态，切态有 200ms 过渡，离开时属性原样还回去。
+- 契约断言：`vk-page.states`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/cues.test.mjs` · 「同页多态：state 切换改 DOM 属性，几何跟着变」
+
+### ✅ 视频 · 页间转场 transition
+
+- 能力：<vk-page transition="cut|fade|push"> 定义这一页的入场；cut 立即（默认，视频最常用），fade 交叉淡入，push 从右侧推入。多页文档用 vk.goto(i) 切页，转场时长 220–260ms。
+- 契约断言：`vk-page.transition`
+- 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
+- 测试：`tests/cues.test.mjs` · 「页间转场：fade 有过渡，cut 立即切页」；`tests/capture.test.mjs` · 「--cues：按字幕时间点逐段截图并写清单」
 
 ## 怎么判红
 

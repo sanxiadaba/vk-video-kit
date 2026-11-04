@@ -1184,6 +1184,80 @@
           "name": "vk-diff：split 生成两窗，summary=none 关掉计数"
         }
       ]
+    },
+    {
+      "id": "cue-driven",
+      "name": "视频 · 字幕驱动 cue",
+      "what": "<vk-page cues=\"…\"> 读 cue.json / .srt；任意元件写 cue=\"3\" 或 cue=\"0:06-0:09\"，就在那段时间里出现 / 高亮（before / on / after）。轨道由 vk.seek(t) 求值，vk.play() / vk.pause() 供录屏。",
+      "contracts": [
+        "vk-page.cues",
+        "vk-page.states"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "字幕 cue：按时间点 seek 后目标可见、其它降墨"
+        },
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "字幕源：JSON / SRT 解析成同一条轨道，focus / state 进 cue"
+        }
+      ]
+    },
+    {
+      "id": "cue-focus",
+      "name": "视频 · 焦点跟随 data-focus",
+      "what": "cue 里的 focus=\"#id\" 把目标标成 data-focus=\"on\"，同层不含目标的兄弟标成 off 并降墨（filter 0.35）；默认 200ms 过渡，focus-duration=\"0\" / focus-transition=\"off\" 可关。",
+      "contracts": [
+        "vk-page.focus-duration",
+        "vk-page.focus-transition"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "焦点过渡：默认 200ms 完成，focus-transition=\"off\" 可关"
+        },
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "字幕 cue：按时间点 seek 后目标可见、其它降墨"
+        }
+      ]
+    },
+    {
+      "id": "page-states",
+      "name": "视频 · 同页多态 states",
+      "what": "<vk-page states=\"a,b,c\"> 声明状态；<script type=\"application/json\" data-vk-states> 给每一态一组 DOM 属性 / 内联样式（显示隐藏、当前项、尺寸）。cue 的 state=\"b\" 切态，切态有 200ms 过渡，离开时属性原样还回去。",
+      "contracts": [
+        "vk-page.states"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "同页多态：state 切换改 DOM 属性，几何跟着变"
+        }
+      ]
+    },
+    {
+      "id": "page-transition",
+      "name": "视频 · 页间转场 transition",
+      "what": "<vk-page transition=\"cut|fade|push\"> 定义这一页的入场；cut 立即（默认，视频最常用），fade 交叉淡入，push 从右侧推入。多页文档用 vk.goto(i) 切页，转场时长 220–260ms。",
+      "contracts": [
+        "vk-page.transition"
+      ],
+      "specimen": "vk-page",
+      "tests": [
+        {
+          "file": "tests/cues.test.mjs",
+          "name": "页间转场：fade 有过渡，cut 立即切页"
+        },
+        {
+          "file": "tests/capture.test.mjs",
+          "name": "--cues：按字幕时间点逐段截图并写清单"
+        }
+      ]
     }
   ]
 }

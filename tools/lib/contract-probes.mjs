@@ -12,6 +12,19 @@
 
 /** 7 个公开属性：显式取值 + 可断言的 effect。 */
 export const PROBES = {
+  'vk-page': {
+    // 这两个是路径 / 名字型内容，空字符串测不出"改了就变"：给真实可解析的探针值。
+    cues: {
+      values: ['__vk_cues__.json'],
+      effect: { on: 'vk-page', kind: 'attr', prop: 'data-cues', expectFromValue: 'raw' },
+      why: '字幕轨路径先镜像到宿主 data-cues；真正的轨道求值由 tests/cues.test.mjs 守。',
+    },
+    states: {
+      values: ['a,b'],
+      effect: { on: 'vk-page', kind: 'attr', prop: 'data-states', expectFromValue: 'raw' },
+      why: '同页多态的名字表先镜像到宿主 data-states；切态行为由 tests/cues.test.mjs 守。',
+    },
+  },
   'vk-compare': {
     ratio: {
       values: ['4 / 3'],

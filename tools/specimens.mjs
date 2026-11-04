@@ -332,6 +332,127 @@ ${THEME_COLS.map(themeColumn).join('\n')}
   return shell(`vk · 主题 · 三套调色板`, `<!-- vk:spec:${hash32(JSON.stringify(['theme', hash32(themePage.toString()), hash32(themeColumn.toString()), hash32(shell.toString()), hash32(RESET), hash32(THEME_CSS), hash32(JSON.stringify(SWATCHES)), JSON.stringify(THEME_COLS)]))} -->\n${THEME_CSS}\n${page}`);
 }
 
+/* --------------------------------------------------------- 视频维度示例页
+   这一页不是某个标签的独照，而是一条 3 条的示例字幕：
+   读 _site/specimen/vk-cues.srt，逐件出现、焦点跟随、切态、播放/暂停。
+   它同时是 `vk capture --cues` 的固定样本。 */
+const CUES_SRT = `1
+00:00:00,000 --> 00:00:03,000
+字符串不是值，是一块内存。
+focus=#s1
+state=a
+
+2
+00:00:03,000 --> 00:00:06,000
+每个字节都有自己的地址。
+focus=#s2
+state=a
+
+3
+00:00:06,000 --> 00:00:09,000
+相邻的字节，地址只差 1。
+focus=#s3
+state=b
+`;
+
+const CUES_CSS = `<style>
+.cue-demo{display:flex;flex-direction:column;justify-content:center;gap:20px;width:100%;height:100%}
+.cue-demo-hd{display:flex;justify-content:space-between;align-items:baseline;gap:24px;font-family:var(--vk-font-mono);font-size:48px;line-height:1.05;letter-spacing:0;color:var(--vk-ink-3)}
+.cue-demo-title{margin:0;font-family:var(--vk-font-sans);font-size:72px;line-height:1.08;font-weight:700;letter-spacing:-.02em;color:var(--vk-ink-1)}
+.cue-demo-grid{width:100%}
+.cue-demo-card{display:flex;flex-direction:column;gap:14px;min-height:0}
+.cue-demo-card .vk-label{align-self:flex-start}
+.cue-demo-foot{display:flex;align-items:center;justify-content:space-between;gap:40px}
+.cue-demo-foot vk-steps{flex:0 0 900px;width:900px}
+.cue-demo-sub{flex:1 1 auto;min-width:0;padding:16px 22px;border-left:6px solid var(--vk-focus);background:var(--vk-theme-surface-2);border-radius:0 10px 10px 0;font-family:var(--vk-font-sans);font-size:48px;line-height:1.22;color:var(--vk-ink-1)}
+.cue-demo-bar{display:flex;align-items:center;gap:14px;font-family:var(--vk-font-mono);font-size:48px;line-height:1.1;color:var(--vk-ink-3)}
+.cue-demo-bar button{appearance:none;border:1px solid var(--vk-theme-line-1);border-radius:999px;background:var(--vk-theme-surface-2);color:var(--vk-ink-1);font:inherit;padding:4px 22px;cursor:pointer}
+.cue-demo-bar button:hover{border-color:var(--vk-theme-accent);color:var(--vk-theme-accent)}
+.cue-demo-bar [data-vk-cue-time]{margin-left:auto;color:var(--vk-ink-3)}
+.cue-demo-more{display:flex;align-items:baseline;gap:24px;padding:18px 28px}
+.cue-demo-more strong{font-family:var(--vk-font-mono);font-size:40px;color:var(--vk-theme-accent)}
+.cue-demo-more span{font-family:var(--vk-font-sans);font-size:40px;color:var(--vk-ink-2)}
+</style>`;
+
+function cuesPage() {
+  const body = `<vk-page id="cue-demo" align="center" dur="9" cues="vk-cues.srt" states="a,b" transition="fade">
+  ${CUES_CSS}
+  <div class="cue-demo">
+    <div class="cue-demo-hd" data-focus-keep>
+      <span>视频维度 · 字幕驱动 · 3 条 / 9 秒</span>
+      <span>vk.play() · vk.seek(t)</span>
+    </div>
+    <h1 class="cue-demo-title" data-focus-keep>旁白讲到哪，画面就跟到哪。</h1>
+    <vk-grid cols="3" gap="sm" class="cue-demo-grid">
+      <vk-box id="s1" cue="1" border="hair" pad="md" surface="paper" class="cue-demo-card">
+        <vk-label variant="tag">01 · 出现</vk-label>
+        <vk-text size="body" weight="bold">字符串不是值，是一块内存。</vk-text>
+        <vk-text size="label" ink="secondary">同一句话，换一种存在方式。</vk-text>
+      </vk-box>
+      <vk-box id="s2" cue="2" border="hair" pad="md" surface="paper" class="cue-demo-card">
+        <vk-label variant="tag">02 · 有地址</vk-label>
+        <vk-text size="body" weight="bold">每个字节都有自己的地址。</vk-text>
+        <vk-text size="label" ink="secondary">0x404064 是 s[0] 的家。</vk-text>
+      </vk-box>
+      <vk-box id="s3" cue="3" border="hair" pad="md" surface="paper" class="cue-demo-card">
+        <vk-label variant="tag">03 · 相邻</vk-label>
+        <vk-text size="body" weight="bold">相邻的字节，地址只差 1。</vk-text>
+        <vk-text size="label" ink="secondary">s[i] 就是 *(s + i)。</vk-text>
+      </vk-box>
+    </vk-grid>
+    <vk-box hidden pad="md" border="hair" class="cue-demo-more" data-focus-keep>
+      <strong>state="b"</strong><span>第三句切到「相邻」这一态：这一块只在 b 态出现。</span>
+    </vk-box>
+    <div class="cue-demo-foot" data-focus-keep>
+      <vk-steps id="steps" current="1">
+        <li>字符串</li>
+        <li>地址</li>
+        <li>相邻</li>
+      </vk-steps>
+      <div class="cue-demo-sub"><span data-vk-cue-text aria-live="polite">（字幕未开始）</span></div>
+    </div>
+    <div class="cue-demo-bar" data-focus-keep>
+      <button type="button" data-play>▶ 播放</button>
+      <button type="button" data-pause>⏸ 暂停</button>
+      <button type="button" data-rewind>↺ 回到 0</button>
+      <button type="button" data-jump="6">跳到 0:06</button>
+      <span data-vk-cue-time>0:00 / 0:09</span>
+    </div>
+  </div>
+  <script type="application/json" data-vk-states>{
+    "a": {
+      ".cue-demo-more": { "attrs": { "hidden": true } },
+      "#steps": { "attrs": { "current": "1" } }
+    },
+    "b": {
+      ".cue-demo-more": { "attrs": { "hidden": false }, "style": { "opacity": "1" } },
+      "#steps": { "attrs": { "current": "3" } },
+      "#s1": { "style": { "opacity": "0.35" } },
+      "#s2": { "style": { "opacity": "0.35" } }
+    }
+  }</script>
+  <script>
+    (() => {
+      const bar = document.querySelector('.cue-demo-bar');
+      if (!bar) return;
+      const play = bar.querySelector('[data-play]');
+      const pause = bar.querySelector('[data-pause]');
+      const rewind = bar.querySelector('[data-rewind]');
+      play?.addEventListener('click', () => window.vk?.play?.());
+      pause?.addEventListener('click', () => window.vk?.pause?.());
+      rewind?.addEventListener('click', () => window.vk?.seek?.(0));
+      bar.querySelector('[data-jump]')?.addEventListener('click', (e) => {
+        window.vk?.seek?.(Number(e.currentTarget.dataset.jump) || 0);
+      });
+    })();
+  </script>
+</vk-page>`;
+  return shell(
+    'vk · 视频维度 · 字幕驱动',
+    `<!-- vk:spec:${hash32(JSON.stringify(['cues', hash32(cuesPage.toString()), hash32(shell.toString()), hash32(RESET), hash32(CUES_CSS), hash32(CUES_SRT)]))} -->\n${body}`
+  );
+}
+
 /** 主帧最多展示的状态数：1 个状态示例 + 至多 2 个外观预设，合计 ≤3。 */
 const MAX_STATES = 3;
 
@@ -438,7 +559,7 @@ function indexPage(n) {
         <vk-text class="spec-card-name" size="label">${ORDER.length} 个组件</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${String(n).padStart(2, '0')} / ${String(PAGES).padStart(2, '0')}</vk-text>
       </vk-stack>
-      <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 3 套 →</vk-text></a>${prev}${next}</vk-stack>
+      <vk-stack direction="row" gap="md" align="baseline"><a href="specimen/vk-cues.html"><vk-text size="label" mono ink="muted" data-meta>视频 · 字幕驱动 →</vk-text></a><a href="specimen/theme.html"><vk-text size="label" mono ink="muted" data-meta>主题 3 套 →</vk-text></a>${prev}${next}</vk-stack>
     </vk-stack>
     <vk-box border="strong"></vk-box>
 ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
@@ -451,6 +572,9 @@ const files = new Map();
 ORDER.forEach((tag, i) => files.set(`${SITE}/specimen/${tag}.html`, specPage(tag, i + 1)));
 // 主题页：同一块内容并排展示三套主题（索引页链到它，不是孤儿页）。
 files.set(`${SITE}/specimen/theme.html`, themePage());
+// 视频维度示例页：3 条字幕 + 可播放的字幕轨。索引页链到它，也是 vk capture --cues 的样本。
+files.set(`${SITE}/specimen/vk-cues.html`, cuesPage());
+files.set(`${SITE}/specimen/vk-cues.srt`, CUES_SRT);
 // 旧名页：一页一句"已合并到谁"，并链回新标签；新标签页底部也链回来（不是孤儿页）。
 for (const alias of ALIAS_ORDER) files.set(`${SITE}/specimen/${alias}.html`, aliasPage(alias));
 for (let n = 1; n <= PAGES; n++) files.set(`${SITE}/${pageHref(n)}`, indexPage(n));
@@ -487,6 +611,8 @@ let stale = 0;
 // 14.0 会一路删标签；生成器只写不删，残留的 vk-keys.html 会让 links 门禁
 // 报"不可达"，还会让索引链接到空页。这里按 registry 的现状清一遍。
 const live = new Set([...TAG_NAMES, ...ALIAS_ORDER].map((t) => `${t}.html`));
+// 视频维度示例页不是标签独照，但同样由本生成器维护；不能当成"已删除标签"清掉。
+live.add('vk-cues.html');
 for (const dir of [`${SITE}/specimen`, `${SITE}/specimens`]) {
   if (!fs.existsSync(dir)) continue;
   for (const name of fs.readdirSync(dir)) {

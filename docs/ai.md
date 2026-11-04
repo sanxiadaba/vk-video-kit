@@ -143,13 +143,13 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L1 原子 · 屏幕上真实存在的单个物件
 
 - **`vk-box`** · 面 — 一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。
-  - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `ring` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `ring` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-panel`** · 分区 — 一块内容分区：底色、可选标题带、内距、圆角；chrome="dots" 会长出窗头，于是它也能当窗用。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。
-  - 属性：`tone` · `variant` · `title` · `chrome` · `fill` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `surface`
+  - 属性：`tone` · `variant` · `title` · `chrome` · `fill` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `surface`
   - 例：`<vk-panel variant="plain" title="白纸">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽；可带一个语义图标（文字与图标共存）。
-  - 属性：`size` · `weight` · `mono` · `align` · `format` · `fit` · `fit-min` · `fit-max` · `icon` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
+  - 属性：`size` · `weight` · `mono` · `align` · `format` · `fit` · `fit-min` · `fit-max` · `icon` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节：hello.c 经 gcc -E 把 stdio.h 抄进来。</vk-text>`
 - **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上（原 vk-caption）。
   - 属性：`variant` · `tone` · `ink` · `index` · `total` · `section` · `icon` · `for` · `side` · `gap-px`
@@ -164,19 +164,19 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L2 排布 · 只决定在哪、多大
 
 - **`vk-stack`** · 竖排 — 纵向节奏。只给间距和对齐，不画任何东西。默认等距；写 weights="1 2 1" 时按权重分剩余高度（ratio 是它的别名）。
-  - 属性：`gap` · `direction` · `align` · `justify` · `wrap` · `weights` · `ratio` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`gap` · `direction` · `align` · `justify` · `wrap` · `weights` · `ratio` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 例：`<vk-stack gap="md" align="center" wrap>`
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
-  - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`
+  - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
 - **`vk-layer`** · 叠层 — 叠放容器：第一个子元素铺满当底，其余按顺序绝对定位叠在上面；vk-text 放在最上面时默认加纸色描边（readable="off" 关），surface 给这一层上五档底色。
   - 属性：`surface` · `tone` · `fill` · `readable` · `grow`
   - 例：`<vk-layer surface="wash">`
 - **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone="左,右" 可给两侧各上一种语义淡底。
-  - 属性：`split` · `axis` · `axis-width` · `symbol` · `size` · `gap` · `direction` · `tone` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`split` · `axis` · `axis-width` · `symbol` · `size` · `gap` · `direction` · `tone` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 例：`<vk-pair split="50" gap="96" axis="none" symbol="→" size="96">`
 - **`vk-flow`** · 流程 — 多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），箭头按容器高 × arrow-scale 缩放，容器窄于 1100px 自动竖排。
-  - 属性：`gap` · `arrow` · `arrow-scale` · `arrow-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`gap` · `arrow` · `arrow-scale` · `arrow-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 例：`<vk-flow arrow arrow-label="gcc" gap="48">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
@@ -186,70 +186,70 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L3 器械 · 渲染一种编程数据的形状
 
 - **`vk-list`** · 列表 — 列表。要点 / 清单 / 定义；条目写成 <li>。步骤用 vk-steps。
-  - 属性：`rule` · `bare` · `gap` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant`
+  - 属性：`rule` · `bare` · `gap` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `variant`
   - 子节点：条目写成 `<li>`
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="md">`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮；reveal="line" 逐行浮现。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `size` · `fit` · `surface` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `size` · `fit` · `surface` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `long` · `numbers`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" mass="hero">`
 - **`vk-term`** · 终端 — 终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。
-  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `title-show` · `mass` · `size` · `fit` · `surface` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`src` · `lines` · `title` · `prompt` · `marks` · `lang` · `current` · `reveal` · `chrome` · `title-show` · `mass` · `size` · `fit` · `surface` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-term title="hello · gcc 四步" prompt="$" lang="sh" reveal="line" at="0.1" stagger="0.3" surface="dark" current="6" src="../assets/hello/build/steps.txt">`
 - **`vk-diff`** · 对比 — 对比：上下对照或左右两窗并排，词级标记 + 一句改了几行。
-  - 属性：`mass` · `lang` · `src` · `lines` · `file` · `chrome` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `variant` · `numbers` · `summary`
+  - 属性：`mass` · `lang` · `src` · `lines` · `file` · `chrome` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `variant` · `numbers` · `summary`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-diff lang="c" file="bounds.c" src="../code/real.diff">`
 - **`vk-table`** · 表格 — 表格：账本 / 对照 / 规格三种形态，表头与数字列对齐。行可用 <tr state="mark"> 标出重点。
-  - 属性：`variant` · `stripe` · `mono` · `mass` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`variant` · `stripe` · `mono` · `mass` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：内容包在 `<table>` 里
   - 状态：`state="current|mark|ok|warn|err"`（row / cell）
   - 例：`<vk-table variant="ledger">`
 - **`vk-math`** · 公式 — 公式。src 指向真实 .tex；构建期用 KaTeX 渲染成静态 HTML，运行时零依赖。
-  - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`src` · `display` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
 - **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。zoom="mark" 在下方生成一块差异放大（默认 ×2），也可以写 x1,y1,x2,y2 或只写倍数。
-  - 属性：`a` · `b` · `alt` · `variant` · `ratio` · `split` · `fill` · `position` · `labels` · `label-position` · `mark` · `mark-label` · `zoom` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`a` · `b` · `alt` · `variant` · `ratio` · `split` · `fill` · `position` · `labels` · `label-position` · `mark` · `mark-label` · `zoom` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
     labels="gcc -O0 · 13 行|gcc -O2 · 10 行"
     mark="58,73,93,84" mark-label="少 3 行">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
-  - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-tree title="hello" current="build/hello.exe" depth="4">hello.c build/ obj/ hello.o hello.i hello.s * hello.exe + Makefile</vk-tree>`
 - **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，act="focus" 标出当前格，超过 cols 自动换行。
-  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `mass` · `current` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `mass` · `current` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-cells cols="6" addr="0x404064" offsets>`
 - **`vk-bytes`** · 字节 — 字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，current 标出一段字节。
-  - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `current` · `mass` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `word` · `endian`
+  - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `current` · `mass` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `word` · `endian`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-bytes src="../code/hello.bin" addr="0x404064" offset="0" length="48" current="1-6">`
 - **`vk-steps`** · 步骤 — 步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）；done="none" 连前面也不打勾，mark="N" 只强调第 N 步。
-  - 属性：`current` · `done` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `direction` · `connector`
+  - 属性：`current` · `done` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `direction` · `connector`
   - 子节点：条目写成 `<li>`
   - 例：`<vk-steps current="2">`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
-  - 属性：`mass` · `value` · `index` · `group` · `sign` · `label` · `tone` · `bit-width` · `bytes` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`mass` · `value` · `index` · `group` · `sign` · `label` · `tone` · `bit-width` · `bytes` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bits value="1 01111111 10000000000000000000000" bit-width="32" sign index="sparse">`
 - **`vk-bars`** · 条 — 一组横向条：标签、数值条、单位；ratio-to 指向基准行（0 起）时，每条旁直接标出相对它的倍率（×500）。子节点写成 <li value label>。
-  - 属性：`max` · `scale` · `ratio-to` · `unit` · `format` · `mass` · `tone` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`max` · `scale` · `ratio-to` · `unit` · `format` · `mass` · `tone` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bars max="52980" scale="log" unit="字节">`
 - **`vk-asm`** · 汇编 — 汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `reveal` · `focus` · `addr` · `title` · `bytes` · `address` · `mass` · `long` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `reveal` · `focus` · `addr` · `title` · `bytes` · `address` · `mass` · `long` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-asm title="hello.s" lines="2-9" current="6" bytes order="1,2,3,4,5,6,7,8" long="wrap"
         fence-after="4" fence-label="编译器屏障">`
 - **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（title 200 默认 / hero 280 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。
-  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `current` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `current` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-timeline start="1972" end="2011" title="C 语言标准" size="subhead" mass="compact">`
@@ -269,7 +269,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 ### L5 页面 · 一整张 1920×1080 的画布
 
 - **`vk-page`** · 页面 — 坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。theme 换整套调色板（只换颜色，不动尺寸）。
-  - 属性：`align` · `theme` · `dur` · `beat` · `poster`
+  - 属性：`align` · `theme` · `dur` · `beat` · `poster` · `cues` · `states` · `transition` · `focus-duration` · `focus-transition`
   - 例：`<vk-page align="center">`
 
 ### 旧名（已合并，仍可用）

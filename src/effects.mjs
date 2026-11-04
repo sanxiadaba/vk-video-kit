@@ -140,6 +140,13 @@ export const EFFECTS = {
     align: { on: 'vk-page', kind: 'style', prop: 'justify-content' },
     // 主题镜像到 data-theme：契约读得到"改了就变"，颜色本身由 tests/theme.test.mjs 量。
     theme: { on: 'vk-page', kind: 'attr', prop: 'data-theme', expectFromValue: 'raw' },
+    /* 视频维度：字幕轨 / 同页多态 / 页间转场 / 焦点过渡。
+       都在宿主上留一份 data-* 镜像；真正的行为由 tests/cues.test.mjs 逐条量。 */
+    cues: { on: 'vk-page', kind: 'attr', prop: 'data-cues', expectFromValue: 'raw' },
+    states: { on: 'vk-page', kind: 'attr', prop: 'data-states', expectFromValue: 'raw' },
+    transition: { on: 'vk-page', kind: 'attr', prop: 'data-transition', expectFromValue: 'raw' },
+    'focus-duration': { on: 'vk-page', kind: 'attr', prop: 'data-focus-duration', expectFromValue: 'raw' },
+    'focus-transition': { on: 'vk-page', kind: 'attr', prop: 'data-focus-transition', expectFromValue: 'raw' },
   },
 
   'vk-text': {

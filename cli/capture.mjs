@@ -23,6 +23,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawn } from 'node:child_process';
+import { parseCueSource } from '../src/shared/cues.mjs';
 
 const args = process.argv.slice(2);
 const flag = (name, fallback = undefined) => {
@@ -50,7 +51,10 @@ const flagAll = (name) => {
 const runCmd = flag('run');
 const stepCmds = flagAll('step');
 const shot = flag('shot');
+const cuesPage = flag('cues');
+const cueFile = flag('cue');
 const out = flag('out');
+const outDir = flag('out-dir', out);
 const cwd = path.resolve(String(flag('cwd', process.cwd())));
 const timeout = Number(flag('timeout', 30000));
 const shell = String(flag('shell', process.platform === 'win32' ? 'powershell' : 'bash'));
@@ -95,12 +99,23 @@ if (runCmd && stepCmds.length) {
   console.error('capture: --run 与 --step 只能二选一（--step 可重复，按顺序执行）');
   process.exit(2);
 }
-if ((!runCmd && !shot && !stepCmds.length) || !out) {
+const modes = [!!runCmd, stepCmds.length > 0, !!shot, !!cuesPage].filter(Boolean).length;
+if (modes > 1) {
+  console.error('capture: --run / --step / --shot / --cues 只能四选一');
+  process.exit(2);
+}
+if (!cuesPage && !out) {
+  console.error('capture: 这个模式需要 --out <文件>');
+  process.exit(2);
+}
+if ((!runCmd && !shot && !stepCmds.length && !cuesPage) || (!out && !outDir)) {
   console.error(`用法：
   vk capture --run "<命令>" --out <文件.txt>   [--cwd .] [--timeout 30000] [--shell powershell|bash] [--prompt "$"] [--no-prompt] [--skip-until "<行首文字>"]
   vk capture --step "<命令>" [--step "<命令>" …] --out <文件.txt>
-                                               依次执行每一步，写成 "$ 命令" + 该步输出（--step 与 --run 互斥）
+                                                依次执行每一步，写成 "$ 命令" + 该步输出（--step 与 --run 互斥）
   vk capture --shot <页面|URL> --out <文件.png> [--width 1920] [--height 1080]
+  vk capture --cues <页面|URL> --out-dir <目录> [--cue <cue.json|字幕.srt>] [--width 1920] [--height 1080]
+                                                按字幕时间点逐段 seek 并截图；--cue 可覆盖页面自带的轨道
   vk capture --verify <文件>                   校验产物与记录的命令结果是否一致`);
   process.exit(2);
 }
@@ -242,6 +257,100 @@ async function captureShot() {
   if (!quiet) console.log(`capture: ${out}（${width}×${height} @2x）`);
 }
 
+async function captureCues() {
+  if (typeof cuesPage !== 'string') {
+    console.error('capture: --cues 后面要跟页面路径或 URL');
+    process.exit(2);
+  }
+  if (typeof outDir !== 'string') {
+    console.error('capture: --cues 需要 --out-dir <目录>');
+    process.exit(2);
+  }
+
+  const pageArg = String(cuesPage);
+  const isUrl = /^https?:\/\//i.test(pageArg);
+  let target = pageArg;
+  let server = null;
+  if (!isUrl) {
+    const abs = path.resolve(pageArg);
+    const parts = abs.split(path.sep);
+    const siteAt = parts.lastIndexOf('_site');
+    const root = siteAt >= 0 ? parts.slice(0, siteAt + 1).join(path.sep) : path.dirname(abs);
+    const rel = siteAt >= 0 ? parts.slice(siteAt + 1).join('/') : path.basename(abs);
+    const { startServer } = await import('./serve.mjs');
+    const started = await startServer({ port: 0, root, transform: false });
+    server = started;
+    target = `${started.base}/${rel}`;
+  }
+
+  let track = null;
+  if (typeof cueFile === 'string') {
+    const text = await fs.readFile(path.resolve(cueFile), 'utf8');
+    track = parseCueSource(text, cueFile.toLowerCase().endsWith('.json') ? 'json' : '');
+  }
+
+  const { chromium } = await import('playwright-core');
+  const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+  const tab = await browser.newPage({ viewport: { width, height }, deviceScaleFactor: 2 });
+  let exitCode = 0;
+  try {
+    const resp = await tab.goto(target, { waitUntil: 'load', timeout: 30000 });
+    if (!resp || !resp.ok()) throw new Error(`打开 ${target} 失败：HTTP ${resp?.status()}`);
+    await tab.evaluate(() => window.vk?.ready?.());
+
+    if (!track) {
+      track = await tab.evaluate(() => window.vk?.cues?.() || []);
+    }
+    if (!track.length) throw new Error('这页没有字幕轨：给 <vk-page cues="…"> 或 --cue 指定一份 cue.json / .srt');
+
+    const dir = path.resolve(String(outDir));
+    await fs.mkdir(dir, { recursive: true });
+    const shots = [];
+    for (const [i, cue] of track.entries()) {
+      // 取每条字幕的中点；至少留 0.05s，避免把 0 秒边界当成"还没开始"。
+      const t = cue.start + Math.min(0.4, Math.max(0.05, (cue.end - cue.start) / 2));
+      await tab.evaluate((time) => window.vk.seek(time), t);
+      // 焦点 / 切态都有 200ms 过渡；录屏截图等它落定。
+      await tab.waitForTimeout(240);
+      const file = `cue-${String(i + 1).padStart(2, '0')}.png`;
+      const abs = path.join(dir, file);
+      await tab.screenshot({ path: abs, type: 'png' });
+      shots.push({
+        index: i + 1,
+        start: cue.start,
+        end: cue.end,
+        t: +t.toFixed(3),
+        text: cue.text || '',
+        ...(cue.focus ? { focus: cue.focus } : {}),
+        ...(cue.state ? { state: cue.state } : {}),
+        file,
+      });
+      if (!quiet) console.log(`capture: ${abs}（${cue.start.toFixed(2)}–${cue.end.toFixed(2)}s · t=${t.toFixed(2)}s）`);
+    }
+    const manifest = {
+      kind: 'cues',
+      page: pageArg,
+      width,
+      height,
+      scale: 2,
+      at: new Date().toISOString(),
+      machine,
+      cues: shots,
+    };
+    await fs.writeFile(path.join(dir, 'cues.json'), JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    if (!quiet) console.log(`capture: ${path.join(dir, 'cues.json')}（${shots.length} 段）`);
+  } catch (e) {
+    exitCode = 1;
+    console.error(`capture: ${e.message}`);
+  } finally {
+    await browser.close().catch(() => {});
+    if (server) await server.close().catch(() => {});
+  }
+  if (exitCode) process.exitCode = exitCode;
+}
+
 if (stepCmds.length) await captureSteps();
 else if (runCmd) await captureRun();
+else if (cuesPage) await captureCues();
 else await captureShot();
+

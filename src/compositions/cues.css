@@ -1,0 +1,65 @@
+/* ============================================================================
+   视频维度 · 统一状态层
+   ----------------------------------------------------------------------------
+   这一层只有三组选择器，对应三个公开属性：
+     data-focus          焦点跟随（目标 on，同层其它兄弟 off → 降墨）
+     data-vk-cue-state   cue 驱动（before / on / after）
+     data-state          同页多态（属性组由 <script data-vk-states> 给）
+   组件不各写一套：所有元件都吃同一套 filter / opacity / transition。
+   ========================================================================== */
+
+/* 焦点跟随：默认 200ms；focus-duration="0" 或 focus-transition="off" 关掉过渡。 */
+[data-focus='off'] {
+  filter: saturate(0.45) opacity(0.35);
+  transition: filter var(--vk-focus-ms, 200ms) ease;
+}
+[data-focus='on'] {
+  filter: none;
+  transition: filter var(--vk-focus-ms, 200ms) ease;
+}
+[data-focus-transition='none'] [data-focus],
+[data-focus-transition='off'] [data-focus],
+[data-focus-duration='0'] [data-focus] {
+  transition: none !important;
+}
+
+/* 字幕驱动：这一条开始前不显示、正在讲时全亮、讲完后退到 55% 但仍留着。 */
+[data-vk-cue-state='before'] {
+  visibility: hidden;
+  pointer-events: none;
+}
+[data-vk-cue-state='after'] {
+  opacity: 0.55;
+  transition: opacity 200ms ease;
+}
+[data-vk-cue-state='on'] {
+  opacity: 1;
+  transition: opacity 200ms ease;
+}
+
+/* 同页多态：只有真的改了内联样式的元素才挂 transition，避免整页都是动画层。 */
+[data-vk-state] {
+  transition:
+    opacity 200ms ease,
+    transform 200ms ease,
+    width 200ms ease,
+    height 200ms ease,
+    background-color 200ms ease,
+    color 200ms ease;
+}
+
+/* 页间转场：隐藏页必须真的消失（自定义元素的 display 会压过浏览器的 [hidden]）。 */
+vk-page[hidden],
+.vk-page[hidden] {
+  display: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-focus='off'],
+  [data-focus='on'],
+  [data-vk-cue-state='on'],
+  [data-vk-cue-state='after'],
+  [data-vk-state] {
+    transition: none !important;
+  }
+}
