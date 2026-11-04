@@ -87,7 +87,7 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
         }
         process.exit(0);
       });
-    }, 150);
+    }, 400);
   };
   let highlighterPromise = null;
   const highlighter = () => (highlighterPromise ||= createVkHighlighter());
@@ -199,11 +199,32 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
     }
   });
 
-  const listen = () =>
-    new Promise((resolve, reject) => {
-      server.once('error', reject);
-      server.listen(port, '127.0.0.1', resolve);
-    });
+  // 自动重启时旧进程刚 close，端口在 Windows 上要过几十毫秒才真的释放；
+  // 新进程若此刻直接 listen 就会 EADDRINUSE 然后退出——服务就"停住"了。
+  // 所以绑定失败要退避重试，而不是一次就放弃。
+  const listen = async (tries = 40) => {
+    for (let i = 0; ; i++) {
+      try {
+        await new Promise((resolve, reject) => {
+          const onErr = (e) => {
+            server.off('listening', onOk);
+            reject(e);
+          };
+          const onOk = () => {
+            server.off('error', onErr);
+            resolve();
+          };
+          server.once('error', onErr);
+          server.once('listening', onOk);
+          server.listen(port, '127.0.0.1');
+        });
+        return;
+      } catch (e) {
+        if (e.code !== 'EADDRINUSE' || i >= tries) throw e;
+        await new Promise((r) => setTimeout(r, 150 * Math.min(i + 1, 8)));
+      }
+    }
+  };
   await listen();
   // Chromium 拒绝连接一批"不安全端口"（6000、6665-6669、10080 …）。
   // port=0 时系统可能正好分到它们，页面直接 ERR_UNSAFE_PORT ——
