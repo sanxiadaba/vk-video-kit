@@ -25,6 +25,9 @@
 export const LIMITS = {
   /** 字号地板（caption：标签 / 单位 / 刻度 / 出处）。手机横屏 0.406× 后约 19.5px。 */
   fontFloor: 48,
+  /** tag 档（vk-label variant="tag" / vk-flow 的步骤标签）：caption × 0.75。
+   *  它是「块的名字」，比正文小一档，但不是正文，也不该被正文地板判红。 */
+  fontTag: 36,
   /** 正文：一整句中文低于它就算排错（body 档，22.7px） */
   fontBody: 56,
   /** 等宽数据（代码 / 表格数字 / 地址）的最低字号 */

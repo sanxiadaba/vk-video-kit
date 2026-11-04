@@ -70,8 +70,12 @@ const ATTR_META = {
   radius: { label: '圆角', group: 'appearance' },
   border: { label: '描边', group: 'appearance' },
   fit: { label: '填充', group: 'appearance' },
-  'fit-min': { label: '最小字号（像素）', group: 'appearance' },
+  'fit-min': { label: '最小字号（像素；fit 的硬地板）', group: 'appearance' },
   'fit-max': { label: '最大字号（像素）', group: 'appearance' },
+  'arrow-scale': { label: '箭头缩放（容器高的比例）', group: 'appearance' },
+  'arrow-label': { label: '箭头上挂的词', group: 'appearance' },
+  'tone-a': { label: '左块色调', group: 'appearance' },
+  'tone-b': { label: '右块色调', group: 'appearance' },
   split: { label: '占比（%）', group: 'layout' },
   axis: { label: '中轴', group: 'appearance' },
   'axis-width': { label: '轴宽（像素）', group: 'appearance' },
@@ -185,7 +189,8 @@ const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   // plain 默认无框无底：要框必须显式写 border。
   'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none' },
-  'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary', 'fit-min': 12, 'fit-max': 240 },
+  // fit-min 是硬地板：容器再窄，字号也不再掉到它以下（默认 40，见 vk-text 的 fit）。
+  'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary', 'fit-min': 40, 'fit-max': 240 },
   'vk-label': { variant: 'kicker', ink: 'muted' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
@@ -194,8 +199,9 @@ const DEFAULTS = {
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
   'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', 'symbol-size': 48, gap: 24, orientation: 'horizontal' },
-  // 步距默认 48：三块并排时刚好是「一块小留白」，不是三等分的缝。箭头默认不画。
-  'vk-flow': { gap: 48, arrow: 'false' },
+  // 步距默认 48：三块并排时刚好是「一块小留白」，不是三等分的缝。
+  // 箭头默认画（arrow="false" 关掉）；尺寸默认取容器高 × 0.12，夹在 28–64。
+  'vk-flow': { gap: 48, arrow: 'true', 'arrow-scale': 0.12 },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
   'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
@@ -215,6 +221,8 @@ const DEFAULTS = {
     size: 'body',
     emphasis: 'soft',
     side: 'auto',
+    // arrow 的箭头也按容器高缩放；0.12 是默认比例（夹在 28–64）。
+    'arrow-scale': 0.12,
   },
   // 注解原语：默认是"像书页边注"的那一种，不是气泡。
   'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br' },
@@ -304,8 +312,9 @@ export const TAGS = {
       // 单行塞满：字号自动缩放到「这一行文本恰好填满容器宽」，只给单行等宽文本。
       // 不写 fit 时行为与旧版逐像素一致（字号仍只由 size 档决定）。
       'fit': oneOf('width'),
-      // fit 的边界；只在 fit="width" 时生效。fit-max 优先于 fit-min（两个都写反时以 max 为准）。
-      'fit-min': { ...num({ min: 8, max: 240, step: 1 }), when: { fit: ['width'] } },
+      // fit 的边界；只在 fit="width" 时生效。fit-min 是硬地板：容器再窄，
+      // 字号也不再往下缩，改为给宿主 data-fit-overflow 并提醒（默认 40）。
+      'fit-min': { ...num({ min: 8, max: 240, step: 1 }), default: 40, when: { fit: ['width'] } },
       'fit-max': { ...num({ min: 8, max: 400, step: 1 }), when: { fit: ['width'] } },
     },
   },
@@ -319,7 +328,9 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      'variant': oneOf('kicker', 'chip', 'badge'),
+      // tag 是「流程步骤 / 块名」专用的一档：36px（caption 的 0.75）、.08em 字距、
+      // 只上色不加底不加框。kicker / chip / badge 仍是页眉、状态、序号。
+      'variant': oneOf('kicker', 'chip', 'badge', 'tag'),
       'tone': oneOf('info', 'focus', 'ok', 'err', 'warn'),
       'ink': oneOf('primary', 'secondary', 'tertiary', 'muted'),
       // 工序进度：index/total 是在整条流程里的位置，不是页号；section 是工序名。
@@ -451,7 +462,7 @@ export const TAGS = {
   'vk-pair': {
     name: '并置',
     layer: 'layout',
-    summary: '两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。',
+    summary: '两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone-a / tone-b 可给两侧各上一种语义淡底。',
     attrs: {
       // 左块占内容区的百分比；右块自动吃掉剩下的。上下并置时是上块占比。
       'split': num({ min: 5, max: 95, step: 1 }),
@@ -464,6 +475,9 @@ export const TAGS = {
       // 块与轴之间的留白（像素）；沟槽总宽 = 2 × gap。
       'gap': num({ min: 8, max: 200, step: 1 }),
       'orientation': oneOf('horizontal', 'vertical'),
+      // 左右分色：只染「面」（wash 底 + 1px 同色系 tint 描边）；不写就不改现状（透明）。
+      'tone-a': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
+      'tone-b': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
     },
   },
   /**
@@ -478,12 +492,17 @@ export const TAGS = {
     name: '流程',
     layer: 'layout',
     summary:
-      '多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），容器窄于 1100px 自动竖排。',
+      '多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），箭头按容器高 × arrow-scale 缩放，容器窄于 1100px 自动竖排。',
     attrs: {
       // 步距（像素）：既是块距，也是箭头占的轨道宽/高。
       'gap': num({ min: 8, max: 200, step: 1 }),
-      // 箭头默认不画：写 arrow / arrow="true" 才画；arrow="false" 关掉。
+      // 箭头默认画：不写 arrow 也画；arrow="false" 关掉。
       'arrow': bool(),
+      // 箭头尺寸 = 容器高 × arrow-scale，夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。
+      'arrow-scale': num({ min: 0.02, max: 0.6, step: 0.01 }),
+      // 中轴词：写在中间那根箭头上；写了它，箭头轨道自动抬到至少 200px
+      // （否则 36px 的词的纸色底会把 48px 的轨道吃光，箭头看不见）。
+      'arrow-label': text(),
     },
   },
   'vk-canvas': {
@@ -964,6 +983,10 @@ export const TAGS = {
       'emphasis': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
       'tone': { ...oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'), default: 'neutral' },
       'label': text(),
+      // arrow：箭头尺寸 = 所在容器高 × arrow-scale（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
+      'arrow-scale': num({ min: 0.02, max: 0.6, step: 0.01 }),
+      // arrow 的中轴词；写了它优先于 label（旧页写 label 仍有效）。
+      'arrow-label': text(),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
       // note 形态的显式落点：side 指定气泡在哪一侧，x/y 直接给覆盖层坐标（同旧 vk-pin）。

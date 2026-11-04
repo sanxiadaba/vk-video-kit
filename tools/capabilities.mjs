@@ -23,6 +23,7 @@ import { TAGS, isContent } from '../src/registry.mjs';
 import { EFFECTS } from '../src/effects.mjs';
 import { PROBES } from './lib/contract-probes.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
+import { STYLE_RULES } from '../src/runtime/style-preset.mjs';
 import { writeIfChanged } from './lib/io.mjs';
 
 const SRC = 'docs/capabilities.json';
@@ -30,6 +31,11 @@ const MD = 'docs/capabilities.md';
 
 /** 契约里这条断言会不会真的执行？（跳过类属性不算） */
 export function checkContract(expr) {
+  // preset 规则不是标签属性：写成 style:<ruleId>，去 STYLE_RULES 里核对。
+  if (expr.startsWith('style:')) {
+    const id = expr.slice('style:'.length);
+    return STYLE_RULES.some((r) => r.id === id) ? null : `能力矩阵里没有这条 preset 规则：${id}`;
+  }
   const dot = expr.lastIndexOf('.');
   if (dot < 1) return `契约断言要写成 标签.属性，收到 ${expr}`;
   const tag = expr.slice(0, dot);
@@ -140,8 +146,7 @@ export function renderMarkdown(data, results) {
 记账方式：**能力**是用户能看见的一件事（“有一档淡底”“深色块也能用”），
 不是标签。标签会删会改；能力不能悄悄消失。
 
-| 能力 | 契约断言 | 标本页 | 测试 | 状态 |
-|---|---|---|---|---|
+| 能力 | 契约断言 | 标本页 | 测试 | 状态 ||---|---|---|---|---|
 ${rows.join('\n')}
 
 ## 明细

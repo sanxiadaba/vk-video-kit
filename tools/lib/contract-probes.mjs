@@ -60,6 +60,11 @@ export const PROBES = {
       effect: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
       why: 'neutral 是默认墨色（不写 tone 时），只断五个语义色。',
     },
+    'arrow-label': {
+      values: ['gcc'],
+      effect: { on: '.vk-edge-label', kind: 'text' },
+      why: 'arrow-label 优先于旧 label：换词，标签文本必须跟着换。',
+    },
   },
   'vk-loupe': {
     point: {
@@ -80,6 +85,23 @@ export const PROBES = {
       values: ['5'],
       effect: { on: '.vk-label-t', kind: 'text' },
       why: 'total 单独写没有分子；registry 的 when 会先放 index="3"，于是文本变成「工序 3/5」。',
+    },
+    variant: {
+      values: ['tag'],
+      effect: { on: 'vk-label', kind: 'style', prop: 'font-size', expect: '36px' },
+      why: 'tag 是新增的一档（caption × 0.75 = 36）；kicker / chip / badge 的形态由 tests/label.test.mjs 守。',
+    },
+  },
+  'vk-flow': {
+    arrow: {
+      values: ['false'],
+      effect: { on: 'vk-flow', kind: 'attr', prop: 'data-arrow', expect: 'false' },
+      why: 'arrow 现在默认开，契约探针改成显式关：只有 arrow="false" 才该变成 false。',
+    },
+    'arrow-label': {
+      values: ['gcc'],
+      effect: { on: '.vk-flow-arrow-label .vk-label-t', kind: 'text' },
+      why: '中轴词是真实文字：换词，标签里的文本必须跟着换。',
     },
   },
   'vk-stat': {
@@ -319,8 +341,8 @@ export const PROBES = {
     },
     'fit-max': {
       values: ['24', '32'],
-      effect: { on: 'vk-text', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
-      why: '长句在 1120 里的自然 fit 约 37.3，所以 24 / 32 都会把字号压到恰好等于边界值。',
+      effect: { on: 'vk-text', kind: 'attr', prop: 'data-fit-max', expectFromValue: 'raw' },
+      why: 'fit-min 现在是硬地板（默认 40），24 / 32 会被地板挡住；契约只断"上限被读到"，字号由 batch-primitives 的 780px 用例守（那里 fit-max=40 > 地板）。',
     },
     measure: {
       values: ['16', 'none'],

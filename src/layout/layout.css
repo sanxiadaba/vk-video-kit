@@ -158,6 +158,30 @@ vk-pair {
   justify-content: center;
 }
 
+/* 左右分色：只染「面」——wash 底 + 1px 同色系 tint 描边。
+   不写 tone-a / tone-b 时没有 data-tone，下面这些规则一条都不生效，
+   旧页仍是透明、无框、无内距。 */
+.vk-pair-l[data-tone],
+.vk-pair-r[data-tone] {
+  box-sizing: border-box;
+  padding: var(--vk-s5);
+  border: 1px solid var(--vk-pair-tone-line);
+  border-radius: var(--vk-r-lg);
+  background: var(--vk-pair-tone-bg);
+}
+.vk-pair-l[data-tone='neutral'],
+.vk-pair-r[data-tone='neutral'] { --vk-pair-tone-bg: var(--vk-paper-sf-1); --vk-pair-tone-line: var(--vk-line-3); }
+.vk-pair-l[data-tone='info'],
+.vk-pair-r[data-tone='info'] { --vk-pair-tone-bg: var(--vk-wash-info); --vk-pair-tone-line: var(--vk-tint-info); }
+.vk-pair-l[data-tone='focus'],
+.vk-pair-r[data-tone='focus'] { --vk-pair-tone-bg: var(--vk-wash-focus); --vk-pair-tone-line: var(--vk-tint-focus); }
+.vk-pair-l[data-tone='ok'],
+.vk-pair-r[data-tone='ok'] { --vk-pair-tone-bg: var(--vk-wash-ok); --vk-pair-tone-line: var(--vk-tint-ok); }
+.vk-pair-l[data-tone='warn'],
+.vk-pair-r[data-tone='warn'] { --vk-pair-tone-bg: var(--vk-wash-warn); --vk-pair-tone-line: var(--vk-tint-warn); }
+.vk-pair-l[data-tone='err'],
+.vk-pair-r[data-tone='err'] { --vk-pair-tone-bg: var(--vk-wash-err); --vk-pair-tone-line: var(--vk-tint-err); }
+
 /* 竖向：两块上下并置，轴横穿。split 仍按上面的语义分配高度；
    运行期在 place() 里按容器实测高度写两块的高度（无确定高度时退回内容高）。 */
 .vk-pair[data-orientation='vertical'] {
@@ -265,10 +289,16 @@ vk-flow[fill] {
 
 .vk-flow {
   --vk-flow-gap: 48px;
+  /* 箭头实际占的轨道：默认等于 gap；写了 arrow-label 时运行期把它抬到 ≥200px。 */
+  --vk-flow-track: var(--vk-flow-gap);
   /* 连接线读次墨，不是发丝线：它要能在一屏里被看见。 */
   --vk-flow-conn: var(--vk-ink-2);
-  /* 三角的进深：横排是宽，竖排是高；配合 8px 半高，斜边 ~16px。 */
-  --vk-flow-tip: 14px;
+  /* 箭头尺寸由 place() 按容器高算（× arrow-scale，夹 28–64）；
+     这里给首帧的兜底值。线与三角都从同一个 --vk-flow-arrow-size 派生。 */
+  --vk-flow-arrow-size: 28px;
+  --vk-flow-tip: 15.4px;
+  --vk-flow-tip-half: 8.4px;
+  --vk-flow-line-w: 2.8px;
 
   display: flex;
   align-items: stretch;
@@ -287,30 +317,11 @@ vk-flow[fill] {
   min-width: 0;
 }
 
-/* 标签是这一步的名字：颜色跟着 data-tone 走（与块的语义同一支色），
-   neutral 退到次墨。字号固定 caption 档——标签是"读得到的小字"，不是页眉。 */
+/* 步骤标签 = vk-label variant="tag"：36px / .08em / 只上色、无底无框。
+   这里只负责它在步骤里的位置；字号与颜色只有 elements.css 那一处定义。 */
 .vk-flow-label {
-  font-family: var(--vk-font-sans);
-  font-size: var(--vk-t-caption);
-  font-weight: var(--vk-w-med);
-  line-height: 1.3;
-  color: var(--vk-ink-2);
-}
-.vk-flow-step[data-tone='neutral'] .vk-flow-label {
-  color: var(--vk-ink-2);
-}
-.vk-flow-step[data-tone='info'] .vk-flow-label,
-.vk-flow-step[data-tone='focus'] .vk-flow-label {
-  color: var(--vk-focus);
-}
-.vk-flow-step[data-tone='ok'] .vk-flow-label {
-  color: var(--vk-ok-ink);
-}
-.vk-flow-step[data-tone='warn'] .vk-flow-label {
-  color: var(--vk-warn-ink);
-}
-.vk-flow-step[data-tone='err'] .vk-flow-label {
-  color: var(--vk-err-ink);
+  align-self: flex-start;
+  max-width: 100%;
 }
 
 /* 块：浅色底 + 1px 描边 + 大圆角 + s6 内距。
@@ -376,17 +387,23 @@ vk-flow[fill] {
    它是装饰：块从左到右的顺序已经把关系说清楚了，读屏不该读到它。 */
 .vk-flow-arrow {
   position: relative;
-  flex: 0 0 var(--vk-flow-gap);
+  flex: 0 0 var(--vk-flow-track);
   align-self: stretch;
   pointer-events: none;
+}
+
+/* 横排时把箭头对齐到「块」的那一段：标签在上，箭头不该穿过标签行。
+   标签行高 = tag 字号 × 1.3，加一步的 gap；箭头的 stretch 会扣掉这段 margin。 */
+.vk-flow[data-orientation='horizontal'] .vk-flow-arrow {
+  margin-top: calc(var(--vk-t-tag) * 1.3 + var(--vk-s3));
 }
 .vk-flow-arrow::before {
   content: '';
   position: absolute;
-  top: calc(50% - 1px);
+  top: calc(50% - var(--vk-flow-line-w) / 2);
   right: var(--vk-flow-tip);
   left: 0;
-  height: 2px;
+  height: var(--vk-flow-line-w);
   background: var(--vk-flow-conn);
 }
 .vk-flow-arrow::after {
@@ -395,10 +412,28 @@ vk-flow[fill] {
   top: 50%;
   right: 0;
   transform: translateY(-50%);
-  border-top: 8px solid transparent;
-  border-bottom: 8px solid transparent;
+  border-top: var(--vk-flow-tip-half) solid transparent;
+  border-bottom: var(--vk-flow-tip-half) solid transparent;
   border-left: var(--vk-flow-tip) solid var(--vk-flow-conn);
   border-right: 0;
+}
+
+/* 中轴词：挂在箭头正中，纸色底把轴线垫断（与 pair 的符号同一条规矩）。
+   字号/字距来自 vk-label variant="tag"（caption × 0.75 = 36px）。 */
+.vk-flow-arrow-label {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  z-index: 1;
+  width: max-content;
+  max-width: none;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.vk-flow-arrow-label .vk-label {
+  padding: 0.05em 0.28em;
+  border-radius: var(--vk-r-2, 2px);
+  background: var(--vk-paper-sf-0);
 }
 
 /* 竖排：块上下排开，箭头在块之间朝下（gap 变成轨道高）。 */
@@ -409,15 +444,15 @@ vk-flow[fill] {
   flex: 1 1 auto;
 }
 .vk-flow[data-orientation='vertical'] .vk-flow-arrow {
-  flex: 0 0 var(--vk-flow-gap);
+  flex: 0 0 var(--vk-flow-track);
   width: 100%;
 }
 .vk-flow[data-orientation='vertical'] .vk-flow-arrow::before {
   top: 0;
   bottom: var(--vk-flow-tip);
-  left: calc(50% - 1px);
+  left: calc(50% - var(--vk-flow-line-w) / 2);
   right: auto;
-  width: 2px;
+  width: var(--vk-flow-line-w);
   height: auto;
 }
 .vk-flow[data-orientation='vertical'] .vk-flow-arrow::after {
@@ -427,8 +462,8 @@ vk-flow[fill] {
   right: auto;
   transform: translateX(-50%);
   border-top: var(--vk-flow-tip) solid var(--vk-flow-conn);
-  border-right: 8px solid transparent;
-  border-left: 8px solid transparent;
+  border-right: var(--vk-flow-tip-half) solid transparent;
+  border-left: var(--vk-flow-tip-half) solid transparent;
   border-bottom: 0;
 }
 

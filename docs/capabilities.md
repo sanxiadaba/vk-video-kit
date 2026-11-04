@@ -7,8 +7,7 @@
 记账方式：**能力**是用户能看见的一件事（“有一档淡底”“深色块也能用”），
 不是标签。标签会删会改；能力不能悄悄消失。
 
-| 能力 | 契约断言 | 标本页 | 测试 | 状态 |
-|---|---|---|---|---|
+| 能力 | 契约断言 | 标本页 | 测试 | 状态 ||---|---|---|---|---|
 | 语义淡底 · wash | `vk-panel.tone` | `specimen/vk-panel.html` | `tests/surfaces.test.mjs`<br>`tests/panel.test.mjs` | ✅ 绿 |
 | 语义淡底 · tint | `vk-panel.tone` | `specimen/vk-panel.html` | `tests/surfaces.test.mjs`<br>`tests/panel.test.mjs` | ✅ 绿 |
 | vk-panel · plain（默认无框无底） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/panel.test.mjs`<br>`tests/batch-ef.test.mjs` | ✅ 绿 |
@@ -45,6 +44,11 @@
 | 归属说明 · vk-caption | `vk-caption.for`<br>`vk-caption.anchor` | `specimen/vk-caption.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 代码窗 / 终端 · surface 与当前行 | `vk-term.surface`<br>`vk-code.surface`<br>`vk-term.current`<br>`vk-code.current` | `specimen/vk-term.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 纸 · 默认底色是纯白 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 流程 · 箭头按块高缩放 + 中轴词 | `vk-flow.arrow-scale`<br>`vk-flow.arrow-label` | `specimen/vk-flow.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 标签 · variant="tag" 专门档位 | `vk-label.variant` | `specimen/vk-label.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 并置 · 左右分色 tone-a / tone-b | `vk-pair.tone-a`<br>`vk-pair.tone-b` | `specimen/vk-pair.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 文字 · fit 的硬地板 fit-min | `vk-text.fit-min` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 文案 · 字幕短句（项目层 preset，默认关） | `style:copy` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -299,6 +303,41 @@
 - 契约断言：`vk-page.align`
 - 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
 - 测试：`tests/batch-primitives.test.mjs` · 「vk-page / body：空文档里的默认底色是纯白」
+
+### ✅ 流程 · 箭头按块高缩放 + 中轴词
+
+- 能力：vk-flow 的箭头不再是固定 14px 三角：尺寸 = 容器高 × arrow-scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow 默认开，arrow="false" 才关。arrow-label 会在中轴那根箭头上挂一个词，字号 = caption × 0.75（36），纸色底把轴线垫断。
+- 契约断言：`vk-flow.arrow-scale` · `vk-flow.arrow-label`
+- 标本页：`_site/specimen/vk-flow.html` + 契约宿主 `_site/specimens/vk-flow.html`
+- 测试：`tests/batch-native.test.mjs` · 「vk-flow 箭头：默认画，尺寸 = 容器高 × arrow-scale（28–64），线宽 = 尺寸 × 0.1」；`tests/batch-native.test.mjs` · 「vk-flow arrow-label：中轴挂词，字号 36（caption × 0.75），纸色底垫断轴线」
+
+### ✅ 标签 · variant="tag" 专门档位
+
+- 能力：vk-label 新增 tag 形态：36px（caption 的 0.75）、letter-spacing .08em、颜色按 tone，不加底、不加框。vk-flow 的步骤标签统一用它，不再用 caption 48 的裸 span。tag 有自己的地板（caption × 0.75），不按正文 body 判。
+- 契约断言：`vk-label.variant`
+- 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
+- 测试：`tests/batch-native.test.mjs` · 「vk-label variant="tag"：36px / .08em / 无底无框，tone 决定颜色」
+
+### ✅ 并置 · 左右分色 tone-a / tone-b
+
+- 能力：vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。不写 tone-a / tone-b 时不加底、不加框、不加内距，旧页逐像素不变。
+- 契约断言：`vk-pair.tone-a` · `vk-pair.tone-b`
+- 标本页：`_site/specimen/vk-pair.html` + 契约宿主 `_site/specimens/vk-pair.html`
+- 测试：`tests/batch-native.test.mjs` · 「vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不改现状」
+
+### ✅ 文字 · fit 的硬地板 fit-min
+
+- 能力：vk-text fit="width" 的 fit-min 默认 40，是硬地板：容器再窄也不再缩字。到了地板仍放不下时，宿主带 data-fit-overflow，运行期提醒「容器太窄，建议减少并列块或换竖排」。不写 fit-min 时字号也不会掉到 40 以下。
+- 契约断言：`vk-text.fit-min`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/batch-native.test.mjs` · 「vk-text fit="width"：fit-min 是硬地板，放不下加 data-fit-overflow 并提醒」
+
+### ✅ 文案 · 字幕短句（项目层 preset，默认关）
+
+- 能力：项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size="caption" / vk-caption）不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。
+- 契约断言：`style:copy`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/batch-native.test.mjs` · 「预设 · 字幕短句：句号 / 超 18 字报提醒（level=warn，默认不跑）」
 
 ## 怎么判红
 

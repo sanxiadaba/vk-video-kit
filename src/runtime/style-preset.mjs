@@ -4,9 +4,10 @@
  * 库只判客观错误：溢出、遮挡正文、非法枚举、锚点解析失败、组件渲染异常、
  * 空组件、素材哈希不符、运行崩溃。这些是"无论画什么都错"的事。
  *
- * 下面这五条不是那种事，它们是**版面主张**：
+ * 下面这几条不是那种事，它们是**版面主张**：
  *   一页只有一个答案（强调色 ≤1）、一页只砸一块重（深色块 ≤1）、
- *   页眉只讲工序（不含文件名 / 页号）、内容落在 120 边距里。
+ *   页眉只讲工序（不含文件名 / 页号）、内容落在 120 边距里、
+ *   字幕短句（不带句号、每行 ≤18 字）。
  * 换一个项目、换一套片子，这些数字都该重定。所以它们被移出 audit.mjs 的
  * 默认路径，做成一个显式打开的 preset：
  *
@@ -65,6 +66,12 @@ export const STYLE_RULES = [
     level: 'error',
     name: '内容落在 120 边距内',
     why: '项目约定的交付边距；换项目可以换成 96 / 100 / 无',
+  },
+  {
+    id: 'copy',
+    level: 'warn',
+    name: '字幕短句：不带句号、每行 ≤18 字',
+    why: '视频字幕一行只留一个意思：句号是"读完了"的信号，字幕没有读完这回事',
   },
 ];
 
@@ -196,6 +203,51 @@ function headerIssues(stage) {
 }
 
 /**
+ * 字幕短句：只判「字幕位」，不判正文段落。
+ *
+ * 字幕位 = vk-text size="caption" / vk-caption / 作者标了 data-subtitle 的文字。
+ * 正文（body / headline）允许完整句子与句号——那不是字幕。
+ * 每条文本行按换行符切开计数；没有换行的 caption 就是一行。
+ */
+function copyIssues(stage) {
+  const out = [];
+  const clip = (s) => s.replace(/\s+/g, ' ').trim().slice(0, 24);
+  for (const el of stage.querySelectorAll('vk-text[size="caption"], vk-caption, vk-text[data-subtitle]')) {
+    if (el.closest('template')) continue;
+    const text = (el.textContent || '').replace(/\u00a0/g, ' ').trim();
+    if (!text) continue;
+    if (/[。.]$/.test(text)) {
+      out.push({
+        type: 'copy',
+        el,
+        what: `字幕以句号收尾：「${clip(text)}」`,
+        rule: 'copy',
+        level: 'warn',
+        style: true,
+        fix: FIX.copy,
+      });
+    }
+    for (const line of text.split(/[\r\n]+/)) {
+      const t = line.replace(/\s+/g, '');
+      if (!t) continue;
+      const n = [...t].length;
+      if (n > 18) {
+        out.push({
+          type: 'copy',
+          el,
+          what: `字幕一行 ${n} 字（上限 18）：「${clip(line)}」`,
+          rule: 'copy',
+          level: 'warn',
+          style: true,
+          fix: FIX.copy,
+        });
+      }
+    }
+  }
+  return out;
+}
+
+/**
  * 内容必须在 120 边距内（项目约定的交付边距）。
  *
  * 只查交付页（1920×1080、未缩放）：审阅页把帧缩小排在一起，坐标不是画布坐标；
@@ -256,6 +308,7 @@ const FIX = {
   header:
     '页眉讲"工序到哪了"：用 index/total/section（工序 3/5 · 汇编）；文件名放进内容块，页号交给帧编号',
   margin: '内缩到 120 边距：删内容 / 降一档间距；页眉页脚也要落在 120 以内（覆盖层不受此限）',
+  copy: '把句子拆成短句：每行 ≤18 字、句尾不加句号；一行只留一个意思（字幕不是文章）',
 };
 
 /**
@@ -310,6 +363,8 @@ export function auditStyle(root = document) {
   for (const m of marginIssues(stage, pageRect, cumulativeScaleX(stage))) {
     out.push({ ...m, rule: 'margin', level: 'error', style: true, fix: FIX.margin });
   }
+
+  for (const c of copyIssues(stage)) out.push(c);
 
   return out;
 }

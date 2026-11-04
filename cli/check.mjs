@@ -10,8 +10,8 @@
  * 多页共用一个浏览器；仍然要求先 `vk build`。
  *
  * 默认只判客观错误（溢出 / 遮挡 / 非法值 / 锚点 / 渲染失败 / 素材过期）。
- * `--style` 才跑那五条版面上的主张（强调色 ≤1、深色块 ≤1、图标白名单提醒、
- * 页眉只讲工序、120 边距）—— 它们属于项目，不属于库。
+ * `--style` 才跑那六条版面上的主张（强调色 ≤1、深色块 ≤1、图标白名单提醒、
+ * 页眉只讲工序、120 边距、字幕短句）—— 它们属于项目，不属于库。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -132,7 +132,7 @@ try {
     const fatal = (it) => it.issues.filter((x) => !isWarn(x)).length > 0 || it.special.length > 0;
     if (styleOn) {
       // 默认不跑；跑的时候把"这是什么"写在最前面，不让人误以为库的要求变多了。
-      console.log('· --style：已开项目层审美 preset（5 条）。默认不跑；这是项目自己的版面主张。');
+      console.log('· --style：已开项目层审美 preset（6 条）。默认不跑；这是项目自己的版面主张。');
     }
     for (const it of results) {
       const lines = linesFor(it);

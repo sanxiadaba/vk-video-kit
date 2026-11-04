@@ -176,13 +176,13 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-grid`** · 网格 — 分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。
   - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
-- **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。
-  - 属性：`split` · `axis` · `axis-width` · `symbol` · `symbol-size` · `gap` · `orientation` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone-a / tone-b 可给两侧各上一种语义淡底。
+  - 属性：`split` · `axis` · `axis-width` · `symbol` · `symbol-size` · `gap` · `orientation` · `tone-a` · `tone-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-pair split="50" gap="48" axis="line" axis-width="2" symbol="→" symbol-size="80">`
-- **`vk-flow`** · 流程 — 多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），容器窄于 1100px 自动竖排。
-  - 属性：`gap` · `arrow` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-flow`** · 流程 — 多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），箭头按容器高 × arrow-scale 缩放，容器窄于 1100px 自动竖排。
+  - 属性：`gap` · `arrow` · `arrow-scale` · `arrow-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
-  - 例：`<vk-flow arrow gap="48">`
+  - 例：`<vk-flow arrow arrow-label="编译" gap="48">`
 - **`vk-canvas`** · 坐标画布 — 坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。
   - 属性：`w` · `h` · `pad-px` · `grid` · `overflow`
   - 例：`<vk-canvas w="1200" h="420">`
@@ -270,7 +270,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`for` · `variant` · `dim` · `keep` · `pad-px` · `tone` · `dash` · `stroke` · `z` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16">`
 - **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
-  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
+  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `arrow-scale` · `arrow-label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="编译" tone="info">`
 - **`vk-note`** · 注解 — 边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
   - 属性：`kind` · `for` · `side` · `leader` · `place` · `w` · `z`

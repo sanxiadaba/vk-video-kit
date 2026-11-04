@@ -29,8 +29,10 @@ export const PRESETS = {
     { label: '加粗', attrs: { weight: 'bold' } },
     { label: '语义色', attrs: { tone: 'ok' } },
     // fit="width"：标本里的长句会被缩到容器宽；780px 的代码行会放大到接近上限。
-    { label: '塞满一行', attrs: { fit: 'width', 'fit-max': '120' } },
-    { label: '封顶 64', attrs: { fit: 'width', 'fit-max': '64' } },
+    // 标本台演示的是「能缩多小」，所以显式把地板放到 8（库默认 40 是给交付页的；
+    // 不写明 fit-min 的话，长句会停在地板 40 并正确报 data-fit-overflow）。
+    { label: '塞满一行', attrs: { fit: 'width', 'fit-min': '8', 'fit-max': '120' } },
+    { label: '封顶 64', attrs: { fit: 'width', 'fit-min': '8', 'fit-max': '64' } },
   ],
   'vk-label': [
     { label: '标签', attrs: { variant: 'chip' } },

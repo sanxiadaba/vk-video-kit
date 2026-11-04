@@ -65,16 +65,30 @@ export class VkFlow extends VkElement {
       }
     }
 
-    // gap 是唯一的间距来源：块距、箭头轨道宽/高都读它。
+    // gap 是块距；箭头实际占的轨道是 --vk-flow-track。
+    // 写了 arrow-label 时轨道至少 200px：36px 的词 + 两截线 + 三角都要有位置，
+    // 48px 的默认轨道会被词的纸色底完全吃掉，箭头就"消失"了。
     const gap = numAttr(this, 'gap', { min: 8, max: 200, fallback: 48 });
+    const arrowScale = numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 });
+    const arrowLabel = (this.getAttribute('arrow-label') || '').trim();
+    // 默认画箭头：只有显式写 arrow="false" / 0 / off / none / no 才关。
+    // （旧页面写 arrow / arrow="true" 也照旧；不写 arrow 的现在默认有箭头。）
     const rawArrow = this.getAttribute('arrow');
-    const arrowOn = rawArrow !== null && !OFF.has(rawArrow.trim().toLowerCase());
+    const arrowOn = rawArrow === null || !OFF.has(rawArrow.trim().toLowerCase());
+    // 契约与自检读这一个标记，不靠猜 CSS。
+    this.dataset.arrow = arrowOn ? 'true' : 'false';
+    this.dataset.arrowScale = String(arrowScale);
 
     const box = document.createElement('div');
     box.className = 'vk-flow';
     // 方向由 place() 按宿主实际宽度校正；先给横排，免得首帧没有样式可挂。
     box.dataset.orientation = 'horizontal';
     box.style.setProperty('--vk-flow-gap', gap + 'px');
+    box.style.setProperty('--vk-flow-track', (arrowLabel && arrowOn ? Math.max(gap, 200) : gap) + 'px');
+
+    // 「中轴」= 中间那根箭头。两步时是唯一一根；三步时不把同一个词写两遍。
+    const arrowCount = Math.max(0, items.length - 1);
+    const midArrow = Math.floor(arrowCount / 2);
 
     items.forEach((it, i) => {
       const step = document.createElement('div');
@@ -83,8 +97,13 @@ export class VkFlow extends VkElement {
       step.dataset.tone = it.tone;
 
       if (it.label) {
-        const label = document.createElement('span');
+        // 步骤标签就是 vk-label 的 tag 档：36px / .08em / 只上色。
+        // 用同一个组件而不是复制一份样式，颜色与形态只有一处定义。
+        const label = document.createElement('vk-label');
         label.className = 'vk-flow-label';
+        label.setAttribute('variant', 'tag');
+        if (it.tone === 'neutral') label.setAttribute('ink', 'secondary');
+        else label.setAttribute('tone', it.tone);
         label.textContent = it.label;
         step.append(label);
       } else {
@@ -103,6 +122,15 @@ export class VkFlow extends VkElement {
         const arrow = document.createElement('span');
         arrow.className = 'vk-flow-arrow';
         arrow.setAttribute('aria-hidden', 'true');
+        // 中轴词：纸色底由 vk-label 的 tag 档负责，它把轴线垫断。
+        if (i === midArrow && arrowLabel) {
+          const word = document.createElement('vk-label');
+          word.className = 'vk-flow-arrow-label';
+          word.setAttribute('variant', 'tag');
+          word.setAttribute('ink', 'secondary');
+          word.textContent = arrowLabel;
+          arrow.append(word);
+        }
         box.append(arrow);
       }
     });
@@ -114,7 +142,25 @@ export class VkFlow extends VkElement {
     this.dataset.vkPlace = '';
     this._watchWidth();
     this._syncOrientation();
+    this._syncArrow();
     VK._invalidate();
+  }
+
+  /** 箭头尺寸 = 容器高 × arrow-scale，夹在 28–64；线宽 = 尺寸 × 0.1（最小 2）。 */
+  _syncArrow() {
+    const box = this._box;
+    if (!box || !box.isConnected) return;
+    const h = box.clientHeight || this.clientHeight || 0;
+    const scale = numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 });
+    // 还没布局时先按 28 画：有尺寸就能看见，place() 随后按真实高度校正。
+    const size = Math.max(28, Math.min(64, (h || 0) * scale || 28));
+    const line = Math.max(2, size * 0.1);
+    box.style.setProperty('--vk-flow-arrow-size', size.toFixed(2) + 'px');
+    box.style.setProperty('--vk-flow-tip', (size * 0.55).toFixed(2) + 'px');
+    box.style.setProperty('--vk-flow-tip-half', (size * 0.3).toFixed(2) + 'px');
+    box.style.setProperty('--vk-flow-line-w', line.toFixed(2) + 'px');
+    // 契约读它：尺寸是运行期算的，不能只体现在 CSS 变量里。
+    this.dataset.arrowSize = String(Math.round(size * 10) / 10);
   }
 
   /** 容器宽度是唯一的输入：宽 → 横排，窄 → 竖排、箭头朝下。 */
@@ -130,7 +176,10 @@ export class VkFlow extends VkElement {
   /** 父级栅格变化 / 窗口缩放都不必等 window resize：量宿主自己。 */
   _watchWidth() {
     if (this._ro || typeof ResizeObserver !== 'function') return;
-    this._ro = new ResizeObserver(() => this._syncOrientation());
+    this._ro = new ResizeObserver(() => {
+      this._syncOrientation();
+      this._syncArrow();
+    });
     this._ro.observe(this);
   }
 
@@ -138,6 +187,7 @@ export class VkFlow extends VkElement {
     // 被搬到新父级后 ResizeObserver 已经断了，重连一次再量。
     this._watchWidth();
     this._syncOrientation();
+    this._syncArrow();
   }
 
   disconnectedCallback() {

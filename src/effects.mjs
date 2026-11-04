@@ -114,6 +114,20 @@ export const EFFECTS = {
     // gap 落在 .vk-pair 的 --vk-pair-gap 上；沟槽是它的两倍。
     gap: { on: '.vk-pair', kind: 'style', prop: '--vk-pair-gap', expectFromValue: 'px' },
     orientation: { on: 'vk-pair', kind: 'attr', prop: 'data-orientation', expectFromValue: 'raw' },
+    // 分色：只染左右两块的面；不写就没有 data-tone，保持透明。
+    'tone-a': { on: '.vk-pair-l', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
+    'tone-b': { on: '.vk-pair-r', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
+  },
+
+  'vk-flow': {
+    // gap 是唯一的间距来源：块距与箭头轨道都读它。
+    gap: { on: '.vk-flow', kind: 'style', prop: '--vk-flow-gap', expectFromValue: 'px' },
+    // 箭头是运行期按属性建的 DOM：开/关镜像到宿主。
+    arrow: { on: 'vk-flow', kind: 'attr', prop: 'data-arrow', expectFromValue: 'raw' },
+    // 缩放比例镜像到宿主；算出来的尺寸在 data-arrow-size（place() 写）。
+    'arrow-scale': { on: 'vk-flow', kind: 'attr', prop: 'data-arrow-scale', expectFromValue: 'raw' },
+    // 中轴词落在真正的文字节点上。
+    'arrow-label': { on: '.vk-flow-arrow-label .vk-label-t', kind: 'text' },
   },
 
   'vk-canvas': {
@@ -433,6 +447,10 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   double: { on: 'vk-annotate', kind: 'attr', prop: 'data-double', expect: '2' },
   tone: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
   label: { on: '.vk-edge-label', kind: 'text' },
+  // 中轴词：新写法优先于 label，落在同一个标签节点上。
+  'arrow-label': { on: '.vk-edge-label', kind: 'text' },
+  // 缩放比例镜像到宿主；尺寸本身写进 data-arrow-size（draw() 按容器高算）。
+  'arrow-scale': { on: 'vk-annotate', kind: 'attr', prop: 'data-arrow-scale', expectFromValue: 'raw' },
   n: { on: 'vk-annotate', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
   size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
   emphasis: { on: 'vk-annotate', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },

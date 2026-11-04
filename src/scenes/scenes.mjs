@@ -276,7 +276,7 @@ export const SCENES = [
     // 三块 + 两条箭头：源码 → 编译 → 产物。等宽、标签在上、箭头画在间隙正中。
     // 标本用短词：等宽代码在 528 块里 fit 到 398 宽，长句会被压到 48px 地板以下。
     body: s`
-<vk-flow arrow gap="48">
+<vk-flow arrow arrow-label="编译" gap="48">
   <li label="源码" tone="info"><vk-text mono>hello.c</vk-text></li>
   <li label="编译" tone="neutral"><vk-text mono>gcc</vk-text></li>
   <li label="产物" tone="ok"><vk-text mono>hello</vk-text></li>

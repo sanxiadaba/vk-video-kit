@@ -238,6 +238,9 @@ export class VkAnnotate extends VkElement {
     d.size = this.getAttribute('size') || 'body';
     d.emphasis = this.getAttribute('emphasis') || 'soft';
     d.n = String(this._num());
+    // arrow 的缩放比例也镜像到宿主上：契约读它，不猜 CSS。
+    if (mode === 'arrow') d.arrowScale = String(numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 }));
+    else delete d.arrowScale;
     // side 是 note 的显式落点；arrow 形态也把请求值镜像出来，契约能读到"改了就变"。
     const sideRaw = (this.getAttribute('side') || 'auto').trim();
     d.side = ['top', 'right', 'bottom', 'left'].includes(sideRaw) ? sideRaw : 'auto';
@@ -322,6 +325,10 @@ export class VkAnnotate extends VkElement {
       dash: this._dashOn(),
       width: this._widthPx(),
       head: { end: head === 'arrow', start: false, dot: head === 'dot' ? 'end' : null, style: 'solid', size: num('--vk-edge-tip', 18) },
+      // arrow 的箭头按「所在容器高 × arrow-scale」缩放（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
+      // 旧标签 vk-edge 在自己的 _arrowConfig 里覆盖整套，不读这两个值，逐像素不动。
+      scale: numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 }),
+      scaled: true,
       gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: num('--vk-edge-gap', 32) }),
       bend: 0,
       tension: 0.42,
@@ -351,13 +358,21 @@ export class VkAnnotate extends VkElement {
       this._svg.append(this._path, this._tip, this._tip2, this._cap);
       this.appendChild(this._svg);
     }
-    const label = this.getAttribute('label');
+    // arrow-label 是「中轴挂一个词」的新写法；旧页的 label 仍然有效，新词优先。
+    const label = this.getAttribute('arrow-label') || this.getAttribute('label');
     if (label && !this._label) {
       this._label = document.createElement('span');
       this._label.className = 'vk-edge-label vk-annot-label';
       this.appendChild(this._label);
     }
-    if (this._label) this._label.textContent = label || '';
+    if (this._label) {
+      this._label.textContent = label || '';
+      // 新词走 tag 档（36 / .08em）；旧 label 保持原来的 body 档，旧页不变。
+      // data-meta 让 36px 的词按「标注」判对比度，而不是按正文地板。
+      const isArrowLabel = !!this.getAttribute('arrow-label');
+      this._label.toggleAttribute('data-arrow-label', isArrowLabel);
+      this._label.toggleAttribute('data-meta', isArrowLabel);
+    }
     this._svg.dataset.head = this._head();
     // 和旧 vk-edge 一样：画线交给 layout（EDGES），render 只准备外壳。
   }
@@ -369,7 +384,12 @@ export class VkAnnotate extends VkElement {
     this._tip?.setAttribute('d', '');
     this._tip2?.setAttribute('d', '');
     if (this._cap) this._cap.style.display = 'none';
-    if (this._label) this._label.textContent = this.getAttribute('label') || '';
+    if (this._label) {
+      this._label.textContent = this.getAttribute('arrow-label') || this.getAttribute('label') || '';
+      const isArrowLabel = !!this.getAttribute('arrow-label');
+      this._label.toggleAttribute('data-arrow-label', isArrowLabel);
+      this._label.toggleAttribute('data-meta', isArrowLabel);
+    }
 
     // 覆盖层是 position:absolute；坐标基准是最近的定位祖先，
     // 不是语义宿主（vk-page 的正文在 1680px 的 .vk-page-inner 里）。
@@ -382,6 +402,15 @@ export class VkAnnotate extends VkElement {
     if (!host.getClientRects().length) return;
 
     const cfg = this._arrowConfig();
+    // 箭头尺寸按所在容器的高度算：容器越高，箭头越大；夹在 28–64，
+    // 线宽跟着箭头走（×0.1，最小 2px）。作者显式写 width 时仍以 width 为准。
+    if (cfg.scaled) {
+      const hostH = host.offsetHeight || host.getBoundingClientRect().height || 1080;
+      const size = Math.max(28, Math.min(64, hostH * cfg.scale));
+      cfg.head.size = size;
+      if (cfg.width == null) cfg.width = Math.max(2, size * 0.1);
+      this.dataset.arrowSize = String(Math.round(size * 10) / 10);
+    }
     const fromA = anchorOf(host, cfg.from, this);
     const toA = anchorOf(host, cfg.to, this);
     if (!fromA || !toA) {

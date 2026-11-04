@@ -664,6 +664,87 @@
           "name": "vk-page / body：空文档里的默认底色是纯白"
         }
       ]
+    },
+    {
+      "id": "flow-arrow-scale",
+      "name": "流程 · 箭头按块高缩放 + 中轴词",
+      "what": "vk-flow 的箭头不再是固定 14px 三角：尺寸 = 容器高 × arrow-scale（默认 0.12），夹在 28–64px；线宽 = 尺寸 × 0.1（最小 2px）。arrow 默认开，arrow=\"false\" 才关。arrow-label 会在中轴那根箭头上挂一个词，字号 = caption × 0.75（36），纸色底把轴线垫断。",
+      "contracts": [
+        "vk-flow.arrow-scale",
+        "vk-flow.arrow-label"
+      ],
+      "specimen": "vk-flow",
+      "tests": [
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "vk-flow 箭头：默认画，尺寸 = 容器高 × arrow-scale（28–64），线宽 = 尺寸 × 0.1"
+        },
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "vk-flow arrow-label：中轴挂词，字号 36（caption × 0.75），纸色底垫断轴线"
+        }
+      ]
+    },
+    {
+      "id": "label-tag",
+      "name": "标签 · variant=\"tag\" 专门档位",
+      "what": "vk-label 新增 tag 形态：36px（caption 的 0.75）、letter-spacing .08em、颜色按 tone，不加底、不加框。vk-flow 的步骤标签统一用它，不再用 caption 48 的裸 span。tag 有自己的地板（caption × 0.75），不按正文 body 判。",
+      "contracts": [
+        "vk-label.variant"
+      ],
+      "specimen": "vk-label",
+      "tests": [
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "vk-label variant=\"tag\"：36px / .08em / 无底无框，tone 决定颜色"
+        }
+      ]
+    },
+    {
+      "id": "pair-tone",
+      "name": "并置 · 左右分色 tone-a / tone-b",
+      "what": "vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。不写 tone-a / tone-b 时不加底、不加框、不加内距，旧页逐像素不变。",
+      "contracts": [
+        "vk-pair.tone-a",
+        "vk-pair.tone-b"
+      ],
+      "specimen": "vk-pair",
+      "tests": [
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不改现状"
+        }
+      ]
+    },
+    {
+      "id": "fit-floor",
+      "name": "文字 · fit 的硬地板 fit-min",
+      "what": "vk-text fit=\"width\" 的 fit-min 默认 40，是硬地板：容器再窄也不再缩字。到了地板仍放不下时，宿主带 data-fit-overflow，运行期提醒「容器太窄，建议减少并列块或换竖排」。不写 fit-min 时字号也不会掉到 40 以下。",
+      "contracts": [
+        "vk-text.fit-min"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "vk-text fit=\"width\"：fit-min 是硬地板，放不下加 data-fit-overflow 并提醒"
+        }
+      ]
+    },
+    {
+      "id": "copy-style",
+      "name": "文案 · 字幕短句（项目层 preset，默认关）",
+      "what": "项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size=\"caption\" / vk-caption）不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。",
+      "contracts": [
+        "style:copy"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/batch-native.test.mjs",
+          "name": "预设 · 字幕短句：句号 / 超 18 字报提醒（level=warn，默认不跑）"
+        }
+      ]
     }
   ]
 }

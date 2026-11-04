@@ -261,6 +261,9 @@ export class VkText extends VkElement {
       this._fitNow();
     } else {
       delete this.dataset.vkPlace;
+      delete this.dataset.fitOverflow;
+      delete this.dataset.fitMin;
+      delete this.dataset.fitMax;
       if (this._fitted) {
         this.style.fontSize = '';
         this.style.lineHeight = '';
@@ -290,8 +293,12 @@ export class VkText extends VkElement {
     const target = this.clientWidth;
     if (!target) return;
     const scale = cumulativeScaleX(this) || 1;
-    const min = numAttr(this, 'fit-min', { min: 1, max: 400, fallback: 12 });
+    // fit-min 是硬地板：默认 40，容器再窄也不往下缩；放不下就报出来。
+    const min = numAttr(this, 'fit-min', { min: 1, max: 400, fallback: 40 });
     const max = numAttr(this, 'fit-max', { min: 1, max: 400, fallback: 240 });
+    // 契约读这两个边界（尺寸是运行期算的，不能只看声明）。
+    this.dataset.fitMin = String(min);
+    this.dataset.fitMax = String(max);
     const measure = () => {
       const range = document.createRange();
       range.selectNodeContents(this);
@@ -302,19 +309,29 @@ export class VkText extends VkElement {
     const current = parseFloat(getComputedStyle(this).fontSize) || 0;
     const line = measure();
     if (!current || !line) return;
-    // fit-max 优先于 fit-min：两个边界写反时以 max 为准，避免出现"最小字号把行撑破"。
-    const clamp = (v) => Math.min(max, Math.max(min, v));
+    // 顺序是 min → max：fit-min 是硬地板，两个边界写反时也不许把字压到地板以下。
+    const clamp = (v) => Math.max(min, Math.min(max, v));
     const next = clamp(current * (target / line));
-    if (Math.abs(next - current) < 0.01 && this._fitted) return;
     this.style.fontSize = next.toFixed(2) + 'px';
     this.style.lineHeight = '1.1';
     this._fitted = true;
 
     const line2 = measure();
-    if (!line2) return;
-    const applied = parseFloat(getComputedStyle(this).fontSize) || next;
-    const refined = clamp(applied * (target / line2));
-    if (Math.abs(refined - applied) > 0.01) this.style.fontSize = refined.toFixed(2) + 'px';
+    if (line2) {
+      const applied = parseFloat(getComputedStyle(this).fontSize) || next;
+      const refined = clamp(applied * (target / line2));
+      if (Math.abs(refined - applied) > 0.01) this.style.fontSize = refined.toFixed(2) + 'px';
+    }
+
+    // 到了地板仍然塞不下：不再缩字，给宿主一个可被检查/样式化的标记，
+    // 并提醒改版面（减少并列块或换竖排），而不是让字默默糊成一团。
+    const line3 = measure();
+    if (line3 > target + 1.5) {
+      this.dataset.fitOverflow = '';
+      this._warnOnce('fit-overflow', 'fit="width" 放不下：容器太窄，建议减少并列块或换竖排');
+    } else {
+      delete this.dataset.fitOverflow;
+    }
   }
 }
 

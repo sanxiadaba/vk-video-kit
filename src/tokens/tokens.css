@@ -221,6 +221,9 @@
   --vk-t-headline: 112px;
   --vk-t-body: 56px;
   --vk-t-caption: 48px;
+  /* tag：流程步骤 / 块名的一档，= caption × 0.75。它不是第五档主对比：
+     只在 vk-label variant="tag" 与 vk-flow 的步骤标签上用。 */
+  --vk-t-tag: 36px;
 
   /* 旧名（14.x 继续可用）：只做别名，别名必须写在主名之后。
      写成 --vk-t-label: var(--vk-t-label) 会把主名一起弄成无效值——名字不同才安全。 */

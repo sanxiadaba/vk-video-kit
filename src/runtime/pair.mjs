@@ -15,6 +15,8 @@
 import { VK, numAttr, takeSlot, VkElement, define } from './base.mjs';
 
 const SYMBOLS = new Set(['→', '=', 'vs']);
+/** 左右分色的词表：与 vk-panel / vk-flow 同一组语义色。 */
+const TONES = ['neutral', 'info', 'focus', 'ok', 'warn', 'err'];
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 export class VkPair extends VkElement {
@@ -30,6 +32,17 @@ export class VkPair extends VkElement {
     const gap = numAttr(this, 'gap', { min: 8, max: 200, fallback: 24 });
     const axisWidth = numAttr(this, 'axis-width', { min: 1, max: 4, fallback: 2 });
     const symbolSize = numAttr(this, 'symbol-size', { min: 12, max: 200, fallback: 48 });
+    const toneOf = (name) => {
+      const raw = (this.getAttribute(name) || '').trim().toLowerCase();
+      if (!raw) return '';
+      if (!TONES.includes(raw)) {
+        this._warnOnce(`tone:${name}`, `的 ${name}="${raw}" 不认识，按透明处理（可用：${TONES.join(' / ')}）`);
+        return '';
+      }
+      return raw;
+    };
+    const toneA = toneOf('tone-a');
+    const toneB = toneOf('tone-b');
 
     if (!this._box) {
       const nodes = takeSlot(this);
@@ -63,6 +76,11 @@ export class VkPair extends VkElement {
     this.dataset.orientation = orientation;
     this.dataset.axis = axis;
     this.dataset.symbol = symbol;
+    // 分色是「面」的事：不写就删掉 data-tone，CSS 不加底也不加框，旧页逐像素不变。
+    if (toneA) this._left.dataset.tone = toneA;
+    else delete this._left.dataset.tone;
+    if (toneB) this._right.dataset.tone = toneB;
+    else delete this._right.dataset.tone;
     this._box.dataset.orientation = orientation;
     this._box.dataset.axis = axis;
     this._box.dataset.symbol = symbol;

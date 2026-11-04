@@ -131,11 +131,15 @@ export function auditPage(root = document, options = {}) {
     // 全推到 7:1 会让代码块变成一片深灰；所以按 AA 4.5 走。
     const inData = /mono/i.test(cs.fontFamily);
     const isSup = !!(el.closest && el.closest('vk-inline[variant="sup"], vk-inline[variant="sub"]'));
+    // tag 是「块的名字」：caption × 0.75（36），不是正文。它的地板跟着 caption 走，
+    // 但不参与正文的 body 门槛——否则 36px 的步骤标签会被判成"正文太小"。
+    const inTag = !!(el.closest && el.closest('vk-label[variant="tag"]'));
+    const fontFloor = inTag ? limits.floor * 0.75 : limits.floor;
     if (hasText && opaque(el) && !isSup && !inOverlay) {
       const fs = parseFloat(cs.fontSize);
       // caption 是硬地板，data-meta 也不能破：元数据只放宽对比度与句长，不放宽字号。
-      if (!inChrome && fs < limits.floor) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
-      if (!inChrome && !isMeta && fs < limits.body) {
+      if (!inChrome && fs < fontFloor) out.push({ type: 'font', what: clip(el.className || el.tagName), fs });
+      if (!inChrome && !inTag && !isMeta && fs < limits.body) {
         const text = (el.textContent || '').replace(/\s+/g, '');
         const isSentence = /[\u4e00-\u9fff]/.test(text) && text.length > 12;
         if (isSentence) out.push({ type: 'font-content', what: clip(text.slice(0, 18)), fs });
