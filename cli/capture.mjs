@@ -257,6 +257,20 @@ async function captureShot() {
   if (!quiet) console.log(`capture: ${out}（${width}×${height} @2x）`);
 }
 
+/** 从页面所在目录往上找"项目根"：有 vk/vk.css 或 dist/vk.js 的那一层。找不到就退回页面目录。 */
+async function projectRoot(abs) {
+  const has = (p) => fs.access(p).then(() => true, () => false);
+  let dir = path.dirname(abs);
+  for (let i = 0; i < 8; i++) {
+    const [css, js] = await Promise.all([has(path.join(dir, 'vk/vk.css')), has(path.join(dir, 'dist/vk.js'))]);
+    if (css || js) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) break;
+    dir = up;
+  }
+  return path.dirname(abs);
+}
+
 async function captureCues() {
   if (typeof cuesPage !== 'string') {
     console.error('capture: --cues 后面要跟页面路径或 URL');
@@ -275,8 +289,10 @@ async function captureCues() {
     const abs = path.resolve(pageArg);
     const parts = abs.split(path.sep);
     const siteAt = parts.lastIndexOf('_site');
-    const root = siteAt >= 0 ? parts.slice(0, siteAt + 1).join(path.sep) : path.dirname(abs);
-    const rel = siteAt >= 0 ? parts.slice(siteAt + 1).join('/') : path.basename(abs);
+    // 页面在 frames/ 这类子目录里时，共享资源（vk/vk.css、dist/vk.js、assets/）在项目根：
+    // 服务根要取"有 vk.css 的那一层"，否则 ../vk/vk.css 会被压进子目录解析成 404。
+    const root = siteAt >= 0 ? parts.slice(0, siteAt + 1).join(path.sep) : await projectRoot(abs);
+    const rel = siteAt >= 0 ? parts.slice(siteAt + 1).join('/') : path.relative(root, abs).split(path.sep).join('/');
     const { startServer } = await import('./serve.mjs');
     const started = await startServer({ port: 0, root, transform: false });
     server = started;
@@ -353,4 +369,3 @@ if (stepCmds.length) await captureSteps();
 else if (runCmd) await captureRun();
 else if (cuesPage) await captureCues();
 else await captureShot();
-
