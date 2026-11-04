@@ -198,8 +198,15 @@ const ATTR_META = {
   footer: { label: '页脚', content: true },
 };
 
-/** 组件默认值：属性参考与组件页的“默认”列都读它。 */
-const DEFAULTS = {
+/**
+ * 组件默认值：属性参考、组件页的“默认”列与 tests/defaults.test.mjs 都读它。
+ *
+ * 这是**声明面**，必须与运行时回落一致：`tests/defaults.test.mjs` 会在每个
+ * 标本页的第一个实例上做“不写属性 vs 显式写默认值”的行为对比，并检查
+ * 数值默认值落在声明的 min..max 内。改这里就要同步改运行时（或反过来），
+ * 否则 npm test 报红。
+ */
+export const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   // plain 默认无框无底：要框必须显式写 border。
   // chrome="none"：默认仍是"没有标题栏的分区"；写 dots 才长成窗体。
@@ -209,21 +216,26 @@ const DEFAULTS = {
   'vk-label': { variant: 'kicker', ink: 'muted', side: 'top' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
-  'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
+  // 填充是对外唯一名字：旧 fit 只是别名，DEFAULTS 不再保留第二份。
+  'vk-img': { fill: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
-  'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
+  // 12 栏坐标系的沟槽是 32（--vk-grid-gutter），也就是 md；不是间距梯的 sm 24。
+  'vk-grid': { cols: '2', gap: 'md', align: 'stretch', 'gap-x': 'md', 'gap-y': 'md' },
   // 中轴符号字号不写默认值：像素写法（48）不在语义档枚举里，运行期回落 48。
   'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', gap: 24, direction: 'horizontal' },
   // 步距默认 48：三块并排时刚好是「一块小留白」，不是三等分的缝。
   // 箭头默认画（arrow="false" 关掉）；尺寸默认取容器高 × 0.12，夹在 28–64。
   'vk-flow': { gap: 48, arrow: 'true', 'arrow-scale': 0.12 },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
-  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', strength: 'solid', arrow: 'end', cap: 'none', size: 'label', z: 20 },
+  // 标注文字默认 body（56），与 .vk-edge-label 的基础字号一致。
+  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', strength: 'solid', arrow: 'end', cap: 'none', size: 'body', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
-  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all', surface: 'paper' },
-  'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min', reveal: 'all' },
-  'vk-timeline': { variant: 'events', mass: 'normal', size: 'hero', current: '-1' },
+  'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all', surface: 'paper', long: 'clip' },
+  // bytes 是布尔属性：不写 = 不显示机器码；没有“空字符串默认值”这回事。
+  'vk-asm': { address: 'all', mass: 'normal', long: 'clip', chrome: 'min', reveal: 'all' },
+  // 主值默认 title（200）：一帧放三个数字时 hero（280）会把整页撑爆。
+  'vk-timeline': { variant: 'events', mass: 'normal', size: 'title', current: '-1' },
   'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', strength: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
   'vk-annotate': {
@@ -251,13 +263,14 @@ const DEFAULTS = {
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
   'vk-compare': { variant: 'split', ratio: '16 / 9', split: 50, fill: 'cover', position: '50% 50%', 'label-position': 'inside' },
-  'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
+  'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal', limit: 14 },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
   'vk-bars': { mass: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
-  'vk-cells': { cols: '0', mass: 'normal', current: '-1' },
-  'vk-steps': { current: '1', mass: 'normal', direction: 'horizontal', connector: 'arrow', done: 'auto' },
+  'vk-cells': { cols: '8', mass: 'normal', current: '-1' },
+  // current 不写 = -1：不替作者宣称「现在停在第 1 步」；要做进度就显式写 current="2"。
+  'vk-steps': { current: '-1', mass: 'normal', direction: 'horizontal', connector: 'arrow', done: 'auto' },
   'vk-page': { align: 'top', theme: 'paper' },
   // 叠层：不写 tone 就是中性；可读性保护默认开。
   'vk-layer': { tone: 'neutral', readable: 'on' },
@@ -436,6 +449,9 @@ export const TAGS = {
       'fill': fill(),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
+      // 出血：page 直系图/面铺到 1920 边。vk-img 是 CUSTOM（不拿 COMMON），
+      // 但 bleed 是通用几何属性，类型、属性参考与构建期校验都该认识它。
+      'bleed': { ...oneOf('x', 'y', 'all', 'none'), default: 'none', layout: true },
       'w': { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
       'h': { ...size({ min: 48, max: 1080, step: 1 }), context: 'canvas-child', layout: true },
       'span': { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
@@ -976,7 +992,7 @@ export const TAGS = {
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（hero 280 默认 / title 200 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（title 200 默认 / hero 280 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -992,7 +1008,7 @@ export const TAGS = {
       'mass': massLevel(),
       // 当前项：第 N 个事件（1 起）；-1 = 不标（旧写法是 li 上写 state="current"）。
       'current': int({ min: -1, max: 99, step: 1 }),
-      // 主值的字号：hero 280（默认，和引入前完全一致）/ title 200 / subhead 112 …
+      // 主值的字号：title 200（默认，一帧三个数字也不撑爆）/ hero 280 / subhead 112 …
       // size 只表字号，旧名 value-size 已并进来。
       'size': sizeTier(),
     },

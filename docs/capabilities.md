@@ -62,6 +62,20 @@
 | 构图 · 叠层 vk-layer | `vk-layer.readable` | `specimen/vk-layer.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 颜色 · 五档底 surface | `vk-panel.surface` | `specimen/vk-panel.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 主题 · 三套调色板 | `vk-page.theme` | `specimen/vk-page.html` | `tests/theme-tokens.test.mjs`<br>`tests/theme-geometry.test.mjs` | ✅ 绿 |
+| 排布 · vk-stack 权重分配 | `vk-stack.gap`<br>`vk-stack.direction` | `specimen/vk-stack.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 关系 · vk-edge 端点贴合 | `vk-edge.variant`<br>`vk-edge.tone` | `specimen/vk-edge.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 行内 · link 与键帽 | `vk-inline.variant` | `specimen/vk-inline.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-list 四种形态 | `vk-list.variant` | `specimen/vk-list.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-table 斑马纹 | `vk-table.stripe`<br>`vk-table.variant` | `specimen/vk-table.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-math 块级 / 字号 | `vk-math.display`<br>`vk-math.size` | `specimen/vk-math.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-cells 换行与当前格 | `vk-cells.cols`<br>`vk-cells.current` | `specimen/vk-cells.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-bits 位宽与符号位 | `vk-bits.bit-width`<br>`vk-bits.sign` | `specimen/vk-bits.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-bars 零线与倍率 | `vk-bars.max`<br>`vk-bars.ratio-to` | `specimen/vk-bars.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-timeline 泳道 | `vk-timeline.variant`<br>`vk-timeline.current` | `specimen/vk-timeline.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 布局 · vk-canvas 坐标系与栅格 | `vk-canvas.pad-px`<br>`vk-canvas.grid` | `specimen/vk-canvas.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-tree 截断保护 | `vk-tree.limit` | `specimen/vk-tree.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 原子 · vk-img 比例与失败占位 | `vk-img.ratio`<br>`vk-img.fill` | `specimen/vk-img.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
+| 数据 · vk-diff 两窗对照 | `vk-diff.variant`<br>`vk-diff.summary` | `specimen/vk-diff.html` | `tests/matrix-behavior.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -442,6 +456,104 @@
 - 契约断言：`vk-page.theme`
 - 标本页：`_site/specimen/vk-page.html` + 契约宿主 `_site/specimens/vk-page.html`
 - 测试：`tests/theme-tokens.test.mjs` · 「主题 · 三套主题的正文对比度 ≥ 7:1」；`tests/theme-tokens.test.mjs` · 「主题 · 三套主题都完整（98 个 --vk-theme-*，不靠继承）」；`tests/theme-geometry.test.mjs` · 「主题 · 三套主题下同一页面的几何与字号逐项相等」
+
+### ✅ 排布 · vk-stack 权重分配
+
+- 能力：vk-stack 写 weights（别名 ratio）时按权重分剩余高度：1:2:1 就是上 1 份、中 2 份、下 1 份；列表之外的孩子保持内容高。容器必须有确定高度（grow / stretch / h）。
+- 契约断言：`vk-stack.gap` · `vk-stack.direction`
+- 标本页：`_site/specimen/vk-stack.html` + 契约宿主 `_site/specimens/vk-stack.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-stack weights：按 1:2:1 分配剩余高度」
+
+### ✅ 关系 · vk-edge 端点贴合
+
+- 能力：vk-edge 按 from / to 的锚点自己算端点：@side:right 的起点贴在源块右边缘中点，@side:left 的终点贴在目标左边缘中点；路径 d 由几何算出，不需要作者摆坐标。
+- 契约断言：`vk-edge.variant` · `vk-edge.tone`
+- 标本页：`_site/specimen/vk-edge.html` + 契约宿主 `_site/specimens/vk-edge.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-edge：连线端点贴合 from / to 的锚点」
+
+### ✅ 行内 · link 与键帽
+
+- 能力：vk-inline variant="link" 写 href 才变成真链接（role=link、tabindex=0、cursor=pointer、点击/回车跳转）；variant="keys" 把 "Ctrl + C" 拆成两枚键帽。字号跟随所在正文行。
+- 契约断言：`vk-inline.variant`
+- 标本页：`_site/specimen/vk-inline.html` + 契约宿主 `_site/specimens/vk-inline.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-inline：link 变真链接（role/tabindex/点击跳转），keys 拆成键帽」
+
+### ✅ 数据 · vk-list 四种形态
+
+- 能力：vk-list 的 variant 决定条目标记：ordered 生成真 <ol>（编号语义）、check 是 <ul> 加勾选框、define 用术语 + 说明的两段结构、bullet 是默认圆点；形态换的是标记，不是行高。
+- 契约断言：`vk-list.variant`
+- 标本页：`_site/specimen/vk-list.html` + 契约宿主 `_site/specimens/vk-list.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-list：ordered 生成真 <ol>（编号语义），check 仍是 <ul> 并换标记」
+
+### ✅ 数据 · vk-table 斑马纹
+
+- 能力：vk-table 写 stripe 给奇数行换底（斑马纹），variant="spec" 改列距与字号；两种形态都不改表格的语义结构。
+- 契约断言：`vk-table.stripe` · `vk-table.variant`
+- 标本页：`_site/specimen/vk-table.html` + 契约宿主 `_site/specimens/vk-table.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-table：stripe 给斑马纹，variant=spec 换列距」
+
+### ✅ 数据 · vk-math 块级 / 字号
+
+- 能力：vk-math 写 display 变成整行居中的块级公式，不写就是行内公式；size 只改公式字号（subhead 112 → label 48），不动内容。
+- 契约断言：`vk-math.display` · `vk-math.size`
+- 标本页：`_site/specimen/vk-math.html` + 契约宿主 `_site/specimens/vk-math.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-math：display 切换行内/块级，size 改公式字号」
+
+### ✅ 数据 · vk-cells 换行与当前格
+
+- 能力：vk-cells 的 cols 决定每行几格（超过自动换行，最多 8 列），current="N" 把第 N 格标成 data-state="current"；跨格用 span，地址随格算。
+- 契约断言：`vk-cells.cols` · `vk-cells.current`
+- 标本页：`_site/specimen/vk-cells.html` + 契约宿主 `_site/specimens/vk-cells.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-cells：cols 决定每行格数，current 标出第 N 格」
+
+### ✅ 数据 · vk-bits 位宽与符号位
+
+- 能力：vk-bits 的 bit-width 决定一行画几位（位串更长时只画最后 N 位），sign 给最高位换底标出符号位；index 的编号跟着位宽走。
+- 契约断言：`vk-bits.bit-width` · `vk-bits.sign`
+- 标本页：`_site/specimen/vk-bits.html` + 契约宿主 `_site/specimens/vk-bits.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-bits：bit-width 决定位数，sign 标出符号位」
+
+### ✅ 数据 · vk-bars 零线与倍率
+
+- 能力：vk-bars 有负值时值域自动包含 0：负条从零线左侧起画、右端贴零线；ratio-to 指向基准行时每行旁标出相对它的倍率（含基准行的 ×1）。
+- 契约断言：`vk-bars.max` · `vk-bars.ratio-to`
+- 标本页：`_site/specimen/vk-bars.html` + 契约宿主 `_site/specimens/vk-bars.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-bars：负值落在零线左边，ratio-to 标出倍率」
+
+### ✅ 数据 · vk-timeline 泳道
+
+- 能力：vk-timeline variant="lanes" 按 lane 分泳道、按 at 摆位、span 占几格；current="N" 把第 N 条标成 data-state="current"（排序后的事件下标，1 起）。
+- 契约断言：`vk-timeline.variant` · `vk-timeline.current`
+- 标本页：`_site/specimen/vk-timeline.html` + 契约宿主 `_site/specimens/vk-timeline.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-timeline：lanes 按 at / lane 摆位，current 标出第 N 条」
+
+### ✅ 布局 · vk-canvas 坐标系与栅格
+
+- 能力：vk-canvas 的 pad-px 把坐标原点向内缩（子节点 x=0 落在内距之后），grid 在画布上铺一层等距栅格；w/h 定画布尺寸。
+- 契约断言：`vk-canvas.pad-px` · `vk-canvas.grid`
+- 标本页：`_site/specimen/vk-canvas.html` + 契约宿主 `_site/specimens/vk-canvas.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-canvas：pad-px 内缩坐标原点，grid 画出栅格」
+
+### ✅ 数据 · vk-tree 截断保护
+
+- 能力：vk-tree 的 limit 限制顶层显示条数（默认 14），但 current 指向的那一支一定画出来——截断不能把“正在讲的节点”截掉；current 同时落 aria-current。
+- 契约断言：`vk-tree.limit`
+- 标本页：`_site/specimen/vk-tree.html` + 契约宿主 `_site/specimens/vk-tree.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-tree：limit 截断，但 current 分支不被截掉」
+
+### ✅ 原子 · vk-img 比例与失败占位
+
+- 能力：vk-img 的 ratio="w / h" 决定盒子高；fill 落到 img 的 object-fit。加载失败时宿主标 data-error 并露出可见占位（alt 文字），不会留下空白框。
+- 契约断言：`vk-img.ratio` · `vk-img.fill`
+- 标本页：`_site/specimen/vk-img.html` + 契约宿主 `_site/specimens/vk-img.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-img：ratio 决定盒高，加载失败露出可见占位」
+
+### ✅ 数据 · vk-diff 两窗对照
+
+- 能力：vk-diff 默认统一视图（旧/新双行号）；variant="split" 换成左右两窗（改前 / 改后）并排，两窗各自完整；summary="none" 关掉「N 行改动」计数。
+- 契约断言：`vk-diff.variant` · `vk-diff.summary`
+- 标本页：`_site/specimen/vk-diff.html` + 契约宿主 `_site/specimens/vk-diff.html`
+- 测试：`tests/matrix-behavior.test.mjs` · 「vk-diff：split 生成两窗，summary=none 关掉计数」
 
 ## 怎么判红
 

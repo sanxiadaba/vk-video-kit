@@ -40,6 +40,7 @@ export class VkList extends VkElement {
     const ul = document.createElement(ordered ? 'ol' : 'ul');
     ul.className = 'vk-list';
     ul.dataset.mode = mode;
+    ul.dataset.variant = variant;
     ul.dataset.mass = mass;
     if (ordered) ul.dataset.ordered = '';
     if (rule) ul.dataset.rule = '';
@@ -687,9 +688,9 @@ export class VkSteps extends VkElement {
       return;
     }
     delete this.dataset.vkStale;
-    // current = 第 N 步，**1 起**（15.0 起统一）；-1 = 不标当前步（地图页五步等权）。
-    const rawCurrent = parseInt(this.getAttribute('current') ?? '1', 10);
-    let current = Number.isFinite(rawCurrent) ? rawCurrent : 1;
+    // current = 第 N 步，**1 起**（15.0 起统一）；不写 = -1，不标当前步（地图页五步等权）。
+    const rawCurrent = parseInt(this.getAttribute('current') ?? '-1', 10);
+    let current = Number.isFinite(rawCurrent) ? rawCurrent : -1;
     if (current < -1) current = -1;
     if (current === 0) {
       this._warnOnce('current', '的 current="0" 不是合法序号：current 从 1 起（-1 = 不标当前）；按第 1 步处理');

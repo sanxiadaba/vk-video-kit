@@ -58,7 +58,8 @@ export const EFFECTS = {
     group: { kind: 'any', reason: 'group 只改分隔线的粗细/位置，没有单一可比属性' },
     sign: { on: '.vk-bit', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
     tone: { on: '.vk-bit', kind: 'style', prop: 'color' },
-    width: { on: 'vk-bits', kind: 'dom', prop: '.vk-bit' },
+    // bit-width 决定一行画几位：位串比它长时只画最后 N 位，所以位数就是行为。
+    'bit-width': { on: 'vk-bits', kind: 'dom', prop: '.vk-bit' },
     bytes: { on: '.vk-bits', kind: 'style', prop: 'border-bottom-width', expect: { not: '0px' } },
   },
 
@@ -179,6 +180,8 @@ export const EFFECTS = {
 
   'vk-img': {
     ratio: { on: 'vk-img', kind: 'style', prop: 'height' },
+    // fill 是对外唯一名字（旧 fit 仍可用）：同一组 object-fit 行为。
+    fill: { on: 'vk-img img', kind: 'style', prop: 'object-fit' },
     fit: { on: 'vk-img img', kind: 'style', prop: 'object-fit' },
     position: { on: 'vk-img img', kind: 'style', prop: 'object-position' },
     radius: { on: 'vk-img .vk-img', kind: 'style', prop: 'border-radius' },
@@ -345,6 +348,8 @@ Object.assign(EFFECTS['vk-icon'], {
 });
 Object.assign(EFFECTS['vk-img'], {
   border: { on: 'vk-img .vk-img', kind: 'style', prop: 'border-top-width' },
+  // 出血先镜像到宿主；真正几何由 CSS 的负 margin 给出。
+  bleed: { on: 'vk-img', kind: 'attr', prop: 'data-bleed', expectFromValue: 'raw' },
 });
 Object.assign(EFFECTS['vk-mark'], {
   // variant 与 type 共用同一组 CSS；type 的 border-top-width 已覆盖。
@@ -354,7 +359,8 @@ Object.assign(EFFECTS['vk-rule'], {
   dash: { on: 'vk-rule', kind: 'style', prop: 'background-image', expect: { not: 'none' } },
 });
 Object.assign(EFFECTS['vk-list'], {
-  variant: { kind: 'any', reason: '四种形态只换条目标记字形，不改高度；无法用单一几何/样式断言。' },
+  // 四种形态都镜像到 data-variant：bullet / check / define / ordered 各是各的值。
+  variant: { on: '.vk-list', kind: 'attr', prop: 'data-variant', expectFromValue: 'raw' },
 });
 Object.assign(EFFECTS['vk-diff'], {
   variant: { on: 'vk-diff', kind: 'geometry', prop: 'height', skipVisual: true },

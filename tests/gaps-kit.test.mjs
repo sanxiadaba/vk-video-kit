@@ -45,22 +45,22 @@ after(async () => {
 
 /* --------------------------------------------------------------- timeline */
 
-test('vk-timeline：value 默认 280，size 三档严格递增（112 / 200 / 280）', async () => {
+test('vk-timeline：value 默认 200，size 三档严格递增（112 / 200 / 280）', async () => {
   const item = `<li date="1972" label="峰值" value="52,980">预处理前</li>`;
   const { tab } = await open(`
     <vk-timeline id="def">${item}</vk-timeline>
-    <vk-timeline id="title" size="title">${item}</vk-timeline>
+    <vk-timeline id="hero" size="hero">${item}</vk-timeline>
     <vk-timeline id="sub" size="subhead">${item}</vk-timeline>`);
   const r = await tab.evaluate(() => {
     const fs = (id) => parseFloat(getComputedStyle(document.querySelector(`#${id} .vk-tl-value`)).fontSize);
-    return { def: fs('def'), title: fs('title'), sub: fs('sub') };
+    return { def: fs('def'), hero: fs('hero'), sub: fs('sub') };
   });
 
-  assert.equal(r.def, 280, `不写 value-size 时必须还是 hero 280：${r.def}`);
+  assert.equal(r.def, 200, `不写 size 时默认 title 200（一帧三个数字不撑爆）：${r.def}`);
   assert.equal(r.sub, 112, `size="subhead" 要降到 112：${r.sub}`);
-  // title 别名到 display 200；subhead 别名到 headline 112。
-  assert.equal(r.title, 200, `size="title" 是中间一档 200：${r.title}`);
-  assert.ok(r.sub < r.title && r.title < r.def, `三档必须严格递增：${r.sub} / ${r.title} / ${r.def}`);
+  // hero 280 是补充档，显式写才用；title 别名到 display 200。
+  assert.equal(r.hero, 280, `size="hero" 是最大一档 280：${r.hero}`);
+  assert.ok(r.sub < r.def && r.def < r.hero, `三档必须严格递增：${r.sub} / ${r.def} / ${r.hero}`);
 });
 
 test('vk-timeline：size 非法值构建期失败，并列出可用档', async () => {

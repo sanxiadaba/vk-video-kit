@@ -52,9 +52,7 @@ npm run build
 
 <vk-page align="center">
   <vk-stack gap="lg">
-    <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">
-      字符串不是值，是<em>一块内存</em>
-    </vk-title>
+    <vk-text size="display">字符串不是值，是<em>一块内存</em></vk-text>
     <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
   </vk-stack>
 </vk-page>
@@ -68,7 +66,7 @@ npm run build
 
 ```html
 <vk-grid cols="3" gap="lg" stretch>
-  <vk-code span="2" src="hello.c" lines="4-9"></vk-code>
+  <vk-code span="2" src="code/hello.c" lines="4-9"></vk-code>
   <vk-stack span="1" gap="md">…</vk-stack>
 </vk-grid>
 ```
@@ -149,9 +147,9 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 
 ```html
 <vk-page align="center">
-  <vk-img bleed src="assets/cover.jpg" alt="" fit="cover"></vk-img>
+  <vk-img bleed src="assets/sample-grid.svg" alt="" fill="cover"></vk-img>
   <vk-stack gap="lg">
-    <vk-title size="title" sub="改一个字符，改的是内存里的一个字节。">字符串不是值，是<em>一块内存</em></vk-title>
+    <vk-text size="display">字符串不是值，是<em>一块内存</em></vk-text>
     <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
   </vk-stack>
 </vk-page>
@@ -164,10 +162,22 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 `for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
 
 ```html
-<vk-note variant="bubble" for="#arr@line:4">第 4 行</vk-note>
-<vk-note variant="bubble" for="#cells@cell:3">第 3 格</vk-note>
-<vk-note variant="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
-<vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
+<vk-page>
+  <!-- 锚点要先有目标：示例把四个目标一起写出来，照抄即可构建 -->
+  <vk-stack gap="md">
+    <vk-code id="arr" lang="c" file="hello.c" src="code/hello.c" lines="1-8"></vk-code>
+    <vk-cells id="cells" cols="4" addr="0x1000">
+      <li value="61" label="s[0]"></li><li value="62" label="s[1]"></li>
+      <li value="63" label="s[2]"></li><li value="64" label="s[3]"></li>
+    </vk-cells>
+    <vk-box id="buf" surface="wash">源缓冲</vk-box>
+    <vk-box id="mem" surface="wash">目标内存</vk-box>
+  </vk-stack>
+  <vk-note variant="bubble" for="#arr@line:4">第 4 行</vk-note>
+  <vk-note variant="bubble" for="#cells@cell:3">第 3 格</vk-note>
+  <vk-note variant="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
+  <vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
+</vk-page>
 ```
 
 `vk-note variant="bubble"`（原 `vk-pin`）只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`

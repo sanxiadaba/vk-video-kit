@@ -23,8 +23,8 @@ const num = (v) => {
 };
 
 /**
- * value 的体量档：一帧放三个数字时，hero（280）会把整页撑到 864+
- * 所以给一档明确的降档词。词表是闭集，构建期也会拦（见 src/highlight.mjs）。
+ * value 的体量档：一帧放三个数字时，hero（280）会把整页撑到 864+，
+ * 所以默认是 title（200）。词表是闭集，构建期也会拦（见 src/highlight.mjs）。
  */
 const VALUE_SIZES = new Set(['hero', 'title', 'subhead']);
 
@@ -63,12 +63,11 @@ export class VkTimeline extends VkElement {
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const mass = this.getAttribute('mass') || 'normal';
-    // 主值的字号：size 只表字号（旧名 value-size 已并进来）；不写 = hero（280），
-    // 与引入 value-size 之前逐像素一致。
-    const valueSizeRaw = (this.getAttribute('size') || 'hero').trim();
-    const valueSize = VALUE_SIZES.has(valueSizeRaw) || SIZE_TIERS.includes(valueSizeRaw) ? valueSizeRaw : 'hero';
+    // 主值的字号：size 只表字号（旧名 value-size 已并进来）；不写 = title（200）。
+    const valueSizeRaw = (this.getAttribute('size') || 'title').trim();
+    const valueSize = VALUE_SIZES.has(valueSizeRaw) || SIZE_TIERS.includes(valueSizeRaw) ? valueSizeRaw : 'title';
     if (valueSizeRaw !== valueSize) {
-      this._warnOnce('size', `的 size="${valueSizeRaw}" 不认识，按 hero 画；可用：${SIZE_TIERS.join(' / ')}`);
+      this._warnOnce('size', `的 size="${valueSizeRaw}" 不认识，按 title 画；可用：${SIZE_TIERS.join(' / ')}`);
     }
     // current = 第 N 个事件（1 起）；-1 = 不标。
     const curRaw = parseInt(this.getAttribute('current') ?? '-1', 10);

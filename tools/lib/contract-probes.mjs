@@ -83,6 +83,18 @@ export const PROBES = {
       effect: { on: 'vk-grid', kind: 'style', prop: 'grid-template-columns' },
       why: '轨道直接写在 grid-template-columns 上。',
     },
+    // 标本宿主是 gap="sm"（24px），所以 gap-x/gap-y 的 sm 与基线相同、测不出变化；
+    // 这两条只探真正会改列距/行距的档位。
+    'gap-x': {
+      values: ['lg', 'xl'],
+      effect: { on: 'vk-grid', kind: 'style', prop: 'column-gap' },
+      why: '横向沟槽只改 column-gap；sm 与宿主 gap 简写相同，不重复探。',
+    },
+    'gap-y': {
+      values: ['lg', 'xl'],
+      effect: { on: 'vk-grid', kind: 'style', prop: 'row-gap' },
+      why: '纵向沟槽只改 row-gap；sm 与宿主 gap 简写相同，不重复探。',
+    },
   },
   'vk-label': {
     total: {
@@ -202,6 +214,7 @@ export const PROBES = {
     },
     size: {
       values: ['label', 'subhead'],
+      effect: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
       why: '连线标签字号：两个非默认档；mega 会把标签挤出安全区。',
     },
   },
@@ -210,6 +223,13 @@ export const PROBES = {
       values: ['vertical'],
       effect: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
       why: '横排/竖排的差异最终在 .vk-steps 的 flex-direction。',
+    },
+    // current 从 1 起；-1 = 不标。读第 2 步的颜色：current=1 时它是 todo，
+    // current=3 时它是 done，两个值都会让颜色离开标本基线（current=2）。
+    current: {
+      values: ['1', '3'],
+      effect: { on: '.vk-step[data-step="1"]', kind: 'style', prop: 'color' },
+      why: '改 current 会改第 2 步的状态（todo / done / current），颜色必须跟手。',
     },
     mark: {
       values: ['2', '3'],
@@ -239,6 +259,11 @@ export const PROBES = {
       values: ['3'],
       effect: { on: '.vk-line', kind: 'style', prop: 'background-color' },
       why: '指一行：整行 focus 底，与 vk-code 的 current 同一条视觉规则。标本有 6 行真实 transcript。',
+    },
+    prompt: {
+      values: ['>', 'PS>'],
+      effect: { on: '.vk-prompt', kind: 'text' },
+      why: 'prompt 决定命令行前缀字符，直接落在 .vk-prompt 的文字上。',
     },
   },
   'vk-code': {
@@ -291,6 +316,11 @@ export const PROBES = {
       effect: { on: '.vk-asm-row', kind: 'style', prop: 'opacity' },
       why: '聚光让非目标行透明度下降。',
     },
+    long: {
+      values: ['wrap', 'clip'],
+      effect: { on: '.vk-asm', kind: 'attr', prop: 'data-long', expectFromValue: 'raw' },
+      why: '长行策略先镜像到 .vk-asm 的 data-long：clip 裁切、wrap 换行、fail 构建期报错。',
+    },
   },
   'vk-bits': {},
   'vk-rule': {
@@ -338,7 +368,8 @@ export const PROBES = {
   'vk-math': {
     size: {
       values: ['label', 'subhead'],
-      why: '公式字号：label 与 subhead 量得到变化；data 与 body 同字号，mega 会超出标本台。',
+      effect: { on: 'vk-math .katex', kind: 'style', prop: 'font-size' },
+      why: '公式字号落在 .katex 上：label 与 subhead 量得到变化；data 与 body 同字号，mega 会超出标本台。',
     },
   },
   'vk-tree': {
@@ -348,14 +379,21 @@ export const PROBES = {
       effect: { on: 'vk-tree', kind: 'dom', prop: '.vk-tree-row' },
       why: '收起一个真实存在的目录；断行数。',
     },
+    limit: {
+      values: ['1', '2'],
+      // kind=dom 读的是 prop 这个选择器的个数；limit 只截顶层。
+      effect: { on: 'vk-tree', kind: 'dom', prop: '.vk-tree-row[data-depth="0"]' },
+      why: 'limit 是顶层显示上限（默认 14）：断顶层行数，而不是整棵树的行数。',
+    },
   },
   'vk-timeline': {
     // 标本把 size 定在 subhead（演示"一帧三个数字"的降档用法），
-    // 默认 hero 与 subhead 已由 tests/gaps-kit.test.mjs 逐档测过；
+    // 默认 title 200 与 hero 280 由 tests/gaps-kit.test.mjs 逐档测过；
     // 契约只探 title 这一档，免得同一件事在两个地方各断言一次。
     size: {
       values: ['title'],
-      why: '标本用 subhead；契约只补 title 这一档（hero 是默认，subhead 是标本态）。',
+      effect: { on: '.vk-tl-value', kind: 'style', prop: 'font-size' },
+      why: '主值字号落在 .vk-tl-value 上：title 200 / hero 280 / subhead 112。',
     },
     current: {
       values: ['2'],
@@ -373,6 +411,11 @@ export const PROBES = {
       values: ['ADDR|BYTES|OP|ARGS'],
       effect: { on: '.vk-asm-a', kind: 'text' },
       why: '列头文字由 labels="地址|机器码|指令|操作数" 一次覆盖四列。',
+    },
+    long: {
+      values: ['wrap', 'clip'],
+      effect: { on: '.vk-asm', kind: 'attr', prop: 'data-long', expectFromValue: 'raw' },
+      why: '长行策略先镜像到 .vk-asm 的 data-long：clip 裁切、wrap 换行、fail 构建期报错。',
     },
   },
   'vk-text': {

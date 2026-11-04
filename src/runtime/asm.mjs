@@ -153,7 +153,7 @@ export class VkAsm extends VkElement {
     ]
       .filter(Boolean)
       .join(' ');
-    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-chrome="${chrome}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'fail')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
+    this.innerHTML = `<div class="vk-asm" style="--vk-asm-cols:${gridCols}" data-chrome="${chrome}" data-mass="${esc(mass)}" data-long="${esc(this.getAttribute('long') || 'clip')}" data-show-addr="${showAddr ? '1' : '0'}" data-show-bytes="${showBytes ? '1' : '0'}" data-show-order="${showOrder ? '1' : '0'}">
       ${head}${cols}<div class="vk-asm-bd" data-vk-part="bd">${rows}</div>
     </div>`;
     applyContentSize(this);
