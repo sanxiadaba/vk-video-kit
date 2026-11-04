@@ -312,7 +312,7 @@
         },
         {
           "file": "tests/annotate.test.mjs",
-          "name": "旧标签是别名：vk-edge / vk-pin / vk-ring 与 vk-annotate 同几何"
+          "name": "旧标签是别名：vk-edge / vk-pin 与 vk-annotate 同几何；vk-ring 变成带环的面"
         }
       ]
     },
@@ -516,13 +516,17 @@
     },
     {
       "id": "icon-whitelist",
-      "name": "图标 · 语义白名单",
-      "what": "vk-icon 的语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看（level=warn）。",
+      "name": "图标 · 语义白名单（vk-text icon）",
+      "what": "图标本质是一个字形：<vk-text icon=\"check\"> 里文字与图标共存。语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字在 vk-text 的 icon 上构建期报错；旧 vk-icon 的装饰图标仍只提醒。",
       "contracts": [
-        "vk-icon.name"
+        "vk-text.icon"
       ],
-      "specimen": "vk-icon",
+      "specimen": "vk-text",
       "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-text icon：字形与文字共存，白名单外构建期报错"
+        },
         {
           "file": "tests/batch-gh.test.mjs",
           "name": "vk-icon 白名单外：构建期只提醒，不再拦构建"
@@ -618,17 +622,21 @@
     },
     {
       "id": "caption-anchor",
-      "name": "归属说明 · vk-caption",
-      "what": "「你写的 / 编译器给的」这种归属说明：贴在目标块上方（anchor=\"above\"）或下方（anchor=\"below\"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。",
+      "name": "归属说明 · vk-label[for]",
+      "what": "「你写的 / 编译器给的」这种归属说明：给 vk-label 写 for，它就贴在目标块上方（anchor=\"above\"）或下方（anchor=\"below\"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。旧标签 vk-caption 保留为别名。",
       "contracts": [
-        "vk-caption.for",
-        "vk-caption.anchor"
+        "vk-label.for",
+        "vk-label.anchor"
       ],
-      "specimen": "vk-caption",
+      "specimen": "vk-label",
       "tests": [
         {
-          "file": "tests/batch-primitives.test.mjs",
-          "name": "vk-caption：左边界对齐目标块首字符（above / below）"
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-label for：贴块说明的左边界对齐目标首字符"
+        },
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-label anchor：above / below 换方向"
         }
       ]
     },
@@ -734,7 +742,7 @@
     {
       "id": "copy-style",
       "name": "文案 · 字幕短句（项目层 preset，默认关）",
-      "what": "项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size=\"caption\" / vk-caption）不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。",
+      "what": "项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size=\"caption\" / vk-label[for]（原 vk-caption））不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。",
       "contracts": [
         "style:copy"
       ],
@@ -743,6 +751,119 @@
         {
           "file": "tests/batch-native.test.mjs",
           "name": "预设 · 字幕短句：句号 / 超 18 字报提醒（level=warn，默认不跑）"
+        }
+      ]
+    },
+    {
+      "id": "text-icon",
+      "name": "文字 · icon 字形",
+      "what": "图标是一个字形，并进 vk-text：icon=\"check\" 写在文字前面，文字与图标共存；四档字号与墨阶仍然只由 vk-text 决定。旧 vk-icon 转发到同一段内联实现。",
+      "contracts": [
+        "vk-text.icon"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-text icon：字形与文字共存，白名单外构建期报错"
+        }
+      ]
+    },
+    {
+      "id": "box-ring",
+      "name": "面 · 描边环 ring",
+      "what": "vk-box 的 ring 是一圈不占布局的描边强调（box-shadow），环色跟 tone、默认焦点色；加不加环，邻居的位置与尺寸都不变。旧 vk-ring 转发到这条描边。",
+      "contracts": [
+        "vk-box.ring"
+      ],
+      "specimen": "vk-box",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-box ring：描边环不占布局，tone 换环色"
+        }
+      ]
+    },
+    {
+      "id": "label-for",
+      "name": "标签 · 贴块 for",
+      "what": "vk-label 写 for 就变成归属说明：位置由目标块决定，左边界对齐目标块的首字符；不写 for 仍是块里的一枚标签。旧 vk-caption 转发到这里。",
+      "contracts": [
+        "vk-label.for"
+      ],
+      "specimen": "vk-label",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-label for：贴块说明的左边界对齐目标首字符"
+        }
+      ]
+    },
+    {
+      "id": "label-anchor",
+      "name": "标签 · 贴块方向 anchor",
+      "what": "anchor=\"above\"（默认）贴在目标块上方，anchor=\"below\" 贴在下方；净空 16px，方向落在宿主的 data-anchor 上。",
+      "contracts": [
+        "vk-label.anchor"
+      ],
+      "specimen": "vk-label",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-label anchor：above / below 换方向"
+        }
+      ]
+    },
+    {
+      "id": "note-bubble",
+      "name": "注解 · 气泡 bubble",
+      "what": "vk-note kind=\"bubble\" 是原来的批注泡：气泡 + 引线绑到任意锚点，自动避让正文；w / n / tone / emphasis / size / leader / gap-px / x / y 与旧 vk-pin 同名同义。",
+      "contracts": [
+        "vk-note.kind"
+      ],
+      "specimen": "vk-note",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-note kind=\"bubble\"：泡 + 引线与旧 vk-pin 同几何"
+        }
+      ]
+    },
+    {
+      "id": "panel-chrome",
+      "name": "分区 · 窗头 chrome",
+      "what": "vk-panel chrome=\"dots\" 长出三点窗头与标题带（默认 none 仍是干净分区）；窗头高 / 三点尺寸读窗自己的令牌，与 code / term / diff 同一张表。旧 vk-window 转发到这里。",
+      "contracts": [
+        "vk-panel.chrome"
+      ],
+      "specimen": "vk-panel",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "vk-panel chrome=\"dots\"：三点窗头与标题带"
+        }
+      ]
+    },
+    {
+      "id": "alias-forward",
+      "name": "旧名 · 六个标签的转发",
+      "what": "vk-icon → vk-text、vk-rule → vk-box、vk-caption → vk-label、vk-pin → vk-note、vk-ring → vk-box、vk-window → vk-panel。旧标签继续可用（同名自定义元素、同一套 DOM），构建期给一条\"已合并到 X，旧名保留\"的提示；标签清单里不再单列。",
+      "contracts": [
+        "vk-text.icon",
+        "vk-box.ring",
+        "vk-label.for",
+        "vk-note.kind",
+        "vk-panel.chrome"
+      ],
+      "specimen": "vk-text",
+      "tests": [
+        {
+          "file": "tests/merged-six.test.mjs",
+          "name": "六个旧标签是别名：转发到新标签并给一条构建期提示"
+        },
+        {
+          "file": "tests/registry.test.mjs",
+          "name": "别名只转发到一个公开标签，且不在清单里单列"
         }
       ]
     }

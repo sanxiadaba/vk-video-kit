@@ -24,7 +24,7 @@ import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, s
 import { ICONS } from './icons.generated.mjs';
 import { ICON_WHITELIST_HINT, isSemanticIcon } from './shared/icons.mjs';
 import { diag } from './shared/diag.mjs';
-import { TAGS, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
+import { TAGS, TAG_NAMES, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
 
 /* ------------------------------------------------------------------ 主题 */
 
@@ -338,7 +338,7 @@ function validateRefs(doc, file, errors) {
 
     // 1) 未知的 vk- 标签：以前被静默忽略。
     if (tag.startsWith('vk-') && !TAGS[tag]) {
-      errors.push(`${file}:${lineOf(node)} 未知标签 <${tag}>；可用：${Object.keys(TAGS).join(', ')}`);
+      errors.push(`${file}:${lineOf(node)} 未知标签 <${tag}>；可用：${TAG_NAMES.join(', ')}`);
       return;
     }
 
@@ -462,11 +462,15 @@ function validateRefs(doc, file, errors) {
     }
 
     // 6) 窗头嵌套：一个窗里再放一个带窗头的组件，会画出两条标题栏
-    if (tag === 'vk-window') {
+    if (tag === 'vk-window' || (tag === 'vk-panel' && (attr(node, 'chrome') || 'none').trim() === 'dots')) {
+      const outer = tag === 'vk-window' ? '<vk-window>' : '<vk-panel chrome="dots">';
       walk(node, (inner) => {
-        if (inner === node || !inner.tagName || !WINDOWED.has(inner.tagName)) return;
-        if (attr(inner, 'chrome') !== 'none') {
-          errors.push(`${file}:${lineOf(inner)} <${inner.tagName}> 在 <vk-window> 里没写 chrome="none"，会出现两条窗头`);
+        if (inner === node || !inner.tagName) return;
+        const innerChrome = (attr(inner, 'chrome') || '').trim();
+        const windowed = WINDOWED.has(inner.tagName) || (inner.tagName === 'vk-panel' && innerChrome === 'dots');
+        if (!windowed) return;
+        if (innerChrome !== 'none') {
+          errors.push(`${file}:${lineOf(inner)} <${inner.tagName}> 在 ${outer} 里没写 chrome="none"，会出现两条窗头`);
         }
       });
     }
@@ -569,11 +573,10 @@ function validateAuthorHtml(doc, file, html = '') {
     }
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
-    // 关系层合并：旧标签是 vk-annotate 的别名，继续可用；只提示一次迁移方向。
-    const ALIAS_MODE = { 'vk-edge': 'arrow', 'vk-pin': 'note', 'vk-ring': 'circle' };
-    if (ALIAS_MODE[tag]) {
+    // 合并后的旧名：统一给一条迁移提示，不拦构建（旧页继续可用）。
+    if (def.aliasOf) {
       warnings.push(
-        `${file}:${lineOf(node)} <${tag}> 已并入 <vk-annotate mode="${ALIAS_MODE[tag]}">（旧标签继续可用；属性表见 docs/reference.md）`
+        `${file}:${lineOf(node)} <${tag}> 已合并到 <${def.aliasOf}>，旧名保留：${def.aliasNote || '属性表见 docs/reference.md'}`
       );
     }
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
@@ -610,15 +613,18 @@ function validateAuthorHtml(doc, file, html = '') {
     // G1：注解原语的两条构建期契约 —— 目标必须能在构建期解析到。
     // 运行期找不到目标只会"安静地不画"，那是最难查的一类错；宁可在构建期红。
     if (tag === 'vk-note') {
-      const kind = (attrs.get('kind') || 'margin').trim() === 'legend' ? 'legend' : 'margin';
-      const where = `${file}:${lineOf(node)} <vk-note${kind === 'legend' ? ' kind="legend"' : ''}>`;
+      const rawKind = (attrs.get('kind') || 'margin').trim();
+      const kind = rawKind === 'legend' || rawKind === 'bubble' ? rawKind : 'margin';
+      const where = `${file}:${lineOf(node)} <vk-note${kind === 'margin' ? '' : ` kind="${kind}"`}>`;
       const targets = String(attrs.get('for') || '')
         .split(';')
         .map((s) => s.trim())
         .filter(Boolean);
       if (!targets.length) {
         errors.push(
-          `${where} 缺 for：${kind === 'margin' ? '边注' : '图例的编号点'}必须指向一个目标；写 #id / .class / vk-标签`
+          `${where} 缺 for：${
+            kind === 'margin' ? '边注' : kind === 'bubble' ? '气泡' : '图例的编号点'
+          }必须指向一个目标；写 #id / .class / vk-标签`
         );
       }
       const bad = targets.filter((v) => {
@@ -797,7 +803,8 @@ function validateAuthorHtml(doc, file, html = '') {
       );
     }
     // pin 只钉一个点；分号是给 ring / spotlight 的多目标语法。
-    if (tag === 'vk-pin' && (attrs.get('for') || '').includes(';')) {
+    // 减法第一波：pin 的能力并进 vk-note kind="bubble"，这条规则跟着走。
+    if ((tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('kind') || '').trim() === 'bubble')) && (attrs.get('for') || '').includes(';')) {
       errors.push(
         diag({
           file,
@@ -805,7 +812,7 @@ function validateAuthorHtml(doc, file, html = '') {
           tag,
           what: '的 for 只能有一个目标',
           wrote: `for="${attrs.get('for')}"`,
-          should: '拆成多个 <vk-pin>，或改用 <vk-ring> / <vk-spotlight>',
+          should: '拆成多个气泡，或改用 vk-annotate mode="circle" / vk-box ring',
           why: '气泡只有一条引线；多目标会让气泡位置失去意义',
         })
       );
@@ -956,8 +963,9 @@ function validateAuthorHtml(doc, file, html = '') {
       if (spec.type === 'size') {
         const special = raw === 'fit' || raw === 'full';
         if (!special) {
-          // vk-pin 的 w 允许写 "200px"：运行时也认这个写法，别让作者被单位绊住。
-          const px = tag === 'vk-pin' && name === 'w' ? raw.match(/^(\d+(?:\.\d+)?)px$/) : null;
+        // vk-pin / vk-note kind="bubble" 的 w 允许写 "200px"：运行时也认这个写法，别让作者被单位绊住。
+        const bubbleW = (tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('kind') || '').trim() === 'bubble')) && name === 'w';
+        const px = bubbleW ? raw.match(/^(\d+(?:\.\d+)?)px$/) : null;
           const n = Number(px ? px[1] : raw);
           const range = `${spec.min ?? '−∞'}…${spec.max ?? '∞'}`;
           if (!Number.isFinite(n)) {
@@ -1004,14 +1012,23 @@ function validateAuthorHtml(doc, file, html = '') {
       if (caps > 1) errors.push(`${file}:${lineOf(node)} <vk-figure> 只能有一个 figcaption`);
       if (caps && attrs.has('caption')) errors.push(`${file}:${lineOf(node)} <vk-figure> 的 figcaption 和 caption 不能同时写`);
     }
-    if (tag === 'vk-icon' || (tag === 'vk-label' && attrs.has('icon'))) {
-      const name = attrs.get(tag === 'vk-icon' ? 'name' : 'icon');
+    const ICON_ATTR = { 'vk-icon': 'name', 'vk-label': 'icon', 'vk-text': 'icon' };
+    if (ICON_ATTR[tag] && attrs.has(ICON_ATTR[tag])) {
+      const name = attrs.get(ICON_ATTR[tag]);
+      const where =
+        tag === 'vk-icon' ? '<vk-icon> 没有图标' : tag === 'vk-text' ? '<vk-text> 的 icon 没有图标' : '<vk-label> 的 icon 没有图标';
       if (name && !ICONS[name]) {
         const near = Object.keys(ICONS).filter((n) => n.includes(name) || name.includes(n)).slice(0, 3);
-        const where = tag === 'vk-icon' ? '<vk-icon> 没有图标' : '<vk-label> 的 icon 没有图标';
         errors.push(`${file}:${lineOf(node)} ${where} "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
       }
-      // 图标白名单只是提醒，不是错误（15.x）：图标可以表达语义，也可以只是装饰。
+      // vk-text 的 icon 是"字形"：白名单外直接报错（想用装饰图标就用 vk-icon / vk-label 的 icon）。
+      // 旧 vk-icon 的装饰图标仍然只提醒，不拦构建。
+      if (tag === 'vk-text' && name && ICONS[name] && !isSemanticIcon(name)) {
+        errors.push(
+          `${file}:${lineOf(node)} <vk-text icon="${name}"> 不在语义图标白名单里；可用：${ICON_WHITELIST_HINT}`
+        );
+      }
+      // 旧 vk-icon 的白名单只是提醒，不是错误（15.x）：图标可以表达语义，也可以只是装饰。
       // 装饰图标不该让一整页构建失败——那是审美判断，属于项目，不属于库。
       if (tag === 'vk-icon' && name && ICONS[name] && !isSemanticIcon(name)) {
         warnings.push(
@@ -1285,6 +1302,11 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     // vk-label 的图标在运行期画（它要跟着形态/文字一起重排），
     // 但名字必须在构建期进页面图标表，否则运行时查不到、退成圆心问号。
     if (node.tagName === 'vk-label') {
+      const name = attr(node, 'icon');
+      if (name && ICONS[name]) iconNames.add(name);
+    }
+    // vk-text 的 icon（原 vk-icon）同理：名字得进页面图标表，运行期才画得出来。
+    if (node.tagName === 'vk-text') {
       const name = attr(node, 'icon');
       if (name && ICONS[name]) iconNames.add(name);
     }

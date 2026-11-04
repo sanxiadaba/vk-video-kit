@@ -38,12 +38,13 @@ defineComponents();
 defineCompositions();
 defineAsm();
 defineTimeline();
-// 关系层：vk-annotate 是本体，vk-edge / vk-pin / vk-ring 是它的旧名字。
+// 关系层：vk-annotate 是本体，vk-edge 是它的旧名。
 defineAnnotate();
-// 注解原语：边注 / 编号图例（不是气泡）。
+// 注解原语：边注 / 气泡（原 vk-pin）/ 编号图例。
 defineNote();
-// 归属说明：贴在块上（或下）的一行小字。
+// 归属说明：贴在块上（或下）的一行小字（旧名 vk-caption，本体是 vk-label）。
 defineCaption();
+// 旧标签别名：vk-pin → vk-note kind="bubble"；vk-ring → vk-box ring。
 defineOverlays();
 installAudit(VK);
 installDirector(VK);

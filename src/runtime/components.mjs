@@ -1,4 +1,5 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { VkPanel } from './elements.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead, DOTS } from './window.mjs';
@@ -96,19 +97,35 @@ const WIN_TONES = new Set(['info', 'focus', 'ok', 'warn', 'err']);
 const CONNECTORS = new Set(['arrow', 'line', 'none']);
 
 /**
- * 窗：L1 原子。三点窗头 + 标题 / 地址栏 / 对话框，内容由作者放。
- * 与 code / term / diff 共用同一个 win() 实现，**不嵌套**。
+ * 窗：旧名，转发到 vk-panel。
+ *
+ * 减法第一波：窗就是一块带窗头的分区（vk-panel chrome="dots"）。
+ * 旧标签继续可用——DOM 仍是 .vk-win / .vk-hd / .vk-win-bd，逐像素不动；
+ * 配置解析与 panel 共用（chrome 折成 dots|none，title / pad 同一套取值）。
  */
-export class VkWindow extends VkElement {
+export class VkWindow extends VkPanel {
   static watchSource = true;
   static slot = true;
   static slotHost = '.vk-win-bd';
   static renderedRoot = '.vk-win';
 
+  connectedCallback() {
+    super.connectedCallback?.();
+    this.dataset.vkAlias = 'vk-panel';
+  }
+
+  /** 新词表：旧 chrome 折成 panel 的 dots / none（min / browser 有窗头）。 */
+  _chrome() {
+    const raw = this.getAttribute('chrome') || 'min';
+    return raw === 'none' ? 'none' : 'dots';
+  }
+
   capture() {}
 
   render() {
+    // 旧词表仍按原样落在 .vk-win[data-chrome] 上：CSS 与旧测试都读它。
     const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
+    this.dataset.chrome = this._chrome();
     const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'lg';
     const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';

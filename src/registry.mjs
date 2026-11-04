@@ -188,10 +188,11 @@ const ATTR_META = {
 const DEFAULTS = {
   'vk-box': { surface: 'none', radius: 'lg', border: 'none' },
   // plain 默认无框无底：要框必须显式写 border。
-  'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none' },
+  // chrome="none"：默认仍是"没有标题栏的分区"；写 dots 才长成窗体。
+  'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none', chrome: 'none' },
   // fit-min 是硬地板：容器再窄，字号也不再掉到它以下（默认 40，见 vk-text 的 fit）。
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary', 'fit-min': 40, 'fit-max': 240 },
-  'vk-label': { variant: 'kicker', ink: 'muted' },
+  'vk-label': { variant: 'kicker', ink: 'muted', anchor: 'above' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
@@ -225,7 +226,8 @@ const DEFAULTS = {
     'arrow-scale': 0.12,
   },
   // 注解原语：默认是"像书页边注"的那一种，不是气泡。
-  'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br' },
+  // kind="bubble" 是原 vk-pin 的泡 + 引线；其余旋钮与气泡共用一套取值。
+  'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br', tone: 'info', emphasis: 'soft', size: 'body', 'gap-px': 24 },
   // 归属说明：默认贴在目标块上方，左边界对齐首字符。
   'vk-caption': { anchor: 'above' },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false', surface: 'paper' },
@@ -265,6 +267,9 @@ export const TAGS = {
       'pad-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
+      // 描边强调：一圈不占布局的环（原 vk-ring 的那层"看这里"）。
+      // 环色跟 tone 走；不写 tone 时是焦点色。
+      'ring': bool(),
       'w': num({ min: 48, max: 1920, step: 1 }),
       'h': num({ min: 48, max: 1080, step: 1 }),
       'x': { ...num({ min: -1920, max: 1920, step: 1 }), hidden: true },
@@ -275,7 +280,7 @@ export const TAGS = {
     name: '分区',
     layer: 'elements',
     summary:
-      '一块内容分区：底色、可选标题带、内距、圆角。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。',
+      '一块内容分区：底色、可选标题带、内距、圆角；chrome="dots" 会长出窗头，于是它也能当窗用。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。',
     attrs: {
       // 语义色只用来染「面」：plain / raised 上落 wash，inset 上落 tint，dark 上落深色 wash。
       'tone': oneOf('neutral', 'info', 'focus', 'ok', 'err', 'warn'),
@@ -283,6 +288,8 @@ export const TAGS = {
       'variant': oneOf('plain', 'raised', 'inset', 'dark'),
       // 有标题才有标题带；标题带里放 vk-label（kicker）。
       'title': text(),
+      // 窗头：dots = 三点 + 标题（原 vk-window 的 min / browser）；none = 干净的分区（默认）。
+      'chrome': oneOf('dots', 'none'),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
@@ -291,7 +298,7 @@ export const TAGS = {
   'vk-text': {
     name: '文字',
     layer: 'elements',
-    summary: '一段文字：字阶、字重、墨阶、等宽、对齐、测量宽。',
+    summary: '一段文字：字阶、字重、墨阶、等宽、对齐、测量宽；可带一个语义图标（文字与图标共存）。',
     content: {
       kind: 'text',
       target: 'vk-text',
@@ -316,12 +323,15 @@ export const TAGS = {
       // 字号也不再往下缩，改为给宿主 data-fit-overflow 并提醒（默认 40）。
       'fit-min': { ...num({ min: 8, max: 240, step: 1 }), default: 40, when: { fit: ['width'] } },
       'fit-max': { ...num({ min: 8, max: 400, step: 1 }), when: { fit: ['width'] } },
+      // 图标：Lucide 名，构建期校验（语义白名单外报错）；图标与文字共存，
+      // 因为它本来就是一个字形，不是另一个标签。原 <vk-icon> 的整块形态由别名转发。
+      'icon': text(),
     },
   },
   'vk-label': {
     name: '标签',
     layer: 'elements',
-    summary: '一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标。',
+    summary: '一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上（原 vk-caption）。',
     content: {
       kind: 'text',
       target: 'vk-label',
@@ -341,6 +351,10 @@ export const TAGS = {
       'section': { ...text(), content: true },
       // 内联图标：只收 Lucide 名字，构建期校验；不写就没有图标槽。
       'icon': text(),
+      // 归属说明（原 vk-caption）：写 for 就把这一行贴到目标块上方/下方，
+      // 左边界对齐目标块的首字符；不写就是块里的一枚标签。
+      'for': sel(),
+      'anchor': oneOf('above', 'below'),
     },
   },
   'vk-inline': {
@@ -360,8 +374,11 @@ export const TAGS = {
   'vk-icon': {
     name: '图标',
     layer: 'elements',
+    // 减法第一波：图标本质是一个字形，并回 vk-text。旧标签继续可用，构建期提示迁移。
+    aliasOf: 'vk-text',
+    aliasNote: '图标本质是一个字形：改用 <vk-text icon="check">，文字与图标可以共存。',
     summary:
-      '一个符号：语义图标可用 check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看。四档尺寸；语义色与墨阶分开。label 是无障碍名称，不是可见文字。',
+      '已合并到 vk-text（旧名保留）：图标本质是一个字形，用 <vk-text icon="名称">。语义图标可用 check / circle-check / triangle-alert / info / x / circle-x / arrow-up / arrow-down / arrow-right。',
     content: {
       kind: 'text',
       target: 'vk-icon',
@@ -402,7 +419,9 @@ export const TAGS = {
   'vk-rule': {
     name: '分隔线',
     layer: 'elements',
-    summary: '一根线。线宽三档；纯装饰或语义分隔。',
+    aliasOf: 'vk-box',
+    aliasNote: '一条线就是一块 1px 高的面：用 <vk-box border="hair">（或 vk-box 的 h + surface）。',
+    summary: '已合并到 vk-box（旧名保留）：线是 1px 高的 box，渲染与旧版一致。',
     attrs: {
       'orientation': oneOf('horizontal', 'vertical'),
     },
@@ -410,7 +429,9 @@ export const TAGS = {
   'vk-window': {
     name: '窗',
     layer: 'elements',
-    summary: '一个窗：三点窗头、标题、地址栏或对话框；内容由作者放。',
+    aliasOf: 'vk-panel',
+    aliasNote: '窗就是带窗头的分区：用 <vk-panel chrome="dots" title="…">，窗头与内距是同一套属性。',
+    summary: '已合并到 vk-panel（旧名保留）：chrome="dots|none" 决定有没有三点窗头。',
     attrs: {
       'mass': oneOf('compact', 'normal', 'hero'),
       'title': text(),
@@ -903,7 +924,9 @@ export const TAGS = {
   'vk-pin': {
     name: '批注泡',
     layer: 'relations',
-    summary: '自由批注：气泡 + 引线绑到任意锚点，不改布局；放在 canvas 或 page 里。',
+    aliasOf: 'vk-note',
+    aliasNote: '批注泡是 vk-note 的一种形态：用 <vk-note kind="bubble">（泡 + 引线，属性同旧版）。',
+    summary: '已合并到 vk-note（旧名保留）：kind="bubble" 就是原来的气泡 + 引线。',
     content: {
       kind: 'text',
       target: 'vk-pin',
@@ -931,7 +954,9 @@ export const TAGS = {
   'vk-ring': {
     name: '圈选',
     layer: 'relations',
-    summary: '圈选/框选/下划线/压暗：绑到任意锚点，只画覆盖层，不改布局。',
+    aliasOf: 'vk-box',
+    aliasNote: '圈选是一块带环的面：用 <vk-box ring>（不占布局）；overlay 圈选用 vk-annotate mode="circle"。',
+    summary: '已合并到 vk-box（旧名保留）：ring 是描边强调，不占布局。',
     attrs: {
       'for': sel(),
       'variant': oneOf('ellipse', 'rect', 'underline', 'bracket', 'dim'),
@@ -1009,43 +1034,54 @@ export const TAGS = {
     name: '注解',
     layer: 'relations',
     summary:
-      '边注与编号图例：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。',
+      '三种注解：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="bubble" 是泡 + 引线（原 vk-pin）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。',
     content: {
       kind: 'text',
       target: 'vk-note',
       fields: [
-        { name: 'text', label: '边注文字（margin 形态）', type: 'textarea', text: true },
+        { name: 'text', label: '注解文字（margin / bubble 形态）', type: 'textarea', text: true },
         { name: 'items', label: '图例条目（legend 形态，一行一条 <li>）', type: 'lines', item: 'li' },
       ],
     },
     attrs: {
-      // 两种形态：边注 / 编号图例。默认边注——它才是"高级注解"的默认长相。
-      'kind': { ...oneOf('margin', 'legend'), default: 'margin' },
+      // 三种形态：边注 / 气泡 / 编号图例。默认边注——它才是"高级注解"的默认长相。
+      // bubble 就是原 vk-pin：同一个泡、同一套类名，属性名也照旧（w / n / leader / emphasis…）。
+      'kind': { ...oneOf('margin', 'bubble', 'legend'), default: 'margin' },
       // 目标：支持 #id@part:arg 与 CSS 选择器；legend 的多个目标用 ; 分隔，按顺序对应条目。
       'for': sel(),
-      // 边注贴哪侧：默认 auto = 自动选有空间的一侧。
-      'side': { ...oneOf('left', 'right', 'auto'), default: 'auto' },
-      // 引线：line = 只有 1px 细线；dot = 细线 + 目标端一枚小圆点（没有箭头）。
-      'leader': { ...oneOf('line', 'dot'), default: 'line' },
+      // 贴哪侧：margin 只认 left / right；bubble 四个方向都认；默认 auto = 自动选有空间的一侧。
+      'side': { ...oneOf('left', 'right', 'top', 'bottom', 'auto'), default: 'auto' },
+      // 引线：margin 用 line / dot；bubble 用 elbow / straight / none。
+      'leader': { ...oneOf('line', 'dot', 'elbow', 'straight', 'none'), default: 'line' },
       // 图例落在页面哪一角：右下 / 左下 / 下方居中。
       'place': { ...oneOf('br', 'bl', 'bottom'), default: 'br' },
-      // 边注宽（像素上限）；实际宽不会超过那一侧的空间。
-      'w': size({ min: 96, max: 600, step: 1 }),
+      // 注解宽（像素上限）。margin 不会超过那一侧的空间；bubble 是气泡宽（160–900，可写 200px）。
+      'w': size({ min: 96, max: 900, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
+      // bubble 形态的旋钮（与 vk-annotate mode="note" 同一套取值）；margin / legend 忽略它们。
+      'tone': { ...oneOf('info', 'focus', 'ok', 'warn', 'err'), default: 'info' },
+      'emphasis': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
+      'size': { ...oneOf('label', 'body', 'subhead'), default: 'body' },
+      'n': int({ min: 1, max: 99, step: 1 }),
+      'gap-px': num({ min: 0, max: 240, step: 1 }),
+      'x': num({ min: -4000, max: 4000, step: 1 }),
+      'y': num({ min: -4000, max: 4000, step: 1 }),
     },
   },
   /**
    * 归属说明：贴在某个块上方（或下方）的一行小字。
    *
-   * 它不是 vk-label 的另一种形态：label 是"块里的一枚标签"，caption 是
-   * "这一块是谁给的"——位置由目标块决定，左边界对齐目标的首字符（不是容器左边）。
+   * 减法第一波：它不是 vk-label 的另一种形态。
+   * 位置由目标块决定，左边界对齐目标的首字符（不是容器左边）。
    * 只画覆盖层，不参与正文布局；字号/墨色固定 caption + ink secondary。
    */
   'vk-caption': {
     name: '归属说明',
     layer: 'relations',
+    aliasOf: 'vk-label',
+    aliasNote: '归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" anchor="above|below">。',
     summary:
-      '贴在目标块上方（或下方）的一行归属说明：caption 字号、墨阶 secondary，左边界与目标块的首字符对齐，不占正文布局。',
+      '已合并到 vk-label（旧名保留）：label 写 for / anchor 就是原来的归属说明。',
     content: {
       kind: 'text',
       target: 'vk-caption',
@@ -1200,7 +1236,23 @@ for (const [tag, attrs] of Object.entries(EXTRA)) {
 }
 
 
-export const TAG_NAMES = Object.keys(TAGS);
+/**
+ * 公开标签：别名不再单列。
+ *
+ * 旧名（aliasOf 指向新标签）仍留在 TAGS 里：构建期继续校验它们的属性、
+ * 运行期继续注册同名自定义元素——只是 `vk tags` / 类型 / 属性参考 / 标本索引
+ * 不再把它们当成"又一个标签"。这就是"减法"：数量减，旧页不减。
+ */
+export const ALL_TAG_NAMES = Object.keys(TAGS);
+export const TAG_NAMES = ALL_TAG_NAMES.filter((t) => !TAGS[t].aliasOf);
+
+/** 旧名 → 新标签的转发表：构建期提示、运行期注册、标本页的别名说明都读这一份。 */
+export const ALIASES = Object.fromEntries(
+  ALL_TAG_NAMES.filter((t) => TAGS[t].aliasOf).map((tag) => [
+    tag,
+    { to: TAGS[tag].aliasOf, note: TAGS[tag].aliasNote || '', name: TAGS[tag].name },
+  ])
+);
 
 /**
  * 结构化子节点 <li> 的合法属性：父标签 → 允许的名字。
@@ -1296,13 +1348,33 @@ const ATTR_META_BY_TAG = {
   'vk-pin': {
     w: { label: '气泡宽（像素，可写 200 或 200px）', group: 'layout' },
   },
+  'vk-text': {
+    icon: { label: '图标（Lucide 名；语义白名单外构建期报错）', group: 'appearance' },
+  },
+  'vk-box': {
+    ring: { label: '描边环（强调，不占布局；环色跟 tone）', group: 'appearance' },
+  },
+  'vk-label': {
+    for: { label: '目标（写 #id 就贴到那块上方/下方）', content: true },
+    anchor: { label: '锚点方向（above 上方 / below 下方）', group: 'appearance' },
+  },
+  'vk-panel': {
+    chrome: { label: '窗头（dots 三点 + 标题 / none 干净分区）', group: 'appearance' },
+  },
   'vk-note': {
-    kind: { label: '形态（margin 边注 / legend 编号图例）', group: 'appearance' },
+    kind: { label: '形态（margin 边注 / bubble 气泡 / legend 编号图例）', group: 'appearance' },
     for: { label: '目标（多个用 ; 分隔，图例按顺序一一对应）', content: true },
-    side: { label: '边注贴哪侧（left / right / auto 自动选有空间的一侧）', group: 'layout' },
-    leader: { label: '引线（line 只有 1px 细线 / dot 细线 + 圆点）', group: 'appearance' },
+    side: { label: '贴哪侧（margin 只认 left / right；bubble 四向 + auto）', group: 'layout' },
+    leader: { label: '引线（line 细线 / dot 细线 + 圆点；bubble：elbow / straight / none）', group: 'appearance' },
     place: { label: '图例位置（br 右下 / bl 左下 / bottom 下方居中）', group: 'layout' },
-    w: { label: '边注宽（像素上限；实际不会超过那一侧的空间）', group: 'layout' },
+    w: { label: '注解宽（margin 是像素上限；bubble 可写 200 或 200px）', group: 'layout' },
+    tone: { label: '气泡色调（bubble）', group: 'appearance' },
+    emphasis: { label: '气泡强度（bubble：solid / soft / ghost）', group: 'appearance' },
+    size: { label: '气泡字号档（bubble）', group: 'appearance' },
+    n: { label: '气泡编号（bubble）', content: true },
+    'gap-px': { label: '气泡与目标的间距（bubble）', group: 'layout' },
+    x: { label: '气泡落点 X（bubble，覆盖层坐标）', group: 'layout' },
+    y: { label: '气泡落点 Y（bubble，覆盖层坐标）', group: 'layout' },
   },
   'vk-timeline': {
     value: { label: '主值（value 条目：大数字，压过 label）', content: true },
@@ -1343,6 +1415,12 @@ export function validate() {
     if (!/^vk-[a-z0-9-]+$/.test(tag)) errors.push(`${tag}: 标签名必须是 vk-小写`);
     if (!layers.has(def.layer)) errors.push(`${tag}: 未知层 ${def.layer}`);
     if (!def.summary) errors.push(`${tag}: 缺少一句话说明`);
+    if (def.aliasOf) {
+      // 别名只能指向一个公开标签：别名链条会让"合并到了谁"说不清。
+      if (!TAGS[def.aliasOf]) errors.push(`${tag}: aliasOf 指向不存在的 ${def.aliasOf}`);
+      else if (TAGS[def.aliasOf].aliasOf) errors.push(`${tag}: aliasOf 不能指向另一个别名 ${def.aliasOf}`);
+      if (!def.aliasNote) errors.push(`${tag}: 别名缺少迁移说明（aliasNote）`);
+    }
     for (const [name, spec] of Object.entries(def.attrs || {})) {
       if (!spec.type && !spec.values) errors.push(`${tag}.${name}: 属性缺少 type 或 values`);
       if (spec.values && !spec.values.length) errors.push(`${tag}.${name}: 枚举为空`);

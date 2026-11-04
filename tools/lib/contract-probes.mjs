@@ -91,6 +91,11 @@ export const PROBES = {
       effect: { on: 'vk-label', kind: 'style', prop: 'font-size', expect: '36px' },
       why: 'tag 是新增的一档（caption × 0.75 = 36）；kicker / chip / badge 的形态由 tests/label.test.mjs 守。',
     },
+    for: {
+      values: ['#lab-a', '#lab-b'],
+      effect: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
+      why: '贴块（原 vk-caption）：for 先镜像到宿主（块里的标签也镜像）；真正的落点由 draw() 按目标首字符算，几何由 tests/merged-six.test.mjs 量。',
+    },
   },
   'vk-flow': {
     arrow: {
@@ -328,6 +333,11 @@ export const PROBES = {
     size: {
       values: ['display', 'headline', 'caption', 'label', 'subhead', 'title', 'hero', 'mega'],
       why: 'data 是 body 的字号（40）+ 等宽字体，字号本来就不变；等宽由 tests/batch-ef.test.mjs 的旧名用例断言。',
+    },
+    icon: {
+      values: ['check'],
+      effect: { on: 'vk-text', kind: 'dom', prop: '.vk-text-ic' },
+      why: '图标是一个字形：写 icon 才出现图标槽，没写就没有空槽（原 vk-icon 并进这里）。',
     },
     fit: {
       values: ['width'],

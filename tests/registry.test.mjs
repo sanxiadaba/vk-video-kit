@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { TAGS, TAG_NAMES, LAYERS, byLayer, validate } from '../src/registry.mjs';
+import { TAGS, TAG_NAMES, ALL_TAG_NAMES, ALIASES, LAYERS, byLayer, validate } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 
 test('registry 自检通过', () => {
@@ -21,17 +21,30 @@ test('registry 自检通过', () => {
 // vk-caption 是"贴在目标块上的归属说明"（label 是块内标签，caption 属于目标块）。
 // 批次 N（流程原语）经批准 +1：vk-flow 是"N 块 + N-1 箭头"（pair 只有两块一条轴，
 // 表达对照；flow 表达"东西怎么变的"）。
-const TAG_CEILING = 36;
+// 减法第一波经批准 -6：vk-icon / vk-rule / vk-caption / vk-pin / vk-ring / vk-window
+// 并进 vk-text / vk-box / vk-label / vk-note / vk-box / vk-panel，旧名保留为别名，
+// 标签清单不再单列（TAG_NAMES 30）。
+const TAG_CEILING = 30;
 
-test(`标签数不超过 ${TAG_CEILING}（只减不增）`, () => {
+test(`标签数不超过 ${TAG_CEILING}（别名不单列，只减不增）`, () => {
   assert.ok(TAG_NAMES.length <= TAG_CEILING, `标签数 ${TAG_NAMES.length} > 上限 ${TAG_CEILING}：新标签要先过"一个东西"的判据`);
-  assert.equal(TAG_NAMES.length, Object.keys(TAGS).length, 'TAG_NAMES 与 TAGS 不一致');
+  assert.equal(TAG_NAMES.length + Object.keys(ALIASES).length, ALL_TAG_NAMES.length, 'TAG_NAMES + 别名 应等于全部注册项');
   const counts = Object.fromEntries(LAYERS.map((l) => [l.id, byLayer(l.id).length]));
   assert.ok(counts.tokens === 0, 'token 层不该有标签');
   for (const [id, n] of Object.entries(counts)) {
     if (id === 'tokens') continue;
     assert.ok(n > 0, `${id} 层是空的`);
   }
+});
+
+test('别名只转发到一个公开标签，且不在清单里单列', () => {
+  for (const [tag, a] of Object.entries(ALIASES)) {
+    assert.ok(TAGS[a.to], `${tag} 的 aliasOf 指向不存在的 ${a.to}`);
+    assert.ok(!TAGS[a.to].aliasOf, `${tag} 不能指向另一个别名 ${a.to}`);
+    assert.ok(!TAG_NAMES.includes(tag), `${tag} 是别名，不该出现在 TAG_NAMES`);
+    assert.ok(a.note && a.note.length > 8, `${tag} 缺迁移说明`);
+  }
+  assert.equal(Object.keys(ALIASES).length, 6, '减法第一波是 6 个旧名');
 });
 
 test('每个标签都有说明和合法属性', () => {

@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
-import { TAG_NAMES } from '../src/registry.mjs';
+import { ALL_TAG_NAMES } from '../src/registry.mjs';
 import { rules, selectorList, tagsIn, stripComments } from '../tools/lib/css-ast.mjs';
 
 /**
@@ -21,7 +21,8 @@ for (const dir of DIRS) {
   for (const f of fs.readdirSync(dir)) if (f.endsWith('.css')) files.push(path.join(dir, f));
 }
 
-const known = new Set(TAG_NAMES);
+// 别名也允许出现在 CSS 里：旧标签继续可用，样式按元素名分流。
+const known = new Set(ALL_TAG_NAMES);
 
 test('CSS 文件都找得到（至少 4 个）', () => {
   assert.ok(files.length >= 4, `只找到 ${files.length} 个 CSS：${files.join(', ')}`);

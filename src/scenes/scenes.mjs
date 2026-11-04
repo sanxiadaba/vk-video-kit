@@ -48,8 +48,10 @@ export const SCENES = [
 
   {
     tag: 'vk-label',
+    // 三种形态 + 一种"贴块"：写了 for 的 label 就是归属说明（原 vk-caption），
+    // 位置由目标块决定，左边界对齐那一块的首字符。
     body: s`
-<vk-stack gap="md">
+<vk-stack gap="lg">
   <vk-stack direction="row" gap="lg" align="center">
     <vk-label variant="kicker">第 3 步 · 汇编</vk-label>
     <vk-label variant="chip">已完成</vk-label>
@@ -61,6 +63,15 @@ export const SCENES = [
     <vk-label tone="err" icon="circle-x">越界</vk-label>
     <vk-label tone="info" icon="circle-alert">注意</vk-label>
     <vk-label ink="secondary" icon="arrow-right">下一步</vk-label>
+  </vk-stack>
+  <vk-stack class="spec-w1200" gap="sm">
+    <vk-box id="lab-a" surface="none" pad="sm">
+      <vk-text size="subhead" mono>printf("%s\n", s);</vk-text>
+    </vk-box>
+    <vk-box id="lab-b" class="spec-indent" surface="none" pad="sm">
+      <vk-text size="body" mono>call 4026cc &lt;_puts&gt;</vk-text>
+    </vk-box>
+    <vk-label for="#lab-a" anchor="above">你写的</vk-label>
   </vk-stack>
 </vk-stack>`,
   },
@@ -296,21 +307,6 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-window',
-    body: s`
-<vk-window chrome="browser" url="http://127.0.0.1:5000/hello">
-  <vk-stack gap="sm">
-    <vk-text size="subhead" weight="bold">示例内容</vk-text>
-    <vk-text size="body" ink="secondary">示例文字。</vk-text>
-    <vk-stack direction="row" gap="sm" align="center">
-      <vk-text size="label">200 OK</vk-text>
-      <vk-text size="label" mono ink="muted">text/html · 12 B</vk-text>
-    </vk-stack>
-  </vk-stack>
-</vk-window>`,
-  },
-
-  {
     tag: 'vk-tree',
     body: s`
 <vk-box class="spec-w1200" surface="none">
@@ -331,70 +327,11 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-icon',
-    // 图标是语义符号，不是装饰：白名单只有四类意思（✓ / ! / ✗ / 方向）。
-    // 这一页按"意思"分组，而不是按"图标库"列一遍。
-    body: s`
-<vk-stack gap="xl">
-  <vk-stack direction="row" gap="2xl" align="center">
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="check" size="lg"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">成立</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="circle-check" size="lg" tone="ok"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">已完成</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="triangle-alert" size="lg" tone="warn"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">注意</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="info" size="lg"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">说明</vk-text>
-    </vk-stack>
-  </vk-stack>
-  <vk-stack direction="row" gap="2xl" align="center">
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="x" size="lg" tone="err"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">不成立</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="circle-x" size="lg" tone="err"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">越界</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="arrow-up" size="lg"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">向上</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="arrow-down" size="lg"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">向下</vk-text>
-    </vk-stack>
-    <vk-stack gap="xs" align="center">
-      <vk-icon name="arrow-right" size="lg"></vk-icon>
-      <vk-text size="body" mono ink="tertiary">下一步</vk-text>
-    </vk-stack>
-  </vk-stack>
-</vk-stack>`,
-  },
-
-  {
     tag: 'vk-img',
     body: s`
 <vk-img class="spec-w1200" fit="contain" src="../assets/img/sample.svg" alt="一张 16:9 的示例图" radius="xl"></vk-img>`,
   },
 
-
-  {
-    tag: 'vk-rule',
-    body: s`
-<vk-stack gap="lg">
-  <vk-rule></vk-rule>
-  <vk-rule variant="strong"></vk-rule>
-  <div class="spec-h240"><vk-stack direction="row" justify="center"><vk-rule orientation="vertical" fill></vk-rule></vk-stack></div>
-</vk-stack>`,
-  },
 
   {
     tag: 'vk-cells',
@@ -488,31 +425,6 @@ export const SCENES = [
   },
 
   {
-    tag: 'vk-pin',
-    body: s`
-<vk-canvas w="1360" h="520" grid="16">
-  <vk-box id="pin-target" x="120" y="150" w="440" h="200" surface="soft" border="hair" radius="lg">
-    <vk-text size="subhead" mono>s[5]</vk-text>
-  </vk-box>
-  <vk-pin for="#pin-target@side:right" side="right" tone="info" n="1">说明</vk-pin>
-</vk-canvas>`,
-  },
-
-  {
-    tag: 'vk-ring',
-    body: s`
-<vk-canvas w="1360" h="520" grid="16">
-  <vk-box id="ring-target" x="220" y="140" w="520" h="220" surface="soft" border="hair" radius="lg">
-    <vk-text size="subhead" mono>0x2a</vk-text>
-  </vk-box>
-  <vk-ring for="#ring-target" variant="rect" tone="info" pad-px="16"></vk-ring>
-</vk-canvas>`,
-  },
-
-
-
-
-  {
     tag: 'vk-annotate',
     // 四种形态各一例，全部用真实内容（hello.c 的前三行 + 一行终端输出）。
     // 形状（straight / ortho / curve × 实虚）由 vk-annotate 的契约与预设覆盖，
@@ -555,6 +467,7 @@ export const SCENES = [
     <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
   </vk-box>
   <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+  <vk-note kind="bubble" for="#nt-code@side:right" side="right" n="1" tone="warn">这一段只讲入口</vk-note>
 
   <vk-box id="nt-a" x="380" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
     <vk-text size="body">预处理</vk-text>
@@ -567,22 +480,6 @@ export const SCENES = [
     <li>到这一步才检查语法并优化</li>
   </vk-note>
 </vk-canvas>`,
-  },
-
-  {
-    tag: 'vk-caption',
-    // 归属说明贴在块上：左边界对齐目标块的首字符（块有 48px 内距，所以不是容器左边）。
-    // 两个目标给契约换 for 用；上方的说明跟着 #cap-a 走。
-    body: s`
-<vk-stack class="spec-w1200 spec-pad-top" gap="lg">
-  <vk-box id="cap-a" surface="none" pad="lg">
-    <vk-text size="headline" mono>printf("%s\n", s);</vk-text>
-  </vk-box>
-  <vk-box id="cap-b" class="spec-indent" surface="none" pad="lg">
-    <vk-text size="body" mono>call 4026cc &lt;_puts&gt;</vk-text>
-  </vk-box>
-  <vk-caption for="#cap-a" anchor="above">你写的</vk-caption>
-</vk-stack>`,
   },
 
   {

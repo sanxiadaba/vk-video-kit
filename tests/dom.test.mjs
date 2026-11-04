@@ -355,7 +355,9 @@ test('vk-page 内的 ring 与目标同坐标', async () => {
   await sleep(60);
   const r = await page.evaluate(() => {
     const t = document.querySelector('#t').getBoundingClientRect();
-    const s = document.querySelector('vk-ring .vk-ring-shape').getBoundingClientRect();
+    // 减法第一波：vk-ring 是一块带环的面（不是 SVG 形状）；side 锚点是零尺寸点，
+    // 环仍然以那个点为中心（pad-px 两侧对称）。
+    const s = document.querySelector('vk-ring').getBoundingClientRect();
     return {
       dx: Math.abs(s.left + s.width / 2 - t.right),
       dy: Math.abs(s.top + s.height / 2 - (t.top + t.height / 2)),
@@ -367,7 +369,11 @@ test('vk-page 内的 ring 与目标同坐标', async () => {
 test('隐藏目标不画 ring', async () => {
   await reset('<vk-page><div id="h" hidden>x</div><vk-ring for="#h@point:50%,50%"></vk-ring></vk-page>');
   await sleep(60);
-  assert.equal(await page.$$eval('vk-ring .vk-ring-shape', (els) => els.length), 0);
+  const r = await page.evaluate(() => {
+    const ring = document.querySelector('vk-ring');
+    return { display: getComputedStyle(ring).display, w: ring.getBoundingClientRect().width };
+  });
+  assert.equal(r.display, 'none', '目标隐藏时环也不该画');
 });
 
 test('bits 64 位：索引 63..0，不重复', async () => {

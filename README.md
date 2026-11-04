@@ -3,9 +3,9 @@
 [![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
 [在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
 
-**English.** vk is a 4-layer visual language of 33 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs. The baseline is phone landscape (1920 rendered at ≈780, 0.406×), with a four-tier type scale (48 / 56 / 112 / 200) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The library only judges objective errors; aesthetic rules (one accent, one dark block, icon whitelist, header wording, 120 margin) are an opt-in project preset (`vk check --style`), off by default. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+**English.** vk is a 4-layer visual language of 30 web components for building 1920×1080 frames for programming-explainer videos. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs. The baseline is phone landscape (1920 rendered at ≈780, 0.406×), with a four-tier type scale (48 / 56 / 112 / 200) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The library only judges objective errors; aesthetic rules (one accent, one dark block, icon whitelist, header wording, 120 margin) are an opt-in project preset (`vk check --style`), off by default. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**35 个原语标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
+写一个能直接录进视频的组件。每个标签独立成立；拼成一页是调用方的事。**30 个原语标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。库不提供任何组合。**
 
 ![vk 标本册索引](docs/cover.png)
 
@@ -15,17 +15,21 @@
 - **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：正文 56 / 标注 48（手机横屏 ≈0.406× 下 22.7 / 19.5 设备像素）。
 - **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
 - **静止即成品。** 没有播放器、没有转场，只有求值器：`seek(t)` 是纯函数，`poster` 逐像素等于静态页。
-- **文档也是库。** 33 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
+- **文档也是库。** 30 张规格页本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-box border="hair"`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
 
 ## 四层
 
 | 层 | 数量 | 标签 |
 |---|---|---|
-| L1 原子 | 9 | `vk-box` `vk-panel` `vk-text` `vk-label` `vk-inline` `vk-icon` `vk-img` `vk-rule` `vk-window` |
-| L2 排布 | 3 | `vk-stack` `vk-grid` `vk-canvas` |
+| L1 原子 | 6 | `vk-box` `vk-panel` `vk-text` `vk-label` `vk-inline` `vk-img` |
+| L2 排布 | 5 | `vk-stack` `vk-grid` `vk-pair` `vk-flow` `vk-canvas` |
 | L3 数据与解析 | 15 | `vk-list` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-compare` `vk-tree` `vk-cells` `vk-bytes` `vk-steps` `vk-bits` `vk-bars` `vk-asm` `vk-timeline` |
-| L4 关系 | 5 | `vk-annotate` `vk-note` `vk-edge` `vk-pin` `vk-ring` |
+| L4 关系 | 3 | `vk-annotate` `vk-note` `vk-edge` |
 | L5 页面 | 1 | `vk-page` |
+
+> 减法：`vk-icon` / `vk-rule` / `vk-caption` / `vk-pin` / `vk-ring` / `vk-window` 已分别并进
+> `vk-text` / `vk-box` / `vk-label` / `vk-note` / `vk-box` / `vk-panel`。旧名仍是可用别名，
+> 构建期给一条迁移提示；`vk tags --aliases` 看清单。
 
 “一组东西的排版”（标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片）不占标签，**库也不提供**——它们是项目自己的 CSS（一集片子一个 `film.css`）。
 规格在 [`docs/v14.md`](docs/v14.md)。
@@ -72,9 +76,9 @@ node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/�
 node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 node bin/vk.mjs shot page.html    # 出一张 1920×1080
 node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
-node bin/vk.mjs tags              # 全部标签（35 个）
+node bin/vk.mjs tags              # 全部标签（30 个，旧名用 --aliases）
 node bin/vk.mjs doc vk-code       # 某个标签的属性
-node bin/vk.mjs brief             # 33 行契约摘要（AI 入口）
+node bin/vk.mjs brief             # 30 行契约摘要（AI 入口）
 node bin/vk.mjs icons arrow       # 搜图标名
 ```
 
@@ -156,13 +160,14 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 `for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
 
 ```html
-<vk-pin for="#arr@line:4">第 4 行</vk-pin>
-<vk-pin for="#cells@cell:3">第 3 格</vk-pin>
-<vk-pin for="#cells@region:10%,0%,40%,100%">这四个字节</vk-pin>
+<vk-note kind="bubble" for="#arr@line:4">第 4 行</vk-note>
+<vk-note kind="bubble" for="#cells@cell:3">第 3 格</vk-note>
+<vk-note kind="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
 <vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
 ```
 
-`vk-pin` 只钉一个目标；要同时圈/照亮多处，用 `vk-ring` / `vk-spotlight`（它们的 `for` 用分号分隔多个目标）。
+`vk-note kind="bubble"`（原 `vk-pin`）只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
+或 `vk-box ring`（它们的 `for` 用分号分隔多个目标）。
 
 | part | 用在 | 编号 |
 |---|---|---|
@@ -224,7 +229,7 @@ node tools/style-preset.mjs frames/06.html   # 同一个 preset 的独立入口
 
 - **索引**：6 页（前 5 页每页 6 格，最后一页 1 格）。每格是**帧板**的等比缩略图 + 名字 + `vk-*` 标签名；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
 - **每个组件一页 = 纸 + 帧板**：上方一块 1920×1080 帧板（一行元信息 + 标准形态），下方是状态带（`PRESETS` 逐档）与最小 HTML；帧板仍是单镜头，没有成品、没有用法、没有解剖。
-- 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-rule`，页面根是 `vk-page`；状态带与最小写法在帧板外。
+- 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-box border="hair"`，页面根是 `vk-page`；状态带与最小写法在帧板外。
 - 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
 
 帧外的只有一段 `body{margin:0}` 与链接色；帧内的可见元素全部是 vk。

@@ -13,6 +13,8 @@ export const PRESETS = {
     { label: '灰面', attrs: { surface: 'soft' } },
     { label: '正确面', attrs: { tone: 'ok' } },
     { label: '强边', attrs: { border: 'strong', radius: 'md' } },
+    // 描边环（原 vk-ring）：不占布局的强调，邻居的位置不动。
+    { label: '描边环', attrs: { ring: '', tone: 'warn' } },
     { label: '横向内距', attrs: { 'pad-x': 'xl' } },
     { label: '纵向内距', attrs: { 'pad-y': 'xl' } },
   ],
@@ -20,6 +22,8 @@ export const PRESETS = {
     { label: '抬起', attrs: { variant: 'raised' } },
     { label: '语义分区', attrs: { tone: 'ok' } },
     { label: '强边', attrs: { border: 'strong', radius: 'md' } },
+    // 窗体（原 vk-window）：chrome="dots" 长出三点窗头。
+    { label: '窗体', attrs: { chrome: 'dots', title: '示例分区' } },
     { label: '大内距', attrs: { pad: 'xl' } },
   ],
   'vk-text': [
@@ -28,6 +32,8 @@ export const PRESETS = {
     { label: '居中', attrs: { align: 'center' } },
     { label: '加粗', attrs: { weight: 'bold' } },
     { label: '语义色', attrs: { tone: 'ok' } },
+    // 图标是一个字形（原 vk-icon）：文字与图标共存。
+    { label: '带图标', attrs: { icon: 'check' } },
     // fit="width"：标本里的长句会被缩到容器宽；780px 的代码行会放大到接近上限。
     // 标本台演示的是「能缩多小」，所以显式把地板放到 8（库默认 40 是给交付页的；
     // 不写明 fit-min 的话，长句会停在地板 40 并正确报 data-fit-overflow）。
@@ -40,12 +46,9 @@ export const PRESETS = {
     { label: '正确', attrs: { tone: 'ok' } },
     { label: '警告', attrs: { tone: 'warn' } },
     { label: '错误', attrs: { tone: 'err' } },
-  ],
-  'vk-icon': [
-    { label: '小', attrs: { size: 'sm' } },
-    { label: '中', attrs: { size: 'md' } },
-    { label: '特大', attrs: { size: 'xl' } },
-    { label: '强调色', attrs: { tone: 'info' } },
+    // 贴块（原 vk-caption）：换目标 / 换方向，说明跟着块走。
+    { label: '贴在上方', attrs: { for: '#lab-a', anchor: 'above' } },
+    { label: '贴在下方', attrs: { for: '#lab-b', anchor: 'below' } },
   ],
   'vk-img': [
     /* 图片的尺寸由容器决定（frame=false，w/h 从来就没生效过）。
@@ -55,10 +58,6 @@ export const PRESETS = {
     { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
     { label: '方图焦点', attrs: { ratio: '1 / 1', fit: 'cover', position: '30% 70%' } },
     { label: '圆图', attrs: { ratio: '1 / 1', radius: 'pill' } },
-  ],
-  'vk-rule': [
-    { label: '强线', attrs: { variant: 'strong' } },
-    { label: '强调线', attrs: { tone: 'info' } },
   ],
   'vk-stack': [
     { label: '紧', attrs: { gap: '2xs' } },
@@ -136,10 +135,6 @@ export const PRESETS = {
     { label: '更小', attrs: { size: 'label' } },
     { label: '行内', attrs: { display: null } },
   ],
-  'vk-window': [
-    { label: '无窗头', attrs: { chrome: 'none' } },
-    { label: '宽内距', attrs: { pad: '2xl' } },
-  ],
   'vk-tree': [
     { label: '收起 tests', attrs: { collapsed: 'tests' } },
     { label: '只看 src', attrs: { collapsed: 'tests', depth: '2' } },
@@ -193,19 +188,6 @@ export const PRESETS = {
     { label: '紧凑', attrs: { mass: 'compact' } },
     { label: '从 1989 起', attrs: { start: '1989' } },
   ],
-  'vk-pin': [
-    { label: '左侧', attrs: { side: 'left' } },
-    { label: '无引线', attrs: { leader: 'none' } },
-    { label: '小字', attrs: { size: 'label' } },
-    { label: '编号 3', attrs: { n: '3' } },
-    { label: '圆点', attrs: { variant: 'dot' } },
-  ],
-  'vk-ring': [
-    { label: '椭圆', attrs: { variant: 'ellipse' } },
-    { label: '下划线', attrs: { variant: 'underline' } },
-    { label: '虚线', attrs: { dash: '' } },
-    { label: '大留白', attrs: { 'pad-px': '28' } },
-  ],
   'vk-annotate': [
     { label: '直线', attrs: { shape: 'straight' } },
     { label: '曲线', attrs: { shape: 'curve' } },
@@ -219,10 +201,8 @@ export const PRESETS = {
     { label: '贴左侧', attrs: { side: 'left' } },
     { label: '圆点引线', attrs: { leader: 'dot' } },
     { label: '更窄', attrs: { w: '160' } },
-  ],
-  'vk-caption': [
-    { label: '贴下方', attrs: { anchor: 'below' } },
-    // 换一个真实目标：说明跟着走，左边界仍对齐那个块的首字符。
-    { label: '跟着第二块', attrs: { for: '#cap-b' } },
+    // 气泡（原 vk-pin）：泡 + 引线，属性名照旧。
+    { label: '气泡批注', attrs: { kind: 'bubble', for: '#nt-a', side: 'right', n: '1' } },
+    { label: '气泡编号 3', attrs: { kind: 'bubble', for: '#nt-a', side: 'bottom', n: '3' } },
   ],
 };

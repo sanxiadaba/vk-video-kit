@@ -35,13 +35,13 @@
 | 对照 · 差异放大 | `vk-compare.zoom` | `specimen/vk-compare.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 | 注解 · 边注 margin | `vk-note.kind`<br>`vk-note.side`<br>`vk-note.leader`<br>`vk-note.w`<br>`vk-note.for` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 注解 · 编号图例 legend | `vk-note.kind`<br>`vk-note.place` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 图标 · 语义白名单 | `vk-icon.name` | `specimen/vk-icon.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 图标 · 语义白名单（vk-text icon） | `vk-text.icon` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 一页一块深色（默认关） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 强调色 ≤1（默认关） | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 内容在 120 边距内（默认关） | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 并置 · vk-pair | `vk-pair.split`<br>`vk-pair.axis`<br>`vk-pair.axis-width`<br>`vk-pair.symbol`<br>`vk-pair.symbol-size`<br>`vk-pair.gap`<br>`vk-pair.orientation` | `specimen/vk-pair.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 文字 · 塞满一行 fit="width" | `vk-text.fit`<br>`vk-text.fit-min`<br>`vk-text.fit-max` | `specimen/vk-text.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
-| 归属说明 · vk-caption | `vk-caption.for`<br>`vk-caption.anchor` | `specimen/vk-caption.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 归属说明 · vk-label[for] | `vk-label.for`<br>`vk-label.anchor` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 代码窗 / 终端 · surface 与当前行 | `vk-term.surface`<br>`vk-code.surface`<br>`vk-term.current`<br>`vk-code.current` | `specimen/vk-term.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 纸 · 默认底色是纯白 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 流程 · 箭头按块高缩放 + 中轴词 | `vk-flow.arrow-scale`<br>`vk-flow.arrow-label` | `specimen/vk-flow.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
@@ -49,6 +49,13 @@
 | 并置 · 左右分色 tone-a / tone-b | `vk-pair.tone-a`<br>`vk-pair.tone-b` | `specimen/vk-pair.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文字 · fit 的硬地板 fit-min | `vk-text.fit-min` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文案 · 字幕短句（项目层 preset，默认关） | `style:copy` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 文字 · icon 字形 | `vk-text.icon` | `specimen/vk-text.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 面 · 描边环 ring | `vk-box.ring` | `specimen/vk-box.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 标签 · 贴块 for | `vk-label.for` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 标签 · 贴块方向 anchor | `vk-label.anchor` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 注解 · 气泡 bubble | `vk-note.kind` | `specimen/vk-note.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 分区 · 窗头 chrome | `vk-panel.chrome` | `specimen/vk-panel.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 旧名 · 六个标签的转发 | `vk-text.icon`<br>`vk-box.ring`<br>`vk-label.for`<br>`vk-note.kind`<br>`vk-panel.chrome` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/registry.test.mjs` | ✅ 绿 |
 
 ## 明细
 
@@ -162,7 +169,7 @@
 - 能力：mode="arrow"：从一个元素（或 x,y 坐标）指向另一个。shape=straight|ortho|curve 决定走线，dash 决定实虚，width 改线宽，head=arrow|dot|none 决定端点。旧 vk-edge 是它的别名，走线与 13.x 逐像素一致。
 - 契约断言：`vk-annotate.shape` · `vk-annotate.head` · `vk-annotate.dash` · `vk-annotate.width`
 - 标本页：`_site/specimen/vk-annotate.html` + 契约宿主 `_site/specimens/vk-annotate.html`
-- 测试：`tests/annotate.test.mjs` · 「vk-annotate arrow：三种 shape 各走一种路径，实虚/线宽/端点各自生效」；`tests/annotate.test.mjs` · 「旧标签是别名：vk-edge / vk-pin / vk-ring 与 vk-annotate 同几何」
+- 测试：`tests/annotate.test.mjs` · 「vk-annotate arrow：三种 shape 各走一种路径，实虚/线宽/端点各自生效」；`tests/annotate.test.mjs` · 「旧标签是别名：vk-edge / vk-pin 与 vk-annotate 同几何；vk-ring 变成带环的面」
 
 ### ✅ 标注 · 圈选 circle
 
@@ -241,12 +248,12 @@
 - 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
 - 测试：`tests/batch-gh.test.mjs` · 「vk-note kind="legend"：编号点钉在目标右上角，页角图例表编号对齐」；`tests/batch-gh.test.mjs` · 「vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接报错」
 
-### ✅ 图标 · 语义白名单
+### ✅ 图标 · 语义白名单（vk-text icon）
 
-- 能力：vk-icon 的语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字构建期只提醒、不拦构建（装饰图标不是错误）；运行期要提醒就在 --style preset 里看（level=warn）。
-- 契约断言：`vk-icon.name`
-- 标本页：`_site/specimen/vk-icon.html` + 契约宿主 `_site/specimens/vk-icon.html`
-- 测试：`tests/batch-gh.test.mjs` · 「vk-icon 白名单外：构建期只提醒，不再拦构建」
+- 能力：图标本质是一个字形：<vk-text icon="check"> 里文字与图标共存。语义四类：成立（check / circle-check）、注意（triangle-alert / info）、不成立（x / circle-x）、方向（arrow-up / arrow-down / arrow-right）。白名单外的名字在 vk-text 的 icon 上构建期报错；旧 vk-icon 的装饰图标仍只提醒。
+- 契约断言：`vk-text.icon`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-text icon：字形与文字共存，白名单外构建期报错」；`tests/batch-gh.test.mjs` · 「vk-icon 白名单外：构建期只提醒，不再拦构建」
 
 ### ✅ 审计 preset · 一页一块深色（默认关）
 
@@ -283,12 +290,12 @@
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
 - 测试：`tests/batch-primitives.test.mjs` · 「vk-text fit="width"：780px 容器差 ≤2px，fit-max 封顶」
 
-### ✅ 归属说明 · vk-caption
+### ✅ 归属说明 · vk-label[for]
 
-- 能力：「你写的 / 编译器给的」这种归属说明：贴在目标块上方（anchor="above"）或下方（anchor="below"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。
-- 契约断言：`vk-caption.for` · `vk-caption.anchor`
-- 标本页：`_site/specimen/vk-caption.html` + 契约宿主 `_site/specimens/vk-caption.html`
-- 测试：`tests/batch-primitives.test.mjs` · 「vk-caption：左边界对齐目标块首字符（above / below）」
+- 能力：「你写的 / 编译器给的」这种归属说明：给 vk-label 写 for，它就贴在目标块上方（anchor="above"）或下方（anchor="below"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。旧标签 vk-caption 保留为别名。
+- 契约断言：`vk-label.for` · `vk-label.anchor`
+- 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-label for：贴块说明的左边界对齐目标首字符」；`tests/merged-six.test.mjs` · 「vk-label anchor：above / below 换方向」
 
 ### ✅ 代码窗 / 终端 · surface 与当前行
 
@@ -334,10 +341,59 @@
 
 ### ✅ 文案 · 字幕短句（项目层 preset，默认关）
 
-- 能力：项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size="caption" / vk-caption）不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。
+- 能力：项目层 --style preset 的 copy 规则（level=warn，默认不启用）：字幕位（vk-text size="caption" / vk-label[for]（原 vk-caption））不带句号、每行 ≤18 字。正文段落不按字幕判；规则清单在 STYLE_RULES，文档在 docs/style-preset.md，项目写法见 film.css。
 - 契约断言：`style:copy`
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
 - 测试：`tests/batch-native.test.mjs` · 「预设 · 字幕短句：句号 / 超 18 字报提醒（level=warn，默认不跑）」
+
+### ✅ 文字 · icon 字形
+
+- 能力：图标是一个字形，并进 vk-text：icon="check" 写在文字前面，文字与图标共存；四档字号与墨阶仍然只由 vk-text 决定。旧 vk-icon 转发到同一段内联实现。
+- 契约断言：`vk-text.icon`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-text icon：字形与文字共存，白名单外构建期报错」
+
+### ✅ 面 · 描边环 ring
+
+- 能力：vk-box 的 ring 是一圈不占布局的描边强调（box-shadow），环色跟 tone、默认焦点色；加不加环，邻居的位置与尺寸都不变。旧 vk-ring 转发到这条描边。
+- 契约断言：`vk-box.ring`
+- 标本页：`_site/specimen/vk-box.html` + 契约宿主 `_site/specimens/vk-box.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-box ring：描边环不占布局，tone 换环色」
+
+### ✅ 标签 · 贴块 for
+
+- 能力：vk-label 写 for 就变成归属说明：位置由目标块决定，左边界对齐目标块的首字符；不写 for 仍是块里的一枚标签。旧 vk-caption 转发到这里。
+- 契约断言：`vk-label.for`
+- 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-label for：贴块说明的左边界对齐目标首字符」
+
+### ✅ 标签 · 贴块方向 anchor
+
+- 能力：anchor="above"（默认）贴在目标块上方，anchor="below" 贴在下方；净空 16px，方向落在宿主的 data-anchor 上。
+- 契约断言：`vk-label.anchor`
+- 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-label anchor：above / below 换方向」
+
+### ✅ 注解 · 气泡 bubble
+
+- 能力：vk-note kind="bubble" 是原来的批注泡：气泡 + 引线绑到任意锚点，自动避让正文；w / n / tone / emphasis / size / leader / gap-px / x / y 与旧 vk-pin 同名同义。
+- 契约断言：`vk-note.kind`
+- 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-note kind="bubble"：泡 + 引线与旧 vk-pin 同几何」
+
+### ✅ 分区 · 窗头 chrome
+
+- 能力：vk-panel chrome="dots" 长出三点窗头与标题带（默认 none 仍是干净分区）；窗头高 / 三点尺寸读窗自己的令牌，与 code / term / diff 同一张表。旧 vk-window 转发到这里。
+- 契约断言：`vk-panel.chrome`
+- 标本页：`_site/specimen/vk-panel.html` + 契约宿主 `_site/specimens/vk-panel.html`
+- 测试：`tests/merged-six.test.mjs` · 「vk-panel chrome="dots"：三点窗头与标题带」
+
+### ✅ 旧名 · 六个标签的转发
+
+- 能力：vk-icon → vk-text、vk-rule → vk-box、vk-caption → vk-label、vk-pin → vk-note、vk-ring → vk-box、vk-window → vk-panel。旧标签继续可用（同名自定义元素、同一套 DOM），构建期给一条"已合并到 X，旧名保留"的提示；标签清单里不再单列。
+- 契约断言：`vk-text.icon` · `vk-box.ring` · `vk-label.for` · `vk-note.kind` · `vk-panel.chrome`
+- 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
+- 测试：`tests/merged-six.test.mjs` · 「六个旧标签是别名：转发到新标签并给一条构建期提示」；`tests/registry.test.mjs` · 「别名只转发到一个公开标签，且不在清单里单列」
 
 ## 怎么判红
 

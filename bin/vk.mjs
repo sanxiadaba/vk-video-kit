@@ -60,9 +60,22 @@ if (cmd === 'build' || cmd === 'check-build') {
   await m;
   await import('../cli/series.mjs');
 } else if (cmd === 'tags') {
-  const { TAGS, TAG_NAMES, LAYERS } = await import('../src/registry.mjs');
+  const { TAGS, TAG_NAMES, ALIASES, LAYERS } = await import('../src/registry.mjs');
+  const showAliases = rest.includes('--aliases');
   if (rest.includes('--json')) {
-    console.log(JSON.stringify(TAG_NAMES.map((tag) => ({ tag, ...TAGS[tag] })), null, 2));
+    console.log(
+      JSON.stringify(
+        showAliases
+          ? Object.entries(ALIASES).map(([tag, a]) => ({ tag, aliasOf: a.to, name: a.name }))
+          : TAG_NAMES.map((tag) => ({ tag, ...TAGS[tag] })),
+        null,
+        2
+      )
+    );
+  } else if (showAliases) {
+    // 旧名不单列成"又一个标签"：它们是合并后留下的转发入口。
+    console.log(`\n别名（旧名保留，构建期提示迁移）`);
+    for (const [tag, a] of Object.entries(ALIASES)) console.log(`  ${tag.padEnd(15)} → ${a.to}`);
   } else {
     for (const layer of LAYERS) {
       const tags = TAG_NAMES.filter((t) => TAGS[t].layer === layer.id);
@@ -70,6 +83,8 @@ if (cmd === 'build' || cmd === 'check-build') {
       console.log(`\n${layer.label}`);
       for (const tag of tags) console.log(`  ${tag.padEnd(15)} ${TAGS[tag].name}`);
     }
+    const n = Object.keys(ALIASES).length;
+    if (n) console.log(`\n（另有 ${n} 个旧名是别名，不单列；vk tags --aliases 看清单）`);
   }
 } else if (cmd === 'doc') {
   const tag = rest[0];
@@ -88,6 +103,10 @@ if (cmd === 'build' || cmd === 'check-build') {
     console.log(JSON.stringify({ tag, ...def, children: CHILDREN[tag] || null, states: STATES[tag] || null }, null, 2));
   } else {
     const layer = LAYERS.find((l) => l.id === def.layer)?.label || def.layer;
+    if (def.aliasOf) {
+      console.log(`\n[vk] ${tag} 已合并到 ${def.aliasOf}，旧名保留（构建期会提示迁移）。`);
+      console.log(`     ${def.aliasNote || ''}\n`);
+    }
     console.log(`${tag} · ${def.name}  (${layer})\n${def.summary}\n`);
     const groups = [
       ['content', '内容'],

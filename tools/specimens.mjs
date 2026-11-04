@@ -9,7 +9,7 @@
  *   node tools/specimens.mjs --check
  */
 import fs from 'node:fs';
-import { TAGS, TAG_NAMES, LAYERS, byLayer } from '../src/registry.mjs';
+import { TAGS, TAG_NAMES, ALIASES, LAYERS, byLayer } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
 import { checkMode } from './lib/io.mjs';
@@ -194,6 +194,53 @@ const STATE_STRIP = {
   'vk-timeline': `<vk-timeline start="1972" end="2018"><li date="1972" label="当前节点" state="current">说明一</li><li date="1999" label="标注节点" state="mark">说明二</li><li date="2018" label="普通节点">说明三</li></vk-timeline>`,
 };
 
+/** 旧名 → 新标签的示例属性：别名页给"旧写法 / 新写法"对照。 */
+const ALIAS_ATTR = {
+  'vk-icon': 'icon="check"',
+  'vk-rule': 'border="hair"',
+  'vk-window': 'chrome="dots" title="main.c"',
+  'vk-pin': 'kind="bubble"',
+  'vk-ring': 'ring',
+  'vk-caption': 'for="#id" anchor="above"',
+};
+
+/** 指向本标签的旧名（规格页底部列出，免得旧链接死掉、也免得别名页成孤儿）。 */
+const aliasesOf = (tag) => Object.entries(ALIASES).filter(([, a]) => a.to === tag);
+
+function aliasPage(alias) {
+  const info = ALIASES[alias];
+  const to = info.to;
+  const sample = ALIAS_ATTR[alias] || '';
+  const body = `<vk-page align="top" data-allow-void>
+  <vk-stack gap="md">
+    <vk-stack direction="row" gap="xs" align="baseline">
+      <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
+      <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
+      <vk-text size="label" mono ink="muted" data-meta>${esc(alias)}</vk-text>
+      <vk-text size="label" mono ink="muted" data-meta>· 旧名</vk-text>
+    </vk-stack>
+    <vk-stack gap="sm">
+      <vk-text size="subhead" weight="bold">${esc(alias)} → ${esc(to)}</vk-text>
+      <vk-text size="body" measure="body">${esc(info.note)}</vk-text>
+      <vk-stack direction="row" gap="md" align="center">
+        <vk-label variant="chip" tone="warn">旧名保留</vk-label>
+        <a href="${esc(to)}.html"><vk-text size="body" mono>看 ${esc(to)} 的属性与标本 →</vk-text></a>
+      </vk-stack>
+    </vk-stack>
+    <vk-stack gap="2xs">
+      <vk-text size="label" mono ink="muted" data-meta>旧写法（仍可用，构建期给一条迁移提示）</vk-text>
+      <vk-text size="label" mono>${esc(`<${alias} …>…</${alias}>`)}</vk-text>
+      <vk-text size="label" mono>${esc(`<${to}${sample ? ` ${sample}` : ''}>…</${to}>`)}</vk-text>
+    </vk-stack>
+  </vk-stack>
+</vk-page>`;
+  return shell(`vk · ${alias} · 旧名`, `<!-- vk:spec:${hash32(JSON.stringify(['alias', alias, to, info.note, sample, hash32(aliasPage.toString())]))} -->\n${body}`);
+}
+
+const ALIAS_ORDER = [...new Set(Object.values(ALIASES).map((a) => a.to))]
+  .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
+  .flatMap((to) => Object.keys(ALIASES).filter((alias) => ALIASES[alias].to === to));
+
 function specPage(tag, no) {
   const def = TAGS[tag];
   const rawBody = sceneOf.get(tag) || `<vk-text size="body">（没有标准形态）</vk-text>`;
@@ -203,20 +250,20 @@ function specPage(tag, no) {
   const sceneDur = SCENE_DUR[tag] ? ` dur="${SCENE_DUR[tag]}"` : '';
   const plate = `<vk-page align="top" data-allow-void${sceneDur}>
   <vk-stack gap="2xs">
-    <vk-stack direction="row" justify="between" align="baseline">
-      <vk-stack direction="row" gap="xs" align="baseline">
+    <vk-stack direction="row" justify="between" align="baseline" wrap>
+      <vk-stack direction="row" gap="xs" align="baseline" wrap>
         <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
         <vk-text size="label" mono ink="muted" data-meta>${esc(def.name)}</vk-text>
       </vk-stack>
-      <vk-stack direction="row" gap="sm" align="baseline">
+      <vk-stack direction="row" gap="sm" align="baseline" wrap>
         ${nav(no, tag)}
         <vk-text size="label" mono ink="muted" data-meta>${meta}</vk-text>
       </vk-stack>
     </vk-stack>
-    <vk-rule></vk-rule>
+    <vk-box border="hair"></vk-box>
 <div class="spec-body">${tag === 'vk-page' ? `<div class="spec-scale">${rawBody}</div>` : rawBody}</div>
   </vk-stack>
 </vk-page>`;
@@ -244,11 +291,19 @@ function specPage(tag, no) {
       ? ''
       : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`}`;
 
+  const aliases = aliasesOf(tag);
+  const aliasBlock = aliases.length
+    ? `<div class="vk-sheet-hd"><vk-text size="label" mono data-meta>旧名</vk-text><vk-text size="label" mono ink="muted" data-meta>已合并，旧名保留</vk-text></div>
+  <vk-stack direction="row" gap="md" align="baseline">${aliases
+    .map(([name]) => `<a href="${name}.html"><vk-text size="label" mono>${esc(name)}</vk-text></a>`)
+    .join('')}</vk-stack>`
+    : '';
   const sheet = `<section class="vk-sheet">
   <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>状态</vk-text><vk-text size="label" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档` : '无'}</vk-text></div>
   <div class="vk-states">${states}</div>
   <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>最小写法</vk-text><vk-text size="label" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
   <pre class="vk-snippet">${snippetOf(rawBody, tag)}</pre>
+  ${aliasBlock}
 </section>`;
 
   return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${plate}\n${sheet}`);
@@ -289,7 +344,7 @@ function indexPage(n) {
       </vk-stack>
       <vk-stack direction="row" gap="md" align="baseline">${prev}${next}</vk-stack>
     </vk-stack>
-    <vk-rule variant="strong"></vk-rule>
+    <vk-box border="strong"></vk-box>
 ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols="3" gap-x="sm" gap-y="sm">${cards}</vk-grid>`}
   </vk-stack>
 </vk-page>`;
@@ -298,6 +353,8 @@ ${slice.length === 1 ? `<div class="spec-lone">${cards}</div>` : `<vk-grid cols=
 
 const files = new Map();
 ORDER.forEach((tag, i) => files.set(`${SITE}/specimen/${tag}.html`, specPage(tag, i + 1)));
+// 旧名页：一页一句"已合并到谁"，并链回新标签；新标签页底部也链回来（不是孤儿页）。
+for (const alias of ALIAS_ORDER) files.set(`${SITE}/specimen/${alias}.html`, aliasPage(alias));
 for (let n = 1; n <= PAGES; n++) files.set(`${SITE}/${pageHref(n)}`, indexPage(n));
 
 /**
@@ -330,7 +387,7 @@ let stale = 0;
 // 删掉已经不存在的标签的标本页。
 // 14.0 会一路删标签；生成器只写不删，残留的 vk-keys.html 会让 links 门禁
 // 报"不可达"，还会让索引链接到空页。这里按 registry 的现状清一遍。
-const live = new Set(TAG_NAMES.map((t) => `${t}.html`));
+const live = new Set([...TAG_NAMES, ...ALIAS_ORDER].map((t) => `${t}.html`));
 for (const dir of [`${SITE}/specimen`, `${SITE}/specimens`]) {
   if (!fs.existsSync(dir)) continue;
   for (const name of fs.readdirSync(dir)) {

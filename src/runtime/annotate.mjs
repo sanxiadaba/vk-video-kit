@@ -106,7 +106,11 @@ function anchorsOf(el, host) {
  * 压暗：目标之外全部退后。vk-ring 的 variant="dim" 走这一条，vk-annotate
  * 的 circle 形态不暴露它（圈选是"画一圈"，压暗是另一件事，旧标签留着）。
  */
-function applyDim(self) {
+/**
+ * 压暗：目标之外全部退后。旧 vk-ring 的 variant="dim" 走这一条（别名保留），
+ * vk-annotate 的 circle 形态不暴露它（圈选是"画一圈"，压暗是另一件事）。
+ */
+export function applyDim(self) {
   const host = hostOf(self);
   if (!host) return;
   if (getComputedStyle(host).position === 'static') host.style.position = 'relative';

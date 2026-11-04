@@ -10,13 +10,13 @@
    · vk.ready() 之后一切都就位：字体、图片、布局、连线
    ========================================================================== */
 
-import { TAGS, TAG_NAMES, observedOf } from '../registry.mjs';
+import { TAGS, TAG_NAMES, ALL_TAG_NAMES, observedOf } from '../registry.mjs';
 import { DENSITY_ALIAS, MASS_TAGS, TIER_ALIAS } from '../shared/tier-alias.mjs';
 import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
 import { wrapCharRange } from './code-utils.mjs';
 
-export { TAGS, TAG_NAMES, dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel };
+export { TAGS, TAG_NAMES, ALL_TAG_NAMES, dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel };
 
 const ROOT = typeof window !== 'undefined' ? window : globalThis;
 const HAS_DOM = typeof document !== 'undefined';
@@ -626,8 +626,16 @@ export class VkElement extends Base {
 
 /* ---------------------------------------------------------------- 布局 */
 
-export const PLACE = new Set();
-export const EDGES = new Set();
+/**
+ * 布局队列。整个 window 只有一份：
+ * `document.write` / `setContent` 这类场景会在同一个 window 上重新执行本 bundle，
+ * 自定义元素注册表仍在（注册表属于 window），元素用的还是上一份的类——
+ * 这时如果换一个新的 Set，layout() 就会看不到那些元素。复用旧的队列。
+ */
+export const PLACE = VK._place instanceof Set ? VK._place : new Set();
+export const EDGES = VK._edges instanceof Set ? VK._edges : new Set();
+VK._place = PLACE;
+VK._edges = EDGES;
 
 export function layout() {
   if (!HAS_DOM) return;
@@ -693,7 +701,8 @@ VK.ready = async () => {
     await Promise.all([...VK._defs].map((n) => customElements.whenDefined(n)));
   }
 
-  const tags = TAG_NAMES.join(',');
+  // 别名也在等：旧页写 <vk-pin> 时，它和本体一样要渲染完。
+  const tags = ALL_TAG_NAMES.join(',');
   const unready = () =>
     [...document.querySelectorAll(tags)].some((el) => el.isConnected && typeof el.paint === 'function' && !el._done);
 

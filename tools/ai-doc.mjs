@@ -9,7 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { TAGS, LAYERS, byLayer, CHILDREN, STATES } from '../src/registry.mjs';
+import { TAGS, ALIASES, LAYERS, byLayer, CHILDREN, STATES } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 
 const START = '<!-- vk:tags:start -->';
@@ -63,6 +63,17 @@ for (const layer of LAYERS) {
     }
     if (STATES[tag]) lines.push(`  - 状态：\`state="${STATES[tag].values.join('|')}"\`（${STATES[tag].where.join(' / ')}）`);
     lines.push(`  - 例：\`${exampleTag(tag)}\``);
+  }
+  lines.push('');
+}
+// 旧名不是"又一个标签"：它们只是合并后的转发入口。AI 写新页时用新标签，
+// 读旧页时知道它们还能用、以及构建期会提示什么。
+const aliasEntries = Object.entries(ALIASES);
+if (aliasEntries.length) {
+  lines.push('### 旧名（已合并，仍可用）');
+  lines.push('');
+  for (const [tag, a] of aliasEntries) {
+    lines.push(`- **\`${tag}\`** → \`${a.to}\` — ${a.note}`);
   }
   lines.push('');
 }

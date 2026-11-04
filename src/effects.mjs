@@ -161,6 +161,10 @@ export const EFFECTS = {
     // 语义色落在字上（与 vk-text / vk-icon 同一套 token）。
     tone: { on: 'vk-label', kind: 'style', prop: 'color' },
     ink: { on: 'vk-label', kind: 'style', prop: 'color' },
+    // 贴块（原 vk-caption）：for / anchor 先镜像到宿主（块里的标签也镜像，
+    // 契约才读得到"改了就变"）；真正的落点由 draw() 的几何算。
+    for: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
+    anchor: { on: 'vk-label', kind: 'attr', prop: 'data-anchor', expectFromValue: 'raw' },
   },
 
   'vk-icon': {
@@ -222,6 +226,8 @@ export const EFFECTS = {
     'pad-y': { on: 'vk-box', kind: 'style', prop: 'padding-top' },
     radius: { on: 'vk-box', kind: 'style', prop: 'border-radius' },
     border: { on: 'vk-box', kind: 'style', prop: 'border-top-width' },
+    // 描边环（原 vk-ring）：一圈 box-shadow，不占布局。
+    ring: { on: 'vk-box', kind: 'style', prop: 'box-shadow', expect: { not: 'none' } },
     w: { on: 'vk-box', kind: 'geometry', prop: 'width' },
     h: { on: 'vk-box', kind: 'geometry', prop: 'height', skipVisual: true },
   },
@@ -232,6 +238,8 @@ export const EFFECTS = {
     tone: { on: 'vk-panel', kind: 'style', prop: 'background-color' },
     // 标题带是一个 vk-label：title 改了，带里的字必须跟着改。
     title: { on: '.vk-panel-hd .vk-label-t', kind: 'text', expect: 'VKPROBE' },
+    // chrome="dots" 长出三点窗头（原 vk-window）：数一数真的有三枚点。
+    chrome: { kind: 'dom', prop: '.vk-dots i' },
     pad: { on: '.vk-panel-bd', kind: 'style', prop: 'padding-top' },
     radius: { on: 'vk-panel', kind: 'style', prop: 'border-radius' },
     border: { on: 'vk-panel', kind: 'style', prop: 'border-top-width' },
@@ -323,6 +331,8 @@ for (const tag of COMMON_TAGS) {
 /* 组件特有的 v10 属性 */
 Object.assign(EFFECTS['vk-text'], {
   emphasis: { on: 'vk-text', kind: 'style', prop: 'color' },
+  // 图标槽（原 vk-icon）：写了才出现，改名字只换这一个 span。
+  icon: { on: 'vk-text', kind: 'dom', prop: '.vk-text-ic' },
 });
 Object.assign(EFFECTS['vk-icon'], {
   emphasis: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
@@ -468,7 +478,16 @@ Object.assign((EFFECTS['vk-note'] ||= {}), {
   leader: { on: 'vk-note', kind: 'attr', prop: 'data-leader', expectFromValue: 'raw' },
   place: { on: 'vk-note', kind: 'attr', prop: 'data-place', expectFromValue: 'raw' },
   z: { on: 'vk-note', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
-  // for / w 的取值与几何断言在 tools/lib/contract-probes.mjs（要指到标本里的真实目标）。
+  // bubble（原 vk-pin）的旋钮：同样先镜像到宿主，落点由 vk-annotate 的 note 形态算。
+  tone: { on: 'vk-note', kind: 'attr', prop: 'data-tone', expectFromValue: 'raw' },
+  emphasis: { on: 'vk-note', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
+  size: { on: 'vk-note', kind: 'attr', prop: 'data-size', expectFromValue: 'raw' },
+  n: { on: 'vk-note', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
+  'gap-px': { on: 'vk-note', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
+  w: { on: 'vk-note', kind: 'attr', prop: 'data-w', expectFromValue: 'raw' },
+  x: { on: 'vk-note', kind: 'attr', prop: 'data-x', expectFromValue: 'raw' },
+  y: { on: 'vk-note', kind: 'attr', prop: 'data-y', expectFromValue: 'raw' },
+  // for 的取值与几何断言在 tools/lib/contract-probes.mjs（要指到标本里的真实目标）。
 });
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {

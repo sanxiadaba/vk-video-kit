@@ -30,7 +30,7 @@ const KICKER_FILE_EXT = /\.(?:c|s|exe|o|i)\b/i;
 /** 「第 3 页 / 3 帧」这类页号。 */
 const KICKER_PAGE_NO = /第\s*[0-9一二三四五六七八九十]+\s*[页帧]|\d+\s*\/\s*\d+\s*[页帧]/;
 /** 覆盖层：只画在内容上，不参与"内容边距"与深色块计数。 */
-const OVERLAY_SEL = 'vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, [data-vk-overlay]';
+const OVERLAY_SEL = 'vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], [data-vk-overlay]';
 
 /**
  * 这一组规则的清单：CLI / 文档 / 测试读同一份，不各自抄文案。
@@ -162,17 +162,18 @@ function darkRegions(stage) {
 /**
  * 图标白名单（提醒）。
  *
- * 构建期已经不再拒绝白名单外的 <vk-icon name>；这里也只是提醒：
- * "图标可以表达语义，也可以只是装饰——知道自己在用装饰就行"。
+ * 这两处图标都不再拒绝白名单外的名字（构建期只提醒）：图标可以表达语义，
+ * 也可以只是装饰——知道自己在用装饰就行。新写法是 <vk-text icon>，
+ * 旧写法 <vk-icon name> 仍然可用（同一个字形）。
  * 自定义 src 的内联 SVG 不算——它是作者自己的图。
  */
 function iconNotes(stage) {
   const out = [];
-  for (const host of stage.querySelectorAll('vk-icon')) {
+  for (const host of stage.querySelectorAll('vk-icon, vk-text[icon]')) {
     if (host.closest('template')) continue;
     const inline = host.querySelector(':scope > .vk-icon[data-vk-inline]');
     if (inline?.dataset.vkSrc) continue;
-    const name = (host.getAttribute('name') || inline?.dataset.vkName || '').trim();
+    const name = (host.getAttribute(host.tagName === 'VK-TEXT' ? 'icon' : 'name') || inline?.dataset.vkName || '').trim();
     if (!name) continue;
     // 只按名字判：名字在白名单里就是合法语义图标（图标表没注入是另一件事，
     // 由 data-vk-unknown 的 special 报）。
@@ -188,6 +189,8 @@ function headerIssues(stage) {
   // kicker 是 vk-label 的默认变体：没写 variant 的也是页眉。
   for (const el of stage.querySelectorAll('vk-label')) {
     if (el.closest('template')) continue;
+    // 贴块的 label 是归属说明（原 vk-caption），不是页眉。
+    if (el.hasAttribute('for')) continue;
     const variant = el.getAttribute('variant') || 'kicker';
     if (variant !== 'kicker') continue;
     const text = (el.textContent || '').replace(/\s+/g, ' ').trim();
@@ -212,7 +215,8 @@ function headerIssues(stage) {
 function copyIssues(stage) {
   const out = [];
   const clip = (s) => s.replace(/\s+/g, ' ').trim().slice(0, 24);
-  for (const el of stage.querySelectorAll('vk-text[size="caption"], vk-caption, vk-text[data-subtitle]')) {
+  // 字幕位 = vk-text size="caption" / vk-label[for]（原 vk-caption）/ 作者标了 data-subtitle 的文字。
+  for (const el of stage.querySelectorAll('vk-text[size="caption"], vk-label[for], vk-caption, vk-text[data-subtitle]')) {
     if (el.closest('template')) continue;
     const text = (el.textContent || '').replace(/\u00a0/g, ' ').trim();
     if (!text) continue;

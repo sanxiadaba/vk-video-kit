@@ -24,6 +24,27 @@ vk-text[mono] {
   letter-spacing: 0;
 }
 
+/* 图标是一个字形：1em，跟着字走。文字与图标共存，所以它不是另一个标签。
+   只挂在 vk-text 的直接图标槽上——旧 vk-icon 的 .vk-icon 仍走它自己的尺寸档。 */
+vk-text > .vk-text-ic {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  margin-right: 0.35em;
+  vertical-align: -0.14em;
+  color: inherit;
+}
+vk-text > .vk-text-ic svg {
+  width: 1em;
+  height: 1em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
 /* --------------------------------------------------------------- vk-box */
 
 vk-box {
@@ -97,6 +118,13 @@ vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-
 /* 定位：只有显式声明才离开文档流 */
 /* 定位：给 x/y 即绝对定位；没有 pos 属性。 */
 vk-box[x], vk-box[y] { position: absolute; }
+
+/* 描边环：原 vk-ring 的"看这里"并进面。box-shadow 不占布局，
+   所以加不加环，邻居的位置与尺寸都不变。环色跟 tone；默认焦点色。 */
+vk-box[ring] { box-shadow: 0 0 0 4px var(--vk-ring-color, var(--vk-focus)); }
+vk-box[ring][tone='ok'] { --vk-ring-color: var(--vk-ok); }
+vk-box[ring][tone='err'] { --vk-ring-color: var(--vk-err); }
+vk-box[ring][tone='warn'] { --vk-ring-color: var(--vk-warn); }
 
 /* ------------------------------------------------------------- vk-panel
    一块内容分区：底色 + 可选标题带 + 内距 + 圆角。
@@ -208,6 +236,34 @@ vk-panel[variant='dark'][tone='focus'] { --vk-panel-bg: var(--vk-dark-wash-focus
 vk-panel[variant='dark'][tone='ok'] { --vk-panel-bg: var(--vk-dark-wash-ok); --vk-panel-hd-bg: var(--vk-dark-tint-ok); --vk-panel-line: var(--vk-dark-tint-ok); }
 vk-panel[variant='dark'][tone='err'] { --vk-panel-bg: var(--vk-dark-wash-err); --vk-panel-hd-bg: var(--vk-dark-tint-err); --vk-panel-line: var(--vk-dark-tint-err); }
 vk-panel[variant='dark'][tone='warn'] { --vk-panel-bg: var(--vk-dark-wash-warn); --vk-panel-hd-bg: var(--vk-dark-tint-warn); --vk-panel-line: var(--vk-dark-tint-warn); }
+
+/* 窗头：chrome="dots" 把分区变成窗（原 vk-window 的形状）。
+   三点、窗头高、内距全部读窗自己的令牌，所以它和 code / term / diff 的窗头是同一张表。 */
+vk-panel[data-chrome='dots'] {
+  --vk-panel-bg: var(--vk-surface-1);
+  --vk-panel-line: var(--vk-line-1);
+  --vk-panel-bw: 2px;
+  overflow: hidden;
+}
+vk-panel[data-chrome='dots'] .vk-panel-hd {
+  align-items: center;
+  gap: var(--vk-s2);
+  height: var(--vk-win-hd);
+  padding: 0 var(--vk-s4);
+  border-bottom: 1px solid var(--vk-line-2);
+  background: var(--vk-surface-2);
+  border-radius: 0;
+}
+/* 标题是窗头里唯一可伸缩的东西：宽不够时先缩它，再省略。 */
+vk-panel[data-chrome='dots'] .vk-panel-hd vk-label {
+  min-width: 0;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-t-label);
+  font-weight: var(--vk-w-reg);
+  letter-spacing: 0;
+  color: var(--vk-ink-2);
+}
+vk-panel[data-chrome='dots'] .vk-panel-hd .vk-label-rule { display: none; }
 
 /* ------------------------------------------------------- 兼容开关 legacy
    15.x 把手机横屏基准写进默认值（四档 200 / 112 / 56 / 48，窗头 56 / 72 / 88）。

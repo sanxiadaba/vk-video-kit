@@ -309,11 +309,19 @@ test('vk-icon 白名单外：构建期只提醒，不再拦构建', async () => 
     console.warn = warn;
   }
   assert.ok(out.html.includes('data-vk-name="rocket"'), '白名单外的图标也要内联，不拦构建');
-  assert.match(got.join('\n'), /不在语义图标白名单里（只是提醒，不拦构建）/, '构建期只留一句提醒');
+  // 减法第一波：vk-icon 已是别名，构建期先给一条"已合并到 vk-text"的提示；
+  // 图标白名单本身的提醒仍在（console 只摘首条，详情见 warnings）。
+  assert.match(got.join('\n'), /已合并到 <vk-text>/, '旧名先给一条迁移提示');
   await assert.rejects(
     () => transformHtml('<vk-icon name="not-a-real-icon"></vk-icon>', { file: 'icon.html' }),
     /没有图标/,
     '不存在的图标仍是"没有图标"（客观错误）'
+  );
+  // 新写法把白名单从"提醒"收紧成"错误"：vk-text 的 icon 是字形，不是装饰。
+  await assert.rejects(
+    () => transformHtml('<vk-text icon="rocket">x</vk-text>', { file: 'icon.html' }),
+    /不在语义图标白名单/,
+    'vk-text 的 icon 白名单外要报错'
   );
 });
 

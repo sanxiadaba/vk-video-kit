@@ -1,44 +1,16 @@
-import { VK, esc, numAttr, safePosition, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
+import { VK, esc, numAttr, safePosition, resolveTarget, EDGES, VkElement, define, plain, takeSlot, fillSlot } from './base.mjs';
 import { cumulativeScaleX } from './geometry.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
 import { isSemanticIcon } from '../shared/icons.mjs';
 
 /**
- * vk-icon —— 一个语义符号，不是装饰。
+ * vk-icon —— 旧名，转发到 vk-text。
  *
- * 名字必须在 ICON_SEMANTIC 白名单里（✓ / ! / ✗ / 方向）；构建期会拒掉白名单外的名字，
- * 运行期这里只做兜底：不认识时退到 info，并在 dataset 上留痕，审计能查。
+ * 图标本质是一个字形：<vk-text icon="check"> 里文字与图标共存。
+ * 旧标签只画图标（读 name），DOM / CSS / 尺寸档保持原样，所以旧页逐像素不动。
+ * 构建期会给一条"已合并到 vk-text，旧名保留"的迁移提示。
  */
-export class VkIcon extends VkElement {
-  static watchSource = false;
-  static frame = false;
-  static renderedRoot = '.vk-icon';
-
-  onAttr(name) {
-    if (name === 'name' || name === 'label') {
-      this.querySelector(':scope > .vk-icon[data-vk-inline]')?.remove();
-    }
-  }
-
-  render() {
-    // src 的自定义 SVG 由构建期内联；运行时保留构建产物，不再覆盖。
-    if (this.hasAttribute('src')) return;
-    const inline = this.querySelector(':scope > .vk-icon[data-vk-inline]');
-    if (inline && inline.dataset.vkName === (this.getAttribute('name') || 'info')) return;
-    const raw = (this.getAttribute('name') || 'info').trim();
-    const known = hasIcon(raw) && isSemanticIcon(raw);
-    const body = known ? iconOf(raw) : iconOf('info');
-    const label = this.getAttribute('label') || '';
-
-    if (!known) this.dataset.vkUnknown = raw;
-    else delete this.dataset.vkUnknown;
-
-    this.innerHTML = `<span class="vk-icon"${label ? ' role="img"' : ' aria-hidden="true"'}${
-      label ? ` aria-label="${esc(label)}"` : ''
-    }><svg viewBox="0 0 24 24">${body}</svg></span>`;
-  }
-}
 
 /**
  * vk-img —— 一张图。
@@ -111,13 +83,17 @@ export class VkImg extends VkElement {
 /**
  * vk-box —— 一个面。
  * 只有 w/h/x/y 需要 JS：它们是任意数值，CSS 里写不出来。
- * 其余（tone/pad/radius/border）全部走 CSS。
+ * 其余（tone/pad/radius/border/ring）全部走 CSS。
+ *
+ * ring 是 14.x 减法第一波并进来的"圈选"：一圈不占布局的描边（box-shadow），
+ * 环色跟 tone；它只强调这一块，不改尺寸、不改位置。
  */
 export class VkBox extends VkElement {
   static watchSource = false;
 
   render() {
     // w/h/x/y 由 Frame 原语统一应用；这里只保留一个空渲染。
+    this.dataset.vkBox = '';
   }
 }
 
@@ -135,6 +111,20 @@ export class VkPanel extends VkElement {
   static watchSource = false;
   static renderedRoot = '.vk-panel-bd';
 
+  /** chrome：dots = 三点窗头（原 vk-window 的 min / browser）；none = 干净的分区。 */
+  _chrome() {
+    const raw = (this.getAttribute('chrome') || 'none').trim();
+    return raw === 'dots' ? 'dots' : 'none';
+  }
+
+  _dots() {
+    const dots = document.createElement('span');
+    dots.className = 'vk-dots';
+    dots.setAttribute('aria-hidden', 'true');
+    dots.innerHTML = '<i></i><i></i><i></i>';
+    return dots;
+  }
+
   render() {
     if (!this._bd) {
       const body = takeSlot(this);
@@ -146,10 +136,14 @@ export class VkPanel extends VkElement {
       this._bd = bd;
     }
 
+    const chrome = this._chrome();
+    this.dataset.chrome = chrome;
     const title = (this.getAttribute('title') || '').trim();
-    if (!title) {
+    // 窗头不是标题的附属物：chrome="dots" 时，没有标题也有一条三点栏（窗的形状）。
+    if (!title && chrome === 'none') {
       this._hd?.remove();
       this._hd = null;
+      this._dotsEl = null;
       this._title = '';
       return;
     }
@@ -158,31 +152,106 @@ export class VkPanel extends VkElement {
       this._hd.className = 'vk-panel-hd';
       this.insertBefore(this._hd, this._bd);
     }
+    if (chrome === 'dots') {
+      if (!this._dotsEl) {
+        this._dotsEl = this._dots();
+        this._hd.prepend(this._dotsEl);
+      }
+    } else if (this._dotsEl) {
+      this._dotsEl.remove();
+      this._dotsEl = null;
+    }
     if (this._title !== title) {
       this._title = title;
       const label = document.createElement('vk-label');
       label.setAttribute('variant', 'kicker');
       label.textContent = title;
-      this._hd.replaceChildren(label);
+      const keep = this._dotsEl;
+      this._hd.replaceChildren(...(keep ? [keep] : []), label);
       this._hd.setAttribute('role', 'heading');
       this._hd.setAttribute('aria-level', '2');
     }
   }
 }
 
+/* ------------------------------------------------ 归属说明的几何（原 caption） */
+
+/** 说明与目标盒之间的净空。 */
+const CAPTION_GAP = 16;
+
+/** 覆盖层只认一个坐标系：最近的定位祖先（没有就退回 body）。 */
+function captionHostOf(el) {
+  let host = el.parentElement;
+  while (host && getComputedStyle(host).position === 'static') host = host.parentElement;
+  if (!host) host = document.body;
+  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
+  return host;
+}
+
+/** 目标块里第一个「真正要读的字」的位置；跳过行号、窗头、无障碍文本。 */
+function firstCharRect(el) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent.trim()) continue;
+    const parent = n.parentElement;
+    if (!parent) continue;
+    if (parent.closest('[data-meta], .vk-ln, .vk-sr, .vk-hd, .vk-ft, [aria-hidden="true"]')) continue;
+    const range = document.createRange();
+    range.selectNodeContents(n);
+    const rects = [...range.getClientRects()].filter((r) => r.width > 0.5 && r.height > 0.5);
+    if (rects.length) return rects[0];
+  }
+  const r = el.getBoundingClientRect();
+  const cs = getComputedStyle(el);
+  return {
+    left: r.left + (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0),
+    top: r.top + (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.borderTopWidth) || 0),
+  };
+}
+
 /**
- * vk-label —— 一行小字：分类、进度、状态。
+ * vk-label —— 一行小字：分类、进度、状态；写 for 就贴到目标块上。
  *
  * 它是「标签 / 角标」这一个东西：kicker（纯文字）、chip（浅底）、badge（实色）。
  * 字号与色板全部读 vk-text 使用的同一套 token；不写 tone 时走 ink 墨阶。
  * 图标是可选的：写 icon 才出现图标槽，没写就没有空槽（不留幽灵节点）。
+ *
+ * 减法第一波：原 vk-caption 并进来。写 for 时它不再占正文布局，
+ * 而是像 caption 一样贴在目标块上方（anchor="above"，默认）或下方，
+ * 左边界对齐目标块的首字符——位置由目标决定，不靠作者摆像素。
  */
 export class VkLabel extends VkElement {
   static watchSource = false;
   static frame = false;
   static renderedRoot = '.vk-label';
 
+  /** 写了 for 才是覆盖层（原 vk-caption）。 */
+  _anchored() {
+    return !!String(this.getAttribute('for') || '').trim();
+  }
+
+  connectedCallback() {
+    super.connectedCallback?.();
+    if (this._anchored()) {
+      this.dataset.vkOverlay = '';
+      EDGES.add(this);
+    }
+  }
+
   render() {
+    if (this._anchored()) {
+      this._renderAnchored();
+      return;
+    }
+    // 从"贴块"改回"块里"：把覆盖层的状态收干净。
+    EDGES.delete(this);
+    delete this.dataset.vkOverlay;
+    // for / anchor 在块里的标签上只是作者的写法镜像（不生效，但契约要能读到"改了"）。
+    this.dataset.for = this.getAttribute('for') || '';
+    this.dataset.anchor = this.getAttribute('anchor') || '';
+    this.style.zIndex = '';
+    this._span = null;
+
     // 渲染后 textContent 仍是标签文字（图标是 svg，不带字），所以每次都能从 DOM 取回原文。
     const text = (this.textContent || '').replace(/\s+/g, ' ').trim();
     const variant = this.getAttribute('variant') || 'kicker';
@@ -217,27 +286,103 @@ export class VkLabel extends VkElement {
       }
     }
 
+    // kicker = 页眉：左边一条 4px 焦点色条。它不占焦点名额（audit 把 label 排除在外）。
+    const rule = variant === 'kicker' ? '<span class="vk-label-rule" aria-hidden="true"></span>' : '';
+    this.innerHTML = `<span class="vk-label" data-vk-part="label" data-meta>${rule}${this._iconMarkup()}<span class="vk-label-t">${esc(
+      labelText
+    )}</span></span>`;
+  }
+
+  /** 图标槽：只在写了 icon 时生成（图标槽的存在本身就是作者意图）。 */
+  _iconMarkup() {
     const raw = (this.getAttribute('icon') || '').trim();
     const known = raw ? hasIcon(raw) : false;
     if (raw && !known) this.dataset.vkUnknown = raw;
     else delete this.dataset.vkUnknown;
-    // 没写 icon 时不生成 .vk-label-ic：图标槽的存在本身就是作者意图。
-    const icon = raw
+    return raw
       ? `<span class="vk-label-ic" aria-hidden="true"><svg viewBox="0 0 24 24">${iconOf(
           known ? raw : 'circle-help'
         )}</svg></span>`
       : '';
-    // kicker = 页眉：左边一条 4px 焦点色条。它不占焦点名额（audit 把 label 排除在外）。
-    const rule = variant === 'kicker' ? '<span class="vk-label-rule" aria-hidden="true"></span>' : '';
-    this.innerHTML = `<span class="vk-label" data-vk-part="label" data-meta>${rule}${icon}<span class="vk-label-t">${esc(
-      labelText
-    )}</span></span>`;
+  }
+
+  _renderAnchored() {
+    const anchor = this.getAttribute('anchor') === 'below' ? 'below' : 'above';
+    this.dataset.anchor = anchor;
+    this.dataset.for = this.getAttribute('for') || '';
+    this.dataset.vkOverlay = '';
+    // 先把作者文字读出来，再换壳：先换壳会把文字一起扔进新 span 之前就读空了。
+    const text = (this.textContent || '').replace(/\s+/g, ' ').trim();
+    const span = this._span || document.createElement('span');
+    span.className = 'vk-label vk-caption';
+    span.setAttribute('data-vk-part', 'label');
+    if (!this._span) {
+      this.replaceChildren(span);
+      this._span = span;
+    }
+    span.innerHTML = `${this._iconMarkup()}<span class="vk-label-t">${esc(text)}</span>`;
+    this.style.zIndex = '50';
+    EDGES.add(this);
+    VK._invalidate();
+  }
+
+  /** 贴块：位置由目标块决定；目标找不到时只警告一次并藏起来。 */
+  draw() {
+    if (!this._anchored() || !this.isConnected) return;
+    const span = this._span;
+    if (!span) return;
+    const expr = this.getAttribute('for') || '';
+    const target = expr ? resolveTarget(document, expr, this) : null;
+    if (!target) {
+      span.style.visibility = 'hidden';
+      if (expr) this._warnOnce(`for:${expr}`, `的 for="${expr}" 找不到目标块`);
+      return;
+    }
+    const host = captionHostOf(this);
+    const hr = host.getBoundingClientRect();
+    if (hr.width < 1 || hr.height < 1) {
+      span.style.visibility = 'hidden';
+      return;
+    }
+    const tr = target.getBoundingClientRect();
+    if (tr.width < 1 || tr.height < 1) {
+      span.style.visibility = 'hidden';
+      return;
+    }
+    const cr = firstCharRect(target);
+    const box = span.getBoundingClientRect();
+    const above = this.getAttribute('anchor') !== 'below';
+    const left = cr.left - hr.left;
+    const top = above ? tr.top - hr.top - box.height - CAPTION_GAP : tr.bottom - hr.top + CAPTION_GAP;
+    span.style.left = left.toFixed(2) + 'px';
+    span.style.top = top.toFixed(2) + 'px';
+    span.style.visibility = 'visible';
   }
 }
 
-/** 纯文本宿主：内容就是子节点，Frame 只负责 w/measure。 */
+/**
+ * vk-icon 的旧实现搬进 vk-text 之后，这两个标签共用同一段图标内联：
+ * 图标就是一个字形（1em，跟着字走），不是另一个标签。
+ *
+ * 旧 vk-icon 是它的子类：只画图标（读 name），新 vk-text 读 icon，文字与图标共存。
+ */
 export class VkText extends VkElement {
   static watchSource = false;
+
+  /** 图标名：新标签读 icon；旧 vk-icon 在子类里改读 name。 */
+  _iconName() {
+    return (this.getAttribute('icon') || '').trim();
+  }
+
+  /** 能不能画：新标签只要有这个 Lucide 名；白名单由构建期把门（旧标签在子类里收紧）。 */
+  _iconAllowed(name) {
+    return hasIcon(name);
+  }
+
+  /** 无障碍名：新标签里图标是文字的补充，默认 aria-hidden；旧 vk-icon 用 label。 */
+  _iconLabel() {
+    return '';
+  }
 
   render() {
     // 14.0：vk-stat 的"数值写法"搬到这里。排版（标签/单位放哪）归配方，
@@ -253,6 +398,7 @@ export class VkText extends VkElement {
         }
       }
     }
+    this._renderIcon();
     // fit="width"：单行文本的"塞满一行"。控件字号仍是作者写的 size；
     // 只有显式 fit 时才由运行期改写 inline font-size。
     const fit = this.getAttribute('fit') === 'width';
@@ -270,6 +416,31 @@ export class VkText extends VkElement {
         this._fitted = false;
       }
     }
+  }
+
+  /** 图标槽：只在写了图标时存在；换名字只换这一个 span，不重建文字。 */
+  _renderIcon() {
+    const prev = this.querySelector(':scope > .vk-text-ic');
+    const raw = this._iconName();
+    if (!raw) {
+      prev?.remove();
+      delete this.dataset.icon;
+      return;
+    }
+    const known = this._iconAllowed(raw);
+    if (known) delete this.dataset.vkUnknownIcon;
+    else this.dataset.vkUnknownIcon = raw;
+    this.dataset.icon = raw;
+    const label = this._iconLabel();
+    const span = document.createElement('span');
+    span.className = 'vk-icon vk-text-ic';
+    if (label) {
+      span.setAttribute('role', 'img');
+      span.setAttribute('aria-label', label);
+    } else span.setAttribute('aria-hidden', 'true');
+    span.innerHTML = `<svg viewBox="0 0 24 24">${iconOf(known ? raw : 'info')}</svg>`;
+    if (prev) prev.replaceWith(span);
+    else this.insertBefore(span, this.firstChild);
   }
 
   /** 排版一遍后按真实行宽重算；容器变宽 / 字体晚到时也会再进这里。 */
@@ -336,6 +507,53 @@ export class VkText extends VkElement {
 }
 
 /**
+ * vk-icon —— 旧名，转发到 vk-text（同一个字形，只画图标）。
+ *
+ * 它只覆盖三件事：图标名读 name、白名单收在语义图标上、label 是无障碍名。
+ * 其余（图标内联、尺寸档、颜色）与 <vk-text icon="…"> 共用一份实现。
+ * 构建期会给一条"已合并到 vk-text，旧名保留"的迁移提示。
+ */
+export class VkIcon extends VkText {
+  static watchSource = false;
+  static frame = false;
+  static renderedRoot = '.vk-icon';
+
+  connectedCallback() {
+    super.connectedCallback?.();
+    this.dataset.vkAlias = 'vk-text';
+  }
+
+  _iconName() {
+    return (this.getAttribute('name') || 'info').trim();
+  }
+
+  _iconAllowed(name) {
+    return hasIcon(name) && isSemanticIcon(name);
+  }
+
+  _iconLabel() {
+    return this.getAttribute('label') || '';
+  }
+
+  onAttr(name) {
+    if (name === 'name' || name === 'label') {
+      this.querySelector(':scope > .vk-icon[data-vk-inline]')?.remove();
+    }
+  }
+
+  render() {
+    // src 的自定义 SVG 由构建期内联；运行时保留构建产物，不再覆盖。
+    if (this.hasAttribute('src')) return;
+    const inline = this.querySelector(':scope > .vk-icon[data-vk-inline]');
+    if (inline && inline.dataset.vkName === this._iconName()) return;
+    // 旧名不认识时退到 info，并在 dataset 上留痕（构建期已经提醒过一次）。
+    this.dataset.vkUnknown = this._iconAllowed(this._iconName()) ? undefined : this._iconName();
+    if (this.dataset.vkUnknown === undefined) delete this.dataset.vkUnknown;
+    super.render();
+  }
+}
+
+/**
  * 行内文字：code / math / sup / sub / link。
  * 字号跟所在文本行（1em），不写死；math 由构建期把 KaTeX 产物放进 script。
  */
@@ -397,10 +615,21 @@ export class VkInline extends VkElement {
   }
 }
 
-/** 分隔线：Frame 只负责 w；线宽/颜色走 CSS。 */
-export class VkRule extends VkElement {
+/** 分隔线：旧名，转发到 vk-box。Frame 只负责 w；线是一块 1px 高的面。 */
+export class VkRule extends VkBox {
   static watchSource = false;
-  render() {}
+
+  connectedCallback() {
+    super.connectedCallback?.();
+    this.dataset.vkAlias = 'vk-box';
+  }
+
+  render() {
+    // 线的颜色 / 虚线 / 线宽仍由 vk-rule 的既有 CSS 给出；
+    // 这里只声明它是"一块面"，以及它就是 vk-box 的旧名。
+    this.dataset.vkBox = '';
+    this.dataset.vkRule = this.getAttribute('variant') || 'thin';
+  }
 }
 
 export function defineElements() {

@@ -1,16 +1,19 @@
 /**
- * L4 注解原语 —— vk-note：边注 / 编号图例。
+ * L4 注解原语 —— vk-note：边注 / 气泡 / 编号图例。
  *
  * 高级感的注解不是气泡。气泡是"画在内容上的一张纸"，边注是"排进版面的一句话"：
  *
  *   kind="margin"  一条 1px 细线从目标引出，文字落在栏间空白里，
  *                  第一行与目标正文的基线对齐（不是"放在旁边差不多高"）；
  *                  side 自动选有空间的一侧，leader="dot" 在目标端加一枚小圆点。
+ *   kind="bubble"  泡 + 引线（减法第一波：原 vk-pin 并到这里）。
+ *                  同一套 .vk-pin-bd / .vk-pin-t 类名与几何，属性名照旧：
+ *                  w / n / tone / emphasis / size / leader / gap-px / x / y。
  *   kind="legend"  目标角上一枚编号点（1 / 2 / 3），页角一张编号 + 说明的图例表。
  *
- * 三条硬规则写在 CSS 与几何里，作者改不了：
- *   · 引线 1px、没有箭头（箭头只属于 vk-annotate mode="arrow" 的"指向关系"）；
- *   · 文字 caption（28）、墨阶 secondary、没有底、没有圆角、没有泡泡；
+ * 两条硬规则写在 CSS 与几何里，作者改不了：
+ *   · margin / legend 的引线 1px、没有箭头（箭头只属于 vk-annotate mode="arrow"）；
+ *     bubble 则复用 vk-annotate 的 note 形态（泡 + 引线 + 自动避让）。
  *   · 它只画覆盖层：不改布局、不占焦点名额（和 vk-label 一样是辅助信息）。
  *
  * 隐藏的镜头 / 模板没有盒子时直接不画；目标找不到时运行期只警告一次，
@@ -18,6 +21,7 @@
  */
 import { VK, EDGES, VkElement, define, numAttr, resolveAnchor } from './base.mjs';
 import { visualToLocal } from './geometry.mjs';
+import { VkAnnotate } from './annotate.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 /** 目标与文字之间的净空。 */
@@ -101,7 +105,7 @@ const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 /* ------------------------------------------------------------------ 组件 */
 
-export class VkNote extends VkElement {
+export class VkNote extends VkAnnotate {
   static watchSource = false;
   static frame = false;
 
@@ -128,7 +132,8 @@ export class VkNote extends VkElement {
   }
 
   _kind() {
-    return this.getAttribute('kind') === 'legend' ? 'legend' : 'margin';
+    const v = this.getAttribute('kind');
+    return v === 'legend' || v === 'bubble' ? v : 'margin';
   }
 
   _place() {
@@ -136,8 +141,91 @@ export class VkNote extends VkElement {
     return v === 'bl' || v === 'bottom' ? v : 'br';
   }
 
+  /** bubble 形态由 vk-annotate 画（同一个 note 模式）；这里只把 kind 折成 mode。 */
+  _mode() {
+    return 'note';
+  }
+
+  /** 气泡宽：w 写 200 或 200px 都行（旧 vk-pin 的写法）；不写按内容自适。 */
+  _noteWidth() {
+    const raw = String(this.getAttribute('w') ?? '').trim();
+    if (!raw) return null;
+    const m = raw.match(/^(\d+(?:\.\d+)?)(?:px)?$/);
+    if (!m) {
+      this._warnOnce('w', `的 w="${raw}" 不是像素宽（写 200 或 200px），按默认宽处理`);
+      return 360;
+    }
+    const n = Number(m[1]);
+    const w = Math.min(900, Math.max(160, n));
+    if (w !== n) this._warnOnce('w', `的 w="${raw}" 超出 160…900，按 ${w} 处理`);
+    return w;
+  }
+
+  /** 状态镜像：两种形态共用一套字段，CSS、契约与旧测试都读它。 */
+  _mirror(cfg, kind) {
+    const d = this.dataset;
+    const attr = (name, fallback) => {
+      const v = this.getAttribute(name);
+      return v == null || v === '' ? fallback : v;
+    };
+    d.kind = kind;
+    d.tone = attr('tone', cfg.tone || 'info');
+    d.emphasis = attr('emphasis', cfg.emphasis || 'soft');
+    d.size = attr('size', cfg.size || 'body');
+    d.n = attr('n', String(cfg.n ?? 0));
+    d.side = attr('side', cfg.side || 'auto');
+    d.leader = attr('leader', kind === 'bubble' ? 'elbow' : 'line');
+    d.place = this._place();
+    d.gap = attr('gap-px', String(cfg.gap ?? 24));
+    d.w = attr('w', cfg.width == null ? '' : String(Math.round(cfg.width)));
+    d.x = attr('x', Number.isFinite(cfg.x) ? String(cfg.x) : '');
+    d.y = attr('y', Number.isFinite(cfg.y) ? String(cfg.y) : '');
+  }
+
+  /** 换形态时，边注 / 图例的壳不是作者内容；把文字从壳里捞回来。 */
+  _collectSlot() {
+    const keep = [];
+    for (const n of this._slotNodes || []) {
+      if (n.parentNode) n.parentNode.removeChild(n);
+      keep.push(n);
+    }
+    for (const n of [...this.childNodes]) {
+      if (n.nodeType === 3) {
+        if (n.textContent.trim()) keep.push(n);
+        continue;
+      }
+      if (n.nodeType !== 1) continue;
+      if (n.tagName === 'SCRIPT') continue;
+      if (n.matches?.('.vk-pin-bd, .vk-ov-svg, .vk-edge-svg')) continue;
+      if (n.matches?.('.vk-note-svg, .vk-note-m, .vk-note-legend')) {
+        for (const t of [...n.querySelectorAll('.vk-note-t')]) {
+          if (t.textContent.trim()) keep.push(document.createTextNode(t.textContent));
+        }
+        continue;
+      }
+      if (n.matches?.('.vk-note-dot')) continue;
+      keep.push(n);
+    }
+    for (const n of keep) n.parentNode?.removeChild(n);
+    this._slotNodes = keep;
+    return keep;
+  }
+
   render() {
     const kind = this._kind();
+    if (kind === 'bubble') {
+      if (this._kindNow !== 'bubble') this._resetShell();
+      this._kindNow = 'bubble';
+      // 从边注切过来时，文字还在 _text 里；气泡只有一个槽，把它交回去。
+      if (!this._slotNodes?.length && this._text) this._slotNodes = [document.createTextNode(this._text)];
+      super.render();
+      const cfg = this._noteConfig('note');
+      this._mirror(cfg, kind);
+      return;
+    }
+    if (this._kindNow === 'bubble') this._resetShell();
+    this._kindNow = kind;
+
     const leader = this.getAttribute('leader') === 'dot' ? 'dot' : 'line';
     const side = this.getAttribute('side') || 'auto';
     this.dataset.kind = kind;
@@ -147,6 +235,21 @@ export class VkNote extends VkElement {
     this.dataset.leader = leader;
     this.dataset.place = this._place();
     this.style.zIndex = String(numAttr(this, 'z', { min: 0, max: 99, fallback: 50 }));
+    this._mirror(
+      {
+        tone: this.getAttribute('tone') || 'info',
+        emphasis: this.getAttribute('emphasis') || 'soft',
+        size: this.getAttribute('size') || 'body',
+        n: parseInt(this.getAttribute('n') || '0', 10) || 0,
+        side,
+        leader,
+        gap: numAttr(this, 'gap-px', { min: 0, max: 240, fallback: 24 }),
+        width: null,
+        x: NaN,
+        y: NaN,
+      },
+      kind
+    );
     if (kind === 'legend') this._renderLegend();
     else this._renderMargin(leader);
     this.dataset.vkOverlay = '';
@@ -238,6 +341,11 @@ export class VkNote extends VkElement {
 
   draw() {
     if (!this.isConnected) return;
+    if (this._kind() === 'bubble') {
+      // 气泡的落点 / 避让 / 引线全在 vk-annotate 的 note 形态里。
+      super.draw();
+      return;
+    }
     const host = hostOf(this);
     if (!host) return;
     const hr = host.getBoundingClientRect();

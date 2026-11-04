@@ -59,16 +59,16 @@ test('@side:top 决定出线方向，不是自动选边', async () => {
 });
 
 test('@region 圈住的是盒子里的百分比区域，不是整个盒子', async () => {
-  await reset(`<vk-canvas w="600" h="300">
+  await reset(`<vk-canvas id="cv" w="600" h="300">
     <vk-box id="b" x="300" y="100" w="200" h="100"></vk-box>
     <vk-ring for="#b@region:50%,50%,50%,50%" variant="rect" pad-px="0"></vk-ring>
   </vk-canvas>`);
-  const box = await page.$eval('vk-ring .vk-ring-shape', (e) => ({
-    x: Number(e.getAttribute('x')),
-    y: Number(e.getAttribute('y')),
-    w: Number(e.getAttribute('width')),
-    h: Number(e.getAttribute('height')),
-  }));
+  // 减法第一波：vk-ring 是一块带描边的面（不是 SVG 形状），量的就是它自己的盒子。
+  const box = await page.evaluate(() => {
+    const cv = document.querySelector('#cv').getBoundingClientRect();
+    const r = document.querySelector('vk-ring').getBoundingClientRect();
+    return { x: r.left - cv.left, y: r.top - cv.top, w: r.width, h: r.height };
+  });
   assert.ok(near(box.x, 400) && near(box.y, 150), `区域左上角应在 (400,150)，实际 (${box.x},${box.y})`);
   assert.ok(near(box.w, 100) && near(box.h, 50), `区域应是 100×50，实际 ${box.w}×${box.h}`);
 });
