@@ -1018,24 +1018,24 @@ vk-steps {
 }
 
 /* 竖排：编号在左、文字在右；连接线变成一段竖线，箭头朝下。 */
-vk-steps[orientation='vertical'] .vk-steps {
+vk-steps[direction='vertical'] .vk-steps {
   flex-direction: column;
   gap: var(--vk-s3);
 }
-vk-steps[orientation='vertical'] .vk-step {
+vk-steps[direction='vertical'] .vk-step {
   flex: 0 0 auto;
   flex-direction: row;
   align-items: center;
   gap: var(--vk-s3);
 }
-vk-steps[orientation='vertical'] .vk-step-line {
+vk-steps[direction='vertical'] .vk-step-line {
   flex: 0 0 48px;
   width: 4px;
   height: 48px;
   margin: 0 0 0 calc(var(--vk-step-n) / 2 - 2px);
   background: var(--vk-line-3);
 }
-vk-steps[orientation='vertical'] .vk-step-line::after {
+vk-steps[direction='vertical'] .vk-step-line::after {
   right: auto;
   left: 50%;
   top: auto;
@@ -1046,10 +1046,10 @@ vk-steps[orientation='vertical'] .vk-step-line::after {
   border-top: var(--vk-step-tip) solid var(--vk-line-3);
   border-bottom: 0;
 }
-vk-steps[orientation='vertical'] .vk-step-line[data-conn='done']::after {
+vk-steps[direction='vertical'] .vk-step-line[data-conn='done']::after {
   border-top-color: var(--vk-ok);
 }
-vk-steps[orientation='vertical'] .vk-step-line[data-conn='current']::after {
+vk-steps[direction='vertical'] .vk-step-line[data-conn='current']::after {
   border-top-color: var(--vk-focus);
 }
 
@@ -1117,7 +1117,7 @@ vk-bits{ display: block; }.vk-bits-wrap{
   font-size: var(--vk-t-body);
   line-height: 1;
   color: var(--vk-ink-1);
-}.vk-bit.is-sign{ background: var(--vk-surface-3); box-shadow: inset 0 -4px 0 var(--vk-line-strong); }.vk-bits-wrap[data-tone='info'] .vk-bit{ color: var(--vk-info); }.vk-bit-row[data-mark] .vk-bit{ outline: 2px solid var(--vk-info-line); outline-offset: -2px; }.vk-bit-legend-f[data-state='mark']{ background: var(--vk-info-soft); box-shadow: inset 0 -3px 0 var(--vk-info-line); }.vk-bit-legend-f[data-state='current']{ background: var(--vk-focus-soft); box-shadow: inset 0 -3px 0 var(--vk-focus); }.vk-bit-legend-f[data-state='err']{ background: var(--vk-err-weak); box-shadow: inset 0 -3px 0 var(--vk-err); }.vk-bit-row[data-state='current'] .vk-bit{ outline: 2px solid var(--vk-focus); outline-offset: -2px; }.vk-bit-row[data-state='ok'] .vk-bit{ outline: 2px solid var(--vk-ok); outline-offset: -2px; }.vk-bit-row[data-state='warn'] .vk-bit{ outline: 2px solid var(--vk-warn); outline-offset: -2px; }.vk-bit-row[data-state='err'] .vk-bit{ outline: 2px solid var(--vk-err); outline-offset: -2px; }.vk-bit-legend-f[data-state='ok']{ background: var(--vk-ok-weak); box-shadow: inset 0 -3px 0 var(--vk-ok); }.vk-bit-legend-f[data-state='warn']{ background: var(--vk-warn-weak); box-shadow: inset 0 -3px 0 var(--vk-warn); }.vk-bit-brackets{ height: 14px; align-items: stretch; }.vk-bit-field{
+}.vk-bit.is-sign{ background: var(--vk-surface-3); box-shadow: inset 0 -4px 0 var(--vk-line-strong); }.vk-bits-wrap[data-tone='info'] .vk-bit{ color: var(--vk-info); }.vk-bits-wrap[data-tone='focus'] .vk-bit{ color: var(--vk-focus); }.vk-bits-wrap[data-tone='ok'] .vk-bit{ color: var(--vk-ok); }.vk-bits-wrap[data-tone='warn'] .vk-bit{ color: var(--vk-warn); }.vk-bits-wrap[data-tone='err'] .vk-bit{ color: var(--vk-err); }.vk-bit-row[data-mark] .vk-bit{ outline: 2px solid var(--vk-info-line); outline-offset: -2px; }.vk-bit-legend-f[data-state='mark']{ background: var(--vk-info-soft); box-shadow: inset 0 -3px 0 var(--vk-info-line); }.vk-bit-legend-f[data-state='current']{ background: var(--vk-focus-soft); box-shadow: inset 0 -3px 0 var(--vk-focus); }.vk-bit-legend-f[data-state='err']{ background: var(--vk-err-weak); box-shadow: inset 0 -3px 0 var(--vk-err); }.vk-bit-row[data-state='current'] .vk-bit{ outline: 2px solid var(--vk-focus); outline-offset: -2px; }.vk-bit-row[data-state='ok'] .vk-bit{ outline: 2px solid var(--vk-ok); outline-offset: -2px; }.vk-bit-row[data-state='warn'] .vk-bit{ outline: 2px solid var(--vk-warn); outline-offset: -2px; }.vk-bit-row[data-state='err'] .vk-bit{ outline: 2px solid var(--vk-err); outline-offset: -2px; }.vk-bit-legend-f[data-state='ok']{ background: var(--vk-ok-weak); box-shadow: inset 0 -3px 0 var(--vk-ok); }.vk-bit-legend-f[data-state='warn']{ background: var(--vk-warn-weak); box-shadow: inset 0 -3px 0 var(--vk-warn); }.vk-bit-brackets{ height: 14px; align-items: stretch; }.vk-bit-field{
   border-top: 2px solid var(--vk-line-strong);
   border-left: 2px solid var(--vk-line-strong);
   border-right: 2px solid var(--vk-line-strong);
@@ -1190,7 +1190,7 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
   width: 2px;
   background: var(--vk-ink-1);
   z-index: 1;
-}.vk-bars[data-has-negative] .vk-bar-t{ overflow: visible; }vk-bars[tone='info'] .vk-bar-fill{ background: var(--vk-info); }.vk-bar[data-state='current'] .vk-bar-fill{ background: var(--vk-focus); }.vk-bar[data-state='mark'] .vk-bar-fill{ background: var(--vk-info); }.vk-bar[data-state='ok'] .vk-bar-fill{ background: var(--vk-ok); }.vk-bar[data-state='warn'] .vk-bar-fill{ background: var(--vk-warn); }.vk-bar[data-state='err'] .vk-bar-fill{ background: var(--vk-err); }.vk-bar-v{
+}.vk-bars[data-has-negative] .vk-bar-t{ overflow: visible; }vk-bars[tone='info'] .vk-bar-fill{ background: var(--vk-info); }vk-bars[tone='focus'] .vk-bar-fill{ background: var(--vk-focus); }vk-bars[tone='ok'] .vk-bar-fill{ background: var(--vk-ok); }vk-bars[tone='warn'] .vk-bar-fill{ background: var(--vk-warn); }vk-bars[tone='err'] .vk-bar-fill{ background: var(--vk-err); }.vk-bar[data-state='current'] .vk-bar-fill{ background: var(--vk-focus); }.vk-bar[data-state='mark'] .vk-bar-fill{ background: var(--vk-info); }.vk-bar[data-state='ok'] .vk-bar-fill{ background: var(--vk-ok); }.vk-bar[data-state='warn'] .vk-bar-fill{ background: var(--vk-warn); }.vk-bar[data-state='err'] .vk-bar-fill{ background: var(--vk-err); }.vk-bar-v{
   font-family: var(--vk-font-mono);
   font-size: var(--vk-t-label);
   text-align: right;
@@ -1218,7 +1218,7 @@ vk-bars{ display: block; }.vk-bars{ display: flex; flex-direction: column; gap: 
 }/* 窄格子（展示站的小镜头）里地址退到元信息档；单元格自己是容器，规则才真的会命中。 */
 .vk-cell{ container-type: inline-size; }@container (max-width: 150px){.vk-cell-a{ font-size: var(--vk-t-label); letter-spacing: -0.04em; }
 }/* 强度只留三档底色；没有第二种材质。 */
-.vk-pin-bd[data-emphasis='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 32 / 56); }vk-table[mass='hero'] td{ padding: calc(var(--vk-cs) * 32 / 56) calc(var(--vk-cs) * 48 / 56); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
+.vk-pin-bd[data-strength='ghost']{ background: transparent; }vk-table[mass='hero'] th{ padding: calc(var(--vk-cs) * 16 / 56) calc(var(--vk-cs) * 32 / 56); }vk-table[mass='hero'] td{ padding: calc(var(--vk-cs) * 32 / 56) calc(var(--vk-cs) * 48 / 56); }vk-bars[mass='hero'] .vk-bar{ gap: var(--vk-s4); min-height: 88px; }vk-bars[mass='hero'] .vk-bar-t{ height: 32px; }.vk-bytes[data-mass='hero'] .vk-bytes-row{ min-height: 64px; }/* tag 的三档强度：中性标签也要有可见差异。 */
 
 /* 图号是窗头里的一枚 chip，不能比窗头高。 */
 .vk-fig-fig{
@@ -1297,7 +1297,7 @@ vk-compare{ display: block; }.vk-cmp{
   width: 100%;
   height: 100%;
   min-height: 0;
-}.vk-cmp[data-fit='cover'] > img{ object-fit: cover; }.vk-cmp[data-fit='contain'] > img{ object-fit: contain; }.vk-cmp-a{ z-index: 1; }.vk-cmp-div{
+}.vk-cmp[data-fill='cover'] > img{ object-fit: cover; }.vk-cmp[data-fill='contain'] > img{ object-fit: contain; }.vk-cmp-a{ z-index: 1; }.vk-cmp-div{
   position: absolute;
   top: 0;
   bottom: 0;
@@ -1322,15 +1322,15 @@ vk-compare{ display: block; }.vk-cmp{
 }.vk-cmp-la{ left: var(--vk-s2); }.vk-cmp-lb{ right: var(--vk-s2); }/* side / stack：两张图各自完整，不裁切。
    注意不能用"一半对一半"的叠图思维：结构不同的两张表一行数都不一样，
    叠起来再 split 会把"行数差"正好裁掉。这里用 grid 并排/上下，各占一个完整格子。 */
-.vk-cmp[data-mode='side']{
+.vk-cmp[data-variant='side']{
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   align-items: start;
-}.vk-cmp[data-mode='stack']{
+}.vk-cmp[data-variant='stack']{
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-}.vk-cmp[data-mode='side'] > img,
-.vk-cmp[data-mode='stack'] > img{
+}.vk-cmp[data-variant='side'] > img,
+.vk-cmp[data-variant='stack'] > img{
   position: static;
   width: 100%;
   height: auto;
@@ -1338,14 +1338,14 @@ vk-compare{ display: block; }.vk-cmp{
   aspect-ratio: var(--vk-cmp-ratio, 16 / 9);
   object-fit: contain;
   background: var(--vk-surface-2);
-}.vk-cmp[data-mode='side'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='side'] > .vk-cmp-b{ grid-column: 2; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-mode='stack'] > .vk-cmp-b{ grid-column: 1; grid-row: 2; }.vk-cmp[data-mode='side'] > .vk-cmp-div,
-.vk-cmp[data-mode='stack'] > .vk-cmp-div{ display: none; }.vk-cmp[data-mode='stack'] > .vk-cmp-la{ bottom: calc(50% + var(--vk-s2)); }.vk-cmp[data-mode='side'] > .vk-cmp-la,
-.vk-cmp[data-mode='side'] > .vk-cmp-lb{ bottom: var(--vk-s2); }/* 角标顶置：先在图上让出一条 64px 的带，图像从带下面开始画。
+}.vk-cmp[data-variant='side'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-variant='side'] > .vk-cmp-b{ grid-column: 2; grid-row: 1; }.vk-cmp[data-variant='stack'] > .vk-cmp-a{ grid-column: 1; grid-row: 1; }.vk-cmp[data-variant='stack'] > .vk-cmp-b{ grid-column: 1; grid-row: 2; }.vk-cmp[data-variant='side'] > .vk-cmp-div,
+.vk-cmp[data-variant='stack'] > .vk-cmp-div{ display: none; }.vk-cmp[data-variant='stack'] > .vk-cmp-la{ bottom: calc(50% + var(--vk-s2)); }.vk-cmp[data-variant='side'] > .vk-cmp-la,
+.vk-cmp[data-variant='side'] > .vk-cmp-lb{ bottom: var(--vk-s2); }/* 角标顶置：先在图上让出一条 64px 的带，图像从带下面开始画。
    默认 inside 仍是"叠在图上、贴底"，所以这些规则只认 data-label-position='top'；
    它解决的是「角标压住图最后几行」——被压掉的字，读者永远看不到。 */
 .vk-cmp[data-label-position='top']{
   padding-top: var(--vk-cmp-band);
-}.vk-cmp[data-label-position='top'][data-mode='split'] > img{
+}.vk-cmp[data-label-position='top'][data-variant='split'] > img{
   top: var(--vk-cmp-band);
   height: calc(100% - var(--vk-cmp-band));
 }.vk-cmp[data-label-position='top'] > .vk-cmp-div{
@@ -1363,12 +1363,12 @@ vk-compare{ display: block; }.vk-cmp{
 .vk-cmp-marks{ position:absolute; inset:0; z-index:4; pointer-events:none; }
 .vk-cmp-marks-a,
 .vk-cmp-marks-b{ position:absolute; inset:0; }
-.vk-cmp[data-mode='split'] .vk-cmp-marks-a{ clip-path: inset(0 calc(100% - var(--vk-cmp-split, 50%)) 0 0); }
-.vk-cmp[data-mode='split'] .vk-cmp-marks-b{ clip-path: inset(0 0 0 var(--vk-cmp-split, 50%)); }
-.vk-cmp[data-mode='side'] .vk-cmp-marks-a{ width:50%; }
-.vk-cmp[data-mode='stack'] .vk-cmp-marks-a{ height:50%; }
-.vk-cmp[data-mode='side'] .vk-cmp-marks-b,
-.vk-cmp[data-mode='stack'] .vk-cmp-marks-b{ display:none; }
+.vk-cmp[data-variant='split'] .vk-cmp-marks-a{ clip-path: inset(0 calc(100% - var(--vk-cmp-split, 50%)) 0 0); }
+.vk-cmp[data-variant='split'] .vk-cmp-marks-b{ clip-path: inset(0 0 0 var(--vk-cmp-split, 50%)); }
+.vk-cmp[data-variant='side'] .vk-cmp-marks-a{ width:50%; }
+.vk-cmp[data-variant='stack'] .vk-cmp-marks-a{ height:50%; }
+.vk-cmp[data-variant='side'] .vk-cmp-marks-b,
+.vk-cmp[data-variant='stack'] .vk-cmp-marks-b{ display:none; }
 .vk-cmp[data-label-position='top'] .vk-cmp-marks{ top: var(--vk-cmp-band); }
 .vk-cmp-mark{
   position:absolute;

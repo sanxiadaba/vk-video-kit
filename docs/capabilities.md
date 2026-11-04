@@ -33,29 +33,29 @@
 | 终端 · 无壳不重复标题 | `vk-term.chrome`<br>`vk-term.title-show` | `specimen/vk-term.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 | 批注 · 显式落点与避让 | `vk-annotate.side` | `specimen/vk-annotate.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
 | 对照 · 差异放大 | `vk-compare.zoom` | `specimen/vk-compare.html` | `tests/gaps-six.test.mjs` | ✅ 绿 |
-| 注解 · 边注 margin | `vk-note.kind`<br>`vk-note.side`<br>`vk-note.leader`<br>`vk-note.w`<br>`vk-note.for` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 注解 · 编号图例 legend | `vk-note.kind`<br>`vk-note.place` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 注解 · 边注 margin | `vk-note.variant`<br>`vk-note.side`<br>`vk-note.leader`<br>`vk-note.w`<br>`vk-note.for` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
+| 注解 · 编号图例 legend | `vk-note.variant`<br>`vk-note.side` | `specimen/vk-note.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 图标 · 语义白名单（vk-text icon） | `vk-text.icon` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 一页一块深色（默认关） | `vk-panel.variant` | `specimen/vk-panel.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 强调色 ≤1（默认关） | `vk-text.tone` | `specimen/vk-text.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
 | 审计 preset · 内容在 120 边距内（默认关） | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-gh.test.mjs` | ✅ 绿 |
-| 并置 · vk-pair | `vk-pair.split`<br>`vk-pair.axis`<br>`vk-pair.axis-width`<br>`vk-pair.symbol`<br>`vk-pair.symbol-size`<br>`vk-pair.gap`<br>`vk-pair.orientation` | `specimen/vk-pair.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
+| 并置 · vk-pair | `vk-pair.split`<br>`vk-pair.axis`<br>`vk-pair.axis-width`<br>`vk-pair.symbol`<br>`vk-pair.size`<br>`vk-pair.gap`<br>`vk-pair.direction` | `specimen/vk-pair.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 文字 · 塞满一行 fit="width" | `vk-text.fit`<br>`vk-text.fit-min`<br>`vk-text.fit-max` | `specimen/vk-text.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
-| 归属说明 · vk-label[for] | `vk-label.for`<br>`vk-label.anchor` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 归属说明 · vk-label[for] | `vk-label.for`<br>`vk-label.side` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 代码窗 / 终端 · surface 与当前行 | `vk-term.surface`<br>`vk-code.surface`<br>`vk-term.current`<br>`vk-code.current` | `specimen/vk-term.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 纸 · 默认底色是纯白 | `vk-page.align` | `specimen/vk-page.html` | `tests/batch-primitives.test.mjs` | ✅ 绿 |
 | 流程 · 箭头按块高缩放 + 中轴词 | `vk-flow.arrow-scale`<br>`vk-flow.arrow-label` | `specimen/vk-flow.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 标签 · variant="tag" 专门档位 | `vk-label.variant` | `specimen/vk-label.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
-| 并置 · 左右分色 tone-a / tone-b | `vk-pair.tone-a`<br>`vk-pair.tone-b` | `specimen/vk-pair.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
+| 并置 · 左右分色 tone | `vk-pair.tone` | `specimen/vk-pair.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文字 · fit 的硬地板 fit-min | `vk-text.fit-min` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文案 · 字幕短句（项目层 preset，默认关） | `style:copy` | `specimen/vk-text.html` | `tests/batch-native.test.mjs` | ✅ 绿 |
 | 文字 · icon 字形 | `vk-text.icon` | `specimen/vk-text.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 面 · 描边环 ring | `vk-box.ring` | `specimen/vk-box.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 标签 · 贴块 for | `vk-label.for` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
-| 标签 · 贴块方向 anchor | `vk-label.anchor` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
-| 注解 · 气泡 bubble | `vk-note.kind` | `specimen/vk-note.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 标签 · 贴块方向 side | `vk-label.side` | `specimen/vk-label.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
+| 注解 · 气泡 bubble | `vk-note.variant` | `specimen/vk-note.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
 | 分区 · 窗头 chrome | `vk-panel.chrome` | `specimen/vk-panel.html` | `tests/merged-six.test.mjs` | ✅ 绿 |
-| 旧名 · 六个标签的转发 | `vk-text.icon`<br>`vk-box.ring`<br>`vk-label.for`<br>`vk-note.kind`<br>`vk-panel.chrome` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/registry.test.mjs` | ✅ 绿 |
+| 旧名 · 六个标签的转发 | `vk-text.icon`<br>`vk-box.ring`<br>`vk-label.for`<br>`vk-note.variant`<br>`vk-panel.chrome` | `specimen/vk-text.html` | `tests/merged-six.test.mjs`<br>`tests/registry.test.mjs` | ✅ 绿 |
 | 内容组件 · 放大 size / fit | `vk-code.size` | `specimen/vk-code.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 构图 · 出血 bleed | `vk-panel.bleed` | `specimen/vk-panel.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
 | 构图 · 铺满 fill | `vk-img.fill` | `specimen/vk-img.html` | `tests/mechanism.test.mjs` | ✅ 绿 |
@@ -243,16 +243,16 @@
 ### ✅ 注解 · 边注 margin
 
 - 能力：kind="margin"：一条 1px 细线从目标引出，文字落在栏间空白里，首行与目标正文同基线；side 自动选有空间的一侧，leader="dot" 在目标端加一枚小圆点。文字固定 caption（28）/ ink secondary，没有泡、没有底、没有箭头。
-- 契约断言：`vk-note.kind` · `vk-note.side` · `vk-note.leader` · `vk-note.w` · `vk-note.for`
+- 契约断言：`vk-note.variant` · `vk-note.side` · `vk-note.leader` · `vk-note.w` · `vk-note.for`
 - 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
-- 测试：`tests/batch-gh.test.mjs` · 「vk-note kind="margin"：1px 细线、文字 caption、与目标正文同基线」；`tests/batch-gh.test.mjs` · 「vk-note 自动选边：有空间的一侧才放文字，显式 side 按指定侧」；`tests/batch-gh.test.mjs` · 「vk-note leader="dot"：细线 + 目标端圆点，没有箭头」
+- 测试：`tests/batch-gh.test.mjs` · 「vk-note variant="margin"：1px 细线、文字 caption、与目标正文同基线」；`tests/batch-gh.test.mjs` · 「vk-note 自动选边：有空间的一侧才放文字，显式 side 按指定侧」；`tests/batch-gh.test.mjs` · 「vk-note leader="dot"：细线 + 目标端圆点，没有箭头」
 
 ### ✅ 注解 · 编号图例 legend
 
 - 能力：kind="legend"：每个目标角上一枚编号点（1 / 2 / 3），页角给一张编号 + 说明的图例表；place=br / bl / bottom 决定表落在哪一角。编号按 <li> 的顺序一一对应，构建期校验目标数与条目数相同。
-- 契约断言：`vk-note.kind` · `vk-note.place`
+- 契约断言：`vk-note.variant` · `vk-note.side`
 - 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
-- 测试：`tests/batch-gh.test.mjs` · 「vk-note kind="legend"：编号点钉在目标右上角，页角图例表编号对齐」；`tests/batch-gh.test.mjs` · 「vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接报错」
+- 测试：`tests/batch-gh.test.mjs` · 「vk-note variant="legend"：编号点钉在目标右上角，页角图例表编号对齐」；`tests/batch-gh.test.mjs` · 「vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接报错」
 
 ### ✅ 图标 · 语义白名单（vk-text icon）
 
@@ -285,7 +285,7 @@
 ### ✅ 并置 · vk-pair
 
 - 能力：两块内容左右（或上下）并置，中间一条 1–4px 的轴；split 决定左块占比，axis 可关掉轴，symbol 可在轴中点放 → / = / vs，也可什么都不放。两块宽度和 = 容器宽 - 2×gap，轴在 2×gap 沟槽的正中。
-- 契约断言：`vk-pair.split` · `vk-pair.axis` · `vk-pair.axis-width` · `vk-pair.symbol` · `vk-pair.symbol-size` · `vk-pair.gap` · `vk-pair.orientation`
+- 契约断言：`vk-pair.split` · `vk-pair.axis` · `vk-pair.axis-width` · `vk-pair.symbol` · `vk-pair.size` · `vk-pair.gap` · `vk-pair.direction`
 - 标本页：`_site/specimen/vk-pair.html` + 契约宿主 `_site/specimens/vk-pair.html`
 - 测试：`tests/batch-primitives.test.mjs` · 「vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点」；`tests/batch-primitives.test.mjs` · 「vk-pair：symbol 的三种写法都出现，axis="none" 只关分隔线」
 
@@ -299,9 +299,9 @@
 ### ✅ 归属说明 · vk-label[for]
 
 - 能力：「你写的 / 编译器给的」这种归属说明：给 vk-label 写 for，它就贴在目标块上方（anchor="above"）或下方（anchor="below"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。旧标签 vk-caption 保留为别名。
-- 契约断言：`vk-label.for` · `vk-label.anchor`
+- 契约断言：`vk-label.for` · `vk-label.side`
 - 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
-- 测试：`tests/merged-six.test.mjs` · 「vk-label for：贴块说明的左边界对齐目标首字符」；`tests/merged-six.test.mjs` · 「vk-label anchor：above / below 换方向」
+- 测试：`tests/merged-six.test.mjs` · 「vk-label for：贴块说明的左边界对齐目标首字符」；`tests/merged-six.test.mjs` · 「vk-label side：top / bottom 换方向」
 
 ### ✅ 代码窗 / 终端 · surface 与当前行
 
@@ -331,12 +331,12 @@
 - 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
 - 测试：`tests/batch-native.test.mjs` · 「vk-label variant="tag"：36px / .08em / 无底无框，tone 决定颜色」
 
-### ✅ 并置 · 左右分色 tone-a / tone-b
+### ✅ 并置 · 左右分色 tone
 
-- 能力：vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。不写 tone-a / tone-b 时不加底、不加框、不加内距，旧页逐像素不变。
-- 契约断言：`vk-pair.tone-a` · `vk-pair.tone-b`
+- 能力：vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。tone 写「左,右」一次给两侧上色；不写时不加底、不加框、不加内距，旧页逐像素不变。
+- 契约断言：`vk-pair.tone`
 - 标本页：`_site/specimen/vk-pair.html` + 契约宿主 `_site/specimens/vk-pair.html`
-- 测试：`tests/batch-native.test.mjs` · 「vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不改现状」
+- 测试：`tests/batch-native.test.mjs` · 「vk-pair tone：左右分色 wash + 1px 同色描边；不写不改现状」
 
 ### ✅ 文字 · fit 的硬地板 fit-min
 
@@ -373,19 +373,19 @@
 - 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
 - 测试：`tests/merged-six.test.mjs` · 「vk-label for：贴块说明的左边界对齐目标首字符」
 
-### ✅ 标签 · 贴块方向 anchor
+### ✅ 标签 · 贴块方向 side
 
 - 能力：anchor="above"（默认）贴在目标块上方，anchor="below" 贴在下方；净空 16px，方向落在宿主的 data-anchor 上。
-- 契约断言：`vk-label.anchor`
+- 契约断言：`vk-label.side`
 - 标本页：`_site/specimen/vk-label.html` + 契约宿主 `_site/specimens/vk-label.html`
-- 测试：`tests/merged-six.test.mjs` · 「vk-label anchor：above / below 换方向」
+- 测试：`tests/merged-six.test.mjs` · 「vk-label side：top / bottom 换方向」
 
 ### ✅ 注解 · 气泡 bubble
 
 - 能力：vk-note kind="bubble" 是原来的批注泡：气泡 + 引线绑到任意锚点，自动避让正文；w / n / tone / emphasis / size / leader / gap-px / x / y 与旧 vk-pin 同名同义。
-- 契约断言：`vk-note.kind`
+- 契约断言：`vk-note.variant`
 - 标本页：`_site/specimen/vk-note.html` + 契约宿主 `_site/specimens/vk-note.html`
-- 测试：`tests/merged-six.test.mjs` · 「vk-note kind="bubble"：泡 + 引线与旧 vk-pin 同几何」
+- 测试：`tests/merged-six.test.mjs` · 「vk-note variant="bubble"：泡 + 引线与旧 vk-pin 同几何」
 
 ### ✅ 分区 · 窗头 chrome
 
@@ -397,7 +397,7 @@
 ### ✅ 旧名 · 六个标签的转发
 
 - 能力：vk-icon → vk-text、vk-rule → vk-box、vk-caption → vk-label、vk-pin → vk-note、vk-ring → vk-box、vk-window → vk-panel。旧标签继续可用（同名自定义元素、同一套 DOM），构建期给一条"已合并到 X，旧名保留"的提示；标签清单里不再单列。
-- 契约断言：`vk-text.icon` · `vk-box.ring` · `vk-label.for` · `vk-note.kind` · `vk-panel.chrome`
+- 契约断言：`vk-text.icon` · `vk-box.ring` · `vk-label.for` · `vk-note.variant` · `vk-panel.chrome`
 - 标本页：`_site/specimen/vk-text.html` + 契约宿主 `_site/specimens/vk-text.html`
 - 测试：`tests/merged-six.test.mjs` · 「六个旧标签是别名：转发到新标签并给一条构建期提示」；`tests/registry.test.mjs` · 「别名只转发到一个公开标签，且不在清单里单列」
 

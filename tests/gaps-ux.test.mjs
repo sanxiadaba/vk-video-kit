@@ -43,8 +43,8 @@ after(async () => {
 test('vk-compare：split / side / stack 三种结构，side/stack 两图都完整不裁切', async () => {
   const { tab } = await open(`<div style="width:800px">
     <vk-compare id="split" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280" split="30"></vk-compare>
-    <vk-compare id="side" mode="side" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280" split="30"></vk-compare>
-    <vk-compare id="stack" mode="stack" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280"></vk-compare>
+    <vk-compare id="side" variant="side" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280" split="30"></vk-compare>
+    <vk-compare id="stack" variant="stack" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280"></vk-compare>
   </div>`);
   const r = await tab.evaluate(() => {
     const read = (id) => {
@@ -56,7 +56,7 @@ test('vk-compare：split / side / stack 三种结构，side/stack 两图都完�
       const ar = a.getBoundingClientRect();
       const br = b.getBoundingClientRect();
       return {
-        mode: shell.dataset.mode,
+        variant: shell.dataset.variant,
         display: getComputedStyle(shell).display,
         aspect: getComputedStyle(shell).aspectRatio,
         clipA: a.style.clipPath,
@@ -70,7 +70,7 @@ test('vk-compare：split / side / stack 三种结构，side/stack 两图都完�
   });
 
   // split 保持旧行为：叠图 + 裁切 + 分割线。
-  assert.equal(r.split.mode, 'split');
+  assert.equal(r.split.variant, 'split');
   assert.equal(r.split.display, 'block');
   assert.equal(r.split.clipA, 'inset(0px 70% 0px 0px)', `split=30 应只留 a 左边 30%：${r.split.clipA}`);
   assert.equal(r.split.clipB, '');
@@ -78,7 +78,7 @@ test('vk-compare：split / side / stack 三种结构，side/stack 两图都完�
   assert.ok(r.split.aspect.startsWith('720 / 280'), `split 要把 ratio 落到框上：${r.split.aspect}`);
 
   // side：左 a 右 b，各占一半，完整显示（没有 clipPath、没有分割线）。
-  assert.equal(r.side.mode, 'side');
+  assert.equal(r.side.variant, 'side');
   assert.equal(r.side.display, 'grid');
   assert.equal(r.side.aspect, 'auto', 'side 的高度由两张图自己撑开，不能再锁整框比例');
   assert.equal(r.side.clipA, '');
@@ -90,7 +90,7 @@ test('vk-compare：split / side / stack 三种结构，side/stack 两图都完�
   assert.ok(r.side.a.h > 100 && r.side.b.h > 100, '两张图的高度不能被压成线');
 
   // stack：上 a 下 b，各占满宽。
-  assert.equal(r.stack.mode, 'stack');
+  assert.equal(r.stack.variant, 'stack');
   assert.equal(r.stack.display, 'grid');
   assert.equal(r.stack.clipA, '');
   assert.equal(r.stack.clipB, '');
@@ -103,23 +103,23 @@ test('vk-compare：split / side / stack 三种结构，side/stack 两图都完�
 
 test('vk-compare：side 下同时写 split 会警告，且不裁切', async () => {
   const { tab, logs } = await open(
-    `<vk-compare id="c" mode="side" split="30" fit="cover" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg"></vk-compare>`
+    `<vk-compare id="c" variant="side" split="30" fill="cover" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg"></vk-compare>`
   );
   const r = await tab.evaluate(() => ({
-    mode: document.querySelector('.vk-cmp').dataset.mode,
+    variant: document.querySelector('.vk-cmp').dataset.variant,
     clip: document.querySelector('.vk-cmp-a').style.clipPath,
   }));
-  assert.equal(r.mode, 'side');
+  assert.equal(r.variant, 'side');
   assert.equal(r.clip, '');
-  assert.match(logs.join('\n'), /mode="side" 下 split 不起作用/);
-  assert.match(logs.join('\n'), /mode="side" 下 fit="cover" 不起作用/);
+  assert.match(logs.join('\n'), /variant="side" 下 split 不起作用/);
+  assert.match(logs.join('\n'), /variant="side" 下 fill="cover" 不起作用/);
 });
 
 test('vk-compare：side/stack 仍守同比例校验（>2% 报 compare-mismatch）', async () => {
   const square = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100' height='100'%3E%3C/svg%3E";
   const wide = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='100'%3E%3C/svg%3E";
   const { tab } = await open(
-    `<vk-page><vk-compare id="c" mode="side" a="${square}" b="${wide}" ratio="1 / 1"></vk-compare></vk-page>`
+    `<vk-page><vk-compare id="c" variant="side" a="${square}" b="${wide}" ratio="1 / 1"></vk-compare></vk-page>`
   );
   const r = await tab.evaluate(() => {
     const host = document.getElementById('c');

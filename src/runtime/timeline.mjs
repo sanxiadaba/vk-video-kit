@@ -15,6 +15,7 @@
  * 泳道模式只做静态摆位：at 是 0 起的步号，span 是占几格。
  */
 import { VkElement, define, esc } from './base.mjs';
+import { SIZE_TIERS } from '../shared/vocab.mjs';
 
 const num = (v) => {
   const n = parseFloat(v);
@@ -62,12 +63,21 @@ export class VkTimeline extends VkElement {
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const mass = this.getAttribute('mass') || 'normal';
-    // 不写 = hero：引入 value-size 之前 value 就是 hero（280），一个像素都不许变。
-    const valueSizeRaw = (this.getAttribute('value-size') || 'hero').trim();
-    const valueSize = VALUE_SIZES.has(valueSizeRaw) ? valueSizeRaw : 'hero';
+    // 主值的字号：size 只表字号（旧名 value-size 已并进来）；不写 = hero（280），
+    // 与引入 value-size 之前逐像素一致。
+    const valueSizeRaw = (this.getAttribute('size') || 'hero').trim();
+    const valueSize = VALUE_SIZES.has(valueSizeRaw) || SIZE_TIERS.includes(valueSizeRaw) ? valueSizeRaw : 'hero';
     if (valueSizeRaw !== valueSize) {
-      this._warnOnce('value-size', `的 value-size="${valueSizeRaw}" 不认识，按 hero 画；可用：hero / title / subhead`);
+      this._warnOnce('size', `的 size="${valueSizeRaw}" 不认识，按 hero 画；可用：${SIZE_TIERS.join(' / ')}`);
     }
+    // current = 第 N 个事件（1 起）；-1 = 不标。
+    const curRaw = parseInt(this.getAttribute('current') ?? '-1', 10);
+    const curIdx = Number.isFinite(curRaw) && curRaw >= 1 ? curRaw - 1 : -1;
+    if (curIdx >= items.length) {
+      this._warnOnce('current', `的 current="${curRaw}" 超过 ${items.length} 个事件，已忽略`);
+    }
+    // 容器级 current 落成那一条的 state：与 <li state="current"> 是同一条渲染路径。
+    for (const [i, it] of items.entries()) if (i === curIdx) it.state = 'current';
     const span = [this.getAttribute('start') || items[0]?.date, this.getAttribute('end') || items[items.length - 1]?.date]
       .filter(Boolean)
       .join('–');

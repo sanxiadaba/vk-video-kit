@@ -80,6 +80,13 @@ export class VkCanvas extends VkElement {
 
 /* ------------------------------------------------------------------ 连线 */
 
+const offsetOf = (raw) => {
+  const [dx, dy] = String(raw || '')
+    .split(/[,\s]+/)
+    .map((s) => parseFloat(s));
+  return [Number.isFinite(dx) ? dx : 0, Number.isFinite(dy) ? dy : 0];
+};
+
 export class VkEdge extends VkAnnotate {
   static legacy = 'arrow';
 
@@ -112,8 +119,9 @@ export class VkEdge extends VkAnnotate {
       via: this.getAttribute('via'),
       fromSide: this.getAttribute('from-side'),
       toSide: this.getAttribute('to-side'),
-      labelDx: numAttr(this, 'label-dx', { min: -400, max: 400, fallback: 0 }),
-      labelDy: numAttr(this, 'label-dy', { min: -200, max: 200, fallback: 0 }),
+      // 标签偏移：label-offset="dx,dy"（旧名 label-dx / label-dy）。
+      labelDx: offsetOf(this.getAttribute('label-offset'))[0],
+      labelDy: offsetOf(this.getAttribute('label-offset'))[1],
       z: numAttr(this, 'z', { min: 0, max: 99, fallback: 20 }),
     };
   }
@@ -156,7 +164,7 @@ export class VkStack extends VkElement {
   static watchSource = false;
 
   onAttr(name) {
-    if (name === 'weights' || name === 'ratio' || name === 'grow' || name === 'fill' || name === 'h') {
+    if (name === 'weights' || name === 'ratio' || name === 'grow' || name === 'stretch' || name === 'h') {
       this._weights();
     }
   }
@@ -168,7 +176,7 @@ export class VkStack extends VkElement {
   _weights() {
     const raw = (this.getAttribute('weights') ?? this.getAttribute('ratio') ?? '').trim();
     const list = raw ? raw.split(/[\s,]+/).filter(Boolean).map(Number) : [];
-    const bounded = this.hasAttribute('grow') || this.hasAttribute('fill') || this.hasAttribute('h');
+    const bounded = this.hasAttribute('grow') || this.hasAttribute('stretch') || this.hasAttribute('h');
     const usable = bounded && list.length > 0 && list.every((n) => Number.isFinite(n) && n > 0);
 
     // 先撤掉上一次的分配：属性被删掉 / 改成非法值时页面要回到等距。
@@ -184,7 +192,7 @@ export class VkStack extends VkElement {
     }
     if (!usable) {
       if (raw && !bounded) {
-        this._warnOnce('weights-h', '写了 weights，但容器没有确定高度（grow / fill / h）：按内容高排，不分配');
+        this._warnOnce('weights-h', '写了 weights，但容器没有确定高度（grow / stretch / h）：按内容高排，不分配');
       }
       return;
     }

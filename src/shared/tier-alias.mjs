@@ -1,24 +1,11 @@
 /**
- * 13.0 的属性改名表，一份表三处用：
- *   · 运行期（runtime/base.mjs）：旧页连上 DOM 时折成新名；
- *   · 构建期（highlight.mjs）：旧名给迁移提示，不拦构建；
- *   · 组件（runtime/*.mjs）：读新名，旧名只在别名层出现。
- * 14.0 连同这张表一起删。
- */
-
-/**
- * 字号档位：旧名 → 现在的名字。只作用于文字类组件。
+ * 13.0 的属性改名表 —— 15.0 起真源移到 src/shared/vocab.mjs。
  *
- * 14.0 起 display 是四档主名之一（160px），不再折成 title；
- * title / subhead / label / data 这些旧名在 tokens.css 里做了别名，
- * 不需要在运行期改写属性——所以这张表只剩"从没进过词表"的旧别名。
+ * 这个文件只剩两个用途：
+ *   · 旧 import 不破（TIER_ALIAS / DENSITY_ALIAS 是 vocab 里那张表的别名）；
+ *   · MASS_TAGS：哪些标签有「体量」这根轴（运行期用它把 size 上的体量词认出来，只提示不改写）。
  */
-export const TIER_ALIAS = {
-  'display-2xl': 'mega',
-  'display-xl': 'hero',
-  heading: 'subhead',
-  meta: 'label',
-};
+export { SIZE_ALIAS as TIER_ALIAS, MASS_ALIAS as DENSITY_ALIAS } from './vocab.mjs';
 
 /**
  * 内在体量（一个块有多大）：compact / normal / hero。
@@ -41,6 +28,3 @@ export const MASS_TAGS = new Set([
   'vk-window',
   'vk-list',
 ]);
-
-/** 旧词：density 的三档并进 mass；loose 是「更松」，对应 hero。 */
-export const DENSITY_ALIAS = { compact: 'compact', normal: 'normal', loose: 'hero' };

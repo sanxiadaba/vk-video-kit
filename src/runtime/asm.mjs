@@ -77,7 +77,7 @@ export class VkAsm extends VkElement {
     const mass = this.getAttribute('mass') || 'normal';
     // 窗头是"这段东西从哪来"：没有 title 时退到构建期记下的文件名，再退到"汇编"。
     const title = this.getAttribute('title') || d.file || '汇编';
-    const hl = lineSet(this.getAttribute('current') || this.getAttribute('line') || '');
+    const hl = lineSet(this.getAttribute('current') || '');
     const focus = lineSet(this.getAttribute('focus'));
     const revealRaw = this.getAttribute('reveal');
     this.dataset.reveal = revealRaw === 'line' || revealRaw === 'none' ? revealRaw : 'all';
@@ -113,8 +113,12 @@ export class VkAsm extends VkElement {
         return row;
       })
       .join('');
-    const labelsOn = this.getAttribute('labels') !== 'none';
-    const label = (name, fallback) => this.getAttribute(name) || fallback;
+    // 列标题：none 关掉；all/不写用默认名；写 "地址|机器码|指令|操作数" 就逐列替换。
+    // 以前的 address-label / bytes-label / mnemonic-label / operands-label 四个名字并成这一个。
+    const labelsRaw = (this.getAttribute('labels') || '').trim();
+    const labelsOn = labelsRaw.toLowerCase() !== 'none';
+    const labelParts = labelsRaw.includes('|') ? labelsRaw.split('|').map((s) => s.trim()) : [];
+    const label = (col, fallback) => labelParts[col] || fallback;
     // chrome 只有 min / none：none = 不要窗，不是只要窗头不要。
     // 这一块自己画壳（.vk-asm 有边框和底色），所以要把 chrome 写进 DOM，
     // 让 CSS 能把壳一起去掉——否则嵌进 vk-window 就是"窗口里套窗口"。
@@ -122,10 +126,10 @@ export class VkAsm extends VkElement {
     const cols = labelsOn
       ? `<div class="vk-asm-cols vk-asm-cols-hd" aria-hidden="true">
       ${showOrder ? '<span class="vk-asm-ord" data-meta>执行</span>' : ''}
-      ${showAddr ? `<span class="vk-asm-a" data-meta>${esc(label('address-label', '地址'))}</span>` : ''}
-      ${showBytes ? `<span class="vk-asm-b" data-meta>${esc(label('bytes-label', '机器码'))}</span>` : ''}
-      <span class="vk-asm-m" data-meta>${esc(label('mnemonic-label', '指令'))}</span>
-      <span class="vk-asm-o" data-meta>${esc(label('operands-label', '操作数'))}</span>
+      ${showAddr ? `<span class="vk-asm-a" data-meta>${esc(label(0, '地址'))}</span>` : ''}
+      ${showBytes ? `<span class="vk-asm-b" data-meta>${esc(label(1, '机器码'))}</span>` : ''}
+      <span class="vk-asm-m" data-meta>${esc(label(2, '指令'))}</span>
+      <span class="vk-asm-o" data-meta>${esc(label(3, '操作数'))}</span>
     </div>`
       : '';
     const head =

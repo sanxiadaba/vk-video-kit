@@ -92,7 +92,7 @@
 
 关系层：`<vk-annotate>` 的 `mode` 决定它回答哪个问题；`<vk-note>` 负责"排进版面的注解"
 （边注 / 气泡 / 编号图例）。
-旧标签 `vk-edge` 是 `vk-annotate` 的别名（`mode="arrow"`）；`vk-pin` 是 `vk-note kind="bubble"`
+旧标签 `vk-edge` 是 `vk-annotate` 的别名（`mode="arrow"`）；`vk-pin` 是 `vk-note variant="bubble"`
 的别名；`vk-ring` 是 `vk-box ring` / `vk-annotate mode="circle"` 的旧名。
 它们继续可用；构建期会给一条迁移提示。
 
@@ -146,20 +146,20 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`surface` · `tone` · `pad` · `pad-y` · `pad-x` · `radius` · `border` · `ring` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-box border="hair" radius="xl" pad="lg" surface="paper">`
 - **`vk-panel`** · 分区 — 一块内容分区：底色、可选标题带、内距、圆角；chrome="dots" 会长出窗头，于是它也能当窗用。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。
-  - 属性：`tone` · `variant` · `title` · `chrome` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `surface`
+  - 属性：`tone` · `variant` · `title` · `chrome` · `fill` · `pad` · `radius` · `border` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `surface`
   - 例：`<vk-panel variant="plain" title="白纸">`
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽；可带一个语义图标（文字与图标共存）。
   - 属性：`size` · `weight` · `mono` · `align` · `format` · `fit` · `fit-min` · `fit-max` · `icon` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节：hello.c 经 gcc -E 把 stdio.h 抄进来。</vk-text>`
 - **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上（原 vk-caption）。
-  - 属性：`variant` · `tone` · `ink` · `index` · `total` · `section` · `icon` · `for` · `anchor` · `gap-px`
+  - 属性：`variant` · `tone` · `ink` · `index` · `total` · `section` · `icon` · `for` · `side` · `gap-px`
   - 例：`<vk-label variant="kicker" index="3" total="4" section="汇编">汇编</vk-label>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
   - 属性：`variant` · `href`
   - 例：`<vk-inline variant="code">s[0]</vk-inline>`
 - **`vk-img`** · 图片 — 一张图：比例、填充方式、焦点。加载失败有可见占位。
-  - 属性：`src` · `alt` · `ratio` · `fit` · `radius` · `border` · `position` · `fill`
-  - 例：`<vk-img fit="contain" src="../assets/hello/o0.png" alt="gcc -O0 编出的 hello.c 反汇编" radius="xl">`
+  - 属性：`src` · `alt` · `ratio` · `fill` · `radius` · `border` · `position`
+  - 例：`<vk-img fill="contain" src="../assets/hello/o0.png" alt="gcc -O0 编出的 hello.c 反汇编" radius="xl">`
 
 ### L2 排布 · 只决定在哪、多大
 
@@ -170,11 +170,11 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 属性：`cols` · `tracks` · `rows` · `gap` · `gap-x` · `gap-y` · `align` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `justify`
   - 例：`<vk-grid cols="3" gap="sm">`
 - **`vk-layer`** · 叠层 — 叠放容器：第一个子元素铺满当底，其余按顺序绝对定位叠在上面；vk-text 放在最上面时默认加纸色描边（readable="off" 关），surface 给这一层上五档底色。
-  - 属性：`surface` · `tone` · `readable` · `grow`
+  - 属性：`surface` · `tone` · `fill` · `readable` · `grow`
   - 例：`<vk-layer surface="wash">`
-- **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone-a / tone-b 可给两侧各上一种语义淡底。
-  - 属性：`split` · `axis` · `axis-width` · `symbol` · `symbol-size` · `gap` · `orientation` · `tone-a` · `tone-b` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
-  - 例：`<vk-pair split="50" gap="96" axis="none" symbol="→" symbol-size="96">`
+- **`vk-pair`** · 并置 — 两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone="左,右" 可给两侧各上一种语义淡底。
+  - 属性：`split` · `axis` · `axis-width` · `symbol` · `size` · `gap` · `direction` · `tone` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 例：`<vk-pair split="50" gap="96" axis="none" symbol="→" size="96">`
 - **`vk-flow`** · 流程 — 多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），箭头按容器高 × arrow-scale 缩放，容器窄于 1100px 自动竖排。
   - 属性：`gap` · `arrow` · `arrow-scale` · `arrow-label` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
@@ -191,7 +191,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 状态：`state="ok|warn|err"`（item）
   - 例：`<vk-list gap="md">`
 - **`vk-code`** · 代码窗 — 代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮；reveal="line" 逐行浮现。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `size` · `fit` · `surface` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers` · `numbering`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `focus` · `fold` · `omit` · `fold-note` · `chrome` · `mark` · `mass` · `size` · `fit` · `surface` · `reveal` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `long` · `numbers`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-code lang="c" file="hello.c" src="../code/hello.c" lines="1-8" current="4" mass="hero">`
 - **`vk-term`** · 终端 — 终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。
@@ -212,27 +212,27 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-math display size="subhead" src="../code/formula.tex">`
 - **`vk-compare`** · 对照 — 前后对照：mode="split"（默认）时左边 split% 显示 a、右边显示 b，上面那张按 split 裁掉右侧；mode="side" 左右并排、mode="stack" 上下排列，两张图各自完整、都不裁切。角标默认叠在图上（label-position="inside"）；label-position="top" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。zoom="mark" 在下方生成一块差异放大（默认 ×2），也可以写 x1,y1,x2,y2 或只写倍数。
-  - 属性：`a` · `b` · `alt` · `mode` · `ratio` · `split` · `fit` · `position` · `label-a` · `label-b` · `label-position` · `mark` · `mark-label` · `zoom` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`a` · `b` · `alt` · `variant` · `ratio` · `split` · `fill` · `position` · `labels` · `label-position` · `mark` · `mark-label` · `zoom` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 例：`<vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
-    label-a="gcc -O0 · 13 行" label-b="gcc -O2 · 10 行"
+    labels="gcc -O0 · 13 行|gcc -O2 · 10 行"
     mark="58,73,93,84" mark-label="少 3 行">`
 - **`vk-tree`** · 文件树 — 文件树：src 指向真实目录，构建期扫描层级、类型、大小。
   - 属性：`mass` · `src` · `title` · `current` · `collapsed` · `limit` · `summary` · `depth` · `chrome` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-tree title="hello" current="build/hello.exe" depth="4">hello.c build/ obj/ hello.o hello.i hello.s * hello.exe + Makefile</vk-tree>`
 - **`vk-cells`** · 内存格 — 一格一个 <li>：标签、值、地址；state="err" 标出越界的那一格，act="focus" 标出当前格，超过 cols 自动换行。
-  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`addr` · `cols` · `stride` · `offsets` · `direction` · `ruler` · `mass` · `current` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-cells cols="6" addr="0x404064" offsets>`
 - **`vk-bytes`** · 字节 — 字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，current 标出一段字节。
   - 属性：`src` · `addr` · `offset` · `length` · `cols` · `group` · `ascii` · `address` · `current` · `mass` · `chrome` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `word` · `endian`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
-  - 例：`<vk-bytes src="../code/hello.bin" addr="0x404064" offset="0" length="48" current="0-5">`
+  - 例：`<vk-bytes src="../code/hello.bin" addr="0x404064" offset="0" length="48" current="1-6">`
 - **`vk-steps`** · 步骤 — 步骤条：编号 + 连线 + 当前步。条目写成 <li>；current="-1" = 不标当前步（纯地图，五步等权）；done="none" 连前面也不打勾，mark="N" 只强调第 N 步。
-  - 属性：`current` · `done` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `orientation` · `connector`
+  - 属性：`current` · `done` · `mark` · `mass` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength` · `direction` · `connector`
   - 子节点：条目写成 `<li>`
-  - 例：`<vk-steps current="1">`
+  - 例：`<vk-steps current="2">`
 - **`vk-bits`** · 位 — 一行二进制位：索引、分组、符号位。
   - 属性：`mass` · `value` · `index` · `group` · `sign` · `label` · `tone` · `bit-width` · `bytes` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
@@ -244,27 +244,27 @@ node bin/vk.mjs icons arrow     # 搜图标名
   - 状态：`state="current|mark|ok|warn|err"`（item）
   - 例：`<vk-bars max="52980" scale="log" unit="字节">`
 - **`vk-asm`** · 汇编 — 汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。
-  - 属性：`lang` · `src` · `lines` · `file` · `current` · `reveal` · `focus` · `addr` · `title` · `bytes` · `address` · `mass` · `long` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `address-label` · `bytes-label` · `mnemonic-label` · `operands-label` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+  - 属性：`lang` · `src` · `lines` · `file` · `current` · `reveal` · `focus` · `addr` · `title` · `bytes` · `address` · `mass` · `long` · `chrome` · `order` · `fence-after` · `fence-label` · `labels` · `size` · `fit` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：内容来自 `src` 或 `<script data-vk-source>`（二选一）
   - 例：`<vk-asm title="hello.s" lines="2-9" current="6" bytes order="1,2,3,4,5,6,7,8" long="wrap"
         fence-after="4" fence-label="编译器屏障">`
-- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 280 / title 200 / subhead 112，默认 hero）。
-  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `value-size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
+- **`vk-timeline`** · 时间线 — 时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（hero 280 默认 / title 200 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。
+  - 属性：`start` · `end` · `variant` · `steps` · `lanes` · `title` · `mass` · `current` · `size` · `at` · `dur` · `enter` · `ease` · `stagger` · `act` · `strength`
   - 子节点：条目写成 `<li>`
   - 状态：`state="current|mark|ok|warn|err"`（item）
-  - 例：`<vk-timeline start="1972" end="2011" title="C 语言标准" value-size="subhead" mass="compact">`
+  - 例：`<vk-timeline start="1972" end="2011" title="C 语言标准" size="subhead" mass="compact">`
 
 ### L4 关系 · 两点之间的关系与批注
 
 - **`vk-edge`** · 连线 — 两点之间的连线。自己算锚点，三种形状。
-  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `emphasis` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `cap` · `z` · `act` · `at` · `dur` · `enter` · `ease` · `label-size` · `label-dx` · `label-dy` · `via`
+  - 属性：`from` · `to` · `from-side` · `to-side` · `variant` · `tension` · `label` · `tone` · `strength` · `size` · `arrow` · `arrow-style` · `arrow-size` · `dash` · `gap-px` · `bend` · `label-offset` · `cap` · `z` · `act` · `at` · `dur` · `enter` · `ease` · `via`
   - 例：`<vk-edge from="#buf@side:right" to="#mem@point:0%,50%" label="编译" tension="42" arrow-style="solid" arrow-size="52">`
 - **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
-  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `emphasis` · `tone` · `label` · `arrow-scale` · `arrow-label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
+  - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `head` · `ring` · `double` · `note` · `n` · `size` · `strength` · `tone` · `label` · `arrow-scale` · `arrow-label` · `gap-px` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="gcc -c" tone="info">`
-- **`vk-note`** · 注解 — 三种注解：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="bubble" 是泡 + 引线（原 vk-pin）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
-  - 属性：`kind` · `for` · `side` · `leader` · `place` · `w` · `z` · `tone` · `emphasis` · `size` · `n` · `gap-px` · `x` · `y`
-  - 例：`<vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">main 的返回值写进 eax；0 表示程序正常结束。</vk-note>`
+- **`vk-note`** · 注解 — 三种注解：variant="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；variant="bubble" 是泡 + 引线（原 vk-pin）；variant="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
+  - 属性：`variant` · `for` · `side` · `leader` · `w` · `z` · `tone` · `strength` · `size` · `n` · `gap-px` · `x` · `y`
+  - 例：`<vk-note variant="margin" for="#nt-code" side="auto" leader="line" w="360">main 的返回值写进 eax；0 表示程序正常结束。</vk-note>`
 
 ### L5 页面 · 一整张 1920×1080 的画布
 
@@ -277,9 +277,9 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-icon`** → `vk-text` — 图标本质是一个字形：改用 <vk-text icon="check">，文字与图标可以共存。
 - **`vk-rule`** → `vk-box` — 一条线就是一块 1px 高的面：用 <vk-box border="hair">（或 vk-box 的 h + surface）。
 - **`vk-window`** → `vk-panel` — 窗就是带窗头的分区：用 <vk-panel chrome="dots" title="…">，窗头与内距是同一套属性。
-- **`vk-pin`** → `vk-note` — 批注泡是 vk-note 的一种形态：用 <vk-note kind="bubble">（泡 + 引线，属性同旧版）。
+- **`vk-pin`** → `vk-note` — 批注泡是 vk-note 的一种形态：用 <vk-note variant="bubble">（泡 + 引线，属性同旧版）。
 - **`vk-ring`** → `vk-box` — 圈选是一块带环的面：用 <vk-box ring>（不占布局）；overlay 圈选用 vk-annotate mode="circle"。
-- **`vk-caption`** → `vk-label` — 归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" anchor="above|below">。
+- **`vk-caption`** → `vk-label` — 归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" side="top|bottom">。
 <!-- vk:tags:end -->
 
 ---
@@ -290,7 +290,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 - **`vk-bytes` 的地址是算出来的**：`offset` 是文件偏移，`addr` 是窗口第 0 字节的地址，屏幕上是 `addr + offset + i`；`current` 又是片段内 0 基。想让窗口从 `0x404064` 开始，写 `addr="0x404000" offset="0x2064"`。
 - **`span` 只属于 `vk-grid`**：`vk-figure`、`vk-code` 放在 page 直系时 `span` 无效（构建期会报）。全宽 16:9 的图会算出 945px 高、顶出 1080——要么包一层 `vk-grid` 给它 `span`，要么换更宽的 `ratio`。
-- **`vk-note kind="bubble"` 的 `side` 是强制边，不是偏好**：钉在整行宽的组件（tree 的一行、code 的整行）上时，气泡会被夹到画布边缘并压住内容。整行目标改用 `side="auto"` 或显式 `x` / `y`。`vk-annotate mode="note"` 没有 `side`，只做自动避让（代码行也算正文）。
+- **`vk-note variant="bubble"` 的 `side` 是强制边，不是偏好**：钉在整行宽的组件（tree 的一行、code 的整行）上时，气泡会被夹到画布边缘并压住内容。整行目标改用 `side="auto"` 或显式 `x` / `y`。`vk-annotate mode="note"` 没有 `side`，只做自动避让（代码行也算正文）。
 - **`vk-compare` 的 `mark` 是百分比，不是像素**：`mark="x1,y1,x2,y2"` 相对取景框；`split` 下每处只标在所属的一半（框心决定 A/B），`side` / `stack` 下只标在 a 图上。写错坐标只会得到 warning，不会画错位置。
 - **`vk-cells` 的 `cols` 上限是 8**；8 列时地址会省略号截断，想要完整地址就减列或缩短地址。
 - **多行 `current`（`current="4-6"`）算一处焦点**：不要在一个组件里既写 `current` 又写 `focus`，那才是"两处"。

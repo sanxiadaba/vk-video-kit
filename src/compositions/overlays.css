@@ -139,29 +139,29 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
    solid 必须是"实色 + 反白"：半透明深蓝 + 深墨字压在深色终端截图上，
    气泡和字一起消失。底色取设计系统里的语义实色，字取 paper——每一组都 ≥ 6.4:1，
    而且 alpha=1，下面的截图一个像素都不会透上来。 */
-.vk-pin-bd[data-emphasis='soft'] { background: var(--vk-surface-2); }
-.vk-pin-bd[data-emphasis='solid'] {
+.vk-pin-bd[data-strength='soft'] { background: var(--vk-surface-2); }
+.vk-pin-bd[data-strength='solid'] {
   --vk-pin-solid: var(--vk-ink-1);
   background: var(--vk-pin-solid);
   color: var(--vk-paper-surface-1);
   border-color: var(--vk-pin-solid);
 }
-.vk-pin-bd[data-emphasis='solid'][data-tone='info'] { --vk-pin-solid: var(--vk-info); }
-.vk-pin-bd[data-emphasis='solid'][data-tone='focus'] { --vk-pin-solid: var(--vk-focus); }
-.vk-pin-bd[data-emphasis='solid'][data-tone='ok'] { --vk-pin-solid: var(--vk-ok); }
-.vk-pin-bd[data-emphasis='solid'][data-tone='warn'] { --vk-pin-solid: var(--vk-warn); }
-.vk-pin-bd[data-emphasis='solid'][data-tone='err'] { --vk-pin-solid: var(--vk-err); }
+.vk-pin-bd[data-strength='solid'][data-tone='info'] { --vk-pin-solid: var(--vk-info); }
+.vk-pin-bd[data-strength='solid'][data-tone='focus'] { --vk-pin-solid: var(--vk-focus); }
+.vk-pin-bd[data-strength='solid'][data-tone='ok'] { --vk-pin-solid: var(--vk-ok); }
+.vk-pin-bd[data-strength='solid'][data-tone='warn'] { --vk-pin-solid: var(--vk-warn); }
+.vk-pin-bd[data-strength='solid'][data-tone='err'] { --vk-pin-solid: var(--vk-err); }
 /* 编号也反白：同色底上的同色圆点等于没有编号。 */
-.vk-pin-bd[data-emphasis='solid'] .vk-pin-n {
+.vk-pin-bd[data-strength='solid'] .vk-pin-n {
   background: var(--vk-paper-surface-1);
   color: var(--vk-ink-1);
 }
 /* dot 变体整个气泡就是一个点：编号跟着实色底走，不再套一圈白。 */
-.vk-pin-bd[data-variant='dot'][data-emphasis='solid'] .vk-pin-n {
+.vk-pin-bd[data-variant='dot'][data-strength='solid'] .vk-pin-n {
   background: var(--vk-pin-solid);
   color: var(--vk-paper-surface-1);
 }
-.vk-pin-bd[data-emphasis='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
+.vk-pin-bd[data-strength='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
 
 /* ============================================================ vk-annotate
    关系层合并后的本体：arrow / circle / note / badge 共用一套几何与令牌。
@@ -456,3 +456,22 @@ vk-label[for] .vk-label.vk-caption {
   pointer-events: none;
 }
 
+/* 15.0：size 只表字号，且与全库共用十档（以前只有 label / body / subhead 三档）。 */
+.vk-pin-bd[data-size='hero'] { font-size: var(--vk-t-hero); }
+.vk-pin-bd[data-size='display'] { font-size: var(--vk-t-display); }
+.vk-pin-bd[data-size='headline'] { font-size: var(--vk-t-headline); }
+.vk-pin-bd[data-size='title'] { font-size: var(--vk-t-title); }
+.vk-pin-bd[data-size='subhead'] { font-size: var(--vk-t-subhead); }
+.vk-pin-bd[data-size='body'] { font-size: var(--vk-t-body); }
+.vk-pin-bd[data-size='data'] { font-size: var(--vk-t-data); }
+.vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); }
+.vk-pin-bd[data-size='caption'] { font-size: var(--vk-t-caption); }
+.vk-pin-bd[data-size='mega'] { font-size: var(--vk-t-mega); }
+vk-annotate[data-size='hero'] .vk-edge-label { font-size: var(--vk-t-hero); }
+vk-annotate[data-size='display'] .vk-edge-label { font-size: var(--vk-t-display); }
+vk-annotate[data-size='headline'] .vk-edge-label { font-size: var(--vk-t-headline); }
+vk-annotate[data-size='title'] .vk-edge-label { font-size: var(--vk-t-title); }
+vk-annotate[data-size='body'] .vk-edge-label { font-size: var(--vk-t-body); }
+vk-annotate[data-size='data'] .vk-edge-label { font-size: var(--vk-t-data); }
+vk-annotate[data-size='caption'] .vk-edge-label { font-size: var(--vk-t-caption); }
+vk-annotate[data-size='mega'] .vk-edge-label { font-size: var(--vk-t-mega); }

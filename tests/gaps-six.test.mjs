@@ -88,7 +88,7 @@ const STEPS = (id, extra = '') =>
   `<vk-steps id="${id}" ${extra}><li>一</li><li>二</li><li>三</li><li>四</li></vk-steps>`;
 
 test('vk-steps done="none"：不标已完成，只有第 3 步是 current；默认行为不变', async () => {
-  await open(`<vk-page>${STEPS('def', 'current="2"')}${STEPS('none', 'current="2" done="none"')}</vk-page>`);
+  await open(`<vk-page>${STEPS('def', 'current="3"')}${STEPS('none', 'current="3" done="none"')}</vk-page>`);
   const r = await page.evaluate(() => {
     const read = (id) => {
       const host = document.getElementById(id);
@@ -108,7 +108,7 @@ test('vk-steps done="none"：不标已完成，只有第 3 步是 current；默�
 });
 
 test('vk-steps mark="N"：只强调第 N 步，不给其它步打勾', async () => {
-  await open(`<vk-page>${STEPS('m', 'mark="2"')}</vk-page>`);
+  await open(`<vk-page>${STEPS('m', 'mark="3"')}</vk-page>`);
   const r = await page.evaluate(() => {
     const host = document.getElementById('m');
     return {
@@ -117,7 +117,7 @@ test('vk-steps mark="N"：只强调第 N 步，不给其它步打勾', async () 
       conns: [...host.querySelectorAll('.vk-step-line')].map((s) => s.dataset.conn),
     };
   });
-  assert.equal(r.mark, '2');
+  assert.equal(r.mark, '3');
   assert.deepEqual(r.states, ['todo', 'todo', 'current', 'todo'], `mark 只强调第 3 步：${r.states}`);
   assert.equal(r.states.includes('done'), false, 'mark 不能让前面的步骤变成 done');
   assert.deepEqual(r.conns, ['todo', 'current', 'todo']);

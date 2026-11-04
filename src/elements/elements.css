@@ -109,7 +109,10 @@ vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
 vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
 vk-box[border='none'] { --vk-box-bw: 0px; --vk-box-line: transparent; }
 
-/* 语义色只叠加在表面上，不承担材质；面不是标注，所以没有 info/focus。 */
+/* 语义色只叠加在表面上，不承担材质。15.0 起与全库同一套六值：
+   neutral 就是不上色（默认），info/focus 也终于能在面上表达。 */
+vk-box[tone='info'] { --vk-box-bg: var(--vk-wash-info); --vk-box-line: var(--vk-tint-info); }
+vk-box[tone='focus'] { --vk-box-bg: var(--vk-wash-focus); --vk-box-line: var(--vk-tint-focus); }
 vk-box[tone='ok'] { --vk-box-bg: var(--vk-ok-weak); --vk-box-line: var(--vk-ok); }
 vk-box[tone='err'] { --vk-box-bg: var(--vk-err-weak); --vk-box-line: var(--vk-err); }
 vk-box[tone='warn'] { --vk-box-bg: var(--vk-warn-weak); --vk-box-line: var(--vk-warn); }
@@ -122,6 +125,8 @@ vk-box[x], vk-box[y] { position: absolute; }
 /* 描边环：原 vk-ring 的"看这里"并进面。box-shadow 不占布局，
    所以加不加环，邻居的位置与尺寸都不变。环色跟 tone；默认焦点色。 */
 vk-box[ring] { box-shadow: 0 0 0 4px var(--vk-ring-color, var(--vk-focus)); }
+vk-box[ring][tone='info'] { --vk-ring-color: var(--vk-info); }
+vk-box[ring][tone='focus'] { --vk-ring-color: var(--vk-focus); }
 vk-box[ring][tone='ok'] { --vk-ring-color: var(--vk-ok); }
 vk-box[ring][tone='err'] { --vk-ring-color: var(--vk-err); }
 vk-box[ring][tone='warn'] { --vk-ring-color: var(--vk-warn); }
@@ -472,7 +477,8 @@ vk-label[ink='secondary'] { color: var(--vk-ink-2); }
 vk-label[ink='tertiary'] { color: var(--vk-ink-3); }
 vk-label[ink='muted'] { color: var(--vk-ink-4); }
 
-/* 语义色：与 vk-text / vk-icon 同一套五值，一档都不新造。 */
+/* 语义色：与全库同一套六值，一档都不新造。neutral = 不上色（回到主墨）。 */
+vk-label[tone='neutral'] { --vk-label-tone: var(--vk-ink-1); --vk-label-wash: var(--vk-wash-neutral); }
 vk-label[tone='info'] { --vk-label-tone: var(--vk-info-ink); --vk-label-wash: var(--vk-info-soft); }
 vk-label[tone='focus'] { --vk-label-tone: var(--vk-focus-ink); --vk-label-wash: var(--vk-focus-soft); }
 vk-label[tone='ok'] { --vk-label-tone: var(--vk-ok-ink); --vk-label-wash: var(--vk-ok-weak); }
@@ -746,7 +752,11 @@ vk-box[surface][surface='wash'] { --vk-box-bg: var(--vk-paper-sf-1); color: var(
 vk-box[surface][surface='tint'] { --vk-box-bg: var(--vk-paper-sf-2); color: var(--vk-ink-1); }
 vk-box[surface][surface='dark'] { --vk-box-bg: var(--vk-ink-1); color: var(--vk-paper-sf-0); }
 vk-box[surface][surface='accent'] { --vk-box-bg: var(--vk-focus); color: var(--vk-paper-sf-0); }
+vk-box[surface][surface='wash'][tone='info'] { --vk-box-bg: var(--vk-wash-info); }
+vk-box[surface][surface='wash'][tone='focus'] { --vk-box-bg: var(--vk-wash-focus); }
 vk-box[surface][surface='wash'][tone='ok'] { --vk-box-bg: var(--vk-wash-ok); }
+vk-box[surface][surface='tint'][tone='info'] { --vk-box-bg: var(--vk-tint-info); }
+vk-box[surface][surface='tint'][tone='focus'] { --vk-box-bg: var(--vk-tint-focus); }
 vk-box[surface][surface='tint'][tone='ok'] { --vk-box-bg: var(--vk-tint-ok); }
 vk-box[surface][surface='accent'][tone='ok'] { --vk-box-bg: var(--vk-ok); }
 vk-box[surface][surface='wash'][tone='warn'] { --vk-box-bg: var(--vk-wash-warn); }
@@ -758,6 +768,8 @@ vk-box[surface][surface='accent'][tone='err'] { --vk-box-bg: var(--vk-err); }
 vk-box[surface][surface='accent'][tone='info'] { --vk-box-bg: var(--vk-info); }
 vk-box[surface][surface='accent'][tone='focus'] { --vk-box-bg: var(--vk-focus); }
 /* paper 上仍认 tone（这是 box 的旧行为）：tone 只染面，不换材质。 */
+vk-box[surface][surface='paper'][tone='info'] { --vk-box-bg: var(--vk-wash-info); }
+vk-box[surface][surface='paper'][tone='focus'] { --vk-box-bg: var(--vk-wash-focus); }
 vk-box[surface][surface='paper'][tone='ok'] { --vk-box-bg: var(--vk-ok-weak); }
 vk-box[surface][surface='paper'][tone='warn'] { --vk-box-bg: var(--vk-warn-weak); }
 vk-box[surface][surface='paper'][tone='err'] { --vk-box-bg: var(--vk-err-weak); }

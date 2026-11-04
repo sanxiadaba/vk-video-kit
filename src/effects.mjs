@@ -110,13 +110,12 @@ export const EFFECTS = {
     axis: { on: 'vk-pair', kind: 'attr', prop: 'data-axis', expectFromValue: 'raw' },
     'axis-width': { on: '.vk-pair-axis', kind: 'style', prop: 'width', expectFromValue: 'px' },
     symbol: { on: 'vk-pair', kind: 'attr', prop: 'data-symbol', expectFromValue: 'raw' },
-    'symbol-size': { on: '.vk-pair-sym', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
+    size: { on: '.vk-pair-sym', kind: 'style', prop: 'font-size', expectFromValue: 'px', skipVisual: true },
     // gap 落在 .vk-pair 的 --vk-pair-gap 上；沟槽是它的两倍。
     gap: { on: '.vk-pair', kind: 'style', prop: '--vk-pair-gap', expectFromValue: 'px' },
-    orientation: { on: 'vk-pair', kind: 'attr', prop: 'data-orientation', expectFromValue: 'raw' },
-    // 分色：只染左右两块的面；不写就没有 data-tone，保持透明。
-    'tone-a': { on: '.vk-pair-l', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
-    'tone-b': { on: '.vk-pair-r', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
+    direction: { on: 'vk-pair', kind: 'attr', prop: 'data-orientation', expectFromValue: 'raw' },
+    // 分色：tone="左,右" 只染左右两块的面；不写就没有 data-tone，保持透明。
+    tone: { on: '.vk-pair-l', kind: 'style', prop: 'background-color', expect: { not: 'rgba(0, 0, 0, 0)' } },
   },
 
   'vk-flow': {
@@ -166,7 +165,7 @@ export const EFFECTS = {
     // 贴块（原 vk-caption）：for / anchor 先镜像到宿主（块里的标签也镜像，
     // 契约才读得到"改了就变"）；真正的落点由 draw() 的几何算。
     for: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
-    anchor: { on: 'vk-label', kind: 'attr', prop: 'data-anchor', expectFromValue: 'raw' },
+    side: { on: 'vk-label', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
     // 净空：先镜像到宿主（块里的标签也镜像，契约才读得到"改了就变"）；
     // 真正的落点由 draw() 算，几何在 tests/fix-three.test.mjs 逐条量。
     'gap-px': { on: 'vk-label', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
@@ -265,7 +264,7 @@ export const EFFECTS = {
     'gap-px': { on: 'svg path', kind: 'attr', prop: 'd' },
     bend: { on: 'svg path', kind: 'attr', prop: 'd' },
     tone: { on: 'svg path', kind: 'style', prop: 'stroke' },
-    emphasis: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
+    strength: { on: '.vk-edge-path', kind: 'style', prop: 'stroke' },
     'from-side': { kind: 'any', reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。' },
     'to-side': { kind: 'any', reason: '同上：只有目标在那一侧时才生效。' },
     arrow: { on: 'svg path', kind: 'attr', prop: 'd' },
@@ -300,8 +299,8 @@ export const EFFECTS = {
   'vk-caption': {
     // 换目标：说明框的 x 跟着目标首字符走。
     for: { on: '.vk-caption', kind: 'geometry', prop: 'x', expect: { not: '0px' } },
-    // above / below 落在宿主的 data-anchor 上；实际 top 由 draw() 算。
-    anchor: { on: 'vk-caption', kind: 'attr', prop: 'data-anchor', expectFromValue: 'raw' },
+    // top / bottom 落在宿主的 data-side 上；实际 top 由 draw() 算。
+    side: { on: 'vk-caption', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
   },
 };
 
@@ -313,7 +312,7 @@ const COMMON = {
   w: { on: '@', kind: 'geometry', prop: 'width' },
   h: { on: '@', kind: 'geometry', prop: 'height' },
   grow: { on: '@', kind: 'style', prop: 'flex-grow', expect: { to: '1' } },
-  fill: { on: '@', kind: 'attr', prop: 'fill', expect: { to: '' } },
+  stretch: { on: '@', kind: 'attr', prop: 'stretch', expect: { to: '' } },
   bleed: { on: '@', kind: 'attr', prop: 'data-bleed', expectFromValue: 'raw' },
   overflow: { on: '@', kind: 'style', prop: 'overflow' },
   measure: { on: '@', kind: 'style', prop: 'max-width', expect: { not: 'none' } },
@@ -383,9 +382,8 @@ Object.assign(EFFECTS['vk-grid'], {
   justify: { on: 'vk-grid', kind: 'style', prop: 'justify-items' },
 });
 Object.assign(EFFECTS['vk-edge'], {
-  'label-size': { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
-  'label-dx': { on: '.vk-edge-label', kind: 'style', prop: 'left' },
-  'label-dy': { on: '.vk-edge-label', kind: 'style', prop: 'top' },
+  size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
+  'label-offset': { on: '.vk-edge-label', kind: 'style', prop: 'left' },
 });
 Object.assign(EFFECTS['vk-tree'], {
   summary: { on: '.vk-tree-meta', kind: 'style', prop: 'display' },
@@ -421,7 +419,7 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
   mass: { on: '.vk-tl-item', kind: 'style', prop: 'padding-top' },
   // 三档：hero 280（默认）/ title 200（display 别名）/ subhead 112（headline 别名）。
   // 标本写的是 subhead，所以契约只探 title 一档（见 contract-probes 的 PROBES）。
-  'value-size': { on: '.vk-tl-value', kind: 'style', prop: 'font-size', expect: '200px' },
+  size: { on: '.vk-tl-value', kind: 'style', prop: 'font-size', expect: '200px' },
 });
 
 
@@ -429,7 +427,8 @@ Object.assign((EFFECTS['vk-timeline'] ||= {}), {
 Object.assign((EFFECTS['vk-compare'] ||= {}), {
   // mode=stack 把两张完整图上下叠：总高由 ratio 与容器宽决定，标本台里必然更高。
   // 这是对照的几何，不是事故；split 默认态仍走完整视觉审计。
-  mode: { on: '.vk-cmp', kind: 'style', prop: 'display', expect: 'grid', skipVisual: true },
+  variant: { on: '.vk-cmp', kind: 'style', prop: 'display', expect: 'grid', skipVisual: true },
+  fill: { on: '.vk-cmp > img', kind: 'style', prop: 'object-fit' },
   position: { on: '.vk-cmp > img', kind: 'style', prop: 'object-position' },
   split: { on: '.vk-cmp-a', kind: 'style', prop: 'clip-path', expect: /inset|polygon|circle/ },
   ratio: { on: '.vk-cmp', kind: 'style', prop: 'aspect-ratio' },
@@ -469,7 +468,7 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
   'arrow-scale': { on: 'vk-annotate', kind: 'attr', prop: 'data-arrow-scale', expectFromValue: 'raw' },
   n: { on: 'vk-annotate', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
   size: { on: '.vk-edge-label', kind: 'style', prop: 'font-size' },
-  emphasis: { on: 'vk-annotate', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
+  strength: { on: 'vk-annotate', kind: 'attr', prop: 'data-strength', expectFromValue: 'raw' },
   // gap-px 只作用于 ortho 折线的起步与批注气泡的落点：默认的曲线箭头不吃间隙，
   // 单场景量不到 → 登记在 EFFECT_ANY（理由写在那里），折线那份由 vk-edge 覆盖。
   z: { on: 'vk-annotate', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
@@ -480,14 +479,13 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
 Object.assign((EFFECTS['vk-note'] ||= {}), {
   // 注解原语（批次 G1）：宿主上的 data-* 是作者写法的镜像；
   // 真正的落点在 draw() 的几何里，由 tests/batch-gh.test.mjs 逐条量。
-  kind: { on: 'vk-note', kind: 'attr', prop: 'data-kind', expectFromValue: 'raw' },
+  variant: { on: 'vk-note', kind: 'attr', prop: 'data-variant', expectFromValue: 'raw' },
   side: { on: 'vk-note', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
   leader: { on: 'vk-note', kind: 'attr', prop: 'data-leader', expectFromValue: 'raw' },
-  place: { on: 'vk-note', kind: 'attr', prop: 'data-place', expectFromValue: 'raw' },
   z: { on: 'vk-note', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
   // bubble（原 vk-pin）的旋钮：同样先镜像到宿主，落点由 vk-annotate 的 note 形态算。
   tone: { on: 'vk-note', kind: 'attr', prop: 'data-tone', expectFromValue: 'raw' },
-  emphasis: { on: 'vk-note', kind: 'attr', prop: 'data-emphasis', expectFromValue: 'raw' },
+  strength: { on: 'vk-note', kind: 'attr', prop: 'data-strength', expectFromValue: 'raw' },
   size: { on: 'vk-note', kind: 'attr', prop: 'data-size', expectFromValue: 'raw' },
   n: { on: 'vk-note', kind: 'attr', prop: 'data-n', expectFromValue: 'raw' },
   'gap-px': { on: 'vk-note', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
@@ -499,7 +497,7 @@ Object.assign((EFFECTS['vk-note'] ||= {}), {
 
 Object.assign((EFFECTS['vk-pin'] ||= {}), {
   tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
-  emphasis: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
+  strength: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
   'gap-px': { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
   w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
   size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
@@ -548,7 +546,7 @@ Object.assign((EFFECTS['vk-rule'] ||= {}), {
 });
 
 Object.assign((EFFECTS['vk-steps'] ||= {}), {
-  orientation: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
+  direction: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
   // 箭头 / 细线 / 不画：落到 .vk-steps 的 data-connector 上，由一条 CSS 决定。
   connector: { on: '.vk-steps', kind: 'attr', prop: 'data-connector' },
   // 地图页：done="none" 不把前几步画成已完成；data-done 是声明的证据。
@@ -558,10 +556,7 @@ Object.assign((EFFECTS['vk-steps'] ||= {}), {
 });
 
 Object.assign(EFFECTS['vk-asm'], {
-  'address-label': { on: '.vk-asm-a', kind: 'text' },
-  'bytes-label': { on: '.vk-asm-b', kind: 'text' },
-  'mnemonic-label': { on: '.vk-asm-m', kind: 'text' },
-  'operands-label': { on: '.vk-asm-o', kind: 'text' },
+  labels: { on: '.vk-asm-a', kind: 'text' },
 });
 
 /* ------------------------------------------------- 15.x 机制层：放大 / 构图 / 色阶 */

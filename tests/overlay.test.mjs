@@ -161,7 +161,7 @@ test('vk-compare：a 固定留左侧，label-a 与 a 同边', async () => {
   await page.setContent(
     SHELL(`<vk-page><vk-grid cols="3">
       <vk-compare span="2" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="4 / 3"
-        split="50" label-a="改前" label-b="改后"></vk-compare>
+        split="50" labels="改前|改后"></vk-compare>
     </vk-grid></vk-page>`),
     { waitUntil: 'load' }
   );

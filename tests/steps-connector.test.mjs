@@ -54,7 +54,7 @@ const geo = (tab, sel) =>
 const near = (a, b, tol, msg) => assert.ok(Math.abs(a - b) <= tol, `${msg}（${a.toFixed(2)} vs ${b.toFixed(2)}，容差 ${tol}）`);
 
 test('5 步流程：4 根连接线，端点 x 等距（≤1px）', async () => {
-  const tab = await open(`<vk-steps id="s" current="2" connector="arrow">${LIS}</vk-steps>`);
+  const tab = await open(`<vk-steps id="s" current="3" connector="arrow">${LIS}</vk-steps>`);
   const { rects, nums } = await geo(tab, '#s .vk-step-line');
   assert.equal(rects.length, 4, '5 步之间只有 4 根线（末步后面不画）');
 
@@ -72,7 +72,7 @@ test('5 步流程：4 根连接线，端点 x 等距（≤1px）', async () => {
 });
 
 test('current 那一步：编号实心钴蓝，指向它的线也是钴蓝', async () => {
-  const tab = await open(`<vk-steps id="s" current="2" connector="arrow">${LIS}</vk-steps>`);
+  const tab = await open(`<vk-steps id="s" current="3" connector="arrow">${LIS}</vk-steps>`);
   const r = await tab.evaluate(() => {
     const cur = document.querySelector('#s .vk-step[data-state="current"]');
     const num = cur.querySelector('.vk-step-n');
@@ -152,7 +152,7 @@ test('current="-1"：纯地图，五步等权，一个"当前步"都不标', asy
 });
 
 test('竖排：连接线转 90°，箭头朝下', async () => {
-  const tab = await open(`<vk-steps id="s" current="1" orientation="vertical" connector="arrow">${LIS}</vk-steps>`);
+  const tab = await open(`<vk-steps id="s" current="1" direction="vertical" connector="arrow">${LIS}</vk-steps>`);
   const r = await tab.evaluate(() => {
     const root = document.querySelector('#s .vk-steps');
     const line = document.querySelector('#s .vk-step-line');

@@ -39,7 +39,7 @@ const rect = (el) => el.getBoundingClientRect();
 test('vk-pair：两块并置、轴居中、split=30 比例正确、symbol 在轴中点', async () => {
   const tab = await open(`
 <vk-page><div style="width:1200px">
-  <vk-pair id="p50" split="50" gap="40" axis="line" axis-width="2" symbol="→" symbol-size="64">
+  <vk-pair id="p50" split="50" gap="40" axis="line" axis-width="2" symbol="→" size="64">
     <vk-box id="pa" surface="soft"><vk-text size="body">左</vk-text></vk-box>
     <vk-box id="pb" surface="soft"><vk-text size="body">右</vk-text></vk-box>
   </vk-pair>
@@ -273,8 +273,8 @@ test('vk-caption：左边界对齐目标块首字符（above / below）', async 
   <vk-box id="tgt" surface="none" pad="lg">
     <vk-text size="headline" mono>printf("%s\\n", s);</vk-text>
   </vk-box>
-  <vk-caption id="c1" for="#tgt" anchor="above">你写的</vk-caption>
-  <vk-caption id="c2" for="#tgt" anchor="below">编译器给的</vk-caption>
+  <vk-caption id="c1" for="#tgt" side="top">你写的</vk-caption>
+  <vk-caption id="c2" for="#tgt" side="bottom">编译器给的</vk-caption>
 </div></vk-page>`);
   const r = await tab.evaluate(() => {
     const target = document.getElementById('tgt');

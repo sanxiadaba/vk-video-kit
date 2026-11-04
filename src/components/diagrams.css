@@ -259,6 +259,15 @@ vk-timeline { display: block; }
   font-size: var(--vk-t-subhead);
   line-height: 1.1;
 }
+/* 15.0：主值字号并进 size，十档都能用（以前只有 hero / title / subhead）。
+   逐档列出来是因为 CSS 不能把属性值直接当 token 名用。 */
+.vk-timeline[data-value-size='mega'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-mega); line-height: 1; }
+.vk-timeline[data-value-size='display'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-display); line-height: 1.02; }
+.vk-timeline[data-value-size='headline'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-headline); line-height: 1.04; }
+.vk-timeline[data-value-size='body'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-body); line-height: 1.2; }
+.vk-timeline[data-value-size='data'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-data); line-height: 1.2; }
+.vk-timeline[data-value-size='label'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-label); line-height: 1.2; }
+.vk-timeline[data-value-size='caption'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-caption); line-height: 1.2; }
 .vk-tl-note {
   color: var(--vk-ink-2);
 }

@@ -60,10 +60,14 @@ npm run build
 </vk-page>
 ```
 
-排版只有一种写法：**分份**。容器给份（`cols` / `rows`），子项占份（`span`），撑满用 `fill`：
+**属性词表只有一份**（`src/shared/vocab.mjs`）：`tone` 六值一套、`fill="none|cover|contain"`、
+`current` 统一表示「当前项」（**序号 1 起，-1 = 没有当前**）、`size` 只表字号（密度写 `mass`）。
+旧名照旧可用（运行期折成新名并提示）；完整映射见 [docs/convergence-15.md](docs/convergence-15.md)。
+
+排版只有一种写法：**分份**。容器给份（`cols` / `rows`），子项占份（`span`），撑满用 `stretch`（`fill` 只留给能填充的组件：img / panel / layer）：
 
 ```html
-<vk-grid cols="3" gap="lg" fill>
+<vk-grid cols="3" gap="lg" stretch>
   <vk-code span="2" src="hello.c" lines="4-9"></vk-code>
   <vk-stack span="1" gap="md">…</vk-stack>
 </vk-grid>
@@ -100,12 +104,12 @@ int main(void) { return 0; }
 ### 代码窗
 
 ```html
-<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4" density="loose"></vk-code>
+<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4" mass="hero"></vk-code>
 ```
 
-- **行号只有一个基准：源文件行号。** `lines="4-6"` 时 gutter 是 4/5/6，`current` / `focus` / `fold` 也写 4/5/6；`numbering="slice"` 只改左侧打印的数字，不改锚点。
+- **行号只有一个基准：源文件行号。** `lines="4-6"` 时 gutter 是 4/5/6，`current` / `focus` / `fold` 也写 4/5/6（`numbering` 已退役：没有第二套基准）。
 - `current="4"` 标出第 4 行（可写 `current="4-6"` 标一段）；`focus="4"` 让其余行退到 0.28；`fold="4"` 隐藏第 4 行，`fold="4-7"` 隐藏 4–7 行，只在开头留一条“中间省略”。
-- `long="clip"`（默认）长行裁切并给右缘渐隐；`long="wrap"` 换行。`density` 只改行高与留白，不改字号。
+- `long="clip"`（默认）长行裁切并给右缘渐隐；`long="wrap"` 换行。`mass` 只改体量（行高与留白），不改字号；`size` 只改字号。
 - `chrome="none"` 去窗头；`numbers="none"` 单独关行号。
 - `current` / `focus` / `fold` 落在片段外会在构建期报错——写错的行段只会让重点消失，画面看起来仍然正常，所以必须硬拦。
 
@@ -160,13 +164,13 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`summary=
 `for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
 
 ```html
-<vk-note kind="bubble" for="#arr@line:4">第 4 行</vk-note>
-<vk-note kind="bubble" for="#cells@cell:3">第 3 格</vk-note>
-<vk-note kind="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
+<vk-note variant="bubble" for="#arr@line:4">第 4 行</vk-note>
+<vk-note variant="bubble" for="#cells@cell:3">第 3 格</vk-note>
+<vk-note variant="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
 <vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
 ```
 
-`vk-note kind="bubble"`（原 `vk-pin`）只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
+`vk-note variant="bubble"`（原 `vk-pin`）只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
 或 `vk-box ring`（它们的 `for` 用分号分隔多个目标）。
 
 | part | 用在 | 编号 |

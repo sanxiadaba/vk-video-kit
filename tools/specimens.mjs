@@ -408,8 +408,8 @@ function specPage(tag, no) {
 function card(tag, no) {
   const def = TAGS[tag];
   // 索引 = 缩略图 + 名字。缩略图是组件本体（不是整页），卡片端 contain 完整显示。
-  return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" fill overflow="clip">
-  <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fit="contain"></vk-img>
+  return `<a class="spec-card" href="specimen/${tag}.html"><vk-stack gap="2xs" stretch overflow="clip">
+  <vk-img class="spec-thumb" src="thumbs/${tag}.png" alt="" ratio="16 / 9" fill="contain"></vk-img>
   <vk-stack direction="row" class="spec-card-name" gap="xs" align="baseline"><vk-text size="label">${esc(def.name)}</vk-text><vk-text size="label" mono ink="muted" data-meta>${esc(tag)}</vk-text></vk-stack>
 </vk-stack></a>`;
 }

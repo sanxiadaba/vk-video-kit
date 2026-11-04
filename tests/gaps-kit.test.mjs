@@ -45,28 +45,28 @@ after(async () => {
 
 /* --------------------------------------------------------------- timeline */
 
-test('vk-timeline：value 默认 280，value-size 三档严格递增（112 / 200 / 280）', async () => {
+test('vk-timeline：value 默认 280，size 三档严格递增（112 / 200 / 280）', async () => {
   const item = `<li date="1972" label="峰值" value="52,980">预处理前</li>`;
   const { tab } = await open(`
     <vk-timeline id="def">${item}</vk-timeline>
-    <vk-timeline id="title" value-size="title">${item}</vk-timeline>
-    <vk-timeline id="sub" value-size="subhead">${item}</vk-timeline>`);
+    <vk-timeline id="title" size="title">${item}</vk-timeline>
+    <vk-timeline id="sub" size="subhead">${item}</vk-timeline>`);
   const r = await tab.evaluate(() => {
     const fs = (id) => parseFloat(getComputedStyle(document.querySelector(`#${id} .vk-tl-value`)).fontSize);
     return { def: fs('def'), title: fs('title'), sub: fs('sub') };
   });
 
   assert.equal(r.def, 280, `不写 value-size 时必须还是 hero 280：${r.def}`);
-  assert.equal(r.sub, 112, `value-size="subhead" 要降到 112：${r.sub}`);
+  assert.equal(r.sub, 112, `size="subhead" 要降到 112：${r.sub}`);
   // title 别名到 display 200；subhead 别名到 headline 112。
-  assert.equal(r.title, 200, `value-size="title" 是中间一档 200：${r.title}`);
+  assert.equal(r.title, 200, `size="title" 是中间一档 200：${r.title}`);
   assert.ok(r.sub < r.title && r.title < r.def, `三档必须严格递增：${r.sub} / ${r.title} / ${r.def}`);
 });
 
-test('vk-timeline：value-size 非法值构建期失败，并列出可用档', async () => {
+test('vk-timeline：size 非法值构建期失败，并列出可用档', async () => {
   await assert.rejects(
-    () => transformHtml('<vk-timeline value-size="tiny"><li value="1"></li></vk-timeline>', { file: 'p.html', highlighter: hl }),
-    /value-size="tiny"[\s\S]*应该写：hero \/ title \/ subhead/,
+    () => transformHtml('<vk-timeline size="tiny"><li value="1"></li></vk-timeline>', { file: 'p.html', highlighter: hl }),
+    /size="tiny"[\s\S]*应该写：mega \/ hero \/ display \/ headline/,
     '非法 value-size 必须在构建期报错，并把三档列出来'
   );
 });
@@ -74,12 +74,12 @@ test('vk-timeline：value-size 非法值构建期失败，并列出可用档', a
 /* ---------------------------------------------------------------- compare */
 
 test('vk-compare：label-position="top" 时角标在图像内容区之外，默认仍叠在图上', async () => {
-  const args = 'a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280" label-a="改前" label-b="改后"';
+  const args = 'a="assets/sample-grid.svg" b="assets/sample-grid-b.svg" ratio="720 / 280" labels="改前|改后"';
   const { tab } = await open(`
     <div style="width:900px">
       <vk-compare id="top" label-position="top" ${args}></vk-compare>
       <vk-compare id="inside" ${args}></vk-compare>
-      <vk-compare id="sidetop" mode="side" label-position="top" ${args}></vk-compare>
+      <vk-compare id="sidetop" variant="side" label-position="top" ${args}></vk-compare>
     </div>`);
   const r = await tab.evaluate(() => {
     const rect = (el) => {
@@ -209,11 +209,11 @@ function contrast(a, b) {
 }
 const rgb = (s) => s.match(/rgba?\(([^)]+)\)/)[1].split(/[ ,/]+/).filter(Boolean).map(Number);
 
-test('vk-pin：emphasis="solid" 在深色底上不透明，文字/背景对比度 ≥ 4.5', async () => {
+test('vk-pin：strength="solid" 在深色底上不透明，文字/背景对比度 ≥ 4.5', async () => {
   const { tab } = await open(`
     <vk-canvas w="1200" h="480">
       <vk-box id="screen" x="40" y="80" w="680" h="320" style="background:#0d1117"></vk-box>
-      <vk-pin id="p" for="#screen" emphasis="solid" w="260">越界写越界</vk-pin>
+      <vk-pin id="p" for="#screen" strength="solid" w="260">越界写越界</vk-pin>
     </vk-canvas>`);
   const r = await tab.evaluate(() => {
     const host = document.getElementById('p');

@@ -10,7 +10,7 @@ import { transformHtml } from '../src/highlight.mjs';
  *   vk-icon    → vk-text（icon="名称"）
  *   vk-rule    → vk-box（border="hair" / 1px 高的面）
  *   vk-caption → vk-label（for + anchor）
- *   vk-pin     → vk-note（kind="bubble"）
+ *   vk-pin     → vk-note（variant="bubble"）
  *   vk-ring    → vk-box（ring）
  *   vk-window  → vk-panel（chrome="dots"）
  *
@@ -139,7 +139,7 @@ test('vk-label for：贴块说明的左边界对齐目标首字符', async () =>
       return {
         dx: Math.abs(sr.left - glyph.left),
         gap: tr.top - sr.bottom,
-        anchor: host.dataset.anchor,
+        anchor: host.dataset.side,
         visible: getComputedStyle(span).visibility,
         remainsInFlow: getComputedStyle(host).position,
       };
@@ -150,35 +150,35 @@ test('vk-label for：贴块说明的左边界对齐目标首字符', async () =>
   assert.ok(r.a.dx <= 2, `左边界应贴目标首字符，差 ${r.a.dx}px`);
   assert.ok(r.b.dx <= 2, `第二个目标的左边界也应贴首字符，差 ${r.b.dx}px`);
   assert.ok(r.a.gap >= 10 && r.a.gap <= 24, `上方说明与目标间净空 16，实际 ${r.a.gap}`);
-  assert.equal(r.a.anchor, 'above', '默认贴上方');
+  assert.equal(r.a.anchor, 'top', '默认贴上方');
   assert.equal(r.a.visible, 'visible');
   assert.equal(r.a.remainsInFlow, 'absolute', '贴块的 label 是覆盖层，不占正文布局');
 });
 
-test('vk-label anchor：above / below 换方向', async () => {
+test('vk-label side：top / bottom 换方向', async () => {
   const tab = await open(`
 <vk-stack gap="lg">
   <vk-box id="t" surface="none" pad="lg"><vk-text size="body">目标块</vk-text></vk-box>
-  <vk-label id="below" for="#t" anchor="below">贴在下面</vk-label>
+  <vk-label id="below" for="#t" side="bottom">贴在下面</vk-label>
 </vk-stack>`);
   const r = await tab.evaluate(() => {
     const host = document.querySelector('#below');
     const span = host.querySelector('.vk-caption');
     const tr = document.querySelector('#t').getBoundingClientRect();
     const sr = span.getBoundingClientRect();
-    return { gap: sr.top - tr.bottom, anchor: host.dataset.anchor };
+    return { gap: sr.top - tr.bottom, anchor: host.dataset.side };
   });
   assert.ok(r.gap >= 10 && r.gap <= 24, `below 的净空也应是 16，实际 ${r.gap}`);
-  assert.equal(r.anchor, 'below');
+  assert.equal(r.anchor, 'bottom');
 });
 
-test('vk-note kind="bubble"：泡 + 引线与旧 vk-pin 同几何', async () => {
+test('vk-note variant="bubble"：泡 + 引线与旧 vk-pin 同几何', async () => {
   const tab = await open(`
 <vk-canvas w="1200" h="600">
   <vk-box id="t" x="200" y="180" w="420" h="180" surface="soft" border="hair" radius="lg" pad="md">
     <vk-text size="subhead" mono>s[5]</vk-text>
   </vk-box>
-  <vk-note id="n" kind="bubble" for="#t@side:right" side="right" n="1" tone="warn">这里越界</vk-note>
+  <vk-note id="n" variant="bubble" for="#t@side:right" side="right" n="1" tone="warn">这里越界</vk-note>
   <vk-pin id="p" for="#t@side:right" side="right" n="1" tone="warn">这里越界</vk-pin>
 </vk-canvas>`);
   const r = await tab.evaluate(() => {
@@ -191,7 +191,7 @@ test('vk-note kind="bubble"：泡 + 引线与旧 vk-pin 同几何', async () => 
       pinText: q('#p .vk-pin-t').textContent.trim(),
       bubbleLeader: !!q('#n .vk-pin-leader'),
       pinLeader: !!q('#p .vk-pin-leader'),
-      kind: q('#n').dataset.kind,
+      variant: q('#n').dataset.variant,
       alias: q('#p').dataset.vkAlias,
       badge: q('#n .vk-pin-n').textContent.trim(),
     };
@@ -202,7 +202,7 @@ test('vk-note kind="bubble"：泡 + 引线与旧 vk-pin 同几何', async () => 
   assert.equal(r.bubbleText, '这里越界');
   assert.equal(r.pinText, '这里越界');
   assert.ok(r.bubbleLeader && r.pinLeader, '两者都该有引线');
-  assert.equal(r.kind, 'bubble', 'kind 落到 data-kind');
+  assert.equal(r.variant, 'bubble', 'variant 落到 data-variant');
   assert.equal(r.alias, 'vk-note', '旧名自己标明转发给谁');
   assert.equal(r.badge, '1', '编号 n 仍是编号');
 });

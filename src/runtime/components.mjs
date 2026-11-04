@@ -1,6 +1,7 @@
 import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot, applyContentSize, fitContent } from './base.mjs';
 import { VkPanel } from './elements.mjs';
 import { formatNumber } from '../shared/format.mjs';
+import { TONES } from '../shared/vocab.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead, DOTS } from './window.mjs';
 
@@ -302,6 +303,14 @@ export class VkTree extends VkElement {
     }
     const fold = this._fold;
     const entries = allEntries.filter((entry) => ![...fold].some((dir) => entry.path.startsWith(dir + '/')));
+    // current 的序号写法：第 N 个可见节点（1 起）。折成路径后，下面只认路径一种写法。
+    for (const token of [...currentSet]) {
+      if (!/^\d+$/.test(token)) continue;
+      const hit = entries[Number(token) - 1];
+      currentSet.delete(token);
+      if (hit) currentSet.add(hit.path || hit.name);
+      else this._warnOnce('current', `的 current="${token}" 超过 ${entries.length} 个节点，已忽略`);
+    }
     const files = everyEntry.filter((e) => e.type === 'file').length;
     const dirs = everyEntry.filter((e) => e.type === 'dir').length;
     const branches = allEntries.filter((e) => e.type === 'dir').length;
@@ -441,8 +450,9 @@ export class VkBytes extends VkElement {
     const mass = this.getAttribute('mass') || 'normal';
     const file = d.file || (this.getAttribute('src') || '').split(/[\\/]/).pop() || 'bytes.bin';
     const range = d.end >= d.start ? `${d.start}–${d.end}` : `${d.start}`;
+    // current = 第 N 个字节（1 起，与其它组件同一套坐标）；索引按相对 offset 的序号算。
     const live = this.getAttribute('current');
-    const liveHl = live == null ? new Set() : new Set([...indexSet(live)].map((i) => d.start + i));
+    const liveHl = live == null ? new Set() : new Set([...indexSet(live)].map((i) => d.start + i - 1));
     const rows = [];
     for (let at = 0; at < d.bytes.length; at += cols) {
       const chunk = d.bytes.slice(at, at + cols);
@@ -602,6 +612,12 @@ export class VkCells extends VkElement {
     const base = addr ? parseInt(addr, 16) : NaN;
     const pad = addr && addr.startsWith('0x') ? Math.max(4, addr.length - 2) : 0;
     const fmtAddr = (n) => (Number.isFinite(n) ? '0x' + n.toString(16).padStart(pad, '0') : '');
+    // current = 第 N 格（1 起）；-1 = 不标。等价于在那一格的 <li> 上写 act="focus"。
+    const curRaw = parseInt(this.getAttribute('current') ?? '-1', 10);
+    const curIdx = Number.isFinite(curRaw) && curRaw >= 1 ? curRaw - 1 : -1;
+    if (curIdx >= 0 && curIdx >= items.length) {
+      this._warnOnce('current', `的 current="${curRaw}" 超过 ${items.length} 格，已忽略`);
+    }
     const byteMode = this.hasAttribute('offsets') || this.hasAttribute('ruler') || this.getAttribute('direction') === 'rtl';
     const direction = this.getAttribute('direction') === 'rtl' ? 'rtl' : 'ltr';
 
@@ -616,7 +632,8 @@ export class VkCells extends VkElement {
       .map((it, i) => {
         const label = it.bad ? `${it.label || `[${i}]`} · 越界` : it.label;
         const span = spans[i];
-        const stateAttr = it.state ? ` data-state="${it.state}"` : '';
+        const cellState = i === curIdx ? 'current' : it.state;
+        const stateAttr = cellState ? ` data-state="${cellState}"` : '';
         const marks = `${it.bad ? ' data-flag="1"' : ''}${it.filled ? ' data-filled="1"' : ''}${it.mark ? ' data-mark="1"' : ''}${stateAttr}`;
         const startOff = offsets[i] * stride;
         const ruler = byteMode
@@ -670,14 +687,19 @@ export class VkSteps extends VkElement {
       return;
     }
     delete this.dataset.vkStale;
-    // -1 = 不标当前步：地图页要有"五步等权"的写法，否则只能假装站在某一步。
-    const rawCurrent = parseInt(this.getAttribute('current') ?? '0', 10);
-    let current = Number.isFinite(rawCurrent) ? rawCurrent : 0;
+    // current = 第 N 步，**1 起**（15.0 起统一）；-1 = 不标当前步（地图页五步等权）。
+    const rawCurrent = parseInt(this.getAttribute('current') ?? '1', 10);
+    let current = Number.isFinite(rawCurrent) ? rawCurrent : 1;
     if (current < -1) current = -1;
-    if (current > items.length - 1) {
-      this._warnOnce('current', `的 current="${current}" 超过 ${items.length - 1}，按最后一步处理`);
-      current = items.length - 1;
+    if (current === 0) {
+      this._warnOnce('current', '的 current="0" 不是合法序号：current 从 1 起（-1 = 不标当前）；按第 1 步处理');
+      current = 1;
     }
+    if (current > items.length) {
+      this._warnOnce('current', `的 current="${current}" 超过 ${items.length}，按最后一步处理`);
+      current = items.length;
+    }
+    const currentIdx = current > 0 ? current - 1 : -1;
     // done="none"：不把 current 之前自动画成已完成。地图页要"五步等权"时，
     // current="-1" 会让整页 0 强调色；这里保留 current 的高亮，只去掉前面的对勾。
     const rawDone = (this.getAttribute('done') || 'auto').trim();
@@ -687,14 +709,16 @@ export class VkSteps extends VkElement {
     }
     // mark="N"（0 起，与 current 同一套坐标）：只强调第 N 步，不给其它步打勾。
     // 这是"地图上指出一处"的写法；有 mark 时不再自动标 done。
+    // mark = 第 N 步，与 current 同一套坐标（1 起）。
     let mark = parseInt(this.getAttribute('mark') ?? '', 10);
     const hasMark = Number.isFinite(mark);
-    if (hasMark && (mark < 0 || mark > items.length - 1)) {
-      this._warnOnce('mark', `的 mark="${mark}" 不在 0…${items.length - 1}，已忽略`);
+    if (hasMark && (mark < 1 || mark > items.length)) {
+      this._warnOnce('mark', `的 mark="${mark}" 不在 1…${items.length}，已忽略`);
       mark = NaN;
     }
     const hasValidMark = Number.isFinite(mark);
-    const focusIdx = hasValidMark ? mark : current;
+    const markIdx = hasValidMark ? mark - 1 : -1;
+    const focusIdx = hasValidMark ? markIdx : currentIdx;
     // 连接线只有三种画法；写错就按默认箭头画，并在控制台说清楚。
     const rawConnector = this.getAttribute('connector');
     const connector = CONNECTORS.has(rawConnector) ? rawConnector : 'arrow';
@@ -711,7 +735,7 @@ export class VkSteps extends VkElement {
       // current = -1 时三个分支都不命中：五步同为 todo，等权的地图。
       // done="none" / 有 mark 时不再自动把前面几步画成 done。
       const state =
-        i === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && i < current ? 'done' : 'todo';
+        i === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && i < currentIdx ? 'done' : 'todo';
       const step = document.createElement('li');
       step.className = 'vk-step';
       step.dataset.step = String(i);
@@ -739,7 +763,7 @@ export class VkSteps extends VkElement {
         // 线的状态跟「它通向的那一步」走：done 绿、current 钴蓝、todo 灰。
         const next = i + 1;
         const nextState =
-          next === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && next < current ? 'done' : 'todo';
+          next === focusIdx ? 'current' : doneMode === 'auto' && !hasValidMark && next < currentIdx ? 'done' : 'todo';
         line.dataset.conn = nextState;
         line.setAttribute('role', 'presentation');
         line.setAttribute('aria-hidden', 'true');
@@ -819,7 +843,9 @@ export class VkBits extends VkElement {
     delete this.dataset.vkStale;
     const index = ['0-7', 'none', 'sparse'].includes(this.getAttribute('index')) ? this.getAttribute('index') : '7-0';
     const sign = this.hasAttribute('sign');
-    const tone = this.getAttribute('tone') === 'info' ? 'info' : 'neutral';
+    // 色调：全库六值；不写 / 不认识就是 neutral（不上色）。
+    const toneRaw = (this.getAttribute('tone') || '').trim().toLowerCase();
+    const tone = TONES.includes(toneRaw) ? toneRaw : 'neutral';
     const bytes = this.hasAttribute('bytes');
     const group = ['1', '4', '8'].includes(this.getAttribute('group')) ? Number(this.getAttribute('group')) : 4;
 
@@ -1105,22 +1131,23 @@ export class VkCompare extends VkElement {
   render() {
     const a = this.getAttribute('a') || '';
     const b = this.getAttribute('b') || '';
-    const modeRaw = (this.getAttribute('mode') || 'split').trim();
+    // 形态：variant（旧名 mode 已并进来）。
+    const modeRaw = (this.getAttribute('variant') || 'split').trim();
     const mode = modeRaw === 'side' || modeRaw === 'stack' ? modeRaw : 'split';
     if (modeRaw !== mode) {
-      this._warnOnce('mode', `的 mode="${modeRaw}" 不认识，按 mode="split" 叠图裁切；可用：split / side / stack`);
+      this._warnOnce('variant', `的 variant="${modeRaw}" 不认识，按 variant="split" 叠图裁切；可用：split / side / stack`);
     }
     // side / stack 是"两张完整的图并排/上下"，没有分割线可裁。
     // 写了 split 不能装没看见：构建期也会提示一次（见 src/highlight.mjs）。
     if (mode !== 'split' && this.hasAttribute('split')) {
       this._warnOnce(
         'split',
-        `的 mode="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）：删掉 split，或改用 mode="split"`
+        `的 variant="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）：删掉 split，或改用 variant="split"`
       );
     }
     // side / stack 的唯一承诺是"两张图都完整"，所以按 contain 画；显式写 cover 要说清楚。
-    if (mode !== 'split' && this.getAttribute('fit') === 'cover') {
-      this._warnOnce('fit', `的 mode="${mode}" 下 fit="cover" 不起作用：并排/上下按 contain 完整显示`);
+    if (mode !== 'split' && this.getAttribute('fill') === 'cover') {
+      this._warnOnce('fill', `的 variant="${mode}" 下 fill="cover" 不起作用：并排/上下按 contain 完整显示`);
     }
     const ratioRaw = this.getAttribute('ratio') || '16 / 9';
     const rm = ratioRaw.match(/^\s*(\d+(?:\.\d+)?)\s*\/\s*(\d+(?:\.\d+)?)\s*$/);
@@ -1128,7 +1155,7 @@ export class VkCompare extends VkElement {
     // split 允许写 "42%" 或 42；numAttr 只认纯数字，所以先剥掉百分号。
     const splitNum = parseFloat(String(this.getAttribute('split') ?? '').replace('%', ''));
     const split = Math.min(100, Math.max(0, Number.isFinite(splitNum) ? splitNum : 50));
-    const fit = this.getAttribute('fit') || 'cover';
+    const fit = this.getAttribute('fill') || 'cover';
     const pos = safePosition(this.getAttribute('position') || '50% 50%');
     // 角标两档：inside（默认，叠在图上）与 top（在图上另起一条带，不压像素）。
     const labelPosRaw = (this.getAttribute('label-position') || 'inside').trim();
@@ -1160,11 +1187,11 @@ export class VkCompare extends VkElement {
     }
 
     const alt = this.getAttribute('alt') || this.getAttribute('label') || '';
-    this._shell.dataset.mode = mode;
+    this._shell.dataset.variant = mode;
     this._shell.style.setProperty('--vk-cmp-ratio', ratio);
     // split 才有"一个框里的两张叠图"；side / stack 的高度由每张图自己的比例撑开。
     this._shell.style.aspectRatio = mode === 'split' ? ratio : '';
-    this._shell.dataset.fit = fit;
+    this._shell.dataset.fill = fit;
     this._shell.dataset.labelPosition = labelPosition;
     // 两张图缺一张时，画面上只剩一块空灰板：看起来像"对照"，其实什么都没有。
     // 状态要留在 DOM 上（audit / vk check 能报），并且写进角标（人能看到）。
@@ -1172,8 +1199,7 @@ export class VkCompare extends VkElement {
     const current = (this._srcs = this._srcs || { a: null, b: null });
     const paintLabels = () => {
       // 每次现读属性：监听器是绑一次的，标签可能后来才改。
-      const la = this.getAttribute('label-a') || '';
-      const lb = this.getAttribute('label-b') || '';
+      const [la, lb] = (this.getAttribute('labels') || '').split('|').map((v) => v.trim());
       const la2 = failed.a ? `${la || '图 A'} · 未加载` : la;
       const lb2 = failed.b ? `${lb || '图 B'} · 未加载` : lb;
       this._la.textContent = la2;

@@ -19,6 +19,7 @@ import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { lexShellLine, shellLang, shellLines } from './shared/shell.mjs';
 import { TIER_ALIAS } from './shared/tier-alias.mjs';
+import { ATTR_ALIAS, CURRENT_RULE, FILL_TAGS, MASS, SIZE_TIERS, TONE_HINT, toneValue } from './shared/vocab.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
 import { ICONS } from './icons.generated.mjs';
@@ -613,9 +614,9 @@ function validateAuthorHtml(doc, file, html = '') {
     // G1：注解原语的两条构建期契约 —— 目标必须能在构建期解析到。
     // 运行期找不到目标只会"安静地不画"，那是最难查的一类错；宁可在构建期红。
     if (tag === 'vk-note') {
-      const rawKind = (attrs.get('kind') || 'margin').trim();
+      const rawKind = (attrs.get('variant') || attrs.get('kind') || 'margin').trim();
       const kind = rawKind === 'legend' || rawKind === 'bubble' ? rawKind : 'margin';
-      const where = `${file}:${lineOf(node)} <vk-note${kind === 'margin' ? '' : ` kind="${kind}"`}>`;
+      const where = `${file}:${lineOf(node)} <vk-note${kind === 'margin' ? '' : ` variant="${kind}"`}>`;
       const targets = String(attrs.get('for') || '')
         .split(';')
         .map((s) => s.trim())
@@ -804,7 +805,10 @@ function validateAuthorHtml(doc, file, html = '') {
     }
     // pin 只钉一个点；分号是给 ring / spotlight 的多目标语法。
     // 减法第一波：pin 的能力并进 vk-note kind="bubble"，这条规则跟着走。
-    if ((tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('kind') || '').trim() === 'bubble')) && (attrs.get('for') || '').includes(';')) {
+    if (
+      (tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('variant') || attrs.get('kind') || '').trim() === 'bubble')) &&
+      (attrs.get('for') || '').includes(';')
+    ) {
       errors.push(
         diag({
           file,
@@ -819,19 +823,19 @@ function validateAuthorHtml(doc, file, html = '') {
     }
     // side / stack 没有分割线：这时 split 是无效词，不能装没看见。
     if (tag === 'vk-compare' && attrs.has('split')) {
-      const mode = (attrs.get('mode') || 'split').trim();
+      const mode = (attrs.get('variant') || attrs.get('mode') || 'split').trim();
       if (mode === 'side' || mode === 'stack') {
         warnings.push(
-          `${file}:${lineOf(node)} <vk-compare> 的 mode="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）；删掉 split，或改用 mode="split"`
+          `${file}:${lineOf(node)} <vk-compare> 的 variant="${mode}" 下 split 不起作用（${mode === 'side' ? '左右并排' : '上下排列'}不裁切）；删掉 split，或改用 variant="split"`
         );
       }
     }
     // side / stack 按 contain 保证两张图完整；显式写 cover 就是无效词。
-    if (tag === 'vk-compare' && attrs.get('fit') === 'cover') {
-      const mode = (attrs.get('mode') || 'split').trim();
+    if (tag === 'vk-compare' && attrs.get('fill') === 'cover') {
+      const mode = (attrs.get('variant') || attrs.get('mode') || 'split').trim();
       if (mode === 'side' || mode === 'stack') {
         warnings.push(
-          `${file}:${lineOf(node)} <vk-compare> 的 mode="${mode}" 下 fit="cover" 不起作用（并排/上下按 contain 完整显示）；删掉 fit，或改用 mode="split"`
+          `${file}:${lineOf(node)} <vk-compare> 的 variant="${mode}" 下 fill="cover" 不起作用（并排/上下按 contain 完整显示）；删掉 fill，或改用 variant="split"`
         );
       }
     }
@@ -893,6 +897,25 @@ function validateAuthorHtml(doc, file, html = '') {
       const spec = def.attrs?.[name];
       const where = { file, line: lineOf(node), tag };
       if (!spec) {
+        // 15.0 概念收敛：旧名不拦构建，只给一条迁移提示（运行期会折成新名）。
+        const alias = ATTR_ALIAS[name];
+        const aliasTag = alias && (!alias.tag || alias.tag === tag || (Array.isArray(alias.tag) && alias.tag.includes(tag)));
+        if (alias && aliasTag) {
+          warnings.push(
+            `${file}:${lineOf(node)} <${tag}> 的 ${name}="${raw}" 已改名：${alias.note}` +
+              (alias.to ? `（新写法：${alias.to}）` : '')
+          );
+          continue;
+        }
+        // fill 只在能填充的组件上声明；其它组件上的 fill 是旧的布尔铺满（= stretch）。
+        if (name === 'fill' && !FILL_TAGS.has(tag)) {
+          warnings.push(
+            `${file}:${lineOf(node)} <${tag}> 的 fill 是旧的布尔写法，15.0 起这个意思叫 stretch；` +
+              '要"填充"只有 vk-img / vk-panel / vk-layer 用 fill="none|cover|contain"'
+          );
+          continue;
+        }
+
         const usable = Object.keys(def.attrs || {});
         const hit = closestOf(name, usable);
         errors.push(
@@ -927,7 +950,74 @@ function validateAuthorHtml(doc, file, html = '') {
         );
         continue;
       }
-      if (spec.values && !spec.values.includes(raw)) {
+      if (spec.type === 'tone') {
+        // 全库一套六值：大小写不敏感；旧写法（accent / danger …）给迁移提示。
+        const tokens = String(raw).split(',');
+        const list = tokens.length > 1;
+        if (list && !spec.list) {
+          errors.push(
+            `${file}:${lineOf(node)} <${tag}> 的 tone="${raw}" 只能写一个值；两侧分色只有 vk-pair 用 tone="左,右"`
+          );
+          continue;
+        }
+        let bad = false;
+        for (const token of tokens) {
+          const text = token.trim();
+          if (list && (!text || text.toLowerCase() === 'none')) continue;
+          const r = toneValue(text);
+          if (r.bad) {
+            bad = true;
+            errors.push(
+              diag({
+                ...where,
+                what: '的 tone 不在词表里',
+                wrote: `tone="${raw}"`,
+                should: `tone 只有六值：${TONE_HINT}`,
+                why: '全库共用一套语义色调：同一个词在哪个组件上都是同一个颜色',
+              })
+            );
+            break;
+          }
+          if (r.alias) warnings.push(`${file}:${lineOf(node)} <${tag}> 的 tone="${text}" 是旧写法，已映射成 tone="${r.value}"`);
+        }
+        continue;
+      }
+      if (spec.type === 'fill') {
+        const v = String(raw).trim().toLowerCase();
+        const boolish = v === '' || ['true', 'false', 'on', 'off', 'yes', 'no'].includes(v);
+        if (boolish) {
+          warnings.push(
+            `${file}:${lineOf(node)} <${tag}> 的 fill 裸写是旧的布尔写法，已映射成 fill="${v === 'false' ? 'none' : 'cover'}"`
+          );
+          continue;
+        }
+        if (v === 'width' || v === 'height' || v === 'stretch') {
+          warnings.push(`${file}:${lineOf(node)} <${tag}> 的 fill="${raw}" 已映射成 fill="cover"`);
+          continue;
+        }
+      }
+      if (spec.type === 'fontsize') {
+        // size 只表字号：语义档名，或像素数（内容组件）。
+        const v = String(raw).trim();
+        if (SIZE_TIERS.includes(v) || /^\d+(?:\.\d+)?$/.test(v)) continue;
+        if (MASS.includes(v)) {
+          warnings.push(
+            `${file}:${lineOf(node)} <${tag}> 的 size="${v}" 是"体量"不是字号：请写 mass="${v}"。size 只表字号`
+          );
+          continue;
+        }
+        errors.push(
+          diag({
+            ...where,
+            what: '的 size 不是字号',
+            wrote: `size="${raw}"`,
+            should: `字号档（${SIZE_TIERS.join(' / ')}）或像素数（160）`,
+            why: '15.0 起 size 只表字号；密度/体量一律写 mass',
+          })
+        );
+        continue;
+      }
+      if (spec.values && !spec.values.includes(raw) && !(name === 'size' && TIER_ALIAS[raw])) {
         // 13.0 改过档位名：旧名一版内仍然生效（运行期会折成新名），所以只提示、不拦构建。
         if (name === 'size' && TIER_ALIAS[raw]) {
           warnings.push(
@@ -1040,9 +1130,9 @@ function validateAuthorHtml(doc, file, html = '') {
     if (tag === 'vk-steps' && attrs.has('current')) {
       const items = (node.childNodes || []).filter((c) => c.tagName === 'li').length;
       const n = Number(attrs.get('current'));
-      if (items > 0 && Number.isFinite(n) && n >= items) {
+      if (items > 0 && Number.isFinite(n) && n > items) {
         errors.push(
-          `${file}:${lineOf(node)} <vk-steps> 的 current="${n}" 超出 0–${items - 1}（共 ${items} 步）；不想标当前步就写 current="-1"`
+          `${file}:${lineOf(node)} <vk-steps> 的 current="${n}" 超出 1–${items}（共 ${items} 步；current 的规则：${CURRENT_RULE}）`
         );
       }
     }
@@ -1278,7 +1368,12 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     );
   }
   if (warnings.length) {
-    console.warn(`[vk] ${file}：${warnings.length} 处旧写法（首处 ${warnings[0].split(': ').pop().slice(0, 90)}）`);
+    // 旧写法只提示、不拦构建：逐条列出（最多 6 条），让人能照着改；
+    // 运行期还会把旧名折成新名，所以旧页不会坏。
+    for (const w of warnings.slice(0, 6)) console.warn(`[vk] ${w}`);
+    if (warnings.length > 6) {
+      console.warn(`[vk] ${file}：还有 ${warnings.length - 6} 处旧写法（运行期会折成新名；不拦构建）`);
+    }
   }
   const blocks = [];
   const maths = [];
@@ -1625,9 +1720,9 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     for (const { from, to } of indexRanges(attr(node, 'current'))) {
       if (!bytes.length) {
         errors.push(`${file}:${line} <vk-bytes> 的 current="${from}" 无法定位：这段片段没有字节`);
-      } else if (from < 0 || from >= bytes.length || to >= bytes.length) {
+      } else if (from < 1 || from > bytes.length || to > bytes.length) {
         errors.push(
-          `${file}:${line} <vk-bytes> 的 current="${from}${to === from ? '' : '-' + to}" 超出 0–${bytes.length - 1}（相对片段的字节偏移）`
+          `${file}:${line} <vk-bytes> 的 current="${from}${to === from ? '' : '-' + to}" 超出 1–${bytes.length}（第几个字节，序号从 1 起）`
         );
       }
     }

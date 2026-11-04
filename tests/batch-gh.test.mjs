@@ -78,10 +78,10 @@ const MARGIN_BODY = `
     <vk-text size="body" mono>int main(void)</vk-text>
     <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
   </vk-box>
-  <vk-note id="n" kind="margin" for="#n1" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+  <vk-note id="n" variant="margin" for="#n1" side="auto" leader="line" w="240">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
 </vk-canvas>`;
 
-test('vk-note kind="margin"：1px 细线、文字 caption、与目标正文同基线', async () => {
+test('vk-note variant="margin"：1px 细线、文字 caption、与目标正文同基线', async () => {
   const tab = await open(MARGIN_BODY);
   await tab.evaluate(probeInPage);
   const r = await tab.evaluate(() => {
@@ -130,9 +130,9 @@ test('vk-note 自动选边：有空间的一侧才放文字，显式 side 按指
 <vk-canvas w="1680" h="840">
   <vk-box id="mid" x="380" y="40" w="560" h="160" surface="soft"></vk-box>
   <vk-box id="edge" x="1500" y="40" w="140" h="160" surface="soft"></vk-box>
-  <vk-note id="a" kind="margin" for="#mid" w="200">自动选边：这一侧有空间。</vk-note>
-  <vk-note id="b" kind="margin" for="#edge" w="200">靠右的目标要往左放。</vk-note>
-  <vk-note id="c" kind="margin" for="#mid" side="left" w="200">显式贴左侧。</vk-note>
+  <vk-note id="a" variant="margin" for="#mid" w="200">自动选边：这一侧有空间。</vk-note>
+  <vk-note id="b" variant="margin" for="#edge" w="200">靠右的目标要往左放。</vk-note>
+  <vk-note id="c" variant="margin" for="#mid" side="left" w="200">显式贴左侧。</vk-note>
 </vk-canvas>`);
   const r = await tab.evaluate(() => {
     const rect = (sel) => document.querySelector(sel).getBoundingClientRect();
@@ -162,7 +162,7 @@ test('vk-note leader="dot"：细线 + 目标端圆点，没有箭头', async () 
   const tab = await open(`
 <vk-canvas w="1680" h="840">
   <vk-box id="d1" x="380" y="120" w="480" h="160" surface="soft"></vk-box>
-  <vk-note id="dn" kind="margin" for="#d1" leader="dot" w="220">圆点标出这一行从哪里引出来。</vk-note>
+  <vk-note id="dn" variant="margin" for="#d1" leader="dot" w="220">圆点标出这一行从哪里引出来。</vk-note>
 </vk-canvas>`);
   const r = await tab.evaluate(() => {
     const note = document.querySelector('#dn');
@@ -195,7 +195,7 @@ test('vk-note leader="dot"：细线 + 目标端圆点，没有箭头', async () 
 
 /* ------------------------------------------------------------- G1 图例 */
 
-test('vk-note kind="legend"：编号点钉在目标右上角，页角图例表编号对齐', async () => {
+test('vk-note variant="legend"：编号点钉在目标右上角，页角图例表编号对齐', async () => {
   const tab = await open(`
 <vk-canvas w="1680" h="840">
   <vk-box id="l1" x="380" y="120" w="420" h="120" surface="none" border="hair" radius="lg" pad="md">
@@ -204,7 +204,7 @@ test('vk-note kind="legend"：编号点钉在目标右上角，页角图例表�
   <vk-box id="l2" x="1040" y="120" w="420" h="120" surface="none" border="hair" radius="lg" pad="md">
     <vk-text size="body">第二步</vk-text>
   </vk-box>
-  <vk-note id="lg" kind="legend" for="#l1;#l2" place="br">
+  <vk-note id="lg" variant="legend" for="#l1;#l2" side="bottom-right">
     <li>只把 include 抄进来</li>
     <li>到这一步才检查语法</li>
   </vk-note>
@@ -263,7 +263,7 @@ test('vk-note 不占焦点名额：页上唯一的答案仍是那处 tone="focus
 <vk-canvas w="1680" h="840">
   <vk-box id="q" x="380" y="120" w="420" h="120" surface="soft"></vk-box>
   <vk-text id="ans" x="380" y="300" size="headline" tone="focus">答案</vk-text>
-  <vk-note kind="margin" for="#q" w="200">辅助信息不抢焦点。</vk-note>
+  <vk-note variant="margin" for="#q" w="200">辅助信息不抢焦点。</vk-note>
 </vk-canvas>`);
   const n = await tab.evaluate(() => window.vk.focusRegions(document.querySelector('.vk-page')).length);
   assert.equal(n, 1, `vk-note 不该被算成焦点：${n}`);
@@ -273,24 +273,24 @@ test('vk-note 不占焦点名额：页上唯一的答案仍是那处 tone="focus
 
 test('vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接报错', async () => {
   await assert.rejects(
-    () => transformHtml('<vk-canvas><vk-box id="a"></vk-box><vk-note kind="margin" for="#nope">注</vk-note></vk-canvas>', { file: 'g1.html' }),
+    () => transformHtml('<vk-canvas><vk-box id="a"></vk-box><vk-note variant="margin" for="#nope">注</vk-note></vk-canvas>', { file: 'g1.html' }),
     /找不到 #nope/,
     '找不到目标必须构建期报错'
   );
   await assert.rejects(
-    () => transformHtml('<vk-note kind="margin">注</vk-note>', { file: 'g2.html' }),
+    () => transformHtml('<vk-note variant="margin">注</vk-note>', { file: 'g2.html' }),
     /缺 for/,
     '边注没有 for 必须构建期报错'
   );
   await assert.rejects(
-    () => transformHtml('<vk-canvas><vk-box id="a"></vk-box><vk-box id="b"></vk-box><vk-note kind="legend" for="#a;#b"><li>一</li></vk-note></vk-canvas>', {
+    () => transformHtml('<vk-canvas><vk-box id="a"></vk-box><vk-box id="b"></vk-box><vk-note variant="legend" for="#a;#b"><li>一</li></vk-note></vk-canvas>', {
       file: 'g3.html',
     }),
     /数量必须相同/,
     '图例的条目数与目标数必须一致'
   );
   const ok = await transformHtml(
-    '<vk-canvas w="600" h="400"><vk-box id="a" x="40" y="40" w="200" h="120"></vk-box><vk-note kind="margin" for="#a">注</vk-note></vk-canvas>',
+    '<vk-canvas w="600" h="400"><vk-box id="a" x="40" y="40" w="200" h="120"></vk-box><vk-note variant="margin" for="#a">注</vk-note></vk-canvas>',
     { file: 'g4.html' }
   );
   assert.ok(ok.html.includes('<vk-note'), '找得到目标时构建通过');
@@ -433,7 +433,7 @@ test('预设 · 内容落在 120 边距内（--style，覆盖层豁免）', asyn
 <div style="height:24px"></div>
 <vk-canvas w="1680" h="840">
   <vk-box id="mo" x="0" y="0" w="400" h="160" surface="soft" border="hair"></vk-box>
-  <vk-note kind="margin" for="#mo" side="left" w="240">这段边注故意落在 120 边距外。</vk-note>
+  <vk-note variant="margin" for="#mo" side="left" w="240">这段边注故意落在 120 边距外。</vk-note>
 </vk-canvas>`);
   const overlayIssues = (await auditTypes(overlay, true)).filter((x) => x.type === 'margin');
   assert.equal(overlayIssues.length, 0, `覆盖层不受 120 边距约束：${JSON.stringify(overlayIssues)}`);

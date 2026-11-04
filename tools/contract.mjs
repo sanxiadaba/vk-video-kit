@@ -157,7 +157,7 @@ function snapshotInPage({ tag, props }) {
     row['rect.h'] = Math.round(r.height * 10) / 10;
     row['rect.x'] = Math.round(r.left * 10) / 10;
     row['rect.y'] = Math.round(r.top * 10) / 10;
-    for (const a of ['d', 'stroke', 'stroke-width', 'stroke-dasharray', 'fill', 'data-style', 'aria-level']) {
+    for (const a of ['d', 'stroke', 'stroke-width', 'stroke-dasharray', 'fill', 'stretch', 'data-style', 'aria-level']) {
       if (el.hasAttribute(a)) row['@' + a] = el.getAttribute(a);
     }
     // 契约用 data-* 表达结构状态（variant / show / active / group / grid…）。

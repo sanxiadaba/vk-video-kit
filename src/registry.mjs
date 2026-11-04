@@ -1,7 +1,12 @@
 /**
  * vk 注册表 —— 标签 / 层 / 属性 / 一句话说明。
  * 由这里生成 types 与 reference.md；运行时也读 attrs 决定 observed 属性。
+ *
+ * 15.0 起，四个"长了多套声明"的概念收进 src/shared/vocab.mjs：
+ * tone（六值一套）/ fill（none·cover·contain）/ current（1 起的当前项）/
+ * size（只表字号，密度写 mass）。这里只引用那一份，不再各写一遍枚举。
  */
+import { TONES, FILLS, SIZE_TIERS, MASS, FILL_TAGS } from './shared/vocab.mjs';
 
 const text = () => ({ type: 'text' });
 const num = (o = {}) => ({ type: 'num', ...o });
@@ -11,6 +16,18 @@ const bool = () => ({ type: 'bool' });
 const lines = () => ({ type: 'lines' });
 const sel = () => ({ type: 'selector' });
 const oneOf = (...values) => ({ values });
+
+/* --------------------------------------------------------------- 共享词表 */
+/** 语义色调：全库同一份六值（见 vocab.mjs）。list = 允许 "左,右" 两侧各一个。 */
+const tone = (o = {}) => ({ type: 'tone', values: TONES, ...o });
+/** 填充：全库同一份三值；只有能填充的组件声明它。 */
+const fill = (o = {}) => ({ type: 'fill', values: FILLS, default: 'none', ...o });
+/** 字号：语义档名（像素写法由内容组件的 fontsize 承担）。 */
+const sizeTier = () => oneOf(...SIZE_TIERS);
+/** 内容字号：语义档名或像素数（160）。 */
+const fontSize = () => ({ type: 'fontsize', values: SIZE_TIERS });
+/** 体量/密度：与字号正交。 */
+const massLevel = () => oneOf(...MASS);
 
 /**
  * 属性元数据：中文名、控件分组、是否属于“内容”（内容不装成控件）。
@@ -38,7 +55,7 @@ const ATTR_META = {
   sub: { label: '副题', content: true },
   ratio: { label: '比例', group: 'appearance' },
   values: { label: '值', content: true },
-  labels: { label: '标签', content: true },
+  labels: { label: '标签（多段用 | 分隔）', content: true },
   addr: { label: '起始地址', content: true },
   offset: { label: '起始字节', content: true },
   length: { label: '字节数', content: true },
@@ -66,7 +83,7 @@ const ATTR_META = {
   bleed: { label: '出血（越过版心到画布边）', group: 'layout' },
   variant: { label: '形态', group: 'appearance' },
   mass: { label: '体量', group: 'appearance' },
-  size: { label: '尺寸', group: 'appearance' },
+  size: { label: '字号（语义档或像素）', group: 'appearance' },
   level: { label: '标题级别', group: 'appearance' },
   weight: { label: '字重', group: 'appearance' },
   mono: { label: '等宽', group: 'appearance' },
@@ -77,14 +94,10 @@ const ATTR_META = {
   'fit-max': { label: '最大字号（像素）', group: 'appearance' },
   'arrow-scale': { label: '箭头缩放（容器高的比例）', group: 'appearance' },
   'arrow-label': { label: '箭头上挂的词', group: 'appearance' },
-  'tone-a': { label: '左块色调', group: 'appearance' },
-  'tone-b': { label: '右块色调', group: 'appearance' },
   split: { label: '占比（%）', group: 'layout' },
   axis: { label: '中轴', group: 'appearance' },
   'axis-width': { label: '轴宽（像素）', group: 'appearance' },
   symbol: { label: '轴上符号', group: 'appearance' },
-  'symbol-size': { label: '符号字号', group: 'appearance' },
-  anchor: { label: '附着位置', group: 'layout' },
   chrome: { label: '窗头', group: 'appearance' },
   stripe: { label: '斑马', group: 'appearance' },
   bare: { label: '无外壳', group: 'appearance' },
@@ -93,7 +106,7 @@ const ATTR_META = {
   dash: { label: '虚线', group: 'appearance' },
   arrow: { label: '箭头', group: 'appearance' },
   cap: { label: '端点', group: 'appearance' },
-  current: { label: '当前', group: 'state' },
+  current: { label: '当前项（序号 1 起；-1 = 没有当前）', group: 'state' },
   focus: { label: '聚光行', group: 'state' },
   fold: { label: '折叠行', group: 'state' },
   span: { label: '占几份', group: 'layout' },
@@ -145,6 +158,7 @@ const ATTR_META = {
   layout: { label: '布局', group: 'layout' },
   wrap: { label: '换行', group: 'layout' },
   grow: { label: '撑满', group: 'layout' },
+  stretch: { label: '铺满父容器（align-self: stretch）', group: 'layout' },
   bend: { label: '拐点', group: 'layout' },
   r: { label: '半径', group: 'layout' },
   as: { label: '标题级别', group: 'appearance' },
@@ -152,13 +166,12 @@ const ATTR_META = {
   limit: { label: '最多显示', group: 'layout' },
   measure: { label: '测量宽', group: 'layout' },
   scale: { label: '刻度', group: 'appearance' },
-  emphasis: { label: '强度', group: 'appearance' },
   ink: { label: '墨阶', group: 'appearance' },
   long: { label: '长行', group: 'appearance' },
   filled: { label: '填充格（布尔：写 filled 即填充）', group: 'state' },
   ruler: { label: '字节尺', group: 'appearance' },
   overflow: { label: '溢出', group: 'appearance' },
-  fill: { label: '填满', group: 'layout' },
+  fill: { label: '填充（none / cover / contain）', group: 'appearance' },
   orientation: { label: '方向', group: 'layout' },
   stride: { label: '步长', group: 'layout' },
   position: { label: '焦点', group: 'appearance' },
@@ -166,11 +179,9 @@ const ATTR_META = {
   hidden: { label: '显示隐藏文件', group: 'appearance' },
   numbers: { label: '行号', group: 'appearance' },
   summary: { label: '摘要', group: 'appearance' },
-  'label-size': { label: '标签字号', group: 'appearance' },
   'label-position': { label: '角标位置', group: 'appearance' },
-  'value-size': { label: '主值字号', group: 'appearance' },
-  'label-dx': { label: '标签 X', group: 'layout' },
-  'label-dy': { label: '标签 Y', group: 'layout' },
+  // 连线标签相对中点的偏移：label-offset="dx,dy"。
+  'label-offset': { label: '标签偏移（dx,dy）', group: 'layout' },
   // 关系层（vk-annotate）：一个组件、四种形态，属性名按形态分组。
   mode: { label: '形态', group: 'appearance' },
   shape: { label: '形状', group: 'appearance' },
@@ -195,24 +206,25 @@ const DEFAULTS = {
   'vk-panel': { tone: 'neutral', variant: 'plain', pad: 'md', radius: 'lg', border: 'none', chrome: 'none' },
   // fit-min 是硬地板：容器再窄，字号也不再掉到它以下（默认 40，见 vk-text 的 fit）。
   'vk-text': { size: 'body', weight: 'regular', align: 'left', ink: 'primary', 'fit-min': 40, 'fit-max': 240 },
-  'vk-label': { variant: 'kicker', ink: 'muted', anchor: 'above' },
+  'vk-label': { variant: 'kicker', ink: 'muted', side: 'top' },
   'vk-inline': { variant: 'code' },
   'vk-icon': { name: 'info', size: 'md', ink: 'primary' },
   'vk-img': { fit: 'cover', position: '50% 50%', radius: 'lg', border: 'none' },
   'vk-rule': { variant: 'thin', orientation: 'horizontal' },
   'vk-stack': { gap: 'sm', align: 'stretch', justify: 'start', direction: 'column' },
   'vk-grid': { cols: '2', gap: 'sm', align: 'stretch', 'gap-x': 'sm', 'gap-y': 'sm' },
-  'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', 'symbol-size': 48, gap: 24, orientation: 'horizontal' },
+  // 中轴符号字号不写默认值：像素写法（48）不在语义档枚举里，运行期回落 48。
+  'vk-pair': { split: 50, axis: 'line', 'axis-width': 2, symbol: 'none', gap: 24, direction: 'horizontal' },
   // 步距默认 48：三块并排时刚好是「一块小留白」，不是三等分的缝。
   // 箭头默认画（arrow="false" 关掉）；尺寸默认取容器高 × 0.12，夹在 28–64。
   'vk-flow': { gap: 48, arrow: 'true', 'arrow-scale': 0.12 },
   'vk-canvas': { 'pad-px': '0', grid: '0', overflow: 'visible' },
-  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', emphasis: 'solid', arrow: 'end', cap: 'none', 'label-size': 'label', z: 20 },
+  'vk-edge': { 'from-side': 'auto', 'to-side': 'auto', variant: 'ortho', tone: 'neutral', strength: 'solid', arrow: 'end', cap: 'none', size: 'label', z: 20 },
   'vk-list': { variant: 'bullet', gap: 'sm', mass: 'normal' },
   'vk-code': { chrome: 'min', mass: 'normal', numbers: 'all', reveal: 'all', surface: 'paper' },
   'vk-asm': { bytes: '', address: 'all', mass: 'normal', long: 'fail', chrome: 'min', reveal: 'all' },
-  'vk-timeline': { variant: 'events', mass: 'normal', 'value-size': 'hero' },
-  'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', emphasis: 'soft', z: 60 },
+  'vk-timeline': { variant: 'events', mass: 'normal', size: 'hero', current: '-1' },
+  'vk-pin': { variant: 'bubble', side: 'auto', leader: 'elbow', tone: 'info', size: 'body', strength: 'soft', z: 60 },
   'vk-ring': { variant: 'rect', tone: 'focus', 'pad-px': 8, stroke: 4, dim: 0.45, z: 40 },
   'vk-annotate': {
     mode: 'arrow',
@@ -224,28 +236,28 @@ const DEFAULTS = {
     ring: 'ellipse',
     tone: 'neutral',
     size: 'body',
-    emphasis: 'soft',
+    strength: 'soft',
     side: 'auto',
     // arrow 的箭头也按容器高缩放；0.12 是默认比例（夹在 28–64）。
     'arrow-scale': 0.12,
   },
   // 注解原语：默认是"像书页边注"的那一种，不是气泡。
   // kind="bubble" 是原 vk-pin 的泡 + 引线；其余旋钮与气泡共用一套取值。
-  'vk-note': { kind: 'margin', side: 'auto', leader: 'line', place: 'br', tone: 'info', emphasis: 'soft', size: 'body', 'gap-px': 24 },
+  'vk-note': { variant: 'margin', side: 'auto', leader: 'line', tone: 'info', strength: 'soft', size: 'body', 'gap-px': 24 },
   // 归属说明：默认贴在目标块上方，左边界对齐首字符。
-  'vk-caption': { anchor: 'above' },
+  'vk-caption': { side: 'top' },
   'vk-term': { prompt: '$', chrome: 'min', mass: 'normal', lang: 'sh', reveal: 'all', 'title-show': 'false', surface: 'paper' },
   'vk-diff': { variant: 'unified', chrome: 'min', numbers: 'all', summary: 'all', mass: 'normal' },
   'vk-table': { variant: 'ledger', mass: 'normal' },
   'vk-math': { size: 'body' },
-  'vk-compare': { mode: 'split', ratio: '16 / 9', split: 50, fit: 'cover', position: '50% 50%', 'label-position': 'inside' },
+  'vk-compare': { variant: 'split', ratio: '16 / 9', split: 50, fill: 'cover', position: '50% 50%', 'label-position': 'inside' },
   'vk-tree': { depth: '4', summary: 'all', chrome: 'min', mass: 'normal' },
   'vk-window': { chrome: 'min', pad: 'lg', mass: 'normal' },
   'vk-bits': { index: '7-0', group: '4', tone: 'neutral', mass: 'normal' },
   'vk-bars': { mass: 'normal', tone: 'neutral', scale: 'linear', format: 'thousands' },
   'vk-bytes': { cols: '8', group: '1', ascii: 'all', address: 'all', mass: 'normal', word: '1', endian: 'little', chrome: 'min' },
-  'vk-cells': { cols: '0', mass: 'normal' },
-  'vk-steps': { current: '0', mass: 'normal', orientation: 'horizontal', connector: 'arrow', done: 'auto' },
+  'vk-cells': { cols: '0', mass: 'normal', current: '-1' },
+  'vk-steps': { current: '1', mass: 'normal', direction: 'horizontal', connector: 'arrow', done: 'auto' },
   'vk-page': { align: 'top', theme: 'paper' },
   // 叠层：不写 tone 就是中性；可读性保护默认开。
   'vk-layer': { tone: 'neutral', readable: 'on' },
@@ -267,7 +279,8 @@ export const TAGS = {
     summary: '一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。',
     attrs: {
       'surface': oneOf('none', 'paper', 'soft', 'sf-1', 'sf-2', 'sf-3', 'sf-4'),
-      'tone': oneOf('ok', 'warn', 'err'),
+      // 色调：与全库同一套六值（以前只有 ok/warn/err，focus 得绕道 vk-rule）。
+      'tone': tone(),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-y': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'pad-x': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
@@ -289,13 +302,15 @@ export const TAGS = {
       '一块内容分区：底色、可选标题带、内距、圆角；chrome="dots" 会长出窗头，于是它也能当窗用。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。',
     attrs: {
       // 语义色只用来染「面」：plain / raised 上落 wash，inset 上落 tint，dark 上落深色 wash。
-      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'err', 'warn'),
+      'tone': tone(),
       // 四档表面：白纸 / 抬起 / 凹下 / 深色。三档浅色靠明度分开，不是四种主题。
       'variant': oneOf('plain', 'raised', 'inset', 'dark'),
       // 有标题才有标题带；标题带里放 vk-label（kicker）。
       'title': text(),
       // 窗头：dots = 三点 + 标题（原 vk-window 的 min / browser）；none = 干净的分区（默认）。
       'chrome': oneOf('dots', 'none'),
+      // 填充：与 img / layer 同一套三值（coverage：吃满宽高 / 只吃宽）。
+      'fill': fill(),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
@@ -311,8 +326,8 @@ export const TAGS = {
       fields: [{ name: 'text', label: '文字', type: 'textarea', text: true }],
     },
     attrs: {
-      // 四档主对比 + 旧名（别名到新档）；hero / mega 是补充档。
-      'size': oneOf('display', 'headline', 'body', 'caption', 'label', 'data', 'subhead', 'title', 'hero', 'mega'),
+      // 字阶：全库同一套十个语义档（用哪一档由组件实现，档名不许各写各的）。
+      'size': sizeTier(),
       'weight': oneOf('regular', 'medium', 'bold'),
       'mono': bool(),
       'align': oneOf('left', 'center', 'right'),
@@ -347,7 +362,8 @@ export const TAGS = {
       // tag 是「流程步骤 / 块名」专用的一档：36px（caption 的 0.75）、.08em 字距、
       // 只上色不加底不加框。kicker / chip / badge 仍是页眉、状态、序号。
       'variant': oneOf('kicker', 'chip', 'badge', 'tag'),
-      'tone': oneOf('info', 'focus', 'ok', 'err', 'warn'),
+      // 色调：全库六值（以前少 neutral；neutral = 不上色，与不写同效）。
+      'tone': tone(),
       'ink': oneOf('primary', 'secondary', 'tertiary', 'muted'),
       // 工序进度：index/total 是在整条流程里的位置，不是页号；section 是工序名。
       // 写 index/total 时 kicker 渲染成「工序 3/5 · 汇编」，左侧带 4px 焦点色条。
@@ -360,7 +376,8 @@ export const TAGS = {
       // 归属说明（原 vk-caption）：写 for 就把这一行贴到目标块上方/下方，
       // 左边界对齐目标块的首字符；不写就是块里的一枚标签。
       'for': sel(),
-      'anchor': oneOf('above', 'below'),
+      // 贴在哪一侧：top 上方 / bottom 下方（旧名 anchor 的 above / below）。
+      'side': oneOf('top', 'bottom'),
       // 贴块时的净空。默认 16；地板 12 是硬的——再近，标签的墨就碰到正文了。
       'gap-px': int({ min: 12, max: 240, step: 4, default: 16 }),
     },
@@ -415,7 +432,8 @@ export const TAGS = {
       'src': text(),
       'alt': text(),
       'ratio': text(),
-      'fit': oneOf('cover', 'contain'),
+      // 填充：全库同一套三值。旧 fit 是同义的第二个写法，已并进 fill。
+      'fill': fill(),
       'radius': oneOf('sm', 'md', 'lg', 'xl', 'pill', 'none'),
       'border': oneOf('none', 'hair', 'strong'),
       'w': { ...size({ min: 48, max: 1920, step: 1 }), context: 'canvas-child', layout: true },
@@ -445,7 +463,7 @@ export const TAGS = {
       'title': text(),
       'url': text(),
       'chrome': oneOf('min', 'none', 'plain', 'browser'),
-      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
+      'tone': tone(),
       'pad': oneOf('2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl'),
     },
   },
@@ -500,7 +518,9 @@ export const TAGS = {
     attrs: {
       // 五档底：纸 / 极淡 / 稍深 / 深色 / 实色强调（tone 决定强调色）。
       'surface': oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
-      'tone': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
+      'tone': tone(),
+      // 这一层怎么铺在父容器里：none / cover / contain（与 img、panel 同一套）。
+      'fill': fill(),
       // 叠在照片/深色块上的字默认加保护；显式 off 才关。
       'readable': { ...oneOf('on', 'off'), default: 'on' },
       'grow': bool(),
@@ -519,7 +539,7 @@ export const TAGS = {
   'vk-pair': {
     name: '并置',
     layer: 'layout',
-    summary: '两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone-a / tone-b 可给两侧各上一种语义淡底。',
+    summary: '两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone="左,右" 可给两侧各上一种语义淡底。',
     attrs: {
       // 左块占内容区的百分比；右块自动吃掉剩下的。上下并置时是上块占比。
       'split': num({ min: 5, max: 95, step: 1 }),
@@ -528,13 +548,15 @@ export const TAGS = {
       'axis-width': num({ min: 1, max: 4, step: 1 }),
       // 轴上的符号：→ / = / vs；none 就是一条干净的线。
       'symbol': oneOf('→', '=', 'vs', 'none'),
-      'symbol-size': num({ min: 12, max: 200, step: 1 }),
+      // 中轴符号的字号：像素数或语义档（size 只表字号，见 vocab）。
+      'size': fontSize(),
       // 块与轴之间的留白（像素）；沟槽总宽 = 2 × gap。
       'gap': num({ min: 8, max: 200, step: 1 }),
-      'orientation': oneOf('horizontal', 'vertical'),
-      // 左右分色：只染「面」（wash 底 + 1px 同色系 tint 描边）；不写就不改现状（透明）。
-      'tone-a': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
-      'tone-b': oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'),
+      // 横 / 竖：与 vk-stack / vk-steps 同一个名字（旧名 orientation）。
+      'direction': oneOf('horizontal', 'vertical'),
+      // 两侧分色：tone="左,右"（第二段可省；none = 这一侧不上色）。
+      // 只染「面」（wash 底 + 1px 同色系 tint 描边）；不写就不改现状（透明）。
+      'tone': tone({ list: true }),
     },
   },
   /**
@@ -585,14 +607,20 @@ export const TAGS = {
       'variant': { ...oneOf('ortho', 'curve', 'line'), default: 'ortho' },
       'tension': num({ min: 5, max: 120, step: 1, when: { variant: ['curve'] } }),
       'label': text(),
-      'tone': oneOf('neutral', 'info', 'focus'),
-      'emphasis': oneOf('solid', 'ghost'),
+      // 连线色调：全库六值（以前只有 neutral/info/focus）。
+      'tone': tone(),
+      // 强度：与标注 / 注解同一个名字（旧名 emphasis）。
+      'strength': oneOf('solid', 'soft', 'ghost'),
+      // 连线标签的字号：与全库同一个名字（旧名 label-size）。
+      'size': sizeTier(),
       'arrow': oneOf('end', 'start', 'both', 'none'),
       'arrow-style': oneOf('solid', 'open', 'thin'),
       'arrow-size': num({ min: 8, max: 64, step: 1 }),
       'dash': bool(),
       'gap-px': num({ min: 0, max: 200, step: 1, when: { variant: ['ortho'] } }),
       'bend': num({ min: -200, max: 200, step: 1, when: { variant: ['ortho'] } }),
+      // 标签相对连线中点的偏移：label-offset="dx,dy"（旧名 label-dx / label-dy）。
+      'label-offset': text(),
       'cap': oneOf('none', 'dot'),
       'z': int({ min: 0, max: 99, step: 1 }),
     },
@@ -628,19 +656,19 @@ export const TAGS = {
       'src': text(),
       'lines': text(),
       'file': text(),
+      // 当前行：与全库同一个语义（第 N 行，1 起；-1 = 不标）。旧名 line 已并进来。
       'current': lines(),
-      // 与 current 同义：讲解时指一行。current 优先；两个是同一个概念，只留一版别名。
-      'line': { ...lines(), hidden: true },
       'focus': lines(),
       'fold': lines(),
       'omit': text(),
       'fold-note': text(),
       'chrome': oneOf('min', 'none'),
       'mark': text(),
-      'mass': oneOf('compact', 'normal', 'hero'),
+      // 体量：compact / normal / hero。密度只认这个名字（size 只管字号）。
+      'mass': massLevel(),
       // 内容字号：像素数（160）或语义档（body / headline / caption …）。
       // 行高、行号、内距、语法下划线都从同一个 --vk-cs 派生，不设上限。
-      'size': text(),
+      'size': fontSize(),
       // 自动铺满容器宽：按内容自然宽反算字号（复用 vk-text 的 fit 规矩）。
       'fit': oneOf('width'),
       // 表面：paper = 白纸（默认，旧行为）；inset = 浅灰凹面；dark = 深色底 + 反白。
@@ -672,17 +700,16 @@ export const TAGS = {
       'marks': text(),
       // sh = 认提示符后按 shell 切；powershell 同一套词法；asm = 非命令行按汇编切；none = 纯文本不上色。
       'lang': { ...oneOf('sh', 'powershell', 'asm', 'none'), default: 'sh' },
-      // 指一行：与 vk-code / vk-asm 同一个名字。line 是同义别名。
+      // 当前行：与 vk-code / vk-asm 同一个语义（第 N 行，1 起）。旧名 line 已并进来。
       'current': lines(),
-      'line': { ...lines(), hidden: true },
       'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
       'chrome': oneOf('none', 'min'),
       // 无壳终端（chrome="none"）默认不显示标题：标题只留给 panel 的标题带，
       // 这里只把 title 留作无障碍名。确实要在无壳终端上再显示一次，才写 title-show。
       'title-show': bool(),
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       // 与 vk-code 同一套内容字号 / 铺满（行高、提示符、内距一起缩放）。
-      'size': text(),
+      'size': fontSize(),
       'fit': oneOf('width'),
       // 表面：paper = 白纸（默认）；inset = 浅灰凹面；dark = 深色底 + 反白。
       'surface': oneOf('paper', 'dark', 'inset'),
@@ -697,14 +724,14 @@ export const TAGS = {
       note: 'diff 文本由 Shiki + tokenDiff 在构建期编译；改文本请改 src 文件并运行 npm run build。variant / chrome / w 仍然 live。',
     },
     attrs: {
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       'lang': { ...text(), build: true },  // diff 的词级高亮在构建期编译，运行期改 lang 不重新着色
       'src': { ...text(), build: true },
       'lines': text(),
       'file': text(),
       'chrome': oneOf('min', 'none'),
       // 内容字号 / 铺满（行号、增删色块、内距一起缩放）。
-      'size': text(),
+      'size': fontSize(),
       'fit': oneOf('width'),
     },
   },
@@ -724,9 +751,9 @@ export const TAGS = {
       'variant': oneOf('ledger', 'compare', 'spec', 'matrix'),
       'stripe': bool(),
       'mono': bool(),
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       // 内容字号 / 铺满（表头、行距、内距一起缩放）。
-      'size': text(),
+      'size': fontSize(),
       'fit': oneOf('width'),
     },
   },
@@ -741,7 +768,8 @@ export const TAGS = {
     attrs: {
       'src': { ...text(), build: true },
       'display': bool(),
-      'size': oneOf('label', 'body', 'subhead'),
+      // 字号：全库同一套语义档（以前只有 label / body / subhead 三档）。
+      'size': sizeTier(),
     },
   },
   'vk-compare': {
@@ -753,13 +781,15 @@ export const TAGS = {
       'a': text(),
       'b': text(),
       'alt': text(),
-      'mode': oneOf('split', 'side', 'stack'),
+      // 形态：split 叠图裁切 / side 并排 / stack 上下（旧名 mode，已并进 variant）。
+      'variant': oneOf('split', 'side', 'stack'),
       'ratio': text(),
       'split': num({ min: 0, max: 100, step: 1 }),
-      'fit': oneOf('cover', 'contain'),
+      // 填充：与 img / panel / layer 同一套（旧名 fit，已并进 fill）。
+      'fill': fill({ default: 'cover' }),
       'position': text(),
-      'label-a': text(),
-      'label-b': text(),
+      // 两张图的角标：labels="左|右"（旧名 label-a / label-b）。
+      'labels': text(),
       // 角标默认叠在图上（inside，保持旧样子）；top 在图上腾一条带，不压任何像素。
       'label-position': oneOf('inside', 'top'),
       // 差异框：相对百分比坐标，多组用 ";"。split 下只画在所属的那一半。
@@ -784,9 +814,10 @@ export const TAGS = {
       ],
     },
     attrs: {
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       'src': { ...text(), build: true },
       'title': text(),
+      // 当前项：1 起的节点序号，或节点路径（树是唯一按路径寻址的列表）。
       'current': text(),
       'collapsed': text(),
       'limit': int({ min: 1, max: 500, step: 1 }),
@@ -794,7 +825,7 @@ export const TAGS = {
       'depth': int({ min: 0, max: 8, step: 1 }),
         'chrome': oneOf('min', 'none'),
       // 内容字号 / 铺满（行高、图标、缩进一起缩放）。
-      'size': text(),
+      'size': fontSize(),
       'fit': oneOf('width'),
     },
   },
@@ -821,7 +852,9 @@ export const TAGS = {
       'offsets': bool(),
       'direction': oneOf('ltr', 'rtl'),
       'ruler': bool(),
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
+      // 当前格：第 N 格（1 起）；-1 = 不标（与 li 上的 act="focus" 等效，二者取一）。
+      'current': int({ min: -1, max: 99, step: 1 }),
     },
   },
   'vk-bytes': {
@@ -874,13 +907,13 @@ export const TAGS = {
       ],
     },
     attrs: {
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       'value': text(),
       'index': oneOf('7-0', '0-7', 'none', 'sparse'),
       'group': oneOf('1', '4', '8'),
       'sign': bool(),
       'label': text(),
-      'tone': oneOf('neutral', 'info'),
+      'tone': tone(),
       'bit-width': oneOf('8', '16', '32', '64'),
       'bytes': bool(),
     },
@@ -900,8 +933,8 @@ export const TAGS = {
       'ratio-to': int({ min: 0, max: 999, step: 1 }),
       'unit': text(),
       'format': oneOf('thousands', 'none'),
-      'mass': oneOf('compact', 'normal', 'hero'),
-      'tone': oneOf('neutral', 'info'),
+      'mass': massLevel(),
+      'tone': tone(),
     },
   },
 
@@ -918,35 +951,32 @@ export const TAGS = {
       'src': { ...text(), build: true },
       'lines': text(),
       'file': { ...text(), build: true },
+      // 当前行：与 vk-code / vk-term 同一个语义（第 N 行，1 起）。旧名 line 已并进来。
       'current': lines(),
-      // 与 current 同义：讲解时指一行。current 优先。
-      'line': { ...lines(), hidden: true },
       'reveal': { ...oneOf('all', 'line', 'none'), default: 'all' },
       'focus': lines(),
       'addr': { ...text(), build: true },
       'title': text(),
       'bytes': bool(),
       'address': oneOf('all', 'none'),
-      'mass': oneOf('compact', 'normal', 'hero'),
+      'mass': massLevel(),
       'long': oneOf('fail', 'wrap', 'clip'),
       'chrome': oneOf('min', 'none'),
       'order': text(),
       'fence-after': text(),
       'fence-label': text(),
-      'labels': oneOf('all', 'none'),
-      'address-label': text(),
-      'bytes-label': text(),
-      'mnemonic-label': text(),
-      'operands-label': text(),
+      // 列标题：none 关掉整行；all 用默认名；写四段（用 | 分隔）就逐列替换。
+      // 以前的 address-label / bytes-label / mnemonic-label / operands-label 四个名字并成这一个。
+      'labels': text(),
       // 内容字号 / 铺满（列宽、行高、内距一起缩放）。
-      'size': text(),
+      'size': fontSize(),
       'fit': oneOf('width'),
     },
   },
   'vk-timeline': {
     name: '时间线',
     layer: 'components',
-    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；value 的字号用 value-size 统一降档（hero 280 / title 200 / subhead 112，默认 hero）。',
+    summary: '时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（hero 280 默认 / title 200 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。',
     content: {
       kind: 'items',
       target: 'vk-timeline',
@@ -959,10 +989,12 @@ export const TAGS = {
       'steps': int({ min: 1, max: 16, step: 1 }),
       'lanes': text(),
       'title': text(),
-      'mass': oneOf('compact', 'normal', 'hero'),
-      // value 是"主值"（大数字）。一帧放三个数字时 hero 会把整页撑爆，
-      // 所以给一档可选的体量：hero 280（默认，和引入前完全一致）/ title 200 / subhead 112。
-      'value-size': oneOf('hero', 'title', 'subhead'),
+      'mass': massLevel(),
+      // 当前项：第 N 个事件（1 起）；-1 = 不标（旧写法是 li 上写 state="current"）。
+      'current': int({ min: -1, max: 99, step: 1 }),
+      // 主值的字号：hero 280（默认，和引入前完全一致）/ title 200 / subhead 112 …
+      // size 只表字号，旧名 value-size 已并进来。
+      'size': sizeTier(),
     },
   },
   'vk-page': {
@@ -985,8 +1017,8 @@ export const TAGS = {
     name: '批注泡',
     layer: 'relations',
     aliasOf: 'vk-note',
-    aliasNote: '批注泡是 vk-note 的一种形态：用 <vk-note kind="bubble">（泡 + 引线，属性同旧版）。',
-    summary: '已合并到 vk-note（旧名保留）：kind="bubble" 就是原来的气泡 + 引线。',
+    aliasNote: '批注泡是 vk-note 的一种形态：用 <vk-note variant="bubble">（泡 + 引线，属性同旧版）。',
+    summary: '已合并到 vk-note（旧名保留）：variant="bubble" 就是原来的气泡 + 引线。',
     content: {
       kind: 'text',
       target: 'vk-pin',
@@ -1001,9 +1033,9 @@ export const TAGS = {
       'x': num({ min: -4000, max: 4000, step: 1 }),
       'y': num({ min: -4000, max: 4000, step: 1 }),
       'n': int({ min: 1, max: 99, step: 1 }),
-      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
+      'tone': tone(),
       'variant': oneOf('bubble', 'dot'),
-      'emphasis': oneOf('solid', 'soft', 'ghost'),
+      'strength': oneOf('solid', 'soft', 'ghost'),
       'leader': oneOf('elbow', 'straight', 'none'),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
       'w': size({ min: 160, max: 900, step: 1 }),
@@ -1024,7 +1056,7 @@ export const TAGS = {
       'dim': { ...num({ min: 0, max: 1, step: 0.01 }), context: 'variant-dim' },
       'keep': { ...text(), context: 'variant-dim' },
       'pad-px': num({ min: 0, max: 80, step: 1 }),
-      'tone': oneOf('info', 'focus', 'ok', 'warn', 'err'),
+      'tone': tone(),
       'dash': bool(),
       'stroke': num({ min: 1, max: 12, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
@@ -1064,9 +1096,11 @@ export const TAGS = {
       // note：泡 / 引线标签 / 编号点；badge 形态固定编号点。
       'note': { ...oneOf('bubble', 'label', 'badge'), default: 'bubble' },
       'n': int({ min: 1, max: 99, step: 1 }),
-      'size': { ...oneOf('label', 'body', 'subhead'), default: 'body' },
-      'emphasis': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
-      'tone': { ...oneOf('neutral', 'info', 'focus', 'ok', 'warn', 'err'), default: 'neutral' },
+      // 字号：与全库共用十档（旧写法只有 label / body / subhead，仍合法）。
+      'size': { ...sizeTier(), default: 'body' },
+      // 强度：与 vk-edge / vk-note 同一个名字（旧名 emphasis）。
+      'strength': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
+      'tone': { ...tone(), default: 'neutral' },
       'label': text(),
       // arrow：箭头尺寸 = 所在容器高 × arrow-scale（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
       'arrow-scale': num({ min: 0.02, max: 0.6, step: 0.01 }),
@@ -1094,7 +1128,7 @@ export const TAGS = {
     name: '注解',
     layer: 'relations',
     summary:
-      '三种注解：kind="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；kind="bubble" 是泡 + 引线（原 vk-pin）；kind="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。',
+      '三种注解：variant="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；variant="bubble" 是泡 + 引线（原 vk-pin）；variant="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。',
     content: {
       kind: 'text',
       target: 'vk-note',
@@ -1105,23 +1139,28 @@ export const TAGS = {
     },
     attrs: {
       // 三种形态：边注 / 气泡 / 编号图例。默认边注——它才是"高级注解"的默认长相。
-      // bubble 就是原 vk-pin：同一个泡、同一套类名，属性名也照旧（w / n / leader / emphasis…）。
-      'kind': { ...oneOf('margin', 'bubble', 'legend'), default: 'margin' },
+      // bubble 就是原 vk-pin：同一个泡、同一套类名，属性名也照旧（w / n / leader / strength…）。
+      'variant': { ...oneOf('margin', 'bubble', 'legend'), default: 'margin' },
       // 目标：支持 #id@part:arg 与 CSS 选择器；legend 的多个目标用 ; 分隔，按顺序对应条目。
       'for': sel(),
       // 贴哪侧：margin 只认 left / right；bubble 四个方向都认；默认 auto = 自动选有空间的一侧。
-      'side': { ...oneOf('left', 'right', 'top', 'bottom', 'auto'), default: 'auto' },
+      // 贴哪侧：margin 只认 left / right；bubble 四向 + auto；
+      // legend 用 bottom-right / bottom-left / bottom（旧名 place 的 br / bl / bottom）。
+      'side': {
+        ...oneOf('left', 'right', 'top', 'bottom', 'bottom-right', 'bottom-left', 'auto'),
+        default: 'auto',
+      },
       // 引线：margin 用 line / dot；bubble 用 elbow / straight / none。
       'leader': { ...oneOf('line', 'dot', 'elbow', 'straight', 'none'), default: 'line' },
-      // 图例落在页面哪一角：右下 / 左下 / 下方居中。
-      'place': { ...oneOf('br', 'bl', 'bottom'), default: 'br' },
+      // 图例落在页面哪一角：右下 / 左下 / 下方居中（side 的 bottom-right 等值）。
+      // 旧名 place（br / bl / bottom）已并进 side。
       // 注解宽（像素上限）。margin 不会超过那一侧的空间；bubble 是气泡宽（160–900，可写 200px）。
       'w': size({ min: 96, max: 900, step: 1 }),
       'z': int({ min: 0, max: 99, step: 1 }),
       // bubble 形态的旋钮（与 vk-annotate mode="note" 同一套取值）；margin / legend 忽略它们。
-      'tone': { ...oneOf('info', 'focus', 'ok', 'warn', 'err'), default: 'info' },
-      'emphasis': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
-      'size': { ...oneOf('label', 'body', 'subhead'), default: 'body' },
+      'tone': { ...tone(), default: 'info' },
+      'strength': { ...oneOf('solid', 'soft', 'ghost'), default: 'soft' },
+      'size': { ...sizeTier(), default: 'body' },
       'n': int({ min: 1, max: 99, step: 1 }),
       'gap-px': num({ min: 0, max: 240, step: 1 }),
       'x': num({ min: -4000, max: 4000, step: 1 }),
@@ -1139,9 +1178,8 @@ export const TAGS = {
     name: '归属说明',
     layer: 'relations',
     aliasOf: 'vk-label',
-    aliasNote: '归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" anchor="above|below">。',
-    summary:
-      '已合并到 vk-label（旧名保留）：label 写 for / anchor 就是原来的归属说明。',
+    aliasNote: '归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" side="top|bottom">。',
+    summary: '已合并到 vk-label（旧名保留）：label 写 for / side 就是原来的归属说明。',
     content: {
       kind: 'text',
       target: 'vk-caption',
@@ -1150,8 +1188,8 @@ export const TAGS = {
     attrs: {
       // 目标块：支持 #id（含 @part）与 CSS 选择器。
       'for': sel(),
-      // above = 目标上方；below = 目标下方。
-      'anchor': oneOf('above', 'below'),
+      // top = 目标上方；bottom = 目标下方（旧名 anchor）。
+      'side': oneOf('top', 'bottom'),
     },
   },
 };
@@ -1181,7 +1219,9 @@ const COMMON = {
   'row-span': { ...int({ min: 1, max: 12, step: 1 }), context: 'grid-child', layout: true },
   z: { ...int({ min: 0, max: 99, step: 1 }), context: 'canvas-child', layout: true },
   grow: { ...bool(), layout: true },
-  fill: { ...bool(), layout: true },
+  // 铺满父容器的一条轴（align-self: stretch）。旧页把它写成裸的 fill —— 见 vocab 的 ATTR_ALIAS：
+  // 非填充组件上的 fill 会折成 stretch（逐像素不变），填充组件上的 fill 折成 cover。
+  stretch: { ...bool(), layout: true },
   // 出血：负 margin 把这一块推到画布边（与 vk-page 的版心内距配合）。
   // x / y / all / none；none 是默认，旧页不写时逐像素不变。
   bleed: { ...oneOf('x', 'y', 'all', 'none'), default: 'none', layout: true },
@@ -1224,17 +1264,11 @@ const EXTRA = {
   },
   'vk-text': {
     ink: oneOf('primary', 'secondary', 'tertiary', 'muted'),
-    // 语义色：与 vk-icon 同一套词表（info / focus / ok / err / warn），不写就是纯墨阶。
-    tone: oneOf('info', 'focus', 'ok', 'err', 'warn'),
+    // 语义色：全库同一套六值（以前这里少 neutral）。
+    tone: tone(),
   },
   'vk-panel': {
     // 五档底：纸 / 极淡 / 稍深 / 深色 / 实色强调。tone 只给 accent（和 wash/tint）上色。
-    surface: oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
-    // 铺满父容器：cover 同时吃满宽高；contain 只吃满宽、高按内容。
-    // 空值仍是旧的布尔 fill（align-self: stretch），旧页不用改。
-    fill: { type: 'text', values: ['cover', 'contain', ''], layout: true },
-  },
-  'vk-layer': {
     surface: oneOf('paper', 'wash', 'tint', 'dark', 'accent'),
   },
   'vk-icon': {
@@ -1246,35 +1280,29 @@ const EXTRA = {
     variant: oneOf('unified', 'split'),
     numbers: oneOf('all', 'none'),
     summary: oneOf('all', 'none'),
-    size: text(),
     fit: oneOf('width'),
   },
-  'vk-mark': { variant: oneOf('highlight', 'underline', 'strike', 'circle') },
-  'vk-rule': { variant: oneOf('thin', 'strong'), tone: oneOf('neutral', 'info', 'focus'), dash: bool() },
+  'vk-rule': { variant: oneOf('thin', 'strong'), tone: tone(), dash: bool() },
   'vk-code': {
     long: oneOf('clip', 'wrap'),
     numbers: oneOf('all', 'none'),
-    numbering: oneOf('slice', 'file'),
-    mass: oneOf('compact', 'normal', 'hero'),
-    size: text(),
+    mass: massLevel(),
     fit: oneOf('width'),
   },
   'vk-term': {
-    mass: oneOf('compact', 'normal', 'hero'),
-    size: text(),
+    mass: massLevel(),
     fit: oneOf('width'),
   },
   'vk-table': {
-    size: text(),
     fit: oneOf('width'),
   },
   'vk-asm': {
-    size: text(),
     fit: oneOf('width'),
   },
   'vk-steps': {
-    mass: oneOf('compact', 'normal', 'hero'),
-    orientation: oneOf('horizontal', 'vertical'),
+    mass: massLevel(),
+    // 横 / 竖：与 vk-pair 同一个名字（旧名 orientation）。
+    direction: oneOf('horizontal', 'vertical'),
     // 流程的箭头由组件画：作者只写步骤名，不再一根根手连。
     connector: oneOf('arrow', 'line', 'none'),
   },
@@ -1292,23 +1320,14 @@ const EXTRA = {
   'vk-img': {
     position: text(),
     border: oneOf('none', 'hair', 'strong'),
-    // 铺满：cover 裁切填满、contain 完整放下（object-fit，不拉伸）。
-    // fill 优先于旧的 fit；不写 fill 时行为完全不变。
-    fill: oneOf('cover', 'contain'),
   },
-  'vk-figure': { position: text() },
   'vk-tree': {
     collapsed: text(),
-    current: text(),
     summary: oneOf('all', 'none'),
-    size: text(),
     fit: oneOf('width'),
   },
-  'vk-callout': { mass: oneOf('compact', 'normal', 'hero') },
   'vk-edge': {
-    'label-size': oneOf('label', 'meta'),
-    'label-dx': num({ min: -400, max: 400, step: 1 }),
-    'label-dy': num({ min: -200, max: 200, step: 1 }),
+    // 连线的途经点：像素坐标 "x,y" 或选择器（旧 vk-edge 的写法）。
     via: text(),
   },
   'vk-page': {},
@@ -1434,8 +1453,7 @@ const ATTR_META_BY_TAG = {
     b: { label: 'b 图（split 右半 / side 右侧 / stack 下方）', content: true },
     mode: { label: '对照方式（split 叠图裁切 / side 并排 / stack 上下；后两者完整显示）', group: 'appearance' },
     split: { label: 'split 模式左侧 a 的占比（%，side/stack 下无效）', group: 'appearance' },
-    'label-a': { label: 'a 的角标（inside 时左下 / top 时左上）', content: true },
-    'label-b': { label: 'b 的角标（inside 时右下 / top 时右上）', content: true },
+    labels: { label: '两张图的角标（labels="左|右"；inside 时左下 / 右下，top 时左上 / 右上）', content: true },
     'label-position': { label: '角标位置（inside 叠在图上 / top 在图上另起一条带，不压图像）', group: 'appearance' },
     mark: { label: '差异框（x1,y1,x2,y2；多组用 ;，相对百分比）', content: true },
     'mark-label': { label: '差异框角标（多组用 ; 与 mark 一一对应）', content: true },
@@ -1462,7 +1480,7 @@ const ATTR_META_BY_TAG = {
   },
   'vk-label': {
     for: { label: '目标（写 #id 就贴到那块上方/下方）', content: true },
-    anchor: { label: '锚点方向（above 上方 / below 下方）', group: 'appearance' },
+    side: { label: '贴哪一侧（top 上方 / bottom 下方；旧名 anchor 的 above / below）', group: 'appearance' },
   },
   'vk-panel': {
     chrome: { label: '窗头（dots 三点 + 标题 / none 干净分区）', group: 'appearance' },
@@ -1472,14 +1490,14 @@ const ATTR_META_BY_TAG = {
     ratio: { label: '高度权重（weights 的别名）', group: 'layout' },
   },
   'vk-note': {
-    kind: { label: '形态（margin 边注 / bubble 气泡 / legend 编号图例）', group: 'appearance' },
+    variant: { label: '形态（margin 边注 / bubble 气泡 / legend 编号图例）', group: 'appearance' },
     for: { label: '目标（多个用 ; 分隔，图例按顺序一一对应）', content: true },
     side: { label: '贴哪侧（margin 只认 left / right；bubble 四向 + auto）', group: 'layout' },
     leader: { label: '引线（line 细线 / dot 细线 + 圆点；bubble：elbow / straight / none）', group: 'appearance' },
-    place: { label: '图例位置（br 右下 / bl 左下 / bottom 下方居中）', group: 'layout' },
+    side: { label: '贴哪侧（margin 只认 left / right；bubble 四向 + auto；legend 用 bottom-right / bottom-left / bottom）', group: 'layout' },
     w: { label: '注解宽（margin 是像素上限；bubble 可写 200 或 200px）', group: 'layout' },
     tone: { label: '气泡色调（bubble）', group: 'appearance' },
-    emphasis: { label: '气泡强度（bubble：solid / soft / ghost）', group: 'appearance' },
+    strength: { label: '气泡强度（bubble：solid / soft / ghost；旧名 emphasis）', group: 'appearance' },
     size: { label: '气泡字号档（bubble）', group: 'appearance' },
     n: { label: '气泡编号（bubble）', content: true },
     'gap-px': { label: '气泡与目标的间距（bubble）', group: 'layout' },
@@ -1530,6 +1548,24 @@ export function validate() {
       if (!TAGS[def.aliasOf]) errors.push(`${tag}: aliasOf 指向不存在的 ${def.aliasOf}`);
       else if (TAGS[def.aliasOf].aliasOf) errors.push(`${tag}: aliasOf 不能指向另一个别名 ${def.aliasOf}`);
       if (!def.aliasNote) errors.push(`${tag}: 别名缺少迁移说明（aliasNote）`);
+    }
+    // 15.0 概念收敛的结构性保证：四个概念各一套词表，公开标签不许再写自己的子集。
+    // （别名标签保留旧词表：它们不再是公开 API，转发到的新标签才是。）
+    if (!def.aliasOf) {
+      for (const [name, spec] of Object.entries(def.attrs || {})) {
+        if (name === 'tone' && (spec.type !== 'tone' || spec.values.join('/') !== TONES.join('/'))) {
+          errors.push(`${tag}.tone: 必须用共享的六值词表（vocab.TONES）`);
+        }
+        if (name === 'fill') {
+          if (!FILL_TAGS.has(tag)) errors.push(`${tag}.fill: 只有 vk-img / vk-panel / vk-layer 声明 fill`);
+          else if (spec.type !== 'fill' || spec.values.join('/') !== FILLS.join('/')) {
+            errors.push(`${tag}.fill: 必须用共享的三值词表（vocab.FILLS）`);
+          }
+        }
+        if (name === 'size' && spec.values && spec.values.join('/') !== SIZE_TIERS.join('/')) {
+          errors.push(`${tag}.size: size 只表字号，必须用共享的十档（vocab.SIZE_TIERS）`);
+        }
+      }
     }
     for (const [name, spec] of Object.entries(def.attrs || {})) {
       if (!spec.type && !spec.values) errors.push(`${tag}.${name}: 属性缺少 type 或 values`);

@@ -1,5 +1,28 @@
 # 变更记录
 
+## 15.0 · 概念收敛：属性层减法（批次 K）
+
+审计（`docs/audit-architecture.md`）的结论是：标签层做了减法，**属性层没做** ——
+31 个标签暴露 172 个属性名 / 677 条声明，同一概念长出多套声明。这一批只收四个概念，
+词表收进 `src/shared/vocab.mjs` 一份；标签数不变（31），**默认画面不变**
+（31 张标本页逐像素比 64,281,600 px，0 差异）。
+
+- **tone 六值一套**：`neutral | info | focus | ok | warn | err`，所有组件共用同一份枚举与校验；
+  大小写不敏感；`vk-box` / `vk-bits` / `vk-bars` / `vk-edge` 补齐了以前不认的色；
+  构建期非法值的文案固定列出六值。`vk-pair` 的 `tone-a` / `tone-b` 并成 `tone="左,右"`。
+  14.0 删掉的 `accent` 映射到 `focus`（带迁移提示）。
+- **fill 三值一套**：`none | cover | contain`，只声明在能填充的组件上（img / panel / layer / compare）；
+  布尔 `fill` 的正名是 `stretch`（`align-self: stretch`，逐像素不变）；
+  `fit` 只保留 `width`（内容字号铺满），图片取景统一走 `fill`。
+- **current 一个语义**：`current="N"` = 当前项，**序号 1 起**，`-1` = 没有当前；
+  `line` / `active` 保留为 deprecated 别名；`vk-cells` / `vk-timeline` 也接入容器级 `current`。
+- **size 只表字号**：`value-size` / `label-size` / `symbol-size` 并进 `size`；
+  密度一律 `mass`；**删掉运行期把 `size` 改写成 `mass` 的行为**（以前一个属性名同时是字号、档位、体量）。
+- 结果：属性名 **172 → 154**，声明 **677 → 668**；旧名不拦构建（运行期折叠 + 提示）。
+- 迁移与映射表：[docs/convergence-15.md](docs/convergence-15.md)。
+
+---
+
 ## 15.0 · 手机横屏基准 + 库退回「只判客观错误」（批次 J）
 
 两条同时改，因为它们是同一件事的两面：**库不该管审美，但必须按真实观看条件定尺寸。**

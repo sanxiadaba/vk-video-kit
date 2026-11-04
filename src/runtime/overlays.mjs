@@ -46,7 +46,7 @@ export class VkPin extends VkNote {
     const cfg = super._noteConfig(mode);
     cfg.form = this.getAttribute('variant') === 'dot' ? 'dot' : 'bubble';
     cfg.tone = this.getAttribute('tone') || 'info';
-    cfg.emphasis = this.getAttribute('emphasis') || 'soft';
+    cfg.strength = this.getAttribute('strength') || 'soft';
     cfg.size = this.getAttribute('size') || 'body';
     cfg.n = parseInt(this.getAttribute('n') || '0', 10);
     cfg.x = numAttr(this, 'x', { min: -4000, max: 4000, fallback: NaN });

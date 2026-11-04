@@ -472,7 +472,7 @@
       "name": "注解 · 边注 margin",
       "what": "kind=\"margin\"：一条 1px 细线从目标引出，文字落在栏间空白里，首行与目标正文同基线；side 自动选有空间的一侧，leader=\"dot\" 在目标端加一枚小圆点。文字固定 caption（28）/ ink secondary，没有泡、没有底、没有箭头。",
       "contracts": [
-        "vk-note.kind",
+        "vk-note.variant",
         "vk-note.side",
         "vk-note.leader",
         "vk-note.w",
@@ -482,7 +482,7 @@
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "vk-note kind=\"margin\"：1px 细线、文字 caption、与目标正文同基线"
+          "name": "vk-note variant=\"margin\"：1px 细线、文字 caption、与目标正文同基线"
         },
         {
           "file": "tests/batch-gh.test.mjs",
@@ -499,14 +499,14 @@
       "name": "注解 · 编号图例 legend",
       "what": "kind=\"legend\"：每个目标角上一枚编号点（1 / 2 / 3），页角给一张编号 + 说明的图例表；place=br / bl / bottom 决定表落在哪一角。编号按 <li> 的顺序一一对应，构建期校验目标数与条目数相同。",
       "contracts": [
-        "vk-note.kind",
-        "vk-note.place"
+        "vk-note.variant",
+        "vk-note.side"
       ],
       "specimen": "vk-note",
       "tests": [
         {
           "file": "tests/batch-gh.test.mjs",
-          "name": "vk-note kind=\"legend\"：编号点钉在目标右上角，页角图例表编号对齐"
+          "name": "vk-note variant=\"legend\"：编号点钉在目标右上角，页角图例表编号对齐"
         },
         {
           "file": "tests/batch-gh.test.mjs",
@@ -587,9 +587,9 @@
         "vk-pair.axis",
         "vk-pair.axis-width",
         "vk-pair.symbol",
-        "vk-pair.symbol-size",
+        "vk-pair.size",
         "vk-pair.gap",
-        "vk-pair.orientation"
+        "vk-pair.direction"
       ],
       "specimen": "vk-pair",
       "tests": [
@@ -626,7 +626,7 @@
       "what": "「你写的 / 编译器给的」这种归属说明：给 vk-label 写 for，它就贴在目标块上方（anchor=\"above\"）或下方（anchor=\"below\"），左边界对齐目标块的首字符（不是容器左边），字号 caption、墨阶 secondary，不占正文布局。旧标签 vk-caption 保留为别名。",
       "contracts": [
         "vk-label.for",
-        "vk-label.anchor"
+        "vk-label.side"
       ],
       "specimen": "vk-label",
       "tests": [
@@ -636,7 +636,7 @@
         },
         {
           "file": "tests/merged-six.test.mjs",
-          "name": "vk-label anchor：above / below 换方向"
+          "name": "vk-label side：top / bottom 换方向"
         }
       ]
     },
@@ -710,17 +710,16 @@
     },
     {
       "id": "pair-tone",
-      "name": "并置 · 左右分色 tone-a / tone-b",
-      "what": "vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。不写 tone-a / tone-b 时不加底、不加框、不加内距，旧页逐像素不变。",
+      "name": "并置 · 左右分色 tone",
+      "what": "vk-pair 的左右两块可以各自上一种语义色：wash 底 + 1px 同色系 tint 描边（info / focus / ok / warn / err / neutral）。tone 写「左,右」一次给两侧上色；不写时不加底、不加框、不加内距，旧页逐像素不变。",
       "contracts": [
-        "vk-pair.tone-a",
-        "vk-pair.tone-b"
+        "vk-pair.tone"
       ],
       "specimen": "vk-pair",
       "tests": [
         {
           "file": "tests/batch-native.test.mjs",
-          "name": "vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不改现状"
+          "name": "vk-pair tone：左右分色 wash + 1px 同色描边；不写不改现状"
         }
       ]
     },
@@ -801,16 +800,16 @@
     },
     {
       "id": "label-anchor",
-      "name": "标签 · 贴块方向 anchor",
+      "name": "标签 · 贴块方向 side",
       "what": "anchor=\"above\"（默认）贴在目标块上方，anchor=\"below\" 贴在下方；净空 16px，方向落在宿主的 data-anchor 上。",
       "contracts": [
-        "vk-label.anchor"
+        "vk-label.side"
       ],
       "specimen": "vk-label",
       "tests": [
         {
           "file": "tests/merged-six.test.mjs",
-          "name": "vk-label anchor：above / below 换方向"
+          "name": "vk-label side：top / bottom 换方向"
         }
       ]
     },
@@ -819,13 +818,13 @@
       "name": "注解 · 气泡 bubble",
       "what": "vk-note kind=\"bubble\" 是原来的批注泡：气泡 + 引线绑到任意锚点，自动避让正文；w / n / tone / emphasis / size / leader / gap-px / x / y 与旧 vk-pin 同名同义。",
       "contracts": [
-        "vk-note.kind"
+        "vk-note.variant"
       ],
       "specimen": "vk-note",
       "tests": [
         {
           "file": "tests/merged-six.test.mjs",
-          "name": "vk-note kind=\"bubble\"：泡 + 引线与旧 vk-pin 同几何"
+          "name": "vk-note variant=\"bubble\"：泡 + 引线与旧 vk-pin 同几何"
         }
       ]
     },
@@ -852,7 +851,7 @@
         "vk-text.icon",
         "vk-box.ring",
         "vk-label.for",
-        "vk-note.kind",
+        "vk-note.variant",
         "vk-panel.chrome"
       ],
       "specimen": "vk-text",

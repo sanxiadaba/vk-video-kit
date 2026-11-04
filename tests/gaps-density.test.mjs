@@ -138,7 +138,7 @@ test('vk-timeline：compact + subhead 的三条总高 ≤ 470，主值与说明�
   const li = (date, value, note) => `<li date="${date}" value="${value}" note="${note}"></li>`;
   const { tab } = await open(`
     <vk-page>
-      <vk-timeline id="tl" mass="compact" value-size="subhead">
+      <vk-timeline id="tl" mass="compact" size="subhead">
         ${li('源码', '106 B', 'hello.c')}
         ${li('预处理', '52,980 B', 'hello.i')}
         ${li('链接', '43,956 B', 'hello.exe')}

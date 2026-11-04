@@ -32,11 +32,11 @@ export const PRESETS = {
   'vk-label': [
     { label: '标签', attrs: { variant: 'chip' } },
     { label: '实色序号', attrs: { variant: 'badge', tone: 'focus' } },
-    { label: '贴在上方', attrs: { for: '#lab-a', anchor: 'above' } },
+    { label: '贴在上方', attrs: { for: '#lab-a', side: 'top' } },
   ],
   'vk-img': [
     { label: '竖幅', attrs: { ratio: '3 / 4' } },
-    { label: '方图完整', attrs: { ratio: '1 / 1', fit: 'contain' } },
+    { label: '方图完整', attrs: { ratio: '1 / 1', fill: 'contain' } },
     { label: '圆图', attrs: { ratio: '1 / 1', radius: 'pill' } },
   ],
   'vk-stack': [
@@ -50,7 +50,7 @@ export const PRESETS = {
   ],
   'vk-pair': [
     { label: '等号', attrs: { symbol: '=' } },
-    { label: '上下并置', attrs: { orientation: 'vertical' } },
+    { label: '上下并置', attrs: { direction: 'vertical' } },
     { label: '偏左 30%', attrs: { split: '30' } },
   ],
   'vk-edge': [
@@ -103,8 +103,8 @@ export const PRESETS = {
     { label: '字节尺', attrs: { offsets: '', ruler: '' } },
   ],
   'vk-steps': [
-    { label: '第一步', attrs: { current: '0' } },
-    { label: '第三步', attrs: { current: '2' } },
+    { label: '第一步', attrs: { current: '1' } },
+    { label: '第三步', attrs: { current: '3' } },
   ],
   'vk-page': [],
   'vk-bits': [
@@ -133,7 +133,7 @@ export const PRESETS = {
   ],
   'vk-note': [
     { label: '贴左侧', attrs: { side: 'left' } },
-    { label: '气泡批注', attrs: { kind: 'bubble', for: '#nt-a', side: 'right', n: '1' } },
-    { label: '气泡编号 3', attrs: { kind: 'bubble', for: '#nt-a', side: 'bottom', n: '3' } },
+    { label: '气泡批注', attrs: { variant: 'bubble', for: '#nt-a', side: 'right', n: '1' } },
+    { label: '气泡编号 3', attrs: { variant: 'bubble', for: '#nt-a', side: 'bottom', n: '3' } },
   ],
 };

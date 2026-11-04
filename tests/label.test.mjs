@@ -94,7 +94,7 @@ test('vk-text：非法 tone 在构建期报错并列出可用值', async () => {
     () => transformHtml('<vk-text tone="danger">x</vk-text>', { file: 'tone.html', highlighter: hl }),
     (e) => {
       assert.match(e.message, /的 tone 不在词表里/);
-      assert.match(e.message, /info \/ focus \/ ok \/ err \/ warn/);
+      assert.match(e.message, /tone 只有六值：neutral \/ info \/ focus \/ ok \/ warn \/ err/);
       return true;
     }
   );

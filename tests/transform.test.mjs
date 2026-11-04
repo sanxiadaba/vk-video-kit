@@ -218,7 +218,7 @@ test('current 越界：bytes / asm / steps 都在构建期硬拦', async () => {
         '<vk-bytes current="9"><script type="text/plain" data-vk-source>00 01 02 03</script></vk-bytes>',
         { file: 'bytes.html', highlighter: hl }
       ),
-    /vk-bytes> 的 current="9" 超出 0–3/
+    /vk-bytes> 的 current="9" 超出 1–4/
   );
   await assert.rejects(
     () =>
@@ -230,7 +230,7 @@ test('current 越界：bytes / asm / steps 都在构建期硬拦', async () => {
   );
   await assert.rejects(
     () => transformHtml('<vk-steps current="9"><li>一步</li><li>两步</li></vk-steps>', { file: 'steps.html', highlighter: hl }),
-    /vk-steps> 的 current="9" 超出 0–1/
+    /vk-steps> 的 current="9" 超出 1–2/
   );
 });
 

@@ -14,9 +14,9 @@
  */
 import { VK, numAttr, takeSlot, VkElement, define } from './base.mjs';
 
+import { SIZE_TIERS, TONE_HINT, toneValue } from '../shared/vocab.mjs';
+
 const SYMBOLS = new Set(['→', '=', 'vs']);
-/** 左右分色的词表：与 vk-panel / vk-flow 同一组语义色。 */
-const TONES = ['neutral', 'info', 'focus', 'ok', 'warn', 'err'];
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
 export class VkPair extends VkElement {
@@ -24,7 +24,7 @@ export class VkPair extends VkElement {
   static renderedRoot = '.vk-pair';
 
   render() {
-    const orientation = this.getAttribute('orientation') === 'vertical' ? 'vertical' : 'horizontal';
+    const orientation = this.getAttribute('direction') === 'vertical' ? 'vertical' : 'horizontal';
     const axis = this.getAttribute('axis') === 'none' ? 'none' : 'line';
     const rawSymbol = (this.getAttribute('symbol') || 'none').trim();
     // axis="none" 只关掉那条分隔线，不连带关掉符号：
@@ -33,18 +33,25 @@ export class VkPair extends VkElement {
     const split = clamp(numAttr(this, 'split', { min: 5, max: 95, fallback: 50 }), 5, 95);
     const gap = numAttr(this, 'gap', { min: 8, max: 200, fallback: 24 });
     const axisWidth = numAttr(this, 'axis-width', { min: 1, max: 4, fallback: 2 });
-    const symbolSize = numAttr(this, 'symbol-size', { min: 12, max: 200, fallback: 48 });
-    const toneOf = (name) => {
-      const raw = (this.getAttribute(name) || '').trim().toLowerCase();
-      if (!raw) return '';
-      if (!TONES.includes(raw)) {
-        this._warnOnce(`tone:${name}`, `的 ${name}="${raw}" 不认识，按透明处理（可用：${TONES.join(' / ')}）`);
+    // 中轴符号的字号：像素数（96）或语义档（headline）。size 只表字号。
+    const sizeRaw = (this.getAttribute('size') || '').trim();
+    const symbolSize = SIZE_TIERS.includes(sizeRaw)
+      ? `var(--vk-t-${sizeRaw})`
+      : String(clamp(Number(sizeRaw) || 48, 12, 200)) + 'px';
+    // 两侧色调：tone="左,右"（第二段可省；none = 这一侧不上色）。
+    const toneTokens = (this.getAttribute('tone') || '').split(',');
+    const readTone = (raw, side) => {
+      const v = (raw || '').trim();
+      if (!v || v.toLowerCase() === 'none') return '';
+      const r = toneValue(v);
+      if (r.bad) {
+        this._warnOnce(`tone:${side}`, `的 tone 里 "${v}" 不认识，按透明处理（可用：${TONE_HINT}）`);
         return '';
       }
-      return raw;
+      return r.value;
     };
-    const toneA = toneOf('tone-a');
-    const toneB = toneOf('tone-b');
+    const toneA = readTone(toneTokens[0], 'a');
+    const toneB = readTone(toneTokens[1], 'b');
 
     if (!this._box) {
       const nodes = takeSlot(this);
@@ -89,7 +96,7 @@ export class VkPair extends VkElement {
     this._box.style.setProperty('--vk-pair-split', String(split / 100));
     this._box.style.setProperty('--vk-pair-gap', gap + 'px');
     this._box.style.setProperty('--vk-pair-axis-w', axisWidth + 'px');
-    this._box.style.setProperty('--vk-pair-symbol-size', symbolSize + 'px');
+    this._box.style.setProperty('--vk-pair-symbol-size', symbolSize);
 
     let sym = this._box.querySelector('.vk-pair-sym');
     if (symbol === 'none') {

@@ -119,6 +119,12 @@ export function effectHit(effect, diffs, beforeCount = 0, afterCount = 0, target
 
 export function valuesFor(spec, probe) {
   if (probe?.values?.length) return probe.values;
+  // 15.0：tone 的六值里 neutral 的意思是「不上色 / 用默认墨」，与不写同效；
+  // 拿它断"改成什么"必然是 no-op，所以只探有颜色的那五个。
+  if (spec.type === 'tone') return spec.values.filter((v) => v !== 'neutral');
+  // 15.0：内容组件的 size 有两种写法（语义档名 / 像素数）。契约只探像素写法，
+  // 档名写法由 vk-text 的十档断言与各组件自己的视觉审计覆盖。
+  if (spec.type === 'fontsize') return ['160'];
   if (spec.values) return spec.values;
   if (spec.type === 'bool') return ['__toggle__'];
   if (spec.type === 'num' || spec.type === 'int') {

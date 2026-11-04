@@ -289,7 +289,7 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     <vk-text size="label" mono ink="muted">你写的</vk-text>
     <vk-text size="label" mono ink="muted">编译器给的</vk-text>
   </vk-stack>
-  <vk-pair split="50" gap="96" axis="none" symbol="→" symbol-size="96">
+  <vk-pair split="50" gap="96" axis="none" symbol="→" size="96">
     <vk-text size="body" mono>s[0] = 'H';</vk-text>
     <vk-text size="body" mono>movb $0x48</vk-text>
   </vk-pair>
@@ -319,7 +319,7 @@ ${C.types.map((t) => `        <tr${t.name === 'unsigned' ? ' state="mark"' : ''}
     body: s`
 <vk-grid cols="3">
   <vk-compare span="2" a="../assets/hello/o0.png" b="../assets/hello/o2.png" ratio="1440 / 900" split="46"
-    label-a="gcc -O0 · 13 行" label-b="gcc -O2 · 10 行"
+    labels="gcc -O0 · 13 行|gcc -O2 · 10 行"
     mark="58,73,93,84" mark-label="少 3 行"></vk-compare>
 </vk-grid>`,
   },
@@ -338,7 +338,7 @@ ${tree}
     tag: 'vk-img',
     // 有边缘、有主体的真实截图：gcc -O0 的反汇编窗口。
     body: s`
-<vk-img class="spec-w1200" fit="contain" src="../assets/hello/o0.png" alt="gcc -O0 编出的 hello.c 反汇编" radius="xl"></vk-img>`,
+<vk-img class="spec-w1200" fill="contain" src="../assets/hello/o0.png" alt="gcc -O0 编出的 hello.c 反汇编" radius="xl"></vk-img>`,
   },
 
   {
@@ -353,7 +353,7 @@ ${C.memory.cells.map((cell) => `  <li value="${cell.value}" label="${cell.label}
     tag: 'vk-steps',
     body: s`
 <vk-stack gap="md" class="spec-w1200">
-  <vk-steps current="1">
+  <vk-steps current="2">
 ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
   </vk-steps>
   <vk-text size="label" mono ink="muted">当前：${C.stages[1].cmd}</vk-text>
@@ -365,11 +365,11 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
     body: s`
 <vk-stack gap="md" class="spec-w1680">
   <vk-text size="body" weight="bold">hello.bin · 48 字节</vk-text>
-  <vk-bytes src="../code/hello.bin" addr="${C.address}" offset="0" length="48" current="0-5"></vk-bytes>
+  <vk-bytes src="../code/hello.bin" addr="${C.address}" offset="0" length="48" current="1-6"></vk-bytes>
   <vk-text size="label" mono ink="muted">68 65 6c 6c 6f 00 → Hello</vk-text>
 </vk-stack>`,
     strip: s`
-<vk-bytes src="../code/hello.bin" addr="${C.address}" offset="0" length="16" current="0-3"></vk-bytes>`,
+<vk-bytes src="../code/hello.bin" addr="${C.address}" offset="0" length="16" current="1-4"></vk-bytes>`,
   },
 
   {
@@ -428,7 +428,7 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
     // lane/at 是泳道预设要用的同一份数据，切 variant="lanes" 不会空轴。
     body: s`
 <vk-stack gap="md" class="spec-w1680">
-  <vk-timeline start="1972" end="2011" title="C 语言标准" value-size="subhead" mass="compact">
+  <vk-timeline start="1972" end="2011" title="C 语言标准" size="subhead" mass="compact">
     <li date="1972" label="C 诞生" lane="C" at="0">Dennis Ritchie 在 Bell Labs 写下第一版 C。</li>
     <li date="1989" value="C89" lane="C" at="1">ANSI X3.159-1989 把 C 标准化。</li>
     <li date="2011" label="C11" lane="C" at="2">加入 _Generic、原子操作与线程库。</li>
@@ -475,7 +475,7 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
     <vk-text size="body" mono>int main(void)</vk-text>
     <vk-text size="body" mono ink="secondary">{ return 0; }</vk-text>
   </vk-box>
-  <vk-note kind="margin" for="#nt-code" side="auto" leader="line" w="360">main 的返回值写进 eax；0 表示程序正常结束。</vk-note>
+  <vk-note variant="margin" for="#nt-code" side="auto" leader="line" w="360">main 的返回值写进 eax；0 表示程序正常结束。</vk-note>
 
   <vk-box id="nt-a" x="380" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
     <vk-text size="body">预处理</vk-text>
@@ -483,7 +483,7 @@ ${C.stages.map((st) => `    <li>${st.title}</li>`).join('\n')}
   <vk-box id="nt-b" x="1040" y="380" w="420" h="160" surface="sf-1" radius="lg" pad="md">
     <vk-text size="body">编译</vk-text>
   </vk-box>
-  <vk-note kind="legend" for="#nt-a;#nt-b" place="br">
+  <vk-note variant="legend" for="#nt-a;#nt-b" side="bottom-right">
     <li>只把 include 抄进来，不做语法检查</li>
     <li>到这一步才检查语法并优化</li>
   </vk-note>

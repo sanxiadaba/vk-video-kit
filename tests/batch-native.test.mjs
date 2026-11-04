@@ -165,9 +165,9 @@ test('vk-label variant="tag"：36px / .08em / 无底无框，tone 决定颜色',
   assert.equal(r.kick.fs, '48px', 'kicker 仍是 caption 48，旧页不变');
 });
 
-test('vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不改现状', async () => {
+test('vk-pair tone：左右分色 wash + 1px 同色描边；不写不改现状', async () => {
   const tab = await open(`
-<vk-pair id="p" tone-a="info" tone-b="ok" gap="24" symbol="→">
+<vk-pair id="p" tone="info,ok" gap="24" symbol="→">
   <vk-text size="body">你写的</vk-text>
   <vk-text size="body">机器写的</vk-text>
 </vk-pair>
@@ -193,8 +193,8 @@ test('vk-pair tone-a / tone-b：左右分色 wash + 1px 同色描边；不写不
     };
     return { p: one('p'), plain: one('plain') };
   });
-  assert.notEqual(r.p.leftBg, 'rgba(0, 0, 0, 0)', 'tone-a=info 要给左块 wash 底');
-  assert.notEqual(r.p.rightBg, 'rgba(0, 0, 0, 0)', 'tone-b=ok 要给右块 wash 底');
+  assert.notEqual(r.p.leftBg, 'rgba(0, 0, 0, 0)', 'tone="info,ok" 的左段要给左块 wash 底');
+  assert.notEqual(r.p.rightBg, 'rgba(0, 0, 0, 0)', 'tone="info,ok" 的右段要给右块 wash 底');
   assert.notEqual(r.p.leftBg, r.p.rightBg, '左右是两支不同的语义色');
   assert.equal(r.p.leftBorder, '1px', '左块 1px 描边');
   assert.equal(r.p.rightBorder, '1px', '右块 1px 描边');

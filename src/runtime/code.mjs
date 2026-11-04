@@ -153,7 +153,7 @@ export class VkCode extends VkElement {
     const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
     const toSlice = (set) =>
       new Set([...set].map((v) => v - startNo + 1).filter((v) => v >= 1 && v <= lines.length));
-    const hl = toSlice(lineSet(this.getAttribute('current') || this.getAttribute('line') || ''));
+    const hl = toSlice(lineSet(this.getAttribute('current') || ''));
     const focus = toSlice(lineSet(this.getAttribute('focus')));
     // 真折叠：区间内的行不渲染；只在区间开头留一条"几行已折叠"。
     const foldSet = new Set();
@@ -169,19 +169,11 @@ export class VkCode extends VkElement {
       foldStarts.set(a, b);
       for (let n = a; n <= b; n++) foldSet.add(n);
     }
-    const digits = String(
-      Math.max(
-        this.getAttribute('numbering') !== 'slice'
-          ? (Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1) + lines.length - 1
-          : lines.length,
-        1
-      )
-    ).length;
+    const digits = String(Math.max(startNo + lines.length - 1, 1)).length;
     this.style.setProperty('--vk-digits', String(digits));
-    const numbering = this.getAttribute('numbering') === 'slice' ? 'slice' : 'file';
-    // data-line / 锚点永远是源文件行号；numbering 只影响左侧打印的数字。
+    // data-line / 锚点 / 左边打印的数字都只有一个基准：源文件行号（旧 numbering 已退役）。
     const noOf = (n) => startNo + n - 1;
-    const gutterOf = (n) => (numbering === 'slice' ? n : noOf(n));
+    const gutterOf = noOf;
 
     const rows = [];
     lines.forEach((line, i) => {
@@ -345,7 +337,7 @@ export class VkTerm extends VkElement {
 
     // 指一行：current 是正式名，line 是同一概念的别名（current 优先）。
     const startNo = Number((this.getAttribute('lines') || '').match(/^\s*(\d+)/)?.[1]) || 1;
-    const currentRaw = this.getAttribute('current') || this.getAttribute('line') || '';
+    const currentRaw = this.getAttribute('current') || '';
     const currentSet = new Set([...lineSet(currentRaw)].map((v) => v - startNo + 1));
 
     // 提示符认不出来时，整块终端会掉成一片灰字：看起来"正常"，其实命令行/输出

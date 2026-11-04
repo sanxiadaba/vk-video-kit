@@ -26,6 +26,9 @@ const ctxOf = (spec) =>
 
 const attrType = (spec, tag, name) => {
   if (tag === 'vk-icon' && name === 'name') return 'IconName';
+  // size 只表字号：语义档名或像素数（内容组件）；tone 的两侧写法是 "左,右"。
+  if (spec.type === 'fontsize') return 'number | string';
+  if (spec.list) return 'string';
   if (spec.values) return spec.values.map((v) => `'${v}'`).join(' | ');
   if (spec.type === 'num' || spec.type === 'int') return 'number | string';
   if (spec.type === 'size') return 'number | string';
@@ -146,7 +149,7 @@ const cem = {
               description: spec.label || name,
               default: spec.default ?? undefined,
               type: {
-                text: spec.values
+                text: spec.type === 'fontsize' ? 'number | string' : spec.values
                   ? spec.values.map((v) => `'${v}'`).join(' | ')
                   : spec.type === 'num' || spec.type === 'int' || spec.type === 'size'
                     ? 'number | string'

@@ -30,9 +30,10 @@ export class VkImg extends VkElement {
     const ratioRaw = this.getAttribute('ratio') || '';
     const ratio = /^\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*$/.test(ratioRaw) ? ratioRaw : '';
     if (ratioRaw && !ratio) this._warnOnce('ratio', `的 ratio="${ratioRaw}" 不合法，按图片原比例显示`);
-    // fill=cover|contain 是新的显式铺满写法；不写时沿用旧的 fit（默认 cover）。
-    const fill = this.getAttribute('fill');
-    const fit = fill === 'cover' || fill === 'contain' ? fill : this.getAttribute('fit') || 'cover';
+    // 填充：fill="none|cover|contain"（与 vk-panel / vk-layer 同一套）。
+    // 旧写法 fit 由运行期折成 fill；不写就是 cover（与引入 fill 之前逐像素一致）。
+    const fillRaw = (this.getAttribute('fill') || '').trim();
+    const fit = fillRaw === 'contain' || fillRaw === 'cover' ? fillRaw : 'cover';
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
     const radius = this.getAttribute('radius') || '';
 
@@ -252,7 +253,7 @@ export class VkLabel extends VkElement {
     delete this.dataset.vkOverlay;
     // for / anchor 在块里的标签上只是作者的写法镜像（不生效，但契约要能读到"改了"）。
     this.dataset.for = this.getAttribute('for') || '';
-    this.dataset.anchor = this.getAttribute('anchor') || '';
+    this.dataset.side = this.getAttribute('side') || '';
     this.dataset.gap = String(numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP }));
     this.style.zIndex = '';
     this._span = null;
@@ -312,8 +313,8 @@ export class VkLabel extends VkElement {
   }
 
   _renderAnchored() {
-    const anchor = this.getAttribute('anchor') === 'below' ? 'below' : 'above';
-    this.dataset.anchor = anchor;
+    const side = this.getAttribute('side') === 'bottom' ? 'bottom' : 'top';
+    this.dataset.side = side;
     this.dataset.for = this.getAttribute('for') || '';
     this.dataset.vkOverlay = '';
     // 先把作者文字读出来，再换壳：先换壳会把文字一起扔进新 span 之前就读空了。
@@ -356,7 +357,7 @@ export class VkLabel extends VkElement {
     }
     const cr = firstCharRect(target);
     const box = span.getBoundingClientRect();
-    const above = this.getAttribute('anchor') !== 'below';
+    const above = this.getAttribute('side') !== 'bottom';
     // 净空可配（gap-px），但不会小于 12：标签与目标正文必须留出一条缝。
     const gap = numAttr(this, 'gap-px', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP });
     this.dataset.gap = String(gap);

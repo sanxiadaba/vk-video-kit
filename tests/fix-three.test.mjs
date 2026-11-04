@@ -88,9 +88,9 @@ const HELPERS = () => {
 const NOTE_CANVAS = (y = 40, h = 160) => `<vk-canvas id="cv" w="1680" h="840">
   <vk-box id="edge" x="1520" y="${y}" w="140" h="${h}" surface="soft"></vk-box>
   <vk-box id="mid" x="380" y="${y}" w="560" h="${h}" surface="soft"></vk-box>
-  <vk-note id="n1" kind="margin" for="#edge" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
-  <vk-note id="n2" kind="margin" for="#mid" w="360">这一段只讲入口：返回值说明程序有没有跑完。再加一句更长的中文，看它会不会顶穿卡片跑到画布外面去。</vk-note>
-  <vk-note id="n3" kind="margin" for="#edge" side="right" w="360">显式写右侧，但那一侧只有 20px 富余。</vk-note>
+  <vk-note id="n1" variant="margin" for="#edge" w="360">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+  <vk-note id="n2" variant="margin" for="#mid" w="360">这一段只讲入口：返回值说明程序有没有跑完。再加一句更长的中文，看它会不会顶穿卡片跑到画布外面去。</vk-note>
+  <vk-note id="n3" variant="margin" for="#edge" side="right" w="360">显式写右侧，但那一侧只有 20px 富余。</vk-note>
 </vk-canvas>`;
 
 test('vk-note：目标贴右边缘时边注翻到左侧，文字不出画布', async () => {
@@ -154,7 +154,7 @@ test('vk-note：长中文句子与长 token 都不越界，宽度不超 w', asyn
 test('vk-note：引线终点落在目标边上，不穿目标矩形', async () => {
   const tab = await open(`<vk-canvas id="cv" w="1680" h="360">
   <vk-box id="t" x="380" y="220" w="560" h="40" surface="soft"></vk-box>
-  <vk-note id="n" kind="margin" for="#t" w="360" leader="dot">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
+  <vk-note id="n" variant="margin" for="#t" w="360" leader="dot">这一段只讲入口：返回值说明程序有没有跑完。</vk-note>
 </vk-canvas>`);
   await tab.evaluate(HELPERS);
   const r = await tab.evaluate(() => {
@@ -317,8 +317,8 @@ test('vk-annotate note：引线两端各自贴住目标边与标注框边（≤1
 test('vk-label：锚定标签与目标的净空 ≥12px，gap-px 可配', async () => {
   const tab = await open(`<vk-stack gap="lg">
   <vk-box id="t" surface="none" pad="sm"><vk-text size="subhead">目标内容</vk-text></vk-box>
-  <vk-label id="d" for="#t" anchor="above">你写的</vk-label>
-  <vk-label id="g" for="#t" anchor="above" gap-px="12">编译器给的</vk-label>
+  <vk-label id="d" for="#t" side="top">你写的</vk-label>
+  <vk-label id="g" for="#t" side="top" gap-px="12">编译器给的</vk-label>
 </vk-stack>`);
   await tab.evaluate(HELPERS);
   const r = await tab.evaluate(() => {
@@ -358,7 +358,7 @@ test('vk-label：两行目标时标签只贴第一行，不压第二行', async 
     <vk-text size="subhead">printf("%s\\n", s);</vk-text>
     <vk-text size="subhead" mono>call 4026cc &lt;_puts&gt;</vk-text>
   </vk-box>
-  <vk-label id="d" for="#t" anchor="above">你写的</vk-label>
+  <vk-label id="d" for="#t" side="top">你写的</vk-label>
 </vk-stack>`);
   await tab.evaluate(HELPERS);
   const r = await tab.evaluate(() => {

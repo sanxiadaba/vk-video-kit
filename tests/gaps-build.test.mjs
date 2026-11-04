@@ -108,20 +108,20 @@ test('⑧ vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
   assert.equal(field.type, 'bool');
 });
 
-test('⑨ vk-compare：mode=side / stack 同时写 split 构建期警告，不静默忽略', async () => {
+test('⑨ vk-compare：variant=side / stack 同时写 split 构建期警告，不静默忽略', async () => {
   const warnings = [];
   const oldWarn = console.warn;
   console.warn = (...args) => warnings.push(args.join(' '));
   try {
     const out = await transformHtml(
-      '<vk-compare mode="side" split="30" fit="cover" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg"></vk-compare>',
+      '<vk-compare variant="side" split="30" fill="cover" a="assets/sample-grid.svg" b="assets/sample-grid-b.svg"></vk-compare>',
       { file: 'p.html', highlighter: hl }
     );
-    assert.match(out.html, /mode="side"/);
+    assert.match(out.html, /variant="side"/);
   } finally {
     console.warn = oldWarn;
   }
-  assert.match(warnings.join('\n'), /mode="side" 下 split 不起作用/, 'side 下 split 必须明确说它不起作用');
+  assert.match(warnings.join('\n'), /variant="side" 下 split 不起作用/, 'side 下 split 必须明确说它不起作用');
 });
 
 test('⑩ vk-pin 的 w 接受 200px，vk-bars 的 ratio-to 指空时构建期警告', async () => {

@@ -246,7 +246,7 @@ export class VkAnnotate extends VkElement {
     d.double = this._double() ? '2' : '1';
     d.note = this._noteForm(mode);
     d.size = this.getAttribute('size') || 'body';
-    d.emphasis = this.getAttribute('emphasis') || 'soft';
+    d.strength = this.getAttribute('strength') || 'soft';
     d.n = String(this._num());
     // arrow 的缩放比例也镜像到宿主上：契约读它，不猜 CSS。
     if (mode === 'arrow') d.arrowScale = String(numAttr(this, 'arrow-scale', { min: 0.02, max: 0.6, fallback: 0.12 }));
@@ -752,7 +752,7 @@ export class VkAnnotate extends VkElement {
       side,
       leader: this.getAttribute('leader') || 'elbow',
       size: this.getAttribute('size') || 'body',
-      emphasis: this.getAttribute('emphasis') || 'soft',
+      strength: this.getAttribute('strength') || 'soft',
       n: this._num() || (form === 'badge' ? 1 : 0),
       text: null,
     };
@@ -810,7 +810,7 @@ export class VkAnnotate extends VkElement {
     this._bd.dataset.tone = cfg.tone;
     this._bd.dataset.variant = cfg.form;
     this._bd.dataset.note = cfg.form;
-    this._bd.dataset.emphasis = cfg.emphasis;
+    this._bd.dataset.strength = cfg.strength;
     this._bd.dataset.size = cfg.size;
     this._svg.dataset.tone = cfg.tone;
 

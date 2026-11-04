@@ -139,13 +139,14 @@ export class VkNote extends VkAnnotate {
   }
 
   _kind() {
-    const v = this.getAttribute('kind');
+    const v = this.getAttribute('variant');
     return v === 'legend' || v === 'bubble' ? v : 'margin';
   }
 
+  /** 图例落在哪一角：side 的 bottom-right / bottom-left / bottom（旧名 place 的 br / bl / bottom）。 */
   _place() {
-    const v = this.getAttribute('place') || 'br';
-    return v === 'bl' || v === 'bottom' ? v : 'br';
+    const v = (this.getAttribute('side') || 'bottom-right').trim();
+    return v === 'bottom-left' ? 'bl' : v === 'bottom' ? 'bottom' : 'br';
   }
 
   /** bubble 形态由 vk-annotate 画（同一个 note 模式）；这里只把 kind 折成 mode。 */
@@ -175,9 +176,9 @@ export class VkNote extends VkAnnotate {
       const v = this.getAttribute(name);
       return v == null || v === '' ? fallback : v;
     };
-    d.kind = kind;
+    d.variant = kind;
     d.tone = attr('tone', cfg.tone || 'info');
-    d.emphasis = attr('emphasis', cfg.emphasis || 'soft');
+    d.strength = attr('strength', cfg.strength || 'soft');
     d.size = attr('size', cfg.size || 'body');
     d.n = attr('n', String(cfg.n ?? 0));
     d.side = attr('side', cfg.side || 'auto');
@@ -235,7 +236,7 @@ export class VkNote extends VkAnnotate {
 
     const leader = this.getAttribute('leader') === 'dot' ? 'dot' : 'line';
     const side = this.getAttribute('side') || 'auto';
-    this.dataset.kind = kind;
+    this.dataset.variant = kind;
     // 宿主上的 data-side / data-leader / data-place 是"作者写法的镜像"：
     // 实际落点由几何算，契约只断言请求值真的被读到。
     this.dataset.side = side;
@@ -245,7 +246,7 @@ export class VkNote extends VkAnnotate {
     this._mirror(
       {
         tone: this.getAttribute('tone') || 'info',
-        emphasis: this.getAttribute('emphasis') || 'soft',
+        strength: this.getAttribute('strength') || 'soft',
         size: this.getAttribute('size') || 'body',
         n: parseInt(this.getAttribute('n') || '0', 10) || 0,
         side,

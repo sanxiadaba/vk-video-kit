@@ -65,6 +65,10 @@ export const PROBES = {
       effect: { on: '.vk-edge-label', kind: 'text' },
       why: 'arrow-label 优先于旧 label：换词，标签文本必须跟着换。',
     },
+    size: {
+      values: ['label', 'subhead'],
+      why: 'size 只表字号；mega/display 会把标签挤出安全区，data 与 body 同字号（等宽那一档）。',
+    },
   },
   'vk-loupe': {
     point: {
@@ -173,6 +177,10 @@ export const PROBES = {
       effect: { on: '.vk-note-m', kind: 'geometry', prop: 'width' },
       why: 'w 是边注的宽度上限；标本目标两侧都有空间，200 与 320 都放得下。',
     },
+    size: {
+      values: ['label', 'subhead'],
+      why: '气泡字号：label 与 subhead 量得到变化；mega 会把气泡撑出安全区。',
+    },
   },
   'vk-caption': {
     for: {
@@ -187,27 +195,26 @@ export const PROBES = {
       effect: { on: 'svg path', kind: 'attr', prop: 'd' },
       why: '路径点最终改写 path 的 d。',
     },
-    'label-dx': {
-      values: ['20'],
+    'label-offset': {
+      values: ['20,20'],
       effect: { on: '.vk-edge-label', kind: 'style', prop: 'left' },
-      why: '标签 X 偏移最终落在 span 的 left。',
+      why: '标签偏移 "dx,dy" 最终落在 span 的 left / top。',
     },
-    'label-dy': {
-      values: ['20'],
-      effect: { on: '.vk-edge-label', kind: 'style', prop: 'top' },
-      why: '标签 Y 偏移最终落在 span 的 top。',
+    size: {
+      values: ['label', 'subhead'],
+      why: '连线标签字号：两个非默认档；mega 会把标签挤出安全区。',
     },
   },
   'vk-steps': {
-    orientation: {
+    direction: {
       values: ['vertical'],
       effect: { on: '.vk-steps', kind: 'style', prop: 'flex-direction' },
       why: '横排/竖排的差异最终在 .vk-steps 的 flex-direction。',
     },
     mark: {
-      values: ['0', '2'],
+      values: ['2', '3'],
       effect: { on: 'vk-steps', kind: 'attr', prop: 'data-mark', expectFromValue: 'raw' },
-      why: 'mark 是 0 起的那一步；两个合法值落到宿主 data-mark 上，改哪个都得跟手。',
+      why: 'mark 是第 N 步（1 起）；两个合法值落到宿主 data-mark 上，改哪个都得跟手。',
     },
   },
   'vk-img': {
@@ -307,6 +314,11 @@ export const PROBES = {
       effect: { on: 'vk-cells', kind: 'style', prop: 'grid-template-columns' },
       why: '标本 10 格、cols=6；只测 5，避免列数太小把帧撑破。',
     },
+    current: {
+      values: ['3'],
+      effect: { on: 'vk-cells', kind: 'dom', prop: '.vk-cell[data-state="current"]' },
+      why: 'current 是第 N 格（1 起）：落成那一格的 data-state="current"，与 li 上的 act="focus" 同一条渲染路径。',
+    },
   },
   'vk-box': {
     'pad-x': { values: ['xs', 'xl'], effect: { on: 'vk-box', kind: 'style', prop: 'padding-left' }, why: '横向内距只看 left 变化。' },
@@ -323,6 +335,12 @@ export const PROBES = {
     // 这不是 gap 失效，是"间距大到画面装不下"。xs / xl 仍能验证档位。
     gap: { values: ['xs', 'xl'], why: '间距档位看得到变化；3xl 只测到三张卡片的物理极限。' },
   },
+  'vk-math': {
+    size: {
+      values: ['label', 'subhead'],
+      why: '公式字号：label 与 subhead 量得到变化；data 与 body 同字号，mega 会超出标本台。',
+    },
+  },
   'vk-tree': {
     depth: { values: ['1'], effect: { on: 'vk-tree', kind: 'geometry', prop: 'height' }, why: '标本只有两层，depth=2 与 4 画面上相同。' },
     collapsed: {
@@ -332,12 +350,17 @@ export const PROBES = {
     },
   },
   'vk-timeline': {
-    // 标本把 value-size 定在 subhead（演示"一帧三个数字"的降档用法），
+    // 标本把 size 定在 subhead（演示"一帧三个数字"的降档用法），
     // 默认 hero 与 subhead 已由 tests/gaps-kit.test.mjs 逐档测过；
     // 契约只探 title 这一档，免得同一件事在两个地方各断言一次。
-    'value-size': {
+    size: {
       values: ['title'],
       why: '标本用 subhead；契约只补 title 这一档（hero 是默认，subhead 是标本态）。',
+    },
+    current: {
+      values: ['2'],
+      effect: { on: 'vk-timeline', kind: 'dom', prop: '.vk-tl-item[data-state="current"]' },
+      why: 'current 是第 N 个事件（1 起）：落成那一条的 data-state="current"。',
     },
   },
   'vk-asm': {
@@ -346,10 +369,11 @@ export const PROBES = {
     order: { values: ['1,2,3'], effect: { on: 'vk-asm', kind: 'dom', prop: '.vk-asm-order' }, why: '顺序徽标个数跟着 order 变。' },
     'fence-after': { values: ['7'], effect: { on: '.vk-asm-fence', kind: 'attr', prop: 'data-fence' }, why: '屏障行跟着 fence-after 换位置。' },
     'fence-label': { values: ['屏障'], effect: { on: '.vk-asm-fence', kind: 'text' }, why: '屏障文字在 .vk-asm-fence。' },
-    'address-label': { values: ['ADDR'], effect: { on: '.vk-asm-a', kind: 'text' }, why: '列头文字由属性覆盖。' },
-    'bytes-label': { values: ['BYTES'], effect: { on: '.vk-asm-b', kind: 'text' }, why: '列头文字由属性覆盖。' },
-    'mnemonic-label': { values: ['OP'], effect: { on: '.vk-asm-m', kind: 'text' }, why: '列头文字由属性覆盖。' },
-    'operands-label': { values: ['ARGS'], effect: { on: '.vk-asm-o', kind: 'text' }, why: '列头文字由属性覆盖。' },
+    labels: {
+      values: ['ADDR|BYTES|OP|ARGS'],
+      effect: { on: '.vk-asm-a', kind: 'text' },
+      why: '列头文字由 labels="地址|机器码|指令|操作数" 一次覆盖四列。',
+    },
   },
   'vk-text': {
     size: {
@@ -436,12 +460,12 @@ export const EFFECT_OVERRIDES = {
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
-  'vk-pair.symbol-size': '轴符号是装饰件（aria-hidden / data-meta），12–200 的极端字号会超出并置块的高度；符号大小与中点位置由 tests/batch-primitives.test.mjs 单独守。',
+  'vk-pair.size': '轴符号是装饰件（aria-hidden / data-meta），12–200 的极端字号会超出并置块的高度；符号大小与中点位置由 tests/batch-primitives.test.mjs 单独守。',
   'vk-text.size': 'display 160 在 888 高的标本台里必然换行并超出安全区；四档字号与行高由 tests/batch-ef.test.mjs 用短文本单独守。',
   'vk-text.fit': 'fit 是为了"单行塞满"，字号可能被压到正文地板以下；填充精度由 tests/batch-primitives.test.mjs 的 780px 用例单独守。',
   'vk-text.fit-min': '边界值会把字号钉在 48 / 56，标本里的长句会因此换行；字号是否恰好等于边界由 tests/batch-primitives.test.mjs 单独守。',
   'vk-text.fit-max': '边界值会把 780px 的代码行压到 64 / 72，视觉审计只关心默认态；边界是否生效由 tests/batch-primitives.test.mjs 单独守。',
-  'vk-compare.mode': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
+  'vk-compare.variant': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
   'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
@@ -490,24 +514,14 @@ export const EFFECT_ANY = [
   },
 
   {
+    tag: 'vk-layer',
+    attr: 'fill',
+    reason: '叠层的高度由父容器与绝对定位的子元素共同决定，标本里 cover / contain 解出同一个盒子；落点由 tests/mechanism.test.mjs 的叠层用例守。',
+  },
+  {
     tag: 'vk-list',
     attr: 'variant',
     reason: '四种形态只换条目标记字形，不改高度；文字变化无法用单一几何/样式断言。',
-  },
-  {
-    tag: 'vk-edge',
-    attr: 'from-side',
-    reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。',
-  },
-  {
-    tag: 'vk-edge',
-    attr: 'to-side',
-    reason: '单场景只对部分边几何有效；强制边背对目标时会退回自动选边。',
-  },
-  {
-    tag: 'vk-code',
-    attr: 'numbering',
-    reason: 'specimen 没有 lines 区间，slice/file 都从 1 开始；有 lines 时由 frame-6 验证。',
   },
   {
     tag: 'vk-tree',
