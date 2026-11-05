@@ -1,0 +1,267 @@
+/* ============================================================================
+   v17 · 底座
+   ----------------------------------------------------------------------------
+   画布、版心、字阶、墨阶、状态。这一层只有"一帧怎样算立住"，不画任何具体件。
+   所有数值来自 tokens.generated.css（由 vocab.mjs 生成）。
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ 重置 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--vk-paper);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  width: var(--vk-canvas-w);
+}
+
+/* ------------------------------------------------------------------ 画布 */
+vk-page {
+  position: relative;
+  display: block;
+  width: var(--vk-canvas-w);
+  height: var(--vk-canvas-h);
+  overflow: hidden;
+  background: var(--vk-paper);
+  font-family: var(--vk-font-sans);
+  color: var(--vk-ink-1);
+}
+
+/* 版心：内容不越过的边界。三类对齐共用同一个盒子。 */
+.vk-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: var(--vk-margin-y) var(--vk-margin-x);
+}
+
+vk-page[align='top'] .vk-stage {
+  justify-content: flex-start;
+}
+vk-page[align='bottom'] .vk-stage {
+  justify-content: flex-end;
+}
+
+/* ------------------------------------------------------------------ 字
+   一档字号 = 一个行盒高度（都是 4 的倍数）。行宽用 em，所以"一行几个字"
+   不随字号漂移。 */
+.vk-t-cap,
+.vk-t-caption {
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  letter-spacing: var(--vk-track-caption);
+}
+.vk-t-body,
+vk-text {
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  letter-spacing: var(--vk-track-body);
+}
+.vk-t-subhead {
+  font-size: var(--vk-fs-subhead);
+  line-height: var(--vk-lh-subhead);
+  letter-spacing: var(--vk-track-subhead);
+}
+.vk-t-headline {
+  font-size: var(--vk-fs-headline);
+  line-height: var(--vk-lh-headline);
+  letter-spacing: var(--vk-track-headline);
+}
+.vk-t-display {
+  font-size: var(--vk-fs-display);
+  line-height: var(--vk-lh-display);
+  letter-spacing: var(--vk-track-display);
+}
+.vk-t-hero {
+  font-size: var(--vk-fs-hero);
+  line-height: var(--vk-lh-hero);
+  letter-spacing: var(--vk-track-hero);
+}
+
+/* ------------------------------------------------------------------ 墨
+   四档墨只有三档：primary / secondary / muted。
+   muted 是"不读第二遍的字"，但在任何底色上都还 ≥4.5:1。 */
+[ink='secondary'] {
+  color: var(--vk-ink-2);
+}
+[ink='muted'] {
+  color: var(--vk-ink-3);
+}
+
+/* 语义色只出现在线、图标、底标上；文字档是同一支色相的深版。 */
+[tone='info'] {
+  --vk-tone: var(--vk-info);
+}
+[tone='focus'] {
+  --vk-tone: var(--vk-focus);
+}
+[tone='ok'] {
+  --vk-tone: var(--vk-ok);
+}
+[tone='warn'] {
+  --vk-tone: var(--vk-warn);
+}
+[tone='err'] {
+  --vk-tone: var(--vk-err);
+}
+[tone='neutral'] {
+  --vk-tone: var(--vk-ink-1);
+}
+
+/* ------------------------------------------------------------------ 状态
+   state 只有两个词：current（现在讲这里）/ mark（作者标了一下）。
+   语义对错用 tone，不要用 state。 */
+[state='current'] {
+  --vk-state: var(--vk-focus);
+}
+[state='mark'] {
+  --vk-state: var(--vk-info);
+}
+
+/* ------------------------------------------------------------------ 文字 */
+vk-text {
+  display: block;
+  margin: 0;
+  max-width: 25em;
+  color: inherit;
+  font-family: var(--vk-font-sans);
+  text-wrap: pretty;
+  overflow-wrap: anywhere;
+  line-break: strict;
+}
+
+/* 行宽：写了 measure 就是"一行几个字"，不写按字号档。 */
+vk-text[size='caption'] {
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  letter-spacing: var(--vk-track-caption);
+  max-width: var(--vk-measure-caption);
+}
+vk-text[size='body'] {
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  max-width: var(--vk-measure-body);
+}
+vk-text[size='subhead'] {
+  font-size: var(--vk-fs-subhead);
+  line-height: var(--vk-lh-subhead);
+  max-width: var(--vk-measure-subhead);
+}
+vk-text[size='headline'] {
+  font-size: var(--vk-fs-headline);
+  line-height: var(--vk-lh-headline);
+  letter-spacing: var(--vk-track-headline);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-headline);
+}
+vk-text[size='display'] {
+  font-size: var(--vk-fs-display);
+  line-height: var(--vk-lh-display);
+  letter-spacing: var(--vk-track-display);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-display);
+}
+vk-text[size='hero'] {
+  font-size: var(--vk-fs-hero);
+  line-height: var(--vk-lh-hero);
+  letter-spacing: var(--vk-track-hero);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-hero);
+}
+
+/* 短句均衡断行：标题最常出现的"孤字"（一块内 / 存。）由它兜住。 */
+vk-text[size='headline'],
+vk-text[size='subhead'],
+vk-text[size='caption'] {
+  text-wrap: balance;
+}
+
+vk-text[weight='medium'] {
+  font-weight: var(--vk-w-medium);
+}
+vk-text[weight='bold'] {
+  font-weight: var(--vk-w-bold);
+}
+vk-text[mono] {
+  font-family: var(--vk-font-mono);
+}
+vk-text[align='center'] {
+  text-align: center;
+  margin-inline: auto;
+}
+vk-text[align='right'] {
+  text-align: right;
+  margin-inline: auto 0;
+}
+vk-text[align='left'] {
+  margin-inline: 0 auto;
+}
+
+/* 尺寸逐字缩放：measure 写数字时是"一行几个字"，n 个字 = n em。 */
+vk-text[tone] {
+  color: var(--vk-tone);
+}
+
+/* em：作者想让观众看这里。一条细下划线；跨行时由 text-decoration 自动断开。 */
+vk-text em {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--vk-info);
+  text-decoration-thickness: 0.045em;
+  text-underline-offset: 0.18em;
+}
+vk-text strong {
+  font-weight: var(--vk-w-bold);
+}
+vk-text[state='current'] {
+  color: var(--vk-tone, var(--vk-focus));
+}
+
+/* 图标与文字共存：图标是 1em 的字形，挂在文字前面。 */
+vk-text > .vk-text-ic {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  margin-right: 0.32em;
+  vertical-align: -0.12em;
+  color: var(--vk-tone, currentColor);
+}
+vk-text > .vk-text-ic svg {
+  width: 1em;
+  height: 1em;
+}
+
+/* ------------------------------------------------------------------ 工具 */
+[bleed='all'] {
+  margin: calc(var(--vk-margin-y) * -1) calc(var(--vk-margin-x) * -1);
+}
+[bleed='x'] {
+  margin-inline: calc(var(--vk-margin-x) * -1);
+}
+[bleed='y'] {
+  margin-block: calc(var(--vk-margin-y) * -1);
+}
+
+/* 只给读屏/调试用，不出现在画面上。 */
+.vk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

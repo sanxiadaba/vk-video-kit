@@ -1,0 +1,90 @@
+/* vk · 由 tools/css.mjs 从 src/vocab.mjs 生成 —— 不要手改。
+   改数值请改 vocab.mjs，然后 node tools/css.mjs。 */
+
+:root {
+  --vk-canvas-w: 1920px;
+  --vk-canvas-h: 1080px;
+  --vk-margin-x: 120px;
+  --vk-margin-y: 96px;
+  --vk-safe-w: 1680px;
+  --vk-safe-h: 888px;
+
+  --vk-fs-caption: 48px;
+  --vk-lh-caption: 64px;
+  --vk-measure-caption: 32em;
+  --vk-track-caption: 0em;
+  --vk-fs-body: 56px;
+  --vk-lh-body: 80px;
+  --vk-measure-body: 25em;
+  --vk-track-body: 0em;
+  --vk-fs-subhead: 84px;
+  --vk-lh-subhead: 120px;
+  --vk-measure-subhead: 18em;
+  --vk-track-subhead: 0em;
+  --vk-fs-headline: 132px;
+  --vk-lh-headline: 176px;
+  --vk-measure-headline: 12em;
+  --vk-track-headline: -0.01em;
+  --vk-fs-display: 200px;
+  --vk-lh-display: 240px;
+  --vk-measure-display: 8em;
+  --vk-track-display: -0.015em;
+  --vk-fs-hero: 280px;
+  --vk-lh-hero: 300px;
+  --vk-measure-hero: 4em;
+  --vk-track-hero: -0.02em;
+
+  --vk-gap-none: 0px;
+  --vk-gap-close: 16px;
+  --vk-gap-normal: 32px;
+  --vk-gap-wide: 64px;
+  --vk-gap-section: 128px;
+  --vk-radius-none: 0px;
+  --vk-radius-md: 12px;
+  --vk-radius-pill: 999px;
+  --vk-line-w-hair: 1px;
+  --vk-line-w-rule: 2px;
+  --vk-line-w-strong: 4px;
+
+  --vk-w-regular: 400;
+  --vk-w-medium: 500;
+  --vk-w-bold: 600;
+  --vk-font-sans: "Inter", "Noto Sans SC", "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
+
+  --vk-paper: #ffffff;
+  --vk-soft: #f4f6f9;
+  --vk-ink-1: #0b0f14;
+  --vk-ink-2: #333d4b;
+  --vk-ink-3: #5c6674;
+  --vk-line-color: rgba(11, 15, 20, 0.10);
+  --vk-line-strong: rgba(11, 15, 20, 0.32);
+  --vk-focus: #1b3fd6;
+  --vk-info: #3a4454;
+  --vk-ok: #0a6b57;
+  --vk-warn: #8a4b00;
+  --vk-err: #b3261e;
+  --vk-tint-info: #eef0f3;
+  --vk-tint-focus: #eaeefb;
+  --vk-tint-ok: #e9f2f0;
+  --vk-tint-warn: #f4efe8;
+  --vk-tint-err: #f8ebeb;
+
+  --vk-dark-bg: #0b0f14;
+  --vk-dark-bg1: #141a22;
+  --vk-dark-fg: #f7f9fc;
+  --vk-dark-fg2: #dbe3ee;
+  --vk-dark-meta: #9aa7b8;
+  --vk-dark-rule: rgba(255, 255, 255, 0.14);
+  --vk-dark-accent: #7aa2ff;
+  --vk-dark-ok: #8fe3c0;
+  --vk-dark-warn: #f5c97a;
+  --vk-dark-err: #ffb4ad;
+  --vk-dark-string: #8fe3c0;
+  --vk-dark-comment: #8b97a8;
+  --vk-syn-string: #0b6b4f;
+  --vk-syn-comment: #667085;
+  --vk-dot-red: #ff5f57;
+  --vk-dot-yellow: #febc2e;
+  --vk-dot-green: #28c840;
+}

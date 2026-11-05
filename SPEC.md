@@ -1,191 +1,199 @@
 # vk · 单帧画面库
 
-**这个库只回答一件事：把一个内容单元画成 1920×1080 画布上正确、清晰、可测量的那个东西，并把若干单元按份摆进画布。**
+**一句话：把一个内容单元画成 1920×1080 上正确、清晰、可测量的那个东西，再把若干单元摆进一帧。**
 
-它不回答：这一页讲什么、分几块、先说哪句、什么时候出现、怎么动。
-没有模板、没有讲解骨架、没有时间轴、没有播放器。
+它不回答：这一页讲什么、分几段、先说哪句、什么时候出现、怎么动。
+没有模板、没有时间轴、没有播放器。一帧就是一张图。
 
 ---
 
-## 1. 画布
+## 1 一帧
 
-- 固定 **1920×1080**，不缩放；出片尺寸就是设计尺寸。
-- 版心 **1680×888**：左右 120，上下 96。内容落在版心里。
-- 正文基准 **56px**。手机横屏把 1920 收到约 780 宽（0.406×），56 → 22.7 设备像素。
-- 一张 `<vk-page>` 就是一帧。`align="top|center|bottom"` 决定内容在版心里的纵向位置。
+- **1920×1080**，不缩放。手机横屏看到约 780 宽（0.406×）。
+- **版心 1680×888**：左右 120、上下 96。内容落在版心里。
+- 作者页是**片段**：只写 `<vk-page>`，`<link>` 和 `<script>` 由构建注入，不用你抄路径。
+- 一帧只说一件事。装不下就是这一帧讲多了 —— 拆帧，不是缩字。
 
 ```html
-<link rel="stylesheet" href="vk/fonts.css">
-<link rel="stylesheet" href="vk/vk.css">
-<script src="dist/vk.js"></script>
-
-<vk-page align="center">
-  <vk-stack gap="md">
+<vk-page>
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 4">内存</vk-label>
     <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5"></vk-code>
+    <vk-code id="c" lang="c" file="hello.c" current="2">
+      <script type="text/plain" data-vk-source>
+char s[] = "hello";
+s[0] = 'H';
+      </script>
+    </vk-code>
   </vk-stack>
+  <vk-callout mode="note" for="#c@line:2">把 H 写进第一个字节</vk-callout>
 </vk-page>
 ```
 
-## 2. 字号
+一个文件可以写多帧：`<vk-page id="1-intro">…</vk-page><vk-page id="2-index">…</vk-page>`，
+`vk render a.html` 出 `a-1-intro.png`、`a-2-index.png`。
 
-只有六档，名字就是语义：
+## 2 只有五个词
+
+| 词 | 意思 | 取值 |
+|---|---|---|
+| `tone` | 语义 | `neutral / info / focus / ok / warn / err` |
+| `size` | 字号 | 六个档名，或像素数 |
+| `gap` `pad` | 间距 | `none / close / normal / wide / section`，或像素数 |
+| `current` | 第几项 | **1 起**；`-1` = 没有当前 |
+| `state` | 注意力 | `current`（现在讲这里）/ `mark`（作者标了一下） |
+
+没有第二个词表达同一个意思。`tone` 管对错，`state` 管注意力，别混。
+
+## 3 字号
 
 | 档 | px | 手机 | 用在哪 |
 |---|---|---|---|
-| `caption` | 48 | 19.5 | 标签、单位、脚注；只给不读第二遍的字 |
-| `body` | 56 | 22.7 | 正文与等宽数据 |
-| `headline` | 112 | 45 | 标题 |
-| `display` | 200 | 81 | 一页最多一次，给「本页唯一的答案」 |
+| `caption` | 48 | 19.5 | 标签、单位、脚注：不读第二遍的字 |
+| `body` | 56 | 22.7 | 正文与数据（地板） |
+| `subhead` | 84 | 34 | 一句话的主张 |
+| `headline` | 132 | 54 | 一帧的标题（≤ 14 字） |
+| `display` | 200 | 81 | 一页最多一次 |
 | `hero` | 280 | 114 | 一个数字 / 一个词当家 |
-| `mega` | 400 | 162 | 同上，极端场合 |
 
-- `size` 只表字号；密度写 `mass="compact|normal|hero"`。
-- 平台地板：任何可读文字 ≥ 48px。`vk check` 会拦。
-- `vk-text` 默认按字号取行宽（body 25 字）；要铺满写 `measure="none"`。
+- 行高固定（64 / 80 / 120 / 176 / 240 / 300），不要自己写行高。
+- 行宽按「一行几个字」自动算：正文 25 字。要铺满写 `measure="none"`。
+- `size` 只表字号；没有 `mass`、没有第二套密度。
 
-## 3. 颜色
+## 4 间距与形
 
-一份调色板，三层变量：`--vk-theme-*`（唯一出现 hex 的地方）→ `--vk-*` 语义名 → 组件。
+- 间距只有五档：`close 16 / normal 32 / wide 64 / section 128`，加像素逃生口 `gap="48"`。
+- 圆角 `none / md / pill`；描边 `none / hair / strong`；线宽 `hair 1 / rule 2 / strong 4`。
+- 库不出现 margin：父级给 `gap`，自己给 `pad`。
 
-- **材质只有一种：白纸。** 层次靠纸的明度：`surface="none|paper|soft|sf-1..4|wash|tint|dark|accent"`。
-- **`tone` 六值**：`neutral / info / focus / ok / warn / err`。语义色只出现在底、条、图标上，不写正文。
-- **`ink` 三档**：`primary / secondary / muted`。正文用 primary。
-- 强调色只有一个含义：**正在讲这里**。作者加的标注用 `em`（一条细下划线）。
+## 5 颜色
 
-## 4. 排布
+- **纸**：`paper`；`soft` 一档浅底；`tint` 语义淡底；`dark` 只在需要反白时用。
+- **墨**：`primary / secondary / muted` 三档。正文用 primary。
+- **一个焦点色**（钴蓝）：只在「正在讲这里」时出现。
+- **四个语义色**：`info`（作者注）/ `ok` / `warn` / `err`。只出现在线、图标、底标上；**不写正文**。
+- 层：`tokens.generated.css`（由 `vocab.mjs` 生成）→ `--vk-*` → 组件。组件里没有 hex。
 
-只有一种写法：**分份**。容器给份，子项占份。
+## 6 排布
+
+只有四种写法：
 
 ```html
-<vk-stack gap="lg">…</vk-stack>                 <!-- 竖排 / direction="row" 横排 -->
-<vk-grid cols="3" gap="md">                     <!-- 12 栏；cols 1–12 -->
-  <vk-code span="2" …></vk-code>
-  <vk-stack span="1">…</vk-stack>
+<vk-stack gap="wide">…</vk-stack>                 <!-- 竖排；direction="row" 横排 -->
+<vk-grid cols="12" gap="normal">                  <!-- 12 栏，子项写 span / row-span -->
+  <vk-code span="7">…</vk-code>
+  <vk-stack span="5">…</vk-stack>
 </vk-grid>
-<vk-pair split="50" symbol="vs">…两块…</vk-pair> <!-- 并置对照 -->
-<vk-flow arrow="true,label:gcc">…<li>…</li>…</vk-flow>
-<vk-canvas w="1400" h="600">…x/y 绝对摆放…</vk-canvas>
-<vk-layer>…叠放；第一个铺底…</vk-layer>
+<vk-canvas w="1400" h="600">…子项写 x / y…</vk-canvas>
+<vk-layer>…第一个铺底，其余叠上去…</vk-layer>
+<vk-pair symbol="vs">…正好两块…</vk-pair>
 ```
 
-- 布局协议（所有块级）：`span` / `row-span`（grid 子项）、`grow` / `stretch` / `bleed` / `overflow`。
-- `x / y / w / h / z` **只在 `vk-canvas` 的子项里合法**。
-- `style` 不被接受：布局要能算、能验，不能手摆。
+- `span` 只属于 `vk-grid` 的子项；`x / y / w / h / z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
 
-## 5. 内容入口
+## 7 27 个件
 
-**真实文件是唯一真相。** 代码、终端、diff、树、字节、汇编、公式都写 `src=`；也可以内联：
+| 件 | 画什么 | 关键属性 |
+|---|---|---|
+| `vk-text` | 一段文字 | `size` `weight` `ink` `tone` `align` `measure` `icon` `mono` |
+| `vk-label` | 一行小字 | `variant`(kicker/chip/badge) `tone` `icon` `counter` |
+| `vk-inline` | 行内代码 / 公式 / 上下标 / 键位 | `variant` |
+| `vk-box` | 一块面 | `surface` `tone` `pad` `radius` `border` `title` `chrome` `ring` |
+| `vk-img` | 一张图 | `src` `alt` `ratio` `fill` `radius` `position` |
+| `vk-code` | 代码窗 | `lang` `src` `lines` `file` `current` `focus` `fold` `size` `long` `chrome` |
+| `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface` `chrome` |
+| `vk-diff` | 改动 | `src` `lines` `file` `lang` `variant` `current` `size` |
+| `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
+| `vk-table` | 表格 | `variant` `mono` `size` `caption` |
+| `vk-list` | 列表 | `variant`(bullet/check/ordered/define) `gap` `size` |
+| `vk-math` | 公式 | `src` `display` `size` |
+| `vk-tree` | 文件树 | `src` `title` `depth` `current` `size` |
+| `vk-cells` | 内存格 | `addr` `cols` `current` `size` |
+| `vk-bytes` | 字节窗 | `src` `addr` `offset` `length` `cols` `current` |
+| `vk-bits` | 位串 | `value` `index` `group` `sign` |
+| `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
+| `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
+| `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
+| `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` `zoom` |
+| `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `side` `gap` `shape` `tone` `size` |
+| `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
+| `vk-page` | 一帧 | `align`(top/center/bottom，默认 center) |
+
+属性的完整取值与默认值：`vk doc <tag>`；机器可读的一份：`vk brief --json`。
+
+**选型**：要讲的东西 → `code` / `term` / `diff` / `asm`（真实文本）· `cells` / `bytes` / `bits`（内存）·
+`table` / `list` / `tree`（结构）· `steps` / `bars` / `timeline` / `compare` / `pair`（关系）·
+`box` `text` `label`（版面）· `callout`（指着某处说一句）。
+
+## 8 内容从哪来
+
+**真实文本是唯一真相。** 两种写法，二选一：
 
 ```html
-<vk-code lang="c" file="hello.c">
-  <script type="text/plain" data-vk-source>
-#include <stdio.h>
-int main(void) { return 0; }
-  </script>
-</vk-code>
+<vk-code lang="c" src="../code/hello.c" lines="4-6"></vk-code>   <!-- 真文件 -->
+<vk-code lang="c"><script type="text/plain" data-vk-source>…</script></vk-code>  <!-- 内联 -->
 ```
 
-`src` 与内联块只能二选一。构建期把高亮 / hexdump / 树 / 公式 / 图标内联进 `out/`，运行期零依赖。
+构建期把高亮 / 公式 / 字节 / 树 / 汇编编译进页面，运行期零依赖。
+`vk render` 永远先构建，所以不存在「改了源没重建」。
 
-| 标签 | 它画什么 | 关键属性 |
+## 9 关系：指着某处说一句
+
+```html
+<vk-callout mode="ring" for="#c@line:5"></vk-callout>
+<vk-callout mode="arrow" from="#a" to="#b" shape="ortho"></vk-callout>
+<vk-callout mode="note" for="#c@line:5" side="bottom">这一行在写内存</vk-callout>
+```
+
+`for / from / to` 接受 CSS 选择器，或 `#id@part:arg`：
+
+| part | 用在哪 | arg |
 |---|---|---|
-| `vk-text` | 一段文字 | `size` `weight` `mono` `ink` `tone` `icon` |
-| `vk-label` | 一行小字 | `variant`（kicker/chip/badge/tag）`counter` `section` |
-| `vk-inline` | 行内代码 / 公式 / 键位 | `variant`（code/math/sup/sub/link/keys） |
-| `vk-box` | 一个面 | `surface` `tone` `pad` `radius` `border` `ring` |
-| `vk-panel` | 有标题的分区 | `title` `variant` `chrome` `surface` `border` |
-| `vk-img` | 一张图 | `src` `alt` `ratio` `fill` `position` |
-| `vk-list` | 列表 | `variant`（bullet/check/define/ordered） |
-| `vk-code` | 代码窗 | `src` `lines` `current` `focus` `fold` `long` `columns` `mass` |
-| `vk-term` | 终端 transcript | `src` `prompt` `marks` `current` |
-| `vk-diff` | 改动 | `src` `variant`（unified/split）`columns` |
-| `vk-table` | 表格 | 原生 `<table>`；`variant` `mono` `stripe` |
-| `vk-math` | 公式 | `src`（.tex）`display` |
-| `vk-compare` | 两张图对照 | `labels` `split` `mark` `zoom` |
-| `vk-tree` | 文件树 | `src` 目录 / 内联；`depth` `columns` `current` |
-| `vk-cells` | 内存格 | `<li value label>`；`cols` `addr` `stride` |
-| `vk-bytes` | 字节窗 | `src` 二进制；`addr` `offset` `length` `cols` |
-| `vk-bits` | 一行位串 | `value` 或 `<li from to label>` |
-| `vk-bars` | 横向条 | `<li value label>`；`max` `scale` `unit` |
-| `vk-asm` | 汇编清单 | `src` objdump 文本；`lines` `current` `fence` `order` |
-| `vk-timeline` | 时间线 | `<li date label>`；`start` `end` `lanes` |
-| `vk-steps` | 步骤进度 | `<li>`；`current`（1 起，-1 = 不标） |
-| `vk-flow` | 序列 | `<li label>`；`arrow` |
-| `vk-pair` | 两块并置 | `split` `axis` `symbol` `tone="左,右"` |
-| `vk-canvas` | 坐标画布 | `w` `h` `pad` `grid` |
-| `vk-layer` | 叠放 | `surface` `fill` `readable` |
-| `vk-annotate` | 箭头 / 圈选 / 批注 / 编号 | `mode` `for` / `from`+`to` |
-| `vk-note` | 边注 / 气泡 / 编号图例 | `variant` `for` |
-| `vk-page` | 画布 | `align` |
-
-属性的取值、默认值用 `vk doc <tag>` 查，不要猜。
-
-## 6. 状态：只有一个词
-
-- `state="current|mark|ok|warn|err"` 写在元素上；`current` 属性写在数据组件上（第几行 / 第几项，**1 起，-1 = 没有当前**）。
-- 一帧只有一处焦点。`vk check` 会把两处 `current` 判成 error。
-- 没讲到的东西不存在：本层没有 `at` / `cue` / `enter` / `duration`。要“第 3 秒的样子”，就把那一帧写成一张页。
-
-## 7. 锚点
-
-`for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`。多个目标用 `;` 分隔。
-
-| part | 用在 | arg |
-|---|---|---|
-| `point` | 任意 | `x%,y%` |
-| `side` | 任意 | `top / right / bottom / left` |
-| `region` | 任意 | `x%,y%,w%,h%` |
-| `line` / `char` | code / diff / asm | 源文件行号；列从 0 起 |
-| `cell` | cells / table | 下标或 `行,列` |
-| `byte` | cells / bytes | 偏移 |
-| `bit` / `field` | bits | 位 / 字段下标 |
+| `line` | code / diff / asm | 源文件行号（1 起） |
+| `cell` | cells | 下标（0 起） |
+| `byte` | bytes | 字节偏移 |
+| `bit` | bits | 位下标（0 起） |
 | `addr` | asm | 指令地址 |
-| `row` / `node` / `item` | table / tree / list | 见组件 |
-| `step` | steps | 从 0 起 |
-| `event` / `lane` | timeline | 事件下标 / 泳道 |
+| `event` / `lane` | timeline | 事件下标 / 泳道名 |
+| `node` | tree | 节点路径 |
+| `point` / `side` / `region` | 任意 | `x%,y%` / `top` / `x%,y%,w%,h%` |
 
-写错会在构建期报错。
+圈选按**字的墨迹**取框：`#c@line:5` 圈的是那一行的字，不是 1680 宽的行盒。
 
-## 8. 工作流
-
-```
-pages/*.html  --vk build-->  out/*.html  --vk shot-->  out/*.png
-```
+## 10 工作流
 
 ```bash
-node bin/vk.mjs build              # 递归 pages/ → out/
-node bin/vk.mjs check pages/       # 结构自检；有 error 退出码 1
-node bin/vk.mjs shot pages/a.html  # 出图 + 同一份自检
-node bin/vk.mjs shot pages/a.html --phone   # 780 宽，按手机尺度看
-node bin/vk.mjs shot pages/a.html --width 640 --out out/a.png
-node bin/vk.mjs doc vk-code        # 属性 / 取值 / 默认值
-node bin/vk.mjs brief              # 30 个标签的属性清单
+vk render pages/01.html          # 需要时自动重建库 → 构建 → 自检 → 出图 → 打印度量
+vk render pages/ --phone         # 780 宽，按手机尺度看
+vk check  pages/01.html          # 只自检，不出图
+vk doc vk-code                   # 一件的属性表
+vk brief --json                  # 全部件的契约（给机器读）
+vk icons arrow                   # 搜图标名
 ```
 
-**构建只写 `out/`，不改源文件。** 源里永远只有你写的内容。
+产物在 `out/<同路径>`；一帧一张 PNG，多帧文件按 `<文件名>-<id>.png`。
 
-## 9. 自检判什么
+## 11 自检判什么
 
-`vk check` 只判「无论你画什么，它都错」的事：
+只判「无论你画什么，它都错」的事：
 
-- 字号低于 48；正文落在 48（低于 body 档）；
-- 对比度不足（正文 7:1，标注 4.5:1）；
-- 超出画布 / 超出安全区；
-- 横向或纵向被裁、内容被盒子裁掉；
-- 非覆盖层元素互相压住；
-- 一处以上焦点；
-- 锚点解析失败、组件渲染失败、素材过期、空锚点；
-- 一张什么都没画出来的空帧。
+1. 出画布 / 出安全区
+2. 内容被裁掉、被省略号截断
+3. 非覆盖层互相压住
+4. 字号低于 36px（手机 14.6px）
+5. 对比度不足（正文 4.5:1，大字 3:1）
+6. 锚点指不到东西
+7. 渲染失败 / 数据过期 / 图片加载失败
+8. 空帧
 
-审美不判。但上面每一条都是“画错了”，不是“不好看”。
+**不判**：焦点几个、留白多少、标题多长、色相几种。好看不靠门禁，靠默认值和组件的自动适配
+（代码窗放不下会自己缩字号；步骤条窄了会自己竖排；注释自动避开内容；表格数字自动右对齐）。
 
-## 10. 已经踩过的坑
+## 12 常见错
 
-- **`span` 只属于 `vk-grid` 的子项**；`w/h` 只属于 `vk-canvas` 的子项。
-- **`current` 是 1 起**；写 0 或超出范围，构建期报。
-- **`vk-bytes` 的地址是算出来的**：屏幕上 = `addr + offset + i`。
-- **`vk-compare` 的 `mark` 是百分比**，相对取景框。
-- **边注需要目标一侧有空间**：整行宽的组件不要把自身当边注目标。
-- **带 `src` 的组件必须先 `vk build`**；没预编译会 stale，自检直接红。
-- **一帧装不下就拆帧**：1080 高、正文 56、行高 1.5，版心里大约 11 行正文。超了不是“挤一挤”，是这一帧讲多了。
+- `span` 写到 `vk-stack` 的子项上（只有 grid 子项认）。
+- 一帧塞两组 `current` 以上：观众不知道看哪。一处就够。
+- 代码行数按窗口算，不是按源文件：`@line:5` 是源文件第 5 行。
+- 把长句塞进 `headline`：标题 ≤ 14 字，超了换 `subhead`。
+- 用 `tone` 给正文上色：语义色只在线和底上，正文用 `ink`。
+- 一帧超过 888 高：删内容或拆帧。`vk render` 会告诉你超了多少。

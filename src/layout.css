@@ -1,0 +1,186 @@
+/* ============================================================================
+   v17 · 排布
+   只输出位置与尺寸，自己不画任何东西。间距只走 gap，库里不出现 margin。
+   ========================================================================== */
+
+.vk-stage > * {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+[grow] {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------ 竖排 */
+vk-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap, var(--vk-gap-normal));
+  min-width: 0;
+}
+
+vk-stack[direction='row'] {
+  flex-direction: row;
+}
+vk-stack[direction='row'] > * {
+  flex: 0 0 auto;
+}
+vk-stack[direction='row'] > [grow] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+vk-stack[align='start'] {
+  align-items: flex-start;
+}
+vk-stack[align='center'] {
+  align-items: center;
+}
+vk-stack[align='end'] {
+  align-items: flex-end;
+}
+vk-stack[align='stretch'] {
+  align-items: stretch;
+}
+
+vk-stack[justify='center'] {
+  justify-content: center;
+}
+vk-stack[justify='end'] {
+  justify-content: flex-end;
+}
+vk-stack[justify='between'] {
+  justify-content: space-between;
+}
+
+/* 按份数分剩余高度：只有写了 weights 的子项参与，其余保持内容高。 */
+vk-stack > [data-weight] {
+  flex: var(--vk-weight, 1) 1 0;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------ 网格 */
+vk-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--vk-cols, 2), minmax(0, 1fr));
+  grid-auto-rows: minmax(0, auto);
+  gap: var(--vk-gap, var(--vk-gap-normal));
+  min-width: 0;
+}
+
+vk-grid > * {
+  min-width: 0;
+}
+
+vk-grid[align='start'] {
+  align-items: start;
+}
+vk-grid[align='center'] {
+  align-items: center;
+}
+vk-grid[align='end'] {
+  align-items: end;
+}
+vk-grid[align='stretch'] {
+  align-items: stretch;
+}
+
+vk-grid > [span='1'] { grid-column: span 1; }
+vk-grid > [span='2'] { grid-column: span 2; }
+vk-grid > [span='3'] { grid-column: span 3; }
+vk-grid > [span='4'] { grid-column: span 4; }
+vk-grid > [span='5'] { grid-column: span 5; }
+vk-grid > [span='6'] { grid-column: span 6; }
+vk-grid > [span='7'] { grid-column: span 7; }
+vk-grid > [span='8'] { grid-column: span 8; }
+vk-grid > [span='9'] { grid-column: span 9; }
+vk-grid > [span='10'] { grid-column: span 10; }
+vk-grid > [span='11'] { grid-column: span 11; }
+vk-grid > [span='12'] { grid-column: span 12; }
+
+vk-grid > [row-span='2'] { grid-row: span 2; }
+vk-grid > [row-span='3'] { grid-row: span 3; }
+vk-grid > [row-span='4'] { grid-row: span 4; }
+vk-grid > [row-span='5'] { grid-row: span 5; }
+vk-grid > [row-span='6'] { grid-row: span 6; }
+
+/* ------------------------------------------------------------------ 坐标 */
+vk-canvas {
+  position: relative;
+  display: block;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ 叠层 */
+vk-layer {
+  position: relative;
+  display: grid;
+  min-width: 0;
+}
+
+vk-layer > * {
+  grid-area: 1 / 1;
+  min-width: 0;
+  min-height: 0;
+}
+
+/* ------------------------------------------------------------------ 并置 */
+vk-pair {
+  position: relative;
+  display: grid;
+  grid-template-columns:
+    calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2)
+    calc((100 - var(--vk-split, 50)) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
+  gap: var(--vk-gap, var(--vk-gap-wide));
+  min-width: 0;
+}
+
+vk-pair[direction='vertical'] {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows:
+    calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2)
+    calc((100 - var(--vk-split, 50)) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
+}
+
+/* 中轴：一条 2px 的线，落在两块之间。 */
+vk-pair[data-axis]::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2 + var(--vk-gap, var(--vk-gap-wide)) / 2);
+  top: 8%;
+  height: 84%;
+  width: var(--vk-line-w-rule);
+  translate: -50% 0;
+  background: var(--vk-line-strong);
+}
+
+vk-pair[direction='vertical'][data-axis]::before {
+  left: 8%;
+  top: calc(var(--vk-split, 50) * 1%);
+  width: 84%;
+  height: var(--vk-line-w-rule);
+  translate: 0 -50%;
+}
+
+/* 轴上的符号：→ / = / vs。 */
+vk-pair[data-symbol]::after {
+  content: attr(data-symbol);
+  position: absolute;
+  left: calc(var(--vk-split, 50) * 1%);
+  top: 50%;
+  translate: -50% -50%;
+  padding: 0 var(--vk-gap-close);
+  background: var(--vk-paper);
+  color: var(--vk-ink-2);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-fs-body);
+  line-height: 1;
+  white-space: nowrap;
+}
+
+vk-pair[direction='vertical'][data-symbol]::after {
+  left: 50%;
+  top: calc(var(--vk-split, 50) * 1%);
+}

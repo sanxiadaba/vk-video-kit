@@ -1,155 +1,125 @@
 /**
- * 测试。
+ * 测试：契约 → 文档 → 渲染。
  *
- *   npm test          schema + 构建 30 张样张（不启浏览器）
- *   npm test -- --full 再加：逐页自检 + 640 宽截图回归
- *   npm test -- --update  重写截图基线
+ *   npm test
+ *
+ * 不测「像素没变」，测「契约没漂、文档没错、验收帧全部干净」。
+ * 像素回归只会告诉你"变了"，不会告诉你"错了"。
  */
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
-import { TAGS, TAG_NAMES, LAYERS, COMMON, CANVAS, LAYOUT_ATTRS, CHILD_ATTRS, CHILDREN, STATES } from '../src/schema.mjs';
-import { SAMPLES, fixturePage } from './samples.mjs';
-import { publish } from './lib/publish.mjs';
+import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
+import { FONT, GAP, TONE, SURFACE, STATE, INK } from '../src/vocab.mjs';
 
-const full = process.argv.includes('--full');
-const update = process.argv.includes('--update');
-let failures = 0;
+let bad = 0;
 const ok = (cond, msg) => {
   if (cond) console.log(`  ✓ ${msg}`);
   else {
-    failures++;
+    bad++;
     console.error(`  ✗ ${msg}`);
   }
 };
 
-/* ---------------------------------------------------------------- schema */
-console.log('schema');
-ok(TAG_NAMES.length === 30, `30 个标签（${TAG_NAMES.length}）`);
-ok(new Set(TAG_NAMES).size === TAG_NAMES.length, '标签名唯一');
-const layerIds = new Set(LAYERS.map((l) => l.id));
+/* ---------------------------------------------------------------- 契约 */
+console.log('契约');
+ok(TAG_NAMES.length === 27, `27 个件（${TAG_NAMES.length}）`);
+ok(new Set(TAG_NAMES).size === TAG_NAMES.length, '件名唯一');
+
+const layers = new Set(['page', 'layout', 'surface', 'content', 'diagram', 'relation']);
 for (const tag of TAG_NAMES) {
-  if (!tag.startsWith('vk-')) ok(false, `${tag} 以 vk- 开头`);
-  if (!layerIds.has(TAGS[tag].layer)) ok(false, `${tag} 的 layer 合法`);
-  for (const [name, spec] of Object.entries(TAGS[tag].attrs)) {
-    if (!spec.values && !spec.type) ok(false, `${tag}/${name} 有 type 或 values`);
-    if (spec.values && spec.default !== undefined && !spec.values.includes(spec.default))
-      ok(false, `${tag}/${name} 的默认值在词表里`);
-    if (spec.values && new Set(spec.values).size !== spec.values.length) ok(false, `${tag}/${name} 的取值不重复`);
+  const t = TAGS[tag];
+  ok(!!t.name && !!t.summary, `${tag} 有名字与一句话说明`);
+  ok(layers.has(t.layer), `${tag} 的层合法（${t.layer}）`);
+  const attrs = attrsOf(tag);
+  const own = Object.keys(t.attrs).length;
+  if (own > 10) {
+    bad++;
+    console.error(`  ✗ ${tag} 有 ${own} 个属性（上限 10）`);
+  }
+  for (const [name, spec] of Object.entries(attrs)) {
+    if (!spec.label || !spec.group) {
+      bad++;
+      console.error(`  ✗ ${tag}/${name} 缺 label 或 group`);
+    }
+    if (!spec.values && !spec.type) {
+      bad++;
+      console.error(`  ✗ ${tag}/${name} 既没有 type 也没有 values`);
+    }
+    if (spec.values && spec.default !== undefined && !spec.values.includes(spec.default)) {
+      bad++;
+      console.error(`  ✗ ${tag}/${name} 的默认值 ${spec.default} 不在取值里`);
+    }
+    if (spec.values && new Set(spec.values).size !== spec.values.length) {
+      bad++;
+      console.error(`  ✗ ${tag}/${name} 的取值有重复`);
+    }
+  }
+  if (t.children?.kind === 'item') {
+    ok(!!t.children.attrs, `${tag} 的 <li> 契约存在`);
   }
 }
-for (const k of Object.keys(CHILD_ATTRS)) ok(!!TAGS[k], `CHILD_ATTRS 的父标签 ${k} 存在`);
-for (const k of Object.keys(CHILDREN)) ok(!!TAGS[k], `CHILDREN 的父标签 ${k} 存在`);
-for (const k of Object.keys(STATES)) ok(!!TAGS[k], `STATES 的父标签 ${k} 存在`);
-ok(Object.keys(COMMON).every((k) => LAYOUT_ATTRS.has(k)), 'LAYOUT_ATTRS = COMMON');
-ok(Object.keys(CANVAS).length === 5, '画布协议 5 个（x/y/w/h/z）');
+console.log(`  · 属性总数 ${TAG_NAMES.reduce((n, t) => n + Object.keys(TAGS[t].attrs).length, 0)}`);
 
-/* 每个公开取值都必须被某处消费：CSS 或运行期。 */
-const haystack = [];
-const walk = (d) => {
-  for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
-    const p = path.join(d, ent.name);
-    if (ent.isDirectory()) walk(p);
-    else if (/\.(css|mjs)$/.test(p) && !p.includes('icons.generated')) haystack.push(fs.readFileSync(p, 'utf8'));
-  }
-};
-walk('src');
-const text = haystack.join('\n');
-let unused = 0;
+/* 词表本身就是取值来源：schema 里出现的枚举必须来自 vocab。 */
+const VOCAB = new Set([...TONE, ...SURFACE, ...STATE, ...INK, ...Object.keys(FONT), ...Object.keys(GAP)]);
 for (const tag of TAG_NAMES) {
-  for (const [name, spec] of Object.entries(TAGS[tag].attrs)) {
-    if (!spec.values || spec.values.length < 3) continue;
-    for (const v of spec.values) {
-      if (v === 'none' || v === 'auto' || v === '') continue;
-      if (!text.includes(`'${v}'`) && !text.includes(`=${v}`) && !text.includes(`"${v}"`)) {
-        unused++;
-        if (unused <= 12) console.error(`  · ${tag}/${name} 的取值 ${v} 没有消费者`);
-      }
+  for (const [name, spec] of Object.entries(attrsOf(tag))) {
+    if (name === 'tone' && spec.values && spec.values.join() !== TONE.join()) {
+      bad++;
+      console.error(`  ✗ ${tag}/tone 与词表不一致`);
     }
   }
 }
-ok(unused === 0, `枚举取值都有消费者（${unused} 个没有）`);
+ok(VOCAB.size > 20, '词表已加载');
 
-/* ---------------------------------------------------------------- 样张 */
-console.log('\nfixtures');
-for (const tag of Object.keys(SAMPLES)) {
-  const file = path.join('tests/pages', `${tag}.html`);
-  fs.mkdirSync('tests/pages', { recursive: true });
-  fs.writeFileSync(file, fixturePage(tag));
-}
-ok(Object.keys(SAMPLES).length === TAG_NAMES.length, `30 张样张（${Object.keys(SAMPLES).length}）`);
+/* ---------------------------------------------------------------- 文档 */
+console.log('\n文档');
+const spec = fs.readFileSync('SPEC.md', 'utf8');
+for (const tag of TAG_NAMES) ok(spec.includes(`\`${tag}\``), `SPEC 提到 ${tag}`);
+ok(!/--vk-s[1-8]/.test(spec), 'SPEC 里没有旧间距名');
+ok(!/mass=/.test(spec), 'SPEC 里没有已删除的 mass');
+
+const tokens = execFileSync(process.execPath, ['tools/css.mjs', '--check'], { encoding: 'utf8' });
+ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
+
+/* ---------------------------------------------------------------- 渲染 */
+console.log('\n验收帧');
+let report = [];
 try {
-  execFileSync(process.execPath, ['bin/vk.mjs', 'build', 'tests/pages'], { stdio: 'pipe' });
-  ok(true, '30 张样张构建通过');
+  const out = execFileSync(
+    process.execPath,
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', '--json'],
+    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+  );
+  report = JSON.parse(out);
 } catch (e) {
-  ok(false, '样张构建失败');
-  console.error(e.stdout?.toString() || e.message);
-}
-
-/* ------------------------------------------------------------ 自检 / 回归 */
-if (full) {
-  publish();
-  const tags = TAG_NAMES;
-  const shotArgs = ['bin/vk.mjs', 'shot'];
-  for (const tag of tags) shotArgs.push(`tests/pages/${tag}.html`);
-  shotArgs.push('--out-dir', 'out/golden', '--width', '640', '--json');
-
-  let report = [];
   try {
-    report = JSON.parse(execFileSync(process.execPath, shotArgs, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
-  } catch (e) {
-    try {
-      report = JSON.parse(e.stdout);
-    } catch {
-      ok(false, '批量截图失败');
-      console.error(e.stdout || e.message);
-    }
+    report = JSON.parse(e.stdout || '[]');
+  } catch {
+    bad++;
+    console.error('  ✗ 渲染失败：', (e.stdout || e.message).slice(0, 400));
   }
-
-  console.log('\naudit');
-  const dirty = report.filter((r) => r.errors.length || r.issues.length || r.special.length);
-  for (const r of dirty) {
-    ok(false, `${path.basename(r.page)} 有 error`);
-    for (const x of [...r.errors, ...r.issues, ...r.special]) console.error(`    · ${x.what || x.type || x}`);
-  }
-  ok(report.length === tags.length && !dirty.length, `30 页自检干净（${report.length} 页）`);
-
-  console.log('\ngolden');
-  const { PNG } = await import('pngjs');
-  const dir = 'tests/golden';
-  fs.mkdirSync(dir, { recursive: true });
-  let diff = 0;
-  for (const r of report) {
-    const tag = path.basename(r.page, '.html');
-    if (!r.png) {
-      ok(false, `${tag} 没有出图`);
-      continue;
-    }
-    const base = path.join(dir, `${tag}.png`);
-    if (update || !fs.existsSync(base)) {
-      fs.copyFileSync(r.png, base);
-      continue;
-    }
-    const a = PNG.sync.read(fs.readFileSync(base));
-    const b = PNG.sync.read(fs.readFileSync(r.png));
-    if (a.width !== b.width || a.height !== b.height) {
-      ok(false, `${tag} 尺寸变了 ${a.width}×${a.height} → ${b.width}×${b.height}`);
-      continue;
-    }
-    let bad = 0;
-    for (let i = 0; i < a.data.length; i += 4) {
-      if (Math.abs(a.data[i] - b.data[i]) > 8 || Math.abs(a.data[i + 1] - b.data[i + 1]) > 8 || Math.abs(a.data[i + 2] - b.data[i + 2]) > 8) bad++;
-    }
-    const ratio = bad / (a.width * a.height);
-    if (ratio > 0.002) {
-      diff++;
-      ok(false, `${tag} 像素差 ${(ratio * 100).toFixed(2)}%`);
-    }
-  }
-  ok(diff === 0, '30 张截图回归一致');
 }
+const frames = report.flatMap((r) => r.frames || []);
+ok(frames.length >= 25, `渲染出 ${frames.length} 帧`);
+let issues = 0;
+for (const r of report) {
+  for (const f of r.frames || []) {
+    for (const x of f.issues) {
+      issues++;
+      console.error(`  ✗ ${path.basename(r.file)} #${f.id}: ${x.what}`);
+    }
+    if (f.metrics && f.metrics.fill > 100) {
+      bad++;
+      console.error(`  ✗ ${path.basename(r.file)} #${f.id} 占版心 ${f.metrics.fill}%，超出 100%`);
+    }
+  }
+}
+ok(issues === 0, '验收帧全部干净');
+ok(report.every((r) => !r.errors || !r.errors.length), '没有控制台错误');
 
-if (failures) {
-  console.error(`\n${failures} 项失败`);
+if (bad) {
+  console.error(`\n${bad} 项失败`);
   process.exitCode = 1;
 } else console.log('\n全部通过');

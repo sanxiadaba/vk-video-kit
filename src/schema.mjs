@@ -1,588 +1,481 @@
 /**
- * vk schema —— 公开 API 的唯一来源。
+ * v17 · 公开 API
+ * ----------------------------------------------------------------------------
+ * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写」。
+ * 它是唯一来源：构建期校验、vk doc / vk brief、SPEC 表格、运行期默认值都读它。
  *
- * 只在这里声明：标签、属性、取值、默认值、子节点、状态。
- * 构建期校验、`vk doc`、`vk brief`、SPEC 表、运行期默认值全部读这一份；
- * CSS 不生成，但 tools/budget.mjs 会检查每个取值都能被消费。
- *
- * 规则：
- *   · motion / cue / act / strength 不存在：库里没有时间维度。
- *   · 共享属性只在 COMMON 里写一次。
+ * 规矩：
+ *   · 属性名与取值只能来自 vocab.mjs；这里不发明数值。
+ *   · 每件只做一件事。两件能画同一个东西 = 作者会选错 = 合并。
+ *   · 一个概念一个词：tone（语义）/ size（字号）/ gap·pad（间距）/
+ *     current（第几项，1 起，-1 = 没有）/ state（当前·标注）。
+ *   · 没有时间维度：没有 at / cue / enter / duration。
  */
 
+import { TONE, STATE, SURFACE, INK, SIZE, SPACE } from './vocab.mjs';
+
 export const LAYERS = [
-  {
-    "id": "tokens",
-    "label": "L0 值"
-  },
-  {
-    "id": "elements",
-    "label": "L1 原子"
-  },
-  {
-    "id": "layout",
-    "label": "L2 排布"
-  },
-  {
-    "id": "components",
-    "label": "L3 器械"
-  },
-  {
-    "id": "relations",
-    "label": "L4 关系"
-  },
-  {
-    "id": "page",
-    "label": "L5 页面"
-  }
+  { id: 'page', label: 'L0 画布' },
+  { id: 'layout', label: 'L1 排布' },
+  { id: 'surface', label: 'L2 面与字' },
+  { id: 'content', label: 'L3 内容' },
+  { id: 'diagram', label: 'L4 图' },
+  { id: 'relation', label: 'L5 关系' },
 ];
 
-/* 每个块级组件都拿到的布局协议。 */
+/* ------------------------------------------------------------------ 共享 */
+/* 每个块级件都有的四件事 + 一个状态。 */
 export const COMMON = {
-  span: { type: 'int', min: 1, max: 12, step: 1, context: 'grid-child', layout: true, group: 'layout', label: '占几份' },
-  'row-span': { type: 'int', min: 1, max: 12, step: 1, context: 'grid-child', layout: true, group: 'layout', label: '跨几行' },
-  grow: { type: 'bool', layout: true, group: 'layout', label: '撑满剩余空间' },
-  stretch: { type: 'bool', layout: true, group: 'layout', label: '铺满父容器一条轴' },
-  bleed: { values: ['none', 'x', 'y', 'all'], default: 'none', layout: true, group: 'layout', label: '出血到画布边' },
-  overflow: { values: ['visible', 'clip'], default: 'visible', layout: true, group: 'layout', label: '溢出' },
-  state: { values: ['current', 'mark', 'ok', 'warn', 'err'], group: 'state', label: '状态（当前 / 标注 / 语义）' },
+  span: { type: 'int', min: 1, max: 12, default: 1, where: 'grid', group: 'layout', label: '占几份' },
+  'row-span': { type: 'int', min: 1, max: 12, default: 1, where: 'grid', group: 'layout', label: '跨几行' },
+  grow: { type: 'bool', group: 'layout', label: '吃掉剩余空间' },
+  bleed: { type: 'enum', values: ['none', 'x', 'y', 'all'], default: 'none', group: 'layout', label: '出血到画布边' },
+  state: { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' },
 };
 
-/* 画布子项的坐标协议：只有 vk-canvas 的直接子节点认。 */
-export const CANVAS = {
-  x: { type: 'num', min: -4000, max: 4000, step: 1, context: 'canvas-child', layout: true, group: 'layout', label: 'X' },
-  y: { type: 'num', min: -4000, max: 4000, step: 1, context: 'canvas-child', layout: true, group: 'layout', label: 'Y' },
-  w: { type: 'size', min: 48, max: 1920, step: 1, context: 'canvas-child', layout: true, group: 'layout', label: '宽' },
-  h: { type: 'size', min: 48, max: 1080, step: 1, context: 'canvas-child', layout: true, group: 'layout', label: '高' },
-  z: { type: 'int', min: 0, max: 99, step: 1, context: 'canvas-child', layout: true, group: 'layout', label: '层级' },
+/* 画布子项：只有 vk-canvas 的直接子节点认。 */
+export const CANVAS_ATTRS = {
+  x: { type: 'num', min: -4000, max: 4000, default: 0, where: 'canvas', group: 'layout', label: 'X' },
+  y: { type: 'num', min: -4000, max: 4000, default: 0, where: 'canvas', group: 'layout', label: 'Y' },
+  w: { type: 'num', min: 48, max: 1920, where: 'canvas', group: 'layout', label: '宽' },
+  h: { type: 'num', min: 48, max: 1080, where: 'canvas', group: 'layout', label: '高' },
+  z: { type: 'int', min: 0, max: 99, default: 0, where: 'canvas', group: 'layout', label: '层级' },
 };
 
+/* ------------------------------------------------------------------ 取值 */
+const size = (def = 'body') => ({ type: 'fontsize', default: def, group: 'type', label: '字号（档名或像素）' });
+const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '间距（档名或像素）' });
+const pad = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
+const tone = (def = 'neutral') => ({ type: 'enum', values: TONE, default: def, group: 'appearance', label: '语调' });
+const radius = () => ({ type: 'enum', values: ['none', 'md', 'pill'], default: 'md', group: 'appearance', label: '圆角' });
+const border = () => ({ type: 'enum', values: ['none', 'hair', 'strong'], default: 'none', group: 'appearance', label: '描边' });
+const current = () => ({ type: 'index', default: -1, group: 'state', label: '当前项（1 起；-1 = 没有）' });
+const chrome = (def = 'min') => ({ type: 'enum', values: ['min', 'none'], default: def, group: 'appearance', label: '窗头' });
+const surface = (values, def) => ({ type: 'enum', values, default: def, group: 'appearance', label: '表面' });
 
+const item = (attrs, hint) => ({ kind: 'item', item: 'li', attrs, hint });
+const source = (hint) => ({ kind: 'source', hint });
+
+/* 数据行的子项属性：tone 表语义、state 表当前/标注。 */
+const ITEM_TONE = () => tone('neutral');
+
+/* ------------------------------------------------------------------ 标签 */
 export const TAGS = {
-  "vk-box": {
-    layer: "elements",
-    name: "面",
-    summary: "一个面：背景、描边、圆角、内距。不认识兄弟，不排别人。",
+  /* ---------------------------------------------------------------- 画布 */
+  'vk-page': {
+    layer: 'page',
+    name: '画布',
+    summary: '一帧 1920×1080 的坐标系。align 决定内容在版心（1680×888）里的纵向位置。',
     attrs: {
-    ...COMMON,
-    "surface": {"values":["none","paper","soft","sf-1","sf-2","sf-3","sf-4","wash","tint","dark","accent"],"label":"表面","group":"appearance","default":"none"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance"},
-    "pad": {"type":"space","values":["0","2xs","xs","sm","md","lg","xl","2xl","3xl"],"list":true,"label":"内距","group":"layout"},
-    "radius": {"values":["sm","md","lg","xl","pill","none"],"label":"圆角","group":"appearance","default":"lg"},
-    "border": {"values":["none","hair","strong"],"label":"描边","group":"appearance","default":"none"},
-    "ring": {"type":"bool","label":"描边环（强调，不占布局；环色跟 tone）","group":"appearance"},
+      align: { type: 'enum', values: ['top', 'center', 'bottom'], default: 'center', group: 'layout', label: '纵向对齐' },
     },
+    children: { kind: 'slot' },
   },
-  "vk-panel": {
-    layer: "elements",
-    name: "分区",
-    summary: "一块内容分区：底色、可选标题带、内距、圆角；chrome=\"dots\" 会长出窗头，于是它也能当窗用。它只描述这一块，不认识兄弟、不排别人；排布归 vk-stack / vk-grid。",
+
+  /* ---------------------------------------------------------------- 排布 */
+  'vk-stack': {
+    layer: 'layout',
+    name: '竖排',
+    summary: '把子项按一条轴排开，只给间距、对齐和份数。不画任何东西。',
     attrs: {
-    ...COMMON,
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance","default":"neutral"},
-    "variant": {"values":["plain","raised","inset","dark"],"label":"形态","group":"appearance","default":"plain"},
-    "title": {"type":"text","label":"标题","content":true},
-    "chrome": {"values":["dots","none"],"label":"窗头（dots 三点 + 标题 / none 干净分区）","group":"appearance","default":"none"},
-    "fill": {"type":"fill","values":["none","cover","contain"],"default":"none","label":"填充（none / cover / contain）","group":"appearance"},
-    "pad": {"values":["2xs","xs","sm","md","lg","xl","2xl","3xl"],"label":"内距","group":"layout","default":"md"},
-    "radius": {"values":["sm","md","lg","xl","pill","none"],"label":"圆角","group":"appearance","default":"lg"},
-    "border": {"values":["none","hair","strong"],"label":"描边","group":"appearance","default":"none"},
-    "surface": {"values":["paper","wash","tint","dark","accent"],"label":"表面","group":"appearance"},
+      gap: gap('normal'),
+      direction: { type: 'enum', values: ['column', 'row'], default: 'column', group: 'layout', label: '方向' },
+      align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '交叉轴' },
+      justify: { type: 'enum', values: ['start', 'center', 'end', 'between'], default: 'start', group: 'layout', label: '主轴' },
+      weights: { type: 'list', group: 'layout', label: '按份数分剩余高度，如 "1 2 1"' },
     },
+    children: { kind: 'slot' },
   },
-  "vk-text": {
-    layer: "elements",
-    name: "文字",
-    summary: "一段文字：字阶、字重、墨阶、等宽、对齐、测量宽；可带一个语义图标（文字与图标共存）。",
+
+  'vk-grid': {
+    layer: 'layout',
+    name: '网格',
+    summary: '12 栏网格。子项用 span / row-span 占份；列宽由份数算出，不能手写像素。',
     attrs: {
-    ...COMMON,
-    "size": {"values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance","default":"body"},
-    "weight": {"values":["regular","medium","bold"],"label":"字重","group":"appearance","default":"regular"},
-    "mono": {"type":"bool","label":"等宽","group":"appearance"},
-    "align": {"values":["left","center","right"],"label":"对齐","group":"layout","default":"left"},
-    "measure": {"type":"text","layout":true,"label":"测量宽","group":"layout"},
-    "format": {"values":["none","thousands","bytes","hex"]},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
-    "fit-min": {"type":"num","min":8,"max":240,"step":1,"default":40,"when":{"fit":["width"]},"label":"最小字号（像素；fit 的硬地板）","group":"appearance"},
-    "fit-max": {"type":"num","min":8,"max":400,"step":1,"when":{"fit":["width"]},"label":"最大字号（像素）","group":"appearance","default":240},
-    "icon": {"type":"text","label":"图标（Lucide 名；语义白名单外构建期报错）","group":"appearance"},
-    "ink": {"values":["primary","secondary","tertiary","muted"],"label":"墨阶","group":"appearance","default":"primary"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance"},
+      cols: { type: 'int', min: 1, max: 12, default: 2, group: 'layout', label: '列数' },
+      gap: gap('normal'),
+      align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '纵向对齐' },
     },
-    content: {"kind":"text","target":"vk-text","fields":[{"name":"text","label":"文字","type":"textarea","text":true}]},
+    children: { kind: 'slot' },
   },
-  "vk-label": {
-    layer: "elements",
-    name: "标签",
-    summary: "一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上。",
+
+  'vk-canvas': {
+    layer: 'layout',
+    name: '坐标画布',
+    summary: '坐标空间：子项用 x / y 明确摆放。只有这里认 x / y / w / h / z。',
     attrs: {
-    "variant": {"values":["kicker","chip","badge","tag"],"label":"形态","group":"appearance","default":"kicker"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance"},
-    "ink": {"values":["primary","secondary","tertiary","muted"],"label":"墨阶","group":"appearance","default":"muted"},
-    "counter": {"type":"text","content":true,"label":"工序进度（i/n；渲染成「工序 i/n」）"},
-    "section": {"type":"text","content":true,"label":"工序名 / 分区名"},
-    "icon": {"type":"text","label":"图标","content":true},
-    "for": {"type":"selector","label":"目标（写 #id 就贴到那块上方/下方）","content":true},
-    "side": {"values":["top","bottom"],"label":"贴哪一侧（top 上方 / bottom 下方；旧名 anchor 的 above / below）","group":"appearance","default":"top"},
-    "gap": {"type":"int","min":12,"max":240,"step":4,"default":16,"label":"间距","group":"layout"},
+      w: { type: 'num', min: 48, max: 1920, group: 'layout', label: '宽（不写按内容）' },
+      h: { type: 'num', min: 48, max: 1080, group: 'layout', label: '高（不写按内容）' },
+      pad: pad('none'),
     },
-    content: {"kind":"text","target":"vk-label","fields":[{"name":"text","label":"文字","type":"textarea","text":true}]},
+    children: { kind: 'slot' },
   },
-  "vk-inline": {
-    layer: "elements",
-    name: "行内",
-    summary: "行内文字：代码、公式、上下标、链接。字号跟随所在文本行。",
+
+  'vk-layer': {
+    layer: 'layout',
+    name: '叠层',
+    summary: '叠放：第一个子项铺满当底，其余按顺序叠上去。',
     attrs: {
-    "variant": {"values":["code","math","sup","sub","link","keys"],"label":"形态","group":"appearance","default":"code"},
-    "href": {"type":"text"},
+      surface: surface(['none', 'paper', 'soft', 'tint', 'dark'], 'none'),
+      tone: tone('neutral'),
     },
-    content: {"kind":"text","target":"vk-inline","fields":[{"name":"text","label":"文字 / TeX","type":"textarea","text":true}]},
+    children: { kind: 'slot' },
   },
-  "vk-img": {
-    layer: "elements",
-    name: "图片",
-    summary: "一张图：比例、填充方式、焦点。加载失败有可见占位。",
+
+  'vk-pair': {
+    layer: 'layout',
+    name: '并置',
+    summary: '两块并置对照：左右（或上下）两块，中间一条轴，轴上可放 → / = / vs。',
     attrs: {
-    "span": COMMON["span"],
-    "row-span": COMMON["row-span"],
-    "bleed": COMMON["bleed"],
-    "src": {"type":"text","label":"来源","content":true},
-    "alt": {"type":"text","label":"替代文字","content":true},
-    "ratio": {"type":"text","label":"比例","group":"appearance"},
-    "fill": {"type":"fill","values":["none","cover","contain"],"default":"cover","label":"填充（none / cover / contain）","group":"appearance"},
-    "radius": {"values":["sm","md","lg","xl","pill","none"],"label":"圆角","group":"appearance","default":"lg"},
-    "border": {"values":["none","hair","strong"],"label":"描边","group":"appearance","default":"none"},
-    "position": {"type":"text","label":"焦点","group":"appearance","default":"50% 50%"},
+      split: { type: 'num', min: 20, max: 80, default: 50, group: 'layout', label: '左块占比（%）' },
+      direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向' },
+      symbol: { type: 'enum', values: ['none', '→', '=', 'vs', '+'], default: 'none', group: 'appearance', label: '轴上符号' },
+      gap: gap('wide'),
     },
-    content: {"kind":"text","target":"vk-img","fields":[{"name":"src","label":"图片地址","type":"text","attr":"src"},{"name":"alt","label":"替代文字","type":"text","attr":"alt"}]},
+    children: { kind: 'slot', exactly: 2 },
   },
-  "vk-stack": {
-    layer: "layout",
-    name: "竖排",
-    summary: "纵向节奏。只给间距和对齐，不画任何东西。默认等距；写 weights=\"1 2 1\" 时按权重分剩余高度（ratio 是它的别名）。",
+
+  /* ------------------------------------------------------------ 面与字 */
+  'vk-box': {
+    layer: 'surface',
+    name: '面',
+    summary: '一块面：底、描边、圆角、内距，可带标题带与窗头。它只描述这一块，不排别人。',
     attrs: {
-    ...COMMON,
-    "gap": {"values":["2xs","xs","sm","md","lg","xl","2xl","3xl","group","section","plate"],"label":"间距","group":"layout","default":"sm"},
-    "direction": {"values":["column","row"],"label":"方向","group":"appearance","default":"column"},
-    "align": {"values":["start","center","end","stretch","baseline"],"label":"对齐","group":"layout","default":"stretch"},
-    "justify": {"values":["start","center","end","between"],"label":"主轴","group":"layout","default":"start"},
-    "wrap": {"type":"bool","context":"direction-row","label":"换行","group":"layout"},
-    "weights": {"type":"text","context":"bounded-height","label":"高度权重（如 \"1 2 1\"：按顺序分给前 N 个直接子项；其余保持内容高）","group":"layout"},
+      surface: surface(['none', 'paper', 'soft', 'tint', 'dark'], 'none'),
+      tone: tone('neutral'),
+      pad: pad('normal'),
+      radius: radius(),
+      border: border(),
+      title: { type: 'text', group: 'appearance', label: '标题（写了才有标题带）' },
+      chrome: { type: 'enum', values: ['none', 'dots'], default: 'none', group: 'appearance', label: '窗头三点' },
+      ring: { type: 'bool', group: 'appearance', label: '强调环（不占布局）' },
     },
+    children: { kind: 'slot' },
   },
-  "vk-grid": {
-    layer: "layout",
-    name: "网格",
-    summary: "分份容器。cols/rows 切几份，子项用 span 占几份；行高按内容。",
+
+  'vk-text': {
+    layer: 'surface',
+    name: '文字',
+    summary: '一段文字：字号、字重、墨阶、对齐、行宽。行内可用 <em> 标注、<strong> 加重。',
     attrs: {
-    ...COMMON,
-    "cols": {"values":["1","2","3","4","5","6","7","8","9","10","11","12"],"label":"列数","group":"layout","default":"2"},
-    "tracks": {"type":"text"},
-    "rows": {"values":["1","2","3","4","5","6"],"context":"bounded-height"},
-    "gap": {"type":"space","values":["0","2xs","xs","sm","md","lg","xl","2xl","3xl","group","section","plate"],"list":true,"label":"间距","group":"layout","default":"md"},
-    "align": {"values":["start","center","end","stretch"],"label":"对齐","group":"layout","default":"stretch"},
-    "justify": {"values":["start","center","end","stretch"],"label":"主轴","group":"layout"},
+      size: size('body'),
+      weight: { type: 'enum', values: ['regular', 'medium', 'bold'], default: 'regular', group: 'type', label: '字重' },
+      ink: { type: 'enum', values: INK, default: 'primary', group: 'appearance', label: '墨阶' },
+      tone: { type: 'enum', values: TONE, group: 'appearance', label: '语调' },
+      align: { type: 'enum', values: ['left', 'center', 'right'], default: 'left', group: 'layout', label: '对齐' },
+      measure: { type: 'measure', group: 'layout', label: '行宽（字数；none = 铺满）' },
+      icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
+      mono: { type: 'bool', group: 'appearance', label: '等宽' },
     },
+    content: 'text',
   },
-  "vk-layer": {
-    layer: "layout",
-    name: "叠层",
-    summary: "叠放容器：第一个子元素铺满当底，其余按顺序绝对定位叠在上面；vk-text 放在最上面时默认加纸色描边（readable=\"off\" 关），surface 给这一层上五档底色。",
+
+  'vk-label': {
+    layer: 'surface',
+    name: '标签',
+    summary: '一行小字：分类、编号、状态。kicker 纯字 / chip 浅底 / badge 实色。',
     attrs: {
-    "grow": COMMON["grow"],
-    "bleed": COMMON["bleed"],
-    "surface": {"values":["paper","wash","tint","dark","accent"],"label":"表面","group":"appearance"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance","default":"neutral"},
-    "fill": {"type":"fill","values":["none","cover","contain"],"default":"none","label":"填充（none / cover / contain）","group":"appearance"},
-    "readable": {"values":["on","off"],"default":"on","label":"可读性保护","group":"appearance"},
+      variant: { type: 'enum', values: ['kicker', 'chip', 'badge'], default: 'kicker', group: 'appearance', label: '形态' },
+      tone: tone('neutral'),
+      icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
+      counter: { type: 'text', group: 'appearance', label: '序号，如 "3/5"' },
     },
+    content: 'text',
   },
-  "vk-pair": {
-    layer: "layout",
-    name: "并置",
-    summary: "两块并置对照：左右（或上下）两块，中间一条轴；轴上可放 → / = / vs，也可只留一条线。tone=\"左,右\" 可给两侧各上一种语义淡底。",
+
+  'vk-inline': {
+    layer: 'surface',
+    name: '行内',
+    summary: '句子里的行内元素：代码、公式、上下标、键位。字号跟着所在文本走。',
     attrs: {
-    ...COMMON,
-    "split": {"type":"num","min":5,"max":95,"step":1,"label":"占比（%）","group":"layout","default":50},
-    "axis": {"values":["line","none"],"label":"中轴","group":"appearance","default":"line"},
-    "axis-width": {"type":"num","min":1,"max":4,"step":1,"label":"轴宽（像素）","group":"appearance","default":2},
-    "symbol": {"values":["→","=","vs","none"],"label":"轴上符号","group":"appearance","default":"none"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "gap": {"type":"num","min":8,"max":200,"step":1,"label":"间距","group":"layout","default":24},
-    "direction": {"values":["horizontal","vertical"],"label":"方向","group":"appearance","default":"horizontal"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"list":true,"label":"色调","group":"appearance"},
+      variant: { type: 'enum', values: ['code', 'math', 'sup', 'sub', 'keys'], default: 'code', group: 'appearance', label: '形态' },
     },
+    content: 'text',
   },
-  "vk-flow": {
-    layer: "layout",
-    name: "流程",
-    summary: "多步流程：每步一块（上方小标签 + 内容块），等宽排开，块之间画箭头；gap 控制步距（默认 48），箭头尺寸 = 容器高 × scale（arrow=\"true,scale:0.12\"，夹在 28–64），容器窄于 1100px 自动竖排。",
+
+  'vk-img': {
+    layer: 'surface',
+    name: '图片',
+    summary: '一张图：比例、填充方式、焦点。加载失败有可见占位。',
     attrs: {
-    ...COMMON,
-    "gap": {"type":"num","min":8,"max":200,"step":1,"label":"间距","group":"layout","default":48},
-    "arrow": {"type":"text","label":"箭头（end / start / both / none；可写 end:open、size:40、cap:start）","group":"appearance","default":"true"},
+      src: { type: 'text', content: true, group: 'content', label: '图片地址' },
+      alt: { type: 'text', content: true, group: 'content', label: '替代文字' },
+      ratio: { type: 'text', group: 'appearance', label: '比例，如 "16 / 9"' },
+      fill: { type: 'enum', values: ['cover', 'contain'], default: 'cover', group: 'appearance', label: '填充' },
+      radius: radius(),
+      position: { type: 'text', default: '50% 50%', group: 'appearance', label: '焦点' },
     },
+    content: 'none',
   },
-  "vk-canvas": {
-    layer: "layout",
-    name: "坐标画布",
-    summary: "坐标空间。子节点用 x/y 明确摆放；可铺一层蓝图纸栅格。",
+
+  /* ---------------------------------------------------------------- 内容 */
+  'vk-code': {
+    layer: 'content',
+    name: '代码',
+    summary: '代码窗。构建期高亮；可截取真实文件的行段，标当前行、聚光、折叠。宽度默认按内容，不铺满。',
     attrs: {
-    "overflow": COMMON["overflow"],
-    "w": CANVAS["w"],
-    "h": CANVAS["h"],
-    "pad": {"type":"num","min":0,"max":200,"step":1,"label":"内距","group":"layout","default":"0"},
-    "grid": {"type":"num","min":0,"max":192,"step":8,"label":"栅格","group":"appearance","default":"0"},
+      lang: { type: 'text', content: true, group: 'content', label: '语言' },
+      src: { type: 'text', content: true, group: 'content', label: '源文件' },
+      lines: { type: 'text', content: true, group: 'content', label: '行段，如 "4-6"' },
+      file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
+      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
+      focus: { type: 'lines', group: 'state', label: '聚光行' },
+      fold: { type: 'lines', group: 'state', label: '折叠行（缺口）' },
+      size: size('body'),
+      long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行' },
+      chrome: chrome('min'),
     },
+    children: source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。构建期高亮，运行期零依赖。'),
   },
-  "vk-list": {
-    layer: "components",
-    name: "列表",
-    summary: "列表。要点 / 清单 / 定义；条目写成 <li>。步骤用 vk-steps。",
+
+  'vk-term': {
+    layer: 'content',
+    name: '终端',
+    summary: '终端 transcript：提示符、命令、输出、报错各自一色。',
     attrs: {
-    ...COMMON,
-    "rule": {"type":"bool","label":"条目分隔线","group":"appearance"},
-    "bare": {"type":"bool","label":"无外壳","group":"appearance"},
-    "gap": {"values":["2xs","xs","sm","md","lg","xl","2xl","3xl","group","section","plate"],"label":"间距","group":"layout","default":"sm"},
-    "mass": {"values":["compact","normal"],"label":"体量","group":"appearance","default":"normal"},
-    "variant": {"values":["bullet","check","define","ordered"],"label":"形态","group":"appearance","default":"bullet"},
+      src: { type: 'text', content: true, group: 'content', label: '源文件' },
+      title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
+      prompt: { type: 'text', default: '$', group: 'appearance', label: '提示符' },
+      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
+      size: size('body'),
+      surface: surface(['paper', 'dark'], 'paper'),
+      chrome: chrome('min'),
     },
-    content: {"kind":"items","target":"vk-list","fields":[{"name":"items","label":"条目（一行一个）","type":"lines","item":"li"}]},
+    children: source('src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。'),
   },
-  "vk-code": {
-    layer: "components",
-    name: "代码窗",
-    summary: "代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。",
+
+  'vk-diff': {
+    layer: 'content',
+    name: '改动',
+    summary: 'diff：上下对照或左右两窗并排，词级标记 + 一句改了几行。',
     attrs: {
-    ...COMMON,
-    "lang": {"type":"text","label":"语言","content":true},
-    "src": {"type":"text","label":"来源","content":true},
-    "lines": {"type":"text","label":"行段","content":true},
-    "file": {"type":"text","label":"文件名","content":true},
-    "current": {"type":"lines","label":"当前项（序号 1 起；-1 = 没有当前）","group":"state"},
-    "focus": {"type":"lines","label":"聚光行","group":"state"},
-    "fold": {"type":"lines","label":"折叠行","group":"state"},
-    "omit": {"type":"text","label":"字符区间","content":true},
-    "fold-note": {"type":"text","label":"折叠说明","content":true},
-    "chrome": {"values":["min","none"],"label":"窗头","group":"appearance","default":"min"},
-    "mark": {"type":"text","label":"标记词","content":true},
-    "columns": {"type":"columns","values":["all","none","numbers"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"all"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
-    "surface": {"values":["paper","dark","inset"],"label":"表面","group":"appearance","default":"paper"},
-    "long": {"values":["clip","wrap"],"label":"长行","group":"appearance","default":"clip"},
+      src: { type: 'text', content: true, group: 'content', label: '源文件' },
+      lines: { type: 'text', content: true, group: 'content', label: '行段' },
+      file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
+      lang: { type: 'text', content: true, group: 'content', label: '语言' },
+      variant: { type: 'enum', values: ['unified', 'split'], default: 'unified', group: 'appearance', label: '形态' },
+      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
+      size: size('body'),
     },
-    content: {"kind":"rebuild","note":"代码文本由 Shiki 在构建期编译；改文本请改 src 文件并运行 npm run build。这里仍然可以调高亮行、聚光、折叠、密度、窗头。"},
+    children: source('src 指向真实 diff 文本，或内联 <script type="text/plain" data-vk-source>。必须有 lang。'),
   },
-  "vk-term": {
-    layer: "components",
-    name: "终端",
-    summary: "终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色。",
+
+  'vk-table': {
+    layer: 'content',
+    name: '表格',
+    summary: '表格：原生 <table>，数字列自动右对齐、单位列自动挂靠。行可写 tone / state。',
     attrs: {
-    ...COMMON,
-    "src": {"type":"text","label":"来源","content":true},
-    "lines": {"type":"text","build":true,"label":"行段","content":true},
-    "title": {"type":"text","label":"标题","content":true},
-    "prompt": {"type":"text","label":"提示符","content":true,"default":"$"},
-    "marks": {"type":"text","label":"字符标记","content":true},
-    "lang": {"values":["sh","powershell","asm","none"],"default":"sh","label":"语言","content":true},
-    "current": {"type":"lines","label":"当前项（序号 1 起；-1 = 没有当前）","group":"state"},
-    "chrome": {"values":["none","min"],"label":"窗头","group":"appearance","default":"min"},
-    "title-show": {"type":"bool","label":"显示标题","group":"appearance","default":"false"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
-    "surface": {"values":["paper","dark","inset"],"label":"表面","group":"appearance","default":"paper"},
+      variant: { type: 'enum', values: ['ledger', 'spec', 'matrix'], default: 'ledger', group: 'appearance', label: '形态' },
+      mono: { type: 'bool', group: 'appearance', label: '等宽' },
+      size: size('body'),
+      caption: { type: 'text', content: true, group: 'content', label: '表题（表下方一行小字）' },
     },
-    content: {"kind":"text","target":"vk-term","fields":[{"name":"text","label":"transcript 文本","type":"textarea","text":true,"raw":true,"clears":["src"]},{"name":"src","label":"transcript 文件","type":"text","attr":"src"},{"name":"title","label":"窗头标题","type":"text","attr":"title"},{"name":"prompt","label":"提示符","type":"text","attr":"prompt"}]},
+    children: { kind: 'table', hint: '写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err" state="current"。' },
   },
-  "vk-diff": {
-    layer: "components",
-    name: "对比",
-    summary: "对比：上下对照或左右两窗并排，词级标记 + 一句改了几行。",
+
+  'vk-list': {
+    layer: 'content',
+    name: '列表',
+    summary: '列表：要点 / 清单 / 定义 / 有序。条目写成 <li>。',
     attrs: {
-    ...COMMON,
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "lang": {"type":"text","build":true,"label":"语言","content":true},
-    "src": {"type":"text","build":true,"label":"来源","content":true},
-    "lines": {"type":"text","label":"行段","content":true},
-    "file": {"type":"text","label":"文件名","content":true},
-    "chrome": {"values":["min","none"],"label":"窗头","group":"appearance","default":"min"},
-    "columns": {"type":"columns","values":["all","none","numbers","summary"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"all"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
-    "variant": {"values":["unified","split"],"label":"形态","group":"appearance","default":"unified"},
+      variant: { type: 'enum', values: ['bullet', 'check', 'ordered', 'define'], default: 'bullet', group: 'appearance', label: '形态' },
+      gap: gap('close'),
+      size: size('body'),
     },
-    content: {"kind":"rebuild","note":"diff 文本由 Shiki + tokenDiff 在构建期编译；改文本请改 src 文件并运行 npm run build。variant / chrome / w 仍然 live。"},
+    children: item({ tone: ITEM_TONE(), state: COMMON.state }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
   },
-  "vk-table": {
-    layer: "components",
-    name: "表格",
-    summary: "表格：账本 / 对照 / 规格三种形态，表头与数字列对齐。行可用 <tr state=\"mark\"> 标出重点。",
+
+  'vk-math': {
+    layer: 'content',
+    name: '公式',
+    summary: '公式：src 指向真实 .tex，构建期用 KaTeX 排版，运行期零依赖。',
     attrs: {
-    ...COMMON,
-    "variant": {"values":["ledger","compare","spec","matrix"],"label":"形态","group":"appearance","default":"ledger"},
-    "stripe": {"type":"bool","label":"斑马","group":"appearance"},
-    "mono": {"type":"bool","label":"等宽","group":"appearance"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
+      src: { type: 'text', content: true, group: 'content', label: '源文件' },
+      display: { type: 'bool', group: 'appearance', label: '独立成行' },
+      size: size('body'),
     },
-    content: {"kind":"rows","target":"table","fields":[{"name":"header","label":"表头（列 1 | 列 2 | …）","type":"line"},{"name":"rows","label":"表体（每行：列 1 | 列 2 | …）","type":"lines"}]},
+    children: source('src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写 TeX。'),
   },
-  "vk-math": {
-    layer: "components",
-    name: "公式",
-    summary: "公式。src 指向真实 .tex；构建期用 KaTeX 渲染成静态 HTML，运行时零依赖。",
+
+  'vk-tree': {
+    layer: 'content',
+    name: '文件树',
+    summary: '文件树：src 指向真实目录，构建期扫描层级；缩进与树线是真的，不是列表。',
     attrs: {
-    ...COMMON,
-    "src": {"type":"text","build":true,"label":"来源","content":true},
-    "display": {"type":"bool","label":"独立成行","group":"appearance"},
-    "size": {"values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance","default":"body"},
+      src: { type: 'text', content: true, group: 'content', label: '目录' },
+      title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
+      depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
+      current: { type: 'text', group: 'state', label: '当前节点路径' },
+      size: size('body'),
     },
-    content: {"kind":"rebuild","note":"公式由 KaTeX 在构建期排版；改 .tex 后运行 npm run build。size / display 仍然 live。"},
+    children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
   },
-  "vk-compare": {
-    layer: "components",
-    name: "对照",
-    summary: "前后对照：mode=\"split\"（默认）时左边 split% 显示 labels 的第一张、右边显示第二张（labels=\"a,b\"），上面那张按 split 裁掉右侧；mode=\"side\" 左右并排、mode=\"stack\" 上下排列，两张图各自完整、都不裁切。角标接在竖线后（labels=\"a,b|左|右\"），默认叠在图上（label-position=\"inside\"）；label-position=\"top\" 会为角标单独让出一条带，不压图像。mark 在图上标出差异（x1,y1,x2,y2 百分比；多组用 ;），mark-label 给角标；split 下每处只标在框心所属的那一半，side/stack 下只标在 a 图（b 是参照物）。zoom=\"mark\" 在下方生成一块差异放大（默认 ×2），也可以写 x1,y1,x2,y2 或只写倍数。",
+
+  'vk-asm': {
+    layer: 'content',
+    name: '汇编',
+    summary: '汇编清单：地址 / 机器码 / 指令 / 操作数四列。行与地址都能被锚定。',
     attrs: {
-    ...COMMON,
-    "alt": {"type":"text","label":"替代文字","content":true},
-    "variant": {"values":["split","side","stack"],"label":"形态","group":"appearance","default":"split"},
-    "ratio": {"type":"text","label":"比例","group":"appearance","default":"16 / 9"},
-    "split": {"type":"num","min":0,"max":100,"step":1,"label":"split 模式左侧 a 的占比（%，side/stack 下无效）","group":"appearance","default":50},
-    "fill": {"type":"fill","values":["none","cover","contain"],"default":"cover","label":"填充（none / cover / contain）","group":"appearance"},
-    "position": {"type":"text","label":"焦点","group":"appearance","default":"50% 50%"},
-    "labels": {"type":"text","label":"两张图（labels=\"a,b\"）与角标（labels=\"a,b|左|右\"）","content":true},
-    "label-position": {"values":["inside","top"],"label":"角标位置（inside 叠在图上 / top 在图上另起一条带，不压图像）","group":"appearance","default":"inside"},
-    "mark": {"type":"text","label":"差异框（x1,y1,x2,y2；多组用 ;，相对百分比）","content":true},
-    "mark-label": {"type":"text","label":"差异框角标（多组用 ; 与 mark 一一对应）","content":true},
-    "zoom": {"type":"text","label":"差异放大","group":"appearance"},
+      src: { type: 'text', content: true, group: 'content', label: '源文件（objdump 文本）' },
+      lines: { type: 'text', content: true, group: 'content', label: '行段' },
+      file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
+      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
+      size: size('body'),
+      chrome: chrome('min'),
+      bytes: { type: 'bool', group: 'appearance', label: '显示机器码列（默认不显示）' },
     },
+    children: source('src 指向 objdump 文本，或内联 <script type="text/plain" data-vk-source>。'),
   },
-  "vk-tree": {
-    layer: "components",
-    name: "文件树",
-    summary: "文件树：src 指向真实目录，构建期扫描层级、类型、大小。",
+
+  'vk-cells': {
+    layer: 'content',
+    name: '内存格',
+    summary: '一格一个 <li>：标签、值、地址。地址由 addr + 序号算出，不手写。',
     attrs: {
-    ...COMMON,
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "src": {"type":"text","build":true,"label":"来源","content":true},
-    "title": {"type":"text","label":"标题","content":true},
-    "current": {"type":"text","label":"当前项（序号 1 起；-1 = 没有当前）","group":"state"},
-    "collapsed": {"type":"text","label":"收起目录","content":true},
-    "limit": {"type":"int","min":1,"max":500,"step":1,"label":"最多显示","group":"layout","default":14},
-    "columns": {"type":"columns","values":["all","none","summary"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"all"},
-    "depth": {"type":"int","min":0,"max":8,"step":1,"label":"最大深度","group":"layout","default":"4"},
-    "chrome": {"values":["min","none"],"label":"窗头","group":"appearance","default":"min"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
+      addr: { type: 'text', content: true, group: 'content', label: '起始地址，如 "0x1000"' },
+      cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
+      current: current(),
+      size: size('body'),
     },
-    content: {"kind":"text","target":"vk-tree","fields":[{"name":"tree","label":"树数据（JSON）","type":"textarea","script":"data-vk-tree","clears":["src"]},{"name":"title","label":"标题","type":"text","attr":"title"},{"name":"current","label":"当前节点","type":"text","attr":"current"}]},
+    children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: COMMON.state }, '<li value="61" label="s[0]">；地址自动按 addr + 序号算。'),
   },
-  "vk-cells": {
-    layer: "components",
-    name: "内存格",
-    summary: "一格一个 <li>：标签、值、地址；state=\"err\" 标出越界的那一格，act=\"focus\" 标出当前格，超过 cols 自动换行。",
+
+  'vk-bytes': {
+    layer: 'content',
+    name: '字节',
+    summary: '字节窗：src 指向真实二进制；十六进制 + ASCII + 地址，current 标出一段。',
     attrs: {
-    ...COMMON,
-    "addr": {"type":"text","label":"起始地址","content":true},
-    "cols": {"type":"int","min":1,"max":8,"step":1,"label":"列数","group":"layout","default":"8"},
-    "stride": {"values":["1","2","4","8"],"label":"步长","group":"layout"},
-    "columns": {"type":"columns","values":["all","none","offsets","ruler"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"none"},
-    "direction": {"values":["ltr","rtl"],"label":"方向","group":"appearance"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "current": {"type":"int","min":-1,"max":99,"step":1,"label":"当前项（序号 1 起；-1 = 没有当前）","group":"state","default":"-1"},
+      src: { type: 'text', content: true, group: 'content', label: '二进制文件' },
+      addr: { type: 'text', default: '0x0', group: 'content', label: '起始地址' },
+      offset: { type: 'int', min: 0, default: 0, group: 'content', label: '起始字节' },
+      length: { type: 'int', min: 1, max: 4096, default: 32, group: 'content', label: '字节数' },
+      cols: { type: 'enum', values: ['4', '8'], default: '8', group: 'layout', label: '每行几列' },
+      current: { type: 'text', group: 'state', label: '当前字节段，如 "4-7"' },
     },
-    content: {"kind":"children","target":"vk-cells","item":"li","fields":[{"name":"value","label":"值","type":"text","attr":"value"},{"name":"label","label":"标签","type":"text","attr":"label"},{"name":"span","label":"跨几格","type":"int","attr":"span"},{"name":"state","label":"状态","type":"text","attr":"state"},{"name":"filled","label":"填充格（布尔）","type":"bool","attr":"filled"}]},
+    children: source('src 指向真实二进制文件。数值是读出来的，不是手写的。'),
   },
-  "vk-bytes": {
-    layer: "components",
-    name: "字节",
-    summary: "字节窗：src 指向真实二进制；八列十六进制 + ASCII + 地址，current 标出一段字节。",
+
+  'vk-bits': {
+    layer: 'content',
+    name: '位',
+    summary: '一行二进制位：索引、分组、符号位。用来讲位域与浮点布局。',
     attrs: {
-    ...COMMON,
-    "src": {"type":"text","build":true,"label":"来源","content":true},
-    "addr": {"type":"text","build":true,"label":"起始地址","content":true},
-    "offset": {"type":"text","build":true,"label":"起始字节","content":true},
-    "length": {"type":"text","build":true,"label":"字节数","content":true},
-    "cols": {"values":["4","8"],"label":"列数","group":"layout","default":"8"},
-    "group": {"values":["1","2","4","8"],"label":"分组","group":"appearance","default":"1"},
-    "columns": {"type":"columns","values":["all","none","address","ascii"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"all"},
-    "current": {"type":"text","label":"当前字节段","group":"state"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "chrome": {"values":["min","none"],"label":"窗头","group":"appearance","default":"min"},
-    "word": {"values":["1","2","4","8"],"default":"1"},
-    "endian": {"values":["little","big"],"default":"little"},
+      value: { type: 'text', content: true, group: 'content', label: '位串，可含空格' },
+      index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号方向' },
+      group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
+      sign: { type: 'bool', group: 'appearance', label: '标出符号位' },
     },
+    content: 'text',
   },
-  "vk-steps": {
-    layer: "components",
-    name: "步骤",
-    summary: "步骤条：编号 + 连线 + 当前步。条目写成 <li>；current=\"-1\" = 不标当前步（纯地图，五步等权）；done=\"none\" 连前面也不打勾，mark=\"N\" 只强调第 N 步。",
+
+  /* ---------------------------------------------------------------- 图 */
+  'vk-steps': {
+    layer: 'diagram',
+    name: '步骤',
+    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>；容器窄时自动竖排，不压字。',
     attrs: {
-    ...COMMON,
-    "current": {"type":"int","min":-1,"max":99,"step":1,"label":"当前项（序号 1 起；-1 = 没有当前）","group":"state","default":"-1"},
-    "done": {"values":["auto","none"],"default":"auto","label":"已完成态","group":"state"},
-    "mark": {"type":"int","min":0,"max":99,"step":1,"label":"标记词","content":true},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "direction": {"values":["horizontal","vertical"],"label":"方向","group":"appearance","default":"horizontal"},
-    "connector": {"values":["arrow","line","none"],"label":"连接线","group":"appearance","default":"arrow"},
+      current: current(),
+      direction: { type: 'enum', values: ['auto', 'horizontal', 'vertical'], default: 'auto', group: 'layout', label: '方向' },
+      connector: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连接线' },
+      size: size('body'),
     },
-    content: {"kind":"items","target":"vk-steps","fields":[{"name":"items","label":"步骤（一行一个）","type":"lines","item":"li"}]},
+    children: item({ tone: ITEM_TONE() }, '每一步写成 <li>；可写 tone 标语义。'),
   },
-  "vk-bits": {
-    layer: "components",
-    name: "位",
-    summary: "一行二进制位：索引、分组、符号位。",
+
+  'vk-bars': {
+    layer: 'diagram',
+    name: '条',
+    summary: '一组横向条：标签、值、单位。用来讲大小对比。',
     attrs: {
-    ...COMMON,
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "value": {"type":"text","label":"数值","content":true},
-    "index": {"values":["7-0","0-7","none","sparse"],"label":"位序号","group":"appearance","default":"7-0"},
-    "group": {"values":["1","4","8"],"label":"分组","group":"appearance","default":"4"},
-    "sign": {"type":"bool","label":"符号位","group":"appearance"},
-    "label": {"type":"text","label":"无障碍名","content":true},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance","default":"neutral"},
-    "bit-width": {"values":["8","16","32","64"],"label":"位宽","group":"layout"},
-    "bytes": {"type":"bool","label":"字节界","group":"appearance"},
+      max: { type: 'num', min: 1, group: 'appearance', label: '最大值（不写按最大一条）' },
+      unit: { type: 'text', content: true, group: 'appearance', label: '单位' },
+      tone: tone('neutral'),
+      scale: { type: 'enum', values: ['linear', 'log'], default: 'linear', group: 'appearance', label: '刻度' },
     },
-    content: {"kind":"text","target":"vk-bits","fields":[{"name":"value","label":"二进制（可含空格）","type":"text","attr":"value"},{"name":"label","label":"说明","type":"text","attr":"label"}]},
+    children: item({ label: { type: 'text', label: '标签' }, value: { type: 'num', label: '数值' }, tone: ITEM_TONE() }, '<li value="120" label="hello.o">；值写数字，不写单位。'),
   },
-  "vk-bars": {
-    layer: "components",
-    name: "条",
-    summary: "一组横向条：标签、数值条、单位；ratio-to 指向基准行（0 起）时，每条旁直接标出相对它的倍率（×500）。子节点写成 <li value label>。",
+
+  'vk-timeline': {
+    layer: 'diagram',
+    name: '时间线',
+    summary: '时间线：等距事件（不按年份比例）或多泳道。一条事项一个 <li>。',
     attrs: {
-    ...COMMON,
-    "max": {"type":"num","min":1,"max":1000000000,"step":1,"label":"最大值","group":"appearance"},
-    "scale": {"values":["linear","log"],"label":"刻度","group":"appearance","default":"linear"},
-    "ratio-to": {"type":"int","min":0,"max":999,"step":1,"label":"倍率基准行（0 起）","group":"appearance"},
-    "unit": {"type":"text","label":"单位","content":true},
-    "format": {"values":["thousands","none"],"default":"thousands"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"label":"色调","group":"appearance","default":"neutral"},
+      variant: { type: 'enum', values: ['events', 'lanes'], default: 'events', group: 'appearance', label: '形态' },
+      start: { type: 'text', content: true, group: 'content', label: '起点' },
+      end: { type: 'text', content: true, group: 'content', label: '终点' },
+      lanes: { type: 'text', content: true, group: 'content', label: '泳道名（逗号分隔）' },
+      current: current(),
     },
-    content: {"kind":"items","target":"vk-bars","fields":[{"name":"items","label":"条目（一行一个：标签|数值）","type":"lines","item":"i"}]},
+    children: item({ date: { type: 'text', label: '日期' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: COMMON.state }, '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'),
   },
-  "vk-asm": {
-    layer: "components",
-    name: "汇编",
-    summary: "汇编清单：地址 / 机器码 / 指令 / 操作数四列；行与地址都能被连线锚定。",
+
+  'vk-compare': {
+    layer: 'diagram',
+    name: '对照',
+    summary: '两张图对照：默认左右并排（每张完整、不裁），也可上下或叠放对照；可标差异框并放大。',
     attrs: {
-    ...COMMON,
-    "lang": {"type":"text","build":true,"label":"语言","content":true},
-    "src": {"type":"text","build":true,"label":"来源","content":true},
-    "lines": {"type":"text","label":"行段","content":true},
-    "file": {"type":"text","build":true,"label":"文件名","content":true},
-    "current": {"type":"lines","label":"当前项（序号 1 起；-1 = 没有当前）","group":"state"},
-    "focus": {"type":"lines","label":"聚光行","group":"state"},
-    "addr": {"type":"text","build":true,"label":"起始地址","content":true},
-    "title": {"type":"text","label":"标题","content":true},
-    "bytes": {"type":"bool","label":"机器码列","group":"appearance"},
-    "columns": {"type":"columns","values":["all","none","address"],"list":true,"label":"列开关（如 \"numbers,summary\"；none / all / -name / titles:地址|机器码…）","group":"appearance","default":"all"},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "long": {"values":["fail","wrap","clip"],"label":"长行","group":"appearance","default":"clip"},
-    "chrome": {"values":["min","none"],"label":"窗头","group":"appearance","default":"min"},
-    "order": {"type":"text"},
-    "fence": {"type":"text","label":"内存屏障（after:行号,label:文字）","group":"appearance"},
-    "size": {"type":"fontsize","values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance"},
-    "fit": {"values":["width"],"label":"填充","group":"appearance"},
+      labels: { type: 'text', content: true, group: 'content', label: '两张图与角标："a.png,b.png|改前|改后"' },
+      split: { type: 'num', min: 20, max: 80, default: 50, group: 'layout', label: 'split 模式左图占比（%）' },
+      variant: { type: 'enum', values: ['side', 'stack', 'split'], default: 'side', group: 'appearance', label: '形态' },
+      mark: { type: 'text', content: true, group: 'appearance', label: '差异框：x1,y1,x2,y2（%；多组用 ;）' },
+      zoom: { type: 'text', group: 'appearance', label: '放大：倍数或区域' },
     },
-    content: {"kind":"rebuild","note":"汇编文本由构建期解析与高亮；改文本请改 src 文件并运行 npm run build。"},
+    content: 'none',
   },
-  "vk-timeline": {
-    layer: "components",
-    name: "时间线",
-    summary: "时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（display 200 默认 / hero 280 / headline 112 …），当前项写在 current（1 起，-1 = 不标）。",
+
+  /* ---------------------------------------------------------------- 关系 */
+  'vk-callout': {
+    layer: 'relation',
+    name: '标注',
+    summary:
+      '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标（按字的墨迹，不按整行盒子），note 是带引线的注释气泡，badge 是编号点。它不改布局。',
     attrs: {
-    ...COMMON,
-    "start": {"type":"text","label":"起点","content":true},
-    "end": {"type":"text","label":"终点","content":true},
-    "variant": {"values":["events","lanes"],"label":"形态","group":"appearance","default":"events"},
-    "steps": {"type":"int","min":1,"max":16,"step":1,"label":"步数（轴宽）","group":"layout"},
-    "lanes": {"type":"text","label":"泳道","content":true},
-    "title": {"type":"text","label":"标题","content":true},
-    "mass": {"values":["compact","normal","hero"],"label":"体量","group":"appearance","default":"normal"},
-    "current": {"type":"int","min":-1,"max":99,"step":1,"label":"当前项（序号 1 起；-1 = 没有当前）","group":"state","default":"-1"},
-    "size": {"values":["caption","body","headline","display","hero","mega"],"label":"字号（语义档或像素）","group":"appearance","default":"display"},
+      mode: { type: 'enum', values: ['arrow', 'ring', 'note', 'badge'], default: 'arrow', group: 'appearance', label: '形态' },
+      for: { type: 'selector', content: true, group: 'target', label: '目标（ring / note / badge）' },
+      from: { type: 'selector', content: true, group: 'target', label: '起点（arrow）' },
+      to: { type: 'selector', content: true, group: 'target', label: '终点（arrow）' },
+      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '贴哪一侧' },
+      gap: gap('normal'),
+      shape: { type: 'enum', values: ['straight', 'ortho', 'curve'], default: 'curve', group: 'appearance', label: '连线形状' },
+      tone: tone('info'),
+      size: size('body'),
     },
-    content: {"kind":"items","target":"vk-timeline","fields":[{"name":"items","label":"事件（一行一个：日期|标题|说明）","type":"lines","item":"i"}]},
-  },
-  "vk-page": {
-    layer: "page",
-    name: "页面",
-    summary: "坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。align 决定内容在版心里的纵向位置。",
-    attrs: {
-    "align": {"values":["top","center","bottom"],"label":"对齐","group":"layout","default":"top"},
-    },
-  },
-  "vk-annotate": {
-    layer: "relations",
-    name: "标注",
-    summary: "关系与图示：mode=\"arrow\"（从一个元素/坐标指向另一个）、mode=\"circle\"（圈出目标，可双圈）、mode=\"note\"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode=\"badge\"（编号点）。只画覆盖层，不改布局。",
-    attrs: {
-    "mode": {"values":["arrow","circle","note","badge"],"default":"arrow","label":"形态（arrow 连线 / circle 圈选 / note 批注 / badge 编号点）","group":"appearance"},
-    "for": {"type":"selector","label":"目标","content":true},
-    "from": {"type":"selector","label":"起点","content":true},
-    "to": {"type":"selector","label":"终点","content":true},
-    "shape": {"values":["straight","ortho","curve"],"default":"curve","label":"连线形状（straight 直线 / ortho 折线 / curve 曲线）","group":"appearance"},
-    "dash": {"values":["solid","dashed"],"default":"solid","label":"虚实（solid 实线 / dashed 虚线）","group":"appearance"},
-    "width": {"type":"num","min":1,"max":24,"step":1,"label":"线宽","group":"appearance"},
-    "arrow": {"type":"text","label":"箭头（end / start / both / none；可写 end:open、size:40、cap:start）","group":"appearance","default":"end"},
-    "ring": {"values":["ellipse","rect"],"default":"ellipse","label":"圈形（ellipse 椭圆 / rect 矩形）","group":"appearance"},
-    "double": {"type":"bool","label":"内外两圈","group":"appearance"},
-    "note": {"values":["bubble","label","badge"],"default":"bubble","label":"批注形态（bubble 泡 / label 引线标签 / badge 编号点）","group":"appearance"},
-    "n": {"type":"int","min":1,"max":99,"step":1,"label":"编号（badge 形态）","content":true},
-    "size": {"values":["caption","body","headline","display","hero","mega"],"default":"body","label":"字号（语义档或像素）","group":"appearance"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"default":"neutral","label":"色调","group":"appearance"},
-    "label": {"type":"text","label":"连线标签","content":true},
-    "gap": {"type":"num","min":0,"max":240,"step":1,"label":"间距","group":"layout"},
-    "side": {"values":["auto","top","right","bottom","left"],"default":"auto","label":"贴边","group":"layout"},
-    },
-    content: {"kind":"text","target":"vk-annotate","fields":[{"name":"text","label":"批注文字（note 形态）","type":"textarea","text":true},{"name":"for","label":"目标（circle / note / badge，或 arrow 的终点）","type":"text","attr":"for"}]},
-  },
-  "vk-note": {
-    layer: "relations",
-    name: "注解",
-    summary: "三种注解：variant=\"margin\" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；variant=\"bubble\" 是泡 + 引线；variant=\"legend\" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。",
-    attrs: {
-    "variant": {"values":["margin","bubble","legend"],"default":"margin","label":"形态（margin 边注 / bubble 气泡 / legend 编号图例）","group":"appearance"},
-    "for": {"type":"selector","label":"目标（多个用 ; 分隔，图例按顺序一一对应）","content":true},
-    "side": {"values":["left","right","top","bottom","bottom-right","bottom-left","auto"],"default":"auto","label":"贴哪侧（margin 只认 left / right；bubble 四向 + auto；legend 用 bottom-right / bottom-left / bottom）","group":"layout"},
-    "leader": {"values":["line","dot","elbow","straight","none"],"default":"line","label":"引线（line 细线 / dot 细线 + 圆点；bubble：elbow / straight / none）","group":"appearance"},
-    "tone": {"type":"tone","values":["neutral","info","focus","ok","warn","err"],"default":"info","label":"气泡色调（bubble）","group":"appearance"},
-    "size": {"values":["caption","body","headline","display","hero","mega"],"default":"body","label":"气泡字号档（bubble）","group":"appearance"},
-    "n": {"type":"int","min":1,"max":99,"step":1,"label":"气泡编号（bubble）","content":true},
-    "gap": {"type":"num","min":0,"max":240,"step":1,"label":"气泡与目标的间距（bubble；像素）","group":"layout","default":24},
-    },
-    content: {"kind":"text","target":"vk-note","fields":[{"name":"text","label":"注解文字（margin / bubble 形态）","type":"textarea","text":true},{"name":"items","label":"图例条目（legend 形态，一行一条 <li>）","type":"lines","item":"li"}]},
+    content: 'text',
   },
 };
 
 export const TAG_NAMES = Object.keys(TAGS);
-export const ALL_TAG_NAMES = TAG_NAMES;
-export const LAYOUT_ATTRS = new Set(Object.keys(COMMON));
-export const CHILDREN = {"vk-list":{"kind":"item","item":"li"},"vk-steps":{"kind":"item","item":"li"},"vk-flow":{"kind":"item","item":"li"},"vk-cells":{"kind":"item","item":"li"},"vk-bars":{"kind":"item","item":"li"},"vk-bits":{"kind":"item","item":"li"},"vk-timeline":{"kind":"item","item":"li"},"vk-table":{"kind":"wrapper","wrapper":"table"},"vk-code":{"kind":"source"},"vk-diff":{"kind":"source"},"vk-term":{"kind":"source"},"vk-math":{"kind":"source"},"vk-bytes":{"kind":"source"},"vk-asm":{"kind":"source"},"vk-tree":{"kind":"source","inline":"text/JSON","item":"li"}};
-export const STATES = {"vk-cells":{"where":["item"],"values":["current","mark","ok","warn","err"]},"vk-bars":{"where":["item"],"values":["current","mark","ok","warn","err"]},"vk-bits":{"where":["item"],"values":["current","mark","ok","warn","err"]},"vk-timeline":{"where":["item"],"values":["current","mark","ok","warn","err"]},"vk-list":{"where":["item"],"values":["ok","warn","err"]},"vk-table":{"where":["row","cell"],"values":["current","mark","ok","warn","err"]}};
 
-export const observedOf = (tag) => [...Object.keys(TAGS[tag]?.attrs || {}), ...Object.keys(COMMON), ...Object.keys(CANVAS)];
+/** 一个标签自己的属性表：共享属性 + 它自己声明的。 */
+export function attrsOf(tag) {
+  if (tag === 'vk-page') return { ...TAGS[tag].attrs };
+  return { ...COMMON, ...TAGS[tag].attrs };
+}
 
-/** 结构化子节点 <li> 的合法属性：父标签 → 允许的名字。 */
-export const CHILD_ATTRS = {
-  'vk-timeline': ['date', 'label', 'value', 'note', 'lane', 'span', 'tone', 'state'],
-  'vk-bits': ['label', 'value', 'from', 'to', 'state'],
-  'vk-cells': ['value', 'label', 'span', 'state', 'filled'],
-  'vk-bars': ['label', 'value', 'state'],
-  'vk-list': ['state'],
-  'vk-steps': [],
-  'vk-flow': ['label', 'tone'],
-  'vk-table': [],
-  'vk-note': [],
-};
+/**
+ * 运行期要观察的属性名。
+ * x / y / w / h / z 只在 vk-canvas 的子节点上成立（构建期按父级判定），
+ * 但运行期一律观察：属性出现在别处时由构建期报错，不靠静默忽略。
+ */
+export function observedOf(tag) {
+  const names = Object.keys(attrsOf(tag));
+  if (tag !== 'vk-page') names.push(...Object.keys(CANVAS_ATTRS));
+  return [...new Set(names)];
+}
 
-/** 一套状态词，全库共用：current 是“正在讲”，mark 是“标注”，其余是语义。 */
-export const STATE_VALUES = ['current', 'mark', 'ok', 'warn', 'err'];
+/** 每个标签的默认值表（运行期 spec() 读它，不再各写一份）。 */
+export const DEFAULTS = Object.fromEntries(
+  TAG_NAMES.map((tag) => {
+    const out = {};
+    for (const [name, spec] of Object.entries(attrsOf(tag))) if (spec.default !== undefined) out[name] = spec.default;
+    return [tag, out];
+  })
+);
 
+/** 结构化子节点的合法属性：父标签 → 名字列表。 */
+export const CHILD_ATTRS = Object.fromEntries(
+  TAG_NAMES.filter((t) => TAGS[t].children?.kind === 'item').map((t) => [
+    t,
+    Object.keys(TAGS[t].children.attrs || {}),
+  ])
+);

@@ -1,19 +1,15 @@
 # 依赖
 node_modules/
 
-# 构建产物：npm run build 随时重建，不进 git
+# 构建产物
 dist/
 vk/
 out/
 assets/fonts/
 src/icons.generated.mjs
-src/icons.core.generated.mjs
 icons.json
 
-# 样张由 npm test 生成
-tests/pages/
-
-# 本地缓存 / 临时目录 / 日志 / 备份
+# 本地缓存 / 临时
 .vk-cache/
 .tmp/
 *.log

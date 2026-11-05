@@ -1,0 +1,84 @@
+<vk-page id="bytes">
+  <vk-stack gap="normal">
+    <vk-label>字节</vk-label>
+    <vk-bytes src="../assets/hello/o0.png" addr="0x1000" offset="0" length="32" cols="8"></vk-bytes>
+    <vk-text size="caption" ink="muted">真实文件的头 32 个字节：偏移读出来的，不是手写的。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="compare">
+  <vk-stack gap="normal">
+    <vk-label>对照</vk-label>
+    <vk-compare labels="../assets/hello/o0.png,../assets/hello/o2.png|gcc -O0|gcc -O2"></vk-compare>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="math">
+  <vk-stack gap="wide">
+    <vk-label>公式</vk-label>
+    <vk-math display size="headline">
+      <script type="text/plain" data-vk-source>
+\sum_{i=1}^{n} i = \frac{n(n+1)}{2}
+      </script>
+    </vk-math>
+    <vk-text size="body">前面的和，是 <vk-inline variant="math">\frac{n(n+1)}{2}</vk-inline> 次加法。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="layout">
+  <vk-stack gap="normal">
+    <vk-label>叠层与坐标</vk-label>
+    <vk-layer surface="soft" tone="focus">
+      <vk-text size="display">叠</vk-text>
+    </vk-layer>
+    <vk-canvas w="900" h="220">
+      <vk-box x="0" y="0" pad="normal" surface="paper" border="hair"><vk-text size="caption">0,0</vk-text></vk-box>
+      <vk-box x="620" y="110" pad="normal" surface="paper" border="hair"><vk-text size="caption">620,110</vk-text></vk-box>
+    </vk-canvas>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="lists">
+  <vk-grid cols="2" gap="wide">
+    <vk-list variant="ordered">
+      <li>取指令</li>
+      <li>解码</li>
+      <li>执行</li>
+    </vk-list>
+    <vk-table variant="spec" mono>
+      <table>
+        <tr><th>寄存器</th><th>值</th></tr>
+        <tr><td>eax</td><td>196608</td></tr>
+        <tr><td>ebp</td><td>4179332</td></tr>
+      </table>
+    </vk-table>
+  </vk-grid>
+</vk-page>
+
+<vk-page id="lanes">
+  <vk-stack gap="normal">
+    <vk-label>泳道</vk-label>
+    <vk-timeline variant="lanes" lanes="语言,工具">
+      <li lane="语言" date="1972" label="C"></li>
+      <li lane="工具" date="1973" label="Unix"></li>
+      <li lane="语言" date="1983" label="C++"></li>
+      <li lane="工具" date="1991" label="Linux"></li>
+    </vk-timeline>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="steps-v">
+  <vk-grid cols="4" gap="wide">
+    <vk-stack span="2">
+      <vk-steps direction="vertical" current="2">
+        <li>写代码</li>
+        <li>编译</li>
+        <li>运行</li>
+      </vk-steps>
+    </vk-stack>
+    <vk-stack span="2" gap="close">
+      <vk-text size="subhead">竖排步骤</vk-text>
+      <vk-text size="caption" ink="muted">窄栏里自动竖排，不压字。</vk-text>
+    </vk-stack>
+  </vk-grid>
+</vk-page>

@@ -49,8 +49,8 @@ function copy(src, dest) {
 /* ---------------------------------------------------------------- 拉丁字体 */
 
 const LATIN = [
-  { family: 'Inter', pkg: 'inter', weight: [400, 500, 700], file: 'inter-latin-%w-normal.woff2', out: 'inter-%w.woff2' },
-  { family: 'JetBrains Mono', pkg: 'jetbrains-mono', weight: [400, 500, 700], file: 'jetbrains-mono-latin-%w-normal.woff2', out: 'jetbrains-mono-%w.woff2' },
+  { family: 'Inter', pkg: 'inter', weight: [400, 500, 600], file: 'inter-latin-%w-normal.woff2', out: 'inter-%w.woff2' },
+  { family: 'JetBrains Mono', pkg: 'jetbrains-mono', weight: [400, 500, 600], file: 'jetbrains-mono-latin-%w-normal.woff2', out: 'jetbrains-mono-%w.woff2' },
 ];
 
 const expected = new Set();
@@ -79,10 +79,10 @@ for (const f of LATIN) {
  * 只做三件事：换成自托管路径、去掉用不到的 woff 回退、font-display 保持 swap
  * （block 保证截帧时不会先闪一下系统字体）。
  *
- * 500 必须真的发：中文标签用 --vk-w-med，缺 500 会静默落到 400，
+ * 400/500/600 必须真的发：缺一档会静默落到相邻档，
  * 层级看不出差别，而且不报错。
  */
-for (const w of [400, 500, 700]) {
+for (const w of [400, 500, 600]) {
   const dir = path.join(SRC, 'noto-sans-sc');
   const css = fs.readFileSync(path.join(dir, `${w}.css`), 'utf8');
 
@@ -142,3 +142,4 @@ fs.writeFileSync(STAMP, key + '\n');
 
 console.log(`vk/fonts.css  ${cssKb}`);
 console.log(`字体文件 ${copied} 个，共 ${kb(fontBytes)}`);
+

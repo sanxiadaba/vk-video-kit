@@ -1,0 +1,71 @@
+/* ============================================================================
+   v17 · 关系层样式
+   ========================================================================== */
+
+vk-callout {
+  display: contents;
+}
+
+.vk-callout-svg {
+  position: absolute;
+  inset: 0;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.vk-callout-bd {
+  position: absolute;
+  pointer-events: none;
+}
+
+.vk-callout-note {
+  max-width: 720px;
+  padding: var(--vk-gap-close) var(--vk-gap-normal);
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: var(--vk-radius-md);
+  background: var(--vk-paper);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.35;
+  text-wrap: pretty;
+}
+
+.vk-callout-note[data-tone='focus'] {
+  border-color: var(--vk-focus);
+}
+.vk-callout-note[data-tone='ok'] {
+  border-color: var(--vk-ok);
+}
+.vk-callout-note[data-tone='warn'] {
+  border-color: var(--vk-warn);
+}
+.vk-callout-note[data-tone='err'] {
+  border-color: var(--vk-err);
+}
+
+.vk-callout-label {
+  translate: -50% -50%;
+  padding: 2px var(--vk-gap-close);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-paper);
+  color: var(--vk-ink-2);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.vk-callout-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  translate: -50% -50%;
+  border-radius: 50%;
+  background: var(--vk-info);
+  color: var(--vk-paper);
+  font-family: var(--vk-font-mono);
+  font-size: 36px;
+  line-height: 1;
+}

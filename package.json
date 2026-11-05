@@ -1,24 +1,17 @@
 {
   "name": "vk-video-kit",
-  "version": "16.0.0",
+  "version": "17.0.0",
   "private": true,
-  "description": "把内容做成画面单元：30 个标签、一层（元素 / 排布 / 数据 / 关系 / 页面）、1920×1080。",
+  "description": "单帧画面库：27 个件、一套词汇、1920×1080。给编程科普视频用。",
   "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
-  "bin": {
-    "vk": "bin/vk.mjs"
-  },
+  "bin": { "vk": "bin/vk.mjs" },
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
-    "fixtures": "node tools/fixtures.mjs",
-    "gallery": "node tools/gallery.mjs",
-    "serve": "node cli/serve.mjs 8099",
+    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/css.mjs && node tools/build.mjs",
+    "render": "node bin/vk.mjs render pages",
     "check": "node bin/vk.mjs check pages",
-    "shot": "node bin/vk.mjs shot",
-    "test": "npm run build && node tools/test.mjs",
-    "test:fast": "node tools/test.mjs --fast",
-    "budget": "node tools/budget.mjs"
+    "test": "node tools/test.mjs"
   },
   "dependencies": {
     "katex": "^0.16.11",
@@ -36,7 +29,5 @@
   },
   "license": "MIT",
   "author": "jun",
-  "engines": {
-    "node": ">=20"
-  }
+  "engines": { "node": ">=20" }
 }
