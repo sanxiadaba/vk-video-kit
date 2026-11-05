@@ -175,7 +175,7 @@ s[0] = 'H';
 <vk-page id="1-cover">
   <vk-grid cols="12" gap="normal">
     <vk-stack span="6" gap="normal" justify="center">
-      <vk-label counter="1 / 8">第 6 集 · 编译链路</vk-label>
+      <vk-label counter="1 / 5">第 6 集 · 编译链路</vk-label>
       <vk-text size="subhead">从 .c 到 .exe，<br>中间发生了什么。</vk-text>
     </vk-stack>
     <vk-img span="6" src="../assets/hello/asm-o0.png" ratio="4 / 3" fill="contain" radius="md"></vk-img>
@@ -188,9 +188,10 @@ s[0] = 'H';
 ```html
 <vk-page id="2-code">
   <vk-stack gap="normal">
-    <vk-label counter="2 / 8">代码 + 圈住一行</vk-label>
+    <vk-label counter="2 / 5">代码 + 圈住一行</vk-label>
     <vk-text size="subhead">关键就在<em>这一行</em>。</vk-text>
     <vk-code id="c" lang="c" file="sum.c" src="../code/opt/sum.c" lines="1-3" current="2"></vk-code>
+    <vk-text size="caption" ink="muted">圈的是源文件第 2 行。</vk-text>
   </vk-stack>
   <vk-callout mode="ring" for="#c@line:2" tone="focus"></vk-callout>
 </vk-page>
@@ -199,26 +200,45 @@ s[0] = 'H';
 **前后对照**
 
 ```html
-<vk-pair symbol="vs">
-  <vk-code lang="c" file="a.c">…顺序访问…</vk-code>
-  <vk-code lang="c" file="b.c">…随机访问…</vk-code>
-</vk-pair>
+<vk-page id="3-pair">
+  <vk-stack gap="normal">
+    <vk-label counter="3 / 5">前后对照</vk-label>
+    <vk-text size="subhead">同一个循环，<em>一个顺、一个跳</em>。</vk-text>
+    <vk-pair symbol="vs">
+      <vk-code lang="c" file="a.c">
+        <script type="text/plain" data-vk-source>
+for (i = 0; i < n; i++)
+    sum += a[i];
+        </script>
+      </vk-code>
+      <vk-code lang="c" file="b.c">
+        <script type="text/plain" data-vk-source>
+for (i = 0; i < n; i++)
+    sum += a[idx[i]];
+        </script>
+      </vk-code>
+    </vk-pair>
+  </vk-stack>
+</vk-page>
 ```
 
 **表格 + 一句结论**
 
 ```html
-<vk-stack gap="normal">
-  <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
-  <vk-table variant="spec">
-    <table>
-      <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
-      <tr><td>L1</td><td>32 KB</td><td>1ns</td></tr>
-      <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
-    </table>
-  </vk-table>
-  <vk-text size="caption" ink="muted">差两个数量级。</vk-text>
-</vk-stack>
+<vk-page id="4-table">
+  <vk-stack gap="normal">
+    <vk-label counter="4 / 5">表格 + 一句结论</vk-label>
+    <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
+    <vk-table variant="spec">
+      <table>
+        <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
+        <tr><td>L1</td><td>32 KB</td><td>1ns</td></tr>
+        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+      </table>
+    </vk-table>
+    <vk-text size="caption" ink="muted">差两个数量级。</vk-text>
+  </vk-stack>
+</vk-page>
 ```
 
 **深色章节页**
@@ -226,7 +246,7 @@ s[0] = 'H';
 ```html
 <vk-page id="5-chapter" surface="dark">
   <vk-stack gap="wide">
-    <vk-label counter="5 / 8">第二章</vk-label>
+    <vk-label counter="5 / 5">第二章</vk-label>
     <vk-text size="display">数据在哪，<br>决定它多快。</vk-text>
     <vk-text size="body" ink="secondary">从缓存行到数组，从 1ns 到 100ns。</vk-text>
   </vk-stack>
@@ -316,7 +336,25 @@ vk sheet episodes/ --cols 4      # 把一集缩成联络图，看整体节奏
 改了一个默认值、动了一个 token，不用逐张看图也能知道影响面。快照只比"墨迹范围 / 占版心 / 焦点数 / 问题类型"，
 不是像素比对——排版微调不会误报成"变了"。
 
-## 13 自检判什么
+
+## 13 一集怎么排
+
+十集走下来，稳定的骨架是这样的（5–10 帧）：
+
+1. **钩子**：一句反常识的话或一个问题。别解释，先让人停下来。
+2. **证据**：真代码 / 真终端 / 真字节。这一段观众要能"看见"，不是听你说。
+3. **对照或数字**：两种写法并排，或者一组量化的条形。差多少，用画面说。
+4. **为什么**：机制。到这一帧观众已经信了，才愿意听解释。
+5. **收尾**：一句能被记住的话 + 一帧深色。
+
+几条不是规定、但十集都守着的习惯：
+
+- **每帧一个主张**：最大那行字就是这一帧的观点，没有就用 `vk stats` 找出来补。
+- **一集至少一帧深色**：十集都用深色收尾；06 / 08 / 09 中途还有一帧终端时刻。
+- **一帧只说一件事**：装不下就拆帧，不缩字号。
+- **节奏别连续三帧同形**：`vk stats` 会点出来。
+
+## 14 自检判什么
 
 只判「无论你画什么，它都错」的事：
 
@@ -339,7 +377,7 @@ vk sheet episodes/ --cols 4      # 把一集缩成联络图，看整体节奏
 长行最后才交给 `long`：`clip` 是默认（窗口长到版心为止，再缩字号，实在放不下才切），
 `wrap` 是折行。
 
-## 14 常见错
+## 15 常见错
 
 - `span` 写到 `vk-stack` 的子项上（只有 grid 子项认）。
 - 一帧塞两组 `current` 以上：观众不知道看哪。一处就够。

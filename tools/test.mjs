@@ -220,6 +220,17 @@ console.log('\n覆盖');
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
 
+  /* SPEC「配方」里的每一段都要和 tests/recipes.html 逐字一致：抄错了例子比没有例子更糟。 */
+  {
+    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\r/g, '');
+    const sec = spec.slice(spec.indexOf('## 7.5 配方'), spec.indexOf('## 8 内容从哪来'));
+    const blocks = [...sec.matchAll(/```html\n([\s\S]*?)```/g)].map((m) => m[1].replace(/\s+/g, ' ').trim());
+    const page = fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').replace(/\s+/g, ' ').trim();
+    const off = blocks.filter((b) => !page.includes(b));
+    ok(blocks.length >= 5 && !off.length, 'SPEC 的配方与 recipes.html 一致');
+    for (const b of off.slice(0, 3)) console.error('    · 对不上：' + b.slice(0, 60));
+  }
+
   /* SPEC §7 的属性表要等于 schema：多写一个（作者写了会报错）和少写一个（作者不知道）都是漂移。 */
   {
     const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\\\|/g, '¦');
