@@ -97,6 +97,9 @@ export class VkTerm extends VkElement {
       return;
     }
     paintState(this);
+    // 写了 size 就按它来（fitToBox 不再改字号）；没写则由 fitToBox 自适应。
+    if (this.hasAttribute('size')) this.style.setProperty('--vk-cs', `var(--vk-fs-${attrEnum(this, 'size', 'body')})`);
+    else this.style.removeProperty('--vk-cs');
     this.registerPlace();
   }
 

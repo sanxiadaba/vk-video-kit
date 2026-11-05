@@ -340,7 +340,8 @@ function buildAsm(node, file) {
   const text = readSource(node, file, 'asm');
   if (text == null) return '';
   const { rows } = parseAsm(text);
-  const keep = lineSet(attrOf(node, 'lines'));
+  const raw = lineSet(attrOf(node, 'lines'));
+  const keep = raw && raw.size ? raw : null;
   let n = 0;
   const body = rows
     .filter((r, i) => !keep || keep.has(i + 1))

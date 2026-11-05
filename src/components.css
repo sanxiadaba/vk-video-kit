@@ -552,6 +552,11 @@ vk-code[long='wrap'] .vk-src {
 }
 
 /* ------------------------------------------------------------------ 汇编 */
+/* 汇编窗比代码窗宽：让窗口严格跟内容走（fitToBox 才有内容可量），不设最小宽。 */
+vk-asm .vk-win {
+  min-width: 0;
+}
+
 .vk-arow {
   display: flex;
   gap: var(--vk-gap-close);
@@ -560,6 +565,9 @@ vk-code[long='wrap'] .vk-src {
   line-height: 1.5;
   min-height: calc(var(--vk-cs, var(--vk-fs-body)) * 1.5);
   white-space: pre;
+}
+.vk-arow > * {
+  flex: 0 0 auto;
 }
 .vk-arow > .vk-aaddr {
   width: 5.4em;

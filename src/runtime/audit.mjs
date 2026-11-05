@@ -190,7 +190,18 @@ export function auditPage(stageEl) {
     }
   }
 
-  // 8. 渲染失败 / 数据过期 / 图片失败
+  // 8. 空件：构建期没读到内容时，组件会渲染成一个空窗——它不报错，但什么也没讲。
+  const DATA_TAGS = ['vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-bytes', 'vk-tree', 'vk-math'];
+  for (const tag of DATA_TAGS) {
+    for (const el of stage.querySelectorAll(tag)) {
+      if (el.closest('svg')) continue;
+      if (!el.textContent.trim() && !el.querySelector('img,svg,table')) {
+        issues.push({ type: 'empty-part', what: `${name(el)} 是空的`, fix: '构建期没读到内容：检查 src 路径 / 内联脚本，或先跑 vk render' });
+      }
+    }
+  }
+
+  // 9. 渲染失败 / 数据过期 / 图片失败
   for (const el of stage.querySelectorAll('[data-vk-error]')) issues.push({ type: 'render', what: `${name(el)} 渲染失败`, fix: '看控制台第一条报错' });
   for (const el of stage.querySelectorAll('[data-vk-stale]')) issues.push({ type: 'stale', what: `${name(el)} 缺少预编译数据`, fix: '运行 vk render 重新生成' });
   for (const el of stage.querySelectorAll('vk-img[data-error]')) issues.push({ type: 'asset', what: `${name(el)} 的图片加载失败`, fix: '检查 src 路径' });

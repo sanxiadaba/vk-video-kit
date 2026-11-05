@@ -1,0 +1,4 @@
+00000000 <_add>:
+   0:	8b 44 24 08          	mov    0x8(%esp),%eax
+   4:	03 44 24 04          	add    0x4(%esp),%eax
+   8:	c3                   	ret
