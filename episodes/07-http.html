@@ -1,0 +1,61 @@
+<vk-page id="1-hook">
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 6">HTTP</vk-label>
+    <vk-text size="headline">网页的第一口，<br>是<em>纯文本</em>。</vk-text>
+    <vk-text size="body" ink="secondary">在 HTML 之前，先有一行说明"这次请求成功了没有"。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="2-raw">
+  <vk-stack gap="close">
+    <vk-label counter="2 / 6">原始响应</vk-label>
+    <vk-text size="subhead">一次真实抓包，134 字节。</vk-text>
+    <vk-term title="response.txt" src="../code/http/response.txt" size="caption" current="1"></vk-term>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="3-bytes">
+  <vk-stack gap="normal">
+    <vk-label counter="3 / 6">头 16 字节</vk-label>
+    <vk-text size="subhead">开头这几个字节，就是<em>状态行</em>。</vk-text>
+    <vk-bytes src="../code/http/head.bin" addr="0x0" cols="8" current="1-16"></vk-bytes>
+    <vk-text size="caption" ink="muted">48 54 54 50 = "HTTP"，2f 31 2e 31 = "/1.1"，20 32 30 30 = " 200"。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="4-status">
+  <vk-stack gap="close">
+    <vk-label counter="4 / 6">状态码</vk-label>
+    <vk-text size="subhead">只看<em>第一位</em>，就知道大概发生了什么。</vk-text>
+    <vk-table variant="spec" mono size="caption">
+      <table>
+        <tr><th>状态码</th><th>意思</th><th>谁的问题</th></tr>
+        <tr><td>2xx</td><td>成功</td><td>—</td></tr>
+        <tr><td>3xx</td><td>换个地址再来</td><td>—</td></tr>
+        <tr><td>4xx</td><td>你请求错了</td><td>客户端</td></tr>
+        <tr><td>5xx</td><td>我处理不了</td><td>服务器</td></tr>
+      </table>
+    </vk-table>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="5-steps">
+  <vk-stack gap="wide">
+    <vk-label counter="5 / 6">一次往返</vk-label>
+    <vk-text size="subhead">建立连接、发请求、收响应、断开。</vk-text>
+    <vk-steps current="3" size="subhead">
+      <li>连接</li>
+      <li>请求</li>
+      <li>响应</li>
+      <li>断开</li>
+    </vk-steps>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="6-end">
+  <vk-stack gap="wide">
+    <vk-label counter="6 / 6">小结</vk-label>
+    <vk-text size="display">协议，<br>就是<em>约定</em>。</vk-text>
+    <vk-text size="caption" ink="muted">下一集：为什么现在的网页要开几十个连接。</vk-text>
+  </vk-stack>
+</vk-page>
