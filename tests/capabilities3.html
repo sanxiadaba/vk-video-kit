@@ -254,3 +254,11 @@ hello
     <vk-img span="6" src="../assets/hello/asm-o0.png" ratio="4 / 3" radius="md"></vk-img>
   </vk-grid>
 </vk-page>
+
+<vk-page id="asmpad">
+  <vk-stack gap="normal">
+    <vk-label counter="26">汇编 · 对齐填充会被压暗</vk-label>
+    <vk-asm file="add-o2.dis" src="../code/opt/add-o2.dis" lines="1-9" size="body" current="3"></vk-asm>
+    <vk-text size="caption" ink="muted">最后那行 lea 是编译器塞的对齐填充，不算函数的一条指令。</vk-text>
+  </vk-stack>
+</vk-page>

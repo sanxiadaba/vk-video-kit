@@ -390,6 +390,11 @@ function buildMath(node, file, errors) {
   }
 }
 
+/** 对齐填充：nop / int3 / 末尾的 lea 0x0(...) —— 不是函数干的事，标出来。 */
+const isPaddingInsn = (mnemonic, operands) =>
+  /^(nop|int3|xchg|lea)$/i.test(mnemonic) &&
+  (/^(nop|int3)$/i.test(mnemonic) || /^0x0\(/.test(operands) || /%ax,\s*%ax/.test(operands));
+
 function buildAsm(node, file) {
   const showBytes = (node.attrs || []).some((a) => a.name === 'bytes');
   const text = readSource(node, file, 'asm');
