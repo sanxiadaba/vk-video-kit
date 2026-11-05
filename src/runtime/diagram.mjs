@@ -157,14 +157,9 @@ export class VkSteps extends VkElement {
       const line = conn.querySelector('i');
       const head = conn.querySelector('b');
       if (vertical) {
-        // 一段 24px 竖线，落在编号章的轴线上。
-        conn.style.cssText =
-          'display:flex;flex:0 0 auto;align-self:flex-start;' +
-          'margin-left:calc(var(--vk-step-badge-x, 0px) - var(--vk-line-rule) / 2);height:24px';
-        if (line) {
-          line.style.cssText =
-            'display:block;width:var(--vk-line-rule);height:24px;border-radius:var(--vk-radius-pill);background:var(--vk-line-strong)';
-        }
+        // 竖排的连接线由 .vk-step::after 画（盒子之间的线），这个节点直接藏掉。
+        conn.style.cssText = 'display:none';
+        if (line) line.style.cssText = 'display:none';
         if (head) head.style.cssText = 'display:none';
       } else {
         // 一条带右箭头的横线：flex: 1 撑开，上限是一步的间距。

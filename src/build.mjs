@@ -381,25 +381,28 @@ function buildBytes(node, file) {
   return `<div class="vk-win"><div class="vk-bd">${rows.join('')}</div></div>`;
 }
 
-function treeHtml(node, rows) {
-  const title = attrOf(node, 'title');
+function treeHtml(node, rows, title) {
   const head = title
     ? `<div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">${esc(title)}</span></div>`
     : '';
   return `<div class="vk-win">${head}<div class="vk-bd vk-tree">${rows.join('')}</div></div>`;
 }
 
+/** 一个节点：名字 + 子节点。缩进与导线由 CSS 画，不靠 └── 字符。 */
+function treeNode(name, isDir, nodePath, kids = '') {
+  return (
+    `<div class="vk-node" data-vk-node="${esc(nodePath)}"${isDir ? ' data-dir' : ''}>` +
+    `<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span>` +
+    (kids ? `<div class="vk-kids">${kids}</div>` : '') +
+    `</div>`
+  );
+}
+
 function buildTree(node, file) {
   const src = attrOf(node, 'src');
   const depth = Number(attrOf(node, 'depth') || 3) || 3;
-  const rows = [];
-  const row = (name, prefix, last, isDir, nodePath) =>
-    `<div class="vk-trow" data-vk-node="${esc(nodePath)}"${isDir ? ' data-dir' : ''}><span class="vk-indent">${prefix}${
-      last ? '└── ' : '├── '
-    }</span><span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></div>`;
 
   if (!src) {
-    // 内联 JSON：{name, children:[{name, dir}]}（也接受纯字符串数组）
     const inline = (node.childNodes || []).find((c) => c.tagName === 'script');
     if (!inline) return '';
     let data;
@@ -408,39 +411,38 @@ function buildTree(node, file) {
     } catch (e) {
       throw new Error(`${file}:${lineOf(node)} <vk-tree> 的内联 JSON 解析失败：${e.message}`);
     }
-    const walk = (items, level, prefix, base) => {
-      if (level > depth) return;
-      (items || []).forEach((it, i, arr) => {
-        const name = typeof it === 'string' ? it : it.name;
-        const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
-        const p = base ? `${base}/${name}` : name;
-        rows.push(row(name, prefix, i === arr.length - 1, isDir, p));
-        if (it.children) walk(it.children, level + 1, prefix + (i === arr.length - 1 ? '    ' : '│   '), p);
-      });
+    const walk = (items, level, base) => {
+      if (level > depth) return '';
+      return (items || [])
+        .map((it) => {
+          const name = typeof it === 'string' ? it : it.name;
+          const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
+          const p = base ? `${base}/${name}` : name;
+          return treeNode(name, isDir, p, it.children ? walk(it.children, level + 1, p) : '');
+        })
+        .join('');
     };
-    walk(Array.isArray(data) ? data : data.children || [data], 1, '', '');
-    return treeHtml(node, rows);
+    const list = Array.isArray(data) ? data : data.children || [data];
+    return treeHtml(node, [walk(list, 1, '')], attrOf(node, 'title'));
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
   if (!fs.existsSync(abs)) throw new Error(`${file}:${lineOf(node)} <vk-tree> 的 src="${src}" 找不到目录`);
-  const walk = (dir, level, prefix) => {
-    if (level > depth) return;
+  const walk = (dir, level, base) => {
+    if (level > depth) return '';
     const entries = fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((e) => !e.name.startsWith('.'))
       .sort((a, b) => (a.isDirectory() === b.isDirectory() ? a.name.localeCompare(b.name) : a.isDirectory() ? -1 : 1))
       .slice(0, 20);
-    entries.forEach((e, i) => {
-      const last = i === entries.length - 1;
-      const isDir = e.isDirectory();
-      const p = path.relative(abs, path.join(dir, e.name)).split(path.sep).join('/');
-      rows.push(row(e.name, prefix, last, isDir, p));
-      if (isDir) walk(path.join(dir, e.name), level + 1, prefix + (last ? '    ' : '│   '));
-    });
+    return entries
+      .map((e) => {
+        const p = base ? `${base}/${e.name}` : e.name;
+        return treeNode(e.name, e.isDirectory(), p, e.isDirectory() ? walk(path.join(dir, e.name), level + 1, p) : '');
+      })
+      .join('');
   };
-  walk(abs, 1, '');
-  return treeHtml(node, rows);
+  return treeHtml(node, [walk(abs, 1, '')], attrOf(node, 'title'));
 }
 
 /* ---------------------------------------------------------------- 图标 */

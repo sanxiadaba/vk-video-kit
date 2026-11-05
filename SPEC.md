@@ -104,13 +104,13 @@ s[0] = 'H';
 | `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface` `chrome` |
 | `vk-diff` | 改动 | `src` `lines` `file` `lang` `current` `size` |
 | `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
-| `vk-table` | 表格 | `variant` `mono` `size` `caption` |
+| `vk-table` | 表格 | `variant` `mono` `size` `caption`（表上方标题） |
 | `vk-list` | 列表 | `variant`(bullet/check/ordered/define) `gap` `size` |
 | `vk-math` | 公式 | `src` `display` `size` |
 | `vk-tree` | 文件树 | `src` `title` `depth` `current` `size` |
 | `vk-cells` | 内存格 | `addr` `cols` `current` `size` |
 | `vk-bytes` | 字节窗 | `src` `addr` `offset` `length` `cols` `current` |
-| `vk-bits` | 位串 | `value` `index` `group` `sign` |
+| `vk-bits` | 位串 | `value`（`|` 分段：符号\|指数\|尾数）`label` `index` `group` `sign` |
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |

@@ -23,7 +23,7 @@ const normPath = (raw) =>
 
 /* ------------------------------------------------------------------ 表格 */
 /* 数字列：按列判断，只给那一列的格子加 .num（对齐交给 CSS）。 */
-const NUM = /^[-+]?[\d,]+(\.\d+)?%?$/
+const NUM = /^-?(0|[1-9]\d{0,2}(,\d{3})*)(\.\d+)?%?$/
 
 export class VkTable extends VkElement {
   render() {
@@ -47,8 +47,8 @@ export class VkTable extends VkElement {
       this._cap.className = 'vk-cap'
     }
     this._cap.textContent = caption
-    // 表题永远紧跟 table；重复 render 只是搬同一个节点，不会叠加。
-    if (this._cap.previousElementSibling !== table) table.after(this._cap)
+    // 表题在表上方：它是标题，不是注脚。
+    if (this._cap.nextElementSibling !== table) table.before(this._cap)
   }
 
   /**
@@ -201,55 +201,72 @@ export class VkBytes extends VkElement {
    位数不校验：8 / 16 / 32 / 64 之外的位串原样画出来。 */
 export class VkBits extends VkElement {
   render() {
-    const bits = this._bits()
-    if (!bits.length) {
+    const fields = this._fields()
+    const total = fields.reduce((n, f) => n + f.length, 0)
+    if (!total) {
       warn(this, '缺 value（位串）')
       this.replaceChildren()
       return
     }
     const mode = attrEnum(this, 'index')
     const group = Number(attrEnum(this, 'group')) || 1
+    const sign = attrBool(this, 'sign')
 
     const row = document.createElement('div')
     row.className = 'vk-bit-row'
-    const cells = bits.map((bit, i) => {
-      const cell = document.createElement('div')
-      cell.className = 'vk-bit'
-      cell.dataset.vkBit = String(i)
 
-      // 序号：down 从 n-1 递减，up 从 0 递增，none 没有序号，sparse 只标 8 的倍数位。
-      if (mode !== 'none') {
-        const idx = document.createElement('span')
-        idx.className = 'vk-bit-i'
-        const n = mode === 'up' ? i : bits.length - 1 - i
-        // 空位用不换行空格占着：格子宽度与基线都不会因为「没字」而塌。
-        idx.textContent = mode === 'sparse' && n % 8 !== 0 ? '\u00a0' : String(n)
-        cell.append(idx)
-      }
+    let seen = 0
+    fields.forEach((field, fi) => {
+      const box = document.createElement('div')
+      box.className = 'vk-bit-field'
+      field.forEach((bit, bi) => {
+        const cell = document.createElement('div')
+        cell.className = 'vk-bit'
+        cell.dataset.vkBit = String(seen)
 
-      const v = document.createElement('span')
-      v.className = 'vk-bit-v'
-      v.textContent = bit
-      cell.append(v)
+        // 序号：down 从 n-1 递减，up 从 0 递增，none 没有，sparse 只标 8 的倍数位。
+        if (mode !== 'none') {
+          const idx = document.createElement('span')
+          idx.className = 'vk-bit-i'
+          const n = mode === 'up' ? seen : total - 1 - seen
+          idx.textContent = mode === 'sparse' && n % 8 !== 0 ? '\u00a0' : String(n)
+          cell.append(idx)
+        }
 
-      // 分组：每 N 位的头上多 8px，组的边界才看得出来。
-      if (i > 0 && i % group === 0) cell.style.marginLeft = '8px'
-      return cell
+        const v = document.createElement('span')
+        v.className = 'vk-bit-v'
+        v.textContent = bit
+        cell.append(v)
+
+        // 组边界：字段内每 N 位多 8px（字段之间由 .vk-bit-field 的间距负责）。
+        if (bi > 0 && bi % group === 0) cell.style.marginLeft = '8px'
+        seen++
+        box.append(cell)
+      })
+      if (fi > 0) box.classList.add('vk-bit-field-gap')
+      row.append(box)
     })
 
-    // 符号位永远是排在最前（最左）的那一位。
-    if (attrBool(this, 'sign')) cells[0].setAttribute('data-sign', '')
+    // 符号位永远是第一位。
+    if (sign) row.querySelector('.vk-bit')?.setAttribute('data-sign', '')
 
-    row.append(...cells)
-    this.replaceChildren(row)
+    const label = attrText(this, 'label')
+    if (label) {
+      const lab = document.createElement('div')
+      lab.className = 'vk-bits-label'
+      lab.textContent = label
+      this.replaceChildren(lab, row)
+    } else this.replaceChildren(row)
   }
 
-  /** 位串来自 value；作者把位串写成正文时，第一次 render 前先收好，之后不再读。 */
-  _bits() {
-    // 第一次 render 的正文还是作者写的；记下来，value 后来被删也能退回它。
+  /** 位串来自 value；`|` 分段（符号 | 指数 | 尾数），段内空格忽略。 */
+  _fields() {
     if (this._text == null) this._text = this.textContent || ''
-    const raw = attrText(this, 'value') || this._text
-    return [...String(raw ?? '').replace(/\s+/g, '')]
+    const raw = String(attrText(this, 'value') || this._text || '')
+    return raw
+      .split('|')
+      .map((f) => [...f.replace(/\s+/g, '')])
+      .filter((f) => f.length)
   }
 }
 

@@ -306,7 +306,7 @@ export const TAGS = {
       title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
-      size: size('body'),
+      size: size('caption'),
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
   },
@@ -360,7 +360,8 @@ export const TAGS = {
     name: '位',
     summary: '一行二进制位：索引、分组、符号位。用来讲位域与浮点布局。',
     attrs: {
-      value: { type: 'text', content: true, group: 'content', label: '位串，可含空格' },
+      value: { type: 'text', content: true, group: 'content', label: '位串，可含空格；用 | 分段（符号 | 指数 | 尾数）' },
+      label: { type: 'text', group: 'appearance', label: '左边一行说明' },
       index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号方向' },
       group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
       sign: { type: 'bool', group: 'appearance', label: '标出符号位' },

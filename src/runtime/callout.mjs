@@ -292,10 +292,24 @@ export class VkCallout extends VkElement {
     box.style.left = `${spot.left}px`;
     box.style.top = `${spot.top}px`;
 
-    // 引线：从气泡边缘连到目标边缘。
+    // 引线：从气泡边缘连到目标的**容器**边缘（不是字的中间），
+    // 否则线会横穿正在讲的那行代码。
     const from = { x: spot.left, y: spot.top, w: bw, h: bh };
-    const p1 = this._borderPoint(from, r);
-    const p2 = this._borderPoint(r, from);
+    const p1 = this._borderPoint(from, ob);
+    let p2;
+    if (owner === a.el) {
+      p2 = this._borderPoint(r, from);
+    } else {
+      // 目标在窗口里：引线落在窗口边缘「对齐那一行」的位置，不穿进正文。
+      const cx = r.x + r.w / 2;
+      const cy = r.y + r.h / 2;
+      const below = from.y > ob.y + ob.h / 2;
+      const right = from.x > ob.x + ob.w / 2;
+      const vertical = Math.abs(from.y + from.h / 2 - (ob.y + ob.h / 2)) > Math.abs(from.x + from.w / 2 - (ob.x + ob.w / 2));
+      p2 = vertical
+        ? { x: Math.min(Math.max(cx, ob.x + 4), ob.x + ob.w - 4), y: below ? ob.y + ob.h : ob.y }
+        : { x: right ? ob.x + ob.w : ob.x, y: Math.min(Math.max(cy, ob.y + 4), ob.y + ob.h - 4) };
+    }
     const line = document.createElementNS(NS, 'line');
     line.setAttribute('x1', String(p1.x));
     line.setAttribute('y1', String(p1.y));

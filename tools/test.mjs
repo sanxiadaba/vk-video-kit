@@ -115,7 +115,7 @@ let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'episodes', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);
@@ -128,7 +128,7 @@ try {
   }
 }
 const frames = report.flatMap((r) => r.frames || []);
-ok(frames.length >= 25, `渲染出 ${frames.length} 帧`);
+ok(frames.length >= 40, `渲染出 ${frames.length} 帧`);
 let issues = 0;
 for (const r of report) {
   for (const f of r.frames || []) {

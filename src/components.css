@@ -82,7 +82,8 @@ vk-box > .vk-box-hd {
   border-end-end-radius: 0;
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
-  color: var(--vk-ink-2);
+  font-weight: var(--vk-w-bold);
+  color: var(--vk-ink-1);
 }
 
 vk-box > .vk-box-bd {
@@ -285,6 +286,8 @@ vk-asm {
   display: flex;
   flex-direction: column;
   width: fit-content;
+  /* 窄内容（两行 diff）不要把窗口缩成一张小卡片：给一个舒适的最小宽。 */
+  min-width: min(100%, 720px);
   max-width: 100%;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
@@ -616,24 +619,27 @@ vk-table td {
   padding: calc(var(--vk-gap-close) * 0.9) var(--vk-gap-normal);
   text-align: left;
   vertical-align: baseline;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.45;
 }
-vk-table thead th {
+
+/* 表头：不依赖作者写 <thead>（浏览器会把裸 <tr> 包进 tbody）。 */
+vk-table th {
   border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-1);
+  white-space: nowrap;
 }
-vk-table tbody td {
+
+vk-table td {
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
   color: var(--vk-ink-1);
 }
-vk-table tbody tr:last-child td {
+
+vk-table tr:last-child td {
   border-bottom: 0;
 }
-vk-table td.num,
-vk-table th.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
+
 vk-table[mono] td,
 vk-table[mono] th {
   font-family: var(--vk-font-mono);
@@ -656,7 +662,7 @@ vk-table tbody tr[tone='err'] td {
   background: var(--vk-tint-err);
 }
 vk-table .vk-cap {
-  margin-top: var(--vk-gap-close);
+  margin-bottom: var(--vk-gap-close);
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
 }
@@ -716,37 +722,56 @@ vk-tree {
   display: block;
   min-width: 0;
 }
+
 .vk-tree {
   display: flex;
   flex-direction: column;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-cs, var(--vk-fs-body));
-  line-height: 1.5;
+  font-size: var(--vk-cs, var(--vk-fs-caption));
+  line-height: 1.4;
 }
-.vk-tree > .vk-trow {
-  display: flex;
-  align-items: baseline;
-  gap: var(--vk-gap-close);
-  min-height: calc(var(--vk-cs, var(--vk-fs-body)) * 1.5);
+
+.vk-tree .vk-node {
+  display: block;
+}
+
+.vk-node > .vk-tname {
+  display: block;
   padding-right: var(--vk-gap-normal);
   white-space: nowrap;
-}
-.vk-trow .vk-indent {
-  flex: 0 0 auto;
-  white-space: pre;
-  color: var(--vk-line-strong);
-}
-.vk-trow .vk-tname {
-  flex: 0 0 auto;
   color: var(--vk-ink-1);
 }
-.vk-trow[data-dir] .vk-tname {
+
+.vk-node[data-dir] > .vk-tname {
   font-weight: var(--vk-w-bold);
 }
 
-.vk-trow[data-current] {
-  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+/* 子节点：一条竖导线 + 每个节点一条横短线。导线是缩进的唯一来源。 */
+.vk-node > .vk-kids {
+  display: flex;
+  flex-direction: column;
+  margin-left: 0.55em;
+  padding-left: 1.1em;
+  border-left: var(--vk-line-w-hair) solid var(--vk-line-color);
+}
+
+.vk-kids > .vk-node {
+  position: relative;
+}
+
+.vk-kids > .vk-node::before {
+  content: '';
+  position: absolute;
+  left: -1.1em;
+  top: 0.7em;
+  width: 0.7em;
+  height: var(--vk-line-w-hair);
+  background: var(--vk-line-color);
+}
+
+.vk-node[data-current] > .vk-tname {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
 }
 
 /* ------------------------------------------------------------------ 内存格 */
@@ -841,34 +866,53 @@ vk-bits {
   flex-direction: column;
   gap: var(--vk-gap-close);
   font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
 }
+
+.vk-bits-label {
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
+
 .vk-bit-row {
   display: flex;
-  gap: 4px;
+  align-items: flex-end;
+  gap: 0;
 }
+
+/* 一段 = 一个语义字段（符号 / 指数 / 尾数）。段之间留 24px，比组间距大。 */
+.vk-bit-field {
+  display: flex;
+  align-items: flex-end;
+}
+.vk-bit-field-gap {
+  margin-left: 24px;
+}
+
 .vk-bit {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  min-width: 1.5em;
+  min-width: 1.3ch;
   padding: 2px 0;
-  border-radius: 4px;
 }
+
 .vk-bit .vk-bit-i {
-  font-size: 36px;
+  font-size: max(36px, 0.5em);
   line-height: 1;
   color: var(--vk-ink-3);
 }
+
 .vk-bit .vk-bit-v {
-  font-size: var(--vk-fs-body);
+  font-size: 1em;
   line-height: 1.2;
   color: var(--vk-ink-1);
 }
+
 .vk-bit[data-sign] .vk-bit-v {
   color: var(--vk-err);
 }
-
 
 /* ------------------------------------------------------------------ 步骤 */
 vk-steps {
@@ -926,7 +970,7 @@ vk-steps[data-direction='vertical'] .vk-step {
   color: var(--vk-ok);
 }
 
-/* 连接线由运行期插入 .vk-step-conn：横排一条线 + 箭头，竖排一段竖线。 */
+/* 横排：运行期插入 .vk-step-conn（线 + 箭头）；竖排：线由 .vk-step::after 画。 */
 
 /* ------------------------------------------------------------------ 条 */
 vk-bars {
@@ -1130,4 +1174,38 @@ vk-compare[zoom] {
   display: flex;
   flex-direction: column;
   gap: var(--vk-gap-close);
+}
+
+/* 竖排步骤：编号章一列、文字一列，线从章底连到下一步章顶。 */
+vk-steps[data-direction='vertical'] {
+  flex-direction: column;
+  gap: 0;
+}
+
+vk-steps[data-direction='vertical'] .vk-step {
+  position: relative;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--vk-gap-close);
+  padding-bottom: 40px;
+}
+
+vk-steps[data-direction='vertical'] .vk-step:last-child {
+  padding-bottom: 0;
+}
+
+vk-steps[data-direction='vertical'] .vk-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 27px;
+  top: 56px;
+  bottom: 4px;
+  width: var(--vk-line-w-rule);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-line-strong);
+}
+
+vk-steps[data-direction='vertical'] .vk-step-conn {
+  display: none;
 }
