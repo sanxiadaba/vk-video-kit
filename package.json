@@ -13,6 +13,7 @@
     "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
     "fixtures": "node tools/fixtures.mjs",
     "gallery": "node tools/gallery.mjs",
+    "serve": "node cli/serve.mjs 8099",
     "check": "node bin/vk.mjs check pages",
     "shot": "node bin/vk.mjs shot",
     "test": "npm run build && node tools/test.mjs",

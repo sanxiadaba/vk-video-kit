@@ -252,7 +252,7 @@ export const TAGS = {
   "vk-code": {
     layer: "components",
     name: "代码窗",
-    summary: "代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮；reveal=\"line\" 逐行浮现。",
+    summary: "代码窗。构建期高亮；真实文件截取行段；聚光、缺口、整行高亮。",
     attrs: {
     ...COMMON,
     "lang": {"type":"text","label":"语言","content":true},
@@ -278,7 +278,7 @@ export const TAGS = {
   "vk-term": {
     layer: "components",
     name: "终端",
-    summary: "终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色；逐行浮现。",
+    summary: "终端。src 指向真实 transcript；命令 / 参数 / 路径 / 输出 / 报错各自一色。",
     attrs: {
     ...COMMON,
     "src": {"type":"text","label":"来源","content":true},
@@ -496,7 +496,7 @@ export const TAGS = {
   "vk-timeline": {
     layer: "components",
     name: "时间线",
-    summary: "时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（title 200 默认 / hero 280 / subhead 112 …），当前项写在 current（1 起，-1 = 不标）。",
+    summary: "时间线：等距事件列表（不按年份比例），或按步展开的多泳道；一条事项一个 <li>，li 可写 value（大数字主值）与 note（小说明）；主值字号写在 size（display 200 默认 / hero 280 / headline 112 …），当前项写在 current（1 起，-1 = 不标）。",
     attrs: {
     ...COMMON,
     "start": {"type":"text","label":"起点","content":true},
@@ -514,7 +514,7 @@ export const TAGS = {
   "vk-page": {
     layer: "page",
     name: "页面",
-    summary: "坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。theme 换整套调色板（只换颜色，不动尺寸）。",
+    summary: "坐标系根：一张 1920×1080、原点在左上的画布；不缩放，不含页眉页脚。align 决定内容在版心里的纵向位置。",
     attrs: {
     "align": {"values":["top","center","bottom"],"label":"对齐","group":"layout","default":"top"},
     },

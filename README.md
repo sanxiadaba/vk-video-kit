@@ -20,8 +20,8 @@ npm run build        # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
 ## 写一帧
 
 ```html
-<link rel="stylesheet" href="../vk/fonts.css">
-<link rel="stylesheet" href="../vk/vk.css">
+<link rel="stylesheet" href="vk/fonts.css">
+<link rel="stylesheet" href="vk/vk.css">
 
 <vk-page align="center">
   <vk-stack gap="md">
@@ -30,7 +30,7 @@ npm run build        # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
   </vk-stack>
 </vk-page>
 
-<script src="../dist/vk.js"></script>
+<script src="dist/vk.js"></script>
 ```
 
 ```bash
@@ -83,8 +83,14 @@ npm run budget       # 标签 / 属性 / 行数预算，超了直接红
 
 ## 画廊
 
-`npm run gallery` 生成 `out/index.html` + 30 张 640 宽截图；
-推 `main` 后由 `.github/workflows/pages.yml` 发布到 GitHub Pages。
+```bash
+npm run gallery      # → out/index.html + out/c/*.html + 30 张 640 宽截图
+npm run serve        # → http://127.0.0.1:8099/
+```
+
+点缩略图进组件详情：实时 1920 帧、属性表、最小写法、上下一个。
+`out/` 是自包含的静态站（已镜像 vk / dist / assets），推 `main` 后由
+`.github/workflows/pages.yml` 发布到 GitHub Pages。
 
 ## 结构
 

@@ -2,20 +2,17 @@
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<title>vk v16 smoke</title>
-<link rel="stylesheet" href="../vk/fonts.css">
-<link rel="stylesheet" href="../vk/vk.css">
+<title>vk smoke</title>
+<link rel="stylesheet" href="vk/fonts.css">
+<link rel="stylesheet" href="vk/vk.css">
 </head>
 <body style="margin:0;background:#e9e9ea">
 <vk-page align="center">
   <vk-stack gap="md">
     <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5">
-<script type="application/json" data-vk-src>{"text":"char s[] = \"hello\";\ns[0] = 'H';\nprintf(\"%s\\n\", s);"}</script>
-<script type="text/plain" data-vk-hl data-vk-hash="37db40b1" data-vk-lang="c">["<span class=\"vk-k\">char</span> s<span class=\"vk-k\">[]</span> <span class=\"vk-o\">=</span> <span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-s\" data-tok=\"s\">hello</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-p\">;</span>","s<span class=\"vk-p\">[</span><span class=\"vk-n\">0</span><span class=\"vk-p\">]</span> <span class=\"vk-o\">=</span> <span class=\"vk-p\" data-tok=\"s\">&#39;</span><span class=\"vk-s\" data-tok=\"s\">H</span><span class=\"vk-p\" data-tok=\"s\">&#39;</span><span class=\"vk-p\">;</span>","<span class=\"vk-f\">printf</span><span class=\"vk-p\">(</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-s\" data-tok=\"s\">%s</span><span class=\"vk-n\" data-tok=\"s\">\\n</span><span class=\"vk-p\" data-tok=\"s\">&quot;</span><span class=\"vk-p\">,</span> s<span class=\"vk-p\">);</span>"]</script>
-</vk-code>
+    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5"></vk-code>
   </vk-stack>
 </vk-page>
-<script src="../dist/vk.js"></script>
+<script src="dist/vk.js"></script>
 </body>
 </html>

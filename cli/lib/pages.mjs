@@ -69,6 +69,30 @@ function keyOf(abs, html) {
   return h.digest('hex');
 }
 
+/**
+ * 运行期才取的本地素材（vk-img / vk-compare）在源里按“相对源页”写；
+ * 产物统一指向镜像后的 out/<原路径>，这样 out/ 可以单独当静态站发布。
+ */
+function rewriteAssets(html, sourceAbs, outAbs) {
+  const mapPath = (p) => {
+    const raw = p.trim();
+    if (!raw || /^(?:[a-z]+:|\/|#)/i.test(raw)) return p;
+    const abs = path.resolve(path.dirname(sourceAbs), raw.split(/[?#]/)[0]);
+    if (!abs.startsWith(process.cwd() + path.sep)) return p;
+    const fromRoot = path.relative(process.cwd(), abs).split(path.sep).join('/');
+    const rel = path.relative(path.dirname(outAbs), path.join('out', fromRoot)).split(path.sep).join('/');
+    return rel;
+  };
+  return html
+    .replace(/(<vk-img\b[^>]*\bsrc=")([^"]+)(")/g, (m, a, p, b) => a + mapPath(p) + b)
+    .replace(/(<vk-compare\b[^>]*\blabels=")([^"]+)(")/g, (m, a, value, b) => {
+      const bar = value.indexOf('|');
+      const sources = bar < 0 ? value : value.slice(0, bar);
+      const rest = bar < 0 ? '' : value.slice(bar);
+      return a + sources.split(',').map(mapPath).join(',') + rest + b;
+    });
+}
+
 export async function buildOne(src, { force = false } = {}) {
   const abs = path.resolve(src);
   const html = fs.readFileSync(abs, 'utf8');
@@ -81,7 +105,7 @@ export async function buildOne(src, { force = false } = {}) {
   const needsHl = /<vk-(?:code|diff|asm)\b/.test(html);
   const result = await transformHtml(html, { file: src, highlighter: needsHl ? await getHighlighter() : null });
   fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, result.html);
+  fs.writeFileSync(out, rewriteAssets(result.html, abs, out));
   files[abs] = key;
   saveCache();
   return { src: abs, out, count: result.count, cached: false };

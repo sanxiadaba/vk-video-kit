@@ -10,6 +10,7 @@ import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { TAGS, TAG_NAMES, LAYERS, COMMON, CANVAS, LAYOUT_ATTRS, CHILD_ATTRS, CHILDREN, STATES } from '../src/schema.mjs';
 import { SAMPLES, fixturePage } from './samples.mjs';
+import { publish } from './lib/publish.mjs';
 
 const full = process.argv.includes('--full');
 const update = process.argv.includes('--update');
@@ -87,6 +88,7 @@ try {
 
 /* ------------------------------------------------------------ 自检 / 回归 */
 if (full) {
+  publish();
   const tags = TAG_NAMES;
   const shotArgs = ['bin/vk.mjs', 'shot'];
   for (const tag of tags) shotArgs.push(`tests/pages/${tag}.html`);

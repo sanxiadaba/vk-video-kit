@@ -43,14 +43,14 @@ export function fixturePage(tag) {
 <head>
 <meta charset="utf-8">
 <title>${tag}</title>
-<link rel="stylesheet" href="../../vk/fonts.css">
-<link rel="stylesheet" href="../../vk/vk.css">
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
 </head>
 <body style="margin:0;background:#e9e9ea">
 <vk-page align="center">
 ${SAMPLES[tag]}
 </vk-page>
-<script src="../../dist/vk.js"></script>
+<script src="../dist/vk.js"></script>
 </body>
 </html>
 `;

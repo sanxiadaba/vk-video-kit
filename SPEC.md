@@ -22,7 +22,7 @@
 <vk-page align="center">
   <vk-stack gap="md">
     <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="4-6" current="5"></vk-code>
+    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5"></vk-code>
   </vk-stack>
 </vk-page>
 ```
