@@ -420,6 +420,7 @@ export const TAGS = {
       start: { type: 'text', content: true, group: 'content', label: '起点' },
       end: { type: 'text', content: true, group: 'content', label: '终点' },
       lanes: { type: 'text', content: true, group: 'content', label: '泳道名（逗号分隔）' },
+      size: sizeText('body'),
       current: current(),
     },
     children: item({ date: { type: 'text', label: '日期' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: STATE_ATTR }, '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'),

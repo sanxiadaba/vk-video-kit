@@ -4,14 +4,9 @@
    运行期只做两件事：标出「哪个是当前」，把几个布局变量写到宿主上。
    默认值一律来自 schema（attr* 系列自己读），这里不写第二份 fallback。 */
 
-import { VkElement, define, attrBool, attrEnum, attrIndex, attrLines, attrNum, attrSpace, attrText, takeSlot, warn } from './base.mjs'
+import { VkElement, define, attrBool, attrEnum, attrIndex, attrLines, attrNum, attrSpace, attrText, sizeCss, takeSlot, warn } from './base.mjs'
 
 /** size 是档名或像素：档名走 tokens，像素原样。 */
-const sizeCss = (size) => {
-  const text = String(size ?? '').trim()
-  return /^\d+(\.\d+)?$/.test(text) ? `${text}px` : `var(--vk-fs-${text})`
-}
-
 /** 节点路径：统一成 posix 相对路径，好和构建期写进 data-vk-node 的值比。 */
 const normPath = (raw) =>
   String(raw ?? '')

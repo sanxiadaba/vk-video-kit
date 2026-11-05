@@ -25,7 +25,7 @@
        角标共处一行（左「改前」右「改后」）。
    ========================================================================== */
 
-import { VkElement, define, attrText, attrNum, attrIndex, attrEnum, attrRaw, esc, warn, takeSlot, VK } from './base.mjs';
+import { VkElement, define, attrText, attrNum, attrIndex, attrEnum, attrRaw, esc, sizeCss, warn, takeSlot, VK } from './base.mjs';
 import { TAGS } from '../schema.mjs';
 
 /* ------------------------------------------------------------------ 共同 */
@@ -286,6 +286,8 @@ const LANE_ROW =
 
 export class VkTimeline extends VkElement {
   render() {
+    const size = sizeCss(attrEnum(this, 'size'));
+    if (size) this.style.setProperty('--vk-cs', size);
     const lis = items(this);
     if (!lis.length) {
       this.innerHTML = '';

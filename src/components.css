@@ -1143,11 +1143,11 @@ vk-timeline {
 }
 .vk-tl-item .vk-tl-date {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
+  font-size: max(36px, calc(var(--vk-cs, var(--vk-fs-body)) * 0.72));
   color: var(--vk-ink-3);
 }
 .vk-tl-item .vk-tl-t {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: 1.3;
   color: var(--vk-ink-1);
 }

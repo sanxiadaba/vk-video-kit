@@ -488,3 +488,9 @@ VK.ready = async () => {
 };
 
 export { CANVAS };
+
+/** 字号：档名走 token，像素原样。 */
+export const sizeCss = (size) => {
+  const text = String(size ?? '').trim();
+  return /^\d+(\.\d+)?$/.test(text) ? `${text}px` : `var(--vk-fs-${text})`;
+};

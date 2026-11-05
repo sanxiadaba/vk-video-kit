@@ -138,7 +138,7 @@ s[0] = 'H';
 | `vk-bits` | 位串 | `value`（竖线分段：符号 \| 指数 \| 尾数）`label` `index` `group` `sign` `size` |
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
-| `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
+| `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `size` `current` |
 | `vk-compare` | 两张图对照 | `labels` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
 | `vk-stack` | 竖排 | `gap` `pad` `align` `justify` `direction` `weights` |
