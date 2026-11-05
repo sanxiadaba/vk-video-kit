@@ -19,6 +19,16 @@
 
 `vk stats episodes/` 给每集出体检表；`npm run inert` 把每个件声明的属性逐个改一下，看有没有视觉变化——"声明了但没实现"的属性会在这里现形。它不是测试，是诊断。
 
+`npm test` 跑 131 条断言，分四类：
+
+- **契约**：27 个件的属性、取值、子节点、模式作用域
+- **文档**：SPEC 的件表/取值表/配方/计数是否和 schema、夹具对得上；README 的件数；
+  "说没有的属性"是否真的没有；CLI 的每条命令都写进 SPEC
+- **代码健康**：样式跨文件冲突、同文件重复、死类、死属性、孤儿属性读取、重复工具、
+  没人读的 CSS 变量
+- **渲染**：184 帧全部零问题（真浏览器，含 780 宽），外加 4 条行为断言（代码窗缩字号、
+  步骤条竖排、数字列右对齐、注释不压内容）和预览图新鲜度
+
 ## 素材
 
 `npm run assets` 编 C 源码、生成 `.s` / `.o` / `.dis`；`npm run shots` 把 `assets/hello/asm.html` 里的两帧截成 `asm-o0.png` / `asm-o2.png`（`vk render --shot .vk-win` 只截窗口本身，不要画布留白）。
@@ -79,7 +89,7 @@ vk brief --json              # 全部件的契约
 ## 测试
 
 ```bash
-npm test        # schema / tokens / 文档一致性 + 全部验收帧（真浏览器，约 20s）
+npm test        # 契约 / 文档 / 代码健康 / 184 帧渲染（真浏览器，约 70s）
 ```
 
 验收帧在 `tests/acceptance/`（真实教学内容，不是模板），组件总表在 `tests/sheet.html`、`tests/sheet2.html`、`tests/capabilities.html`、`tests/capabilities2.html`，
