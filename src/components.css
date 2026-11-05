@@ -984,7 +984,38 @@ vk-steps[data-direction='vertical'] .vk-step {
   color: var(--vk-ok);
 }
 
-/* 横排：运行期插入 .vk-step-conn（线 + 箭头）；竖排：线由 .vk-step::after 画。 */
+/* 连接线全部由 CSS 画：横排在 .vk-step 右外侧，竖排在编号章下方。
+   运行期不再插节点，字号/间距怎么变都不会错位。 */
+vk-steps {
+  position: relative;
+}
+
+vk-steps[data-direction='horizontal'] .vk-step {
+  position: relative;
+}
+
+vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  top: 4px;
+  left: 100%;
+  width: var(--vk-step-gap, var(--vk-gap-wide));
+  text-align: center;
+  font-size: 40px;
+  line-height: 1;
+  color: var(--vk-line-strong);
+}
+
+vk-steps[data-direction='horizontal'][data-connector='line'] .vk-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 27px;
+  left: calc(100% + var(--vk-step-gap, var(--vk-gap-wide)) / 2 - 12px);
+  width: 24px;
+  height: var(--vk-line-w-rule);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-line-strong);
+}
 
 /* ------------------------------------------------------------------ 条 */
 vk-bars {

@@ -121,10 +121,6 @@ export class VkSteps extends VkElement {
           `<span class="vk-step-t"${size === 'body' ? '' : ` style="font-size:${fontCss(size)}"`}>${esc(itemText(node))}</span>` +
           `</div>`
       );
-      // 连接线是兄弟节点，不进 .vk-step：压不到字。
-      if (connector !== 'none' && i < lis.length - 1) {
-        parts.push(`<span class="vk-step-conn" aria-hidden="true"><i></i>${connector === 'arrow' ? '<b></b>' : ''}</span>`);
-      }
     });
     this.innerHTML = parts.join('');
 
@@ -153,31 +149,6 @@ export class VkSteps extends VkElement {
       }
     }
 
-    for (const conn of this.querySelectorAll('.vk-step-conn')) {
-      const line = conn.querySelector('i');
-      const head = conn.querySelector('b');
-      if (vertical) {
-        // 竖排的连接线由 .vk-step::after 画（盒子之间的线），这个节点直接藏掉。
-        conn.style.cssText = 'display:none';
-        if (line) line.style.cssText = 'display:none';
-        if (head) head.style.cssText = 'display:none';
-      } else {
-        // 一条带右箭头的横线：flex: 1 撑开，上限是一步的间距。
-        // height 定成线宽：箭头（12px 高）以线为中心溢出，不会把线顶偏。
-        conn.style.cssText =
-          'display:flex;align-items:center;flex:1 1 0;min-width:24px;max-width:var(--vk-step-gap);' +
-          'align-self:flex-start;height:var(--vk-line-rule);' +
-          'margin-top:calc(var(--vk-step-badge-y, 0px) - var(--vk-line-rule) / 2)';
-        if (line) {
-          line.style.cssText =
-            'flex:1 1 auto;min-width:8px;height:var(--vk-line-rule);border-radius:var(--vk-radius-pill);background:var(--vk-line-strong)';
-        }
-        if (head) {
-          head.style.cssText =
-            'width:0;height:0;border-top:6px solid transparent;border-bottom:6px solid transparent;border-left:8px solid var(--vk-line-strong)';
-        }
-      }
-    }
   }
 
   /** 量：够不够横排；编号章的中心在哪（连接线要对齐它）。 */
@@ -193,21 +164,8 @@ export class VkSteps extends VkElement {
     if (written === 'horizontal' && avail < want) {
       warn(this, `horizontal 要约 ${want}px，容器只有 ${Math.round(avail)}px；写 direction="auto" 让它自己竖排`);
     }
-    this._measureBadge();
   }
 
-  /** 编号章相对宿主的中心。用 offset*（布局像素）而不是 rect：舞台可能被缩放。 */
-  _measureBadge() {
-    const badge = this.querySelector('.vk-step-n');
-    if (!badge) return;
-    const parent = badge.offsetParent;
-    if (parent !== this && parent !== this.offsetParent) return; // 不在同一坐标系，量不了就别量
-    const inner = parent === this;
-    const x = badge.offsetLeft - (inner ? 0 : this.offsetLeft) + badge.offsetWidth / 2;
-    const y = badge.offsetTop - (inner ? 0 : this.offsetTop) + badge.offsetHeight / 2;
-    this.style.setProperty('--vk-step-badge-x', `${Math.round(x)}px`);
-    this.style.setProperty('--vk-step-badge-y', `${Math.round(y)}px`);
-  }
 }
 
 /* ==================================================================== 条 */
