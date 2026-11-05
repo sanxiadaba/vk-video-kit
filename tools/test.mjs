@@ -13,6 +13,7 @@ import { execFileSync } from 'node:child_process';
 import * as parse5 from 'parse5';
 import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
 import { FONT, GAP, TONE, SURFACE, STATE, INK } from '../src/vocab.mjs';
+import { parseAsm } from '../src/shared/asm.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 
@@ -79,6 +80,14 @@ for (const tag of TAG_NAMES) {
   }
 }
 ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
+
+  /* 汇编解析：没有机器码的输入（--no-show-raw-insn / 手写 .s）不能崩。 */
+  {
+    const noBytes = parseAsm('0: push %rbp\n1: mov %esp,%ebp\n');
+    ok(noBytes.rows.filter((r) => r.kind === 'insn').length === 2 && noBytes.rows[0].bytes === '', '汇编行没有机器码也能解析');
+    const withBytes = parseAsm('401136: 55            push   %rbp\n');
+    ok(withBytes.rows[0].bytes === '55' && withBytes.rows[0].addr === '401136', '带机器码的 objdump 行照旧');
+  }
 
 /* 每个公开属性都要有消费者：声明了却没人读 = 作者写了没效果。 */
 const GENERIC = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);

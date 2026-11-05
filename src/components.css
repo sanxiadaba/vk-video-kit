@@ -606,6 +606,15 @@ vk-diff .vk-line {
   flex: 1 1 auto;
   color: var(--vk-ink-2);
 }
+/* 差异里的当前行：和代码窗同一套"焦点条 + 8% 底"，不然 current 是哑的。 */
+.vk-diff-row.is-current {
+  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+.vk-diff-row.is-current .vk-sign {
+  color: var(--vk-focus);
+}
+
 .vk-arow.is-current {
   background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);

@@ -75,7 +75,8 @@ export function parseAsm(text) {
         line,
         kind: 'insn',
         addr: normAddr(obj[1]),
-        bytes: obj[2].trim().replace(/\s+/g, ' '),
+        // 机器码段可以缺席（--no-show-raw-insn）：分组是 undefined，不是空串。
+        bytes: (obj[2] || '').trim().replace(/\s+/g, ' '),
         text: obj[3].trim(),
       });
       return;

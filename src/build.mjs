@@ -590,7 +590,8 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
       }
     } catch (e) {
       // 单个件失败不要吃掉整页的其它错误：记下来，继续。
-      errors.push(e.message);
+      if (process.env.VK_DEBUG) console.error('DEBUG', tag, e.stack);
+      errors.push(`${file}:${lineOf(node)} <${tag}> 构建失败：${e.message}`);
       out = '';
     }
 

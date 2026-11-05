@@ -42,7 +42,7 @@ s[0] = 'H';
 | `tone` | 语义 | `neutral / info / focus / ok / warn / err` |
 | `size` | 字号 | 六个档名 |
 | `gap` `pad` | 间距 | `none / close / normal / wide / section`，或像素数 |
-| `current` | 第几项 | **1 起**；`-1` = 没有当前 |
+| `current` | 第几项 | **1 起**；`-1` = 没有当前（`vk-tree` 例外：写节点路径） |
 | `state` | 注意力 | `current`（现在讲这里）/ `mark`（作者标了一下） |
 
 没有第二个词表达同一个意思。`tone` 管对错，`state` 管注意力，别混。
