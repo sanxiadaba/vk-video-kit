@@ -10,7 +10,7 @@
   <vk-stack gap="close">
     <vk-label counter="2 / 9">内存长什么样</vk-label>
     <vk-text size="subhead">数组是<em>一整块</em>，链表是<em>撒出去</em>的。</vk-text>
-    <vk-canvas w="1500" h="380" pad="close">
+    <vk-canvas w="1500" h="400" pad="close">
       <vk-text x="0" y="0" size="caption" ink="muted">数组：八个元素挨在一起</vk-text>
       <vk-box x="0" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">1</vk-text></vk-box>
       <vk-box x="66" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">2</vk-text></vk-box>
@@ -20,11 +20,11 @@
       <vk-box x="330" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">6</vk-text></vk-box>
       <vk-box x="396" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">7</vk-text></vk-box>
       <vk-box x="462" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">8</vk-text></vk-box>
-      <vk-text x="0" y="190" size="caption" ink="muted">链表：每个节点带一个指针，散落在堆上</vk-text>
-      <vk-box id="n0" x="0" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">1 · →</vk-text></vk-box>
-      <vk-box id="n1" x="380" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">2 · →</vk-text></vk-box>
-      <vk-box id="n2" x="760" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">3 · →</vk-text></vk-box>
-      <vk-box id="n3" x="1140" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">4 · →</vk-text></vk-box>
+      <vk-text x="0" y="176" size="caption" ink="muted">链表：每个节点带一个指针，散落在堆上</vk-text>
+      <vk-box id="n0" x="0" y="250" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">1 · →</vk-text></vk-box>
+      <vk-box id="n1" x="360" y="310" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">2 · →</vk-text></vk-box>
+      <vk-box id="n2" x="800" y="244" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">3 · →</vk-text></vk-box>
+      <vk-box id="n3" x="1120" y="302" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">4 · →</vk-text></vk-box>
     </vk-canvas>
   </vk-stack>
   <vk-callout mode="arrow" from="#n0" to="#n1" shape="straight"></vk-callout>
