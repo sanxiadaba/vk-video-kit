@@ -350,7 +350,8 @@ function buildAsm(node, file) {
       if (r.kind === 'blank') return '';
       n++;
       if (r.kind === 'label') {
-        return `<div class="vk-arow vk-alabel" data-vk-line="${n}"><span class="vk-aaddr">${esc(r.addr)}</span><span class="vk-ainsn">${esc(
+        // 标签行和紧接着的指令同地址：再写一遍地址只是噪音，留空。
+        return `<div class="vk-arow vk-alabel" data-vk-line="${n}"><span class="vk-aaddr"></span><span class="vk-ainsn">${esc(
           '<' + r.text + '>:'
         )}</span></div>`;
       }
