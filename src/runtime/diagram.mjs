@@ -441,7 +441,6 @@ export class VkCompare extends VkElement {
     }
 
     this._paintMarks();
-    this._syncAspect();
   }
 
   _structure(variant, srcs, caps) {
@@ -474,7 +473,6 @@ export class VkCompare extends VkElement {
   _wire() {
     for (const img of this.querySelectorAll('.vk-compare-pane[data-pane="a"] img, .vk-compare-pane[data-pane="b"] img')) {
       img.addEventListener('load', () => {
-        this._syncAspect();
         this._paintMarks(); // 图到了才知道留边多少，标记框要重画
         VK.invalidate(); // 图到了，pane 高变了，放大块要重量
       });
@@ -512,26 +510,6 @@ export class VkCompare extends VkElement {
     }
   }
 
-  /**
-   * 比例自检：两张图比例不同 —— pane 里必然留边，mark 的百分比也对不齐。
-   * 图还没到就不知道，等 load 再来一次。
-   */
-  _syncAspect() {
-    const imgs = [
-      ...this.querySelectorAll('.vk-compare-pane[data-pane="a"] img, .vk-compare-pane[data-pane="b"] img'),
-    ];
-    const panes = [...this.querySelectorAll('.vk-compare-pane[data-pane="a"], .vk-compare-pane[data-pane="b"]')];
-    const known = imgs.length >= 2 && imgs.every((i) => i.naturalWidth > 0 && i.naturalHeight > 0);
-    if (!known) {
-      for (const p of panes) p.removeAttribute('data-mismatch');
-      return;
-    }
-    const ratio = (i) => i.naturalWidth / i.naturalHeight;
-    const [a, b] = imgs.map(ratio);
-    const off = Math.abs(a - b) / Math.max(a, b) > 0.01;
-    // 比例不同只是留边多少，并排或上下都读得懂，不提示也不改图。
-    for (const p of panes) p.toggleAttribute('data-mismatch', off);
-  }
 
 }
 
