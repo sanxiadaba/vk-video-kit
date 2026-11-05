@@ -110,3 +110,23 @@
     </vk-grid>
   </vk-stack>
 </vk-page>
+
+<vk-page id="cover">
+  <vk-img src="../assets/hello/o0.png" alt="封面" bleed="all"></vk-img>
+  <vk-stack gap="wide">
+    <vk-box surface="paper" pad="normal" border="hair">
+      <vk-text size="headline">一张图铺满整帧，<em>字放在纸上</em></vk-text>
+      <vk-text size="caption" ink="muted">bleed="all" 出血到画布四边；压在图上的字必须有实底。</vk-text>
+    </vk-box>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="img">
+  <vk-stack gap="normal">
+    <vk-label>图片</vk-label>
+    <vk-grid cols="12">
+      <vk-img span="8" src="../assets/sample-grid.svg" alt="示例" ratio="16 / 9" fill="contain" radius="md"></vk-img>
+    </vk-grid>
+    <vk-text size="caption" ink="muted">ratio 固定比例，fill="contain" 不裁切。</vk-text>
+  </vk-stack>
+</vk-page>

@@ -249,6 +249,11 @@ vk-text > .vk-text-ic svg {
 [bleed='all'] {
   margin: calc(var(--vk-margin-y) * -1) calc(var(--vk-margin-x) * -1);
 }
+
+/* 内容压在整帧背景之上：flex 子项的 z-index 不需要 position 就生效。 */
+.vk-stage > * {
+  z-index: 1;
+}
 [bleed='x'] {
   margin-inline: calc(var(--vk-margin-x) * -1);
 }
