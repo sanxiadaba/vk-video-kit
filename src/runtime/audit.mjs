@@ -201,6 +201,24 @@ export function auditPage(stageEl) {
     }
   }
 
+  // 8.5 画布子项超出画布：x/y/w/h 放错了，出图时被裁掉一截，肉眼很难发现。
+  for (const canvas of stage.querySelectorAll('vk-canvas')) {
+    const cb = canvas.getBoundingClientRect();
+    for (const kid of canvas.children) {
+      const r = kid.getBoundingClientRect();
+      const over = Math.round(
+        Math.max(0, cb.left - r.left, r.right - cb.right, cb.top - r.top, r.bottom - cb.bottom) / (scale || 1)
+      );
+      if (over > 2) {
+        issues.push({
+          type: 'canvas-overflow',
+          what: `${name(kid)} 超出了 canvas ${over}px`,
+          fix: '改它的 x / y / w / h，或把 canvas 的 h 放大',
+        });
+      }
+    }
+  }
+
   // 9. 渲染失败 / 数据过期 / 图片失败
   for (const el of stage.querySelectorAll('[data-vk-error]')) issues.push({ type: 'render', what: `${name(el)} 渲染失败`, fix: '看控制台第一条报错' });
   for (const el of stage.querySelectorAll('[data-vk-stale]')) issues.push({ type: 'stale', what: `${name(el)} 缺少预编译数据`, fix: '运行 vk render 重新生成' });

@@ -100,10 +100,25 @@ $ make
 ok
         </script>
       </vk-term>
-      <vk-canvas span="3" w="300" h="160" pad="close">
+      <vk-canvas span="3" w="300" h="200" pad="close">
         <vk-box x="0" y="0" w="300" h="80" surface="soft" pad="close"><vk-text size="caption">canvas pad</vk-text></vk-box>
         <vk-box x="0" y="100" w="300" h="80" surface="tint" tone="ok" pad="close"><vk-text size="caption">第二块</vk-text></vk-box>
       </vk-canvas>
     </vk-grid>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="t4">
+  <vk-stack gap="close">
+    <vk-label counter="11">table · 四列</vk-label>
+    <vk-table variant="spec" mono size="caption">
+      <table>
+        <tr><th>指令</th><th>长度</th><th>操作数</th><th>说明</th></tr>
+        <tr><td>mov</td><td>1</td><td>2</td><td>把数据搬进寄存器</td></tr>
+        <tr><td>add</td><td>2</td><td>2</td><td>两个数相加</td></tr>
+        <tr><td>jmp</td><td>2</td><td>1</td><td>跳到另一个地址</td></tr>
+        <tr><td>push</td><td>1</td><td>1</td><td>压栈</td></tr>
+      </table>
+    </vk-table>
   </vk-stack>
 </vk-page>
