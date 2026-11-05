@@ -159,6 +159,11 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
       .filter(([phrase]) => !specText.includes(phrase))
       .map(([phrase]) => phrase);
     ok(!stale.length, 'SPEC 里的计数和词表一致');
+
+    const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
+    const staleReadme = [...readme.matchAll(/(\d+) 个件/g)].map((m) => Number(m[1])).filter((n) => n !== TAG_NAMES.length);
+    ok(!staleReadme.length, 'README 里的件数和词表一致');
+    for (const n of staleReadme) console.error('    · README 写着 ' + n + ' 个件，实际 ' + TAG_NAMES.length);
     for (const st of stale) console.error('    · 计数过期：' + st);
   }
 
