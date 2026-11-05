@@ -353,6 +353,12 @@ console.log('\n自动适配');
       numAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(2)')).textAlign,
       textAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(1)')).textAlign,
       noteOverlaps: overlap(box(note), box(target)),
+      // 层的高度要由图撑出来、说明要压在图上：图若用 bleed（不占高度），这条会挂。
+      pairSplit: (() => {
+        const l = box(q(6, '#pleft'));
+        const r = box(q(6, '#pright'));
+        return !!l && !!r && l.right <= r.left + 2 && Math.abs(l.width - r.width) < 4;
+      })(),
     };
   });
   await b.close();
@@ -360,6 +366,7 @@ console.log('\n自动适配');
   ok(r.stepsDir === 'vertical', '窄容器里的步骤条自动竖排');
   ok(r.numAlign === 'right' && r.textAlign === 'left', '表格数字列右对齐、文字列不动');
   ok(!r.noteOverlaps, '注释不压在目标上');
+  ok(r.pairSplit, '并置是两个等宽的并排块');
   /* 手写排版：等于开第二套字体系统，构建期要拦。 */
   {
     const probe = path.join(os.tmpdir(), 'vk-style-' + Date.now() + '.html');

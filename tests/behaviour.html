@@ -52,3 +52,20 @@ int b = 2;
   </vk-stack>
   <vk-callout mode="note" for="#target@line:2">这一行在写内存</vk-callout>
 </vk-page>
+
+<vk-page id="layer-stack">
+  <vk-layer>
+    <vk-img id="layimg" src="../assets/hello/asm-o0.png" alt="底" ratio="4 / 1" fill="contain"></vk-img>
+    <vk-stack justify="end">
+      <vk-box id="laynote" surface="paper" pad="close">
+        <vk-text size="body">叠上去的说明</vk-text>
+      </vk-box>
+    </vk-stack>
+  </vk-layer>
+</vk-page>
+<vk-page id="pair-split">
+  <vk-pair symbol="vs">
+    <vk-box id="pleft" surface="tint" tone="ok" pad="close"><vk-text size="body">左</vk-text></vk-box>
+    <vk-box id="pright" surface="tint" tone="warn" pad="close"><vk-text size="body">右</vk-text></vk-box>
+  </vk-pair>
+</vk-page>

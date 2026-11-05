@@ -1,0 +1,1408 @@
+/* ============================================================================
+   v17 · 件
+   ----------------------------------------------------------------------------
+   每个件只做一件事。尺寸、行高、颜色全部来自 tokens；这里只写"这件长什么样"。
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ 面 */
+vk-box {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: var(--vk-box-pad, var(--vk-gap-normal));
+  border-radius: var(--vk-radius-md);
+  background: var(--vk-box-bg, transparent);
+  border: var(--vk-box-bw, 0) solid var(--vk-box-line, var(--vk-line-color));
+}
+
+vk-box[surface='paper'] {
+  --vk-box-bg: var(--vk-paper);
+  --vk-box-bw: var(--vk-line-w-hair);
+  --vk-box-line: var(--vk-line-color);
+}
+vk-box[surface='soft'] {
+  --vk-box-bg: var(--vk-soft);
+  --vk-box-bw: var(--vk-line-w-hair);
+  --vk-box-line: var(--vk-line-color);
+}
+/* 写了 tone 就该看得出来：描边先跟着语义色走。 */
+vk-box[tone] {
+  --vk-box-line: var(--vk-tone);
+}
+
+/* 没指定 surface 时，tone 自己带一层淡底。 */
+vk-box[tone]:not([surface]),
+vk-box[tone][surface='none'] {
+  --vk-box-bg: var(--vk-tint);
+}
+vk-box[surface='tint'] {
+  --vk-box-bg: var(--vk-tint, var(--vk-tint-info));
+}
+vk-box[surface='tint'][tone='focus'] {
+  --vk-box-bg: var(--vk-tint-focus);
+}
+vk-box[surface='tint'][tone='ok'] {
+  --vk-box-bg: var(--vk-tint-ok);
+}
+vk-box[surface='tint'][tone='warn'] {
+  --vk-box-bg: var(--vk-tint-warn);
+}
+vk-box[surface='tint'][tone='err'] {
+  --vk-box-bg: var(--vk-tint-err);
+}
+vk-box[surface='dark'] {
+  color: var(--vk-dark-fg);
+  --vk-box-bg: var(--vk-dark-bg);
+  color: var(--vk-dark-fg);
+}
+
+vk-box[border='hair'] {
+  --vk-box-bw: var(--vk-line-w-hair);
+}
+vk-box[border='strong'] {
+  --vk-box-bw: var(--vk-line-w-rule);
+  --vk-box-line: var(--vk-line-strong);
+}
+
+vk-box[radius='none'] {
+  border-radius: 0;
+}
+vk-box[radius='pill'] {
+  border-radius: var(--vk-radius-pill);
+}
+
+/* 强调环：不占布局，只让这一块显出来。 */
+vk-box[ring] {
+  box-shadow: 0 0 0 var(--vk-line-w-rule) var(--vk-tone, var(--vk-info));
+}
+vk-box[ring][tone='focus'] {
+  box-shadow: 0 0 0 var(--vk-line-w-rule) var(--vk-focus);
+}
+
+/* 标题带：只有写了 title 或 chrome="dots" 才存在。 */
+vk-box > .vk-box-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-gap-close);
+  margin: calc(var(--vk-box-pad, var(--vk-gap-normal)) * -1) calc(var(--vk-box-pad, var(--vk-gap-normal)) * -1)
+    var(--vk-box-pad, var(--vk-gap-normal));
+  padding: var(--vk-gap-close) var(--vk-box-pad, var(--vk-gap-normal));
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-box-line, var(--vk-line-color));
+  border-radius: inherit;
+  border-end-start-radius: 0;
+  border-end-end-radius: 0;
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  font-weight: var(--vk-w-bold);
+  color: var(--vk-ink-1);
+}
+
+vk-box > .vk-box-bd {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+  min-width: 0;
+  min-height: 0;
+}
+
+/* 窗三点：观众一眼认出"这是窗口"。 */
+.vk-dots {
+  display: inline-flex;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+.vk-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--vk-ink-3);
+}
+.vk-dots i:nth-child(1) {
+  background: var(--vk-dot-red);
+}
+.vk-dots i:nth-child(2) {
+  background: var(--vk-dot-yellow);
+}
+.vk-dots i:nth-child(3) {
+  background: var(--vk-dot-green);
+}
+
+vk-box[tone='focus'] {
+  --vk-tone: var(--vk-focus);
+}
+
+/* 叠层：底 + 叠上去的东西。surface 是这一层的底。 */
+/* 层是真的叠：所有子项落在同一格里，盒子由最高的那个撑出来。 */
+vk-layer {
+  display: grid;
+  grid-template-areas: 'stack';
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  padding: var(--vk-gap-normal);
+  border-radius: var(--vk-radius-md);
+}
+
+vk-layer > * {
+  grid-area: stack;
+  min-width: 0;
+  min-height: 0;
+}
+vk-layer[surface='paper'] {
+  background: var(--vk-paper);
+  box-shadow: 0 0 0 var(--vk-line-w-hair) var(--vk-line-color);
+}
+vk-layer[surface='soft'] {
+  background: var(--vk-soft);
+}
+vk-layer[tone]:not([surface]),
+vk-layer[tone][surface='none'] {
+  background: var(--vk-tint);
+}
+vk-layer[surface='tint'] {
+  background: var(--vk-tint, var(--vk-tint-info));
+}
+vk-layer[surface='tint'][tone='focus'] {
+  background: var(--vk-tint-focus);
+}
+vk-layer[surface='dark'] {
+  color: var(--vk-dark-fg);
+  background: var(--vk-dark-bg);
+  color: var(--vk-dark-fg);
+}
+
+/* ------------------------------------------------------------------ 标签 */
+vk-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-gap-close);
+  max-width: 100%;
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-3);
+  white-space: nowrap;
+}
+
+vk-label .vk-label-t {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+vk-label .vk-label-n {
+  font-family: var(--vk-font-mono);
+  color: var(--vk-ink-2);
+  letter-spacing: 0.02em;
+}
+vk-label .vk-ic {
+  display: inline-flex;
+  width: 1em;
+  height: 1em;
+  color: var(--vk-tone, currentColor);
+}
+vk-label[tone] .vk-label-t {
+  color: var(--vk-tone);
+}
+
+vk-label[variant='chip'] .vk-label-t {
+  padding: 0 var(--vk-gap-close);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-tint, var(--vk-tint-info));
+  color: var(--vk-tone, var(--vk-ink-2));
+}
+vk-label[variant='badge'] .vk-label-t {
+  padding: 0 var(--vk-gap-close);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-tone, var(--vk-ink-1));
+  color: var(--vk-paper);
+  font-weight: var(--vk-w-medium);
+}
+
+/* ------------------------------------------------------------------ 行内 */
+vk-inline {
+  display: inline;
+}
+vk-inline[variant='code'] {
+  padding: 0.08em 0.32em;
+  border-radius: 6px;
+  background: var(--vk-soft);
+  font-family: var(--vk-font-mono);
+  font-size: 0.94em;
+}
+vk-inline[variant='math'] {
+  font-size: 1em;
+}
+vk-inline[variant='sup'],
+vk-inline[variant='sub'] {
+  font-size: 0.62em;
+  line-height: 0;
+  vertical-align: baseline;
+  position: relative;
+}
+vk-inline[variant='sup'] {
+  top: -0.52em;
+}
+vk-inline[variant='sub'] {
+  bottom: -0.28em;
+}
+
+/* 键位：Ctrl + C 写成两枚键帽。 */
+.vk-keys {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.24em;
+  font-size: 0.84em;
+}
+.vk-key {
+  display: inline-block;
+  padding: 0.06em 0.34em;
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: 6px;
+  background: var(--vk-soft);
+  font-family: var(--vk-font-mono);
+  font-size: 1em;
+  line-height: 1.4;
+}
+.vk-key-plus {
+  color: var(--vk-ink-3);
+}
+
+/* ------------------------------------------------------------------ 图片 */
+vk-img {
+  display: block;
+  position: relative;
+  min-width: 0;
+  overflow: hidden;
+  border-radius: var(--vk-radius-md);
+  background: var(--vk-soft);
+}
+vk-img img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+/* 铺满整帧的图是背景：绝对定位，盖住整个版心（含出血）。 */
+vk-img[bleed='all'] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  border-radius: 0;
+  z-index: 0;
+}
+
+vk-img[radius='none'] {
+  border-radius: 0;
+}
+vk-img[data-error] img {
+  display: none;
+}
+vk-img[data-error]::after,
+vk-img .vk-img-ph {
+  content: '';
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+  background: var(--vk-soft);
+}
+
+/* ------------------------------------------------------------------ 窗
+   代码 / 终端 / 差异 / 汇编共用一个窗形：三点窗头 + 一列内容。
+   默认按内容宽（不铺满版心），右侧不留空窗。 */
+vk-code,
+vk-term,
+vk-diff,
+vk-asm {
+  display: block;
+  min-width: 0;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+}
+
+.vk-win {
+  /* 窗口自带底，就自带墨阶：深色页里的纸面窗不能继承亮字。 */
+  --vk-ink-1: var(--vk-on-paper-1);
+  --vk-ink-2: var(--vk-on-paper-2);
+  --vk-ink-3: var(--vk-on-paper-3);
+  display: flex;
+  flex-direction: column;
+  width: fit-content;
+  /* 窗宽跟版心走：连续两帧的代码窗宽度一致，剪起来不会跳。
+     想更窄就把窗口放进 grid / pair 的窄格里。 */
+  min-width: 100%;
+  max-width: 100%;
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: var(--vk-radius-md);
+  overflow: hidden;
+  background: var(--vk-paper);
+}
+
+.vk-win > .vk-hd {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-gap-close);
+  height: 56px;
+  padding: 0 var(--vk-gap-normal);
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
+  background: var(--vk-soft);
+  font-size: 40px;
+  line-height: 1;
+  color: var(--vk-ink-2);
+  white-space: nowrap;
+}
+.vk-win > .vk-hd .vk-file {
+  font-family: var(--vk-font-mono);
+  color: var(--vk-ink-2);
+}
+.vk-win > .vk-hd .vk-range {
+  font-family: var(--vk-font-mono);
+  color: var(--vk-ink-3);
+}
+.vk-win[data-chrome='none'] > .vk-hd {
+  display: none;
+}
+
+.vk-win > .vk-bd {
+  display: flex;
+  flex-direction: column;
+  padding: var(--vk-gap-close) 0;
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ 代码 */
+.vk-line {
+  display: flex;
+  overflow: hidden;
+  gap: var(--vk-gap-normal);
+  padding: 0 var(--vk-gap-normal) 0 0;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.5;
+  white-space: pre;
+  min-height: calc(var(--vk-cs, var(--vk-fs-body)) * 1.5);
+  color: var(--vk-ink-1);
+}
+.vk-line .vk-ln {
+  flex: 0 0 auto;
+  width: 3.2em;
+  text-align: right;
+  color: var(--vk-ink-3);
+  font-size: max(36px, 0.65em);
+  line-height: calc(1.5 / 0.65);
+  user-select: none;
+}
+.vk-line .vk-src {
+  flex: 0 0 auto;
+  padding-right: var(--vk-gap-normal);
+}
+
+/* 长行：默认裁切（代码不该被折行读）；写 long="wrap" 才折。 */
+vk-code[long='clip'] .vk-win {
+  max-width: 100%;
+}
+vk-code[long='clip'] .vk-line {
+  overflow: hidden;
+  text-overflow: clip;
+}
+vk-code[long='wrap'] .vk-line {
+  white-space: pre-wrap;
+  overflow: visible;
+  overflow-wrap: anywhere;
+}
+vk-code[long='wrap'] .vk-src {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* 当前行：一条实心焦点条 + 8% 底。焦点之外的行退到 0.35。 */
+.vk-line.is-current {
+  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+.vk-line.is-current .vk-ln {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
+}
+.vk-mark {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--vk-focus) 14%, transparent);
+  box-shadow: inset 0 -2px 0 var(--vk-focus);
+}
+.vk-line.is-dim {
+  opacity: 0.35;
+}
+.vk-line.is-fold {
+  justify-content: flex-start;
+  color: var(--vk-ink-3);
+  font-style: normal;
+  letter-spacing: 0.24em;
+}
+
+/* 语法：只有三个颜色。关键字靠字重，数字退到墨阶。 */
+.vk-src .k {
+  font-weight: var(--vk-w-bold);
+}
+.vk-src .s {
+  color: var(--vk-syn-string);
+}
+.vk-src .c {
+  color: var(--vk-syn-comment);
+}
+.vk-src .f {
+  font-weight: var(--vk-w-bold);
+}
+
+/* 深色反白：只给「代码窗可选的反白」用。 */
+.vk-win[data-surface='dark'] {
+  border-color: var(--vk-dark-rule);
+  background: var(--vk-dark-bg);
+}
+.vk-win[data-surface='dark'] > .vk-hd {
+  border-bottom-color: var(--vk-dark-rule);
+  background: var(--vk-dark-bg1);
+  color: var(--vk-dark-meta);
+}
+.vk-win[data-surface='dark'] > .vk-hd .vk-file {
+  color: var(--vk-dark-fg2);
+}
+.vk-win[data-surface='dark'] .vk-line {
+  color: var(--vk-dark-fg);
+}
+.vk-win[data-surface='dark'] .vk-ln {
+  color: var(--vk-dark-meta);
+}
+.vk-win[data-surface='dark'] .s {
+  color: var(--vk-dark-string);
+}
+.vk-win[data-surface='dark'] .c {
+  color: var(--vk-dark-comment);
+}
+.vk-win[data-surface='dark'] .vk-line.is-current {
+  background: color-mix(in srgb, var(--vk-dark-accent) 18%, transparent);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-dark-accent);
+}
+.vk-win[data-surface='dark'] .vk-line.is-current .vk-ln {
+  color: var(--vk-dark-accent);
+}
+/* 终端的三种行在深色底上要各自有颜色：命令最亮、输出次之、提示最暗。 */
+.vk-win[data-surface='dark'] .vk-cmd {
+  color: var(--vk-dark-fg);
+}
+.vk-win[data-surface='dark'] .vk-out {
+  color: var(--vk-dark-fg2);
+}
+.vk-win[data-surface='dark'] .vk-prompt {
+  color: var(--vk-dark-meta);
+}
+
+/* 代码行不自己裁：让窗口先长到内容宽（最多版心），再谈缩字号。 */
+vk-code .vk-line,
+vk-diff .vk-line {
+  overflow: visible;
+}
+
+/* ------------------------------------------------------------------ 终端 */
+.vk-term .vk-line {
+  font-family: var(--vk-font-mono);
+  padding-left: var(--vk-gap-normal);
+}
+.vk-term .vk-prompt {
+  color: var(--vk-ink-3);
+  user-select: none;
+}
+.vk-term .vk-cmd {
+  color: var(--vk-ink-1);
+  font-weight: var(--vk-w-medium);
+}
+.vk-term .vk-out {
+  color: var(--vk-ink-2);
+}
+.vk-term .vk-path {
+  color: var(--vk-focus);
+}
+.vk-term .vk-err {
+  color: var(--vk-err);
+}
+
+/* ------------------------------------------------------------------ 差异 */
+.vk-diff-row {
+  display: flex;
+  gap: var(--vk-gap-close);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.5;
+  white-space: pre;
+  min-height: calc(var(--vk-cs, var(--vk-fs-body)) * 1.5);
+  padding-right: var(--vk-gap-normal);
+}
+.vk-diff-row .vk-sign {
+  flex: 0 0 auto;
+  width: 1.2em;
+  text-align: center;
+  color: var(--vk-ink-3);
+  user-select: none;
+}
+.vk-diff-row .vk-ln {
+  flex: 0 0 auto;
+  width: 2.6em;
+  text-align: right;
+  font-size: 0.65em;
+  line-height: calc(1.5 / 0.65);
+  color: var(--vk-ink-3);
+  user-select: none;
+}
+.vk-diff-row .vk-dsrc {
+  flex: 0 0 auto;
+}
+.vk-diff-row.add {
+  background: var(--vk-tint-ok);
+}
+.vk-diff-row.del {
+  background: var(--vk-tint-err);
+}
+.vk-diff-row.add .vk-sign {
+  color: var(--vk-ok);
+  font-weight: var(--vk-w-bold);
+}
+.vk-diff-row.del .vk-sign {
+  color: var(--vk-err);
+  font-weight: var(--vk-w-bold);
+}
+.vk-diff-row .vk-word {
+  border-radius: 3px;
+  background: color-mix(in srgb, var(--vk-ok) 22%, transparent);
+}
+.vk-diff-row.del .vk-word {
+  background: color-mix(in srgb, var(--vk-err) 20%, transparent);
+}
+.vk-diff-hunk {
+  padding: var(--vk-gap-close) var(--vk-gap-normal) 0;
+  font-family: var(--vk-font-mono);
+  font-size: max(36px, 0.65em);
+  color: var(--vk-ink-3);
+}
+.vk-diff-foot {
+  padding: var(--vk-gap-close) var(--vk-gap-normal);
+  border-top: var(--vk-line-w-hair) solid var(--vk-line-color);
+  font-size: 40px;
+  color: var(--vk-ink-3);
+}
+.vk-diff-split {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--vk-line-w-hair);
+  background: var(--vk-line-color);
+}
+.vk-diff-split > .vk-win {
+  border: 0;
+  border-radius: 0;
+}
+
+/* ------------------------------------------------------------------ 汇编 */
+.vk-arow {
+  display: flex;
+  gap: var(--vk-gap-close);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.5;
+  min-height: calc(var(--vk-cs, var(--vk-fs-body)) * 1.5);
+  white-space: pre;
+}
+.vk-arow > * {
+  flex: 0 0 auto;
+}
+.vk-arow > .vk-aaddr {
+  width: 5.4em;
+  flex: 0 0 auto;
+  color: var(--vk-ink-3);
+}
+.vk-arow > .vk-abytes {
+  width: 5.6em;
+  flex: 0 0 auto;
+  color: var(--vk-ink-3);
+}
+.vk-arow > .vk-ainsn {
+  width: 4.4em;
+  flex: 0 0 auto;
+  color: var(--vk-ink-1);
+  font-weight: var(--vk-w-medium);
+}
+.vk-arow > .vk-aops {
+  flex: 1 1 auto;
+  color: var(--vk-ink-2);
+}
+/* 差异里的当前行：和代码窗同一套"焦点条 + 8% 底"，不然 current 是哑的。 */
+.vk-diff-row.is-current {
+  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+.vk-diff-row.is-current .vk-sign {
+  color: var(--vk-focus);
+}
+
+/* 对齐填充：dim 掉，但它确实在文件里，不隐藏。 */
+.vk-arow[data-vk-pad] {
+  opacity: 0.42;
+}
+
+.vk-arow.is-current {
+  background: color-mix(in srgb, var(--vk-focus) 8%, transparent);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+.vk-arow.is-dim {
+  opacity: 0.35;
+}
+.vk-alabel .vk-ainsn {
+  font-weight: var(--vk-w-bold);
+  color: var(--vk-ink-2);
+}
+.vk-alabel .vk-aaddr {
+  color: var(--vk-ink-3);
+}
+
+/* 并置两边各自铺满自己的格子：向中轴靠拢会把宽内容（代码窗）挤出版心。 */
+
+/* ------------------------------------------------------------------ 公式 */
+vk-math {
+  display: block;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.4;
+}
+vk-math .katex-display {
+  margin: 0;
+}
+
+/* ------------------------------------------------------------------ 表格 */
+vk-table {
+  display: block;
+  min-width: 0;
+}
+vk-table table {
+  /* 表格按内容宽，不硬拉满版心：三列表被拉成 1680 宽时，列间距会大得读不出行。 */
+  width: auto;
+  min-width: min(100%, 420px);
+  max-width: 100%;
+  border-collapse: collapse;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.45;
+}
+/* 数字列：运行期按列算好 num 类，这里负责让它右对齐、数字等宽。 */
+vk-table td.num,
+vk-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+vk-table th,
+vk-table td {
+  padding: calc(var(--vk-gap-close) * 0.9) var(--vk-gap-normal);
+  text-align: left;
+  vertical-align: baseline;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.45;
+}
+
+/* 表头：不依赖作者写 <thead>（浏览器会把裸 <tr> 包进 tbody）。 */
+vk-table th {
+  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
+  font-weight: var(--vk-w-bold);
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+}
+
+vk-table td {
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
+  color: var(--vk-ink-1);
+}
+
+vk-table tr:last-child td {
+  border-bottom: 0;
+}
+
+vk-table[mono] td,
+vk-table[mono] th {
+  font-family: var(--vk-font-mono);
+}
+vk-table[variant='spec'] thead th {
+  color: var(--vk-ink-3);
+  font-weight: var(--vk-w-medium);
+  font-size: var(--vk-fs-caption);
+}
+vk-table tbody tr[state='current'] td {
+  background: color-mix(in srgb, var(--vk-focus) 7%, transparent);
+}
+vk-table tbody tr[tone='ok'] td {
+  background: var(--vk-tint-ok);
+}
+vk-table tbody tr[tone='warn'] td {
+  background: var(--vk-tint-warn);
+}
+vk-table tbody tr[tone='err'] td {
+  background: var(--vk-tint-err);
+}
+vk-table .vk-cap {
+  margin-bottom: var(--vk-gap-close);
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
+
+/* ------------------------------------------------------------------ 列表 */
+vk-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-list, var(--vk-gap-close));
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+}
+vk-list li {
+  position: relative;
+  padding-left: 1.5em;
+  color: var(--vk-ink-1);
+}
+vk-list li::before {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--vk-tone, var(--vk-ink-3));
+}
+vk-list:not([variant]) li::before,
+vk-list[variant='bullet'] li::before {
+  content: '·';
+  font-weight: var(--vk-w-bold);
+}
+vk-list[variant='ordered'] {
+  counter-reset: vk-li;
+}
+vk-list[variant='ordered'] li {
+  counter-increment: vk-li;
+}
+vk-list[variant='ordered'] li::before {
+  content: counter(vk-li) '.';
+  color: var(--vk-ink-3);
+  font-variant-numeric: tabular-nums;
+}
+vk-list[variant='check'] li::before {
+  content: '✓';
+  color: var(--vk-tone, var(--vk-ok));
+  font-weight: var(--vk-w-bold);
+}
+vk-list li[state='current'] {
+  color: var(--vk-focus);
+}
+
+/* ------------------------------------------------------------------ 文件树 */
+vk-tree {
+  display: block;
+  min-width: 0;
+}
+
+.vk-tree {
+  display: flex;
+  flex-direction: column;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-caption));
+  line-height: 1.4;
+}
+
+.vk-tree .vk-node {
+  display: block;
+}
+
+.vk-node > .vk-tname {
+  display: block;
+  padding-right: var(--vk-gap-normal);
+  white-space: nowrap;
+  color: var(--vk-ink-1);
+}
+
+.vk-node[data-dir] > .vk-tname {
+  font-weight: var(--vk-w-bold);
+}
+
+/* 子节点：一条竖导线 + 每个节点一条横短线。导线是缩进的唯一来源。 */
+.vk-node > .vk-kids {
+  display: flex;
+  flex-direction: column;
+  margin-left: 0.55em;
+  padding-left: 1.1em;
+  border-left: var(--vk-line-w-hair) solid var(--vk-line-color);
+}
+
+.vk-kids > .vk-node {
+  position: relative;
+}
+
+.vk-kids > .vk-node::before {
+  content: '';
+  position: absolute;
+  left: -1.1em;
+  top: 0.7em;
+  width: 0.7em;
+  height: var(--vk-line-w-hair);
+  background: var(--vk-line-color);
+}
+
+.vk-node[data-current] > .vk-tname {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
+}
+
+/* ------------------------------------------------------------------ 内存格 */
+vk-cells {
+  display: grid;
+  grid-template-columns: repeat(var(--vk-cols, 4), minmax(0, 1fr));
+  gap: var(--vk-gap-close);
+}
+.vk-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--vk-gap-close) calc(var(--vk-gap-close) * 0.9);
+  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-radius: var(--vk-radius-md);
+  background: var(--vk-paper);
+}
+.vk-cell > .vk-cell-l {
+  font-family: var(--vk-font-mono);
+  font-size: 40px;
+  line-height: 1.2;
+  color: var(--vk-ink-3);
+}
+.vk-cell > .vk-cell-v {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.3;
+  color: var(--vk-ink-1);
+}
+.vk-cell > .vk-cell-a {
+  font-family: var(--vk-font-mono);
+  font-size: 36px;
+  line-height: 1.2;
+  color: var(--vk-ink-3);
+}
+.vk-cell[state='current'] {
+  border-color: var(--vk-focus);
+  box-shadow: 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+  background: color-mix(in srgb, var(--vk-focus) 6%, var(--vk-paper));
+}
+vk-cells .vk-cell[tone] {
+  border-color: var(--vk-tone);
+}
+.vk-cell[tone='ok'] {
+  border-color: var(--vk-ok);
+}
+.vk-cell[tone='err'] {
+  border-color: var(--vk-err);
+  background: var(--vk-tint-err);
+}
+
+/* ------------------------------------------------------------------ 字节 */
+vk-bytes {
+  display: block;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.5;
+}
+.vk-brow {
+  display: flex;
+  overflow: hidden;
+  gap: var(--vk-gap-normal);
+  white-space: pre;
+  min-height: 1.5em;
+}
+.vk-brow > * {
+  flex: 0 0 auto;
+}
+.vk-brow > .vk-baddr {
+  color: var(--vk-ink-3);
+}
+.vk-brow > .vk-hex {
+  display: inline-flex;
+  gap: 0.62em;
+}
+.vk-brow > .vk-hex i {
+  font-style: normal;
+  color: var(--vk-ink-1);
+}
+.vk-brow > .vk-hex i[data-current] {
+  background: var(--vk-focus);
+  color: var(--vk-paper);
+  border-radius: 3px;
+}
+.vk-brow > .vk-ascii {
+  color: var(--vk-ink-3);
+}
+
+/* 字节窗永远跟内容走：它是定长的十六进制表，不需要"舒适最小宽"。 */
+vk-bytes .vk-win {
+  min-width: 0;
+}
+
+/* ------------------------------------------------------------------ 位 */
+vk-bits {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+}
+
+.vk-bits-label {
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
+
+.vk-bit-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+/* 一段 = 一个语义字段（符号 / 指数 / 尾数）。段之间留 24px，比组间距大。 */
+.vk-bit-field {
+  display: flex;
+  align-items: flex-end;
+}
+.vk-bit-field-gap {
+  margin-left: 24px;
+}
+
+.vk-bit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 1.3ch;
+  padding: 2px 0;
+}
+
+.vk-bit .vk-bit-i {
+  font-size: max(36px, 0.5em);
+  line-height: 1;
+  color: var(--vk-ink-3);
+}
+
+.vk-bit .vk-bit-v {
+  font-size: 1em;
+  line-height: 1.2;
+  color: var(--vk-ink-1);
+}
+
+.vk-bit[data-sign] .vk-bit-v {
+  color: var(--vk-err);
+}
+
+/* ------------------------------------------------------------------ 步骤 */
+vk-steps {
+  display: flex;
+  gap: var(--vk-gap-wide);
+  min-width: 0;
+}
+vk-steps[direction='vertical'],
+vk-steps[data-direction='vertical'] {
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+}
+.vk-step {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+  flex: 1 1 0;
+  min-width: 0;
+}
+vk-steps[direction='vertical'] .vk-step,
+vk-steps[data-direction='vertical'] .vk-step {
+  flex-direction: row;
+  align-items: center;
+  flex: 0 0 auto;
+}
+.vk-step > .vk-step-n {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  flex: 0 0 auto;
+  border: var(--vk-line-w-rule) solid var(--vk-line-strong);
+  border-radius: var(--vk-radius-md);
+  font-family: var(--vk-font-mono);
+  font-size: 40px;
+  color: var(--vk-ink-2);
+}
+.vk-step > .vk-step-t {
+  font-size: var(--vk-fs-body);
+  line-height: 1.3;
+  color: var(--vk-ink-1);
+}
+.vk-step[state='current'] > .vk-step-n {
+  border-color: var(--vk-focus);
+  background: var(--vk-focus);
+  color: var(--vk-paper);
+}
+.vk-step[state='current'] > .vk-step-t {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
+}
+.vk-step[data-done] > .vk-step-n {
+  border-color: var(--vk-ok);
+  color: var(--vk-ok);
+}
+
+/* 连接线全部由 CSS 画：横排在 .vk-step 右外侧，竖排在编号章下方。
+   运行期不再插节点，字号/间距怎么变都不会错位。 */
+vk-steps {
+  position: relative;
+}
+
+vk-steps[data-direction='horizontal'] .vk-step {
+  position: relative;
+}
+
+vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last-child)::after {
+  content: '→';
+  position: absolute;
+  top: 0.1em;
+  left: 100%;
+  width: var(--vk-step-gap, var(--vk-gap-wide));
+  text-align: center;
+  font-size: calc(var(--vk-step-t-size, var(--vk-fs-body)) * 0.7);
+  line-height: 1;
+  color: var(--vk-line-strong);
+}
+
+vk-steps[data-direction='horizontal'][data-connector='line'] .vk-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  top: 27px;
+  left: calc(100% + var(--vk-step-gap, var(--vk-gap-wide)) / 2 - 12px);
+  width: 24px;
+  height: var(--vk-line-w-rule);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-line-strong);
+}
+
+/* ------------------------------------------------------------------ 条 */
+vk-bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+}
+.vk-bar {
+  display: grid;
+  grid-template-columns: minmax(6em, auto) 1fr auto;
+  align-items: center;
+  gap: var(--vk-gap-normal);
+  font-size: var(--vk-fs-body);
+  line-height: 1.3;
+}
+.vk-bar > .vk-bar-l {
+  color: var(--vk-ink-2);
+}
+.vk-bar > .vk-bar-track {
+  height: 24px;
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-soft);
+  overflow: hidden;
+}
+.vk-bar > .vk-bar-track > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--vk-tone, var(--vk-ink-2));
+}
+.vk-bar > .vk-bar-v {
+  font-family: var(--vk-font-mono);
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+}
+
+/* ------------------------------------------------------------------ 时间线 */
+vk-timeline {
+  display: block;
+  min-width: 0;
+}
+
+.vk-tl-range {
+  margin-bottom: var(--vk-gap-close);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  line-height: 1;
+  color: var(--vk-ink-3);
+}
+.vk-tl {
+  position: relative;
+  display: flex;
+  gap: var(--vk-gap-wide);
+  padding-top: var(--vk-gap-wide);
+}
+/* 轴不再整条画：每个点自己画到下一个点（含 gap），最后一格不画。 */
+.vk-tl-item:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(var(--vk-gap-wide) * -1 + var(--vk-gap-wide) / 2);
+  width: calc(100% + var(--vk-gap-wide));
+  height: var(--vk-line-w-rule);
+  background: var(--vk-line-strong);
+}
+.vk-tl-item {
+  position: relative;
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+}
+.vk-tl-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: calc(var(--vk-gap-wide) * -0.5 - 7px);
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: var(--vk-paper);
+  border: var(--vk-line-w-rule) solid var(--vk-line-strong);
+}
+.vk-tl-item[state='current']::before {
+  border-color: var(--vk-focus);
+  background: var(--vk-focus);
+}
+.vk-tl-item .vk-tl-date {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
+.vk-tl-item .vk-tl-t {
+  font-size: var(--vk-fs-body);
+  line-height: 1.3;
+  color: var(--vk-ink-1);
+}
+.vk-tl-item .vk-tl-note {
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
+
+/* ------------------------------------------------------------------ 对照 */
+vk-compare {
+  display: block;
+  min-width: 0;
+}
+.vk-compare {
+  display: grid;
+  gap: var(--vk-gap-normal);
+}
+.vk-compare-pane {
+  position: relative;
+  min-width: 0;
+  /* 对照窗的固定高度：两张图统一按 contain 缩到这个高，不按原图比例撑开。 */
+  height: var(--vk-compare-h, 560px);
+  overflow: hidden;
+  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-radius: var(--vk-radius-md);
+  background: var(--vk-soft);
+}
+.vk-compare-pane img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.vk-compare-label {
+  margin-bottom: var(--vk-gap-close);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-2);
+}
+.vk-compare-mark {
+  position: absolute;
+  border: var(--vk-line-w-rule) solid var(--vk-err);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+/* 步骤连接线：运行期插入 .vk-step-conn（横排线 + 箭头 / 竖排竖线）。 */
+.vk-step-conn {
+  flex: 1 1 0;
+  min-width: 24px;
+  display: flex;
+  align-items: center;
+}
+.vk-step-conn > i {
+  flex: 1 1 auto;
+  min-width: 8px;
+  height: var(--vk-line-w-rule);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-line-strong);
+}
+.vk-step-conn > b {
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 8px solid var(--vk-line-strong);
+}
+
+/* 时间线泳道 */
+.vk-lanes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-normal);
+}
+.vk-lane {
+  display: flex;
+  gap: var(--vk-gap-normal);
+  align-items: flex-start;
+}
+.vk-lane-name {
+  flex: 0 0 auto;
+  min-width: 6em;
+  padding-top: var(--vk-gap-wide);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-3);
+}
+.vk-lane-row {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  gap: var(--vk-gap-normal);
+  padding-top: var(--vk-gap-wide);
+  border-top: var(--vk-line-w-hair) solid var(--vk-line-color);
+}
+
+/* 对照：角标行 / 放大块 */
+.vk-compare-hd {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--vk-gap-normal);
+}
+
+/* 堆叠对照：两张各占一半高度，560 会顶出画布。 */
+vk-compare[variant='stack'] {
+  --vk-compare-h: 320px;
+}
+
+/* 有放大块时主图要让出一半高度，否则整页会被顶出去。 */
+vk-compare[zoom] {
+  --vk-compare-h: 330px;
+  display: flex;
+  flex-direction: column;
+  gap: var(--vk-gap-close);
+}
+
+/* 竖排步骤：编号章一列、文字一列，线从章底连到下一步章顶。 */
+vk-steps[data-direction='vertical'] {
+  flex-direction: column;
+  gap: 0;
+}
+
+vk-steps[data-direction='vertical'] .vk-step {
+  position: relative;
+  flex: 0 0 auto;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--vk-gap-close);
+  padding-bottom: 40px;
+}
+
+vk-steps[data-direction='vertical'] .vk-step:last-child {
+  padding-bottom: 0;
+}
+
+vk-steps[data-direction='vertical'] .vk-step:not(:last-child)::after {
+  content: '';
+  position: absolute;
+  left: 27px;
+  top: 56px;
+  bottom: 4px;
+  width: var(--vk-line-w-rule);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-line-strong);
+}
+
+vk-steps[data-direction='vertical'] .vk-step-conn {
+  display: none;
+}
+
+/* ------------------------------------------------------------------ 深色页
+   自己画了纸/浅/淡底的件，就得自己把三档墨钉回纸面：
+   否则深色页把墨换成亮色，这些件会变成"亮底亮字"。 */
+.vk-cell,
+.vk-key,
+vk-inline[variant='code'],
+vk-label[variant='chip'] .vk-label-t,
+.vk-win,
+.vk-win > .vk-hd,
+.vk-diff-row,
+.vk-bar > .vk-bar-track,
+.vk-compare-pane,
+.vk-callout-note,
+vk-table tbody tr[tone] td {
+  --vk-focus: var(--vk-focus-paper);
+  --vk-info: var(--vk-info-paper);
+  --vk-ok: var(--vk-ok-paper);
+  --vk-warn: var(--vk-warn-paper);
+  --vk-err: var(--vk-err-paper);
+  --vk-tint-info: var(--vk-tint-info-paper);
+  --vk-tint-focus: var(--vk-tint-focus-paper);
+  --vk-tint-ok: var(--vk-tint-ok-paper);
+  --vk-tint-warn: var(--vk-tint-warn-paper);
+  --vk-tint-err: var(--vk-tint-err-paper);
+  --vk-ink-1: var(--vk-on-paper-1);
+  --vk-ink-2: var(--vk-on-paper-2);
+  --vk-ink-3: var(--vk-on-paper-3);
+  color: var(--vk-on-paper-1);
+}
+
+/* 深色页上的表格线：纸面发丝线在近黑上看不见，换成暗色系的线。 */
+vk-page[surface='dark'] vk-table th,
+vk-page[surface='dark'] vk-table td,
+vk-box[surface='dark'] vk-table th,
+vk-box[surface='dark'] vk-table td,
+vk-layer[surface='dark'] vk-table th,
+vk-layer[surface='dark'] vk-table td {
+  border-bottom-color: var(--vk-dark-rule);
+}
+
+/* ------------------------------------------------------------------ 深色页 · 流程件
+   步骤章、时间线、横条槽都按纸面设计的颜色，深色页上要换一套。 */
+vk-page[surface='dark'] .vk-step-n,
+vk-box[surface='dark'] .vk-step-n,
+vk-layer[surface='dark'] .vk-step-n {
+  border-color: var(--vk-dark-rule);
+  color: var(--vk-dark-fg2);
+}
+vk-page[surface='dark'] .vk-step[state='current'] > .vk-step-n,
+vk-box[surface='dark'] .vk-step[state='current'] > .vk-step-n,
+vk-layer[surface='dark'] .vk-step[state='current'] > .vk-step-n {
+  background: var(--vk-dark-accent);
+  border-color: var(--vk-dark-accent);
+  color: var(--vk-dark-bg);
+}
+vk-page[surface='dark'] .vk-step[data-done] > .vk-step-n,
+vk-box[surface='dark'] .vk-step[data-done] > .vk-step-n,
+vk-layer[surface='dark'] .vk-step[data-done] > .vk-step-n {
+  border-color: var(--vk-dark-ok);
+  color: var(--vk-dark-ok);
+}
+vk-page[surface='dark'] .vk-bar > .vk-bar-track,
+vk-box[surface='dark'] .vk-bar > .vk-bar-track,
+vk-layer[surface='dark'] .vk-bar > .vk-bar-track {
+  background: var(--vk-dark-rule);
+}
+vk-page[surface='dark'] .vk-tl-date,
+vk-box[surface='dark'] .vk-tl-date,
+vk-layer[surface='dark'] .vk-tl-date {
+  color: var(--vk-dark-meta);
+}
+
+/* 目录树被 max 截断时的那一行 */
+.vk-node.is-more {
+  color: var(--vk-ink-3);
+}

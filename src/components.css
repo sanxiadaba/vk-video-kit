@@ -132,20 +132,9 @@ vk-box[tone='focus'] {
 }
 
 /* 叠层：底 + 叠上去的东西。surface 是这一层的底。 */
-/* 层是真的叠：所有子项落在同一格里，盒子由最高的那个撑出来。 */
 vk-layer {
-  display: grid;
-  grid-template-areas: 'stack';
-  grid-template-columns: minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr);
   padding: var(--vk-gap-normal);
   border-radius: var(--vk-radius-md);
-}
-
-vk-layer > * {
-  grid-area: stack;
-  min-width: 0;
-  min-height: 0;
 }
 vk-layer[surface='paper'] {
   background: var(--vk-paper);
