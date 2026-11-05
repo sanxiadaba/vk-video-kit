@@ -212,6 +212,21 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const d of dup.slice(0, 5)) console.error('    · ' + d + ' 在多个文件里各写了一份');
   }
 
+  /* 运行时会设一批 --vk-* 变量给样式读；设了没人读，就是拼错或者功能没了。 */
+  {
+    const files2 = ['base.css', 'layout.css', 'components.css', 'callout.css'];
+    const cssText = files2.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
+    const rtText =
+      fs.readdirSync(path.join(ROOT, 'src', 'runtime')).map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8')).join('\n');
+    const set = new Set([...rtText.matchAll(/setProperty\('(--[\w-]+)'/g)].map((m) => m[1]));
+    const readAnywhere = new Set(
+      [...cssText.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]).concat([...rtText.matchAll(/getPropertyValue\('(--vk-[\w-]+)'/g)].map((m) => m[1]))
+    );
+    const lonely = [...set].filter((n) => !readAnywhere.has(n));
+    ok(set.size > 5 && !lonely.length, '运行时设的变量都有人在读');
+    for (const l of lonely) console.error('    · ' + l + ' 设了但样式没读');
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {

@@ -311,7 +311,6 @@ export class VkTimeline extends VkElement {
     const range = start || end ? `<div class="vk-tl-range">${esc(start)}${start && end ? ' → ' : ''}${esc(end)}</div>` : '';
     const events = lis.map((node, i) => this._event(node, i, cur)).join('');
     // 轴从第一个点画到最后一个点：等分的第 N 列起点就是最后一个点。
-    this.style.setProperty('--vk-tl-span', `${((lis.length - 1) / lis.length) * 100}%`);
     this.innerHTML = `${range}<div class="vk-tl">${events}</div>`;
   }
 
