@@ -23,7 +23,6 @@ export class VkImg extends VkElement {
     const ratio = /^\s*\d+(?:\.\d+)?\s*\/\s*\d+(?:\.\d+)?\s*$/.test(ratioRaw) ? ratioRaw : '';
     if (ratioRaw && !ratio) this._warnOnce('ratio', `的 ratio="${ratioRaw}" 不合法，按图片原比例显示`);
     // 填充：fill="none|cover|contain"（与 vk-panel / vk-layer 同一套）。
-    // 旧写法 fit 由运行期折成 fill；不写就是 cover（与引入 fill 之前逐像素一致）。
     const fillRaw = (this.getAttribute('fill') || '').trim();
     const fit = fillRaw === 'contain' || fillRaw === 'cover' ? fillRaw : 'cover';
     const focus = safePosition(this.getAttribute('position') || '50% 50%');
@@ -80,7 +79,6 @@ export class VkImg extends VkElement {
  * 只有 w/h/x/y 需要 JS：它们是任意数值，CSS 里写不出来。
  * 其余（tone/pad/radius/border/ring）全部走 CSS。
  *
- * ring 是 14.x 减法第一波并进来的"圈选"：一圈不占布局的描边（box-shadow），
  * 环色跟 tone；它只强调这一块，不改尺寸、不改位置。
  */
 export class VkBox extends VkElement {
@@ -213,7 +211,6 @@ function firstCharRect(el) {
  * 字号与色板全部读 vk-text 使用的同一套 token；不写 tone 时走 ink 墨阶。
  * 图标是可选的：写 icon 才出现图标槽，没写就没有空槽（不留幽灵节点）。
  *
- * 减法第一波：原 vk-caption 并进来。写 for 时它不再占正文布局，
  * 而是像 caption 一样贴在目标块上方（anchor="above"，默认）或下方，
  * 左边界对齐目标块的首字符——位置由目标决定，不靠作者摆像素。
  */
@@ -243,7 +240,6 @@ export class VkLabel extends VkElement {
     // 从"贴块"改回"块里"：把覆盖层的状态收干净。
     EDGES.delete(this);
     delete this.dataset.vkOverlay;
-    // for / anchor 在块里的标签上只是作者的写法镜像（不生效，但契约要能读到"改了"）。
     this.dataset.for = this.getAttribute('for') || '';
     this.dataset.side = this.getAttribute('side') || '';
     this.dataset.gap = String(numAttr(this, 'gap', { min: MIN_CAPTION_GAP, max: 240, fallback: CAPTION_GAP }));
@@ -261,7 +257,6 @@ export class VkLabel extends VkElement {
     const parts = [];
     if (Number.isFinite(index) && index > 0) {
       // total 写了就带上；index > total 是作者写错（构建期可另加提醒），
-      // 但不能静默吞掉 total——契约与读者都该看见"分母写的是什么"。
       parts.push(Number.isFinite(total) && total > 0 ? `工序 ${index}/${total}` : `工序 ${index}`);
     }
     if (name) parts.push(name);
@@ -381,7 +376,6 @@ export class VkText extends VkElement {
   }
 
   render() {
-    // 14.0：vk-stat 的"数值写法"搬到这里。排版（标签/单位放哪）归配方，
     // 而"52980 写成 52,980"是文本机制，跟着文字走。
     const format = this.getAttribute('format');
     if (format && format !== 'none') {
@@ -463,7 +457,6 @@ export class VkText extends VkElement {
     // fit-min 是硬地板：默认 40，容器再窄也不往下缩；放不下就报出来。
     const min = numAttr(this, 'fit-min', { min: 1, max: 400, fallback: 40 });
     const max = numAttr(this, 'fit-max', { min: 1, max: 400, fallback: 240 });
-    // 契约读这两个边界（尺寸是运行期算的，不能只看声明）。
     this.dataset.fitMin = String(min);
     this.dataset.fitMax = String(max);
     const measure = () => {
@@ -513,7 +506,6 @@ export class VkInline extends VkElement {
   render() {
     const variant = this.getAttribute('variant') || 'code';
     // 键位：`Ctrl + C` 写成两枚键帽。它和行内代码是同一件事（行内小件），
-    // 只是长相不同——14.0 把 vk-keys 并进这里，少一个标签。
     if (variant === 'keys') {
       const raw = (this.textContent || '').replace(/\s+/g, ' ').trim();
       if (raw && !this._keysDone) {

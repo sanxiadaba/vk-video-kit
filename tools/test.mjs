@@ -87,36 +87,49 @@ try {
 
 /* ------------------------------------------------------------ 自检 / 回归 */
 if (full) {
-  console.log('\naudit');
+  const tags = TAG_NAMES;
+  const shotArgs = ['bin/vk.mjs', 'shot'];
+  for (const tag of tags) shotArgs.push(`tests/pages/${tag}.html`);
+  shotArgs.push('--out-dir', 'out/golden', '--width', '640', '--json');
+
+  let report = [];
   try {
-    execFileSync(process.execPath, ['bin/vk.mjs', 'check', 'tests/pages'], { stdio: 'pipe' });
-    ok(true, '30 页自检干净');
+    report = JSON.parse(execFileSync(process.execPath, shotArgs, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
   } catch (e) {
-    ok(false, '自检有 error');
-    console.error(e.stdout?.toString() || e.message);
+    try {
+      report = JSON.parse(e.stdout);
+    } catch {
+      ok(false, '批量截图失败');
+      console.error(e.stdout || e.message);
+    }
   }
+
+  console.log('\naudit');
+  const dirty = report.filter((r) => r.errors.length || r.issues.length || r.special.length);
+  for (const r of dirty) {
+    ok(false, `${path.basename(r.page)} 有 error`);
+    for (const x of [...r.errors, ...r.issues, ...r.special]) console.error(`    · ${x.what || x.type || x}`);
+  }
+  ok(report.length === tags.length && !dirty.length, `30 页自检干净（${report.length} 页）`);
 
   console.log('\ngolden');
   const { PNG } = await import('pngjs');
   const dir = 'tests/golden';
   fs.mkdirSync(dir, { recursive: true });
   let diff = 0;
-  for (const tag of TAG_NAMES) {
-    const shot = path.join('out', 'golden', `${tag}.png`);
-    fs.mkdirSync(path.dirname(shot), { recursive: true });
-    try {
-      execFileSync(process.execPath, ['bin/vk.mjs', 'shot', `tests/pages/${tag}.html`, '--out', shot, '--width', '640'], { stdio: 'pipe' });
-    } catch {
-      ok(false, `${tag} 截图失败`);
+  for (const r of report) {
+    const tag = path.basename(r.page, '.html');
+    if (!r.png) {
+      ok(false, `${tag} 没有出图`);
       continue;
     }
     const base = path.join(dir, `${tag}.png`);
     if (update || !fs.existsSync(base)) {
-      fs.copyFileSync(shot, base);
+      fs.copyFileSync(r.png, base);
       continue;
     }
     const a = PNG.sync.read(fs.readFileSync(base));
-    const b = PNG.sync.read(fs.readFileSync(shot));
+    const b = PNG.sync.read(fs.readFileSync(r.png));
     if (a.width !== b.width || a.height !== b.height) {
       ok(false, `${tag} 尺寸变了 ${a.width}×${a.height} → ${b.width}×${b.height}`);
       continue;

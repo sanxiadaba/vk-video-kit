@@ -8,7 +8,7 @@ import { markTerms, wrapCharRange } from './code-utils.mjs';
 import { hasColumn } from '../shared/vocab.mjs';
 import { win, fileHead } from './window.mjs';
 
-/** 表面：paper 是默认（旧页逐像素不变）；dark / inset 是显式选择。 */
+/** 表面：paper 是默认；dark / inset 是显式选择。 */
 const SURFACES = new Set(['dark', 'inset']);
 const surfaceOf = (el) => {
   const v = el.getAttribute('surface');
@@ -92,7 +92,6 @@ export class VkCode extends VkElement {
   /**
    * 长行溢出：同步量一次，不靠 rAF。
    *
-   * 以前放在 requestAnimationFrame 里，离屏 / 后台标签页不跑 rAF，右缘渐隐就永远不出现，
    * 画面看起来像"这行完整"。这里直接读 scrollWidth / clientWidth：读一次强制布局，
    * 但只在渲染时和尺寸变化时各一次，成本可控。
    */
@@ -127,8 +126,6 @@ export class VkCode extends VkElement {
     const file = this.getAttribute('file') || (srcPath ? srcPath.split(/[\\/]/).pop() : '') || '源码';
     const chrome = this.getAttribute('chrome') || 'min';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
-    // 列开关：columns="numbers" / "none"（旧名 numbers 是别名）。
-    // data-numbers 是规范化镜像：CSS 用它切行号列（不靠已改名的旧属性）。
     const showNums = hasColumn(this, 'vk-code', 'numbers');
     this.dataset.numbers = showNums ? 'all' : 'none';
     const marks = (this.getAttribute('mark') || '').split(',').map((s) => s.trim()).filter(Boolean);
@@ -175,7 +172,6 @@ export class VkCode extends VkElement {
     }
     const digits = String(Math.max(startNo + lines.length - 1, 1)).length;
     this.style.setProperty('--vk-digits', String(digits));
-    // data-line / 锚点 / 左边打印的数字都只有一个基准：源文件行号（旧 numbering 已退役）。
     const noOf = (n) => startNo + n - 1;
     const gutterOf = noOf;
 
@@ -252,7 +248,6 @@ export class VkCode extends VkElement {
 
 /*
  * 命令行的词法在 src/shared/shell.mjs：构建期（src/highlight.mjs）与运行期
- * 都 import 同一份，这里只负责把 token 摆成一行。以前这里有一份 split(/\s+/)
  * 的猜法——命令名一色、其余全灰；两份实现就是那样分叉出来的。
  */
 
@@ -319,7 +314,6 @@ export class VkTerm extends VkElement {
     const headLabel = title || srcName || '终端';
     const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
 
-    // 声明写在宿主上，契约与 director 都读得见；静态像素不变。
     this.dataset.lang = lang;
     this.dataset.reveal = reveal;
 
@@ -335,7 +329,6 @@ export class VkTerm extends VkElement {
       built.lines.length === lines.length;
     const rows = lines.map((line, i) => (usable ? built.lines[i] : lexShellLine(line, { lang, prompts, marks })));
     // 诊断/测试用：这一块到底用的是构建期 token，还是运行时重切。
-    // data-vk-* 是运行时内部标记，不进契约快照。
     if (usable) this.dataset.vkTermUsed = '1';
     else delete this.dataset.vkTermUsed;
 

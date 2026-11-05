@@ -262,7 +262,6 @@ vk-text {
 }
 
 /* 四档主对比：display / headline / body / caption。
-   旧名（title / subhead / label / data）与四档共用同一条规则——名字只是别名，
    外观不允许分叉；hero / mega 是补充档，只给"一个数字 / 一个词当家"。 */
 vk-text[size='display'],
 vk-text[size='display']    { font-size: var(--vk-t-display); line-height: var(--vk-lh-display); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-display); }
@@ -295,7 +294,6 @@ vk-text[ink='tertiary'] { color: var(--vk-ink-3); }
 vk-text[ink='muted'] { color: var(--vk-ink-4); }
 
 /* 语义色：与 vk-text 同一套词表，用的是同一组语义 token。
-   不写 tone 时这里一条都不命中——墨阶行为逐像素不变。
    文字用「文字档」（--vk-*-ink，≥7:1）；底/线/图标才用原色。 */
 vk-text[tone='info'] { --vk-text-tone: var(--vk-info-ink); }
 vk-text[tone='focus'] { --vk-text-tone: var(--vk-focus-ink); }
@@ -318,8 +316,6 @@ vk-text[tone][data-strength='ghost'] {
 vk-text[align='center'] { text-align: center; margin-inline: auto; }
 vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
 
-/* 散文默认按字号取行宽；作者可以用 measure 覆盖。
-   新名与旧名都给：measure 写的是"按哪一档的行宽"，不是第二个字号。 */
 vk-text { max-width: var(--vk-measure-body); }
 vk-text[measure='caption'],
 vk-text[measure='caption'] { max-width: var(--vk-measure-caption); }
@@ -650,8 +646,6 @@ vk-layer[surface='accent'] vk-text {
   color: inherit;
 }
 
-/* vk-panel 的铺满：cover 同时吃满宽高；contain 只吃满宽，高按内容。
-   空值 / 不写仍是旧的布尔 fill（align-self: stretch），旧页不变。 */
 vk-panel[fill='cover'] {
   display: flex;
   flex-direction: column;

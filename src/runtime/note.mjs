@@ -1,23 +1,12 @@
 /**
- * L4 注解原语 —— vk-note：边注 / 气泡 / 编号图例。
+ * vk-note：边注 / 气泡 / 编号图例。只画覆盖层，不改布局、不占焦点。
  *
- * 高级感的注解不是气泡。气泡是"画在内容上的一张纸"，边注是"排进版面的一句话"：
+ *   variant="margin"  一条 1px 细线从目标引出，文字落在栏间空白，首行与目标基线对齐；
+ *                     side="left|right|auto" 选边，leader="dot" 在目标端加圆点。
+ *   variant="bubble"  复用 vk-annotate 的 note 形态（泡 + 引线 + 自动避让）。
+ *   variant="legend"  目标角上一枚编号点，页角一张编号 + 说明的图例表。
  *
- *   kind="margin"  一条 1px 细线从目标引出，文字落在栏间空白里，
- *                  第一行与目标正文的基线对齐（不是"放在旁边差不多高"）；
- *                  side 自动选有空间的一侧，leader="dot" 在目标端加一枚小圆点。
- *   kind="bubble"  泡 + 引线（减法第一波：原 vk-pin 并到这里）。
- *                  同一套 .vk-pin-bd / .vk-pin-t 类名与几何，属性名照旧：
- *                  w / n / tone / emphasis / size / leader / gap-px / x / y。
- *   kind="legend"  目标角上一枚编号点（1 / 2 / 3），页角一张编号 + 说明的图例表。
- *
- * 两条硬规则写在 CSS 与几何里，作者改不了：
- *   · margin / legend 的引线 1px、没有箭头（箭头只属于 vk-annotate mode="arrow"）；
- *     bubble 则复用 vk-annotate 的 note 形态（泡 + 引线 + 自动避让）。
- *   · 它只画覆盖层：不改布局、不占焦点名额（和 vk-label 一样是辅助信息）。
- *
- * 隐藏的镜头 / 模板没有盒子时直接不画；目标找不到时运行期只警告一次，
- * 真正的拦截在构建期（src/highlight.mjs）。
+ * margin / legend 的引线 1px、没有箭头；箭头只属于 vk-annotate mode="arrow"。
  */
 import { VK, EDGES, VkElement, define, numAttr, resolveAnchor } from './base.mjs';
 import { visualToLocal } from './geometry.mjs';
@@ -46,7 +35,7 @@ function hostOf(el) {
   return host;
 }
 
-/** 图例落在页面 120 版心里；画布/标本台里退到 24 的内距。 */
+/** 图例落在 120 版心里；画布里退到 24 的内距。 */
 function marginOf(host) {
   // 只有"纸"本身是 120 版心；画布挂在纸里面，但它的坐标是画布自己的。
   if (!host.matches?.('.vk-page')) return 24;
@@ -169,7 +158,7 @@ export class VkNote extends VkAnnotate {
     return w;
   }
 
-  /** 状态镜像：两种形态共用一套字段，CSS、契约与旧测试都读它。 */
+  /** 状态镜像：两种形态共用一套字段。 */
   _mirror(cfg, kind) {
     const d = this.dataset;
     const attr = (name, fallback) => {
@@ -238,7 +227,6 @@ export class VkNote extends VkAnnotate {
     const side = this.getAttribute('side') || 'auto';
     this.dataset.variant = kind;
     // 宿主上的 data-side / data-leader / data-place 是"作者写法的镜像"：
-    // 实际落点由几何算，契约只断言请求值真的被读到。
     this.dataset.side = side;
     this.dataset.leader = leader;
     this.dataset.place = this._place();
@@ -382,7 +370,6 @@ export class VkNote extends VkAnnotate {
     b.cx = b.x + b.w / 2;
     b.cy = b.y + b.h / 2;
 
-    // 宽度先落、高度后量。反过来（旧实现）量到的还是上一帧的一行高，
     // 纵向 clamp 按错的高度算，多行边注就会被放到画布外面去。
     const want = numAttr(this, 'w', { min: MIN_W, max: 600, fallback: DEFAULT_W });
     const gap = numAttr(this, 'gap', { min: 0, max: 240, fallback: GAP });

@@ -160,7 +160,7 @@ node bin/vk.mjs shot pages/a.html  # 出图 + 同一份自检
 node bin/vk.mjs shot pages/a.html --phone   # 780 宽，按手机尺度看
 node bin/vk.mjs shot pages/a.html --width 640 --out out/a.png
 node bin/vk.mjs doc vk-code        # 属性 / 取值 / 默认值
-node bin/vk.mjs brief              # 30 个标签的契约摘要
+node bin/vk.mjs brief              # 30 个标签的属性清单
 ```
 
 **构建只写 `out/`，不改源文件。** 源里永远只有你写的内容。

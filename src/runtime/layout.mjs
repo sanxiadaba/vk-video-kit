@@ -131,7 +131,6 @@ export class VkStack extends VkElement {
     const bounded = this.hasAttribute('grow') || this.hasAttribute('stretch') || this.hasAttribute('h');
     const usable = bounded && list.length > 0 && list.every((n) => Number.isFinite(n) && n > 0);
 
-    // 先撤掉上一次的分配：属性被删掉 / 改成非法值时页面要回到等距。
     for (const el of this.children) {
       if (!el.hasAttribute('data-vk-weight')) continue;
       el.removeAttribute('data-vk-weight');

@@ -15,7 +15,7 @@
     "gallery": "node tools/gallery.mjs",
     "check": "node bin/vk.mjs check pages",
     "shot": "node bin/vk.mjs shot",
-    "test": "node tools/test.mjs",
+    "test": "npm run build && node tools/test.mjs",
     "test:fast": "node tools/test.mjs --fast",
     "budget": "node tools/budget.mjs"
   },

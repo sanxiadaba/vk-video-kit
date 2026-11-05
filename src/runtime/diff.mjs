@@ -71,7 +71,6 @@ export class VkDiff extends VkElement {
     const source = this._raw ? sliceLines(full, this.getAttribute('lines')) : full;
     const file = this.getAttribute('file') || '';
     const chrome = this.getAttribute('chrome') || 'min';
-    // 列开关：行号 / 摘要都写 columns（旧名 numbers / summary 是别名）。
     const showNums = hasColumn(this, 'vk-diff', 'numbers');
     const nosum = !hasColumn(this, 'vk-diff', 'summary');
     const mode = (this.getAttribute('variant') || 'unified') === 'split' ? 'split' : 'unified';
@@ -109,7 +108,6 @@ export class VkDiff extends VkElement {
       const ln = showNums ? `<span class="vk-ln" data-vk-part="ln" aria-hidden="true">${n}</span>` : '';
       return `<div class="vk-dline is-${kind}" data-vk-part="line" data-row="${row}" data-line="${n}" data-side="${kind}"><span class="vk-sr">${sr}</span><span class="vk-dsign" aria-hidden="true">${sign}</span>${ln}<span class="vk-dsrc">${html || ' '}</span></div>`;
     };
-    // 统一视图：旧/新双行号；空号保留列位，读改前改后不会错位。
     const ucell = ({ kind, oldN, newN, html, row }) => {
       const sign = kind === 'del' ? '−' : kind === 'add' ? '+' : '';
       const sr = kind === 'del' ? '删除' : kind === 'add' ? '新增' : '';

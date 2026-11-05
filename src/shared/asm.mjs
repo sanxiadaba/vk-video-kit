@@ -18,7 +18,6 @@ const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
 /**
  * objdump 自己打印的表头 / 诊断，不是作者写的指令。
  *
- * 它们和指令混在同一个文本流里，以前会被当成 insn 画出来：
  * `hello.exe: file format pei-i386`、`Disassembly of section .text:`、
  * `objdump: warning: ...` 甚至会把 `objdump` 拆成助记符。
  * 这些行必须整行跳过，但跳过不能静默：parseAsm 返回 skipped 计数，

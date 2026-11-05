@@ -1,14 +1,5 @@
-/* ============================================================================
-   runtime · base
-   ----------------------------------------------------------------------------
-   唯一真源。dist/vk.js、dist/vk.esm.js 由 tools/build.mjs 生成，不要改产物。
-
-   四条不可动摇的约定：
-   · 组件把作者写的纯文本变成拟真界面，作者只写内容
-   · 动画是叠加层，CSS 静止态就是最终帧
-   · 时间轴只依赖时间，可任意 seek
-   · vk.ready() 之后一切都就位：字体、图片、布局、连线
-   ========================================================================== */
+/* runtime · base
+   组件基类：属性 → 渲染 → 布局。没有时间维度，没有别名折叠。 */
 
 import { TAGS, TAG_NAMES, ALL_TAG_NAMES, observedOf } from '../schema.mjs';
 import { MASS, SIZE_TIERS, parseSpace, spaceCss, parseCounter } from '../shared/vocab.mjs';
@@ -319,7 +310,6 @@ export function fetchSource(el) {
  *
  * 之所以由 JS 写而不再用 `[pad='md lg']` 这类选择器：两个轴的组合是 8×8，
  * CSS 要么写 64 条规则，要么没法表达。这里只写四条 longhand / 两条 gap。
- * `spaceCss` 返回的是 `var(--vk-sN)`，与原来的 CSS 令牌引用同源，逐像素不变。
  */
 export function applySpacing(el) {
   const tag = el.tagName?.toLowerCase();
@@ -364,7 +354,6 @@ export function applyMeasure(el) {
     el.style.maxWidth = 'none';
     return;
   }
-  // 旧写法（label / body / subhead / title / hero）保留：它们的意思是「按那一档的行宽」，
   // 直接引用 token，行为和 12.x 一致。新名（caption / headline / display）是同一件事。
   if (['caption', 'label', 'body', 'headline', 'subhead', 'display', 'title', 'hero'].includes(v)) {
     el.style.maxWidth = `var(--vk-measure-${v})`;
@@ -385,7 +374,6 @@ const CONTENT_SIZE_TIERS = new Set(SIZE_TIERS);
  *
  * 只写一个宿主变量 --vk-cs；行高、行号、内距、语法色块都在 CSS 里从它派生，
  * 所以不会出现"字放大了、行号还是 48"这种半缩放。不写 size 时不动变量，
- * 宿主 CSS 的默认值就是今天的样子（逐像素不变）。
  */
 export function applyContentSize(el) {
   const raw = (el.getAttribute?.('size') || '').trim();
@@ -403,7 +391,6 @@ export function applyContentSize(el) {
   }
   if (raw) el.dataset.contentSize = raw;
   else delete el.dataset.contentSize;
-  // 契约读 data-fit；它同时也是"这一块靠运行期铺满"的声明。
   if (fit) el.dataset.fit = 'width';
   else delete el.dataset.fit;
   if (fit) el.dataset.vkPlace = '';
@@ -418,7 +405,6 @@ export function applyContentSize(el) {
  *
  * 做法和 vk-text 的 fit 同一个思路（量自然宽 → 按比例改字号），只是量的是
  * 整块内容：临时把内容根设成 max-content，量完还原。行高/内距也随字号走，
- * 所以第一次按比例算就能收敛，再做一次只吸收 subpixel 误差。
  */
 export function fitContent(el, rootSel) {
   if (!HAS_DOM || !el.isConnected || el.getAttribute?.('fit') !== 'width') return;
@@ -462,7 +448,6 @@ export function fitContent(el, rootSel) {
  * 出血：通用属性 bleed="x|y|all|none"。
  *
  * 真正的几何在 CSS 里（负 margin + 100% + 2×版心边距），这里只把作者写的值
- * 镜像到 data-bleed：运行时改属性也能立刻生效，契约也能读到"改了就变"。
  */
 export function applyBleed(el) {
   const raw = (el.getAttribute?.('bleed') || '').trim();
@@ -735,7 +720,6 @@ export class VkElement extends Base {
  * 布局队列。整个 window 只有一份：
  * `document.write` / `setContent` 这类场景会在同一个 window 上重新执行本 bundle，
  * 自定义元素注册表仍在（注册表属于 window），元素用的还是上一份的类——
- * 这时如果换一个新的 Set，layout() 就会看不到那些元素。复用旧的队列。
  */
 export const PLACE = VK._place instanceof Set ? VK._place : new Set();
 export const EDGES = VK._edges instanceof Set ? VK._edges : new Set();
@@ -908,10 +892,5 @@ export function fillSlot(host, nodes) {
 }
 
 if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
-
-
-
-
-
 
 

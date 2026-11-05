@@ -244,8 +244,6 @@ vk-annotate .vk-edge-label[data-dir='v'] { transform: translate(var(--vk-s2), -5
 vk-annotate .vk-edge-label[data-dir='v-left'] { transform: translate(calc(-100% - var(--vk-s2)), -50%); }
 vk-annotate[data-size='caption'] .vk-edge-label { font-size: var(--vk-t-label); }
 vk-annotate[data-size='headline'] .vk-edge-label { font-size: var(--vk-t-subhead); }
-/* arrow-label 是「中轴挂一个词」的新写法：走 tag 档（caption × 0.75 = 36），
-   字距 .08em；旧 label 仍是 body 档，旧页不变。 */
 vk-annotate .vk-edge-label[data-arrow-label] {
   font-size: var(--vk-t-tag, 36px);
   letter-spacing: 0.08em;

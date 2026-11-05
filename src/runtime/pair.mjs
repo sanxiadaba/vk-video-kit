@@ -85,7 +85,6 @@ export class VkPair extends VkElement {
     this.dataset.orientation = orientation;
     this.dataset.axis = axis;
     this.dataset.symbol = symbol;
-    // 分色是「面」的事：不写就删掉 data-tone，CSS 不加底也不加框，旧页逐像素不变。
     if (toneA) this._left.dataset.tone = toneA;
     else delete this._left.dataset.tone;
     if (toneB) this._right.dataset.tone = toneB;

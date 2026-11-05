@@ -62,7 +62,7 @@ node bin/vk.mjs check pages/             # 多页共用一个浏览器
 node bin/vk.mjs shot pages/a.html --phone
 node bin/vk.mjs shot pages/a.html --width 640 --out out/a.png
 node bin/vk.mjs doc vk-code              # 属性 / 取值 / 默认值
-node bin/vk.mjs brief                    # 契约摘要（--json 给机器）
+node bin/vk.mjs brief                    # 属性清单（--json 给机器）
 node bin/vk.mjs tags                     # 30 个标签
 node bin/vk.mjs icons arrow              # 搜 Lucide 图标名
 ```
@@ -73,17 +73,23 @@ node bin/vk.mjs icons arrow              # 搜 Lucide 图标名
 ## 测试与预算
 
 ```bash
-npm test             # schema + 30 张样张构建（不启浏览器）
-npm test -- --full   # + 30 页自检 + 640 宽截图回归
+npm test             # 构建 + schema + 30 张样张（不启浏览器）
+npm test -- --full   # + 30 页自检 + 640 宽截图回归（约 9s）
 npm run budget       # 标签 / 属性 / 行数预算，超了直接红
 ```
 
-样张在 `tests/pages/`，只用于构建与回归，不是模板，也不进库。
+样张在 `tests/pages/`，由 `npm test` 生成，只用于构建与回归，不是模板。
+`vk build` 有内容哈希缓存，只重编改过的页；`vk check` 与 `vk shot` 一组页共用一个浏览器和字体缓存。
+
+## 画廊
+
+`npm run gallery` 生成 `out/index.html` + 30 张 640 宽截图；
+推 `main` 后由 `.github/workflows/pages.yml` 发布到 GitHub Pages。
 
 ## 结构
 
 ```
-src/schema.mjs      公开 API 的唯一真值（标签 / 属性 / 取值 / 默认值 / 子节点 / 状态）
+src/schema.mjs      公开 API 的唯一来源（标签 / 属性 / 取值 / 默认值 / 子节点 / 状态）
 src/runtime/        组件实现
 src/*.css           样式层（tokens → elements → layout → components → page → relations）
 cli/                build / check / shot

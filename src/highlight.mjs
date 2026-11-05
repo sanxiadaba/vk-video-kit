@@ -1,15 +1,6 @@
 /**
- * vk 高亮核心 —— CLI 与 dev server 都调这里。
- *
- * 为什么不是正则：
- * HTML 不是正则能改的东西。`<vk-code>` 可能出现在注释、模板、属性值里，
- * 而 `<` / 引号 / 自闭合标签的边界正则永远差一条。这里用 parse5 的
- * sourceCodeLocation：只替换元素内部的字节区间，作者的 HTML 一个字节都不重排。
- *
- * 为什么源码可以从文件来：
- * `<vk-code lang="c" src="code/hello.c">` 让 .c 文件成为单一真源：
- * 不用把 `#include <stdio.h>` 写成 `&lt;stdio.h&gt;`，也能用编辑器写、用 gcc 编译。
- * 构建期把源码内联进 HTML，产物仍然是自包含的。
+ * 构建期预编译：用 parse5 的 sourceCodeLocation 只替换元素内部区间，
+ * 作者写的 HTML 一个字节都不重排。代码 / 公式 / 树 / 字节 / 汇编 / 图标都在这层编译。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -201,7 +192,6 @@ const hasAttr = (node, name) => !!(node.attrs || []).find((x) => x.name === name
 function walk(node, fn) {
   fn(node);
   if (node.childNodes) for (const c of node.childNodes) walk(c, fn);
-  // <template> 的内容不在 childNodes 里；标本页的四个非默认镜头靠它做惰性装载。
   if (node.content) walk(node.content, fn);
 }
 
@@ -210,14 +200,8 @@ const GLOBAL_ATTRS = new Set([
   'x', 'y', 'lang', 'dir', 'hidden', 'aria-hidden', 'aria-label', 'aria-labelledby', 'bleed',
 ]);
 
-/** 严格模式：像素摆位与后门直接报错。默认开——新帧只能用意图表达布局。 */
-let STRICT = true;
-export function setStrict(v) {
-  STRICT = !!v;
-}
-
 /** 具名窗体的组件：它们自己带窗头，嵌进 vk-panel chrome="dots" 时必须 chrome="none"。 */
-const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes']);
+const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-tree', 'vk-bytes']);
 /** 每个组件支持的内部锚点（与运行时 resolveTarget 同一份约定）。 */
 const ANCHORS = {
   'vk-code': ['line', 'char'],
@@ -253,7 +237,7 @@ const ancestors = (node) => {
   return out;
 };
 
-/** 标本页用 <template> 惰性装镜头：同一段场景会重复多次，页内 id 允许重复。 */
+/** 用 <template> 惰性装镜头：同一段场景会重复多次，页内 id 允许重复。 */
 const walkTpl = (node, fn, inTpl = false) => {
   fn(node, inTpl);
   if (node.childNodes) for (const c of node.childNodes) walkTpl(c, fn, inTpl);
@@ -300,7 +284,6 @@ function anchorCapacity(node, file) {
       .map((x) => (Number.isFinite(x) && x > 0 ? x : 1));
     const total = spans.reduce((a, b) => a + b, 0);
     // @cell 指字段；@byte 指字节，只有开了字节尺（columns 的 offsets / ruler，
-    // 或旧的 offsets / ruler 别名，或 direction=rtl）才存在。
     const byteMode =
       columnOnOf(node, 'offsets') ||
       columnOnOf(node, 'ruler') ||
@@ -363,7 +346,6 @@ function validateRefs(doc, file, errors) {
     const tag = node.tagName;
     if (!tag || inTpl) return;
 
-    // 1) 未知的 vk- 标签：以前被静默忽略。
     if (tag.startsWith('vk-') && !TAGS[tag]) {
       errors.push(`${file}:${lineOf(node)} 未知标签 <${tag}>；可用：${TAG_NAMES.join(', ')}`);
       return;
@@ -547,7 +529,7 @@ function validateAuthorHtml(doc, file, html = '') {
   const errors = [];
   const warnings = [];
   /** 新规矩：严格模式下是错误，默认只提醒——旧页要慢慢迁（清单见 docs/layout-plan.md）。 */
-  const strictness = (msg) => (STRICT ? errors : warnings).push(msg);
+  const strictness = (msg) => errors.push(msg);
   const lineOf = (node) => node.sourceCodeLocation?.startLine || 1;
   walk(doc, (node) => {
     const tag = node.tagName;
@@ -556,25 +538,24 @@ function validateAuthorHtml(doc, file, html = '') {
       const allowed = CHILD_ATTRS[parent];
       if (allowed) {
         if (tag === 'i' && CHILDREN[parent]?.item === 'li') {
-          (STRICT ? errors : warnings).push(
+          errors.push(
             `${file}:${lineOf(node)} <${parent}> 的条目还是 <i>；v12 统一成 <li>（改标签名即可）`
           );
         }
         for (const { name, value: raw } of node.attrs || []) {
           if (name.startsWith('data-') || name.startsWith('aria-') || GLOBAL_ATTRS.has(name)) continue;
           if (name === 'bad') {
-            (STRICT ? errors : warnings).push(`${file}:${lineOf(node)} <${parent}> 的 bad 已改名为 state="err"`);
+            errors.push(`${file}:${lineOf(node)} <${parent}> 的 bad 已改名为 state="err"`);
             continue;
           }
           if (name === 'mark') {
-            (STRICT ? errors : warnings).push(`${file}:${lineOf(node)} <${parent}> 的 mark 已改名为 state="mark"`);
+            errors.push(`${file}:${lineOf(node)} <${parent}> 的 mark 已改名为 state="mark"`);
             continue;
           }
           if (name === 'state') {
             if (!STATE_VALUES.includes(raw)) {
               errors.push(`${file}:${lineOf(node)} <${parent}> 的 state="${raw}" 不在词表里；可用：${STATE_VALUES.join(' / ')}`);
             }
-            // 13.0：state 只留 ok / warn / err；「现在讲这里」是姿态，不是状态。
             if (raw === 'current') {
               warnings.push(
                 `${file}:${lineOf(node)} <${parent}> 的子节点 state="current" 已退役，改写成 <${tag} act="focus">（一版别名仍生效）`
@@ -634,7 +615,6 @@ function validateAuthorHtml(doc, file, html = '') {
       }
     }
 
-    // G1：注解原语的两条构建期契约 —— 目标必须能在构建期解析到。
     // 运行期找不到目标只会"安静地不画"，那是最难查的一类错；宁可在构建期红。
     if (tag === 'vk-note') {
       const rawKind = (attrs.get('variant') || attrs.get('kind') || 'margin').trim();
@@ -694,7 +674,6 @@ function validateAuthorHtml(doc, file, html = '') {
     }
 
 
-    // 子节点契约：条目只能 <li>；table 必须包 <table>；源码件只能 src / 内联块。
     const model = CHILDREN[tag];
     if (model) {
       const elementChildren = (node.childNodes || []).filter((c) => c.tagName);
@@ -733,7 +712,7 @@ function validateAuthorHtml(doc, file, html = '') {
         if (!['tr', 'td', 'th'].includes(n.tagName)) return;
         const rowAttrs = n.attrs || [];
         if (rowAttrs.some((a) => a.name === 'data-em')) {
-          (STRICT ? errors : warnings).push(
+          errors.push(
             `${file}:${lineOf(n)} <table> 的行标记 data-em 已改名为 state="mark"（列/格同）`
           );
         }
@@ -948,7 +927,6 @@ function validateAuthorHtml(doc, file, html = '') {
         continue;
       }
       if (spec.type === 'tone') {
-        // 全库一套六值：大小写不敏感；旧写法（accent / danger …）给迁移提示。
         const tokens = String(raw).split(',');
         const list = tokens.length > 1;
         if (list && !spec.list) {
@@ -1014,7 +992,6 @@ function validateAuthorHtml(doc, file, html = '') {
         );
         continue;
       }
-      // 15.2 的新词表：columns / space / arrow / fence / counter。
       if (spec.type === 'columns') {
         const allowed = COLUMNS[tag]?.all || [];
         for (const piece of String(raw).split(',')) {
@@ -1217,7 +1194,6 @@ function validateAuthorHtml(doc, file, html = '') {
  * 多余的闭合标签 —— 只有肉眼能看出来的那类错。
  *
  * demo 里出现过两个孤立的 </vk-window>：浏览器会默默丢掉它们，页面照常渲染，
- * 所以 vk check、结构断言、指纹全都放行。但它是错的：删掉开标签时忘了删闭标签，
  * 下一次改动就会以为那里真的有个窗。
  *
  * 只查"闭合标签找不到对应的开标签"。不查未闭合的开标签——那是浏览器自己的容错，
@@ -1428,8 +1404,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     );
   }
   if (warnings.length) {
-    // 旧写法只提示、不拦构建：逐条列出（最多 6 条），让人能照着改；
-    // 运行期还会把旧名折成新名，所以旧页不会坏。
     for (const w of warnings.slice(0, 6)) console.warn(`[vk] ${w}`);
     if (warnings.length > 6) {
       console.warn(`[vk] ${file}：还有 ${warnings.length - 6} 处旧写法（运行期会折成新名；不拦构建）`);

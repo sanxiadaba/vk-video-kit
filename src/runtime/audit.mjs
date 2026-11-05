@@ -218,7 +218,6 @@ export function auditPage(root = document, options = {}) {
 
   // 覆盖层压住正文：批注泡这类"画在别人身上"的东西，压住字就是错。
   // 13.x 把 pin/ring/edge 当"显式覆盖"整体排除了，于是第 10 站的批注泡盖住标题，
-  // 门禁仍然说"干净"——这条就是补那个盲区。只查真正有底的泡，线条类不算。
   for (const pin of stage.querySelectorAll('vk-note[variant="bubble"], vk-annotate[data-mode="note"]')) {
     const bubble = pin.querySelector('.vk-pin-bd') || pin;
     const pr = bubble.getBoundingClientRect();
@@ -241,7 +240,6 @@ export function auditPage(root = document, options = {}) {
   // 空帧：一个组件都没渲染出来、或整页只剩背景时，上面所有检查都会沉默——
   // 因为没有任何东西可以不合格。这一条把"没画面"从"没问题"里分出来。
   //
-  // 例外是"故意空"的页：标本台（.vk-stage）、文献页/图版（data-allow-void）。
   // 它们本来就只有一个元件或大片留白，拿空帧去拦它是错的。
   const voidExempt = stage.classList?.contains('vk-stage') || stage.hasAttribute?.('data-allow-void') || stage.closest?.('[data-allow-void]');
   if (!voidExempt) {
@@ -456,7 +454,6 @@ export function metrics(root = document) {
     const safe = safeBox(stage);
     const sr = safe.getBoundingClientRect();
     const kids = [...(safe.children || [])].filter((el) => el.getBoundingClientRect().height > 0);
-    // 内容底 = 最后一个可见块；14.0 没有 vk-title 了，标题就是普通的块。
     let first = kids.find((el) => !el.matches?.('[data-vk-overlay]')) || kids[0];
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：annotate 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
@@ -561,7 +558,6 @@ export function focusRegions(stage) {
 }
 
 export function installAudit(VK) {
-  // 阈值表也给出去：门禁在浏览器里跑时读它，而不是各自抄一份数字。
   VK.limits = LIMITS;
   VK.auditPage = auditPage;
   VK.auditPages = auditPages;

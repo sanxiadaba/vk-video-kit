@@ -12,7 +12,6 @@ import { DOTS } from './window.mjs';
 
 /**
  * 操作数分色：寄存器 / 立即数 / 地址 / 注释 各自一色，用与 vk-term 同一张
- * token 表（src/shared/shell.mjs）。以前这里是一把正则把 %reg 与 $imm 涂两色，
  * 地址、注释、标点全是操作数的墨色——指令读起来还是一整块。
  */
 function operandHtml(text) {
@@ -90,7 +89,6 @@ export class VkAsm extends VkElement {
       .filter(Boolean);
     const showOrder = orderList.length > 0;
     let insn = 0;
-    // 屏障：fence="after:4,label:编译器屏障"（旧 fence-after / fence-label 是别名）。
     const fence = parseFence(this.getAttribute('fence'));
     const fenceAfter = fence.after;
     const fenceLabel = fence.label;
@@ -119,8 +117,6 @@ export class VkAsm extends VkElement {
       })
       .join('');
     // 列标题：columns 的 titles: 段；不写 = 默认名，titles:none 关掉整行。
-    // 以前 address-label / bytes-label / mnemonic-label / operands-label 四个名字并成 labels，
-    // 15.2 又把 labels 并进 columns —— 旧写法都是别名。
     const labelsOn = columnSpec.titles !== 'none';
     const labelParts = Array.isArray(columnSpec.titles) ? columnSpec.titles : [];
     const label = (col, fallback) => labelParts[col] || fallback;
@@ -146,7 +142,6 @@ export class VkAsm extends VkElement {
     /**
      * 列模板由「实际输出的列」推出来，不由 CSS 里的开关组合硬编码。
      * 地址列给 max-content：8 位 0x 地址在 40px 等宽下装不进 180px。
-     * 机器码列跟着字阶走（28px 字仍落在 500，旧页不变；56px 档给到 576），
      * 否则 7 字节指令会被折成两行，一整张清单瞬间高出一倍。
      */
     const gridCols = [

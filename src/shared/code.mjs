@@ -28,12 +28,6 @@ export function stripAnsi(text) {
   return String(text ?? '').replace(ANSI_RE, '');
 }
 
-/** 这段文本里有没有 ANSI 转义（剥前剥后不同就是有）。 */
-export function hasAnsi(text) {
-  const s = String(text ?? '');
-  return stripAnsi(s) !== s;
-}
-
 /** 去掉源码缩进带来的公共缩进；统一 CRLF。 */
 export function dedent(text) {
   let t = String(text).replace(/\r\n?/g, '\n');
@@ -89,7 +83,6 @@ export function isIndexList(value) {
 /**
  * "4,6-8" → Set{4,6,7,8}
  *
- * 上限不是性能优化，是安全边界：`highlight="1-100000000"` 以前会直接
  * 分配一亿个 Set 项，把页面卡死。超过 MAX_LINE 的范围直接截断。
  */
 export const MAX_LINE = 10000;
@@ -132,7 +125,6 @@ export function sliceLines(text, spec) {
 
 /**
  * git 的 index 表头只认 40/7 位十六进制对：`index 3f9a2b1..8c4d5e6 100644`。
- * 旧实现用 `^index ` 一刀切，于是正文里以 "index " 开头的一行（`index = 0`）
  * 会从画面上消失——diff 少一行，右下角却还写着"改了几行"。
  */
 const INDEX_HEADER = /^index [0-9a-f]{7,}\.\.[0-9a-f]{7,}(?:\s|$)/i;
@@ -150,7 +142,6 @@ const headerPath = (s) => {
  * 真实 git diff / 手写行段 → { sign, text }；hunk 起始行挂在第一条内容行上。
  *
  * 表头（`--- ` / `+++ ` / `index `）和正文共用同一批字符：
- * 删掉的一行如果本来以 `-- ` 开头，源码里就是 `--- ...`，和表头长得一模一样。
  * 所以表头只在**能证明它是表头**时跳过（diff --git 之后、或 ---/+++ 成对且像路径），
  * 其余一律当正文——宁可多显示一行，也不能让一行悄悄消失。
  */

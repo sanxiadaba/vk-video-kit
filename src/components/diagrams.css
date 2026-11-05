@@ -101,7 +101,7 @@ vk-asm { display: block; }
   white-space: nowrap;
 }
 .vk-asm-a { justify-self: end; }
-/* 机器码列放不下时的三档：默认 fail（由门禁报），wrap 换行，clip 渐隐。 */
+/* 机器码列放不下时的三档：默认 fail，wrap 换行，clip 渐隐。 */
 .vk-asm[data-long='wrap'] .vk-asm-b { white-space: normal; overflow-wrap: anywhere; line-height: 1.15; }
 .vk-asm[data-long='clip'] .vk-asm-b { overflow: hidden; text-overflow: ellipsis; }
 .vk-asm-m {

@@ -7,7 +7,7 @@
  *   vk shot <page>        build + check + 一张 1920×1080 PNG（--phone 出 780 宽）
  *   vk doc <tag>          某个标签的属性、取值、默认值
  *   vk tags               全部标签（--json）
- *   vk brief              30 行契约摘要（--json 给机器）
+ *   vk brief              30 行属性清单（--json 给机器）
  *   vk icons [query]      搜 Lucide 图标名
  */
 import fs from 'node:fs';
@@ -156,7 +156,7 @@ vk —— 把内容做成画面单元
   vk shot <page>       一张 1920×1080（--phone 出 780 宽）
   vk doc <tag>         看某个标签的属性、取值与默认值
   vk tags              列出 ${TAG_NAMES.length} 个标签（--json）
-  vk brief             契约摘要（--json）
+  vk brief             属性清单（--json）
   vk icons [query]     搜 Lucide 图标名（--json）
 
 入口文档：SPEC.md

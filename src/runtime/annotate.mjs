@@ -6,9 +6,6 @@
  *   <vk-annotate mode="note" note="bubble" for="#code@line:7">这里越界</vk-annotate>
  *   <vk-annotate mode="badge" for="#code@line:7" n="1"></vk-annotate>
  *
- * vk-edge 是箭头形态的独立入口：同一个类，`static legacy` 把 mode
- * 固定在 arrow / note / circle，读的仍然是旧词表（variant / stroke / arrow / cap…）。
- * 所以旧页面的 DOM、坐标、CSS 全部照旧；合并只发生在"谁在画"这一层。
  *
  * 隐藏的镜头没有盒子，直接不画；覆盖层只挂在包含块上，不改布局。
  */
@@ -112,14 +109,12 @@ function anchorsOf(el, host) {
 export class VkAnnotate extends VkElement {
   static watchSource = false;
   static frame = false;
-  // note 形态的槽：搬节点，不序列化 HTML（与旧 vk-pin 完全一致）。
   static slot = true;
   static slotHost = '.vk-pin-t';
   static renderedRoot = '.vk-edge-svg, .vk-ov-svg, .vk-pin-bd';
 
   connectedCallback() {
     super.connectedCallback?.();
-    // 画布靠这个标记把覆盖层排除在 x/y 摆位之外；旧标签也带一份，无副作用。
     this.dataset.vkOverlay = '';
     EDGES.add(this);
   }
@@ -131,7 +126,6 @@ export class VkAnnotate extends VkElement {
   }
 
   /** 连线的形状：新词 straight / ortho / curve；旧词 line 在别名的子类里折过来。
-   *  默认 curve：一条线的价值是"指过去"，不是画三个直角。折线是旧 vk-edge 的相貌，
    *  新标签要么直线、要么一条顺滑的弯，不再默认给人看"管道"。 */
   _shape() {
     const v = this.getAttribute('shape') || 'curve';
@@ -139,7 +133,6 @@ export class VkAnnotate extends VkElement {
   }
 
   _dashOn() {
-    // 枚举写作 dashed；历史写法（只有属性、没有值）也当虚线。
     const v = this.getAttribute('dash');
     return v === 'dashed' || v === '' ? v !== null : false;
   }
@@ -181,7 +174,7 @@ export class VkAnnotate extends VkElement {
     return this.getAttribute('tone') || (mode === 'circle' ? 'focus' : mode === 'arrow' ? 'neutral' : 'info');
   }
 
-  /** 状态镜像：四种形态共用一套规范化值，CSS 与契约都读它。 */
+  /** 状态镜像：四种形态共用一套规范化值。 */
   _syncState(mode) {
     if (this.constructor.legacy) return;
     const d = this.dataset;
@@ -194,10 +187,8 @@ export class VkAnnotate extends VkElement {
     d.note = this._noteForm(mode);
     d.size = this.getAttribute('size') || 'body';
     d.n = String(this._num());
-    // arrow 的缩放比例也镜像到宿主上：契约读它，不猜 CSS。
     if (mode === 'arrow') d.arrowScale = String(parseArrow(this.getAttribute('arrow')).scale ?? 0.12);
     else delete d.arrowScale;
-    // side 是 note 的显式落点；arrow 形态也把请求值镜像出来，契约能读到"改了就变"。
     const sideRaw = (this.getAttribute('side') || 'auto').trim();
     d.side = ['top', 'right', 'bottom', 'left'].includes(sideRaw) ? sideRaw : 'auto';
   }
@@ -288,7 +279,6 @@ export class VkAnnotate extends VkElement {
         size: arrowCfg.size != null ? Math.max(8, Math.min(64, arrowCfg.size)) : num('--vk-edge-tip', 18),
       },
       // arrow 的箭头按「所在容器高 × scale」缩放（夹 28–64），线宽 = 尺寸 × 0.1（≥2）。
-      // 旧标签 vk-edge 在自己的 _arrowConfig 里覆盖整套，不读这两个值，逐像素不动。
       scale: Number.isFinite(arrowCfg.scale) ? Math.min(0.6, Math.max(0.02, arrowCfg.scale)) : 0.12,
       scaled: true,
       gap: numAttr(this, 'gap', { min: 0, max: 240, fallback: num('--vk-edge-gap', 32) }),
@@ -309,7 +299,6 @@ export class VkAnnotate extends VkElement {
       this._svg = document.createElementNS(NS, 'svg');
       this._svg.setAttribute('class', 'vk-edge-svg');
       // 纸色"垫层"：先画一条更粗的白线，箭头就从任何底色上浮起来。
-      // 只有新标签有——旧 vk-edge 的逐像素不变是硬约定。
       if (!this.constructor.legacy) {
         this._halo = document.createElementNS(NS, 'path');
         this._halo.setAttribute('class', 'vk-edge-halo');
@@ -326,7 +315,6 @@ export class VkAnnotate extends VkElement {
       this._svg.append(...(this._halo ? [this._halo] : []), this._path, this._tip, this._tip2, this._cap);
       this.appendChild(this._svg);
     }
-    // 中轴词并进 arrow 的 label: 段；旧页的 label 仍然有效，新词优先。
     const arrowWord = parseArrow(this.getAttribute('arrow')).label;
     const label = arrowWord || this.getAttribute('label');
     if (label && !this._label) {
@@ -336,19 +324,16 @@ export class VkAnnotate extends VkElement {
     }
     if (this._label) {
       this._label.textContent = label || '';
-      // 新词走 tag 档（36 / .08em）；旧 label 保持原来的 body 档，旧页不变。
       // data-meta 让 36px 的词按「标注」判对比度，而不是按正文地板。
       const isArrowLabel = !!arrowWord;
       this._label.toggleAttribute('data-arrow-label', isArrowLabel);
       this._label.toggleAttribute('data-meta', isArrowLabel);
     }
     this._svg.dataset.head = this._head();
-    // 和旧 vk-edge 一样：画线交给 layout（EDGES），render 只准备外壳。
   }
 
   _drawArrow() {
     if (!this._svg) this._renderArrow();
-    // 每次重画先清空：端点被删掉时不能留下上一帧的线。
     this._path?.setAttribute('d', '');
     this._tip?.setAttribute('d', '');
     this._tip2?.setAttribute('d', '');
@@ -505,7 +490,6 @@ export class VkAnnotate extends VkElement {
       this._cap.style.display = 'none';
     }
 
-    // 线宽：新标签可以写 width；旧标签没有这个属性，CSS 令牌说了算。
     if (cfg.width != null) {
       this._path.style.strokeWidth = cfg.width + 'px';
       this._tip.style.strokeWidth = cfg.width + 'px';
@@ -694,7 +678,6 @@ export class VkAnnotate extends VkElement {
       gap: numAttr(this, 'gap', { min: 0, max: 240, fallback: 24 }),
       width: this._noteWidth(),
       z: numAttr(this, 'z', { min: 0, max: 99, fallback: 60 }),
-      // x/y 与旧 vk-pin 同语义：覆盖层坐标，给了就不再自动找位置。
       x: numAttr(this, 'x', { min: -4000, max: 4000, fallback: NaN }),
       y: numAttr(this, 'y', { min: -4000, max: 4000, fallback: NaN }),
       side,
@@ -816,7 +799,6 @@ export class VkAnnotate extends VkElement {
         bottom: anchor.y + anchor.h,
       };
       // 编号点钉在目标里：它指的就是"这一块"，坐标 = 目标左上角 + 内距。
-      // 写了 @side: / side= 的仍按指定侧放到外面（旧 vk-pin 的摆放不再改动）。
       pinned = cfg.form === 'badge' && !target.side && cfg.side === 'auto' && !Number.isFinite(cfg.x) && !Number.isFinite(cfg.y);
       if (pinned) {
         const room = (Math.min(anchor.w, anchor.h) - Math.min(bw, bh)) / 2;
@@ -1040,7 +1022,6 @@ function noteCrossesRect(points, rect) {
 
 /**
  * 折线有没有从盒子里穿过去（强制 side 写反时的症状）。
- * 旧 vk-edge 的实现，一字未动。
  */
 function crossesOwnBox(pts, a, b) {
   const inside = (p, r) => p.x > r.x + 2 && p.x < r.x + r.w - 2 && p.y > r.y + 2 && p.y < r.y + r.h - 2;
@@ -1058,7 +1039,6 @@ function crossesOwnBox(pts, a, b) {
 
 /**
  * 覆盖层的坐标系：为 circle / note 准备 stage，并把结果缓存在实例上。
- * 旧实现直接调 _frame()，这里保持同名行为。
  */
 VkAnnotate.prototype._frame = function _frame() {
   if (!this._svg) return null;

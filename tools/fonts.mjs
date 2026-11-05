@@ -87,7 +87,6 @@ for (const w of [400, 500, 700]) {
   const css = fs.readFileSync(path.join(dir, `${w}.css`), 'utf8');
 
   // 复制 CSS 真正引用到的每一个文件（切片 + latin/cyrillic/vietnamese 那几片）。
-  // 只收 CSS 真正引用的 woff2；woff 回退行被删掉，不复制不会被请求的文件。
   const referenced = new Set();
   for (const m of css.matchAll(/url\(\.\/files\/([^)]+)\)/g)) if (m[1].endsWith('.woff2')) referenced.add(m[1]);
   for (const file of referenced) {
@@ -103,7 +102,7 @@ for (const w of [400, 500, 700]) {
   const rewritten = css
     .replace(/, url\(\.\/files\/[^)]+\.woff\) format\('woff'\)/g, '')
     .replace(/url\(\.\/files\/([^)]+)\)/g, "url('../assets/fonts/noto/$1')")
-  
+
   blocks.push(rewritten.trim());
 }
 

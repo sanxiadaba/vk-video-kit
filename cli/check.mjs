@@ -11,7 +11,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { launch, openPage } from './lib/browser.mjs';
+import { launch, openSession } from './lib/browser.mjs';
 import { resolvePage, collect } from './lib/pages.mjs';
 
 const args = process.argv.slice(2);
@@ -44,20 +44,21 @@ for (const f of files) {
 }
 
 const browser = await launch();
+const session = await openSession(browser);
 const all = [];
 try {
   for (const page of built) {
-    const { tab, errors } = await openPage(browser, page);
-    const audit = await tab.evaluate(() => window.vk?.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] });
+    const errors = await session.open(page);
+    const audit = await session.tab.evaluate(() => window.vk?.auditPage?.() || { issues: [], special: ['缺少 vk.auditPage'] });
     const issues = [
       ...errors.map((e) => ({ type: 'runtime', what: e })),
       ...audit.issues,
       ...audit.special.map((s) => ({ type: 'special', what: s })),
     ];
     all.push({ page, issues });
-    await tab.context().close();
   }
 } finally {
+  await session.close();
   await browser.close();
 }
 

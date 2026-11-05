@@ -49,7 +49,6 @@ function kebab(name) {
 }
 
 /**
- * 旧名字继续可用：作者写 close / alert / box 比写 x / triangle-alert / package 自然。
  * 别名只改查表，不复制 SVG。
  */
 export const ALIASES = {

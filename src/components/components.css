@@ -113,7 +113,7 @@ vk-list{ display: block; }.vk-list{
   line-height: 1.95;
   color: var(--vk-ink-3);
 }/* 密度：compact 只压行高与项目内距，字号、墨色、项目符号都不动。
-   默认 normal 没有自己的规则 —— 旧页面不写 mass 时逐像素不变。 */
+   默认 normal 没有自己的规则。 */
 .vk-list[data-mass='compact']{
   line-height: 1.2;
   --vk-list-gap: var(--vk-s2);
@@ -122,7 +122,6 @@ vk-list{ display: block; }.vk-list{
 }/* --------------------------------------------------------------- vk-code */
 
 /* 内容字号只有一个来源：--vk-cs。size="160" 时运行期把它写成 160px；
-   不写 size 时它就是正文/标签的原值，所以旧页逐像素不变。
    行高、行号、内距、语法色块全部从这里派生，避免 transform 缩放整块。 */
 vk-code,
 vk-term,
@@ -222,8 +221,6 @@ vk-term{ display: block; }
   font-size: var(--vk-cs);
   line-height: var(--vk-lh-code);
 }
-/* 体量三档同时改行高与字号：hero 要让"上屏"那一行明显压过其它行。
-   字号只到 1.5×正文（72px）：再大，标本页 1680 宽里的 32 字符命令行会溢出。 */
 /* compact 要比 normal 小一档：data 已别名到 body（40），所以这里按比例收，
    不再借一个"明天可能改"的字号 token。 */
 .vk-term[data-mass='compact'] .vk-bd{ font-size: calc(var(--vk-cs) * 0.9); line-height: 1.25; }
@@ -277,7 +274,7 @@ vk-term{ display: block; }
    surface 不是"只刷一层背景"：窗材质由 .vk-win 上的 --vk-win-* 一组变量定义，
    换表面就是换这一组。深色把窗头、行号、语法、提示符、结果行、当前行一起翻过来；
    inset 只是把同一张纸压暗一档，字仍是墨色。默认 paper 没有任何规则——
-   旧页不写 surface 时逐像素不变。 */
+   不写 surface 时保持默认底色。 */
 .vk-win[data-surface='inset'] {
   --vk-win-bg: var(--vk-sf-2);
   --vk-win-soft: var(--vk-sf-3);
@@ -805,7 +802,6 @@ vk-cells{ display: block; }.vk-cells{
   display: flex;
   flex-direction: column;
   /* 值列齐底：一格有 label、一格没有，数字也要落在同一条线上。
-     （旧的是 space-between + 值上 margin-bottom:auto，没 label 的格子会把
      数字顶到第一行，看着像"这格忘填了"。） */
   justify-content: flex-end;
   box-sizing: border-box;

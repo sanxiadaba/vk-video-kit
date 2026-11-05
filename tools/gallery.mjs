@@ -14,13 +14,11 @@ execFileSync(process.execPath, ['bin/vk.mjs', 'build', 'tests/pages'], { stdio: 
 
 const dir = path.join('out', 'gallery');
 fs.mkdirSync(dir, { recursive: true });
-for (const tag of TAG_NAMES) {
-  execFileSync(
-    process.execPath,
-    ['bin/vk.mjs', 'shot', `tests/pages/${tag}.html`, '--out', path.join(dir, `${tag}.png`), '--width', '640'],
-    { stdio: 'pipe' }
-  );
-}
+execFileSync(
+  process.execPath,
+  ['bin/vk.mjs', 'shot', ...TAG_NAMES.map((tag) => `tests/pages/${tag}.html`), '--out-dir', dir, '--width', '640'],
+  { stdio: 'pipe' }
+);
 
 const cards = [];
 for (const layer of LAYERS) {
@@ -33,7 +31,7 @@ for (const layer of LAYERS) {
 }
 
 fs.writeFileSync(
-  path.join('out', 'gallery.html'),
+  path.join('out', 'index.html'),
   `<!doctype html><html lang="zh-CN"><head><meta charset="utf-8"><title>vk · 30 个标签</title>
 <style>
 body{margin:0;padding:48px;background:#eef2f7;font-family:Inter,"Noto Sans SC",sans-serif;color:#0b0f14}
@@ -45,4 +43,6 @@ figcaption{padding:10px 14px;font-size:13px;color:#4b5563;border-top:1px solid #
 </style></head><body><h1>vk · 30 个标签</h1><p>640 宽（按手机尺度看）。样张只用于看与回归，不是模板。</p>
 <div class="grid">${cards.join('\n')}</div></body></html>\n`
 );
-console.log(`gallery: out/gallery.html · ${TAG_NAMES.length} 张`);
+console.log(`gallery: out/index.html · ${TAG_NAMES.length} 张`);
+
+

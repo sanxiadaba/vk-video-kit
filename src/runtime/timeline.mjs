@@ -39,7 +39,6 @@ export class VkTimeline extends VkElement {
         date: el.getAttribute('date') || '',
         label: el.getAttribute('label') || '',
         // value / note：数字当主值、说明降一档。和 label / date 共存，
-        // 都写时按 value > label、note > 正文 的顺序取，旧写法一个字都不用改。
         value: el.getAttribute('value') || '',
         note: el.getAttribute('note') || '',
         lane: el.getAttribute('lane') || '',
@@ -63,7 +62,6 @@ export class VkTimeline extends VkElement {
     const variant = this.getAttribute('variant') === 'lanes' ? 'lanes' : 'events';
     const title = this.getAttribute('title') || '';
     const mass = this.getAttribute('mass') || 'normal';
-    // 主值的字号：size 只表字号（旧名 value-size 已并进来）；不写 = title（200）。
     const valueSizeRaw = (this.getAttribute('size') || 'title').trim();
     const valueSize = VALUE_SIZES.has(valueSizeRaw) || SIZE_TIERS.includes(valueSizeRaw) ? valueSizeRaw : 'title';
     if (valueSizeRaw !== valueSize) {

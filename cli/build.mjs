@@ -12,6 +12,7 @@ import fs from 'node:fs';
 import { buildOne, collect, outPathOf } from './lib/pages.mjs';
 
 const args = process.argv.slice(2);
+const force = args.includes('--force');
 let inputs = args.filter((a) => !a.startsWith('--'));
 
 if (!inputs.length) {
@@ -39,9 +40,14 @@ if (!files.length) {
 
 let blocks = 0;
 let failed = 0;
+let cached = 0;
 for (const file of files) {
   try {
-    const r = await buildOne(file);
+    const r = await buildOne(file, { force });
+    if (r.cached) {
+      cached++;
+      continue;
+    }
     blocks += r.count;
     console.log(`  ${file} → ${r.out}  ${r.count ? `${r.count} block(s)` : ''}`.trimEnd());
   } catch (e) {
@@ -54,5 +60,5 @@ if (failed) {
   console.error(`\n${failed} 个文件失败`);
   process.exitCode = 1;
 } else {
-  console.log(`\ndone · ${blocks} block(s), ${files.length} file(s)`);
+  console.log(`\ndone · ${blocks} block(s), ${files.length - cached} 个文件${cached ? `，${cached} 个缓存命中` : ''}`);
 }

@@ -78,9 +78,7 @@ export class VkFlow extends VkElement {
       : 0.12;
     const arrowLabel = (arrowCfg.label || '').trim();
     // 默认画箭头：只有显式写 arrow="false" / 0 / off / none / no 才关。
-    // （旧页面写 arrow / arrow="true" 也照旧；不写 arrow 的现在默认有箭头。）
     const arrowOn = rawArrow === null || !OFF.has(rawArrow.trim().toLowerCase());
-    // 契约与自检读这一个标记，不靠猜 CSS。
     this.dataset.arrow = arrowOn ? 'true' : 'false';
     this.dataset.arrowScale = String(arrowScale);
 
@@ -165,7 +163,6 @@ export class VkFlow extends VkElement {
     box.style.setProperty('--vk-flow-tip', (size * 0.55).toFixed(2) + 'px');
     box.style.setProperty('--vk-flow-tip-half', (size * 0.3).toFixed(2) + 'px');
     box.style.setProperty('--vk-flow-line-w', line.toFixed(2) + 'px');
-    // 契约读它：尺寸是运行期算的，不能只体现在 CSS 变量里。
     this.dataset.arrowSize = String(Math.round(size * 10) / 10);
   }
 

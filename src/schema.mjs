@@ -1,13 +1,12 @@
 /**
- * vk schema —— 公开 API 的唯一真值。
+ * vk schema —— 公开 API 的唯一来源。
  *
  * 只在这里声明：标签、属性、取值、默认值、子节点、状态。
  * 构建期校验、`vk doc`、`vk brief`、SPEC 表、运行期默认值全部读这一份；
  * CSS 不生成，但 tools/budget.mjs 会检查每个取值都能被消费。
  *
  * 规则：
- *   · 一个概念一个名字。没有别名、没有旧写法、没有“运行期折成新名”。
- *   · motion / cue / act / strength 不存在：本层没有时间维度。
+ *   · motion / cue / act / strength 不存在：库里没有时间维度。
  *   · 共享属性只在 COMMON 里写一次。
  */
 

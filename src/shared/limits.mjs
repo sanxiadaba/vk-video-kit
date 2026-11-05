@@ -1,7 +1,6 @@
 /**
  * 硬性数值：只有一个来源。
  *
- * 为什么要有这个文件：同一个门槛曾经写了三份（audit 96/36/4.5、gate 72/36/3、
  * contract 96/35.5/96），同一页会被判成两个相反的结论。数值是"什么算坏"的定义，
  * 一个定义只能有一处。CSS 里的 token 与这里对齐，由 tests/limits.test.mjs 断言。
  *
@@ -51,5 +50,3 @@ export const LIMITS = {
   safe: { x: 120, y: 96, w: 1680, h: 888 },
 };
 
-/** 文字与版面：一条信息要么是正文，要么是标注，没有第三种。 */
-export const TEXT_ROLES = ['body', 'muted', 'large'];

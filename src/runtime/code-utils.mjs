@@ -42,7 +42,6 @@ export function markTerms(root, terms) {
 }
 
 /**
- * 把一个字符区间包成 span（可重复调用：同一个 key 会先拆掉旧包）。
  * 返回第一个包好的 span，供 vk-edge 之类需要"指到字符"的地方取包围盒。
  */
 export function wrapCharRange(root, start, end, cls = 'vk-dw', key = '') {

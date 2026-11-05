@@ -4,9 +4,6 @@ import { TONES, hasColumn, parseCompareLabels } from '../shared/vocab.mjs';
 import { iconOf } from './icons.mjs';
 import { win, fileHead, DOTS } from './window.mjs';
 
-/* ------------------------------------------------------------------ title */
-
-
 /* ------------------------------------------------------------------- list */
 
 export class VkList extends VkElement {
@@ -33,7 +30,6 @@ export class VkList extends VkElement {
     const ordered = variant === 'ordered';
     const rule = this.hasAttribute('rule');
     const bare = this.hasAttribute('bare');
-    // 密度：compact 只改行高与内距；不写 / 写 normal 完全走旧样式。
     const mass = this.getAttribute('mass') === 'compact' ? 'compact' : 'normal';
     const mode = variant === 'ordered' ? 'bullet' : variant;
     const ul = document.createElement(ordered ? 'ol' : 'ul');
@@ -291,7 +287,6 @@ export class VkTree extends VkElement {
     }
 
     const label = title || root || '文件树';
-    // 顶部统计是一列（旧名 summary）：columns="none" 关掉。
     const meta = hasColumn(this, 'vk-tree', 'summary') ? `${files} 文件 · ${dirs} 目录` : '';
 
     this.innerHTML = `
@@ -573,7 +568,6 @@ export class VkCells extends VkElement {
  * 作者不需要（也不能）写坐标或手工连 vk-edge。
  *
  * current="-1"：**不标当前步**。给"纯地图"页用——五步等权，没有"走到哪一步"的暗示；
- * 不写 current 仍是 0（第一步即当前步），旧页一个字不用改。
  */
 export class VkSteps extends VkElement {
   static watchSource = true;
@@ -594,7 +588,6 @@ export class VkSteps extends VkElement {
       return;
     }
     delete this.dataset.vkStale;
-    // current = 第 N 步，**1 起**（15.0 起统一）；不写 = -1，不标当前步（地图页五步等权）。
     const rawCurrent = parseInt(this.getAttribute('current') ?? '-1', 10);
     let current = Number.isFinite(rawCurrent) ? rawCurrent : -1;
     if (current < -1) current = -1;
@@ -731,7 +724,6 @@ export class VkBits extends VkElement {
     //
     // 这里按"解析结果"判断，不按"有没有 rows"判断：rows 永远至少有一条
     // （没有子节点时默认取宿主的 value），所以空块、只写 label、value 里混进
-    // 非 0/1 字符，以前都会掉到下面那个 ? 占位里。
     const bitsOf = (raw) => String(raw || '').replace(/\s+/g, '');
     const bad = rows.find((r) => bitsOf(r.value) && !/^[01]+$/.test(bitsOf(r.value)));
     if (bad) {
@@ -899,7 +891,6 @@ export class VkBars extends VkElement {
      * ratio-to：把「差了几倍」直接写出来。
      *
      * 两条刻度都不能同时讲清 106 / 52,980：log 把三根压成一样长，linear 让 106 只剩 6px。
-     * 倍率不是刻度问题，而是一条独立的标注——所以条长照旧，旁边多一个 ×500。
      * 行号 0 起，和 #id@item:0 是同一套编号；指空 / 基数为 0 都不静默吞掉。
      */
     const ratioRaw = this.getAttribute('ratio-to');
@@ -1037,11 +1028,9 @@ export class VkCompare extends VkElement {
 
   render() {
     // 两张图与两个角标都写在 labels：labels="a,b" / labels="a,b|左|右"。
-    // 旧写法 a / b 与 label-a / label-b 在运行期折进这里（见 base.mjs）。
     const pair = parseCompareLabels(this.getAttribute('labels'));
     const a = pair.a;
     const b = pair.b;
-    // 形态：variant（旧名 mode 已并进来）。
     const modeRaw = (this.getAttribute('variant') || 'split').trim();
     const mode = modeRaw === 'side' || modeRaw === 'stack' ? modeRaw : 'split';
     if (modeRaw !== mode) {
@@ -1265,7 +1254,6 @@ export class VkCompare extends VkElement {
     const nw = img.naturalWidth;
     const nh = img.naturalHeight;
     const fit = getComputedStyle(img).objectFit === 'contain' ? 'contain' : 'cover';
-    // 与 <img> 的 object-fit 用同一套缩放：放大块才能和取景框逐像素对齐。
     const s = fit === 'contain' ? Math.min(W / nw, H / nh) : Math.max(W / nw, H / nh);
     const RW = nw * s;
     const RH = nh * s;
@@ -1418,6 +1406,5 @@ export class VkTable extends VkElement {
     fitContent(this, 'table');
   }
 }
-
 
 
