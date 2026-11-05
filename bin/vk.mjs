@@ -304,15 +304,23 @@ if (cmd === 'render' || cmd === 'check') {
   })();
   const next = { ...prev };
   const changed = [];
+  const seen = new Set();
   for (const r of report) {
     const rel = path.relative(ROOT, r.file).split(path.sep).join('/');
     for (const f of r.frames || []) {
       if (!f.metrics) continue;
       const key = rel + '#' + (f.id || f.index + 1);
+      seen.add(key);
       const sig = [f.metrics.contentTop, f.metrics.contentBottom, f.metrics.fill, f.metrics.focus, f.issues.map((x) => x.type || x.what).join('|')].join(',');
       if (prev[key] && prev[key] !== sig) changed.push(key);
       next[key] = sig;
     }
+  }
+  // 这次渲染过的文件里，已经不存在的帧名（改名/删帧）要从快照里清掉，
+  // 否则以后重建同名帧会跟"幽灵"比对。
+  for (const key of Object.keys(next)) {
+    const [file] = key.split('#');
+    if (report.some((r) => path.relative(ROOT, r.file).split(path.sep).join('/') === file) && !seen.has(key)) delete next[key];
   }
   try {
     fs.mkdirSync(OUT, { recursive: true });
