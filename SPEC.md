@@ -38,7 +38,7 @@ s[0] = 'H';
 | 词 | 意思 | 取值 |
 |---|---|---|
 | `tone` | 语义 | `neutral / info / focus / ok / warn / err` |
-| `size` | 字号 | 六个档名，或像素数 |
+| `size` | 字号 | 六个档名 |
 | `gap` `pad` | 间距 | `none / close / normal / wide / section`，或像素数 |
 | `current` | 第几项 | **1 起**；`-1` = 没有当前 |
 | `state` | 注意力 | `current`（现在讲这里）/ `mark`（作者标了一下） |
@@ -211,3 +211,4 @@ vk icons arrow                   # 搜图标名
 - 用 `tone` 给正文上色：语义色只在线和底上，正文用 `ink`。
 - 一帧超过 888 高：删内容或拆帧。`vk render` 会告诉你超了多少。
 - `mark` 是**一段原文**（窗口里所有出现处都会被标），不是正则，也不用转义。
+
