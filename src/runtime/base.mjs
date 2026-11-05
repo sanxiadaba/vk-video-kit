@@ -461,6 +461,36 @@ export function define(tag, ctor) {
 
 VK.layout = layout;
 
+
+/* 自己画了浅底的件，把三档墨换回纸面值。
+   不维护选择器清单：看谁真的画了浅色不透明底，就换谁的墨。
+   （深色页上放白纸卡片曾经是白纸白字——清单漏了一个件就会重演。） */
+function pinInkOnLight() {
+  if (!document.querySelector('vk-page[surface="dark"]')) return;
+  const lum = (css) => {
+    const m = String(css).match(/rgba?\(([^)]+)\)/);
+    if (!m) return null;
+    const [r, g, b, a = 1] = m[1].split(',').map(Number);
+    if (a < 0.9) return null;
+    const f = (c) => {
+      const v = c / 255;
+      return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4;
+    };
+    return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
+  };
+  for (const page of document.querySelectorAll('vk-page[surface="dark"]')) {
+    for (const el of page.querySelectorAll('*')) {
+      const bg = lum(getComputedStyle(el).backgroundColor);
+      if (bg == null || bg < 0.5) continue;
+      el.style.setProperty('--vk-ink-1', 'var(--vk-on-paper-1)');
+      el.style.setProperty('--vk-ink-2', 'var(--vk-on-paper-2)');
+      el.style.setProperty('--vk-ink-3', 'var(--vk-on-paper-3)');
+      // color 是继承的计算值，不设这一行，子元素仍是深色页的亮字。
+      el.style.color = 'var(--vk-on-paper-1)';
+    }
+  }
+}
+
 VK.ready = async () => {
   if (!HAS_DOM) return true;
   if (document.readyState === 'loading') {
@@ -476,6 +506,7 @@ VK.ready = async () => {
       if (++quiet >= 2) break;
     } else quiet = 0;
   }
+  pinInkOnLight();
   await document.fonts?.ready;
   await Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
   await nextFrame();
