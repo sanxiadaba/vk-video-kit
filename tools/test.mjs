@@ -143,6 +143,7 @@ console.log('\n覆盖');
 {
   const COMMON = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
   const seen = new Set();
+  const seenTags = new Set();
   const files = [];
   for (const dir of ['episodes', 'tests/acceptance', 'tests']) {
     if (!fs.existsSync(dir)) continue;
@@ -151,7 +152,10 @@ console.log('\n覆盖');
   for (const f of files) {
     const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
     const walk = (n) => {
-      if (n.tagName?.startsWith('vk-')) for (const a of n.attrs || []) seen.add(n.tagName + '.' + a.name);
+      if (n.tagName?.startsWith('vk-')) {
+        seenTags.add(n.tagName);
+        for (const a of n.attrs || []) seen.add(n.tagName + '.' + a.name);
+      }
       for (const c of n.childNodes || []) walk(c);
       if (n.content) walk(n.content);
     };
@@ -165,6 +169,9 @@ console.log('\n覆盖');
     }
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
+  const coldTags = TAG_NAMES.filter((t) => !seenTags.has(t));
+  ok(!coldTags.length, '每个件都被真帧用过');
+  for (const c of coldTags) console.error(`    · ${c} —— 加一帧用它，否则它只是存在`);
   for (const c of cold) console.error(`    · ${c} —— 在 tests/capabilities*.html 里加一帧，或把它删掉`);
 }
 
