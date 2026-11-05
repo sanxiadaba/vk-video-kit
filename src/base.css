@@ -39,6 +39,13 @@ vk-page {
 }
 
 /* 版心：内容不越过的边界。三类对齐共用同一个盒子。 */
+/* 大标题排两行时把长度摊匀：第二行不会只剩一两个字。 */
+vk-text[size='headline'],
+vk-text[size='display'],
+vk-text[size='hero'] {
+  text-wrap: balance;
+}
+
 .vk-stage {
   position: relative;
   display: flex;

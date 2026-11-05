@@ -33,6 +33,15 @@ const RECIPES = [
       { file: 'opt/add-o2.dis', sliceOf: 'opt/o2.dis', symbol: '_add' },
     ],
   },
+  {
+    src: 'pipe/main.c',
+    outputs: [
+      { file: 'pipe/main.i', cmd: ['gcc', '-std=gnu99', '-E', 'pipe/main.c', '-o', 'pipe/main.i'] },
+      { file: 'pipe/main.s', cmd: ['gcc', '-std=gnu99', '-S', '-O0', 'pipe/main.c', '-o', 'pipe/main.s'] },
+      { file: 'pipe/main.o', cmd: ['gcc', '-std=gnu99', '-c', 'pipe/main.s', '-o', 'pipe/main.o'] },
+      { file: 'pipe/main.exe', cmd: ['gcc', 'pipe/main.o', '-o', 'pipe/main.exe'] },
+    ],
+  },
 ];
 
 function walkC(dir, out = []) {

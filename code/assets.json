@@ -30,5 +30,21 @@
       "opt/o2.dis",
       "opt/add-o2.dis"
     ]
+  },
+  "pipe/main.c": {
+    "src": "pipe/main.c",
+    "srcHash": "d3429fab2dcc9c62",
+    "outputs": {
+      "pipe/main.i": "2dccae872b855bc6",
+      "pipe/main.s": "3239d09816c803cc",
+      "pipe/main.o": "94b20013bcdfc509",
+      "pipe/main.exe": "057101fbcdcd6950"
+    },
+    "needs": [
+      "pipe/main.i",
+      "pipe/main.s",
+      "pipe/main.o",
+      "pipe/main.exe"
+    ]
   }
 }
