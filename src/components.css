@@ -298,7 +298,7 @@ vk-asm {
   flex-direction: column;
   width: fit-content;
   /* 窄内容（两行 diff）不要把窗口缩成一张小卡片：给一个舒适的最小宽。 */
-  min-width: min(100%, 720px);
+  min-width: min(100%, 880px);
   max-width: 100%;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
@@ -882,6 +882,11 @@ vk-bytes {
   color: var(--vk-ink-3);
 }
 
+/* 字节窗永远跟内容走：它是定长的十六进制表，不需要"舒适最小宽"。 */
+vk-bytes .vk-win {
+  min-width: 0;
+}
+
 /* ------------------------------------------------------------------ 位 */
 vk-bits {
   display: flex;
@@ -1005,11 +1010,11 @@ vk-steps[data-direction='horizontal'] .vk-step {
 vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last-child)::after {
   content: '→';
   position: absolute;
-  top: 4px;
+  top: 0.1em;
   left: 100%;
   width: var(--vk-step-gap, var(--vk-gap-wide));
   text-align: center;
-  font-size: 40px;
+  font-size: calc(var(--vk-step-t-size, var(--vk-fs-body)) * 0.7);
   line-height: 1;
   color: var(--vk-line-strong);
 }

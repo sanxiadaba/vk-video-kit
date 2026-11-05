@@ -7,6 +7,7 @@
  *   vk check  pages/                  只自检
  *   vk doc vk-code                    一个件的属性表
  *   vk brief [--json]                 全部件的机器可读契约
+ *   vk sheet episodes/ --cols 4        每帧缩略图拼成一张联络图（看节奏）
  *   vk icons arrow                    搜 Lucide 图标名
  *
  * 没有第二个入口：库的构建（CSS / JS / 字体）在这里按需自动完成。
@@ -266,6 +267,72 @@ if (cmd === 'render' || cmd === 'check') {
   }
   const bad = report.some((r) => r.errors?.length || r.frames.some((f) => f.issues.length) || r.ready === false);
   process.exitCode = failed || bad ? 1 : 0;
+} else if (cmd === 'sheet') {
+  // 联络图：把一串帧缩成小图拼在一张纸上。它不替代单帧渲染，是用来"一眼看完一集"的。
+  if (!inputs.length) {
+    console.error('用法：vk sheet <file|dir> [--cols 4] [--width 420] [--out out/sheet.png]');
+    process.exit(2);
+  }
+  const cols = Math.max(1, Number(val('--cols') || 0) || 4);
+  const thumbW = Math.max(160, Number(val('--width') || 0) || 420);
+  const outFile = path.resolve(val('--out') || path.join(OUT, 'sheet.png'));
+  ensureLibrary();
+  publish();
+
+  const files = inputs.flatMap((i) => (fs.existsSync(i) ? collect(i) : []));
+  if (!files.length) {
+    console.error(`[vk] 找不到 ${inputs.join(' ')}`);
+    process.exit(2);
+  }
+
+  const tmp = fs.mkdtempSync(path.join(OUT, '.sheet-'));
+  const shots = [];
+  const browser = await launch();
+  try {
+    for (const f of files) {
+      const b = await buildPage(f);
+      if (!b.ok) {
+        console.error(`✗ ${path.relative(ROOT, f)}：${b.errors.join('；')}`);
+        continue;
+      }
+      const session = await openPage(browser, 'file:///' + b.out.split(path.sep).join('/'));
+      for (let i = 0; i < session.frames.length; i++) {
+        const fr = session.frames[i];
+        const png = path.join(tmp, `${shots.length}.png`);
+        await session.page.screenshot({ path: png, fullPage: true, clip: { x: fr.x, y: fr.y, width: fr.w, height: fr.h } });
+        await downscale(png, thumbW);
+        shots.push({ png, label: `${path.basename(f, '.html')}${session.frames.length > 1 ? ' #' + (fr.id || i + 1) : ''}` });
+      }
+      await session.page.close();
+    }
+
+    const gap = 16;
+    const capH = 26;
+    const rows = Math.ceil(shots.length / cols);
+    const pageW = cols * thumbW + (cols + 1) * gap;
+    const pageH = rows * (Math.round((thumbW * 9) / 16) + capH + gap) + gap;
+    const html = `<!doctype html><meta charset="utf-8"><style>
+      body { margin:0; background:#141414; font:13px/1.4 ui-monospace,Consolas,monospace; color:#9a9a9a; }
+      .g { display:grid; grid-template-columns:repeat(${cols},${thumbW}px); gap:${gap}px; padding:${gap}px; }
+      figure { margin:0; }
+      img { display:block; width:${thumbW}px; border-radius:6px; background:#fff; }
+      figcaption { padding:5px 2px 0; }
+    </style><div class="g">${shots
+      .map((s) => `<figure><img src="file:///${s.png.split(path.sep).join('/')}"><figcaption>${s.label}</figcaption></figure>`)
+      .join('')}</div>`;
+
+    const sheetHtml = path.join(tmp, 'sheet.html');
+    fs.writeFileSync(sheetHtml, html);
+    const page = await browser.newPage({ viewport: { width: pageW, height: Math.min(pageH, 8000) }, deviceScaleFactor: 1 });
+    await page.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
+    await page.screenshot({ path: outFile, fullPage: true });
+    await page.close();
+    console.log(`${shots.length} 帧 → ${path.relative(ROOT, outFile)}`);
+  } finally {
+    await browser.close();
+    fs.rmSync(tmp, { recursive: true, force: true });
+  }
+  process.exitCode = 0;
 } else if (cmd === 'doc') {
   const tag = inputs[0];
   if (!TAGS[tag]) {

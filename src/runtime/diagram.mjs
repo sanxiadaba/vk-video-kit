@@ -135,6 +135,7 @@ export class VkSteps extends VkElement {
     const vertical = dir === 'vertical';
     this.dataset.direction = dir;
     this.style.setProperty('--vk-step-gap', vertical ? 'var(--vk-gap-close)' : 'var(--vk-gap-wide)');
+    this.style.setProperty('--vk-step-t-size', `var(--vk-fs-${attrEnum(this, 'size', 'body')})`);
 
     // CSS 只在 [direction='vertical'] 下把 .vk-step 改成横排；data-direction 缺这条。
     for (const step of this.querySelectorAll('.vk-step')) {

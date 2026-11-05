@@ -15,7 +15,8 @@
     "check": "node bin/vk.mjs check pages",
     "test": "node tools/test.mjs",
     "assets": "node tools/assets.mjs",
-    "assets:check": "node tools/assets.mjs --check"
+    "assets:check": "node tools/assets.mjs --check",
+    "sheet": "node bin/vk.mjs sheet episodes --cols 4"
   },
   "dependencies": {
     "katex": "^0.16.11",
