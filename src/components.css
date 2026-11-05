@@ -1139,7 +1139,8 @@ vk-compare {
 .vk-compare-pane {
   position: relative;
   min-width: 0;
-  height: var(--vk-compare-h, 640px);
+  /* 对照窗的固定高度：两张图统一按 contain 缩到这个高，不按原图比例撑开。 */
+  height: var(--vk-compare-h, 560px);
   overflow: hidden;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
   border-radius: var(--vk-radius-md);

@@ -1,6 +1,6 @@
 <vk-page id="1-hook">
   <vk-stack gap="wide">
-    <vk-label counter="1 / 6">优化</vk-label>
+    <vk-label counter="1 / 7">优化</vk-label>
     <vk-text size="headline">一行 <em>a + b</em>，编译出几条指令？</vk-text>
     <vk-text size="body" ink="secondary">不开优化：7 条。开了 -O2：3 条。差的那 4 条，是编译器在替省。</vk-text>
   </vk-stack>
@@ -8,7 +8,7 @@
 
 <vk-page id="2-source">
   <vk-stack gap="normal">
-    <vk-label counter="2 / 6">源码</vk-label>
+    <vk-label counter="2 / 7">源码</vk-label>
     <vk-text size="subhead">就这么三行。</vk-text>
     <vk-code lang="c" file="sum.c" src="../code/opt/sum.c" lines="1-3" current="2"></vk-code>
     <vk-text size="caption" ink="muted">这一块是从 code/opt/sum.c 读出来的。</vk-text>
@@ -17,7 +17,7 @@
 
 <vk-page id="3-o0">
   <vk-stack gap="close">
-    <vk-label counter="3 / 6">-O0</vk-label>
+    <vk-label counter="3 / 7">-O0</vk-label>
     <vk-text size="subhead">不优化：先摆好<em>栈帧</em>，再算。</vk-text>
     <vk-asm file="add-o0.dis" src="../code/opt/add-o0.dis" size="caption" current="6"></vk-asm>
   </vk-stack>
@@ -25,15 +25,23 @@
 
 <vk-page id="4-o2">
   <vk-stack gap="close">
-    <vk-label counter="4 / 6">-O2</vk-label>
+    <vk-label counter="4 / 7">-O2</vk-label>
     <vk-text size="subhead">开了优化：栈帧<em>整个不要了</em>。</vk-text>
     <vk-asm file="add-o2.dis" src="../code/opt/add-o2.dis" size="caption" current="2"></vk-asm>
   </vk-stack>
 </vk-page>
 
+<vk-page id="5-look">
+  <vk-stack gap="close">
+    <vk-label counter="5 / 7">看一眼</vk-label>
+    <vk-text size="subhead">左边全是"进出栈"，右边只剩计算。</vk-text>
+    <vk-compare labels="../assets/hello/o0.png,../assets/hello/o2.png|-O0|-O2"></vk-compare>
+  </vk-stack>
+</vk-page>
+
 <vk-page id="5-count">
   <vk-stack gap="normal">
-    <vk-label counter="5 / 6">数一数</vk-label>
+    <vk-label counter="6 / 7">数一数</vk-label>
     <vk-text size="subhead">同一个函数，<em>7 条对 3 条</em>。</vk-text>
     <vk-bars max="8" unit="条指令">
       <li value="7" label="add · -O0"></li>
@@ -45,7 +53,7 @@
 
 <vk-page id="6-end">
   <vk-stack gap="wide">
-    <vk-label counter="6 / 6">小结</vk-label>
+    <vk-label counter="7 / 7">小结</vk-label>
     <vk-text size="display">优化，<br>先省<em>不必要的事</em>。</vk-text>
     <vk-text size="caption" ink="muted">下一集：为什么 -O2 有时反而更慢。</vk-text>
   </vk-stack>
