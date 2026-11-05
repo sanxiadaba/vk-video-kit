@@ -112,6 +112,7 @@ s[0] = 'H';
 - **`vk-canvas` 的子项要写清 `w` / `h`**：不写就按内容高，内容一变就超出画布（自检会报 `超出了 canvas Npx`）。
 - **`vk-layer` 里的重叠是对的**，自检不会报。压字那种写法，图不要写 `bleed`（出血把图从文档流里摘出去，
   层就塌成文字那么高），给 `ratio` 让图自己撑高。
+- 图对照只有并排和上下两种：静态图里没有"拖动"，滑动裁切那种交互做不了。
 - `vk-pair` 默认左右等分；`split="30"` 改成左三右七；`direction="vertical"` 上下对照。
 
 ## 7 27 个件
@@ -138,7 +139,7 @@ s[0] = 'H';
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
-| `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
+| `vk-compare` | 两张图对照 | `labels` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
 | `vk-stack` | 竖排 | `gap` `pad` `align` `justify` `direction` `weights` |
 | `vk-grid` | 栅格 | `cols` `gap` `pad` `align` `ratio` |
@@ -194,7 +195,6 @@ s[0] = 'H';
 | | `none` | 整帧终端，没有窗头，用于"深色呼吸" |
 | `vk-compare variant` | `side`（默认） | 左右两张图并排 |
 | | `stack` | 上下叠，差异更明显 |
-| | `split` | 同一格里滑动裁切（`split="40"` 是右图露出的百分比） |
 
 
 ### 没有这些属性（别猜）

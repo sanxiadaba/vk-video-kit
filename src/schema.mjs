@@ -431,8 +431,7 @@ export const TAGS = {
     summary: '两张图对照：默认左右并排（每张完整、不裁），也可上下或叠放对照；可标差异框并放大。',
     attrs: {
       labels: { type: 'text', content: true, group: 'content', label: '两张图与角标："a.png,b.png|改前|改后"' },
-      split: { type: 'num', min: 20, max: 80, default: 50, group: 'layout', label: 'split 模式左图占比（%）' },
-      variant: { type: 'enum', values: ['side', 'stack', 'split'], default: 'side', group: 'appearance', label: '形态' },
+      variant: { type: 'enum', values: ['side', 'stack'], default: 'side', group: 'appearance', label: '形态' },
       mark: { type: 'text', content: true, group: 'appearance', label: '差异框：x1,y1,x2,y2（%；多组用 ;）' },
     },
     content: 'none',

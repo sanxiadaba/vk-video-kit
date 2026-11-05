@@ -1246,12 +1246,6 @@ vk-compare {
 }
 
 /* 对照：角标行 / 放大块 */
-.vk-compare-hd {
-  display: flex;
-  justify-content: space-between;
-  gap: var(--vk-gap-normal);
-}
-
 /* 堆叠对照：两张各占一半高度，560 会顶出画布。 */
 vk-compare[variant='stack'] {
   --vk-compare-h: 320px;
@@ -1374,4 +1368,8 @@ vk-layer[surface='dark'] .vk-tl-date {
 /* 目录树被 max 截断时的那一行 */
 .vk-node.is-more {
   color: var(--vk-ink-3);
+}
+vk-compare[data-cover] .vk-compare-pane img,
+vk-compare[data-cover] .vk-compare-pane > img {
+  object-fit: cover;
 }

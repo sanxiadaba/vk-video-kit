@@ -21,7 +21,7 @@
      · .vk-tl-start / .vk-tl-end
      · .vk-lane / .vk-lane-row / .vk-lane-name（泳道整块没有规则）
      · .vk-compare-pane img 没写 object-fit（这里补 contain：不裁、不拉伸）
-     · .vk-compare-label 在 split 下没法逐 pane 放：两个 pane 叠着，
+     · .vk-compare-label 逐 pane 放，一行一个：
        角标共处一行（左「改前」右「改后」）。
    ========================================================================== */
 
@@ -427,13 +427,12 @@ export class VkCompare extends VkElement {
     }
     if (srcs.length < 2) warn(this, 'labels 只解析出一张图，对照需要两张');
 
-    const variant = attrEnum(this, 'variant', 'split');
-    const split = attrNum(this, 'split', 50);
+    const variant = attrEnum(this, 'variant', 'side');
     this.dataset.variant = variant;
 
     this._marks = parseMarks(attrText(this, 'mark'), this);
 
-    // 只有结构会变的属性才重建（重建等于重新加载图片，split 这种不该动 DOM）。
+    // 只有结构会变的属性才重建（重建等于重新加载图片）。
     const sig = `${variant}|${srcs.join('\u0000')}|${caps.join('\u0000')}`;
     if (this._sig !== sig) {
       this._sig = sig;
@@ -441,7 +440,6 @@ export class VkCompare extends VkElement {
       this._wire();
     }
 
-    this._paintSplit(variant, split);
     this._paintMarks();
     this._syncAspect();
   }
@@ -452,12 +450,6 @@ export class VkCompare extends VkElement {
       imgHtml(srcs[i], caps[i] || '') +
       `</div>`;
     const capsSome = caps.some(Boolean);
-    // split 的两个 pane 叠着，角标只能共用一行：左「改前」右「改后」。
-    const hd = capsSome
-      ? `<div class="vk-compare-hd" style="display:flex;justify-content:space-between;gap:var(--vk-gap-normal)">` +
-        srcs.map((_, i) => `<span class="vk-compare-label">${esc(caps[i] || '')}</span>`).join('') +
-        `</div>`
-      : '';
     const item = (i) =>
       `<div class="vk-compare-item" style="display:flex;flex-direction:column;min-width:0;min-height:0">` +
       (caps[i] ? `<span class="vk-compare-label">${esc(caps[i])}</span>` : '') +
@@ -465,13 +457,7 @@ export class VkCompare extends VkElement {
       `</div>`;
 
     let body;
-    if (variant === 'split') {
-      body =
-        `<div class="vk-compare" style="grid-template-rows:auto auto">${hd}` +
-        `<div class="vk-compare-split" style="display:grid;min-height:0">` +
-        srcs.map((_, i) => pane(i, 'grid-area:1 / 1;min-height:0')).join('') +
-        `</div></div>`;
-    } else if (variant === 'side') {
+    if (variant === 'side') {
       body = `<div class="vk-compare" style="grid-template-columns:1fr 1fr">${srcs
         .map((_, i) => item(i))
         .join('')}</div>`;
@@ -494,14 +480,6 @@ export class VkCompare extends VkElement {
       });
       img.addEventListener('error', () => warn(this, `图片加载失败：${img.getAttribute('src')}`));
     }
-  }
-
-  /** 右 pane 按 split 裁：两张图叠在同一格里，露出来的比例就是 split。 */
-  _paintSplit(variant, split) {
-    const b = this.querySelector('.vk-compare-pane[data-pane="b"]');
-    if (!b) return;
-    if (variant === 'split') b.style.clipPath = `inset(0 0 0 ${split}%)`;
-    else b.style.removeProperty('clip-path');
   }
 
   _paintMarks() {
@@ -551,13 +529,8 @@ export class VkCompare extends VkElement {
     const ratio = (i) => i.naturalWidth / i.naturalHeight;
     const [a, b] = imgs.map(ratio);
     const off = Math.abs(a - b) / Math.max(a, b) > 0.01;
+    // 比例不同只是留边多少，并排或上下都读得懂，不提示也不改图。
     for (const p of panes) p.toggleAttribute('data-mismatch', off);
-    if (off) {
-      warn(
-        this,
-        `两张图比例不同（${a.toFixed(3)} vs ${b.toFixed(3)}）：contain 会留边，差异框按 pane 的百分比也对不齐。裁成同一比例再对照。`
-      );
-    }
   }
 
 }
