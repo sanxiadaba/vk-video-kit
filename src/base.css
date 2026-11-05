@@ -56,6 +56,15 @@ vk-text[size='hero'] {
   padding: var(--vk-margin-y) var(--vk-margin-x);
 }
 
+/* 深色的一帧：整张纸换掉，墨阶跟着换。 */
+vk-page[surface='dark'] {
+  background: var(--vk-dark-bg);
+  color: var(--vk-dark-fg);
+  --vk-ink-1: var(--vk-dark-fg);
+  --vk-ink-2: var(--vk-dark-fg2);
+  --vk-ink-3: var(--vk-dark-meta);
+}
+
 vk-page[align='top'] .vk-stage {
   justify-content: flex-start;
 }
@@ -132,6 +141,14 @@ vk-text {
 }
 [tone='neutral'] {
   --vk-tone: var(--vk-ink-1);
+}
+
+/* 深色底把墨阶整体换掉：正文、次要、弱化都变成暗色前景。 */
+vk-layer[surface='dark'],
+vk-box[surface='dark'] {
+  --vk-ink-1: var(--vk-dark-fg);
+  --vk-ink-2: var(--vk-dark-fg2);
+  --vk-ink-3: var(--vk-dark-meta);
 }
 
 /* ------------------------------------------------------------------ 状态

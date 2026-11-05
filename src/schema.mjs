@@ -72,7 +72,9 @@ export const TAGS = {
     name: '画布',
     summary: '一帧 1920×1080 的坐标系。align 决定内容在版心（1680×888）里的纵向位置。',
     attrs: {
+      id: { type: 'text', group: 'content', label: '帧名（出图文件名）' },
       align: { type: 'enum', values: ['top', 'center', 'bottom'], default: 'center', group: 'layout', label: '纵向对齐' },
+      surface: { type: 'enum', values: ['paper', 'dark'], default: 'paper', group: 'appearance', label: '底色' },
     },
     children: { kind: 'slot' },
   },

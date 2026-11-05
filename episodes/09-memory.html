@@ -1,6 +1,14 @@
+<vk-page id="0-chapter" surface="dark">
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 9">第二章</vk-label>
+    <vk-text size="display">数据在哪，<br>决定它多快。</vk-text>
+    <vk-text size="body" ink="secondary">从缓存行到数组，从 1ns 到 100ns。</vk-text>
+  </vk-stack>
+</vk-page>
+
 <vk-page id="1-hook">
   <vk-stack gap="wide">
-    <vk-label counter="1 / 8">内存层级</vk-label>
+    <vk-label counter="2 / 9">内存层级</vk-label>
     <vk-text size="headline">等一次内存，<br>够算<em>几百条指令</em>。</vk-text>
     <vk-text size="body" ink="secondary">所以 CPU 不直接找内存，先在几层缓存里翻。</vk-text>
   </vk-stack>
@@ -8,7 +16,7 @@
 
 <vk-page id="2-stack">
   <vk-stack gap="close">
-    <vk-label counter="2 / 8">越靠上越快、越小、越贵</vk-label>
+    <vk-label counter="3 / 9">越靠上越快、越小、越贵</vk-label>
     <vk-box surface="soft" pad="normal" title="内存 · 16 GB · 约 100ns">
       <vk-box surface="tint" tone="info" pad="normal" title="L3 · 8 MB · 约 15ns">
         <vk-box surface="tint" tone="ok" pad="normal" title="L2 · 256 KB · 约 4ns">
@@ -23,7 +31,7 @@
 
 <vk-page id="3-bars">
   <vk-stack gap="normal">
-    <vk-label counter="3 / 8">差多少</vk-label>
+    <vk-label counter="4 / 9">差多少</vk-label>
     <vk-text size="subhead">对数刻度下，每格是<em>十倍</em>。</vk-text>
     <vk-bars scale="log" max="100000" unit="ns">
       <li value="1" label="L1" tone="ok"></li>
@@ -37,7 +45,7 @@
 
 <vk-page id="4-pair">
   <vk-stack gap="normal">
-    <vk-label counter="4 / 8">两种访问</vk-label>
+    <vk-label counter="5 / 9">两种访问</vk-label>
     <vk-text size="subhead">同样的循环，一个顺、一个跳。</vk-text>
     <vk-pair symbol="vs">
       <vk-stack gap="close">
@@ -64,7 +72,7 @@ for (i = 0; i < n; i++)
 
 <vk-page id="5-table">
   <vk-stack gap="close">
-    <vk-label counter="5 / 8">数字</vk-label>
+    <vk-label counter="6 / 9">数字</vk-label>
     <vk-table variant="spec" size="caption">
       <table>
         <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
@@ -81,7 +89,7 @@ for (i = 0; i < n; i++)
 
 <vk-page id="6-line">
   <vk-stack gap="normal">
-    <vk-label counter="6 / 8">一次搬一整行</vk-label>
+    <vk-label counter="7 / 9">一次搬一整行</vk-label>
     <vk-text size="subhead">缓存行是 <em>64 字节</em>：用到一个，白送十五个。</vk-text>
     <vk-steps current="2" size="subhead">
       <li>要第 5 个字节</li>
@@ -93,7 +101,7 @@ for (i = 0; i < n; i++)
 
 <vk-page id="7-why">
   <vk-stack gap="normal">
-    <vk-label counter="7 / 8">于是代码要"顺着来"</vk-label>
+    <vk-label counter="8 / 9">于是代码要"顺着来"</vk-label>
     <vk-text size="subhead">三条能立刻用上的规则。</vk-text>
     <vk-list variant="check" gap="close">
       <li>遍历用连续内存（数组而不是链表）</li>
@@ -106,7 +114,7 @@ for (i = 0; i < n; i++)
 
 <vk-page id="8-end">
   <vk-stack gap="wide">
-    <vk-label counter="8 / 8">小结</vk-label>
+    <vk-label counter="9 / 9">小结</vk-label>
     <vk-text size="display">快的秘密，<br>是<em>近</em>。</vk-text>
     <vk-text size="caption" ink="muted">下一集：一次函数调用，CPU 为什么能猜到去哪。</vk-text>
   </vk-stack>

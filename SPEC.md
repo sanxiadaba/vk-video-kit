@@ -124,7 +124,7 @@ s[0] = 'H';
 | `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
 | `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
-| `vk-page` | 一帧 | `id`(帧名，出图用作文件名) `align`(top/center/bottom，默认 center) |
+| `vk-page` | 一帧 | `id`(帧名，出图用作文件名) `align`(top/center/bottom，默认 center) `surface`(paper/dark，默认 paper) |
 
 属性的完整取值与默认值：`vk doc <tag>`；机器可读的一份：`vk brief --json`。
 
@@ -135,6 +135,7 @@ s[0] = 'H';
 ### 背景与全幅
 
 一帧可以有一张铺满整帧的底：把它写成 `vk-page` 的直接子项，加 `bleed="all"`。
+整帧反白（章节页、终端时刻）就直接写 `<vk-page surface="dark">`：纸变深，正文、次要、弱化三档墨自动换成亮色，不用逐处改 `ink`。
 
 ```html
 <vk-page>
