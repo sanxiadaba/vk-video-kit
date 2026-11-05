@@ -107,7 +107,12 @@ export function auditPage(stageEl) {
     // 2. 出安全区
     if (!isOverlay(el) && !el.closest('[bleed]')) {
       if (r.left < safe.left - 2 || r.right > safe.right + 2 || r.top < safe.top - 2 || r.bottom > safe.bottom + 2) {
-        issues.push({ type: 'safe-area', what: `${name(el)} 超出安全区`, fix: '内容要落在版心 1680×888 里；删内容或换帧' });
+        const over = Math.round(Math.max(0, safe.top - r.top, r.bottom - safe.bottom, safe.left - r.left, r.right - safe.right) / (scale || 1));
+        issues.push({
+          type: 'safe-area',
+          what: `${name(el)} 超出安全区 ${over}px`,
+          fix: '内容要落在版心 1680×888 里：删一行 / 降一级 gap / 拆帧',
+        });
       }
     }
 
