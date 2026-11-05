@@ -339,6 +339,19 @@ console.log('\n自动适配');
   ok(r.stepsDir === 'vertical', '窄容器里的步骤条自动竖排');
   ok(r.numAlign === 'right' && r.textAlign === 'left', '表格数字列右对齐、文字列不动');
   ok(!r.noteOverlaps, '注释不压在目标上');
+  /* 手写排版：等于开第二套字体系统，构建期要拦。 */
+  {
+    const probe = path.join(os.tmpdir(), 'vk-style-' + Date.now() + '.html');
+    fs.writeFileSync(probe, '<vk-page id="x"><vk-text size="body" style="font-size: 20px">手写</vk-text></vk-page>');
+    let caught = '';
+    try {
+      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'check', probe], { stdio: 'pipe' });
+    } catch (e) {
+      caught = String(e.stdout || '') + String(e.stderr || '');
+    }
+    fs.rmSync(probe, { force: true });
+    ok(caught.includes('style 里写了'), '手写 font-size 会被拦下');
+  }
 }
 
 console.log('\n验收帧');

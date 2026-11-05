@@ -168,7 +168,17 @@ function validate(root, file, errors) {
     const spec = attrsOf(tag);
     const parent = node.parentNode?.tagName;
     for (const { name, value } of node.attrs || []) {
-      if (name.startsWith('data-') || name.startsWith('aria-') || ['id', 'class', 'style', 'title', 'role', 'hidden'].includes(name)) continue;
+      if (name === 'style') {
+        // 排版只有一个来源：size / ink / weight。手写这几样等于开第二套字体系统。
+        const bad = String(value).match(/(?:^|;)\s*(font-size|line-height|color|font-family|font-weight|letter-spacing)\s*:/i);
+        if (bad) {
+          errors.push(
+            `${file}:${lineOf(node)} <${tag}> 的 style 里写了 ${bad[1]}：排版只走 size / ink / weight / align，不要手写`
+          );
+        }
+        continue;
+      }
+      if (name.startsWith('data-') || name.startsWith('aria-') || ['id', 'class', 'title', 'role', 'hidden'].includes(name)) continue;
       const def = spec[name];
       const canvasOk = parent === 'vk-canvas' && name in CANVAS_ATTRS;
       if (!def && !canvasOk) {
