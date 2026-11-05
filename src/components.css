@@ -464,6 +464,12 @@ vk-code[long='wrap'] .vk-src {
   color: var(--vk-dark-meta);
 }
 
+/* 代码行不自己裁：让窗口先长到内容宽（最多版心），再谈缩字号。 */
+vk-code .vk-line,
+vk-diff .vk-line {
+  overflow: visible;
+}
+
 /* ------------------------------------------------------------------ 终端 */
 .vk-term .vk-line {
   font-family: var(--vk-font-mono);

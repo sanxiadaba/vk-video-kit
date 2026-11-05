@@ -1,0 +1,99 @@
+<vk-page id="1-hook">
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 8">数组 vs 链表</vk-label>
+    <vk-text size="headline">同样八百万个数，<br>一边 <em>5ms</em>，一边 <em>23ms</em>。</vk-text>
+    <vk-text size="body" ink="secondary">两种写法都"遍历一遍"，差的是内存在哪。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="2-memory">
+  <vk-stack gap="close">
+    <vk-label counter="2 / 8">内存长什么样</vk-label>
+    <vk-text size="subhead">数组是<em>一整块</em>，链表是<em>撒出去</em>的。</vk-text>
+    <vk-canvas w="1500" h="380" pad="close">
+      <vk-text x="0" y="0" size="caption" ink="muted">数组：八个元素挨在一起</vk-text>
+      <vk-box x="0" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">1</vk-text></vk-box>
+      <vk-box x="66" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">2</vk-text></vk-box>
+      <vk-box x="132" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">3</vk-text></vk-box>
+      <vk-box x="198" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">4</vk-text></vk-box>
+      <vk-box x="264" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">5</vk-text></vk-box>
+      <vk-box x="330" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">6</vk-text></vk-box>
+      <vk-box x="396" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">7</vk-text></vk-box>
+      <vk-box x="462" y="80" w="60" h="76" surface="tint" tone="ok" pad="close"><vk-text size="caption" align="center">8</vk-text></vk-box>
+      <vk-text x="0" y="190" size="caption" ink="muted">链表：每个节点带一个指针，散落在堆上</vk-text>
+      <vk-box id="n0" x="0" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">1 · →</vk-text></vk-box>
+      <vk-box id="n1" x="380" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">2 · →</vk-text></vk-box>
+      <vk-box id="n2" x="760" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">3 · →</vk-text></vk-box>
+      <vk-box id="n3" x="1140" y="270" w="200" h="80" surface="soft" border="hair" pad="close"><vk-text size="caption" align="center">4 · →</vk-text></vk-box>
+    </vk-canvas>
+  </vk-stack>
+  <vk-callout mode="arrow" from="#n0" to="#n1" shape="straight"></vk-callout>
+  <vk-callout mode="arrow" from="#n1" to="#n2" shape="straight"></vk-callout>
+  <vk-callout mode="arrow" from="#n2" to="#n3" shape="straight"></vk-callout>
+</vk-page>
+
+<vk-page id="3-array">
+  <vk-stack gap="close">
+    <vk-label counter="3 / 8">数组的循环</vk-label>
+    <vk-code lang="c" file="array.c" src="../code/adt/array.c" lines="12-14" size="caption" current="2"></vk-code>
+    <vk-text size="caption" ink="muted">一次加法，地址往前走四个字节。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="4-list">
+  <vk-stack gap="close">
+    <vk-label counter="4 / 8">链表的循环</vk-label>
+    <vk-code lang="c" file="list.c" src="../code/adt/list.c" lines="19-21" current="2"></vk-code>
+    <vk-text size="caption" ink="muted">每个节点先去读指针，跳过去，再读值。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="5-bars">
+  <vk-stack gap="normal">
+    <vk-label counter="5 / 8">实测</vk-label>
+    <vk-text size="subhead">同一台机器，八百万次累加。</vk-text>
+    <vk-bars max="30" unit="毫秒">
+      <li value="5" label="数组" tone="ok"></li>
+      <li value="23" label="链表" tone="err"></li>
+    </vk-bars>
+    <vk-text size="caption" ink="muted">gcc -O2，各跑三次取稳定值；链表每次 22–24ms。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="6-why">
+  <vk-stack gap="normal">
+    <vk-label counter="6 / 8">为什么</vk-label>
+    <vk-text size="subhead">CPU 不是按字节取，是按<em>缓存行</em>取。</vk-text>
+    <vk-grid cols="12" gap="close">
+      <vk-box span="6" surface="tint" tone="ok" pad="normal" title="数组">
+        <vk-text size="caption">取 1 个元素，白送 15 个 —— 它们就在同一行里。</vk-text>
+      </vk-box>
+      <vk-box span="6" surface="tint" tone="err" pad="normal" title="链表">
+        <vk-text size="caption">取 1 个节点，只用到 8 字节，下一跳还在很远。</vk-text>
+      </vk-box>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="7-table">
+  <vk-stack gap="close">
+    <vk-label counter="7 / 8">那链表还有什么用</vk-label>
+    <vk-table variant="spec" size="caption">
+      <table>
+        <tr><th>操作</th><th>数组</th><th>链表</th></tr>
+        <tr><td>按下标取</td><td>一步</td><td>走 N 步</td></tr>
+        <tr><td>头部插入</td><td>整体后移</td><td>改两个指针</td></tr>
+        <tr><td>遍历</td><td>快</td><td>慢</td></tr>
+        <tr><td>内存占用</td><td>紧凑</td><td>多一倍指针</td></tr>
+      </table>
+    </vk-table>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="8-end">
+  <vk-stack gap="wide">
+    <vk-label counter="8 / 8">小结</vk-label>
+    <vk-text size="display">决定快慢的，<br>常常是<em>数据在哪</em>。</vk-text>
+    <vk-text size="caption" ink="muted">下一集：为什么哈希表"看起来乱"，却很快。</vk-text>
+  </vk-stack>
+</vk-page>
