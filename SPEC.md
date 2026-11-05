@@ -140,8 +140,8 @@ s[0] = 'H';
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
 | `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
-| `vk-stack` | 竖排 | `gap` `align` `justify` `direction` `weights` |
-| `vk-grid` | 栅格 | `cols` `gap` `align` `ratio` |
+| `vk-stack` | 竖排 | `gap` `pad` `align` `justify` `direction` `weights` |
+| `vk-grid` | 栅格 | `cols` `gap` `pad` `align` `ratio` |
 | `vk-canvas` | 自由摆 | `w` `h` `pad` |
 | `vk-layer` | 叠放 | `surface` `tone` |
 | `vk-pair` | 并置 | `direction` `split` `symbol` `gap` |

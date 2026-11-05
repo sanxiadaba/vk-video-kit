@@ -89,6 +89,7 @@ export const TAGS = {
     attrs: {
       gap: gap('normal'),
       direction: { type: 'enum', values: ['column', 'row'], default: 'column', group: 'layout', label: '方向' },
+      pad: pad('none'),
       align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '交叉轴' },
       justify: { type: 'enum', values: ['start', 'center', 'end', 'between'], default: 'start', group: 'layout', label: '主轴' },
       weights: { type: 'list', group: 'layout', label: '按份数分剩余高度，如 "1 2 1"' },
@@ -103,6 +104,7 @@ export const TAGS = {
     attrs: {
       cols: { type: 'int', min: 1, max: 12, default: 2, group: 'layout', label: '列数' },
       ratio: { type: 'list', group: 'layout', label: '按比例分列，如 "1 8 23"（写了就不看 cols）' },
+      pad: pad('none'),
       gap: gap('normal'),
       align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '纵向对齐' },
     },

@@ -5,6 +5,9 @@ export class VkStack extends VkElement {
   render() {
     const gap = attrSpace(this, 'gap', 'normal');
     if (gap) this.style.setProperty('--vk-gap', gap);
+    const pad = attrSpace(this, 'pad', 'none');
+    if (pad && pad !== '0px') this.style.setProperty('--vk-pad', pad);
+    else this.style.removeProperty('--vk-pad');
     this._weights();
   }
 
@@ -32,6 +35,9 @@ export class VkStack extends VkElement {
 /* ------------------------------------------------------------------ 网格 */
 export class VkGrid extends VkElement {
   render() {
+    const pad = attrSpace(this, 'pad', 'none');
+    if (pad && pad !== '0px') this.style.setProperty('--vk-pad', pad);
+    else this.style.removeProperty('--vk-pad');
     const ratio = attrText(this, 'ratio').trim();
     if (ratio) {
       const list = ratio.split(/[\s,]+/).filter(Boolean).map(Number);
