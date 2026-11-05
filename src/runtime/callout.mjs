@@ -13,6 +13,9 @@ import {
 
 const NS = 'http://www.w3.org/2000/svg';
 
+/** 件的"看得见的那一块"：窗口类画在 .vk-win 里，宿主本身是 1680 宽的透明块。 */
+const visibleBox = (el) => el?.querySelector?.(':scope > .vk-win') || el;
+
 /**
  * vk-callout —— 画在别人身上的一层。
  *
@@ -239,9 +242,12 @@ export class VkCallout extends VkElement {
      * 否则目标是一行代码时，四个候选位置全在代码窗里面。
      */
     const owner = a.el.closest('vk-code, vk-box, vk-cells, vk-table, vk-tree, vk-term, vk-diff, vk-img, vk-list, vk-steps') || a.el;
-    const ob = local(owner.getBoundingClientRect());
+    const ob = local(visibleBox(owner).getBoundingClientRect());
 
-    const obstacles = [...stage.querySelectorAll('vk-code, vk-box, vk-cells, vk-text, vk-table, vk-list, vk-term, vk-diff, vk-tree, vk-steps, vk-bars, vk-timeline, vk-img, vk-math, vk-asm')]
+    // 障碍物 = 所有会占地方的东西。vk-label 也算：气泡压住小标题一样难看。
+    const obstacles = [...stage.querySelectorAll(
+      'vk-code, vk-box, vk-cells, vk-text, vk-label, vk-table, vk-list, vk-term, vk-diff, vk-tree, vk-steps, vk-bars, vk-timeline, vk-img, vk-math, vk-asm, vk-pair, vk-grid'
+    )]
       .filter((el) => !el.contains(this) && !this.contains(el) && !owner.contains(el) && el !== owner)
       .map((el) => {
         const q = el.getBoundingClientRect();
@@ -331,11 +337,23 @@ export class VkCallout extends VkElement {
     const a = this._target();
     if (!a) return;
     const r = local(a.rect);
+    const stage = stageOf(this);
+    if (!stage) return;
+    const W = stage.clientWidth;
+    // 目标在窗口里时，圆点放到窗口外面：压住正文或压住圈线都难看。
+    const owner =
+      a.el.closest('vk-code, vk-term, vk-diff, vk-box, vk-cells, vk-tree, vk-asm, vk-bytes') || a.el;
+    const ob = local(visibleBox(owner).getBoundingClientRect());
     const dot = document.createElement('div');
     dot.className = 'vk-callout-bd vk-callout-badge';
     dot.textContent = this._text || '1';
-    dot.style.left = `${r.x + r.w}px`;
-    dot.style.top = `${r.y}px`;
+    // 圆点是 44px 且以锚点为中心：锚点要再往外让半个点，否则会压在字上。
+    const half = 22;
+    const right = ob.x + ob.w + half + 8;
+    const left = ob.x - half - 8;
+    const fitRight = right + half <= W - 4;
+    dot.style.left = `${fitRight ? right : left}px`;
+    dot.style.top = `${r.y + r.h / 2}px`;
     this._root.appendChild(dot);
     void esc;
   }

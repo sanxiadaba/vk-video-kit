@@ -184,7 +184,7 @@ let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'episodes', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/relations.html', 'episodes', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);
@@ -197,7 +197,7 @@ try {
   }
 }
 const frames = report.flatMap((r) => r.frames || []);
-ok(frames.length >= 50, `渲染出 ${frames.length} 帧`);
+ok(frames.length >= 55, `渲染出 ${frames.length} 帧`);
 let issues = 0;
 for (const r of report) {
   for (const f of r.frames || []) {

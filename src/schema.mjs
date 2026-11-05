@@ -435,7 +435,7 @@ export const TAGS = {
       for: { type: 'selector', content: true, group: 'target', label: '目标（ring / note / badge）' },
       from: { type: 'selector', content: true, group: 'target', label: '起点（arrow）' },
       to: { type: 'selector', content: true, group: 'target', label: '终点（arrow）' },
-      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '贴哪一侧' },
+      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '优先贴哪一侧（压到内容会自动顺延）' },
       gap: gap('normal'),
       shape: { type: 'enum', values: ['straight', 'ortho', 'curve'], default: 'curve', group: 'appearance', label: '连线形状' },
       label: { type: 'text', group: 'target', label: '连线上的字（arrow）' },
