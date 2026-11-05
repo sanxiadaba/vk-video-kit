@@ -42,6 +42,18 @@ const RECIPES = [
       { file: 'pipe/main.exe', cmd: ['gcc', 'pipe/main.o', '-o', 'pipe/main.exe'] },
     ],
   },
+  {
+    src: 'adt/array.c',
+    outputs: [
+      { file: 'adt/array.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/array.c', '-o', 'adt/array.exe'] },
+    ],
+  },
+  {
+    src: 'adt/list.c',
+    outputs: [
+      { file: 'adt/list.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/list.c', '-o', 'adt/list.exe'] },
+    ],
+  },
 ];
 
 function walkC(dir, out = []) {

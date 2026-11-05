@@ -90,7 +90,7 @@ s[0] = 'H';
 <vk-pair symbol="vs">…正好两块…</vk-pair>   <!-- `symbol` 写中轴上那个字；写了 split 就不画轴 -->
 ```
 
-- `span` 只属于 `vk-grid` 的子项；`x / y / w / h / z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
+- `span` 只属于 `vk-grid` 的子项；`x` `y` `w` `h` `z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
 - **`vk-canvas` 的子项要写清 `w` / `h`**：不写就按内容高，内容一变就超出画布（自检会报 `超出了 canvas Npx`）。
 - **`vk-canvas` 是最后的逃生口**：坐标要自己算，元素高度变了位置就错。堆叠用 `vk-stack`、分栏用 `vk-grid`、
   对照用 `vk-pair`。只有"必须按坐标摆"（示意图、连线两端）才用 canvas。

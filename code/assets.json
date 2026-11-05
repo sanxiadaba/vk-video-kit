@@ -1,4 +1,24 @@
 {
+  "adt/array.c": {
+    "src": "adt/array.c",
+    "srcHash": "a98d407e309dd5d1",
+    "outputs": {
+      "adt/array.exe": "2ce9fa54a7a37993"
+    },
+    "needs": [
+      "adt/array.exe"
+    ]
+  },
+  "adt/list.c": {
+    "src": "adt/list.c",
+    "srcHash": "2f962e954bc71ef6",
+    "outputs": {
+      "adt/list.exe": "42c230966ba1bcee"
+    },
+    "needs": [
+      "adt/list.exe"
+    ]
+  },
   "bsearch/bsearch.c": {
     "src": "bsearch/bsearch.c",
     "srcHash": "c517ce41489b21df",
@@ -38,7 +58,7 @@
       "pipe/main.i": "2dccae872b855bc6",
       "pipe/main.s": "3239d09816c803cc",
       "pipe/main.o": "94b20013bcdfc509",
-      "pipe/main.exe": "684d8acf38b15782"
+      "pipe/main.exe": "168b878db81eef30"
     },
     "needs": [
       "pipe/main.i",
