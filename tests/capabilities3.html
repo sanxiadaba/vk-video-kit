@@ -255,3 +255,26 @@ hello
     <vk-img span="6" src="../assets/hello/asm-o0.png" ratio="4 / 3" radius="md"></vk-img>
   </vk-grid>
 </vk-page>
+
+<vk-page id="darkkit" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label counter="20">深色页上的一整套件</vk-label>
+    <vk-table variant="spec" size="caption">
+      <table>
+        <tr><th>层</th><th>延迟</th></tr>
+        <tr><td>L1</td><td>1ns</td></tr>
+        <tr><td>内存</td><td>100ns</td></tr>
+      </table>
+    </vk-table>
+    <vk-cells cols="4" addr="0x1000" stride="4" current="2">
+      <li label="a[0]">10</li>
+      <li label="a[1]">20</li>
+      <li label="a[2]">30</li>
+      <li label="a[3]">40</li>
+    </vk-cells>
+    <vk-list variant="bullet" gap="close">
+      <li>深色页上的清单</li>
+      <li state="current">当前项</li>
+    </vk-list>
+  </vk-stack>
+</vk-page>

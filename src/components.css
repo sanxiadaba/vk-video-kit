@@ -1313,3 +1313,33 @@ vk-steps[data-direction='vertical'] .vk-step:not(:last-child)::after {
 vk-steps[data-direction='vertical'] .vk-step-conn {
   display: none;
 }
+
+/* ------------------------------------------------------------------ 深色页
+   自己画了纸/浅/淡底的件，就得自己把三档墨钉回纸面：
+   否则深色页把墨换成亮色，这些件会变成"亮底亮字"。 */
+.vk-cell,
+.vk-key,
+vk-inline[variant='code'],
+vk-label[variant='chip'] .vk-label-t,
+.vk-win,
+.vk-win > .vk-hd,
+.vk-diff-row,
+.vk-bar > .vk-bar-track,
+.vk-tl-item,
+.vk-compare-pane,
+vk-table tbody tr[tone] td {
+  --vk-focus: var(--vk-focus-paper);
+  --vk-ink-1: var(--vk-on-paper-1);
+  --vk-ink-2: var(--vk-on-paper-2);
+  --vk-ink-3: var(--vk-on-paper-3);
+}
+
+/* 深色页上的表格线：纸面发丝线在近黑上看不见，换成暗色系的线。 */
+vk-page[surface='dark'] vk-table th,
+vk-page[surface='dark'] vk-table td,
+vk-box[surface='dark'] vk-table th,
+vk-box[surface='dark'] vk-table td,
+vk-layer[surface='dark'] vk-table th,
+vk-layer[surface='dark'] vk-table td {
+  border-bottom-color: var(--vk-dark-rule);
+}

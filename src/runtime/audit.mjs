@@ -19,10 +19,20 @@ const name = (el) => {
 };
 
 const parseColor = (s) => {
-  const m = String(s).match(/rgba?\(([^)]+)\)/);
-  if (!m) return null;
-  const p = m[1].split(/[ ,/]+/).filter(Boolean).map(Number);
-  return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
+  const str = String(s);
+  const rgb = str.match(/rgba?\(([^)]+)\)/);
+  if (rgb) {
+    const p = rgb[1].split(/[ ,/]+/).filter(Boolean).map(Number);
+    return { r: p[0], g: p[1], b: p[2], a: p[3] === undefined ? 1 : p[3] };
+  }
+  // color(srgb 0.94 0.95 0.99 / 0.5)：color-mix() 出来的现代写法，
+  // 不认它就会把背景当成"透明"，一路走到深色页上，报出假的低对比。
+  const srgb = str.match(/color\(srgb\s+([\d.]+)\s+([\d.]+)\s+([\d.]+)(?:\s*\/\s*([\d.]+))?\)/i);
+  if (srgb) {
+    const a = srgb[4] === undefined ? 1 : Number(srgb[4]);
+    return { r: Math.round(Number(srgb[1]) * 255), g: Math.round(Number(srgb[2]) * 255), b: Math.round(Number(srgb[3]) * 255), a };
+  }
+  return null;
 };
 const blend = (f, b) => {
   const a = f.a + b.a * (1 - f.a);
