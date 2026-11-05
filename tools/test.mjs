@@ -174,6 +174,27 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const l of lies) console.error('    · ' + l + ' 其实已经有了，文档该改');
   }
 
+  /* 反向：运行时读的每个属性都必须是 schema 声明过的（删功能时最容易留下孤儿读取）。 */
+  {
+    const rtFiles = fs.readdirSync(path.join(ROOT, 'src', 'runtime')).filter((f) => f.endsWith('.mjs'));
+    const orphan = [];
+    for (const f of rtFiles) {
+      const src = fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8');
+      const map = new Map([...src.matchAll(/define\('([a-z-]+)',\s*(\w+)\)/g)].map((m) => [m[2], m[1]]));
+      const starts = [...src.matchAll(/^(?:export )?class (\w+)/gm)].map((m) => ({ name: m[1], at: m.index }));
+      for (let i = 0; i < starts.length; i++) {
+        const tag = map.get(starts[i].name);
+        if (!tag) continue;
+        const body = src.slice(starts[i].at, i + 1 < starts.length ? starts[i + 1].at : src.length);
+        for (const m of body.matchAll(/attr[A-Z]\w*\(this,\s*'([\w-]+)'/g)) {
+          if (!attrsOf(tag)?.[m[1]]) orphan.push(tag + "." + m[1]);
+        }
+      }
+    }
+    ok(!orphan.length, '运行时只读声明过的属性');
+    for (const o of [...new Set(orphan)].slice(0, 6)) console.error('    · ' + o + ' 读了 schema 里没有的属性');
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {
