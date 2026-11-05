@@ -69,16 +69,17 @@ const escHtml = (s) =>
 export async function startServer({ port = 8099, root = process.cwd(), transform = true } = {}) {
   // 进程启动时的库指纹：服务端代码 + 构建产物（dist/build.json 的 id）。
   // 页面 / 请求拿它和现在的指纹比，不一致 = 这个进程比磁盘上的库旧，必须重启。
-  const serverStamp = computeStamp();
+  let serverStamp = computeStamp();
   // 过时了就自己重启：库改十几轮，人不会记得重启服务器，
   // 而每次"过时"看起来都像页面坏了。--no-restart 可以关掉（测试与 CI 用）。
   // 端口 0 是测试用的临时端口，不能自己重启（会抢不到端口、把测试进程搞乱）。
   const noRestart = port === 0 || process.argv.includes('--no-restart');
   let restarting = false;
+  let warnedStale = false;
   const selfRestart = () => {
+    if (process.env.VK_RESTART !== '1') return;
     if (noRestart || restarting) return;
     restarting = true;
-    // 不自己 spawn：以 42 退出，由监护进程在端口释放后拉起新 worker。
     setTimeout(() => process.exit(42), 400);
   };
   let highlighterPromise = null;
@@ -89,14 +90,15 @@ export async function startServer({ port = 8099, root = process.cwd(), transform
   async function renderHtml(file) {
     // 先判旧、再看缓存：页面自己的 mtime 没变，但库重建过，缓存里的那份也不能信
     // （它由旧 registry 的校验产出）。放在缓存前面，过时才不会被命中缓存掩盖。
+    // 库更新后进程里的 registry 可能旧了：清掉缓存、照常服务。
+    // 绝不能因此回一张"正在重启"的页面——开发服务器永远不该拒绝出页面。
     if (serverIsStale(serverStamp)) {
-      const e = new Error(
-        '库已更新（构建产物或服务端代码变了），这个 vk serve 进程还是启动时那一份。\n' +
-          '启动指纹 ' + serverStamp + ' → 现在 ' + computeStamp() + '。\n' +
-          '已经自动重启；刷新后这条提示会消失。如果仍然存在，才是页面真的写错了。'
-      );
-      e.staleServer = true;
-      throw e;
+      if (!warnedStale) {
+        warnedStale = true;
+        console.warn('[vk] 库已更新，本次请求用当前进程的 registry 渲染；需要最新校验请重启 serve');
+      }
+      htmlCache.clear();
+      serverStamp = computeStamp();
     }
     const st = await fs.stat(file);
     const hit = htmlCache.get(file);
