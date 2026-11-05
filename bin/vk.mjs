@@ -350,7 +350,8 @@ if (cmd === 'render' || cmd === 'check') {
     for (const [name, spec] of list) {
       const vals = spec.values ? spec.values.join(' | ') : spec.type;
       const def = spec.default !== undefined ? `  默认 ${spec.default}` : '';
-      console.log(`  ${name.padEnd(12)} ${vals}${def}  ${spec.label || ''}`);
+      const modes = spec.modes ? `  （只对 mode=${spec.modes.join(' / ')}）` : '';
+      console.log(`  ${name.padEnd(12)} ${vals}${def}  ${spec.label || ''}${modes}`);
     }
   }
   if (t.children) console.log(`\n子节点：${t.children.hint || t.children.kind}`);

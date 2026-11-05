@@ -158,6 +158,16 @@ function validate(root, file, errors) {
       if (s.type === 'space' && !(value in GAP) && !/^\d+(\.\d+)?(px)?$/.test(value)) {
         errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${value}" 不是间距；可用：${Object.keys(GAP).join(' / ')} 或像素数`);
       }
+      // 有的属性只在某几种形态下有用：写错形态它就是个哑属性，构建期就说清楚。
+      if (s.modes) {
+        const modeAttr = (node.attrs || []).find((a) => a.name === 'mode');
+        const mode = modeAttr?.value ?? spec.mode?.default ?? '';
+        if (mode && !s.modes.includes(mode)) {
+          errors.push(
+            `${file}:${lineOf(node)} <${tag}> 的 ${name} 只在 mode=${s.modes.map((m) => '\u201c' + m + '\u201d').join(' / ')} 时有用；现在的 mode 是 ${mode}，这个属性不会生效`
+          );
+        }
+      }
     }
     // span 只在 grid 子项上成立；x/y 只在 canvas 子项上。
     if (node.attrs?.some((a) => a.name === 'span' || a.name === 'row-span') && parent !== 'vk-grid') {
