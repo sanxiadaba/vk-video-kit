@@ -374,7 +374,7 @@ export const TAGS = {
     attrs: {
       value: { type: 'text', content: true, group: 'content', label: '位串，可含空格；用 | 分段（符号 | 指数 | 尾数）' },
       label: { type: 'text', group: 'appearance', label: '左边一行说明' },
-      index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号方向' },
+      index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号：down 按位权 7,6,5…；up 从左往右数 0,1,2…；sparse 只标 8 的倍数' },
       group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
       sign: { type: 'bool', group: 'appearance', label: '标出符号位' },
       size: sizeText('body'),
