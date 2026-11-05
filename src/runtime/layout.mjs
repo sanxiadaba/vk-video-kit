@@ -78,9 +78,13 @@ export class VkPair extends VkElement {
     const gap = attrSpace(this, 'gap', 'wide');
     if (gap) this.style.setProperty('--vk-gap', gap);
     const symbol = attrText(this, 'symbol', 'none');
-    if (symbol === 'none') delete this.dataset.symbol;
-    else this.dataset.symbol = symbol;
-    this.dataset.axis = '';
+    if (symbol === 'none') {
+      delete this.dataset.symbol;
+      delete this.dataset.axis;
+    } else {
+      this.dataset.symbol = symbol;
+      this.dataset.axis = '';
+    }
   }
 }
 

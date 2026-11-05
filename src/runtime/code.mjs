@@ -48,6 +48,7 @@ function paintState(host) {
 
 export class VkCode extends VkElement {
   render() {
+    this._mark();
     const lines = this.querySelectorAll('.vk-line[data-vk-line]');
     if (!lines.length) {
       this.stale('缺少预编译的代码');
@@ -60,6 +61,32 @@ export class VkCode extends VkElement {
 
   place() {
     fitToBox(this);
+  }
+
+  /** mark="malloc"：把窗口里出现的每个词包成 .vk-mark，不碰其它字符。 */
+  _mark() {
+    for (const old of this.querySelectorAll('.vk-mark')) old.replaceWith(...old.childNodes);
+    const word = (this.getAttribute('mark') || '').trim();
+    if (!word) return;
+    for (const src of this.querySelectorAll('.vk-src')) {
+      const walker = document.createTreeWalker(src, NodeFilter.SHOW_TEXT);
+      const targets = [];
+      for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent.includes(word)) targets.push(n);
+      for (const node of targets) {
+        const parts = node.textContent.split(word);
+        const frag = document.createDocumentFragment();
+        parts.forEach((p, i) => {
+          if (i) {
+            const m = document.createElement('span');
+            m.className = 'vk-mark';
+            m.textContent = word;
+            frag.append(m);
+          }
+          if (p) frag.append(document.createTextNode(p));
+        });
+        node.replaceWith(frag);
+      }
+    }
   }
 }
 

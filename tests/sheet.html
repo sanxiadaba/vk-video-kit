@@ -34,6 +34,21 @@ int main(void) {
   </vk-stack>
 </vk-page>
 
+<vk-page id="mark">
+  <vk-stack gap="normal">
+    <vk-label>标词</vk-label>
+    <vk-code lang="c" file="hello.c" current="3" mark="printf">
+      <script type="text/plain" data-vk-source>
+int main(void) {
+  printf("hello\n");
+  return 0;
+}
+      </script>
+    </vk-code>
+    <vk-text size="caption" ink="muted">mark 把窗口里出现的每个词标出来。</vk-text>
+  </vk-stack>
+</vk-page>
+
 <vk-page id="file">
   <vk-stack gap="normal">
     <vk-label>真文件</vk-label>

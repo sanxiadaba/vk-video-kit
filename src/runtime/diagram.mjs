@@ -21,7 +21,6 @@
      · .vk-tl-start / .vk-tl-end
      · .vk-lane / .vk-lane-row / .vk-lane-name（泳道整块没有规则）
      · .vk-compare-pane img 没写 object-fit（这里补 contain：不裁、不拉伸）
-     · .vk-compare-zoom（放大块）
      · .vk-compare-label 在 split 下没法逐 pane 放：两个 pane 叠着，
        角标共处一行（左「改前」右「改后」）。
    ========================================================================== */
@@ -408,8 +407,6 @@ export class VkTimeline extends VkElement {
 
 /* ================================================================== 对照 */
 
-const ZOOM_MAX = 12; // 倍数上限：再大就只剩色块，不如写区域。
-
 /** 差异框："x1,y1,x2,y2;…"，百分比。 */
 function parseMarks(raw, host) {
   const out = [];
@@ -433,31 +430,6 @@ function parseMarks(raw, host) {
     out.push({ left, top, w, h });
   }
   return out;
-}
-
-/** 放大："2" 是倍数；"x1,y1,x2,y2" 是区域（按区域算倍数，让它刚好铺满）。 */
-function parseZoom(raw, host) {
-  const tok = String(raw || '').trim();
-  if (!tok) return null;
-  const nums = tok.split(',').map((s) => Number(s.trim()));
-  if (nums.length === 1 && Number.isFinite(nums[0]) && nums[0] >= 1) {
-    return { factor: Math.min(ZOOM_MAX, nums[0]), region: null };
-  }
-  if (nums.length === 4 && nums.every((n) => Number.isFinite(n))) {
-    const [x1, y1, x2, y2] = nums.map((n) => Math.max(0, Math.min(100, n)));
-    const w = Math.abs(x2 - x1);
-    const h = Math.abs(y2 - y1);
-    if (w < 1 || h < 1) {
-      warn(host, `zoom="${tok}" 的区域太小`);
-      return null;
-    }
-    return {
-      factor: Math.min(ZOOM_MAX, Math.min(100 / w, 100 / h) * 0.92),
-      region: { left: Math.min(x1, x2), top: Math.min(y1, y2), w, h }, // 与 mark 同一套字段
-    };
-  }
-  warn(host, `zoom="${tok}" 只认倍数（"2"）或区域（"x1,y1,x2,y2"，百分比）`);
-  return null;
 }
 
 const markHtml = (m) =>
@@ -488,32 +460,18 @@ export class VkCompare extends VkElement {
     const split = attrNum(this, 'split', 50);
     this.dataset.variant = variant;
 
-    const zoom = parseZoom(attrText(this, 'zoom'), this);
     this._marks = parseMarks(attrText(this, 'mark'), this);
-    // 放大的落点：写了区域就用区域；否则用第一个差异框；再否则整张图。
-    const area = zoom?.region || this._marks[0] || null;
-    this._zoom = zoom
-      ? {
-          factor: zoom.factor,
-          cx: area ? area.left + area.w / 2 : 50,
-          cy: area ? area.top + area.h / 2 : 50,
-          rw: area ? area.w : 100,
-          rh: area ? area.h : 100,
-        }
-      : null;
 
     // 只有结构会变的属性才重建（重建等于重新加载图片，split 这种不该动 DOM）。
-    const sig = `${variant}|${srcs.join('\u0000')}|${caps.join('\u0000')}|${zoom ? zoom.factor.toFixed(3) : ''}`;
+    const sig = `${variant}|${srcs.join('\u0000')}|${caps.join('\u0000')}`;
     if (this._sig !== sig) {
       this._sig = sig;
-      this._zoomH = 0;
       this.innerHTML = this._structure(variant, srcs, caps);
       this._wire();
     }
 
     this._paintSplit(variant, split);
     this._paintMarks();
-    this._paintZoom();
     this._syncAspect();
   }
 
@@ -552,17 +510,7 @@ export class VkCompare extends VkElement {
         .join('')}</div>`;
     }
 
-    // 放大块：追加在下方，pane 高度由 place() 按主对照区算。
-    const zoom = this._zoom;
-    const zoomHtml = zoom
-      ? `<div class="vk-compare-zoom" data-zoom="${pct(zoom.factor)}" style="margin-top:var(--vk-gap-normal);display:flex;flex-direction:column;gap:var(--vk-gap-close)">` +
-        `<span class="vk-compare-label">${esc(caps[0] || '')}${caps[0] ? ' · ' : ''}${pct(zoom.factor)}×</span>` +
-        `<div class="vk-compare-pane" data-pane="zoom">` +
-        `<div data-marks data-zoom-inner style="position:absolute;inset:0">${imgHtml(srcs[0], caps[0] || '')}</div>` +
-        `</div></div>`
-      : '';
-
-    return body + zoomHtml;
+    return body;
   }
 
   /** 图片事件只挂一次（innerHTML 重建后要重挂）。 */
@@ -592,13 +540,6 @@ export class VkCompare extends VkElement {
     }
   }
 
-  _paintZoom() {
-    const inner = this.querySelector('[data-zoom-inner]');
-    if (!inner || !this._zoom) return;
-    inner.style.transform = `scale(${pct(this._zoom.factor)})`;
-    inner.style.transformOrigin = `${pct(this._zoom.cx)}% ${pct(this._zoom.cy)}%`;
-  }
-
   /**
    * 比例自检：两张图比例不同 —— pane 里必然留边，mark 的百分比也对不齐。
    * 图还没到就不知道，等 load 再来一次。
@@ -625,26 +566,6 @@ export class VkCompare extends VkElement {
     }
   }
 
-  /**
-   * 量：放大块的视口跟「被放大的那一块」同比例 —— 区域正好铺满，不留黑边。
-   * 高度按主对照区的 60%：放大是细节 inset，不该抢主图的位置。
-   */
-  place() {
-    const view = this.querySelector('.vk-compare-zoom > .vk-compare-pane');
-    if (!view || !this._zoom) return;
-    const main = this.querySelector('.vk-compare-pane[data-pane="a"]');
-    const pw = main?.offsetWidth || 0;
-    const ph = main?.offsetHeight || 0;
-    if (!pw || !ph) return;
-    const h = Math.round(Math.max(120, Math.min(640, ph * 0.6)));
-    const ar = (this._zoom.rw / this._zoom.rh) * (pw / ph); // 区域自身的宽高比
-    const w = Math.round(Math.min(Math.max(120, h * ar), this.clientWidth || pw * 2));
-    if (h === this._zoomH && w === this._zoomW) return;
-    this._zoomH = h;
-    this._zoomW = w;
-    view.style.height = `${h}px`;
-    view.style.width = `${w}px`;
-  }
 }
 
 /* ================================================================== 注册 */

@@ -82,3 +82,19 @@
     </vk-stack>
   </vk-grid>
 </vk-page>
+
+<vk-page id="arrow">
+  <vk-stack gap="wide">
+    <vk-label counter="关系">箭头</vk-label>
+    <vk-pair symbol="none">
+      <vk-box id="from" surface="paper" border="hair" pad="normal"><vk-text size="body">工作区</vk-text></vk-box>
+      <vk-box id="to" surface="paper" border="hair" pad="normal"><vk-text size="body">索引</vk-text></vk-box>
+    </vk-pair>
+    <vk-stack gap="close">
+      <vk-label variant="chip" tone="focus">chip</vk-label>
+      <vk-label variant="badge">badge</vk-label>
+    </vk-stack>
+  </vk-stack>
+  <vk-callout mode="arrow" from="#from" to="#to" shape="straight" label="add"></vk-callout>
+</vk-page>
+

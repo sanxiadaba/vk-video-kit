@@ -100,7 +100,7 @@ s[0] = 'H';
 | `vk-inline` | 行内代码 / 公式 / 上下标 / 键位 | `variant` |
 | `vk-box` | 一块面 | `surface` `tone` `pad` `radius` `border` `title` `chrome` `ring` |
 | `vk-img` | 一张图 | `src` `alt` `ratio` `fill` `radius` `position` |
-| `vk-code` | 代码窗 | `lang` `src` `lines` `file` `current` `focus` `fold` `size` `long` `chrome` |
+| `vk-code` | 代码窗 | `lang` `src` `lines` `file` `current` `focus` `fold` `mark` `size` `long` `chrome` |
 | `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface` `chrome` |
 | `vk-diff` | 改动 | `src` `lines` `file` `lang` `current` `size` |
 | `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
@@ -114,8 +114,8 @@ s[0] = 'H';
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
-| `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` `zoom` |
-| `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `side` `gap` `shape` `tone` |
+| `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
+| `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
 | `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
 | `vk-page` | 一帧 | `align`(top/center/bottom，默认 center) |
 
@@ -124,6 +124,19 @@ s[0] = 'H';
 **选型**：要讲的东西 → `code` / `term` / `diff` / `asm`（真实文本）· `cells` / `bytes` / `bits`（内存）·
 `table` / `list` / `tree`（结构）· `steps` / `bars` / `timeline` / `compare` / `pair`（关系）·
 `box` `text` `label`（版面）· `callout`（指着某处说一句）。
+
+### 背景与全幅
+
+一帧可以有一张铺满整帧的底：把它写成 `vk-page` 的直接子项，加 `bleed="all"`。
+
+```html
+<vk-page>
+  <vk-img src="../assets/cover.png" alt="封面" bleed="all"></vk-img>
+  <vk-stack gap="wide">…内容压在图上…</vk-stack>
+</vk-page>
+```
+
+`bleed="x"` 只横向出血，`bleed="y"` 只纵向。出血只对自己生效，不影响兄弟。
 
 ## 8 内容从哪来
 
@@ -197,3 +210,4 @@ vk icons arrow                   # 搜图标名
 - 把长句塞进 `headline`：标题 ≤ 14 字，超了换 `subhead`。
 - 用 `tone` 给正文上色：语义色只在线和底上，正文用 `ink`。
 - 一帧超过 888 高：删内容或拆帧。`vk render` 会告诉你超了多少。
+- `mark` 是**一段原文**（窗口里所有出现处都会被标），不是正则，也不用转义。

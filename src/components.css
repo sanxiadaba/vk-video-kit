@@ -378,6 +378,11 @@ vk-code[long='wrap'] .vk-src {
   color: var(--vk-focus);
   font-weight: var(--vk-w-bold);
 }
+.vk-mark {
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--vk-focus) 14%, transparent);
+  box-shadow: inset 0 -2px 0 var(--vk-focus);
+}
 .vk-line.is-dim {
   opacity: 0.35;
 }
@@ -1118,8 +1123,10 @@ vk-compare {
   justify-content: space-between;
   gap: var(--vk-gap-normal);
 }
-.vk-compare-zoom {
-  margin-top: var(--vk-gap-normal);
+
+/* 有放大块时主图要让出一半高度，否则整页会被顶出去。 */
+vk-compare[zoom] {
+  --vk-compare-h: 330px;
   display: flex;
   flex-direction: column;
   gap: var(--vk-gap-close);

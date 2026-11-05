@@ -25,7 +25,7 @@ const NS = 'http://www.w3.org/2000/svg';
  */
 export class VkCallout extends VkElement {
   render() {
-    const raw = (this.textContent || '').trim();
+    const raw = (attrText(this, 'label') || this.textContent || '').trim();
     if (raw) this._text = raw;
     if (!this._root) {
       const root = document.createElement('div');
