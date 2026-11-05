@@ -302,6 +302,13 @@ vk-text > .vk-text-ic svg {
 }
 
 /* 内容压在整帧背景之上：flex 子项的 z-index 不需要 position 就生效。 */
+/* 深色底上的重点线：--vk-info 在近黑上太暗，换暗色系的强调色。 */
+vk-page[surface='dark'] vk-text em,
+vk-box[surface='dark'] vk-text em,
+vk-layer[surface='dark'] vk-text em {
+  text-decoration-color: var(--vk-dark-accent);
+}
+
 .vk-stage > * {
   z-index: 1;
 }
