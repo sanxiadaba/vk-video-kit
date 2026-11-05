@@ -1,0 +1,54 @@
+<vk-page id="code-shrink">
+  <vk-stack gap="normal">
+    <vk-label counter="1">很长的代码行：窗口先长宽，再缩字号</vk-label>
+    <vk-code id="long" lang="c" file="long.c">
+      <script type="text/plain" data-vk-source>
+int total = compute(alpha_param, beta_param, gamma_param);
+      </script>
+    </vk-code>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="code-normal">
+  <vk-stack gap="normal">
+    <vk-label counter="2">短代码行：不缩</vk-label>
+    <vk-code id="short" lang="c" file="short.c">
+      <script type="text/plain" data-vk-source>
+int x = 1;
+      </script>
+    </vk-code>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="steps-narrow">
+  <vk-grid cols="12" gap="close">
+    <vk-steps id="steps" span="4" current="1">
+      <li>先要拿到原始数据</li>
+      <li>再把它换算成同一单位</li>
+      <li>最后才谈得上比较</li>
+    </vk-steps>
+  </vk-grid>
+</vk-page>
+
+<vk-page id="table-num">
+  <vk-table id="table" variant="ledger">
+    <table>
+      <tr><th>项目</th><th>次</th><th>毫秒</th></tr>
+      <tr><td>顺序</td><td>1000</td><td>12.5</td></tr>
+      <tr><td>二分</td><td>14</td><td>0.2</td></tr>
+    </table>
+  </vk-table>
+</vk-page>
+
+<vk-page id="note-avoid">
+  <vk-stack gap="normal">
+    <vk-label counter="5">注释放不下就挪开</vk-label>
+    <vk-code id="target" lang="c" file="x.c" current="2">
+      <script type="text/plain" data-vk-source>
+int a = 1;
+int b = 2;
+      </script>
+    </vk-code>
+  </vk-stack>
+  <vk-callout mode="note" for="#target@line:2">这一行在写内存</vk-callout>
+</vk-page>

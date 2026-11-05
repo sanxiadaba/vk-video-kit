@@ -670,6 +670,13 @@ vk-table table {
   font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: 1.45;
 }
+/* 数字列：运行期按列算好 num 类，这里负责让它右对齐、数字等宽。 */
+vk-table td.num,
+vk-table th.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 vk-table th,
 vk-table td {
   padding: calc(var(--vk-gap-close) * 0.9) var(--vk-gap-normal);

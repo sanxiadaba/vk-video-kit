@@ -233,12 +233,44 @@ try {
 }
 
 /* ---------------------------------------------------------------- 渲染 */
+console.log('\n自动适配');
+{
+  /* 库承诺的"自己会变好"：代码窗缩字号、步骤条竖排、数字列右对齐、注释不压内容。
+     这些都是行为，不是属性，只能真跑一遍量。 */
+  const { chromium: pw } = await import('playwright');
+  const b = await pw.launch({ channel: 'msedge', args: ['--allow-file-access-from-files'] });
+  const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
+  await page.goto('file:///' + path.join(ROOT, 'out', 'tests', 'behaviour.html').split(path.sep).join('/'));
+  await page.evaluate(() => window.vk.ready());
+  const r = await page.evaluate(() => {
+    const stages = [...document.querySelectorAll('.vk-stage')];
+    const q = (i, sel) => stages[i]?.querySelector(sel);
+    const box = (el) => (el ? el.getBoundingClientRect() : null);
+    const overlap = (a, b) => !!a && !!b && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
+    const note = q(4, '.vk-callout-note');
+    const target = q(4, 'vk-code');
+    return {
+      longFs: parseInt(getComputedStyle(q(0, '.vk-line')).fontSize),
+      shortFs: parseInt(getComputedStyle(q(1, '.vk-line')).fontSize),
+      stepsDir: q(2, 'vk-steps')?.dataset.direction,
+      numAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(2)')).textAlign,
+      textAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(1)')).textAlign,
+      noteOverlaps: overlap(box(note), box(target)),
+    };
+  });
+  await b.close();
+  ok(r.longFs < r.shortFs, `长代码行自动缩字号（${r.longFs}px < ${r.shortFs}px）`);
+  ok(r.stepsDir === 'vertical', '窄容器里的步骤条自动竖排');
+  ok(r.numAlign === 'right' && r.textAlign === 'left', '表格数字列右对齐、文字列不动');
+  ok(!r.noteOverlaps, '注释不压在目标上');
+}
+
 console.log('\n验收帧');
 let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/relations.html', 'episodes', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/relations.html', 'tests/behaviour.html', 'episodes', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);
