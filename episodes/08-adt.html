@@ -80,17 +80,63 @@ $ ./list
   <vk-stack gap="normal">
     <vk-label counter="7 / 9">为什么</vk-label>
     <vk-text size="subhead">CPU 不是按字节取，是按<em>缓存行</em>取。</vk-text>
-    <vk-grid cols="12" gap="close">
-      <vk-box span="6" surface="tint" tone="ok" pad="normal" title="数组">
-        <vk-text size="caption">取 1 个元素，白送 15 个 —— 它们就在同一行里。</vk-text>
-      </vk-box>
-      <vk-box span="6" surface="tint" tone="err" pad="normal" title="链表">
-        <vk-text size="caption">取 1 个节点，只用到 8 字节，下一跳还在很远。</vk-text>
-      </vk-box>
-    </vk-grid>
+    <vk-text size="caption" ink="muted">数组：一次搬一整行 64 字节</vk-text>
+    <vk-cells cols="16" current="5" size="caption">
+      <li>1</li>
+      <li>2</li>
+      <li>3</li>
+      <li>4</li>
+      <li>5</li>
+      <li>6</li>
+      <li>7</li>
+      <li>8</li>
+      <li>9</li>
+      <li>10</li>
+      <li>11</li>
+      <li>12</li>
+      <li>13</li>
+      <li>14</li>
+      <li>15</li>
+      <li>16</li>
+    </vk-cells>
+    <vk-text size="caption" ink="muted">链表：每个节点各占一行，每行只用 8 字节</vk-text>
+    <vk-cells cols="16" size="caption">
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li>1</li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li>1</li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+      <li></li>
+    </vk-cells>
+    <vk-text size="caption" ink="muted">取 1 个，白送 15 个 —— 只在数组上成立。</vk-text>
   </vk-stack>
 </vk-page>
-
 <vk-page id="8-table">
   <vk-stack gap="close">
     <vk-label counter="8 / 9">那链表还有什么用</vk-label>
