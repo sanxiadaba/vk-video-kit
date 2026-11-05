@@ -1,0 +1,46 @@
+<vk-page id="1-hook">
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 5">二分</vk-label>
+    <vk-text size="headline">一百万个数里找一个，<br>最多<em>二十次</em></vk-text>
+    <vk-text size="body" ink="secondary">顺着看要一百万次；每次砍掉一半，二十次就够。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="2-math">
+  <vk-stack gap="normal">
+    <vk-label counter="2 / 5">为什么</vk-label>
+    <vk-text size="subhead">做 k 次之后，剩 <em>n / 2^k</em> 个。</vk-text>
+    <vk-math display>\frac{n}{2^k} = 1 \;\Longrightarrow\; k = \log_2 n</vk-math>
+    <vk-text size="caption" ink="muted">100 万的对数底 2 是 19.93，所以最多 20 次。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="3-code">
+  <vk-stack gap="close">
+    <vk-label counter="3 / 5">代码</vk-label>
+    <vk-text size="body">关键是这一行 <em>mid = lo + (hi - lo) / 2</em></vk-text>
+    <vk-code lang="c" file="bsearch.c" src="../code/bsearch/bsearch.c" size="caption" lines="1-7" current="4"></vk-code>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="4-cost">
+  <vk-stack gap="normal">
+    <vk-label counter="4 / 5">代价</vk-label>
+    <vk-text size="subhead">规模涨一千倍，次数只多十次。</vk-text>
+    <vk-bars scale="log" max="1000000" unit="次">
+      <li value="1000" label="顺序 · 一千条"></li>
+      <li value="1000000" label="顺序 · 一百万条"></li>
+      <li value="14" label="二分 · 一千条" tone="ok"></li>
+      <li value="20" label="二分 · 一百万条" tone="ok"></li>
+    </vk-bars>
+    <vk-text size="caption" ink="muted">对数刻度：每一格是十倍。所以二分那两条看起来几乎一样长。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="5-end">
+  <vk-stack gap="wide">
+    <vk-label counter="5 / 5">小结</vk-label>
+    <vk-text size="display">有序，<br>才砍得动。</vk-text>
+    <vk-text size="caption" ink="muted">下一集：排序为什么至少要 n log n 次比较。</vk-text>
+  </vk-stack>
+</vk-page>

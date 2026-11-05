@@ -322,9 +322,10 @@ function buildDiff(node, file, errors) {
 }
 
 function buildMath(node, file, errors) {
-  const text = readSource(node, file, 'math');
-  if (text == null) {
-    errors.push(`${file}:${lineOf(node)} <vk-math> 没有内容：写 src="文件.tex" 或内联 TeX`);
+  // 三种写法都收：src 文件、内联 <script>、直接写在标签里的 TeX。
+  const text = readSource(node, file, 'math') ?? textOf(node);
+  if (text == null || !text.trim()) {
+    errors.push(`${file}:${lineOf(node)} <vk-math> 没有内容：写 src="文件.tex"，或把 TeX 直接写在标签里`);
     return '';
   }
   try {
