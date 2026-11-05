@@ -122,6 +122,29 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     }
   }
   ok(!twice.length, '同一文件里没有重复声明');
+
+  /* 死样式：CSS 里定义了、但没有任何一帧或运行时产出这个类名。 */
+  {
+    const cssText = files.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
+    const names = new Set();
+    for (const m of cssText.matchAll(/\.([a-zA-Z][\w-]*)/g)) names.add(m[1]);
+    const runtime = fs
+      .readdirSync(path.join(ROOT, 'src', 'runtime'))
+      .map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8'))
+      .join('\n') + fs.readFileSync(path.join(ROOT, 'src', 'build.mjs'), 'utf8');
+    const seen = new Set();
+    const walkDir = (dir) => {
+      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+        const full = path.join(dir, e.name);
+        if (e.isDirectory()) walkDir(full);
+        else if (e.name.endsWith('.html')) for (const m of fs.readFileSync(full, 'utf8').matchAll(/[\w-]+/g)) seen.add(m[0]);
+      }
+    };
+    for (const d of ['out', 'episodes', 'tests']) if (fs.existsSync(path.join(ROOT, d))) walkDir(path.join(ROOT, d));
+    const dead = [...names].filter((c) => !seen.has(c) && !runtime.includes(c));
+    ok(names.size > 80 && !dead.length, '没有写了却没人用的类');
+    for (const d of dead.slice(0, 6)) console.error('    · .' + d + ' 没有任何一帧用到');
+  }
   for (const t2 of twice.slice(0, 5)) console.error('    · ' + t2);
   for (const c of clashes.slice(0, 5)) console.error('    · ' + c);
 }

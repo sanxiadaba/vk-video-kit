@@ -89,37 +89,10 @@ vk-page[align='bottom'] .vk-stage {
 /* ------------------------------------------------------------------ 字
    一档字号 = 一个行盒高度（都是 4 的倍数）。行宽用 em，所以"一行几个字"
    不随字号漂移。 */
-.vk-t-cap,
-.vk-t-caption {
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
-  letter-spacing: var(--vk-track-caption);
-}
-.vk-t-body,
 vk-text {
   font-size: var(--vk-fs-body);
   line-height: var(--vk-lh-body);
   letter-spacing: var(--vk-track-body);
-}
-.vk-t-subhead {
-  font-size: var(--vk-fs-subhead);
-  line-height: var(--vk-lh-subhead);
-  letter-spacing: var(--vk-track-subhead);
-}
-.vk-t-headline {
-  font-size: var(--vk-fs-headline);
-  line-height: var(--vk-lh-headline);
-  letter-spacing: var(--vk-track-headline);
-}
-.vk-t-display {
-  font-size: var(--vk-fs-display);
-  line-height: var(--vk-lh-display);
-  letter-spacing: var(--vk-track-display);
-}
-.vk-t-hero {
-  font-size: var(--vk-fs-hero);
-  line-height: var(--vk-lh-hero);
-  letter-spacing: var(--vk-track-hero);
 }
 
 /* ------------------------------------------------------------------ 墨
@@ -305,18 +278,6 @@ vk-text[state='current'] {
 }
 
 /* 图标与文字共存：图标是 1em 的字形，挂在文字前面。 */
-vk-text > .vk-text-ic {
-  display: inline-flex;
-  width: 1em;
-  height: 1em;
-  margin-right: 0.32em;
-  vertical-align: -0.12em;
-  color: var(--vk-tone, currentColor);
-}
-vk-text > .vk-text-ic svg {
-  width: 1em;
-  height: 1em;
-}
 
 /* 图标：1em 见方、跟着文字基线走。不限制的话内联 SVG 会按默认 300×150 撑开整段。 */
 .vk-ic {

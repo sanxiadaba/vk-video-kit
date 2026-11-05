@@ -507,9 +507,6 @@ vk-diff .vk-line {
 .vk-term .vk-out {
   color: var(--vk-ink-2);
 }
-.vk-term .vk-path {
-  color: var(--vk-focus);
-}
 .vk-term .vk-err {
   color: var(--vk-err);
 }
@@ -558,13 +555,6 @@ vk-diff .vk-line {
   color: var(--vk-err);
   font-weight: var(--vk-w-bold);
 }
-.vk-diff-row .vk-word {
-  border-radius: 3px;
-  background: color-mix(in srgb, var(--vk-ok) 22%, transparent);
-}
-.vk-diff-row.del .vk-word {
-  background: color-mix(in srgb, var(--vk-err) 20%, transparent);
-}
 .vk-diff-hunk {
   padding: var(--vk-gap-close) var(--vk-gap-normal) 0;
   font-family: var(--vk-font-mono);
@@ -576,16 +566,6 @@ vk-diff .vk-line {
   border-top: var(--vk-line-w-hair) solid var(--vk-line-color);
   font-size: 40px;
   color: var(--vk-ink-3);
-}
-.vk-diff-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: var(--vk-line-w-hair);
-  background: var(--vk-line-color);
-}
-.vk-diff-split > .vk-win {
-  border: 0;
-  border-radius: 0;
 }
 
 /* ------------------------------------------------------------------ 汇编 */
