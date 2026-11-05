@@ -45,10 +45,7 @@ vk-callout {
 }
 
 .vk-callout-label {
-  translate: -50% -50%;
-  padding: 2px var(--vk-gap-close);
-  border-radius: var(--vk-radius-pill);
-  background: var(--vk-paper);
+  translate: -50% -135%;
   color: var(--vk-ink-2);
   font-size: var(--vk-fs-caption);
   line-height: 1.4;
