@@ -166,6 +166,27 @@ s[0] = 'H';
 但图上的字必须在实底上（`vk-box surface="paper"`）—— 库不提供遮罩，别把正文直接压在照片上。
 
 
+
+### 几个容易选错的取值
+
+| 属性 | 取值 | 什么时候用 |
+|---|---|---|
+| `vk-label variant` | `kicker`（默认） | 一帧开头那行小字：编号 + 栏目名 |
+| | `chip` | 标签/分类，浅底胶囊 |
+| | `badge` | 状态，实心底、白字 |
+| `vk-inline variant` | `code`（默认） | 正文里的标识符、运算符 |
+| | `math` | 行内公式 |
+| | `sup` / `sub` | 上下标（不常用） |
+| | `keys` | 键盘键帽，如 <kbd>Ctrl</kbd> |
+| `vk-box radius` | `md`（默认）/ `none` / `pill` | 卡片 / 直角 / 胶囊 |
+| `vk-box border` | `none`（默认）/ `hair` / `strong` | 无描边 / 细分隔 / 强调框 |
+| `vk-code long` | `clip`（默认） | 超出就裁（配合 `long="wrap"` 换行） |
+| `vk-term chrome` | `min`（默认） | 有窗头，像应用里的终端 |
+| | `none` | 整帧终端，没有窗头，用于"深色呼吸" |
+| `vk-compare variant` | `side`（默认） | 左右两张图并排 |
+| | `stack` | 上下叠，差异更明显 |
+| | `split` | 同一格里滑动裁切（`split="40"` 是右图露出的百分比） |
+
 ## 7.5 配方
 
 五个最常用的组合。每一段都能直接贴进页面，渲染出来是干净的（`tests/recipes.html` 就是这五段）。

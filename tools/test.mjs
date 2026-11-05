@@ -126,6 +126,25 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const g of ghosts.slice(0, 6)) console.error('    · ' + g + ' 没有样式也没有运行时读取');
   }
 
+  /* SPEC 里解释取值的那张表，必须指向真实的属性和真实存在的取值。 */
+  {
+    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
+    const head = specText.indexOf('### 几个容易选错的取值');
+    const tail = specText.indexOf('## 7.5 配方');
+    const sec = head >= 0 && tail > head ? specText.slice(head, tail) : '';
+    const rows = [...sec.matchAll(/`(vk-[a-z]+) ([a-z-]+)`\s*\|\s*([^\n|]+)\|/g)];
+    const wrong = [];
+    for (const [, tag, attr, cell] of rows) {
+      const def = attrsOf(tag)?.[attr];
+      if (!def) { wrong.push(tag + '.' + attr + ' 不存在'); continue; }
+      for (const v of cell.matchAll(/([`])([a-z-]+)\1/g)) {
+        if (def.values && !def.values.includes(v[2])) wrong.push(tag + "." + attr + " 没有取值 " + v[2]);
+      }
+    }
+    ok(rows.length >= 5 && !wrong.length, 'SPEC 的取值说明对得上 schema');
+    for (const w of wrong.slice(0, 5)) console.error('    · ' + w);
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {
