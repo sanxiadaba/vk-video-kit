@@ -214,7 +214,7 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
 
   /* 运行时会设一批 --vk-* 变量给样式读；设了没人读，就是拼错或者功能没了。 */
   {
-    const files2 = ['base.css', 'layout.css', 'components.css', 'callout.css'];
+    const files2 = ['tokens.generated.css', 'base.css', 'layout.css', 'components.css', 'callout.css'];
     const cssText = files2.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
     const rtText =
       fs.readdirSync(path.join(ROOT, 'src', 'runtime')).map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8')).join('\n');
@@ -224,6 +224,12 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     );
     const lonely = [...set].filter((n) => !readAnywhere.has(n));
     ok(set.size > 5 && !lonely.length, '运行时设的变量都有人在读');
+
+    // 反向：样式里读的变量必须有人定义（tokens 或运行时）。
+    const defined = new Set([...cssText.matchAll(/(--vk-[\w-]+)\s*:/g)].map((m) => m[1]));
+    const unset = [...new Set([...cssText.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]))].filter((n) => !defined.has(n) && !set.has(n));
+    ok(!unset.length, '样式读的变量都有人定义');
+    for (const u of unset.slice(0, 5)) console.error('    · ' + u + ' 没有定义');
     for (const l of lonely) console.error('    · ' + l + ' 设了但样式没读');
   }
 

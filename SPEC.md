@@ -219,7 +219,7 @@ s[0] = 'H';
 <vk-page id="1-cover">
   <vk-grid cols="12" gap="normal">
     <vk-stack span="6" gap="normal" justify="center">
-      <vk-label counter="1 / 6">第 6 集 · 编译链路</vk-label>
+      <vk-label counter="1 / 7">第 6 集 · 编译链路</vk-label>
       <vk-text size="subhead">从 .c 到 .exe，<br>中间发生了什么。</vk-text>
     </vk-stack>
     <vk-img span="6" src="../assets/hello/asm-o0.png" ratio="4 / 3" fill="contain" radius="md"></vk-img>
@@ -232,7 +232,7 @@ s[0] = 'H';
 ```html
 <vk-page id="2-code">
   <vk-stack gap="normal">
-    <vk-label counter="2 / 6">代码 + 圈住一行</vk-label>
+    <vk-label counter="2 / 7">代码 + 圈住一行</vk-label>
     <vk-text size="subhead">关键就在<em>这一行</em>。</vk-text>
     <vk-code id="c" lang="c" file="sum.c" src="../code/opt/sum.c" lines="1-3" current="2"></vk-code>
     <vk-text size="caption" ink="muted">圈的是源文件第 2 行。</vk-text>
@@ -246,7 +246,7 @@ s[0] = 'H';
 ```html
 <vk-page id="3-pair">
   <vk-stack gap="normal">
-    <vk-label counter="3 / 6">前后对照</vk-label>
+    <vk-label counter="3 / 7">前后对照</vk-label>
     <vk-text size="subhead">同一个循环，<em>一个顺、一个跳</em>。</vk-text>
     <vk-pair symbol="vs">
       <vk-code lang="c" file="a.c">
@@ -271,7 +271,7 @@ for (i = 0; i < n; i++)
 ```html
 <vk-page id="4-table">
   <vk-stack gap="normal">
-    <vk-label counter="4 / 6">表格 + 一句结论</vk-label>
+    <vk-label counter="4 / 7">表格 + 一句结论</vk-label>
     <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
     <vk-table variant="spec">
       <table>
@@ -290,7 +290,7 @@ for (i = 0; i < n; i++)
 ```html
 <vk-page id="5-chapter" surface="dark">
   <vk-stack gap="wide">
-    <vk-label counter="5 / 6">第二章</vk-label>
+    <vk-label counter="5 / 7">第二章</vk-label>
     <vk-text size="display">数据在哪，<br>决定它多快。</vk-text>
     <vk-text size="body" ink="secondary">从缓存行到数组，从 1ns 到 100ns。</vk-text>
   </vk-stack>
@@ -302,13 +302,30 @@ for (i = 0; i < n; i++)
 ```html
 <vk-page id="6-bars">
   <vk-stack gap="normal">
-    <vk-label counter="6 / 6">两组数字</vk-label>
+    <vk-label counter="6 / 7">两组数字</vk-label>
     <vk-text size="subhead">同样的活，差了<em>四倍</em>。</vk-text>
     <vk-bars max="30" unit="毫秒">
       <li value="5" label="数组" tone="ok"></li>
       <li value="23" label="链表" tone="err"></li>
     </vk-bars>
     <vk-text size="caption" ink="muted">八百万次累加，同一台机器。</vk-text>
+  </vk-stack>
+</vk-page>
+```
+
+**一个终端窗口**
+
+```html
+<vk-page id="7-term">
+  <vk-stack gap="normal">
+    <vk-label counter="7 / 7">一个终端窗口</vk-label>
+    <vk-text size="subhead">跑一遍，<em>输出自己说话</em>。</vk-text>
+    <vk-term title="python">
+      <script type="text/plain" data-vk-source>
+$ python3 -c "print(0.1 + 0.2)"
+0.30000000000000004
+      </script>
+    </vk-term>
   </vk-stack>
 </vk-page>
 ```
