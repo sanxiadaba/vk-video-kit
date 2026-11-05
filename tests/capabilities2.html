@@ -84,3 +84,26 @@ int parse(const char *s, struct result *out, size_t cap, int flags);
     <vk-compare variant="split" split="40" labels="../assets/hello/o0.png,../assets/hello/o2.png|-O0|-O2"></vk-compare>
   </vk-stack>
 </vk-page>
+
+<vk-page id="rest">
+  <vk-stack gap="close">
+    <vk-label counter="10" icon="check">label · icon</vk-label>
+    <vk-grid cols="12" gap="close">
+      <vk-diff span="8" file="loop.diff" src="../code/snippets/loop.diff" size="caption"></vk-diff>
+      <vk-tree span="4" src="../code/snippets" depth="1" size="caption" title="snippets/"></vk-tree>
+    </vk-grid>
+    <vk-grid cols="12" gap="close">
+      <vk-img span="3" src="../assets/hello/o0.png" ratio="16 / 9" fill="cover" position="top" radius="md"></vk-img>
+      <vk-term span="3" title="sh" size="caption" chrome="none">
+        <script type="text/plain" data-vk-source>
+$ make
+ok
+        </script>
+      </vk-term>
+      <vk-canvas span="3" w="300" h="160" pad="close">
+        <vk-box x="0" y="0" w="300" h="80" surface="soft" pad="close"><vk-text size="caption">canvas pad</vk-text></vk-box>
+        <vk-box x="0" y="100" w="300" h="80" surface="tint" tone="ok" pad="close"><vk-text size="caption">第二块</vk-text></vk-box>
+      </vk-canvas>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
