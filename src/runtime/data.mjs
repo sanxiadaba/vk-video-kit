@@ -103,7 +103,8 @@ export class VkTree extends VkElement {
     if (size) this.style.setProperty('--vk-cs', size)
     const want = normPath(attrText(this, 'current'))
     let hit = 0
-    for (const row of this.querySelectorAll('.vk-tree > .vk-trow[data-vk-node]')) {
+    // 树是嵌套节点（.vk-node），不是平铺的行：别按旧结构找。
+    for (const row of this.querySelectorAll('.vk-tree .vk-node[data-vk-node]')) {
       const on = !!want && normPath(row.dataset.vkNode) === want
       if (on) hit++
       row.toggleAttribute('data-current', on)

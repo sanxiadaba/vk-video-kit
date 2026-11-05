@@ -91,7 +91,8 @@ export class VkPair extends VkElement {
     const gap = attrSpace(this, 'gap', 'wide');
     if (gap) this.style.setProperty('--vk-gap', gap);
     const symbol = attrText(this, 'symbol', 'none');
-    if (symbol === 'none') {
+    // split 是不对称分栏：中轴上那个字会被挤进窄的一边，索性不画。
+    if (symbol === 'none' || this.hasAttribute('split')) {
       delete this.dataset.symbol;
       delete this.dataset.axis;
     } else {

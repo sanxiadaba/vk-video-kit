@@ -61,7 +61,7 @@ vk brief --json              # 全部件的契约
 npm test        # schema / tokens / 文档一致性 + 全部验收帧（真浏览器，约 20s）
 ```
 
-验收帧在 `tests/acceptance/`（真实教学内容，不是模板），组件总表在 `tests/sheet.html` 与 `tests/sheet2.html`，
+验收帧在 `tests/acceptance/`（真实教学内容，不是模板），组件总表在 `tests/sheet.html`、`tests/sheet2.html`、`tests/capabilities.html`、`tests/capabilities2.html`，
 真分镜在 `episodes/`（一整段 6–10 帧的连续内容，也是回归用例）。
 
 ## 结构

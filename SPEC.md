@@ -87,7 +87,7 @@ s[0] = 'H';
 </vk-grid>
 <vk-canvas w="1400" h="600">…子项写 x / y…</vk-canvas>
 <vk-layer>…第一个铺底，其余叠上去…</vk-layer>
-<vk-pair symbol="vs">…正好两块…</vk-pair>   <!-- `symbol` 写中轴上那个字，none = 不画轴 -->
+<vk-pair symbol="vs">…正好两块…</vk-pair>   <!-- `symbol` 写中轴上那个字；写了 split 就不画轴 -->
 ```
 
 - `span` 只属于 `vk-grid` 的子项；`x / y / w / h / z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。

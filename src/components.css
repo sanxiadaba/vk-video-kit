@@ -616,6 +616,11 @@ vk-pair:not([direction='vertical']) > :first-child {
 vk-pair:not([direction='vertical']) > :last-child {
   justify-self: start;
 }
+/* 但写了 split 就是要按比例分：两块铺满自己的格子，不再向中轴靠拢。 */
+vk-pair[split]:not([direction='vertical']) > :first-child,
+vk-pair[split]:not([direction='vertical']) > :last-child {
+  justify-self: stretch;
+}
 
 /* ------------------------------------------------------------------ 公式 */
 vk-math {

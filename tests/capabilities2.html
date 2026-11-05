@@ -1,0 +1,86 @@
+<vk-page id="align" align="top">
+  <vk-stack gap="normal">
+    <vk-label counter="1">page align · top</vk-label>
+    <vk-text size="subhead">align="top" 让内容贴版心上沿。</vk-text>
+    <vk-grid cols="3" align="center" gap="close">
+      <vk-box surface="soft" pad="close"><vk-text size="caption">等高</vk-text></vk-box>
+      <vk-box surface="soft" pad="close"><vk-text size="caption">两行<br>文字</vk-text></vk-box>
+      <vk-box surface="soft" pad="close"><vk-text size="caption">一</vk-text></vk-box>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="pair">
+  <vk-stack gap="normal">
+    <vk-label counter="2">pair · split</vk-label>
+    <vk-text size="subhead">split="35" 让左边窄、右边宽。</vk-text>
+    <vk-pair direction="horizontal" split="35" gap="close" symbol="vs">
+      <vk-box surface="soft" pad="close"><vk-text size="caption">窄</vk-text></vk-box>
+      <vk-box surface="tint" tone="focus" pad="close"><vk-text size="caption">宽的一边</vk-text></vk-box>
+    </vk-pair>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="box">
+  <vk-stack gap="normal">
+    <vk-label counter="3">box · chrome</vk-label>
+    <vk-grid cols="12" gap="close">
+      <vk-box span="6" chrome="dots" title="带窗头" pad="close" radius="md">
+        <vk-text size="caption">chrome="dots" 加三个圆点，radius 改圆角。</vk-text>
+      </vk-box>
+      <vk-box span="6" surface="tint" tone="ok" pad="close" radius="none">
+        <vk-text size="caption" icon="check">label 也能带图标。</vk-text>
+      </vk-box>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="codewrap">
+  <vk-stack gap="close">
+    <vk-label counter="4">code · long / chrome</vk-label>
+    <vk-code lang="c" file="long.c" size="caption" long="wrap" chrome="none">
+      <script type="text/plain" data-vk-source>
+int parse(const char *s, struct result *out, size_t cap, int flags);
+      </script>
+    </vk-code>
+    <vk-text size="caption" ink="muted">long="wrap" 折行；chrome="none" 去掉窗头。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="termsrc">
+  <vk-stack gap="close">
+    <vk-label counter="5">term · src</vk-label>
+    <vk-term title="server.log" src="../code/snippets/server.log" size="caption" current="2"></vk-term>
+    <vk-text size="caption" ink="muted">src 读真实日志文件；current 标一行。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="diffs">
+  <vk-stack gap="close">
+    <vk-label counter="6">diff · src / lines</vk-label>
+    <vk-diff file="loop.diff" src="../code/snippets/loop.diff" lang="c" lines="1-4" current="3"></vk-diff>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="maths">
+  <vk-stack gap="normal">
+    <vk-label counter="7">math · src / tree · src / current</vk-label>
+    <vk-math src="../code/snippets/mean.tex" display></vk-math>
+    <vk-tree src="../code/snippets" depth="1" current="mean.tex" title="code/snippets"></vk-tree>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="asms">
+  <vk-stack gap="close">
+    <vk-label counter="8">asm / compare</vk-label>
+    <vk-asm file="add-o0.dis" src="../code/opt/add-o0.dis" size="caption" bytes chrome="none" current="6"></vk-asm>
+    <vk-text size="caption" ink="muted">bytes 显示机器码列；chrome="none" 去掉窗头。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="split">
+  <vk-stack gap="close">
+    <vk-label counter="9">compare · split</vk-label>
+    <vk-compare variant="split" split="40" labels="../assets/hello/o0.png,../assets/hello/o2.png|-O0|-O2"></vk-compare>
+  </vk-stack>
+</vk-page>
