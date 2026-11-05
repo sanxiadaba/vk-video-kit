@@ -47,12 +47,16 @@ int x = a[2];
 <vk-page id="4-why">
   <vk-stack gap="normal">
     <vk-label counter="4 / 5">换成从 1 开始会怎样</vk-label>
-    <vk-text size="subhead">每次取元素，CPU 都要先减一。</vk-text>
-    <vk-list variant="bullet" gap="close">
-      <li>地址 = 首地址 + (下标 − 1) × 4</li>
-      <li>多一次减法，每次都多</li>
-      <li state="current">C 之父选了不用减的那种</li>
-    </vk-list>
+    <vk-text size="subhead">每取一次元素，就<em>多一次减法</em>。</vk-text>
+    <vk-pair symbol="vs">
+      <vk-box surface="tint" tone="ok" pad="normal" title="从 0 开始">
+        <vk-text size="caption" mono>首地址 + 下标 × 4</vk-text>
+      </vk-box>
+      <vk-box surface="tint" tone="warn" pad="normal" title="从 1 开始">
+        <vk-text size="caption" mono>首地址 + (下标−1) × 4</vk-text>
+      </vk-box>
+    </vk-pair>
+    <vk-text size="caption" ink="muted">多一次减法，每次都多；所以 C 之父选了不用减的那种。</vk-text>
   </vk-stack>
 </vk-page>
 
