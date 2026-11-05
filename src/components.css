@@ -826,6 +826,11 @@ vk-cells {
   grid-template-columns: repeat(var(--vk-cols, 4), minmax(0, 1fr));
   gap: var(--vk-gap-close);
 }
+.vk-cell[data-empty] {
+  border-style: dashed;
+  background: none;
+}
+
 .vk-cell {
   display: flex;
   flex-direction: column;

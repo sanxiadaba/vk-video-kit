@@ -134,6 +134,8 @@ export class VkCells extends VkElement {
       const cell = document.createElement('div')
       cell.className = 'vk-cell'
       cell.dataset.vkCell = String(i)
+      // 空格子不是"没加载"，是"这一格没用上"：标出来，样式压淡。
+      if (!li.textContent.trim() && !li.getAttribute('label')) cell.dataset.empty = '1'
 
       const label = attrText(li, 'label')
       if (label) {
