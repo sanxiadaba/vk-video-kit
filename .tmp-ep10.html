@@ -1,0 +1,65 @@
+<vk-page id="1-hook">
+  <vk-stack gap="wide">
+    <vk-label counter="1 / 5">数组</vk-label>
+    <vk-text size="headline">为什么下标<em>从 0 开始</em>？</vk-text>
+    <vk-text size="body" ink="secondary">因为下标不是"第几个"，是"往前挪几格"。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="2-cells">
+  <vk-stack gap="normal">
+    <vk-label counter="2 / 5">下标就是偏移</vk-label>
+    <vk-text size="subhead">a[2]，就是<em>往后数两格</em>。</vk-text>
+    <vk-code id="c" lang="c" file="pick.c" current="2">
+      <script type="text/plain" data-vk-source>
+int a[5] = {10, 20, 30, 40, 50};
+int x = a[2];
+      </script>
+    </vk-code>
+    <vk-cells id="cl" cols="5" addr="0x1000" stride="4" current="3">
+      <li label="a[0]">10</li>
+      <li label="a[1]">20</li>
+      <li label="a[2]">30</li>
+      <li label="a[3]">40</li>
+      <li label="a[4]">50</li>
+    </vk-cells>
+    <vk-text size="caption" ink="muted">a[2] 不是"第三个"，是"首地址往前挪两格"。</vk-text>
+  </vk-stack>
+  <vk-callout mode="arrow" from="#c@word:2:a[2]" to="#cl@cell:2" shape="ortho" tone="focus"></vk-callout>
+</vk-page>
+
+<vk-page id="3-table">
+  <vk-stack gap="close">
+    <vk-label counter="3 / 5">下标与地址</vk-label>
+    <vk-text size="subhead">多一格，地址就多 <em>4 个字节</em>。</vk-text>
+    <vk-table variant="spec">
+      <table>
+        <tr><th>下标</th><th>地址</th><th>值</th></tr>
+        <tr><td>0</td><td>0x1000</td><td>10</td></tr>
+        <tr><td>1</td><td>0x1004</td><td>20</td></tr>
+        <tr><td>2</td><td>0x1008</td><td>30</td></tr>
+      </table>
+    </vk-table>
+    <vk-text size="caption" ink="muted">地址 = 首地址 + 下标 × 4，所以第一个格子的下标只能是 0。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="4-why">
+  <vk-stack gap="normal">
+    <vk-label counter="4 / 5">换成从 1 开始会怎样</vk-label>
+    <vk-text size="subhead">每次取元素，CPU 都要先减一。</vk-text>
+    <vk-list variant="bullet" gap="close">
+      <li>地址 = 首地址 + (下标 − 1) × 4</li>
+      <li>多一次减法，每次都多</li>
+      <li state="current">C 之父选了不用减的那种</li>
+    </vk-list>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="5-end" surface="dark">
+  <vk-stack gap="wide">
+    <vk-label counter="5 / 5">小结</vk-label>
+    <vk-text size="display">下标是<em>偏移量</em>，<br>不是序号。</vk-text>
+    <vk-text size="caption" ink="muted">下一集：越界访问为什么不会当场报错。</vk-text>
+  </vk-stack>
+</vk-page>

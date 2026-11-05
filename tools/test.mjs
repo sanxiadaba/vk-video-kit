@@ -206,6 +206,23 @@ console.log('\n覆盖');
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
 
+  /* 帧计数写错（插帧后忘了重排）：构建期要报。 */
+  {
+    const probe = path.join(os.tmpdir(), 'vk-count-' + Date.now() + '.html');
+    fs.writeFileSync(
+      probe,
+      '<vk-page id="a"><vk-label counter="1 / 3">一</vk-label></vk-page>\n<vk-page id="b"><vk-label counter="3 / 3">二</vk-label></vk-page>\n<vk-page id="c"><vk-label counter="3 / 3">三</vk-label></vk-page>\n'
+    );
+    let caught = '';
+    try {
+      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'check', probe, '--json'], { stdio: 'pipe' });
+    } catch (e) {
+      caught = String(e.stdout || '') + String(e.stderr || '');
+    }
+    fs.rmSync(probe, { force: true });
+    ok(caught.includes('帧的计数'), '帧计数写错会在构建期报错');
+  }
+
   /* 重名 id 会静默覆盖出图、也会让锚点只指到第一个：构建期必须红。 */
   {
     const probe = path.join(os.tmpdir(), 'vk-dup-' + Date.now() + '.html');

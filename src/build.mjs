@@ -124,9 +124,39 @@ function editDistance(a, b) {
   return dp[m][n];
 }
 
+/** node 是不是 page 的后代（parse5 的节点只有 parentNode）。 */
+function within(node, page) {
+  let n = node;
+  while (n) {
+    if (n === page) return true;
+    n = n.parentNode;
+  }
+  return false;
+}
+
 function validate(root, file, errors) {
   const all = flatten(root);
   const idSeen = {};
+
+  /* 帧计数：<vk-label counter="3 / 9"> 要和实际顺序、总数对得上。
+     中间插一帧就得全体重排，靠人眼很容易漏。 */
+  const pages = all.filter((n) => n.tagName === 'vk-page');
+  // 只有当每一帧都写了 "N / M" 才算帧计数；只写了一条的多半是栏目标签。
+  const counterOf = (pg) => {
+    const label = all.find((n) => n.tagName === 'vk-label' && within(n, pg));
+    return (label?.attrs || []).find((a) => a.name === 'counter')?.value || '';
+  };
+  const allNumbered = pages.length > 1 && pages.every((pg) => /^\d+\s*\/\s*\d+$/.test(counterOf(pg)));
+  if (allNumbered) {
+    pages.forEach((pg, i) => {
+      const value = counterOf(pg);
+      const m = String(value).match(/^(\d+)\s*\/\s*(\d+)$/);
+      if (!m) return;
+      const [n, total] = [Number(m[1]), Number(m[2])];
+      if (n !== i + 1) errors.push(`${file}:${lineOf(pg)} 第 ${i + 1} 帧的计数写成了 "${value}"（应是 ${i + 1} / ${pages.length}）`);
+      else if (total !== pages.length) errors.push(`${file}:${lineOf(pg)} 帧总数写成了 ${total}，这个文件有 ${pages.length} 帧`);
+    });
+  }
   for (const node of all) {
     const tag = node.tagName;
     if (!tag?.startsWith('vk-')) continue;
