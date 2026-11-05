@@ -317,8 +317,9 @@ vk-asm {
   display: flex;
   flex-direction: column;
   width: fit-content;
-  /* 窄内容（两行 diff）不要把窗口缩成一张小卡片：给一个舒适的最小宽。 */
-  min-width: min(100%, 880px);
+  /* 窗宽跟版心走：连续两帧的代码窗宽度一致，剪起来不会跳。
+     想更窄就把窗口放进 grid / pair 的窄格里。 */
+  min-width: 100%;
   max-width: 100%;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
