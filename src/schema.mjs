@@ -338,14 +338,15 @@ export const TAGS = {
   'vk-cells': {
     layer: 'content',
     name: '内存格',
-    summary: '一格一个 <li>：标签、值、地址。地址由 addr + 序号算出，不手写。',
+    summary: '一格一个 <li>：标签、值、地址。地址由 addr + 序号 × stride 算出，不手写。',
     attrs: {
       addr: { type: 'text', content: true, group: 'content', label: '起始地址，如 "0x1000"' },
+      stride: { type: 'int', min: 1, default: 1, group: 'content', label: '每格占几字节（int 数组写 4）' },
       cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
       current: current(),
       size: sizeText('body'),
     },
-    children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: COMMON.state }, '<li value="61" label="s[0]">；地址自动按 addr + 序号算。'),
+    children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: COMMON.state }, '<li value="61" label="s[0]">；地址自动按 addr + 序号 × stride 算。'),
   },
 
   'vk-bytes': {

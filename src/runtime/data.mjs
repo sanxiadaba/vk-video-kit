@@ -124,6 +124,7 @@ export class VkCells extends VkElement {
     if (size) this.style.setProperty('--vk-cs', size)
 
     const addr = attrText(this, 'addr').trim()
+    const stride = Math.max(1, attrNum(this, 'stride') || 1)
     const start = addr ? Number(addr) : null
     const hasAddr = start != null && Number.isFinite(start)
     if (addr && !hasAddr) warn(this, `addr="${addr}" 不是数字地址`)
@@ -153,7 +154,7 @@ export class VkCells extends VkElement {
       if (hasAddr) {
         const a = document.createElement('span')
         a.className = 'vk-cell-a'
-        a.textContent = `0x${(start + i).toString(16).padStart(4, '0')}`
+        a.textContent = `0x${(start + i * stride).toString(16).padStart(4, '0')}`
         cell.append(a)
       }
 
