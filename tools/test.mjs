@@ -81,6 +81,19 @@ for (const tag of TAG_NAMES) {
 }
 ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
 
+  /* 文档漂移：CLI 上的每条命令、每个开关都得在 SPEC 里出现，否则作者看不到。 */
+  {
+    const bin = fs.readFileSync(path.join(ROOT, 'bin', 'vk.mjs'), 'utf8');
+    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
+    const cmds = [...new Set([...bin.matchAll(/cmd === '([a-z]+)'/g)].map((m) => m[1]))];
+    const flags = [...new Set([...bin.matchAll(/'(--[a-z]+)'/g)].map((m) => m[1]))].filter((f) => ['--phone', '--json', '--out', '--width', '--shot', '--cols'].includes(f));
+    const missCmd = cmds.filter((c) => !spec.includes('vk ' + c));
+    const missFlag = flags.filter((f) => !spec.includes(f));
+    ok(!missCmd.length && !missFlag.length, 'SPEC 与 CLI 一致');
+    for (const c of missCmd) console.error('    · 命令没写进 SPEC：vk ' + c);
+    for (const f of missFlag) console.error('    · 开关没写进 SPEC：' + f);
+  }
+
   /* 调色板一致性：语义色有纸面原值，就必须有深色页覆盖，否则深色页上它会"暗下去"。 */
   {
     // 读源码而不是构建产物：这条检查在渲染之前跑，构建产物可能还是上一版。

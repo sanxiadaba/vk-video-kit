@@ -206,10 +206,15 @@ s[0] = 'H';
 ```bash
 vk render pages/01.html          # 需要时自动重建库 → 构建 → 自检 → 出图 → 打印度量
 vk render pages/ --phone         # 780 宽，按手机尺度看
+vk render pages/ --width 960     # 任意宽度（会等比缩图）
+vk render a.html --out shots/    # 出图目录（默认 out/）
+vk render a.html --shot .vk-win  # 只截帧里某个元素：导出素材用
 vk check  pages/01.html          # 只自检，不出图
 vk doc vk-code                   # 一件的属性表
 vk brief --json                  # 全部件的契约（给机器读）
 vk icons arrow                   # 搜图标名
+vk stats episodes/               # 每集体检：帧数 / 占版心 / 缺主张 / 节奏
+vk sheet episodes/ --cols 4      # 把一集缩成联络图，看整体节奏
 ```
 
 一集 = 一个 `episodes/*.html` 文件，里面按顺序写 `<vk-page id="1-xxx">`；产物在 `out/<同路径>`；一帧一张 PNG，多帧文件按 `<文件名>-<id>.png`。
