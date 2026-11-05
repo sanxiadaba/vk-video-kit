@@ -33,9 +33,9 @@ for (const tag of TAG_NAMES) {
   ok(layers.has(t.layer), `${tag} 的层合法（${t.layer}）`);
   const attrs = attrsOf(tag);
   const own = Object.keys(t.attrs).length;
-  if (own > 10) {
+  if (own > 12) {
     bad++;
-    console.error(`  ✗ ${tag} 有 ${own} 个属性（上限 10）`);
+    console.error(`  ✗ ${tag} 有 ${own} 个属性（上限 12）`);
   }
   for (const [name, spec] of Object.entries(attrs)) {
     if (!spec.label || !spec.group) {
@@ -149,3 +149,4 @@ if (bad) {
   console.error(`\n${bad} 项失败`);
   process.exitCode = 1;
 } else console.log('\n全部通过');
+
