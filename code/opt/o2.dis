@@ -1,5 +1,5 @@
 
-o2.o:     file format pe-i386
+opt/o2.o:     file format pe-i386
 
 
 Disassembly of section .text:

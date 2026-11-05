@@ -360,9 +360,10 @@ function buildAsm(node, file) {
       }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)}</span></div>`;
     })
     .join('');
+  const lines = attrOf(node, 'lines');
   return `<div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
     attrOf(node, 'file') ? `<span class="vk-file">${esc(attrOf(node, 'file'))}</span>` : ''
-  }</div><div class="vk-bd">${body}</div></div>`;
+  }${lines ? `<span class="vk-range">${esc(lines)}</span>` : ''}</div><div class="vk-bd">${body}</div></div>`;
 }
 
 function buildBytes(node, file, errors) {

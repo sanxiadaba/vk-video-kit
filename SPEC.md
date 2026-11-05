@@ -109,10 +109,10 @@ s[0] = 'H';
 | `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
 | `vk-table` | 表格 | `variant` `mono` `size` `caption`（表上方标题） |
 | `vk-list` | 列表 | `variant`(bullet/check/ordered/define) `gap` `size` |
-| `vk-math` | 公式 | `src` `display` `size` |
+| `vk-math` | 公式 | `src` `display` `size`（TeX 可直接写在标签里） |
 | `vk-tree` | 文件树 | `src` `title` `depth` `current` `size` |
 | `vk-cells` | 内存格 | `addr` `cols` `current` `size` |
-| `vk-bytes` | 字节窗 | `src` `addr` `offset` `length` `cols` `current` |
+| `vk-bytes` | 字节窗 | `src` `addr` `offset` `length` `cols` `current`（1 起，如 "1-3"） |
 | `vk-bits` | 位串 | `value`（`|` 分段：符号\|指数\|尾数）`label` `index` `group` `sign` |
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |

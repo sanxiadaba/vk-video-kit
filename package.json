@@ -6,12 +6,16 @@
   "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
-  "bin": { "vk": "bin/vk.mjs" },
+  "bin": {
+    "vk": "bin/vk.mjs"
+  },
   "scripts": {
     "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/css.mjs && node tools/build.mjs",
     "render": "node bin/vk.mjs render pages",
     "check": "node bin/vk.mjs check pages",
-    "test": "node tools/test.mjs"
+    "test": "node tools/test.mjs",
+    "assets": "node tools/assets.mjs",
+    "assets:check": "node tools/assets.mjs --check"
   },
   "dependencies": {
     "katex": "^0.16.11",
@@ -29,5 +33,7 @@
   },
   "license": "MIT",
   "author": "jun",
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
