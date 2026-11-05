@@ -664,7 +664,7 @@ vk-table {
 vk-table table {
   /* 表格按内容宽，不硬拉满版心：三列表被拉成 1680 宽时，列间距会大得读不出行。 */
   width: auto;
-  min-width: min(100%, 820px);
+  min-width: min(100%, 420px);
   max-width: 100%;
   border-collapse: collapse;
   font-size: var(--vk-cs, var(--vk-fs-body));
