@@ -487,6 +487,13 @@ function pinInkOnLight() {
       el.style.setProperty('--vk-ink-3', 'var(--vk-on-paper-3)');
       // color 是继承的计算值，不设这一行，子元素仍是深色页的亮字。
       el.style.color = 'var(--vk-on-paper-1)';
+      // 焦点色和语义色也换回纸面版本：白卡片上的亮蓝线在白底上看不见。
+      for (const name of ['focus', 'info', 'ok', 'warn', 'err']) {
+        el.style.setProperty(`--vk-${name}`, `var(--vk-${name}-paper)`);
+      }
+      for (const name of ['info', 'focus', 'ok', 'warn', 'err']) {
+        el.style.setProperty(`--vk-tint-${name}`, `var(--vk-tint-${name}-paper)`);
+      }
     }
   }
 }
