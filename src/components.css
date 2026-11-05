@@ -1303,6 +1303,12 @@ vk-steps[data-direction='vertical'] .vk-step-conn {
    否则深色页把墨换成亮色，这些件会变成"亮底亮字"。 */
 .vk-cell,
 .vk-key,
+vk-box[surface='paper'],
+vk-box[surface='soft'],
+vk-box[surface='tint'],
+vk-layer[surface='paper'],
+vk-layer[surface='soft'],
+vk-layer[surface='tint'],
 vk-inline[variant='code'],
 vk-label[variant='chip'] .vk-label-t,
 .vk-win,

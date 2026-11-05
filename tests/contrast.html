@@ -1,0 +1,20 @@
+<vk-page id="1-dark-light" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label counter="1 / 2">冷读测试 · 深色页上的浅底件</vk-label>
+    <vk-text size="subhead">深色页里放一张<em>白纸卡片</em>。</vk-text>
+    <vk-box surface="paper" pad="normal">
+      <vk-text size="body">卡片里的字应该是深色的，不能跟着深色页变白。</vk-text>
+      <vk-text size="caption" ink="muted">次要文字也一样。</vk-text>
+    </vk-box>
+    <vk-text size="caption" ink="muted">卡片外面这行才该是浅色。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="2-word">
+  <vk-stack gap="normal">
+    <vk-label counter="2 / 2">冷读测试 · 圈住行里的一段字</vk-label>
+    <vk-text size="subhead">只圈 <em>sum</em> 这几个字符。</vk-text>
+    <vk-code id="c" lang="c" file="array.c" src="../code/adt/array.c" lines="10-14" current="3"></vk-code>
+  </vk-stack>
+  <vk-callout mode="ring" for="#c@word:13:sum" tone="focus"></vk-callout>
+</vk-page>
