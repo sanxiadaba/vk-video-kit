@@ -386,7 +386,10 @@ if (cmd === 'render' || cmd === 'check') {
           }
           const m = window.vk.metrics(stage) || {};
           const tags = new Set([...stage.querySelectorAll('*')].map((e) => e.localName).filter((t) => t.startsWith('vk-')));
-          return { id: pg.id || String(i + 1), maxFs, fill: m.fill || 0, focus: m.focus || 0, dark: pg.hasAttribute('surface') && pg.getAttribute('surface') === 'dark', tags: [...tags] };
+          const CONTENT = ['vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-table', 'vk-list', 'vk-tree', 'vk-cells', 'vk-bytes', 'vk-bits', 'vk-steps', 'vk-bars', 'vk-timeline', 'vk-compare', 'vk-pair', 'vk-canvas', 'vk-img', 'vk-math'];
+          // 没有内容件但有成排的盒子：那是示意图，不是纯文字。
+          const shape = CONTENT.find((t) => stage.querySelector(t)) || (stage.querySelectorAll('vk-box').length >= 3 ? 'vk-box' : 'text');
+          return { id: pg.id || String(i + 1), maxFs, fill: m.fill || 0, focus: m.focus || 0, dark: pg.hasAttribute('surface') && pg.getAttribute('surface') === 'dark', shape, tags: [...tags] };
         })
       );
       const low = rows.filter((r) => r.maxFs <= 56).map((r) => r.id);
@@ -396,6 +399,26 @@ if (cmd === 'render' || cmd === 'check') {
       console.log(`\n${path.relative(ROOT, b.file)}  ·  ${rows.length} 帧`);
       console.log(`  占版心 平均 ${avg}%（${Math.min(...rows.map((r) => r.fill))}–${Math.max(...rows.map((r) => r.fill))}）`);
       console.log(`  字号只到正文 ${low.length} 帧${low.length ? '（可能缺一句主张）：' + low.join(' ') : ''}`);
+      const GLYPH = {
+        'vk-code': '码', 'vk-term': '端', 'vk-diff': '差', 'vk-asm': '汇',
+        'vk-table': '表', 'vk-list': '单', 'vk-tree': '树', 'vk-cells': '格',
+        'vk-bytes': '节', 'vk-bits': '位', 'vk-steps': '步', 'vk-bars': '条',
+        'vk-timeline': '线', 'vk-compare': '照', 'vk-pair': '并', 'vk-canvas': '图',
+        'vk-img': '图', 'vk-math': '式', 'vk-box': '块', text: '字',
+      };
+      const rhythm = rows.map((r) => (r.dark ? '●' : '') + (GLYPH[r.shape] || '字')).join(' ');
+      // 连续三帧同一形态 = 节奏发闷
+      const runs = [];
+      let run = 1;
+      for (let i = 1; i <= rows.length; i++) {
+        if (i < rows.length && rows[i].shape === rows[i - 1].shape) run++;
+        else {
+          if (run >= 3) runs.push(`${rows[i - run].id} 起 ${run} 帧都是「${GLYPH[rows[i - 1].shape] || '字'}」`);
+          run = 1;
+        }
+      }
+      console.log(`  节奏 ${rhythm}`);
+      if (runs.length) console.log(`  连续同形：${runs.join('；')}`);
       console.log(`  深色 ${dark} 帧 · 用到 ${tags.size} 种件`);
       await session.page.close();
     }
