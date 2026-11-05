@@ -10,26 +10,8 @@
    · vk.ready() 之后一切都就位：字体、图片、布局、连线
    ========================================================================== */
 
-import { TAGS, TAG_NAMES, ALL_TAG_NAMES, observedOf } from '../registry.mjs';
-import { DENSITY_ALIAS, MASS_TAGS, TIER_ALIAS } from '../shared/tier-alias.mjs';
-import { FILL_BOOL, FILL_TAGS, MASS, SIZE_ALIAS, SIZE_TIERS, MASS_ALIAS, toneValue } from '../shared/vocab.mjs';
-import {
-  COLUMNS,
-  COLUMN_ATTRS,
-  DEPRECATED_ATTRS,
-  parseColumns,
-  serializeColumns,
-  parseSpace,
-  spaceCss,
-  parseArrow,
-  serializeArrow,
-  serializeFlowArrow,
-  parseFence,
-  serializeFence,
-  parseCounter,
-  parseCompareLabels,
-  serializeCompareLabels,
-} from '../shared/vocab.mjs';
+import { TAGS, TAG_NAMES, ALL_TAG_NAMES, observedOf } from '../schema.mjs';
+import { MASS, SIZE_TIERS, parseSpace, spaceCss, parseCounter } from '../shared/vocab.mjs';
 import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
 import { applyFrame, auditOverflow } from './frame.mjs';
 import { wrapCharRange } from './code-utils.mjs';
@@ -328,352 +310,6 @@ export function fetchSource(el) {
   pendingSources.add(p);
 }
 
-/* --------------------------------------------------------------- 值层迁移 */
-
-/**
- * 概念收敛的**运行期一半**：旧页连上 DOM 的第一刻，把旧名 / 旧值折成新词。
- *
- * 折完再往下走，所以组件、CSS、契约、文档都只认一套词。别名表只有一份，
- * 在 src/shared/vocab.mjs；这里只负责"落到属性上"，并给一条迁移提示（不拦构建）。
- *
- * 15.0 折的六件事：
- *   · tone 大小写 + 旧写法（accent / danger …）→ 六值；vk-pair 的 tone-a/b → tone="左,右"
- *   · fill 裸写（布尔）→ 填充组件上 cover、其它组件上 stretch（旧的 align-self: stretch）
- *   · line / active → current（当前项，1 起）
- *   · value-size / label-size / symbol-size → size（size 只表字号）
- *   · emphasis → strength；kind → variant；compare 的 mode → variant
- *   · label 的 anchor → side；note 的 place → side；label-a/b 与 asm 的四个列标题 → labels
- *
- * size 上的体量词（compact / normal / hero）**不再偷偷改写成 mass**：
- * 15.0 之前那段改写让 size 同时是字号、档位、体量，行为取决于标签与历史；
- * 现在只提示，让页面自己去写 mass。density（更老的词）仍然折成 mass。
- */
-export function normalizeVocab(el) {
-  const tag = el.tagName?.toLowerCase();
-  const get = (name) => el.getAttribute?.(name);
-  const warn = (key, msg) => el._warnOnce?.(key, msg);
-  const fold = (from, to, map) => {
-    const raw = get(from);
-    if (raw == null) return;
-    const next = map ? map(raw) : raw;
-    el.removeAttribute(from);
-    if (next == null) return next;
-    if (get(to) == null) el.setAttribute(to, next);
-    return next;
-  };
-
-  /* ---------------------------------------------------------------- tone */
-  const toneRaw = get('tone');
-  if (toneRaw != null) {
-    const isPair = tag === 'vk-pair';
-    const tokens = isPair ? toneRaw.split(',') : [toneRaw];
-    const out = tokens.map((token) => {
-      const text = token.trim();
-      if (isPair && (text === '' || text.toLowerCase() === 'none')) return 'none';
-      const r = toneValue(text);
-      if (r.bad) return text; // 不认识的留给构建期报错；运行期不擅自改画面
-      if (r.alias) warn(`tone:${text}`, `的 tone="${text}" 是旧写法，已映射成 tone="${r.value}"`);
-      return r.value;
-    });
-    const next = isPair ? out.join(',') : out[0];
-    if (next !== toneRaw) el.setAttribute('tone', next);
-  }
-  // vk-pair 的旧写法：tone-a / tone-b 各写一侧 → tone="左,右"（缺的一侧是 none）。
-  if (get('tone-a') != null || get('tone-b') != null) {
-    const a = (get('tone-a') ?? '').trim().toLowerCase() || 'none';
-    const b = (get('tone-b') ?? '').trim().toLowerCase() || 'none';
-    el.removeAttribute('tone-a');
-    el.removeAttribute('tone-b');
-    const fix = (v) => {
-      if (v === 'none') return 'none';
-      const r = toneValue(v);
-      return r.value || 'none';
-    };
-    if (get('tone') == null) el.setAttribute('tone', `${fix(a)},${fix(b)}`);
-    warn('tone:pair', `的 tone-a / tone-b 已并成 tone="左,右"，请写成 tone="${fix(a)},${fix(b)}"`);
-  }
-
-  /* ---------------------------------------------------------------- fill */
-  const fillRaw = get('fill');
-  if (fillRaw != null) {
-    const value = fillRaw.trim().toLowerCase();
-    const boolish = value === '' || ['true', 'false', 'on', 'off', 'yes', 'no'].includes(value);
-    if (FILL_TAGS.has(tag)) {
-      if (boolish) {
-        const next = FILL_BOOL[value] || 'cover';
-        el.setAttribute('fill', next);
-        warn('fill', `的 fill 裸写是旧的布尔写法，已映射成 fill="${next}"`);
-      } else if (value === 'width' || value === 'height' || value === 'stretch') {
-        el.setAttribute('fill', 'cover');
-        warn('fill', `的 fill="${value}" 是旧的铺满写法，已映射成 fill="cover"`);
-      }
-    } else {
-      // 非填充组件：这里的 fill 一直是"铺满父容器的一条轴"（align-self: stretch）。
-      el.removeAttribute('fill');
-      el.setAttribute('stretch', '');
-      warn(
-        'fill:stretch',
-        `的 fill 裸写是"铺满父容器"的旧布尔写法，15.0 起这个意思改叫 stretch；` +
-          `要"填充"请只在 vk-img / vk-panel / vk-layer 上用 fill="none|cover|contain"`
-      );
-    }
-  }
-
-  /* ------------------------------------------------------ current / 行段 */
-  for (const old of ['line', 'active']) {
-    const raw = get(old);
-    if (raw == null) continue;
-    if (get('current') == null) el.setAttribute('current', raw);
-    el.removeAttribute(old);
-    warn(`current:${old}`, `的 ${old}="${raw}" 已并入 current（当前项，1 起）；请写成 current="${raw}"`);
-  }
-
-  /* ---------------------------------------------------------------- size */
-  // value-size / label-size / symbol-size 是同一个概念（字号）的三个名字。
-  for (const old of ['value-size', 'label-size', 'symbol-size']) {
-    const raw = get(old);
-    if (raw == null) continue;
-    const mapped = SIZE_ALIAS[raw.trim()] || raw.trim();
-    el.removeAttribute(old);
-    if (get('size') == null) el.setAttribute('size', mapped);
-    warn(`size:${old}`, `的 ${old}="${raw}" 已并入 size；请写成 size="${mapped}"（size 只表字号）`);
-  }
-  const sizeRaw = get('size');
-  if (sizeRaw && MASS_TAGS.has(tag) && MASS.includes(sizeRaw.trim())) {
-    // 不再偷偷把 size 改写成 mass：一个属性名只能有一个意思。
-    warn(
-      'size:mass',
-      `的 size="${sizeRaw}" 是"体量"，不是字号；15.0 起请写 mass="${sizeRaw}"（size 只表字号，值会被忽略）`
-    );
-  }
-  const tierNext = sizeRaw && SIZE_ALIAS[sizeRaw.trim()];
-  if (tierNext) {
-    el.setAttribute('size', tierNext);
-    warn('size:tier', `的 size="${sizeRaw}" 已改名，请写成 size="${tierNext}"`);
-  }
-  // density：更老的体量词，仍折成 mass（这一条从 13.0 起就有）。
-  const density = get('density');
-  if (density && MASS_ALIAS[density.toLowerCase()] && get('mass') == null) {
-    const next = MASS_ALIAS[density.toLowerCase()];
-    el.setAttribute('mass', next);
-    warn('mass', `的 density="${density}" 已退役，请写成 mass="${next}"`);
-  }
-
-  /* ------------------------------------------------------ 形态 / 强度 / 位置 */
-  fold('emphasis', 'strength');
-  // kind → variant 是旧名迁移；但 vk-scene 的 kind 是正式属性（五个讲解动作），
-  // 不能被折成 variant。判据只有一条：声明面里真的有 kind 就不折。
-  if (!TAGS[tag]?.attrs?.kind) fold('kind', 'variant');
-  if (tag === 'vk-compare') fold('mode', 'variant');
-  fold('anchor', 'side', (v) => ({ above: 'top', below: 'bottom' })[v.trim()] ?? v);
-  fold('place', 'side', (v) => ({ br: 'bottom-right', bl: 'bottom-left', bottom: 'bottom' })[v.trim()] ?? v);
-
-  /* ------------------------------------------------------------- 标签文字 */
-  // 并排对照的两张图：label-a / label-b → labels="左|右"
-  if (get('label-a') != null || get('label-b') != null) {
-    const a = get('label-a') ?? '';
-    const b = get('label-b') ?? '';
-    el.removeAttribute('label-a');
-    el.removeAttribute('label-b');
-    if (get('labels') == null) el.setAttribute('labels', `${a}|${b}`);
-    warn('labels:pair', `的 label-a / label-b 已并成 labels="左|右"，请写成 labels="${a}|${b}"`);
-  }
-  // 汇编四列的自定义标题：address-label / bytes-label / mnemonic-label / operands-label → labels
-  if (tag === 'vk-asm' && ['address-label', 'bytes-label', 'mnemonic-label', 'operands-label'].some((n) => get(n) != null)) {
-    const order = ['address-label', 'bytes-label', 'mnemonic-label', 'operands-label'];
-    const parts = order.map((n) => get(n) ?? '');
-    for (const n of order) el.removeAttribute(n);
-    if (get('labels') == null) el.setAttribute('labels', parts.join('|'));
-    warn('labels:asm', `的四个 *-label 已并成 labels="地址|机器码|指令|操作数"，请写成 labels="${parts.join('|')}"`);
-  }
-  // 连线标签的偏移：label-dx / label-dy → label-offset="dx,dy"
-  if (get('label-dx') != null || get('label-dy') != null) {
-    const dx = get('label-dx') ?? '0';
-    const dy = get('label-dy') ?? '0';
-    el.removeAttribute('label-dx');
-    el.removeAttribute('label-dy');
-    if (get('label-offset') == null) el.setAttribute('label-offset', `${dx},${dy}`);
-    warn('label-offset', `的 label-dx / label-dy 已并成 label-offset="dx,dy"，请写成 label-offset="${dx},${dy}"`);
-  }
-  // code 的 numbering 已退役：行号一律是源文件行号。
-  if (get('numbering') != null) {
-    const raw = get('numbering');
-    el.removeAttribute('numbering');
-    warn('numbering', `的 numbering="${raw}" 已退役：行号只有一种基准 —— 源文件的真实行号`);
-  }
-
-  /* ------------------------------------------------ 15.2 列开关 → columns */
-  // 七个别名（numbers / ascii / address / offsets / ruler / summary / labels）折成一个
-  // columns；这份清单和默认列只有 vocab.COLUMNS 一份。
-  if (COLUMNS[tag]) {
-    const spec = COLUMNS[tag];
-    const legacy = COLUMN_ATTRS.filter((name) => spec.all.includes(name) && get(name) != null);
-    // asm 的 labels 是"标题段"：titles:地址|机器码|指令|操作数。
-    const legacyTitles = tag === 'vk-asm' && get('labels') != null ? get('labels') : null;
-    if (legacy.length || legacyTitles != null) {
-      // 再折一次时（运行期动态改旧名 / 切预设）把旧值叠加在当前 columns 上：
-      // columns 可能是上一次折叠的产物，也可能是作者写的；旧名是"现在这一次"的意图，优先。
-      const parsed = parseColumns(tag, get('columns'));
-      for (const name of legacy) {
-        const raw = String(get(name) ?? '').trim().toLowerCase();
-        if (raw === 'none' || raw === 'false') parsed.on.delete(name);
-        else parsed.on.add(name);
-      }
-      if (legacyTitles != null) {
-        const raw = String(legacyTitles).trim();
-        parsed.titles = raw.toLowerCase() === 'none' ? 'none' : raw.split('|').map((s) => s.trim());
-      }
-      el.setAttribute('columns', serializeColumns(tag, parsed.on, parsed.titles));
-      for (const name of legacy) el.removeAttribute(name);
-      if (legacyTitles != null) el.removeAttribute('labels');
-      warn(
-        `columns:${tag}`,
-        `的 ${[...legacy, ...(legacyTitles != null ? ['labels'] : [])].join(' / ')} 已并成 columns；` +
-          `请写成 columns="${serializeColumns(tag, parsed.on, parsed.titles)}"`
-      );
-    }
-  }
-
-  /* --------------------------------------------------- 15.2 间距 → gap/pad */
-  // 直接改名：像素间距 / 内距也走 gap / pad（数字就是像素）。
-  for (const [from, to] of [
-    ['gap-px', 'gap'],
-    ['pad-px', 'pad'],
-  ]) {
-    const raw = get(from);
-    if (raw == null) continue;
-    el.removeAttribute(from);
-    // 旧名是"现在这一次"的意图：覆盖上一次折叠留下的新值（动态改属性 / 切预设）。
-    el.setAttribute(to, raw);
-    warn(`space:${from}`, `的 ${from}="${raw}" 已并成 ${to}；请写成 ${to}="${raw}"`);
-  }
-  // 轴向：gap-x / gap-y（grid）与 pad-x / pad-y（box）折成 "x y"。
-  for (const axis of [
-    { tags: ['vk-grid'], from: ['gap-x', 'gap-y'], to: 'gap', fallback: 'md' },
-    { tags: ['vk-box'], from: ['pad-x', 'pad-y'], to: 'pad', fallback: '0' },
-  ]) {
-    if (!axis.tags.includes(tag)) continue;
-    if (get(axis.from[0]) == null && get(axis.from[1]) == null) continue;
-    const base = parseSpace(get(axis.to));
-    const x = get(axis.from[0]) ?? base?.x ?? axis.fallback;
-    const y = get(axis.from[1]) ?? base?.y ?? axis.fallback;
-    el.removeAttribute(axis.from[0]);
-    el.removeAttribute(axis.from[1]);
-    el.setAttribute(axis.to, String(x) === String(y) ? String(x) : `${x} ${y}`);
-    warn(`space:${axis.to}:${tag}`, `的 ${axis.from.join(' / ')} 已并成 ${axis.to}；请写成 ${axis.to}="${x === y ? x : `${x} ${y}`}"`);
-  }
-
-  /* ---------------------------------------------------- 15.2 箭头 → arrow */
-  // cap / arrow-style / arrow-size / arrow-scale / arrow-label / head 六个别名
-  // 全折进 arrow 一个词：end:open、size:40、scale:0.12、label:gcc、cap:start。
-  const arrowOld = {
-    'vk-edge': ['cap', 'arrow-style', 'arrow-size'],
-    'vk-flow': ['arrow-scale', 'arrow-label'],
-    'vk-annotate': ['head', 'arrow-scale', 'arrow-label'],
-  }[tag];
-  if (arrowOld && arrowOld.some((name) => get(name) != null)) {
-    if (tag === 'vk-flow') {
-      // flow 的 arrow 还是"画不画"：true / false，后面接 scale / label。
-      const raw = get('arrow');
-      const on = !(raw != null && ['false', '0', 'off', 'none', 'no'].includes(raw.trim().toLowerCase()));
-      const cfg = parseArrow(raw);
-      let scale = cfg.scale;
-      let label = cfg.label;
-      if (get('arrow-scale') != null) {
-        const n = Number(get('arrow-scale'));
-        if (Number.isFinite(n)) scale = n;
-      }
-      if (get('arrow-label') != null) label = String(get('arrow-label')).trim() || null;
-      for (const name of arrowOld) el.removeAttribute(name);
-      const next = serializeFlowArrow({ on, scale, label });
-      el.setAttribute('arrow', next);
-      warn('arrow:flow', `的 arrow-scale / arrow-label 已并成 arrow；请写成 arrow="${next}"`);
-    } else {
-      const cfg = parseArrow(get('arrow'));
-      if (tag === 'vk-edge' && get('cap') != null) {
-        const raw = String(get('cap')).trim().toLowerCase();
-        cfg.dot = raw === 'dot' ? 'start' : null;
-      }
-      if (tag === 'vk-edge' && get('arrow-style') != null) {
-        const raw = String(get('arrow-style')).trim().toLowerCase();
-        if (raw === 'solid' || raw === 'open' || raw === 'thin') cfg.style = raw;
-      }
-      if (tag === 'vk-edge' && get('arrow-size') != null) {
-        const n = Number(get('arrow-size'));
-        if (Number.isFinite(n)) cfg.size = n;
-      }
-      if (tag === 'vk-annotate' && get('head') != null) {
-        const raw = String(get('head')).trim().toLowerCase();
-        cfg.end = raw === 'arrow';
-        cfg.dot = raw === 'dot' ? 'end' : null;
-      }
-      if (tag === 'vk-annotate' && get('arrow-scale') != null) {
-        const n = Number(get('arrow-scale'));
-        if (Number.isFinite(n)) cfg.scale = n;
-      }
-      if (tag === 'vk-annotate' && get('arrow-label') != null) {
-        cfg.label = String(get('arrow-label')).trim() || null;
-      }
-      for (const name of arrowOld) el.removeAttribute(name);
-      const next = serializeArrow(cfg);
-      el.setAttribute('arrow', next);
-      warn('arrow', `的 ${arrowOld.join(' / ')} 已并成 arrow；请写成 arrow="${next}"`);
-    }
-  }
-
-  /* ---------------------------------------------------- 15.2 屏障 → fence */
-  if (tag === 'vk-asm' && (get('fence-after') != null || get('fence-label') != null)) {
-    const cfg = parseFence(get('fence'));
-    if (get('fence-after') != null) {
-      const raw = String(get('fence-after')).trim();
-      cfg.after = /^\d+$/.test(raw) ? raw : '';
-      el.removeAttribute('fence-after');
-    }
-    if (get('fence-label') != null) {
-      cfg.label = String(get('fence-label')).trim() || '内存屏障';
-      el.removeAttribute('fence-label');
-    }
-    const next = serializeFence(cfg);
-    if (next) el.setAttribute('fence', next);
-    else el.removeAttribute('fence');
-    warn('fence', `的 fence-after / fence-label 已并成 fence；请写成 fence="${next}"`);
-  }
-
-  /* ------------------------------------------------ 15.2 工序进度 → counter */
-  if (tag === 'vk-label' && (get('index') != null || get('total') != null)) {
-    // 两个旧名可能分两次写进来（index 先、total 后）：以当前 counter 为底再合成。
-    const base = parseCounter(get('counter'));
-    const indexRaw = get('index');
-    const totalRaw = get('total');
-    const index = indexRaw != null ? String(indexRaw).trim() : String(base.index);
-    const total = totalRaw != null ? String(totalRaw).trim() : String(base.total);
-    el.removeAttribute('index');
-    el.removeAttribute('total');
-    const next = /^\d+$/.test(index) ? (/^\d+$/.test(total) ? `${index}/${total}` : index) : '';
-    // 动态改旧名时旧值优先；没有分子（只写了 total）就清掉。
-    if (next) el.setAttribute('counter', next);
-    else el.removeAttribute('counter');
-    warn('counter', `的 index / total 已并成 counter；请写成 counter="${next}"`);
-  }
-
-  /* ------------------------------------------- 15.2 对照两图 → labels="a,b" */
-  if (tag === 'vk-compare' && (get('a') != null || get('b') != null)) {
-    // 两个旧名可能分两次写进来（a 先、b 后）：以当前 a/b 的合并值为准，
-    // 角标从 labels 里保留（label-a / label-b 也先折进 labels 的竖线段）。
-    const parsed = parseCompareLabels(get('labels'));
-    const next = {
-      a: String(get('a') ?? parsed.a ?? '').trim(),
-      b: String(get('b') ?? parsed.b ?? '').trim(),
-      la: parsed.la,
-      lb: parsed.lb,
-    };
-    el.removeAttribute('a');
-    el.removeAttribute('b');
-    el.setAttribute('labels', serializeCompareLabels(next));
-    warn('compare:labels', `的 a / b 已并成 labels="a,b"；请写成 labels="${serializeCompareLabels(next)}"`);
-  }
-}
-
 /* --------------------------------------------------------------- 15.2 间距落点 */
 
 /** 档位 / 像素 → inline 值；不认识的 token 返回空串（保留 CSS 默认）。 */
@@ -711,9 +347,6 @@ export function applySpacing(el) {
     else el.style.removeProperty('row-gap');
   }
 }
-
-/** 13.0 的名字，保留给旧 import。 */
-export const normalizeTier = normalizeVocab;
 
 /**
  * 行宽：作者写的是「一行几个字」，不是像素。
@@ -866,9 +499,6 @@ export class VkElement extends Base {
   }
 
   connectedCallback() {
-    // 值层迁移：旧档名（display-2xl / heading / meta …）与 15.2 的别名在连上 DOM
-    // 的第一刻折成新名。折完再往下走，所以 CSS、文档、契约都只认一套词。
-    normalizeTier(this);
     applySpacing(this);
     applyMeasure(this);
     applyBleed(this);
@@ -1010,13 +640,6 @@ export class VkElement extends Base {
 
   attributeChangedCallback(name, oldValue, newValue) {
     if (!this._done || oldValue === newValue) return;
-    // 15.2 的旧名也要能被动态改写：折成新名后重画一次（新名自己的回调会再触发）。
-    if (DEPRECATED_ATTRS.includes(name)) {
-      normalizeTier(this);
-      applySpacing(this);
-      this._schedulePaint();
-      return;
-    }
     // 行宽 / 间距是纯样式，不重建子树，属性一变就立刻重算。
     if (name === 'measure') applyMeasure(this);
     if (name === 'bleed') applyBleed(this);
@@ -1124,7 +747,6 @@ export function layout() {
   // 第一次排一次全页，之后只排注册过的 dirty 元素。
   if (!PLACE.size && !EDGES.size) {
     for (const el of document.querySelectorAll('[data-vk-place]')) PLACE.add(el);
-    for (const el of document.querySelectorAll('vk-edge')) EDGES.add(el);
   }
   // 需要排版的画布先摆，连线才有东西可量
   for (const el of PLACE) {

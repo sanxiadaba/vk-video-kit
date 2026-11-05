@@ -1,43 +1,23 @@
 {
   "name": "vk-video-kit",
-  "version": "15.2.0",
-  "description": "把内容做成画面单元：32 个原语标签、四层（值 / 原语 / 机制 / 预设）、1920×1080。",
+  "version": "16.0.0",
+  "private": true,
+  "description": "把内容做成画面单元：30 个标签、一层（元素 / 排布 / 数据 / 关系 / 页面）、1920×1080。",
+  "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
-  "types": "types/index.d.ts",
+  "bin": {
+    "vk": "bin/vk.mjs"
+  },
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/ai-doc.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen && node tools/thumbs.mjs && node cli/build.mjs _site/index.html",
-    "build:fast": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/gen.mjs && node tools/build.mjs && node tools/assemble.mjs && node tools/scenes.mjs && node tools/specimens.mjs && node tools/stamp.mjs && node cli/build.mjs _site/specimens && node cli/build.mjs _site/specimen",
-    "gen": "node tools/gen.mjs",
-    "ai": "node tools/ai-doc.mjs",
-    "links": "node tools/links.mjs",
-    "capabilities": "node tools/capabilities.mjs",
-    "contract": "node tools/contract-all.mjs",
-    "contract:one": "node tools/contract.mjs",
-    "scenes": "node tools/scenes.mjs",
-    "assemble": "node tools/assemble.mjs",
-    "specimens": "node tools/specimens.mjs",
-    "precompile": "node cli/build.mjs",
-    "serve": "node cli/serve.mjs 8099 _site",
-    "dev": "npm run build && node tools/dev.mjs",
-    "slice": "node cli/build.mjs slice/frames && node tools/plan.mjs slice/deck.json",
-    "plan": "node tools/plan.mjs",
-    "box": "node tools/box-tree.mjs",
-    "shot": "node tools/shot.mjs",
-    "quick": "node tools/quick.mjs",
-    "gate": "node tools/gate-all.mjs",
-    "gate:full": "node tools/gate-all.mjs --full",
-    "gate:visual": "node tools/gate-all.mjs --presets",
-    "gate:one": "node tools/gate.mjs",
-    "verify": "node tools/verify.mjs",
-    "check": "node tools/verify.mjs",
-    "lint": "node tools/lint.mjs",
-    "format": "prettier --write \"tools/**/*.mjs\" \"tests/**/*.mjs\" \"package.json\" \".github/**/*.yml\"",
-    "format:check": "prettier --check \"tools/**/*.mjs\" \"tests/**/*.mjs\" \"package.json\" \".github/**/*.yml\"",
-    "test": "node tools/test-all.mjs",
-    "test:fast": "node tools/test-all.mjs --fast",
-    "icons": "node tools/icons.mjs",
-    "fonts": "node tools/fonts.mjs"
+    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
+    "fixtures": "node tools/fixtures.mjs",
+    "gallery": "node tools/gallery.mjs",
+    "check": "node bin/vk.mjs check pages",
+    "shot": "node bin/vk.mjs shot",
+    "test": "node tools/test.mjs",
+    "test:fast": "node tools/test.mjs --fast",
+    "budget": "node tools/budget.mjs"
   },
   "dependencies": {
     "katex": "^0.16.11",
@@ -51,16 +31,10 @@
     "esbuild": "^0.28.2",
     "lucide": "^1.61.0",
     "playwright": "^1.64.1",
-    "playwright-core": "^1.64.1",
-    "pngjs": "^7.0.0",
-    "prettier": "^3.9.10"
+    "pngjs": "^7.0.0"
   },
   "license": "MIT",
   "author": "jun",
-  "type": "module",
-  "bin": {
-    "vk": "bin/vk.mjs"
-  },
   "engines": {
     "node": ">=20"
   }

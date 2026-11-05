@@ -1,15 +1,13 @@
 #!/usr/bin/env node
 /**
- * vk CLI —— 随包发布，装完就能用。
+ * vk CLI
  *
- *   vk build [files...]   把 <vk-code src> 与 <vk-math> 预编译成自包含 HTML
- *   vk check <page>       结构自检（字号/对比度/安全区/溢出/重叠/空锚点）
- *   vk shot <page>        出一张 1920×1080（--at 秒 / --fps 30 --out-dir 目录）
- *   vk series             跨帧量一集：体量 / 骨架 / 字阶 / 焦点 / 白占比
- *   vk capture --run/--step/--shot/--cues  把真实材料采集进仓库（真跑命令 / 分步跑 / 真截一张图 / 按字幕逐段截图）
- *   vk serve [port]       开发服务器，改文件刷新即见
- *   vk tags               列出全部标签
- *   vk doc <tag>          看某个标签的属性、内容与默认值
+ *   vk build [paths…]     pages/ → out/；代码 / 公式 / hexdump / 文件树 / 图标构建期内联
+ *   vk check [paths…]     build + 结构自检（字号 / 对比度 / 安全区 / 溢出 / 重叠 / 锚点）
+ *   vk shot <page>        build + check + 一张 1920×1080 PNG（--phone 出 780 宽）
+ *   vk doc <tag>          某个标签的属性、取值、默认值
+ *   vk tags               全部标签（--json）
+ *   vk brief              30 行契约摘要（--json 给机器）
  *   vk icons [query]      搜 Lucide 图标名
  */
 import fs from 'node:fs';
@@ -21,87 +19,53 @@ const cmd = cmdRaw || 'help';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const pkgRoot = path.resolve(here, '..');
 
-const need = async (pkg, why) => {
-  try {
-    return await import(pkg);
-  } catch {
-    console.error(`\n[vk] 缺少 ${pkg}（${why}）。包的依赖未装好，请重新安装 vk-video-kit。\n`);
-    process.exit(1);
-  }
-};
+const schema = () => import('../src/schema.mjs');
+const layerLabel = (layers, id) => layers.find((l) => l.id === id)?.label || id;
 
-if (cmd === 'build' || cmd === 'check-build') {
-  await need('shiki', '代码高亮');
-  await need('parse5', '解析 HTML');
-  await need('katex', '公式渲染');
-  process.argv = [process.argv[0], 'precompile', ...(cmd === 'check-build' ? ['--check'] : []), ...rest];
-  const m = await import('../cli/build.mjs');
-  await m.main();
+if (cmd === 'build') {
+  process.argv = [process.argv[0], 'build', ...rest];
+  await import('../cli/build.mjs');
 } else if (cmd === 'check') {
   process.argv = [process.argv[0], 'check', ...rest];
   await import('../cli/check.mjs');
-} else if (cmd === 'serve') {
-  await need('shiki', '代码高亮');
-  await need('parse5', '解析 HTML');
-  await need('katex', '公式渲染');
-  const m = await import('../cli/serve.mjs');
-  await m.main(Number(rest[0]) || 8099, process.cwd());
 } else if (cmd === 'shot') {
   process.argv = [process.argv[0], 'shot', ...rest];
-  const m = await need('playwright-core', '截图');
-  await m;
   await import('../cli/shot.mjs');
-} else if (cmd === 'capture') {
-  process.argv = [process.argv[0], 'capture', ...rest];
-  await import('../cli/capture.mjs');
-} else if (cmd === 'series') {
-  process.argv = [process.argv[0], 'series', ...rest];
-  const m = await need('playwright-core', '跨帧度量');
-  await m;
-  await import('../cli/series.mjs');
 } else if (cmd === 'tags') {
-  const { TAGS, TAG_NAMES, LAYERS } = await import('../src/registry.mjs');
-  if (rest.includes('--json')) {
-    console.log(JSON.stringify(TAG_NAMES.map((tag) => ({ tag, ...TAGS[tag] })), null, 2));
-  } else {
+  const { TAGS, TAG_NAMES, LAYERS } = await schema();
+  if (rest.includes('--json')) console.log(JSON.stringify(TAG_NAMES.map((t) => ({ tag: t, ...TAGS[t] })), null, 2));
+  else {
     for (const layer of LAYERS) {
       const tags = TAG_NAMES.filter((t) => TAGS[t].layer === layer.id);
       if (!tags.length) continue;
       console.log(`\n${layer.label}`);
-      for (const tag of tags) console.log(`  ${tag.padEnd(15)} ${TAGS[tag].name}`);
+      for (const t of tags) console.log(`  ${t.padEnd(14)} ${TAGS[t].name}`);
     }
   }
 } else if (cmd === 'doc') {
-  const tag = rest[0];
+  const tag = rest.find((a) => !a.startsWith('-'));
   if (!tag) {
     console.error('用法：vk doc <tag> [--all] [--json]');
     process.exit(1);
   }
-  const { TAGS, LAYERS, CHILDREN, STATES, LAYOUT_ATTRS } = await import('../src/registry.mjs');
+  const { TAGS, LAYERS, CHILDREN, STATES, LAYOUT_ATTRS } = await schema();
   const def = TAGS[tag];
   if (!def) {
     console.error(`[vk] 没有 ${tag}。先跑 vk tags 看清单。`);
     process.exit(1);
   }
-  const all = rest.includes('--all');
   if (rest.includes('--json')) {
     console.log(JSON.stringify({ tag, ...def, children: CHILDREN[tag] || null, states: STATES[tag] || null }, null, 2));
   } else {
-    const layer = LAYERS.find((l) => l.id === def.layer)?.label || def.layer;
-    console.log(`${tag} · ${def.name}  (${layer})\n${def.summary}\n`);
+    console.log(`${tag} · ${def.name}  (${layerLabel(LAYERS, def.layer)})\n${def.summary}\n`);
+    const all = rest.includes('--all');
     const groups = [
       ['content', '内容'],
       ['appearance', '外观'],
       ['state', '状态'],
       ['layout', '布局'],
-      ['protocol', '布局协议'],
     ];
-    const rows = Object.entries(def.attrs || {})
-      .filter(([, spec]) => all || !spec.layout)
-      .map(([name, spec]) => [
-        name,
-        { ...spec, group: spec.layout ? 'protocol' : spec.content ? 'content' : spec.group || 'appearance' },
-      ]);
+    const rows = Object.entries(def.attrs || {}).filter(([name, spec]) => all || !spec.layout || !LAYOUT_ATTRS.has(name));
     for (const [group, title] of groups) {
       const list = rows.filter(([, spec]) => (spec.group || 'appearance') === group);
       if (!list.length) continue;
@@ -113,12 +77,6 @@ if (cmd === 'build' || cmd === 'check-build') {
         const label = spec.label ? `  ${spec.label}` : '';
         console.log(`  ${name.padEnd(14)} ${vals}${defv}${ctx}${label}`);
       }
-      console.log('');
-    }
-    const content = TAGS[tag].content;
-    if (content?.fields?.length) {
-      console.log('内容：');
-      for (const f of content.fields) console.log(`  ${f.name.padEnd(14)} ${f.type || 'text'}  ${f.label || ''}`);
       console.log('');
     }
     const model = CHILDREN[tag];
@@ -134,29 +92,51 @@ if (cmd === 'build' || cmd === 'check-build') {
       console.log(`子节点：${desc}`);
     }
     if (STATES[tag]) console.log(`状态：state="${STATES[tag].values.join('|')}"（${STATES[tag].where.join(' / ')}）`);
+    console.log('\n布局协议：span → vk-grid 子项；x / y / w / h / z → vk-canvas 子项；其余块级属性通用。');
   }
 } else if (cmd === 'brief') {
-  const { TAGS, TAG_NAMES, LAYERS, CHILDREN, STATES } = await import('../src/registry.mjs');
-  const layerArg = rest.find((a) => a.startsWith('--layer='))?.split('=')[1] || rest[rest.indexOf('--layer') + 1];
-  for (const layer of LAYERS) {
-    if (layerArg && !layer.id.includes(layerArg) && layer.label !== layerArg) continue;
-    const tags = TAG_NAMES.filter((t) => TAGS[t].layer === layer.id);
-    if (!tags.length) continue;
-    console.log(`\n${layer.label}`);
-    for (const tag of tags) {
-      const def = TAGS[tag];
-      const own = Object.entries(def.attrs || {}).filter(([, s]) => !s.layout && !s.hidden);
-      const attrs = own.map(([n, s]) => (s.values ? `${n}=${s.values.join('|')}` : n)).join(' ');
-      const child = CHILDREN[tag];
-      const childText =
-        child?.kind === 'item' ? ` · 子:${child.item}` : child?.kind === 'wrapper' ? ` · 子:${child.wrapper}` : child?.kind === 'source' ? ' · 子:src' : '';
-      const stateText = STATES[tag] ? ` · state:${STATES[tag].values.join('|')}` : '';
-      console.log(`  ${tag.padEnd(14)} ${def.name} — ${attrs}${childText}${stateText}`);
+  const { TAGS, TAG_NAMES, LAYERS, CHILDREN, STATES, LAYOUT_ATTRS } = await schema();
+  if (rest.includes('--json')) {
+    console.log(
+      JSON.stringify(
+        TAG_NAMES.map((tag) => ({
+          tag,
+          layer: TAGS[tag].layer,
+          name: TAGS[tag].name,
+          summary: TAGS[tag].summary,
+          attrs: Object.fromEntries(
+            Object.entries(TAGS[tag].attrs).filter(([n, s]) => !LAYOUT_ATTRS.has(n) && !s.hidden)
+          ),
+          children: CHILDREN[tag] || null,
+          states: STATES[tag] || null,
+        })),
+        null,
+        2
+      )
+    );
+  } else {
+    for (const layer of LAYERS) {
+      const tags = TAG_NAMES.filter((t) => TAGS[t].layer === layer.id);
+      if (!tags.length) continue;
+      console.log(`\n${layer.label}`);
+      for (const tag of tags) {
+        const own = Object.entries(TAGS[tag].attrs).filter(([n, s]) => !LAYOUT_ATTRS.has(n) && !s.hidden);
+        const attrs = own.map(([n, s]) => (s.values ? `${n}=${s.values.join('|')}` : n)).join(' ');
+        const child =
+          CHILDREN[tag]?.kind === 'item'
+            ? ` · 子:${CHILDREN[tag].item}`
+            : CHILDREN[tag]?.kind === 'wrapper'
+              ? ` · 子:${CHILDREN[tag].wrapper}`
+              : CHILDREN[tag]?.kind === 'source'
+                ? ' · 子:src'
+                : '';
+        const state = STATES[tag] ? ` · state:${STATES[tag].values.join('|')}` : '';
+        console.log(`  ${tag.padEnd(14)} ${attrs}${child}${state}`);
+      }
     }
   }
 } else if (cmd === 'icons') {
   const q = rest.find((a) => !a.startsWith('-')) || '';
-  const json = fs.readFileSync(path.join(pkgRoot, 'icons.json'), 'utf8');
   const data = JSON.parse(fs.readFileSync(path.join(pkgRoot, 'icons.json'), 'utf8'));
   const all = (data.names || Object.keys(data)).sort();
   const hit = q ? all.filter((n) => n.includes(q.toLowerCase())) : all;
@@ -167,20 +147,18 @@ if (cmd === 'build' || cmd === 'check-build') {
     console.log(`\n共 ${hit.length} 个`);
   }
 } else {
-  // 标签数是 registry 的事实，不在这里写死：收敛一次就要改一次文档。
-  const { TAG_NAMES } = await import('../src/registry.mjs');
+  const { TAG_NAMES } = await schema();
   console.log(`
 vk —— 把内容做成画面单元
 
-  vk build [files...]   预编译代码高亮与公式（产物自包含）
-  vk check <page>       结构自检：字号/对比度/安全区/溢出/重叠/空锚点
-  vk shot <page>        截一张 1920×1080（--phone / --crop / --at 秒 / --scene 表.json）
-vk shot <page> --fps 30 --range 0-4.6 --out-dir film/  出帧序列（库只出帧，不做编码）
-  vk serve [port]       开发服务器（默认 8099）
-  vk tags               列出 ${TAG_NAMES.length} 个标签（--json）
-  vk doc <tag>          看某个标签的属性、内容与默认值
-  vk icons [query]      搜 Lucide 图标名（--json）
+  vk build [paths…]    pages/ → out/（预编译代码 / 公式 / 字节 / 树 / 图标）
+  vk check [paths…]    结构自检：字号/对比度/安全区/溢出/重叠/空锚点
+  vk shot <page>       一张 1920×1080（--phone 出 780 宽）
+  vk doc <tag>         看某个标签的属性、取值与默认值
+  vk tags              列出 ${TAG_NAMES.length} 个标签（--json）
+  vk brief             契约摘要（--json）
+  vk icons [query]     搜 Lucide 图标名（--json）
 
-用法与属性见包内的 README.md 与 docs/reference.md，给 AI 的入口是 docs/ai.md。
+入口文档：SPEC.md
 `);
 }

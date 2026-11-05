@@ -79,56 +79,6 @@ export class VkCanvas extends VkElement {
   }
 }
 
-/* ------------------------------------------------------------------ 连线 */
-
-const offsetOf = (raw) => {
-  const [dx, dy] = String(raw || '')
-    .split(/[,\s]+/)
-    .map((s) => parseFloat(s));
-  return [Number.isFinite(dx) ? dx : 0, Number.isFinite(dy) ? dy : 0];
-};
-
-export class VkEdge extends VkAnnotate {
-  static legacy = 'arrow';
-
-  _mode() {
-    return 'arrow';
-  }
-
-  _arrowConfig() {
-    const cs = getComputedStyle(this);
-    const num = (name, fallback) => parseFloat(cs.getPropertyValue(name)) || fallback;
-    const variant = this.getAttribute('variant') || 'ortho';
-    // 箭头只有一个词：arrow="end" / "both:open" / "end,size:40" / "end,cap:start"。
-    const cfg = parseArrow(this.getAttribute('arrow'));
-    return {
-      from: this.getAttribute('from'),
-      to: this.getAttribute('to'),
-      shape: variant === 'line' ? 'straight' : variant,
-      dash: this.hasAttribute('dash'),
-      width: null,
-      head: {
-        end: cfg.end,
-        start: cfg.start,
-        dot: cfg.dot,
-        style: cfg.style,
-        size: cfg.size != null ? Math.max(8, Math.min(64, cfg.size)) : num('--vk-edge-tip', 18),
-      },
-      gap: numAttr(this, 'gap', { min: 0, max: 200, fallback: num('--vk-edge-gap', 32) }),
-      bend: numAttr(this, 'bend', { min: -200, max: 200, fallback: 0 }),
-      tension: numAttr(this, 'tension', { min: 5, max: 120, fallback: 42 }) / 100,
-      r: num('--vk-edge-r', 16),
-      via: this.getAttribute('via'),
-      fromSide: this.getAttribute('from-side'),
-      toSide: this.getAttribute('to-side'),
-      // 标签偏移：label-offset="dx,dy"（旧名 label-dx / label-dy）。
-      labelDx: offsetOf(this.getAttribute('label-offset'))[0],
-      labelDy: offsetOf(this.getAttribute('label-offset'))[1],
-      z: numAttr(this, 'z', { min: 0, max: 99, fallback: 20 }),
-    };
-  }
-}
-
 /* ---------------------------------------------------------------- 网格 */
 export class VkGrid extends VkElement {
   static watchSource = false;
@@ -166,7 +116,7 @@ export class VkStack extends VkElement {
   static watchSource = false;
 
   onAttr(name) {
-    if (name === 'weights' || name === 'ratio' || name === 'grow' || name === 'stretch' || name === 'h') {
+    if (name === 'weights' || name === 'grow' || name === 'stretch' || name === 'h') {
       this._weights();
     }
   }
@@ -176,7 +126,7 @@ export class VkStack extends VkElement {
   }
 
   _weights() {
-    const raw = (this.getAttribute('weights') ?? this.getAttribute('ratio') ?? '').trim();
+    const raw = (this.getAttribute('weights') || '').trim();
     const list = raw ? raw.split(/[\s,]+/).filter(Boolean).map(Number) : [];
     const bounded = this.hasAttribute('grow') || this.hasAttribute('stretch') || this.hasAttribute('h');
     const usable = bounded && list.length > 0 && list.every((n) => Number.isFinite(n) && n > 0);
@@ -198,9 +148,7 @@ export class VkStack extends VkElement {
       }
       return;
     }
-    const kids = [...this.children].filter(
-      (el) => el.tagName !== 'VK-EDGE' && !el.hasAttribute('data-vk-overlay')
-    );
+    const kids = [...this.children].filter((el) => !el.hasAttribute('data-vk-overlay'));
     kids.forEach((el, i) => {
       const weight = list[i];
       if (weight == null) return;
@@ -231,7 +179,6 @@ export class VkLayer extends VkElement {
 
 export function defineLayout() {
   define('vk-canvas', VkCanvas);
-  define('vk-edge', VkEdge);
   define('vk-layer', VkLayer);
   // L2 流：纯 CSS + Frame；每个标签一个独立构造器（customElements 不允许复用同一构造器）
   const flow = () => class extends VkElement {

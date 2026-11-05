@@ -82,9 +82,9 @@ vk-box[surface='sf-1'] { --vk-box-bg: var(--vk-sf-1); --vk-box-line: var(--vk-li
 vk-box[surface='sf-2'] { --vk-box-bg: var(--vk-sf-2); --vk-box-line: var(--vk-line-1); --vk-box-bw: 2px; }
 vk-box[surface='sf-3'] { --vk-box-bg: var(--vk-sf-3); --vk-box-line: var(--vk-line-2); --vk-box-bw: 2px; }
 vk-box[surface='sf-4'] { --vk-box-bg: var(--vk-sf-4); --vk-box-line: var(--vk-line-2); --vk-box-bw: 2px; }
-/* 描边只管粗细；线色归 tone——所以"彩色描边卡"是 tone + border 的组合。 */
-vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); }
-vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); }
+/* 描边只管粗细；线色默认取同一条发丝线——没写 surface 也看得见框。 */
+vk-box[border='hair'] { --vk-box-bw: var(--vk-line-w); --vk-box-line: var(--vk-line-1); }
+vk-box[border='strong'] { --vk-box-bw: var(--vk-line-w-strong); --vk-box-line: var(--vk-line-3); }
 vk-box[border='none'] { --vk-box-bw: 0px; --vk-box-line: transparent; }
 
 /* 语义色只叠加在表面上，不承担材质。15.0 起与全库同一套六值：
@@ -265,13 +265,13 @@ vk-text {
    旧名（title / subhead / label / data）与四档共用同一条规则——名字只是别名，
    外观不允许分叉；hero / mega 是补充档，只给"一个数字 / 一个词当家"。 */
 vk-text[size='display'],
-vk-text[size='title']    { font-size: var(--vk-t-display); line-height: var(--vk-lh-display); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-display); }
+vk-text[size='display']    { font-size: var(--vk-t-display); line-height: var(--vk-lh-display); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-display); }
 vk-text[size='headline'],
-vk-text[size='subhead']  { font-size: var(--vk-t-headline); line-height: var(--vk-lh-headline); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-headline); }
+vk-text[size='headline']  { font-size: var(--vk-t-headline); line-height: var(--vk-lh-headline); letter-spacing: -0.01em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-headline); }
 vk-text[size='body']     { font-size: var(--vk-t-body); line-height: var(--vk-lh-body); max-width: var(--vk-measure-body); }
 vk-text[size='caption'],
-vk-text[size='label']    { font-size: var(--vk-t-caption); line-height: var(--vk-lh-caption); max-width: var(--vk-measure-caption); }
-vk-text[size='data']     { font-size: var(--vk-t-data); line-height: var(--vk-lh-data); font-family: var(--vk-font-mono); }
+vk-text[size='caption']    { font-size: var(--vk-t-caption); line-height: var(--vk-lh-caption); max-width: var(--vk-measure-caption); }
+vk-text[size='body']     { font-size: var(--vk-t-data); line-height: var(--vk-lh-data); font-family: var(--vk-font-mono); }
 vk-text[size='hero']     { font-size: var(--vk-t-hero); line-height: var(--vk-lh-hero); letter-spacing: -0.035em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
 vk-text[size='mega']     { font-size: var(--vk-t-mega); line-height: var(--vk-lh-mega); letter-spacing: -0.04em; font-weight: var(--vk-w-bold); max-width: var(--vk-measure-hero); }
 
@@ -322,12 +322,12 @@ vk-text[align='right'] { text-align: right; margin-inline: auto 0; }
    新名与旧名都给：measure 写的是"按哪一档的行宽"，不是第二个字号。 */
 vk-text { max-width: var(--vk-measure-body); }
 vk-text[measure='caption'],
-vk-text[measure='label'] { max-width: var(--vk-measure-caption); }
+vk-text[measure='caption'] { max-width: var(--vk-measure-caption); }
 vk-text[measure='body'] { max-width: var(--vk-measure-body); }
 vk-text[measure='headline'],
-vk-text[measure='subhead'] { max-width: var(--vk-measure-headline); }
+vk-text[measure='headline'] { max-width: var(--vk-measure-headline); }
 vk-text[measure='display'],
-vk-text[measure='title'] { max-width: var(--vk-measure-display); }
+vk-text[measure='display'] { max-width: var(--vk-measure-display); }
 vk-text[measure='none'] { max-width: none; }
 
 /* ------------------------------------------------------------- vk-label */
@@ -468,14 +468,53 @@ vk-inline[variant='link'] {
   text-underline-offset: 0.12em;
 }
 
-/* em 只有一个意思：作者想让观众看这里。它属于标注，用梅紫。
-   但它不能比"当前行"更响：只给一条梅紫下划线，整块底留给 vk-mark。 */
-vk-text em,
-
-/* muted 正文里的 em 改用更淡的下划线：底太浅仍只有 4.45，不如换一种标注标记。 */
-vk-text[ink='muted'] em {
+/* em 只有一个意思：作者想让观众看这里。它属于标注，用一条细下划线，
+   不抢“当前行”的整块底色。 */
+vk-text em {
+  font-style: normal;
   background: none;
-  box-shadow: inset 0 -0.12em 0 var(--vk-info-soft);
+  box-shadow: inset 0 -0.03em 0 var(--vk-info);
+}
+/* muted 正文里的 em 改用线色：底太浅时仍然看得见，又不喧宾夺主。 */
+vk-text[ink='muted'] em {
+  box-shadow: inset 0 -0.03em 0 var(--vk-line-strong);
+}
+
+/* 状态：一帧只有一处 current。语义只落在底与条上，正文永远是墨色。 */
+vk-text[state],
+vk-box[state],
+vk-panel[state] {
+  box-shadow: inset 4px 0 0 transparent;
+}
+vk-text[state='current'],
+vk-box[state='current'],
+vk-panel[state='current'] {
+  background: var(--vk-focus-soft);
+  box-shadow: inset 4px 0 0 var(--vk-focus);
+}
+vk-text[state='mark'],
+vk-box[state='mark'],
+vk-panel[state='mark'] {
+  background: var(--vk-surface-2);
+  box-shadow: inset 4px 0 0 var(--vk-ink-3);
+}
+vk-text[state='ok'],
+vk-box[state='ok'],
+vk-panel[state='ok'] {
+  background: var(--vk-ok-weak);
+  box-shadow: inset 4px 0 0 var(--vk-ok);
+}
+vk-text[state='warn'],
+vk-box[state='warn'],
+vk-panel[state='warn'] {
+  background: var(--vk-warn-weak);
+  box-shadow: inset 4px 0 0 var(--vk-warn);
+}
+vk-text[state='err'],
+vk-box[state='err'],
+vk-panel[state='err'] {
+  background: var(--vk-err-weak);
+  box-shadow: inset 4px 0 0 var(--vk-err);
 }
 
 /* --------------------------------------------------------------- vk-img */

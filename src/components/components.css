@@ -524,7 +524,7 @@ vk-table tr[data-em] td:first-child{ box-shadow: inset calc(var(--vk-cs) * 4 / 5
   line-height: 1.2;
 }/* --------------------------------------------------------------- vk-math */
 
-vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-width: 100%; }vk-math:not([display]) .katex-display{ display: inline-block; margin: 0; }vk-math[display]{ width: 100%; }vk-math[display]{ text-align: center; }.vk-math{ font-size: var(--vk-t-body); color: var(--vk-ink-1); }.vk-math .katex{ font-size: 1em; }vk-math[size='subhead'] .vk-math{ font-size: var(--vk-t-subhead); }vk-math[size='label'] .vk-math{ font-size: var(--vk-t-label); }.vk-math[data-display]{ display: block; }.vk-math[data-raw]{
+vk-math{ display: block; }vk-math:not([display]){ display: inline-block; max-width: 100%; }vk-math:not([display]) .katex-display{ display: inline-block; margin: 0; }vk-math[display]{ width: 100%; }vk-math[display]{ text-align: center; }.vk-math{ font-size: var(--vk-t-body); color: var(--vk-ink-1); }.vk-math .katex{ font-size: 1em; }vk-math[size='headline'] .vk-math{ font-size: var(--vk-t-subhead); }vk-math[size='caption'] .vk-math{ font-size: var(--vk-t-label); }.vk-math[data-display]{ display: block; }.vk-math[data-raw]{
   font-family: var(--vk-font-mono);
   color: var(--vk-ink-1);
   border-left: 4px solid var(--vk-err);

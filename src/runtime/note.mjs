@@ -379,6 +379,8 @@ export class VkNote extends VkAnnotate {
     }
     box.style.display = '';
     const b = local(t.rect);
+    b.cx = b.x + b.w / 2;
+    b.cy = b.y + b.h / 2;
 
     // 宽度先落、高度后量。反过来（旧实现）量到的还是上一帧的一行高，
     // 纵向 clamp 按错的高度算，多行边注就会被放到画布外面去。

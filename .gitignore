@@ -2,21 +2,16 @@
 node_modules/
 
 # 构建产物：npm run build 随时重建，不进 git
-_site/
 dist/
 vk/
-types/
+out/
 assets/fonts/
-docs/reference.md
-docs/choosing.md
-docs/screenshots/
-icons.json
-custom-elements.json
-vscode-html-data.json
-web-types.json
 src/icons.generated.mjs
 src/icons.core.generated.mjs
-spec.json
+icons.json
+
+# 样张由 npm test 生成
+tests/pages/
 
 # 本地缓存 / 临时目录 / 日志 / 备份
 .vk-cache/

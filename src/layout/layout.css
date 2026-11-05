@@ -126,7 +126,7 @@ vk-stack[ratio] > [data-vk-weight] {
   min-height: 0;
 }
 [measure='body'] { max-width: var(--vk-measure-body); }
-[measure='title'] { max-width: var(--vk-measure-title); }
+[measure='display'] { max-width: var(--vk-measure-title); }
 [overflow='clip'] { overflow: hidden; }
 
 /* ------------------------------------------------------------- vk-pair */
@@ -353,6 +353,9 @@ vk-flow[stretch] {
   border: 1px solid var(--vk-flow-line, var(--vk-line-3));
   border-radius: var(--vk-r-lg, var(--vk-r-3));
   background: var(--vk-flow-bg, var(--vk-paper-sf-1));
+  /* 步骤内容直接写文字时也有正文档；放了 vk-text 则由它自己覆盖。 */
+  font-size: var(--vk-t-body);
+  line-height: var(--vk-lh-body);
 }
 
 /* 块里的等宽文本是"一句代码"，不是散文：永不折行。
@@ -677,7 +680,7 @@ vk-canvas {
   min-width: 0;
   isolation: isolate;
 }
-vk-canvas > *:not(svg):not(vk-edge) {
+vk-canvas > *:not(svg) {
   position: absolute;
 }
 vk-canvas > svg {
@@ -693,110 +696,6 @@ vk-canvas[data-grid='1'] {
     linear-gradient(to bottom, var(--vk-line-2) 2px, transparent 2px);
   background-size: var(--vk-grid, 24px) var(--vk-grid, 24px);
 }
-
-/* --------------------------------------------------------------- vk-edge */
-
-vk-edge {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
-vk-edge .vk-edge-svg {
-  position: absolute;
-  inset: 0;
-  overflow: visible;
-}
-vk-edge .vk-edge-path {
-  fill: none;
-  stroke: var(--vk-ink-3);
-  stroke-width: var(--vk-edge-w);
-  /* 平头收在线尖：圆头会在三角形尖端多戳出一个 2px 的圆点，
-     看起来就像箭头后面还拖着一小截线。 */
-  stroke-linecap: butt;
-  stroke-linejoin: round;
-}
-vk-edge .vk-edge-tip {
-  fill: var(--vk-ink-3);
-  stroke: none;
-}
-/* 开口箭头：只描两条边。 */
-vk-edge .vk-edge-tip[data-style='open'] {
-  fill: none;
-  stroke: var(--vk-ink-3);
-  stroke-width: var(--vk-edge-w);
-  stroke-linecap: round;
-  stroke-linejoin: round;
-}
-vk-edge[tone='info'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-info-line); }
-vk-edge[tone='focus'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-focus-line); }
-vk-edge[tone='ok'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-ok); }
-vk-edge[tone='err'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-err); }
-vk-edge[tone='warn'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-warn); }
-vk-edge[strength='ghost'] .vk-edge-tip[data-style='open'] { stroke: var(--vk-line-3); }
-vk-edge .vk-edge-cap {
-  fill: var(--vk-ink-3);
-  stroke: none;
-}
-
-vk-edge[tone='info'] .vk-edge-path { stroke: var(--vk-info-line); }
-vk-edge[tone='info'] .vk-edge-tip,
-vk-edge[tone='info'] .vk-edge-cap { fill: var(--vk-info-line); }
-vk-edge[tone='focus'] .vk-edge-path { stroke: var(--vk-focus-line); }
-vk-edge[tone='focus'] .vk-edge-tip,
-vk-edge[tone='focus'] .vk-edge-cap { fill: var(--vk-focus-line); }
-vk-edge[tone='ok'] .vk-edge-path { stroke: var(--vk-ok); }
-vk-edge[tone='ok'] .vk-edge-tip,
-vk-edge[tone='ok'] .vk-edge-cap { fill: var(--vk-ok); }
-vk-edge[tone='err'] .vk-edge-path { stroke: var(--vk-err); }
-vk-edge[tone='err'] .vk-edge-tip,
-vk-edge[tone='err'] .vk-edge-cap { fill: var(--vk-err); }
-vk-edge[tone='warn'] .vk-edge-path { stroke: var(--vk-warn); }
-vk-edge[tone='warn'] .vk-edge-tip,
-vk-edge[tone='warn'] .vk-edge-cap { fill: var(--vk-warn); }
-vk-edge[strength='soft'] .vk-edge-path { stroke: var(--vk-line-3); }
-vk-edge[strength='ghost'] .vk-edge-path { stroke: var(--vk-line-strong); }
-vk-edge[strength='ghost'] .vk-edge-tip,
-vk-edge[strength='ghost'] .vk-edge-cap { fill: var(--vk-line-strong); }
-
-vk-edge[dash] .vk-edge-path { stroke-dasharray: 20 14; }
-
-/* 标签是给观众读的：40px、墨色、白底把线切断。
-   位置由几何决定（横线在上/下，竖线在左/右），不靠人手摆。 */
-vk-edge .vk-edge-label {
-  position: absolute;
-  transform: translate(-50%, calc(-100% - var(--vk-s1)));
-  padding: 0 var(--vk-s1);
-  background: var(--vk-surface-1);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-t-body);
-  font-weight: var(--vk-w-med);
-  line-height: 1.3;
-  color: var(--vk-ink-1);
-  white-space: nowrap;
-}
-vk-edge .vk-edge-label[data-dir='h-below'] {
-  transform: translate(-50%, var(--vk-s1));
-}
-vk-edge .vk-edge-label[data-dir='v'] {
-  transform: translate(var(--vk-s2), -50%);
-}
-vk-edge .vk-edge-label[data-dir='v-left'] {
-  transform: translate(calc(-100% - var(--vk-s2)), -50%);
-}
-vk-edge[size='body'] .vk-edge-label { font-size: var(--vk-t-body); }
-vk-edge[size='label'] .vk-edge-label { font-size: var(--vk-t-label); }
-/* 15.0：size 只表字号，连线的标签也能用全库那十档（以前只有 label / meta）。 */
-vk-edge[size='mega'] .vk-edge-label { font-size: var(--vk-t-mega); }
-vk-edge[size='hero'] .vk-edge-label { font-size: var(--vk-t-hero); }
-vk-edge[size='display'] .vk-edge-label { font-size: var(--vk-t-display); }
-vk-edge[size='headline'] .vk-edge-label { font-size: var(--vk-t-headline); }
-vk-edge[size='title'] .vk-edge-label { font-size: var(--vk-t-title); }
-vk-edge[size='subhead'] .vk-edge-label { font-size: var(--vk-t-subhead); }
-vk-edge[size='data'] .vk-edge-label { font-size: var(--vk-t-data); }
-vk-edge[size='caption'] .vk-edge-label { font-size: var(--vk-t-caption); }
-
-
-
 
 /* `align` 与 HTML 遗留提示 [align=center]{text-align:center} 撞名：
    布局原语必须自己把文字对齐复位，否则整个子树的文字会被居中。 */

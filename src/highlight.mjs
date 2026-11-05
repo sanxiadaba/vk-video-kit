@@ -18,12 +18,9 @@ import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 import { lexShellLine, shellLang, shellLines } from './shared/shell.mjs';
-import { TIER_ALIAS } from './shared/tier-alias.mjs';
 import {
-  ATTR_ALIAS,
   COLUMNS,
   CURRENT_RULE,
-  FILL_TAGS,
   MASS,
   SIZE_TIERS,
   TONE_HINT,
@@ -36,7 +33,7 @@ import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, s
 import { ICONS } from './icons.generated.mjs';
 import { ICON_WHITELIST_HINT, isSemanticIcon } from './shared/icons.mjs';
 import { diag } from './shared/diag.mjs';
-import { TAGS, TAG_NAMES, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES } from './registry.mjs';
+import { TAGS, TAG_NAMES, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES, CANVAS } from './schema.mjs';
 
 /* ------------------------------------------------------- 15.2 列开关 / 对照 */
 
@@ -766,7 +763,6 @@ function validateAuthorHtml(doc, file, html = '') {
     // canvas 的子节点靠 x/y 定位；漏写一个就会静默落到 0，和"放在左上角"分不清。
     if (node.parentNode?.tagName === 'vk-canvas' && tag.startsWith('vk-')) {
       const free =
-        tag === 'vk-edge' ||
         XY_OVERLAY.has(tag) ||
         attrs.has('data-vk-overlay');
       if (!free) {
@@ -922,26 +918,9 @@ function validateAuthorHtml(doc, file, html = '') {
       }
       const spec = def.attrs?.[name];
       const where = { file, line: lineOf(node), tag };
-      if (!spec) {
-        // 15.0 概念收敛：旧名不拦构建，只给一条迁移提示（运行期会折成新名）。
-        const alias = ATTR_ALIAS[name];
-        const aliasTag = alias && (!alias.tag || alias.tag === tag || (Array.isArray(alias.tag) && alias.tag.includes(tag)));
-        if (alias && aliasTag) {
-          warnings.push(
-            `${file}:${lineOf(node)} <${tag}> 的 ${name}="${raw}" 已改名：${alias.note}` +
-              (alias.to ? `（新写法：${alias.to}）` : '')
-          );
-          continue;
-        }
-        // fill 只在能填充的组件上声明；其它组件上的 fill 是旧的布尔铺满（= stretch）。
-        if (name === 'fill' && !FILL_TAGS.has(tag)) {
-          warnings.push(
-            `${file}:${lineOf(node)} <${tag}> 的 fill 是旧的布尔写法，15.0 起这个意思叫 stretch；` +
-              '要"填充"只有 vk-img / vk-panel / vk-layer 用 fill="none|cover|contain"'
-          );
-          continue;
-        }
-
+      // 画布子项的坐标协议只在这一层成立，不挂进每个标签的属性表。
+      const canvasOk = node.parentNode?.tagName === 'vk-canvas' && name in CANVAS;
+      if (!spec && !canvasOk) {
         const usable = Object.keys(def.attrs || {});
         const hit = closestOf(name, usable);
         errors.push(
@@ -966,14 +945,6 @@ function validateAuthorHtml(doc, file, html = '') {
               why: '给了值也只会被当成真：看着像能关掉，实际关不掉',
             })
           );
-        continue;
-      }
-      // 关系不是形容词：trace / badge / compare 各有自己的组件，元素上写它们没有意义。
-      if (name === 'act' && (raw === 'trace' || raw === 'badge' || raw === 'compare')) {
-        const tool = { trace: 'vk-edge', badge: 'vk-note', compare: 'vk-diff' }[raw];
-        errors.push(
-          `${file}:${lineOf(node)} <${node.tagName}> 的 act="${raw}" 不是元素动作；关系用 <${tool}>（它是组件，不是形容词）。元素上可写：focus / context / mark`
-        );
         continue;
       }
       if (spec.type === 'tone') {
@@ -1084,7 +1055,7 @@ function validateAuthorHtml(doc, file, html = '') {
           );
         }
       }
-      if (name === 'arrow' && tag === 'vk-edge') {
+      if (name === 'arrow' && tag === 'vk-annotate') {
         const tokens = String(raw)
           .split(',')
           .map((s) => s.trim())
@@ -1094,7 +1065,7 @@ function validateAuthorHtml(doc, file, html = '') {
         );
         if (!tokens.length || !shaped) {
           errors.push(
-            `${file}:${lineOf(node)} <vk-edge> 的 arrow="${raw}" 不认识；写 end / start / both / none，可加 :triangle / :open / :thin，或 size:40、cap:start（逗号分隔）`
+            `${file}:${lineOf(node)} <${tag}> 的 arrow="${raw}" 不认识；写 end / start / both / none，可加 :solid / :open / :thin，或 size:40、cap:start（逗号分隔）`
           );
         }
       }
@@ -1123,14 +1094,7 @@ function validateAuthorHtml(doc, file, html = '') {
       if (name === 'counter' && tag === 'vk-label' && !/^\d+(?:\/\d+)?$/.test(String(raw).trim())) {
         errors.push(`${file}:${lineOf(node)} <vk-label> 的 counter="${raw}" 不是工序进度；写 counter="3/5"（或只写 "3"）`);
       }
-      if (spec.values && spec.type !== 'space' && spec.type !== 'columns' && !spec.values.includes(raw) && !(name === 'size' && TIER_ALIAS[raw])) {
-        // 13.0 改过档位名：旧名一版内仍然生效（运行期会折成新名），所以只提示、不拦构建。
-        if (name === 'size' && TIER_ALIAS[raw]) {
-          warnings.push(
-            `${file}:${lineOf(node)} <${node.tagName}> 的 size="${raw}" 已改名，请写成 size="${TIER_ALIAS[raw]}"`
-          );
-          continue;
-        }
+      if (spec.values && spec.type !== 'space' && spec.type !== 'columns' && !spec.values.includes(raw)) {
         const hit = closestOf(raw, spec.values);
         errors.push(
           diag({

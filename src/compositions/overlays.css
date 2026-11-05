@@ -55,7 +55,7 @@
 .vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
 .vk-pin-bd[data-tone='warn'] { border-left-color: var(--vk-warn); }
 .vk-pin-bd[data-tone='neutral'] { border-left-color: var(--vk-ink-1); }
-.vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); padding: var(--vk-s1) var(--vk-s2); }
+.vk-pin-bd[data-size='caption'] { font-size: var(--vk-t-label); padding: var(--vk-s1) var(--vk-s2); }
 .vk-pin-n {
   display: inline-flex;
   align-items: center;
@@ -242,8 +242,8 @@ vk-annotate .vk-edge-label {
 vk-annotate .vk-edge-label[data-dir='h-below'] { transform: translate(-50%, var(--vk-s1)); }
 vk-annotate .vk-edge-label[data-dir='v'] { transform: translate(var(--vk-s2), -50%); }
 vk-annotate .vk-edge-label[data-dir='v-left'] { transform: translate(calc(-100% - var(--vk-s2)), -50%); }
-vk-annotate[data-size='label'] .vk-edge-label { font-size: var(--vk-t-label); }
-vk-annotate[data-size='subhead'] .vk-edge-label { font-size: var(--vk-t-subhead); }
+vk-annotate[data-size='caption'] .vk-edge-label { font-size: var(--vk-t-label); }
+vk-annotate[data-size='headline'] .vk-edge-label { font-size: var(--vk-t-subhead); }
 /* arrow-label 是「中轴挂一个词」的新写法：走 tag 档（caption × 0.75 = 36），
    字距 .08em；旧 label 仍是 body 档，旧页不变。 */
 vk-annotate .vk-edge-label[data-arrow-label] {
@@ -272,8 +272,8 @@ vk-annotate[data-note='label'] .vk-pin-bd {
   color: var(--vk-ink-1);
   white-space: nowrap;
 }
-vk-annotate[data-note='label'] .vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); }
-vk-annotate[data-note='label'] .vk-pin-bd[data-size='subhead'] { font-size: var(--vk-t-subhead); }
+vk-annotate[data-note='label'] .vk-pin-bd[data-size='caption'] { font-size: var(--vk-t-label); }
+vk-annotate[data-note='label'] .vk-pin-bd[data-size='headline'] { font-size: var(--vk-t-subhead); }
 /* 编号点：手机上（整帧 780 宽）它只剩 20 来个像素，所以给足尺寸与纸色环——
    实色圆 + 反白数字 + 一圈纸（把底下的笔画切开），远看是"一个点"，不是"一粒灰"。 */
 vk-annotate[data-note='badge'] .vk-pin-bd,
@@ -445,18 +445,18 @@ vk-label[for] .vk-label.vk-caption {
 .vk-pin-bd[data-size='hero'] { font-size: var(--vk-t-hero); }
 .vk-pin-bd[data-size='display'] { font-size: var(--vk-t-display); }
 .vk-pin-bd[data-size='headline'] { font-size: var(--vk-t-headline); }
-.vk-pin-bd[data-size='title'] { font-size: var(--vk-t-title); }
-.vk-pin-bd[data-size='subhead'] { font-size: var(--vk-t-subhead); }
+.vk-pin-bd[data-size='display'] { font-size: var(--vk-t-title); }
+.vk-pin-bd[data-size='headline'] { font-size: var(--vk-t-subhead); }
 .vk-pin-bd[data-size='body'] { font-size: var(--vk-t-body); }
-.vk-pin-bd[data-size='data'] { font-size: var(--vk-t-data); }
-.vk-pin-bd[data-size='label'] { font-size: var(--vk-t-label); }
+.vk-pin-bd[data-size='body'] { font-size: var(--vk-t-data); }
+.vk-pin-bd[data-size='caption'] { font-size: var(--vk-t-label); }
 .vk-pin-bd[data-size='caption'] { font-size: var(--vk-t-caption); }
 .vk-pin-bd[data-size='mega'] { font-size: var(--vk-t-mega); }
 vk-annotate[data-size='hero'] .vk-edge-label { font-size: var(--vk-t-hero); }
 vk-annotate[data-size='display'] .vk-edge-label { font-size: var(--vk-t-display); }
 vk-annotate[data-size='headline'] .vk-edge-label { font-size: var(--vk-t-headline); }
-vk-annotate[data-size='title'] .vk-edge-label { font-size: var(--vk-t-title); }
+vk-annotate[data-size='display'] .vk-edge-label { font-size: var(--vk-t-title); }
 vk-annotate[data-size='body'] .vk-edge-label { font-size: var(--vk-t-body); }
-vk-annotate[data-size='data'] .vk-edge-label { font-size: var(--vk-t-data); }
+vk-annotate[data-size='body'] .vk-edge-label { font-size: var(--vk-t-data); }
 vk-annotate[data-size='caption'] .vk-edge-label { font-size: var(--vk-t-caption); }
 vk-annotate[data-size='mega'] .vk-edge-label { font-size: var(--vk-t-mega); }

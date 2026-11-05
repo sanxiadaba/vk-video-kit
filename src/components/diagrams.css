@@ -251,11 +251,11 @@ vk-timeline { display: block; }
    title / subhead 只改字号与行高，主值仍然是这一条的主位。
    只落在轴模式的 .vk-tl-item 上：泳道 chip 只有一格宽，224 放不进去，
    那里仍按 subhead 画（见文件末尾的 .vk-tl-chip .vk-tl-value）。 */
-.vk-timeline[data-value-size='title'] .vk-tl-item .vk-tl-value {
+.vk-timeline[data-value-size='display'] .vk-tl-item .vk-tl-value {
   font-size: var(--vk-t-title);
   line-height: 1.06;
 }
-.vk-timeline[data-value-size='subhead'] .vk-tl-item .vk-tl-value {
+.vk-timeline[data-value-size='headline'] .vk-tl-item .vk-tl-value {
   font-size: var(--vk-t-subhead);
   line-height: 1.1;
 }
@@ -265,8 +265,8 @@ vk-timeline { display: block; }
 .vk-timeline[data-value-size='display'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-display); line-height: 1.02; }
 .vk-timeline[data-value-size='headline'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-headline); line-height: 1.04; }
 .vk-timeline[data-value-size='body'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-body); line-height: 1.2; }
-.vk-timeline[data-value-size='data'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-data); line-height: 1.2; }
-.vk-timeline[data-value-size='label'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-label); line-height: 1.2; }
+.vk-timeline[data-value-size='body'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-data); line-height: 1.2; }
+.vk-timeline[data-value-size='caption'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-label); line-height: 1.2; }
 .vk-timeline[data-value-size='caption'] .vk-tl-item .vk-tl-value { font-size: var(--vk-t-caption); line-height: 1.2; }
 .vk-tl-note {
   color: var(--vk-ink-2);

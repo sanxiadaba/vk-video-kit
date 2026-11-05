@@ -1,23 +1,17 @@
 import { resolveAnchor } from './base.mjs';
 import { LIMITS } from '../shared/limits.mjs';
-import { auditStyle, STYLE_RULES } from './style-preset.mjs';
 
 /**
- * 页面自检：作者页与标本页共用同一份。
+ * 页面自检：`vk check` 与 `vk shot` 共用同一份。
  *
  * 只看客观错误：字号地板、对比度、溢出、裁切、遮挡正文、非法值、
- * 空锚点、组件渲染失败、空组件、素材过期。这些都是"无论你画什么，它都错"的事。
+ * 空锚点、组件渲染失败、空帧、素材过期、一处以上焦点。
+ * 这些都是「无论你画什么，它都错」的事。
  *
- * 审美判断不在这里：强调色 ≤1、深色块 ≤1、图标白名单、页眉只讲工序、
- * 120 边距、字幕句长、孤行、焦点数量都是**项目层**的版面主张，默认不跑；
- * 要跑就显式打开：
- *   vk check --style ...      /  node tools/style-preset.mjs ...
- *   vk.auditPage(root, { style: true })
- * 判定与文案在 runtime/style-preset.mjs（STYLE_RULES 是唯一清单）。
- * 安全区（120 边距）、底部空带、字数、元素数量都不再是默认审计的一部分。
+ * 审美不在这里：强调色几个、深色块几个、页眉怎么写，那些不属于库。
+ * 焦点数量是例外——两处焦点是「观众不知道该看哪」，是事故，不是风格。
  *
- * 所有数值来自 shared/limits.mjs —— 这里不再有第二份定义。
- * 对比度分两档：正文 7:1，标注（ink="muted"，即 [data-meta] 里）4.5:1。
+ * 所有数值来自 shared/limits.mjs；对比度分两档：正文 7:1，标注 4.5:1。
  */
 
 const MIN_FONT = LIMITS.fontFloor;
@@ -27,7 +21,7 @@ const MUTED_RATIO = LIMITS.contrastMuted;
 const LARGE_RATIO = LIMITS.contrastLarge;
 const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
-const OVERLAYS = new Set(['vk-edge', 'vk-annotate', 'vk-note', 'vk-label']);
+const OVERLAYS = new Set(['vk-annotate', 'vk-note', 'vk-label']);
 
 
 
@@ -102,7 +96,7 @@ export function auditPage(root = document, options = {}) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-annotate, vk-note, vk-label[for]');
+    const inOverlay = !!el.closest('vk-annotate, vk-note, vk-label[for]');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inBleed = !!el.closest('.vk-page-bleed');
 
@@ -253,11 +247,11 @@ export function auditPage(root = document, options = {}) {
   if (!voidExempt) {
     const body = stage.querySelector('.vk-page-bd') || stage;
     const chars = (body.innerText || '').replace(/\s+/g, '').length;
-    const media = [...body.querySelectorAll('img, svg, canvas, vk-img, vk-canvas, vk-figure')].filter((el) => {
+    const media = [...body.querySelectorAll('img, svg, canvas, vk-img, vk-canvas')].filter((el) => {
       const r = el.getBoundingClientRect();
       return r.width > 80 && r.height > 80;
     }).length;
-    if (chars < 12 && media === 0) {
+    if (chars === 0 && media === 0) {
       out.push({
         type: 'empty',
         what: `可见文字 ${chars} 字、没有图`,
@@ -301,7 +295,7 @@ export function auditPage(root = document, options = {}) {
   // w 是硬宽：量出来必须等于写的数字（容忍 1.5px）。
   // 覆盖层除外：气泡的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
   for (const el of stage.querySelectorAll('[w]')) {
-    if (el.closest('vk-edge, vk-annotate, vk-note, vk-label[for]')) continue;
+    if (el.closest('vk-annotate, vk-note, vk-label[for]')) continue;
     const raw = (el.getAttribute('w') || '').trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
     const cs = getComputedStyle(el);
@@ -374,14 +368,6 @@ export function auditPage(root = document, options = {}) {
     }
   }
 
-  /* ------------------------------------------------- 项目层 preset（可选）
-     强调色 / 深色块 / 图标白名单 / 页眉 / 120 边距都是版面上的主张，不是事故。
-     默认不跑；只有显式要（`vk check --style`、auditPage(root, {style:true})）才跑。
-     判定本身在 runtime/style-preset.mjs，这里只负责"要不要问它"。 */
-  if (options.style) {
-    for (const x of auditStyle(stage)) out.push(x);
-  }
-
   // 预编译/素材状态。
   const special = [];
   if (stage.querySelector('[data-vk-unknown]')) special.push(`未知图标：${stage.querySelector('[data-vk-unknown]').dataset.vkUnknown}`);
@@ -390,7 +376,7 @@ export function auditPage(root = document, options = {}) {
   if (stage.querySelector('[data-vk-error]')) special.push('有元件渲染失败');
   if (
     stage.querySelector(
-      'vk-img[data-error], vk-compare[data-error], vk-figure[data-error], .vk-fig-win[data-error]'
+      'vk-img[data-error], vk-compare[data-error]'
     )
   )
     special.push('图片加载失败');
@@ -409,6 +395,12 @@ export function auditPage(root = document, options = {}) {
       const fix = fixFor(rest);
       return fix ? { ...rest, fix } : rest;
     });
+
+  // 一帧只讲一件事：两处焦点不是"更清楚"，是让观众不知道该看哪。
+  const focusCount = focusRegions(stage).length;
+  if (focusCount > 1) {
+    issues.push({ type: 'focus', what: `${focusCount} 处焦点`, fix: '只保留一处 state="current"；其余降成 state="mark"' });
+  }
 
   return { issues, special };
 }
@@ -467,9 +459,9 @@ export function metrics(root = document) {
     // 内容底 = 最后一个可见块；14.0 没有 vk-title 了，标题就是普通的块。
     let first = kids.find((el) => !el.matches?.('[data-vk-overlay]')) || kids[0];
     const fr = first?.getBoundingClientRect();
-    // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
+    // 覆盖层不算内容：annotate 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
-      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-annotate, vk-note, vk-label[for], [data-vk-overlay]'))
+      .filter((el) => !el.closest('svg') && !el.closest('vk-annotate, vk-note, vk-label[for], [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -522,10 +514,8 @@ export function focusRegions(stage) {
   };
 
   for (const el of stage.querySelectorAll('[data-vk-focus]')) addInk(el);
-  // 注意力只有两个来源：作者写的 act="focus"，以及运行期落到元素上的 data-act / data-tone。
-  // 13.0 这里只认 [tone="focus"]，于是 pose 给块级元素上的焦点（data-tone）永远数不到——
-  // CSS 把字涂蓝、审计说"只有一处焦点"。
-  for (const el of stage.querySelectorAll('[data-act="focus"], [tone="focus"], [data-tone="focus"]')) addInk(el);
+  // v16 的注意力只有一个词：state="current"（元素 / 行 / 格子都写它）。
+  for (const el of stage.querySelectorAll('[data-state="current"], [state="current"], [tone="focus"]')) addInk(el);
   for (const el of stage.querySelectorAll('.vk-line.is-hl, .vk-asm-row.is-hl')) add(el);
   // 一段高亮字节 = 一个 region：按容器归一，而不是按字节
   for (const el of stage.querySelectorAll('.vk-byte[data-hl="1"], .vk-byte-c[data-hl="1"]')) {
@@ -544,9 +534,12 @@ export function focusRegions(stage) {
     add(el);
   }
 
-  // 相邻同款行合成一个 region：两行表格、五个高亮字节都只算「一处」。
+  // 相邻同款「行」合成一个 region：两行表格、五个高亮字节都只算「一处」。
+  // 只对数据行生效；两块独立的文字各是一片焦点，不能合并。
+  const ROW = '.vk-line, .vk-asm-row, .vk-cell, .vk-tree-row, .vk-step, .vk-tl-item, .vk-bit-row, .vk-byte, tr, li';
   for (const el of [...found]) {
     if (!(el instanceof HTMLElement)) continue;
+    if (!el.matches(ROW)) continue;
     const prev = el.previousElementSibling;
     if (prev && found.has(prev) && prev.className === el.className) found.delete(el);
   }
@@ -572,9 +565,6 @@ export function installAudit(VK) {
   VK.limits = LIMITS;
   VK.auditPage = auditPage;
   VK.auditPages = auditPages;
-  // 项目层 preset：默认不跑，显式打开（vk check --style）才用。
-  VK.auditStyle = auditStyle;
-  VK.styleRules = STYLE_RULES;
   VK.metrics = metrics;
   VK.focusRegions = focusRegions;
 }

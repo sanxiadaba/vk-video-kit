@@ -1,348 +1,95 @@
-# vk · 画面语言
+# vk · 单帧画面库
 
-[![ci](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml/badge.svg)](https://github.com/sanxiadaba/vk-video-kit/actions/workflows/ci.yml)
-[在线标本册](https://sanxiadaba.github.io/vk-video-kit/) · [GitHub](https://github.com/sanxiadaba/vk-video-kit)
+给编程科普视频用的**元素层**：把一个内容单元（代码 / 终端 / diff / 树 / 字节 / 位 / 表格 / 公式 / 图 / 文字）
+画成 1920×1080 画布上正确、清晰、可测量的那个东西，并把若干单元按份摆进画布。
 
-**English.** vk is a 4-layer visual language of 32 web components for building 1920×1080 frames for programming-explainer videos. Beyond the single primitives, `vk-scene` packages five reusable explain-moves (compare / steps / locate / measure / cause) as named slots with default layouts. Content is read from real files or inline source blocks at build time (Shiki, KaTeX, hex dumps, JSON trees), the runtime is dependency-free, the palette is one paper material with five surface steps and semantic wash/tint pairs. The baseline is phone landscape (1920 rendered at ≈780, 0.406×), with a four-tier type scale (48 / 56 / 112 / 200) and two contrast tiers (7:1 prose, 4.5:1 annotations and mono data). The library only judges objective errors; aesthetic rules (one accent, one dark block, icon whitelist, header wording, 120 margin) are an opt-in project preset (`vk check --style`), off by default. The showcase is a self-hosted specimen book: every page is a real frame, every visible element is a vk component. Documentation is Chinese-first; this paragraph is the English summary.
+- **不做**：文案、讲解架构、版面模板、时间轴 / 动画 / 播放 / 转场 / 录屏 / 渲染。
+- **做**：30 个标签、一套布局协议、一套词汇（六档字号 / 六色语义 / 三档墨 / 一种纸）、
+  构建期预编译（Shiki / KaTeX / hexdump / 树 / 图标）、结构自检、出图。
+- **手机横屏基准**：1920 收到约 780 宽（0.406×），正文 56px ≈ 22.7 设备像素。
 
-写一个能直接录进视频的组件。每个标签独立成立；拼成一页仍由调用方决定。**32 个标签、1920×1080，手机横屏基准（≈0.406×），一种材质（白纸 + 四档表面 + 语义淡底）。单件原语之外，`vk-scene` 把五个讲解动作收成可复用组合，作者只填槽内容。**
+作者手册（给 AI 的入口）是 [SPEC.md](SPEC.md)。属性细节用 `vk doc <tag>` 查。
 
-![vk 标本册索引](docs/cover.png)
-
-## 五个原则
-
-- **分则独立。** 每个标签离开兄弟节点也能成立：不伪造内容，不依赖父级上下文，不要求作者补一次性 CSS。
-- **合则成帧。** 所有组件共享同一张 1920×1080 画布、同一个 1680×888 安全区、同一条字阶：正文 56 / 标注 48（手机横屏 ≈0.406× 下 22.7 / 19.5 设备像素）。
-- **真实文件是唯一真相。** 代码、终端、diff、树、字节、公式都通过 `src` 指向真实文件；构建期编译，HTML 里不再出现第二份手敲内容。
-- **静止即成品。** 没有播放器、没有转场，只有求值器：`seek(t)` 是纯函数，`poster` 逐像素等于静态页。
-- **文档也是库。** 每个标签一张规格页，页面本身用 vk 组件写：标题行是 `vk-text`，分隔是 `vk-box border="hair"`，页面根是 `vk-page`；帧外只有一段 `body{margin:0}`。
-
-## 四层
-
-| 层 | 数量 | 标签 |
-|---|---|---|
-| L1 原子 | 6 | `vk-box` `vk-panel` `vk-text` `vk-label` `vk-inline` `vk-img` |
-| L2 排布 | 6 | `vk-stack` `vk-grid` `vk-layer` `vk-pair` `vk-flow` `vk-canvas` |
-| L3 数据与解析 | 15 | `vk-list` `vk-code` `vk-term` `vk-diff` `vk-table` `vk-math` `vk-compare` `vk-tree` `vk-cells` `vk-bytes` `vk-steps` `vk-bits` `vk-bars` `vk-asm` `vk-timeline` |
-| L4 关系 | 3 | `vk-annotate` `vk-note` `vk-edge` |
-| L5 页面与组合 | 2 | `vk-page` `vk-scene` |
-
-> 减法：`vk-icon` / `vk-rule` / `vk-caption` / `vk-pin` / `vk-ring` / `vk-window` 已经不存在，
-> 对应的能力分别在 `vk-text` / `vk-box` / `vk-label` / `vk-note` / `vk-box` / `vk-panel` 上。
-
-“一组东西的排版”（标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片）不占标签，**库也不提供**——它们是项目自己的 CSS（一集片子一个 `film.css`）。但**讲解动作**不是装饰：`compare / steps / locate / measure / cause` 是五个可复用的组合，收在 `vk-scene` 里，见下一节。
-属性参考在 [`docs/reference.md`](docs/reference.md)，作者手册在 [`docs/ai.md`](docs/ai.md)。
-
-## 图示语汇 · vk-scene
-
-五个讲解动作，一个容器。作者只填 `slot` 内容，默认版式由库里给：
-
-| kind | 讲什么 | 槽位 |
-|---|---|---|
-| `compare` | 改前 / 改后、A / B | `a` `b`（可选 `label-a` `label-b`） |
-| `steps` | 一步一步来 | `step`（N 个；`current="2"` 是 1 起的当前步） |
-| `locate` | 在哪儿（内存 / 文件 / 屏幕） | `where` `map` |
-| `measure` | 多大、差多少 | `value` `chart` `ratio` |
-| `cause` | 为什么会这样 | `a` `b` `why`（或 `arrow="label:因为…"`） |
-
-```html
-<vk-scene kind="compare" labels="改前|改后" tone="info,ok">
-  <vk-box slot="a" border="hair" pad="md"><vk-text size="body" mono>s[0] = 'h';</vk-text></vk-box>
-  <vk-box slot="b" border="hair" pad="md"><vk-text size="body" mono>s[0] = 'H';</vk-text></vk-box>
-</vk-scene>
-```
-
-`compare` 左右等宽、中轴留 48、标签在上；`steps` 复用 `vk-flow` 并带底部 `vk-steps` 进度轨；`locate` 是地址大字 + 容器 + 中央指向线；`measure` 是 ≥240px 的数字 + 对比条 + 倍数牌；`cause` 是现象 → 带词的箭头 → 结果。每个槽都可以写 `cue="1"`，与全库同一条字幕轨道：没讲到隐藏、讲到全亮、讲完退到 55%。
-
-## 快速开始
-
-这是私有工具，不发布 npm。第一次先装依赖并构建一次（生成 `vk/`、`dist/` 与 `_site/`）：
+## 安装与构建
 
 ```bash
 npm install
-npm run build
+npm run build        # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
 ```
-
-一帧的最小 HTML。资源路径相对页面本身；页面放在子目录时改成 `../vk/...`：
-
-```html
-<link rel="stylesheet" href="vk/fonts.css">
-<link rel="stylesheet" href="vk/vk.css">
-<script src="dist/vk.js"></script>
-
-<vk-page align="center">
-  <vk-stack gap="lg">
-    <vk-text size="display">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
-  </vk-stack>
-</vk-page>
-```
-
-**属性词表只有一份**（`src/shared/vocab.mjs`）：`tone` 六值一套、`fill="none|cover|contain"`、
-`current` 统一表示「当前项」（**序号 1 起，-1 = 没有当前**）、`size` 只表字号（密度写 `mass`）。
-旧属性名由运行期折成新名并提示。
-
-排版只有一种写法：**分份**。容器给份（`cols` / `rows`），子项占份（`span`），撑满用 `stretch`（`fill` 只留给能填充的组件：img / panel / layer）：
-
-```html
-<vk-grid cols="3" gap="lg" stretch>
-  <vk-code span="2" src="code/hello.c" lines="4-9"></vk-code>
-  <vk-stack span="1" gap="md">…</vk-stack>
-</vk-grid>
-```
-
-像素 `w` / `h` 只在 `vk-canvas` 的子节点里合法，`style` 不被接受——布局要能算、能验，不能靠手摆。容量也是算出来的：一帧 888px 高，正文 52×1.5 一行，**11 行**。
-
-```bash
-node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/公式/字节/树写进 HTML
-node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
-node bin/vk.mjs shot page.html    # 出一张 1920×1080
-node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
-node bin/vk.mjs tags              # 全部标签（32 个）
-node bin/vk.mjs doc vk-code       # 某个标签的属性
-node bin/vk.mjs brief             # 30 行契约摘要（AI 入口）
-node bin/vk.mjs icons arrow       # 搜图标名
-```
-
-短代码也可以不落盘，直接放进内联源码块（`<` 不用转义）：
-
-```html
-<vk-code lang="c" file="hello.c">
-  <script type="text/plain" data-vk-source>
-#include <stdio.h>
-int main(void) { return 0; }
-  </script>
-</vk-code>
-```
-
-`src` 仍是长文件的首选；`src` 与内联块同时出现，构建期会报错。`file://` 下 `src` 取不到，请先跑 `vk build` 或 `vk serve`，不要直接双击 HTML。
 
 ## 写一帧
 
-### 代码窗
-
 ```html
-<vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4" mass="hero"></vk-code>
-```
+<link rel="stylesheet" href="../vk/fonts.css">
+<link rel="stylesheet" href="../vk/vk.css">
 
-- **行号只有一个基准：源文件行号。** `lines="4-6"` 时 gutter 是 4/5/6，`current` / `focus` / `fold` 也写 4/5/6（`numbering` 已退役：没有第二套基准）。
-- `current="4"` 标出第 4 行（可写 `current="4-6"` 标一段）；`focus="4"` 让其余行退到 0.28；`fold="4"` 隐藏第 4 行，`fold="4-7"` 隐藏 4–7 行，只在开头留一条“中间省略”。
-- `long="clip"`（默认）长行裁切并给右缘渐隐；`long="wrap"` 换行。`mass` 只改体量（行高与留白），不改字号；`size` 只改字号。
-- `chrome="none"` 去窗头；`columns="none"` 单独关行号（旧名 `numbers="none"` 仍是别名）。
-- `current` / `focus` / `fold` 落在片段外会在构建期报错——写错的行段只会让重点消失，画面看起来仍然正常，所以必须硬拦。
-
-终端读真实 transcript，命令行以 `$` 开头，结果行用显式前缀 `✓` / `!` / `✗`：
-
-```html
-<vk-term title="zsh" src="code/hello.term"></vk-term>
-```
-
-diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns="numbers"` 关计数，`chrome="none"` 去窗头。diff 没有 `current` / `focus`——它表达“改了什么”，不是“正在讲哪行”；要指某一行用 `vk-annotate mode="circle"` 的 `@line` 锚点。
-
-### 数据形状
-
-| 组件 | 内容入口 | 构建期做什么 |
-|---|---|---|
-| `vk-code` | `src` 源码 / 内联块 | Shiki 高亮 |
-| `vk-diff` | `src` diff / 内联块 | 行对与词级差异 |
-| `vk-term` | `src` transcript | 行分类 |
-| `vk-table` | 原生 `<table>` | 列宽、数字列对齐 |
-| `vk-math` | `src` `.tex` / 内联 | KaTeX 排版 |
-| `vk-figure` | `src` 图片 | 画框与图注 |
-| `vk-tree` | `src` 真实目录 / 内联 JSON | 扫描层级、类型、大小 |
-| `vk-cells` | `<li value label>` | 一格一个单元 |
-| `vk-bytes` | `src` 二进制 / 内联 hex | 十六进制 + ASCII + 地址 |
-| `vk-asm` | `src` `.s` / objdump 文本 | 地址 / 机器码 / 指令 |
-| `vk-timeline` | `<li date label lane>` | 等距事件或多泳道 |
-| `vk-bars` | `<li value label>` | 横向条与数值轴 |
-| `vk-bits` | `value` / `<li from to label>` | 位串与字段 |
-
-代码、终端、diff、树、字节、汇编、公式在运行时零依赖；没预编译时会显示 `data-vk-stale`，门禁直接失败。`vk-timeline` 由结构化子节点直接排版，不需要构建数据。
-
-### 页面与出血
-
-`vk-page` 固定 1920×1080、安全区 96 / 120、可选 `align="top|center|bottom"`。**不缩放**，出片尺寸就是设计尺寸。
-
-需要全幅图/色带到 1920 边时，给 page 的直接子节点写 `bleed`：它铺满整帧、排在内容层后面；出血层只收图/面，正文仍守安全区（`vk check` 会拦住出血层里的文字）。
-
-```html
 <vk-page align="center">
-  <vk-img bleed src="assets/sample-grid.svg" alt="" fill="cover"></vk-img>
-  <vk-stack gap="lg">
-    <vk-text size="display">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="code/hello.c" lines="1-8" current="4"></vk-code>
-  </vk-stack>
-</vk-page>
-```
-
-不想用页面就把它拿掉：元件本身是 1920 的设计像素。
-
-### 锚点
-
-`for` / `from` / `to` 接受 CSS 选择器，也接受 `#id@part:arg`：
-
-```html
-<vk-page>
-  <!-- 锚点要先有目标：示例把四个目标一起写出来，照抄即可构建 -->
   <vk-stack gap="md">
-    <vk-code id="arr" lang="c" file="hello.c" src="code/hello.c" lines="1-8"></vk-code>
-    <vk-cells id="cells" cols="4" addr="0x1000">
-      <li value="61" label="s[0]"></li><li value="62" label="s[1]"></li>
-      <li value="63" label="s[2]"></li><li value="64" label="s[3]"></li>
-    </vk-cells>
-    <vk-box id="buf" surface="wash">源缓冲</vk-box>
-    <vk-box id="mem" surface="wash">目标内存</vk-box>
+    <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
+    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5"></vk-code>
   </vk-stack>
-  <vk-note variant="bubble" for="#arr@line:4">第 4 行</vk-note>
-  <vk-note variant="bubble" for="#cells@cell:3">第 3 格</vk-note>
-  <vk-note variant="bubble" for="#cells@region:10%,0%,40%,100%">这四个字节</vk-note>
-  <vk-edge from="#buf@side:right" to="#mem@point:0%,50%"></vk-edge>
 </vk-page>
+
+<script src="../dist/vk.js"></script>
 ```
-
-`vk-note variant="bubble"` 只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
-或 `vk-box ring`（它们的 `for` 用分号分隔多个目标）。
-
-| part | 用在 | 编号 |
-|---|---|---|
-| `point` | 任意标签 | `x%,y%`，左上角是 0,0 |
-| `side` | 任意标签 | `top` / `right` / `bottom` / `left` |
-| `region` | 任意标签 | `x%,y%,w%,h%` |
-| `line` / `char` | `vk-code` / `vk-diff` / `vk-asm` | 源文件行号；字符列从 0 起 |
-| `cell` | `vk-cells` / `vk-table` | 下标或 `行,列`，从 0 起 |
-| `byte` | `vk-cells` / `vk-bytes` | 偏移从 0 起 |
-| `bit` / `field` | `vk-bits` | 位下标 / 字段下标，从 0 起 |
-| `addr` | `vk-asm` | 指令地址 |
-| `row` / `node` / `item` | `vk-table` / `vk-tree` / `vk-list` | 见组件 |
-| `step` | `vk-steps` | 从 0 起 |
-| `event` / `lane` | `vk-timeline` | 排序后事件下标（0 起）/ 泳道名 |
-
-写错会在 `vk build` 报错。
-
-## 主题（调色板）
-
-颜色只有一个来源：`src/tokens/themes.css` 里的 `--vk-theme-*`（一套主题 98 个值）。
-三套内置主题挂在 `vk-page` / `body` / 任意祖先上，**只换颜色，不换版**：
-
-| 主题 | 纸 | 墨 | 强调 | 场景 | 正文对比度 |
-|---|---|---|---|---|---|
-| `paper`（默认） | 纯白 | 冷墨 | 钴蓝 | 现在的样子 | 19.2:1 |
-| `graphite` | 近白 | 暖墨 | 琥珀 | 更“纸感”，适合长时间看 | 17.4:1 |
-| `blueprint` | 极浅蓝 | 深蓝墨 | 亮蓝 | 工程图感，适合“讲结构” | 16.1:1 |
-
-```html
-<vk-page theme="graphite">…</vk-page>   <!-- 属性写法（运行期 = data-theme） -->
-<body data-theme="blueprint">…</body>   <!-- 整页 -->
-<div data-theme="paper">…</div>         <!-- 局部：只影响这一块 -->
-```
-
-自定义 = 覆盖 `--vk-theme-*`，不用改库：
-
-```css
-[data-theme="sepia"]{
-  --vk-theme-paper:  #f6efe2;
-  --vk-theme-ink-1:  #201a12;
-  --vk-theme-accent: #7a3b00;
-}
-```
-
-三层：`--vk-theme-*`（库里唯一出现 hex 的地方）→ 语义名（`--vk-paper-*` / `--vk-ink-*` /
-`--vk-wash-*` / `--vk-focus-*` …，全部 = `var(--vk-theme-*)`）→ 组件（不写颜色）。
-默认主题就是纸色基准；三套主题下同一块内容的包围盒与字号逐项相等。
-完整变量表与派生公式见 [`docs/themes.md`](docs/themes.md)。
-
-## 两条视觉规则
-
-1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / 气泡）用梅紫，其中 `em` 只画一条梅紫下划线；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
-2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
-
-**字阶四档：200 / 112 / 56 / 48，名字是 `display / headline / body / caption`。**
-基准是**手机横屏**：1920 的帧在手机上实际渲染到约 780×439（0.406×），字号按这个尺度定。
-
-- `caption` 48：标签、单位、脚注——只给「不读第二遍」的字（手机 19.5px）；
-- `body` 56：正文与等宽数据（手机 22.7px）；
-- `headline` 112：标题（手机 45px）；
-- `display` 200：一页最多一次，只给「本页唯一的答案」（手机 81px）。
-
-旧字号名继续可用，全部别名到四档：`label` → `caption`、`data` → `body`、`subhead` → `headline`、
-`title` → `display`；`hero` 280 / `mega` 400 保留为补充档（一个数字 / 一个词当家，一帧最多一个）。
-`display-2xl` / `display-xl` / `heading` / `meta` 仍是补充别名。
-
-`vk-text` 默认按字号取行宽（body 25 字 → 1400px，display 是版心上限 1680）；要铺满容器写 `measure="none"`。
-
-## 库判客观错误，审美判断留给项目
-
-`vk check` 默认只判「无论画什么都错」的事：溢出、裁切、覆盖层压住正文、非法枚举、
-锚点解析失败、组件渲染失败、空组件、素材过期。字阶地板 / 对比度 / 安全区也是硬门槛。
-
-强调色 ≤1、深色块 ≤1、页眉只讲工序、内容落在 120 边距里 —— 这四条是**版面主张**，
-默认**不跑**；要跑就显式开：
 
 ```bash
-node bin/vk.mjs check frames/06.html --style
-node tools/style-preset.mjs frames/06.html   # 同一个 preset 的独立入口
+node bin/vk.mjs build pages/a.html       # pages/ → out/，编译代码 / 公式 / 字节 / 树 / 图标
+node bin/vk.mjs check pages/a.html       # 结构自检（字号 / 对比度 / 安全区 / 溢出 / 重叠 / 焦点）
+node bin/vk.mjs shot pages/a.html        # 出 out/a.png（--phone 出 780 宽）
 ```
 
-图标白名单降级为**提醒**：装饰图标不再让页面变红，构建期也只打印一句提醒。
-详见 [`docs/style-preset.md`](docs/style-preset.md)。
+**构建只写 `out/`，不改源文件。**
 
-## 规格页
+## 30 个标签
 
-`npm run build` 生成的不是组件文档，而是 32 张规格页：
+| 层 | 标签 |
+|---|---|
+| 原子 6 | `box` `panel` `text` `label` `inline` `img` |
+| 排布 6 | `stack` `grid` `layer` `pair` `flow` `canvas` |
+| 数据 15 | `list` `code` `term` `diff` `table` `math` `compare` `tree` `cells` `bytes` `steps` `bits` `bars` `asm` `timeline` |
+| 关系 2 | `annotate` `note` |
+| 页面 1 | `page` |
 
-- **索引**：6 页（前 5 页每页 6 格，最后一页 1 格）。每格是**帧板**的等比缩略图 + 名字 + `vk-*` 标签名；缩略图由 `tools/thumbs.mjs` 生成，内容哈希缓存。
-- **每个组件一页 = 纸 + 帧板**：上方一块 1920×1080 帧板（一行元信息 + 标准形态），下方是状态带（`PRESETS` 逐档）与最小 HTML；帧板仍是单镜头，没有成品、没有用法、没有解剖。
-- 页面本身就是 vk 标签写的：标题行是 `vk-text`，分隔是 `vk-box border="hair"`，页面根是 `vk-page`；状态带与最小写法在帧板外。
-- 属性表在 [`docs/reference.md`](docs/reference.md)，由 registry 生成，和页面同源。
+同一件事只有一个写法：`tone` 六值、`size` 六档、`current` 1 起、
+`state="current|mark|ok|warn|err"`、`columns` 一个列开关。
+没有别名、没有旧写法、没有 `at` / `cue` / `enter`。
 
-帧外的只有一段 `body{margin:0}` 与链接色；帧内的可见元素全部是 vk。
-
-## 命令
+## 自检与出图
 
 ```bash
-npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata（含索引缩略图，约 30s）
-npm run build:fast  # 同上但不截缩略图（约 3s）；测试与日常都用这个
-npm run dev         # build + watch 重建 + dev server（8099）
-npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（约 8s）
-npm run specimens   # 只重生成标本册
-npm run verify      # 只读校验：生成物与源码不一致就失败
-npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
-npm test            # 全量（约 30s；首次 contract/gate 冷跑，暖缓存更快）
-node cli/shot.mjs --batch a.html b.html --out-dir shots/   # 一个浏览器拍一组（12 帧约 3s）
-npm test -- --fast  # 只跑静态检查（不起浏览器）
-npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
-npm run gate        # 48px 地板 / 对比度 / 安全区 / 裁切 / console / 溢出
-npm run gate:full   # 全部页面（暖缓存更快）
-npm run gate:visual # 每个预设的像素差
-npm run links       # 站内链接门禁
-npm run capabilities # 能力矩阵：契约 / 标本 / 测试三件套，缺一件报红
-npm run shot -- _site/specimen/vk-code.html
-node bin/vk.mjs shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
+node bin/vk.mjs check pages/             # 多页共用一个浏览器
+node bin/vk.mjs shot pages/a.html --phone
+node bin/vk.mjs shot pages/a.html --width 640 --out out/a.png
+node bin/vk.mjs doc vk-code              # 属性 / 取值 / 默认值
+node bin/vk.mjs brief                    # 契约摘要（--json 给机器）
+node bin/vk.mjs tags                     # 30 个标签
+node bin/vk.mjs icons arrow              # 搜 Lucide 图标名
 ```
 
-`vk check` 查 48px 地板、正文是否落在 56、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
+`vk check` 只判客观错误：字号地板、对比度、安全区、溢出、裁切、非覆盖层重叠、
+一处以上焦点、空锚点、渲染失败、素材过期、空帧。
 
-`npm run build` 之后：`_site/` 是完整静态站（索引 + 32 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是本地页面引用的构建产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
+## 测试与预算
 
-## 仓库结构
-
-```
-src/      运行时 + CSS 层 + registry + 标本数据（唯一真源）
-cli/      本地 CLI：build / serve / check / shot
-tools/    仅开发：registry 生成、scenes、标本册、契约、门禁
-code/     真实示例文件（含 .bin / .json）
-docs/     设计说明 + 给 AI 的作者手册 + 生成的属性参考
-tests/    纯函数单测与浏览器回归
-_site/    构建产物（gitignore）
+```bash
+npm test             # schema + 30 张样张构建（不启浏览器）
+npm test -- --full   # + 30 页自检 + 640 宽截图回归
+npm run budget       # 标签 / 属性 / 行数预算，超了直接红
 ```
 
-## 包
+样张在 `tests/pages/`，只用于构建与回归，不是模板，也不进库。
 
-私有工具，不发布 npm；`dist/` 与 `vk/` 只供本地页面引用，CLI 用 `node bin/vk.mjs`。
+## 结构
 
-## 浏览器
-
-桌面 Chromium / Edge（`target: chrome110`）。标本册是桌面 only；手机横屏观看由 1920 帧整体缩放保证。CI 只装 Chromium。
+```
+src/schema.mjs      公开 API 的唯一真值（标签 / 属性 / 取值 / 默认值 / 子节点 / 状态）
+src/runtime/        组件实现
+src/*.css           样式层（tokens → elements → layout → components → page → relations）
+cli/                build / check / shot
+tools/              构建、样张、画廊、预算、测试
+pages/              作者页（源）；构建产物在 out/
+```
 
 ## 许可
 
