@@ -54,6 +54,12 @@ const RECIPES = [
       { file: 'adt/list.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/list.c', '-o', 'adt/list.exe'] },
     ],
   },
+  {
+    src: 'read/pow2.c',
+    outputs: [
+      { file: 'read/pow2.exe', cmd: ['gcc', '-std=gnu99', '-O0', 'read/pow2.c', '-o', 'read/pow2.exe'] },
+    ],
+  },
 ];
 
 function walkC(dir, out = []) {

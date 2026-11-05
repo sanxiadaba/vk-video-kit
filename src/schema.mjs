@@ -376,6 +376,7 @@ export const TAGS = {
       index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号方向' },
       group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
       sign: { type: 'bool', group: 'appearance', label: '标出符号位' },
+      size: sizeText('body'),
     },
     content: 'text',
   },

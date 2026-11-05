@@ -205,6 +205,8 @@ export class VkBytes extends VkElement {
    位数不校验：8 / 16 / 32 / 64 之外的位串原样画出来。 */
 export class VkBits extends VkElement {
   render() {
+    const size = sizeCss(attrEnum(this, 'size'))
+    if (size) this.style.setProperty('--vk-cs', size)
     const fields = this._fields()
     const total = fields.reduce((n, f) => n + f.length, 0)
     if (!total) {

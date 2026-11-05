@@ -937,7 +937,7 @@ vk-bits {
   flex-direction: column;
   gap: var(--vk-gap-close);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
 }
 
 .vk-bits-label {
