@@ -1,29 +1,31 @@
 <vk-page id="arrows">
   <vk-stack gap="normal">
-    <vk-label counter="1">arrow · 三种形状</vk-label>
-    <vk-grid cols="12" gap="wide">
-      <vk-box id="a1" span="3" surface="soft" pad="normal"><vk-text size="caption" align="center">源</vk-text></vk-box>
-      <vk-box id="a2" span="3" surface="soft" pad="normal"><vk-text size="caption" align="center">直</vk-text></vk-box>
-      <vk-box id="a3" span="3" surface="soft" pad="normal"><vk-text size="caption" align="center">折</vk-text></vk-box>
-    </vk-grid>
-    <vk-text size="caption" ink="muted">straight 直连；ortho 走直角；curve 是默认的弧线。</vk-text>
+    <vk-label counter="1">arrow · straight / ortho</vk-label>
+    <vk-text size="subhead">同一行用直线；高低错开用直角。</vk-text>
+    <vk-canvas w="1500" h="300" pad="close">
+      <vk-box id="a1" x="0" y="0" w="380" h="120" surface="soft" pad="normal"><vk-text size="caption">源</vk-text></vk-box>
+      <vk-box id="a2" x="560" y="0" w="380" h="120" surface="soft" pad="normal"><vk-text size="caption">同高</vk-text></vk-box>
+      <vk-box id="a3" x="1120" y="170" w="380" h="120" surface="tint" tone="focus" pad="normal"><vk-text size="caption">错开</vk-text></vk-box>
+    </vk-canvas>
   </vk-stack>
   <vk-callout mode="arrow" from="#a1" to="#a2" shape="straight"></vk-callout>
-  <vk-callout mode="arrow" from="#a2" to="#a3" shape="ortho"></vk-callout>
+  <vk-callout mode="arrow" from="#a2" to="#a3" shape="ortho" tone="focus"></vk-callout>
 </vk-page>
 
-<vk-page id="notes">
-  <vk-stack gap="normal">
+<vk-page id="sides">
+  <vk-stack gap="none">
     <vk-label counter="2">note · 四边</vk-label>
-    <vk-grid cols="12" gap="section">
-      <vk-box id="n1" span="4" surface="soft" pad="normal"><vk-text size="caption">左上目标</vk-text></vk-box>
-      <vk-box id="n2" span="4" surface="soft" pad="normal"><vk-text size="caption">中</vk-text></vk-box>
-      <vk-box id="n3" span="4" surface="soft" pad="normal"><vk-text size="caption">右</vk-text></vk-box>
-    </vk-grid>
+    <vk-canvas w="1500" h="700" pad="close">
+      <vk-box id="s1" x="700" y="120" w="300" h="100" surface="soft" pad="normal"><vk-text size="caption" align="center">上</vk-text></vk-box>
+      <vk-box id="s2" x="900" y="320" w="300" h="100" surface="soft" pad="normal"><vk-text size="caption" align="center">右</vk-text></vk-box>
+      <vk-box id="s3" x="700" y="520" w="300" h="100" surface="soft" pad="normal"><vk-text size="caption" align="center">下</vk-text></vk-box>
+      <vk-box id="s4" x="420" y="320" w="300" h="100" surface="soft" pad="normal"><vk-text size="caption" align="center">左</vk-text></vk-box>
+    </vk-canvas>
   </vk-stack>
-  <vk-callout mode="note" for="#n1" side="top">顶部注解</vk-callout>
-  <vk-callout mode="note" for="#n2" side="bottom">底部注解，文字长一点也应当放得下</vk-callout>
-  <vk-callout mode="note" for="#n3" side="left">左侧注解</vk-callout>
+  <vk-callout mode="note" for="#s1" side="top">上方</vk-callout>
+  <vk-callout mode="note" for="#s2" side="right">右侧</vk-callout>
+  <vk-callout mode="note" for="#s3" side="bottom">下方</vk-callout>
+  <vk-callout mode="note" for="#s4" side="left">左侧</vk-callout>
 </vk-page>
 
 <vk-page id="ring">
@@ -33,7 +35,7 @@
     <vk-text size="caption" ink="muted">ring 圈住第 2 行；badge 是编号点。</vk-text>
   </vk-stack>
   <vk-callout mode="ring" for="#r1@line:2" tone="focus"></vk-callout>
-  <vk-callout mode="badge" for="#r1@line:2" side="right">1</vk-callout>
+  <vk-callout mode="badge" for="#r1@line:2">1</vk-callout>
 </vk-page>
 
 <vk-page id="far">

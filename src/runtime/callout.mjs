@@ -1,4 +1,5 @@
 import {
+  inkRect,
   VkElement,
   define,
   attrEnum,
@@ -53,6 +54,14 @@ export class VkCallout extends VkElement {
     const scale = stageScale(stage);
     const W = stage.offsetWidth;
     const H = stage.offsetHeight;
+    // 版心（画布减去外边距）：气泡要落在版心里，跟内容一个边界。
+    const scs = getComputedStyle(stage);
+    const safe = {
+      x: Number.parseFloat(scs.paddingLeft) || 0,
+      y: Number.parseFloat(scs.paddingTop) || 0,
+      r: W - (Number.parseFloat(scs.paddingRight) || 0),
+      b: H - (Number.parseFloat(scs.paddingBottom) || 0),
+    };
     const local = (r) => ({
       x: (r.left - sr.left) / scale,
       y: (r.top - sr.top) / scale,
@@ -225,8 +234,9 @@ export class VkCallout extends VkElement {
     box.textContent = text;
     this._root.appendChild(box);
 
-    // 保底宽度：一行至少 8 个汉字，否则宁可变宽。
-    const minW = 8 * 48;
+    // 保底宽度：一行至少 5 个汉字。8 个太宽——短注解会撑成一大块，
+    // 挤压它自己的落位空间（右侧、左侧就放不下了）。
+    const minW = 5 * 48;
     const maxW = Math.min(720, W - 48);
     box.style.maxWidth = `${maxW}px`;
     box.style.minWidth = `${Math.min(minW, maxW)}px`;
@@ -235,6 +245,14 @@ export class VkCallout extends VkElement {
 
     const gap = Number.parseFloat(attrSpace(this, 'gap', 'normal')) || 32;
     const sideAttr = attrEnum(this, 'side', 'auto');
+    // 版心（画布减去外边距）：气泡要落在版心里，跟内容一个边界。
+    const scs = getComputedStyle(stage);
+    const safe = {
+      x: Number.parseFloat(scs.paddingLeft) || 0,
+      y: Number.parseFloat(scs.paddingTop) || 0,
+      r: stage.offsetWidth - (Number.parseFloat(scs.paddingRight) || 0),
+      b: stage.offsetHeight - (Number.parseFloat(scs.paddingBottom) || 0),
+    };
     const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
     /**
@@ -244,13 +262,14 @@ export class VkCallout extends VkElement {
     const owner = a.el.closest('vk-code, vk-box, vk-cells, vk-table, vk-tree, vk-term, vk-diff, vk-img, vk-list, vk-steps') || a.el;
     const ob = local(visibleBox(owner).getBoundingClientRect());
 
-    // 障碍物 = 所有会占地方的东西。vk-label 也算：气泡压住小标题一样难看。
+    // 障碍物只算"看得见"的件：stack / grid / canvas 是透明容器，把它们算进去会把整帧封死。
     const obstacles = [...stage.querySelectorAll(
-      'vk-code, vk-box, vk-cells, vk-text, vk-label, vk-table, vk-list, vk-term, vk-diff, vk-tree, vk-steps, vk-bars, vk-timeline, vk-img, vk-math, vk-asm, vk-pair, vk-grid'
+      'vk-code, vk-box, vk-cells, vk-text, vk-label, vk-table, vk-list, vk-term, vk-diff, vk-tree, vk-steps, vk-bars, vk-timeline, vk-img, vk-math, vk-asm, vk-compare'
     )]
       .filter((el) => !el.contains(this) && !this.contains(el) && !owner.contains(el) && el !== owner)
       .map((el) => {
-        const q = el.getBoundingClientRect();
+        // 文字是满宽块但墨迹只占左边一小段：障碍物按墨迹算。
+        const q = /^vk-(text|label)$/.test(el.tagName.toLowerCase()) ? inkRect(el) || el.getBoundingClientRect() : el.getBoundingClientRect();
         return { x: (q.left - sr.left) / scale, y: (q.top - sr.top) / scale, w: q.width / scale, h: q.height / scale };
       });
 
@@ -279,8 +298,8 @@ export class VkCallout extends VkElement {
     for (const side of order) {
       const c0 = space[side];
       const fit = {
-        left: clamp(c0.left, 8, Math.max(8, W - bw - 8)),
-        top: clamp(c0.top, 8, Math.max(8, H - bh - 8)),
+        left: clamp(c0.left, safe.x + 8, Math.max(safe.x + 8, safe.r - bw - 8)),
+        top: clamp(c0.top, safe.y + 8, Math.max(safe.y + 8, safe.b - bh - 8)),
         side,
         bw,
         bh,
