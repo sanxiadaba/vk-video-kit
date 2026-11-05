@@ -301,8 +301,15 @@ if (cmd === 'render' || cmd === 'check') {
   else
     for (const tag of TAG_NAMES) {
       const t = TAGS[tag];
-      console.log(`${tag.padEnd(12)} ${t.name}`);
-      if (CHILD_ATTRS[tag]) console.log(`             子 <li>：${CHILD_ATTRS[tag].join(', ') || '无属性'}`);
+      console.log(`\n${tag} · ${t.name} —— ${t.summary}`);
+      const parts = [];
+      for (const [name, spec] of Object.entries(attrsOf(tag))) {
+        const v = spec.values ? spec.values.join('|') : spec.type;
+        parts.push(`${name}=${v}${spec.default !== undefined ? `(${spec.default})` : ''}`);
+      }
+      console.log('  ' + parts.join('  '));
+      if (CHILD_ATTRS[tag]) console.log(`  子 <li>：${CHILD_ATTRS[tag].join(', ') || '无属性'}`);
+      if (t.children?.hint) console.log(`  内容：${t.children.hint}`);
     }
 } else if (cmd === 'icons') {
   const q = (inputs[0] || '').toLowerCase();

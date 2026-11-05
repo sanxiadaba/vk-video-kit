@@ -12,7 +12,7 @@
  *   · 没有时间维度：没有 at / cue / enter / duration。
  */
 
-import { TONE, STATE, SURFACE, INK, SIZE, SPACE } from './vocab.mjs';
+import { TONE, STATE, SURFACE, INK, SIZE } from './vocab.mjs';
 
 export const LAYERS = [
   { id: 'page', label: 'L0 画布' },
@@ -43,7 +43,7 @@ export const CANVAS_ATTRS = {
 };
 
 /* ------------------------------------------------------------------ 取值 */
-const size = (def = 'body') => ({ type: 'fontsize', default: def, group: 'type', label: '字号（档名或像素）' });
+const size = (def = 'body') => ({ type: 'enum', values: SIZE, default: def, group: 'type', label: '字号' });
 const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '间距（档名或像素）' });
 const pad = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
 const tone = (def = 'neutral') => ({ type: 'enum', values: TONE, default: def, group: 'appearance', label: '语调' });
@@ -253,7 +253,6 @@ export const TAGS = {
       lines: { type: 'text', content: true, group: 'content', label: '行段' },
       file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
       lang: { type: 'text', content: true, group: 'content', label: '语言' },
-      variant: { type: 'enum', values: ['unified', 'split'], default: 'unified', group: 'appearance', label: '形态' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       size: size('body'),
     },
@@ -438,7 +437,6 @@ export const TAGS = {
       gap: gap('normal'),
       shape: { type: 'enum', values: ['straight', 'ortho', 'curve'], default: 'curve', group: 'appearance', label: '连线形状' },
       tone: tone('info'),
-      size: size('body'),
     },
     content: 'text',
   },

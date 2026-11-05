@@ -158,9 +158,6 @@ function validate(root, file, errors) {
       if (s.type === 'space' && !(value in GAP) && !/^\d+(\.\d+)?(px)?$/.test(value)) {
         errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${value}" 不是间距；可用：${Object.keys(GAP).join(' / ')} 或像素数`);
       }
-      if (s.type === 'fontsize' && !['caption', 'body', 'subhead', 'headline', 'display', 'hero'].includes(value) && !/^\d+(\.\d+)?$/.test(value)) {
-        errors.push(`${file}:${lineOf(node)} <${tag}> 的 size="${value}" 不是字号；可用：caption / body / subhead / headline / display / hero 或像素数`);
-      }
     }
     // span 只在 grid 子项上成立；x/y 只在 canvas 子项上。
     if (node.attrs?.some((a) => a.name === 'span' || a.name === 'row-span') && parent !== 'vk-grid') {
@@ -334,8 +331,10 @@ function buildAsm(node, file) {
   const text = readSource(node, file, 'asm');
   if (text == null) return '';
   const { rows } = parseAsm(text);
+  const keep = lineSet(attrOf(node, 'lines'));
   let n = 0;
   const body = rows
+    .filter((r, i) => !keep || keep.has(i + 1))
     .map((r) => {
       if (r.kind === 'blank') return '';
       n++;
@@ -382,6 +381,14 @@ function buildBytes(node, file) {
   return `<div class="vk-win"><div class="vk-bd">${rows.join('')}</div></div>`;
 }
 
+function treeHtml(node, rows) {
+  const title = attrOf(node, 'title');
+  const head = title
+    ? `<div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">${esc(title)}</span></div>`
+    : '';
+  return `<div class="vk-win">${head}<div class="vk-bd vk-tree">${rows.join('')}</div></div>`;
+}
+
 function buildTree(node, file) {
   const src = attrOf(node, 'src');
   const depth = Number(attrOf(node, 'depth') || 3) || 3;
@@ -412,7 +419,7 @@ function buildTree(node, file) {
       });
     };
     walk(Array.isArray(data) ? data : data.children || [data], 1, '', '');
-    return `<div class="vk-tree">${rows.join('')}</div>`;
+    return treeHtml(node, rows);
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
@@ -433,7 +440,7 @@ function buildTree(node, file) {
     });
   };
   walk(abs, 1, '');
-  return `<div class="vk-tree">${rows.join('')}</div>`;
+  return treeHtml(node, rows);
 }
 
 /* ---------------------------------------------------------------- 图标 */

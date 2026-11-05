@@ -39,7 +39,11 @@ function paintState(host) {
     row.classList.toggle('is-dim', !!focus && !focus.has(n) && !cur);
   }
   const win = host.querySelector('.vk-win');
-  if (win) win.dataset.chrome = host.getAttribute('chrome') === 'none' ? 'none' : 'min';
+  if (win) {
+    win.dataset.chrome = host.getAttribute('chrome') === 'none' ? 'none' : 'min';
+    const s = host.getAttribute('surface');
+    if (s) win.dataset.surface = s;
+  }
 }
 
 export class VkCode extends VkElement {

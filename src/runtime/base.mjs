@@ -358,6 +358,7 @@ export class VkElement extends Base {
   _paint() {
     try {
       this.render?.();
+      this.frame();
       this._painted = true;
       if (this.place) this.registerPlace();
       if (this.draw) this.registerEdge();

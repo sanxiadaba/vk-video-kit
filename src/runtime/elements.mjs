@@ -1,9 +1,22 @@
-import { VkElement, define, attrText, esc, warn, takeSlot, fillSlot } from './base.mjs';
+import { VkElement, define, attrText, attrSpace, esc, warn, takeSlot, fillSlot } from './base.mjs';
 
 /* ------------------------------------------------------------------ 文字 */
 /** 文字是纯 CSS 的：size / ink / tone / align 都由属性选择器完成。 */
 export class VkText extends VkElement {
-  render() {}
+  render() {
+    const m = (this.getAttribute('measure') || '').trim();
+    if (!m) {
+      this.style.removeProperty('max-width');
+      return;
+    }
+    if (m === 'none') {
+      this.style.maxWidth = 'none';
+      return;
+    }
+    const n = Number(m);
+    if (Number.isInteger(n) && n >= 4 && n <= 60) this.style.maxWidth = n + 'em';
+    else warn(this, `measure="${m}" 只能是 none 或 4–60 的整数（一行几个字）`);
+  }
 }
 
 /* ------------------------------------------------------------------ 标签 */
@@ -77,6 +90,7 @@ export class VkImg extends VkElement {
 /* ------------------------------------------------------------------ 面 */
 export class VkBox extends VkElement {
   render() {
+    this.style.setProperty('--vk-box-pad', attrSpace(this, 'pad', 'normal'));
     if (!this._bd) {
       const kids = takeSlot(this);
       const bd = document.createElement('div');
@@ -106,7 +120,17 @@ export class VkBox extends VkElement {
   }
 }
 
+/* ------------------------------------------------------------------ 公式 */
+export class VkMath extends VkElement {
+  render() {
+    const tier = this.getAttribute('size') || 'body';
+    this.style.setProperty('--vk-cs', `var(--vk-fs-${tier})`);
+    if (!this.querySelector('.katex')) this.stale('缺少预编译的公式');
+  }
+}
+
 export function defineElements() {
+  define('vk-math', VkMath);
   define('vk-text', VkText);
   define('vk-label', VkLabel);
   define('vk-inline', VkInline);

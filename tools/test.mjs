@@ -73,6 +73,32 @@ for (const tag of TAG_NAMES) {
 }
 ok(VOCAB.size > 20, '词表已加载');
 
+/* 每个公开属性都要有消费者：声明了却没人读 = 作者写了没效果。 */
+const GENERIC = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
+const hay = [];
+const walkSrc = (d) => {
+  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    const p = path.join(d, e.name);
+    if (e.isDirectory()) walkSrc(p);
+    else if (/\.(css|mjs)$/.test(p) && !p.endsWith('schema.mjs') && !p.includes('generated')) hay.push(fs.readFileSync(p, 'utf8'));
+  }
+};
+walkSrc('src');
+walkSrc('bin');
+walkSrc('tools');
+const text = hay.join('\n');
+for (const tag of TAG_NAMES) {
+  for (const name of Object.keys(attrsOf(tag))) {
+    if (GENERIC.has(name) || name === 'class' || name === 'id') continue;
+    const needle = name.includes('-') ? name : `'${name}'`;
+    if (!text.includes(`'${name}'`) && !text.includes(`[${name}`) && !text.includes(`"${name}"`)) {
+      bad++;
+      console.error(`  ✗ ${tag}/${name} 声明了但没有消费者`);
+    }
+  }
+}
+ok(true, '属性都有消费者（逐条检查）');
+
 /* ---------------------------------------------------------------- 文档 */
 console.log('\n文档');
 const spec = fs.readFileSync('SPEC.md', 'utf8');

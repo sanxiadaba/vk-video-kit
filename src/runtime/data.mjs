@@ -35,6 +35,8 @@ export class VkTable extends VkElement {
       return
     }
     this._align(table)
+    const tbSize = attrEnum(this, 'size');
+    if (tbSize) this.style.setProperty('--vk-cs', sizeCss(tbSize))
     if (!caption) {
       this._cap?.remove()
       this._cap = null

@@ -119,6 +119,29 @@ vk-box[tone='focus'] {
   --vk-tone: var(--vk-focus);
 }
 
+/* 叠层：底 + 叠上去的东西。surface 是这一层的底。 */
+vk-layer {
+  padding: var(--vk-gap-normal);
+  border-radius: var(--vk-radius-md);
+}
+vk-layer[surface='paper'] {
+  background: var(--vk-paper);
+  box-shadow: 0 0 0 var(--vk-line-w-hair) var(--vk-line-color);
+}
+vk-layer[surface='soft'] {
+  background: var(--vk-soft);
+}
+vk-layer[surface='tint'] {
+  background: var(--vk-tint-info);
+}
+vk-layer[surface='tint'][tone='focus'] {
+  background: var(--vk-tint-focus);
+}
+vk-layer[surface='dark'] {
+  background: var(--vk-dark-bg);
+  color: var(--vk-dark-fg);
+}
+
 /* ------------------------------------------------------------------ 标签 */
 vk-label {
   display: inline-flex;
@@ -304,6 +327,7 @@ vk-asm {
 /* ------------------------------------------------------------------ 代码 */
 .vk-line {
   display: flex;
+  overflow: hidden;
   gap: var(--vk-gap-normal);
   padding: 0 var(--vk-gap-normal) 0 0;
   font-family: var(--vk-font-mono);
@@ -337,6 +361,7 @@ vk-code[long='clip'] .vk-line {
 }
 vk-code[long='wrap'] .vk-line {
   white-space: pre-wrap;
+  overflow: visible;
   overflow-wrap: anywhere;
 }
 vk-code[long='wrap'] .vk-src {
@@ -553,11 +578,21 @@ vk-code[long='wrap'] .vk-src {
 }
 
 /* 并置：两块各自向中轴靠拢，轴线才读成"之间"。 */
-vk-pair[direction='horizontal'] > :first-child {
+vk-pair:not([direction='vertical']) > :first-child {
   justify-self: end;
 }
-vk-pair[direction='horizontal'] > :last-child {
+vk-pair:not([direction='vertical']) > :last-child {
   justify-self: start;
+}
+
+/* ------------------------------------------------------------------ 公式 */
+vk-math {
+  display: block;
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: 1.4;
+}
+vk-math .katex-display {
+  margin: 0;
 }
 
 /* ------------------------------------------------------------------ 表格 */
