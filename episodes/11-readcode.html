@@ -1,6 +1,6 @@
 <vk-page id="1-hook">
   <vk-stack gap="wide">
-    <vk-label counter="1 / 6">读代码</vk-label>
+    <vk-label counter="1 / 7">读代码</vk-label>
     <vk-text size="headline">这行代码，<br>在判断<em>什么</em>？</vk-text>
     <vk-text size="body" ink="secondary">没有注释、没有循环，只有三个符号：&amp;&amp; ! &amp;。</vk-text>
   </vk-stack>
@@ -8,7 +8,7 @@
 
 <vk-page id="2-code">
   <vk-stack gap="normal">
-    <vk-label counter="2 / 6">就这一行</vk-label>
+    <vk-label counter="2 / 7">就这一行</vk-label>
     <vk-text size="subhead">把 n 和 <em>n−1</em> 按位与一次。</vk-text>
     <vk-code id="c" lang="c" file="pow2.c" src="../code/read/pow2.c" lines="3-5"></vk-code>
     <vk-text size="caption" ink="muted">答案是：判断 n 是不是 2 的幂。下面是它为什么成立。</vk-text>
@@ -18,7 +18,7 @@
 
 <vk-page id="3-bits">
   <vk-stack gap="normal">
-    <vk-label counter="3 / 6">先看一个例子</vk-label>
+    <vk-label counter="3 / 7">先看一个例子</vk-label>
     <vk-text size="subhead">8 和 7，只差<em>一个进位</em>。</vk-text>
     <vk-bits value="00001000" index="down" size="caption"></vk-bits>
     <vk-bits value="00000111" index="down" size="caption"></vk-bits>
@@ -29,7 +29,7 @@
 
 <vk-page id="4-why">
   <vk-stack gap="normal">
-    <vk-label counter="4 / 6">为什么一定为 0</vk-label>
+    <vk-label counter="4 / 7">为什么一定为 0</vk-label>
     <vk-text size="subhead">2 的幂只有<em>一个 1</em>。</vk-text>
     <vk-list variant="bullet" gap="close">
       <li>2 的幂：二进制里只有一位是 1</li>
@@ -41,7 +41,7 @@
 
 <vk-page id="5-zero">
   <vk-stack gap="normal">
-    <vk-label counter="5 / 6">那前面的 n &amp;&amp; 呢</vk-label>
+    <vk-label counter="5 / 7">那前面的 n &amp;&amp; 呢</vk-label>
     <vk-text size="subhead"><em>0</em> 也会让结果变成 0。</vk-text>
     <vk-table variant="spec" size="caption">
       <table>
@@ -55,9 +55,17 @@
   </vk-stack>
 </vk-page>
 
-<vk-page id="6-end" surface="dark">
+<vk-page id="6-run" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label counter="6 / 7">跑一遍</vk-label>
+    <vk-term src="../code/read/run.txt" size="caption" chrome="none" current="1"></vk-term>
+    <vk-text size="caption" ink="muted">0 和 12 是 0，其他的都是 1 —— 和上面的表一致。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="7-end" surface="dark">
   <vk-stack gap="wide">
-    <vk-label counter="6 / 6">小结</vk-label>
+    <vk-label counter="7 / 7">小结</vk-label>
     <vk-text size="headline">读代码，<br>先看它<em>排除</em>了什么。</vk-text>
     <vk-text size="caption" ink="muted">下一集：为什么数组越界不会当场报错。</vk-text>
   </vk-stack>

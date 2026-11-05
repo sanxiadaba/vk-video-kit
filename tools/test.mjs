@@ -319,6 +319,16 @@ try {
   console.error('  ✗ 素材清单不一致：\n' + String(e.stderr || e.message).trim());
 }
 
+/* 录进分镜的程序输出不能和程序对不上：跑一遍，比文本。 */
+try {
+  const run = execFileSync(path.join(ROOT, 'code', 'read', 'pow2.exe'), { encoding: 'utf8' });
+  const saved = fs.readFileSync(path.join(ROOT, 'code', 'read', 'run.txt'), 'utf8');
+  ok(run.replace(/\r/g, '') === saved.replace(/\r/g, ''), 'code/read/run.txt 和程序实际输出一致');
+} catch (e) {
+  bad++;
+  console.error('  ✗ 跑不动 code/read/pow2.exe：' + String(e.message).slice(0, 100));
+}
+
 /* ---------------------------------------------------------------- 渲染 */
 console.log('\n自动适配');
 {
