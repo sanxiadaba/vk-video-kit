@@ -33,18 +33,18 @@
 </vk-page>
 
 <vk-page id="3-array">
-  <vk-stack gap="close">
+  <vk-stack gap="normal">
     <vk-label counter="3 / 9">数组的循环</vk-label>
+    <vk-text size="subhead">一次加法，地址就<em>往前挪一格</em>。</vk-text>
     <vk-code lang="c" file="array.c" src="../code/adt/array.c" lines="12-14" size="caption" current="2"></vk-code>
-    <vk-text size="caption" ink="muted">一次加法，地址往前走四个字节。</vk-text>
   </vk-stack>
 </vk-page>
 
 <vk-page id="4-list">
-  <vk-stack gap="close">
+  <vk-stack gap="normal">
     <vk-label counter="4 / 9">链表的循环</vk-label>
+    <vk-text size="subhead">先读指针，<em>再跳过去</em>读值。</vk-text>
     <vk-code lang="c" file="list.c" src="../code/adt/list.c" lines="19-21" current="2"></vk-code>
-    <vk-text size="caption" ink="muted">每个节点先去读指针，跳过去，再读值。</vk-text>
   </vk-stack>
 </vk-page>
 
