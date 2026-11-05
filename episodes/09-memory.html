@@ -92,15 +92,28 @@ for (i = 0; i < n; i++)
 <vk-page id="6-line">
   <vk-stack gap="normal">
     <vk-label counter="7 / 9">一次搬一整行</vk-label>
-    <vk-text size="subhead">缓存行是 <em>64 字节</em>：用到一个，白送十五个。</vk-text>
-    <vk-steps current="2" size="subhead">
-      <li>要第 5 个字节</li>
-      <li>整行 64 字节搬进 L1</li>
-      <li>后面 15 个直接用</li>
-    </vk-steps>
+    <vk-text size="subhead">缓存行是 <em>64 字节</em>：搬就搬一整行。</vk-text>
+    <vk-cells cols="8" current="5" size="caption">
+      <li>1</li>
+      <li>2</li>
+      <li>3</li>
+      <li>4</li>
+      <li>5</li>
+      <li>6</li>
+      <li>7</li>
+      <li>8</li>
+      <li>9</li>
+      <li>10</li>
+      <li>11</li>
+      <li>12</li>
+      <li>13</li>
+      <li>14</li>
+      <li>15</li>
+      <li>16</li>
+    </vk-cells>
+    <vk-text size="caption" ink="muted">一行 = 16 个 int：只用到第 5 个，其余 15 个白送。</vk-text>
   </vk-stack>
 </vk-page>
-
 <vk-page id="7-why">
   <vk-stack gap="normal">
     <vk-label counter="8 / 9">于是代码要"顺着来"</vk-label>
