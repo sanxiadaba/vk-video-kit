@@ -1,3 +1,5 @@
+/* 件的外观：每个 vk-* 自己的背景、边框、圆角、留白、以及深色页上的替换。
+   位置与尺寸归 layout.css，这里只写"长什么样"。 */
 /* ============================================================================
    v17 · 件
    ----------------------------------------------------------------------------
@@ -51,7 +53,6 @@ vk-box[surface='tint'][tone='err'] {
   --vk-box-bg: var(--vk-tint-err);
 }
 vk-box[surface='dark'] {
-  color: var(--vk-dark-fg);
   --vk-box-bg: var(--vk-dark-bg);
   color: var(--vk-dark-fg);
 }
@@ -154,7 +155,6 @@ vk-layer[surface='tint'][tone='focus'] {
   background: var(--vk-tint-focus);
 }
 vk-layer[surface='dark'] {
-  color: var(--vk-dark-fg);
   background: var(--vk-dark-bg);
   color: var(--vk-dark-fg);
 }

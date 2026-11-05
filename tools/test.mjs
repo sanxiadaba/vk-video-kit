@@ -105,6 +105,24 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const [prop, fs2] of owners) if (fs2.size > 1) clashes.push(`${sel} { ${prop} } → ${[...fs2].join(' / ')}`);
   }
   ok(map.size > 200 && !clashes.length, '样式规则没有跨文件冲突');
+
+  /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
+  const twice = [];
+  for (const f of files) {
+    const css = fs.readFileSync(path.join(ROOT, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    const seen = new Map();
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sel = m[1].trim().replace(/\s+/g, ' ');
+      if (!sel || sel.startsWith('@')) continue;
+      for (const d of m[2].split(';').map((x) => x.split(':')[0].trim()).filter(Boolean)) {
+        const key = sel + '|' + d;
+        if (seen.has(key)) twice.push(`${f}: ${sel} { ${d} }`);
+        seen.set(key, true);
+      }
+    }
+  }
+  ok(!twice.length, '同一文件里没有重复声明');
+  for (const t2 of twice.slice(0, 5)) console.error('    · ' + t2);
   for (const c of clashes.slice(0, 5)) console.error('    · ' + c);
 }
 
