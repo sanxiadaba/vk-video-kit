@@ -14,6 +14,8 @@ const OBJDUMP = /^\s*([0-9a-f]{1,16}):\s*((?:[0-9a-f]{2}\s+)+)?\s*(.+)$/i;
 // 它不是一条独立指令，必须并回上一条；否则屏幕上会多出一行只有 `00` 的"指令"。
 const OBJDUMP_CONT = /^\s+((?:[0-9a-f]{2}(?:\s+|$))+)$/i;
 const LABEL_ADDR = /^\s*([0-9a-f]{1,16})\s+<([^>]+)>:\s*$/i;
+/** 地址去掉前导零：ELF 的 0000000000401136 读起来是 401136。 */
+const normAddr = (s) => String(s).replace(/^0+(?=[0-9a-f])/i, '');
 const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
 
 /**
@@ -63,8 +65,8 @@ export function parseAsm(text) {
     }
     const lab = raw.match(LABEL_ADDR);
     if (lab) {
-      labels.push({ addr: lab[1], name: lab[2], line });
-      rows.push({ line, kind: 'label', addr: lab[1], bytes: '', text: lab[2] });
+      labels.push({ addr: normAddr(lab[1]), name: lab[2], line });
+      rows.push({ line, kind: 'label', addr: normAddr(lab[1]), bytes: '', text: lab[2] });
       return;
     }
     const obj = raw.match(OBJDUMP);
@@ -72,7 +74,7 @@ export function parseAsm(text) {
       rows.push({
         line,
         kind: 'insn',
-        addr: obj[1],
+        addr: normAddr(obj[1]),
         bytes: obj[2].trim().replace(/\s+/g, ' '),
         text: obj[3].trim(),
       });
