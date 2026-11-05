@@ -102,7 +102,7 @@ s[0] = 'H';
 | `vk-img` | 一张图 | `src` `alt` `ratio` `fill` `radius` `position` |
 | `vk-code` | 代码窗 | `lang` `src` `lines` `file` `current` `focus` `fold` `size` `long` `chrome` |
 | `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface` `chrome` |
-| `vk-diff` | 改动 | `src` `lines` `file` `lang` `variant` `current` `size` |
+| `vk-diff` | 改动 | `src` `lines` `file` `lang` `current` `size` |
 | `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
 | `vk-table` | 表格 | `variant` `mono` `size` `caption` |
 | `vk-list` | 列表 | `variant`(bullet/check/ordered/define) `gap` `size` |
@@ -115,7 +115,7 @@ s[0] = 'H';
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
 | `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` `zoom` |
-| `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `side` `gap` `shape` `tone` `size` |
+| `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `side` `gap` `shape` `tone` |
 | `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
 | `vk-page` | 一帧 | `align`(top/center/bottom，默认 center) |
 

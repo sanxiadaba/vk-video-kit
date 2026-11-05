@@ -34,6 +34,14 @@ int main(void) {
   </vk-stack>
 </vk-page>
 
+<vk-page id="file">
+  <vk-stack gap="normal">
+    <vk-label>真文件</vk-label>
+    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-8" current="5"></vk-code>
+    <vk-text size="caption" ink="muted">这一块的行是从 code/hello.c 读出来的，不是抄进页面的。</vk-text>
+  </vk-stack>
+</vk-page>
+
 <vk-page id="terminal">
   <vk-grid cols="2" gap="wide">
     <vk-term title="zsh">

@@ -797,14 +797,18 @@ vk-cells .vk-cell[tone] {
 vk-bytes {
   display: block;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: 1.5;
 }
 .vk-brow {
   display: flex;
+  overflow: hidden;
   gap: var(--vk-gap-normal);
   white-space: pre;
   min-height: 1.5em;
+}
+.vk-brow > * {
+  flex: 0 0 auto;
 }
 .vk-brow > .vk-baddr {
   color: var(--vk-ink-3);

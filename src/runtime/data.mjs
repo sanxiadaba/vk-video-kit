@@ -180,6 +180,19 @@ export class VkBytes extends VkElement {
     for (const byte of this.querySelectorAll('i[data-vk-byte]')) {
       byte.toggleAttribute('data-current', !!want?.has(Number(byte.dataset.vkByte)))
     }
+    this.registerPlace()
+  }
+
+  /** 字节窗是固定列宽的字表格：放不下就整体缩字号，不裁掉 ASCII 列。 */
+  place() {
+    const win = this.querySelector('.vk-win')
+    if (!win) return
+    this.style.setProperty('--vk-cs', '56px')
+    let need = 0
+    for (const row of this.querySelectorAll('.vk-brow')) need = Math.max(need, row.scrollWidth)
+    if (!need || !win.clientWidth) return
+    const next = Math.max(36, Math.min(56, (56 * (win.clientWidth - 4)) / need))
+    this.style.setProperty('--vk-cs', next.toFixed(2) + 'px')
   }
 }
 
