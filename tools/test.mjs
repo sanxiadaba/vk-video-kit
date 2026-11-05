@@ -9,6 +9,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
+import * as parse5 from 'parse5';
 import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
 import { FONT, GAP, TONE, SURFACE, STATE, INK } from '../src/vocab.mjs';
 
@@ -108,6 +109,34 @@ ok(!/mass=/.test(spec), 'SPEC 里没有已删除的 mass');
 
 const tokens = execFileSync(process.execPath, ['tools/css.mjs', '--check'], { encoding: 'utf8' });
 ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
+
+// 分镜里用到的每个属性，SPEC 里都得写：新会话只读 SPEC 也能写出同样的帧。
+{
+  const used = new Map();
+  const files = [];
+  for (const dir of ['episodes', 'tests/acceptance']) {
+    for (const f of fs.readdirSync(dir)) if (f.endsWith('.html')) files.push(path.join(dir, f));
+  }
+  for (const f of files) {
+    const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
+    const walk = (n) => {
+      if (n.tagName?.startsWith('vk-')) {
+        for (const a of n.attrs || []) used.set(`${n.tagName} ${a.name}`, `${f}:${n.sourceCodeLocation?.startTag?.startLine ?? '?'}`);
+      }
+      for (const c of n.childNodes || []) walk(c);
+      if (n.content) walk(n.content);
+    };
+    walk(doc);
+  }
+  const misses = [];
+  for (const [key, where] of used) {
+    const attr = key.split(' ')[1];
+    if (attr === 'id' && key.startsWith('vk-page')) continue;
+    if (!spec.includes(`\`${attr}\``)) misses.push(`${key}（${where}）`);
+  }
+  ok(!misses.length, '分镜用到的属性都在 SPEC 里');
+  for (const m of misses) console.error(`    · ${m}`);
+}
 
 /* ---------------------------------------------------------------- 素材 */
 console.log('\n素材');

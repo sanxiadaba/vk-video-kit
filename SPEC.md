@@ -87,7 +87,7 @@ s[0] = 'H';
 </vk-grid>
 <vk-canvas w="1400" h="600">…子项写 x / y…</vk-canvas>
 <vk-layer>…第一个铺底，其余叠上去…</vk-layer>
-<vk-pair symbol="vs">…正好两块…</vk-pair>
+<vk-pair symbol="vs">…正好两块…</vk-pair>   <!-- `symbol` 写中轴上那个字，none = 不画轴 -->
 ```
 
 - `span` 只属于 `vk-grid` 的子项；`x / y / w / h / z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
@@ -96,8 +96,9 @@ s[0] = 'H';
 
 ## 7 27 个件
 
-| 件 | 画什么 | 关键属性 |
+| 件 | 画什么 | 属性 |
 |---|---|---|
+| （所有件） | 共享 | `span` `row-span` `grow` `bleed` `state` |
 | `vk-text` | 一段文字 | `size` `weight` `ink` `tone` `align` `measure` `icon` `mono` |
 | `vk-label` | 一行小字 | `variant`(kicker/chip/badge) `tone` `icon` `counter` |
 | `vk-inline` | 行内代码 / 公式 / 上下标 / 键位 | `variant` |
@@ -120,7 +121,7 @@ s[0] = 'H';
 | `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
 | `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
-| `vk-page` | 一帧 | `align`(top/center/bottom，默认 center) |
+| `vk-page` | 一帧 | `id`(帧名，出图用作文件名) `align`(top/center/bottom，默认 center) |
 
 属性的完整取值与默认值：`vk doc <tag>`；机器可读的一份：`vk brief --json`。
 
