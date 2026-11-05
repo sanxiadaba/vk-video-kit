@@ -615,18 +615,7 @@ vk-diff .vk-line {
   color: var(--vk-ink-3);
 }
 
-/* 并置：两块各自向中轴靠拢，轴线才读成"之间"。 */
-vk-pair:not([direction='vertical']) > :first-child {
-  justify-self: end;
-}
-vk-pair:not([direction='vertical']) > :last-child {
-  justify-self: start;
-}
-/* 但写了 split 就是要按比例分：两块铺满自己的格子，不再向中轴靠拢。 */
-vk-pair[split]:not([direction='vertical']) > :first-child,
-vk-pair[split]:not([direction='vertical']) > :last-child {
-  justify-self: stretch;
-}
+/* 并置两边各自铺满自己的格子：向中轴靠拢会把宽内容（代码窗）挤出版心。 */
 
 /* ------------------------------------------------------------------ 公式 */
 vk-math {
