@@ -41,8 +41,8 @@ function paintState(host) {
   const win = host.querySelector('.vk-win');
   if (win) {
     win.dataset.chrome = host.getAttribute('chrome') === 'none' ? 'none' : 'min';
-    const s = host.getAttribute('surface');
-    if (s) win.dataset.surface = s;
+    // surface 有默认值（终端默认深色）：没写属性也要落到 DOM，CSS 才挑得中。
+    win.dataset.surface = attrEnum(host, 'surface') || 'paper';
   }
 }
 

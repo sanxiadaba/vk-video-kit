@@ -143,6 +143,13 @@ vk-text {
   --vk-tone: var(--vk-ink-1);
 }
 
+/* 纸面墨阶的原值：自带纸底的件（窗口）用它把自己重置回纸面。 */
+:root {
+  --vk-on-paper-1: var(--vk-ink-1);
+  --vk-on-paper-2: var(--vk-ink-2);
+  --vk-on-paper-3: var(--vk-ink-3);
+}
+
 /* 深色底把墨阶整体换掉：正文、次要、弱化都变成暗色前景。 */
 vk-layer[surface='dark'],
 vk-box[surface='dark'] {

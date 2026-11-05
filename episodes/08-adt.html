@@ -1,6 +1,6 @@
 <vk-page id="1-hook">
   <vk-stack gap="wide">
-    <vk-label counter="1 / 8">数组 vs 链表</vk-label>
+    <vk-label counter="1 / 9">数组 vs 链表</vk-label>
     <vk-text size="headline">同样八百万个数，<br>一边 <em>5ms</em>，一边 <em>23ms</em>。</vk-text>
     <vk-text size="body" ink="secondary">两种写法都"遍历一遍"，差的是内存在哪。</vk-text>
   </vk-stack>
@@ -8,7 +8,7 @@
 
 <vk-page id="2-memory">
   <vk-stack gap="close">
-    <vk-label counter="2 / 8">内存长什么样</vk-label>
+    <vk-label counter="2 / 9">内存长什么样</vk-label>
     <vk-text size="subhead">数组是<em>一整块</em>，链表是<em>撒出去</em>的。</vk-text>
     <vk-canvas w="1500" h="380" pad="close">
       <vk-text x="0" y="0" size="caption" ink="muted">数组：八个元素挨在一起</vk-text>
@@ -34,7 +34,7 @@
 
 <vk-page id="3-array">
   <vk-stack gap="close">
-    <vk-label counter="3 / 8">数组的循环</vk-label>
+    <vk-label counter="3 / 9">数组的循环</vk-label>
     <vk-code lang="c" file="array.c" src="../code/adt/array.c" lines="12-14" size="caption" current="2"></vk-code>
     <vk-text size="caption" ink="muted">一次加法，地址往前走四个字节。</vk-text>
   </vk-stack>
@@ -42,7 +42,7 @@
 
 <vk-page id="4-list">
   <vk-stack gap="close">
-    <vk-label counter="4 / 8">链表的循环</vk-label>
+    <vk-label counter="4 / 9">链表的循环</vk-label>
     <vk-code lang="c" file="list.c" src="../code/adt/list.c" lines="19-21" current="2"></vk-code>
     <vk-text size="caption" ink="muted">每个节点先去读指针，跳过去，再读值。</vk-text>
   </vk-stack>
@@ -50,7 +50,7 @@
 
 <vk-page id="5-bars">
   <vk-stack gap="normal">
-    <vk-label counter="5 / 8">实测</vk-label>
+    <vk-label counter="5 / 9">实测</vk-label>
     <vk-text size="subhead">同一台机器，八百万次累加。</vk-text>
     <vk-bars max="30" unit="毫秒">
       <li value="5" label="数组" tone="ok"></li>
@@ -60,9 +60,25 @@
   </vk-stack>
 </vk-page>
 
-<vk-page id="6-why">
+<vk-page id="6-term" surface="dark">
+  <vk-stack gap="wide">
+    <vk-label counter="6 / 9">真实运行</vk-label>
+    <vk-term size="subhead" chrome="none">
+      <script type="text/plain" data-vk-source>
+$ ./array
+31999996000000 5.0 ms
+
+$ ./list
+31999996000000 23.0 ms
+      </script>
+    </vk-term>
+    <vk-text size="caption" ink="muted">同样的累加和，同样的机器，只差内存怎么放。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="7-why">
   <vk-stack gap="normal">
-    <vk-label counter="6 / 8">为什么</vk-label>
+    <vk-label counter="7 / 9">为什么</vk-label>
     <vk-text size="subhead">CPU 不是按字节取，是按<em>缓存行</em>取。</vk-text>
     <vk-grid cols="12" gap="close">
       <vk-box span="6" surface="tint" tone="ok" pad="normal" title="数组">
@@ -75,9 +91,9 @@
   </vk-stack>
 </vk-page>
 
-<vk-page id="7-table">
+<vk-page id="8-table">
   <vk-stack gap="close">
-    <vk-label counter="7 / 8">那链表还有什么用</vk-label>
+    <vk-label counter="8 / 9">那链表还有什么用</vk-label>
     <vk-table variant="spec" size="caption">
       <table>
         <tr><th>操作</th><th>数组</th><th>链表</th></tr>
@@ -90,9 +106,9 @@
   </vk-stack>
 </vk-page>
 
-<vk-page id="8-end">
+<vk-page id="9-end">
   <vk-stack gap="wide">
-    <vk-label counter="8 / 8">小结</vk-label>
+    <vk-label counter="9 / 9">小结</vk-label>
     <vk-text size="display">决定快慢的，<br>常常是<em>数据在哪</em>。</vk-text>
     <vk-text size="caption" ink="muted">下一集：为什么哈希表"看起来乱"，却很快。</vk-text>
   </vk-stack>

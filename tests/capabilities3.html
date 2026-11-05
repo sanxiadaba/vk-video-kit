@@ -231,3 +231,16 @@ ok
     </vk-layer>
   </vk-stack>
 </vk-page>
+
+<vk-page id="paperterm">
+  <vk-stack gap="close">
+    <vk-label counter="19">term · 纸面窗（当文档看）</vk-label>
+    <vk-term surface="paper" title="transcript.txt" size="caption">
+      <script type="text/plain" data-vk-source>
+$ echo hello
+hello
+      </script>
+    </vk-term>
+    <vk-text size="caption" ink="muted">深色是默认；要当文档贴出来时用 surface="paper"。</vk-text>
+  </vk-stack>
+</vk-page>

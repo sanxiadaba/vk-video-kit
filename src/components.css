@@ -296,6 +296,10 @@ vk-asm {
 }
 
 .vk-win {
+  /* 窗口自带底，就自带墨阶：深色页里的纸面窗不能继承亮字。 */
+  --vk-ink-1: var(--vk-on-paper-1);
+  --vk-ink-2: var(--vk-on-paper-2);
+  --vk-ink-3: var(--vk-on-paper-3);
   display: flex;
   flex-direction: column;
   width: fit-content;

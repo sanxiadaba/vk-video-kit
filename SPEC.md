@@ -108,7 +108,7 @@ s[0] = 'H';
 | `vk-box` | 一块面 | `surface` `tone` `pad` `radius` `border` `title` `chrome` `ring` |
 | `vk-img` | 一张图 | `src` `alt` `ratio` `fill` `radius` `position` |
 | `vk-code` | 代码窗 | `lang` `src` `lines` `file` `current` `focus` `fold` `mark` `size` `long` `chrome` |
-| `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface` `chrome` |
+| `vk-term` | 终端 | `src` `title` `prompt` `current` `size` `surface`(默认 dark) `chrome` |
 | `vk-diff` | 改动 | `src` `lines` `file` `lang` `current` `size` |
 | `vk-asm` | 汇编 | `src` `lines` `file` `current` `size` `chrome` `bytes` |
 | `vk-table` | 表格 | `variant` `mono` `size` `caption`（表上方标题） |
@@ -136,6 +136,7 @@ s[0] = 'H';
 
 一帧可以有一张铺满整帧的底：把它写成 `vk-page` 的直接子项，加 `bleed="all"`。
 整帧反白（章节页、终端时刻）就直接写 `<vk-page surface="dark">`：纸变深，正文、次要、弱化三档墨自动换成亮色，不用逐处改 `ink`。
+终端在深色页上会自然融进去——`vk-term` 默认就是深色窗，去掉窗头（`chrome="none"`）就是一张"整帧终端"。
 
 ```html
 <vk-page>
