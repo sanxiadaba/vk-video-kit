@@ -384,6 +384,30 @@ try {
 }
 const frames = report.flatMap((r) => r.frames || []);
 ok(frames.length >= 60, `渲染出 ${frames.length} 帧`);
+
+/* README 里的预览图是仓库门面：内容与当前渲染对不上，它就在撒谎。 */
+try {
+  const tmp = path.join(ROOT, 'out', 'preview-check.png');
+  execFileSync(process.execPath, ['bin/vk.mjs', 'sheet', 'episodes/09-memory.html', '--cols', '3', '--width', '560', '--out', tmp], {
+    cwd: ROOT,
+    stdio: 'pipe',
+    maxBuffer: 64 * 1024 * 1024,
+  });
+  const { PNG } = await import('pngjs');
+  const a = PNG.sync.read(fs.readFileSync(path.join(ROOT, 'assets', 'preview.png')));
+  const b = PNG.sync.read(fs.readFileSync(tmp));
+  let diff = 0;
+  if (a.width === b.width && a.height === b.height) {
+    for (let i = 0; i < a.data.length; i++) if (a.data[i] !== b.data[i]) diff++;
+  } else diff = a.data.length;
+  const ratio = diff / a.data.length;
+  ok(ratio < 0.002, 'README 的预览图与当前渲染一致');
+  if (ratio >= 0.002) console.error('    · 预览图过期了，跑 npm run preview');
+} catch (e) {
+  bad++;
+  console.error('  ✗ 预览图检查失败：' + String(e.message).slice(0, 120));
+}
+
 let issues = 0;
 for (const r of report) {
   for (const f of r.frames || []) {
