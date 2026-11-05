@@ -177,9 +177,43 @@ export function inkRect(el) {
 /* ---------------------------------------------------------------- 锚点 */
 
 // 只列"真会被指到"的部件：多一个空名字，作者写下去只会安静地指空。
-const PARTS = ['line', 'cell', 'byte', 'bit', 'addr', 'step', 'event', 'lane', 'node'];
+const PARTS = ['line', 'word', 'cell', 'byte', 'bit', 'addr', 'step', 'event', 'lane', 'node'];
 
 const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
+
+/* 在一行 / 一个件里找到某段字的矩形：箭头要指向 a[2]，不是整行。 */
+function parseWordArgs(args) {
+  const first = (args[0] || '').trim();
+  if (/^\d+$/.test(first)) return { lineArg: first, needle: args.slice(1).join(':').trim() };
+  return { lineArg: '', needle: args.join(':').trim() };
+}
+
+function wordRect(host, lineArg, needle) {
+  const row = /^\d+$/.test(lineArg) ? host.querySelector(`[data-vk-line="${lineArg}"]`) : host;
+  if (!row || !needle) return null;
+  const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let text = '';
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    nodes.push({ node: n, start: text.length });
+    text += n.textContent;
+  }
+  const i = text.indexOf(needle);
+  if (i < 0) return null;
+  const at = (off) => {
+    for (let k = nodes.length - 1; k >= 0; k--) {
+      if (off >= nodes[k].start) return { node: nodes[k].node, offset: Math.min(off - nodes[k].start, nodes[k].node.textContent.length) };
+    }
+    return { node: nodes[0].node, offset: 0 };
+  };
+  const range = document.createRange();
+  const a = at(i);
+  const b = at(i + needle.length);
+  range.setStart(a.node, a.offset);
+  range.setEnd(b.node, b.offset);
+  const r = range.getBoundingClientRect();
+  return r.width > 0 || r.height > 0 ? r : null;
+}
 
 export function resolveTarget(root, expr, owner) {
   const raw = String(expr ?? '').trim();
@@ -193,6 +227,10 @@ export function resolveTarget(root, expr, owner) {
     if (part === 'line') {
       const n = (args[0] || '').trim();
       return host.querySelector(`[data-vk-line="${cssEscape(n)}"]`) || null;
+    }
+    if (part === 'word') {
+      const { lineArg, needle } = parseWordArgs(args);
+      return wordRect(host, lineArg, needle) ? host : null;
     }
     if (!PARTS.includes(part)) {
       warn(owner, `不支持 @${part}；可用 ${PARTS.join(' / ')}`);
@@ -252,6 +290,14 @@ export function resolveAnchor(root, expr, owner) {
       const el = resolveTarget(root, raw, owner);
       if (!el) return null;
       return { el, rect: inkRect(el), side: null };
+    }
+    if (part === 'word') {
+      const id = raw.slice(1, at);
+      const host = safeQuery(root, `#${cssEscape(id)}`, owner);
+      if (!host) return null;
+      const { lineArg, needle } = parseWordArgs(raw.slice(at + part.length + 2).split(':'));
+      const rect = wordRect(host, lineArg, needle);
+      return rect ? { el: host, rect, side: null } : null;
     }
   }
   const el = resolveTarget(root, raw, owner);

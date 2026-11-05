@@ -70,3 +70,17 @@
   <vk-callout mode="badge" for="#cl@cell:1" tone="ok">2</vk-callout>
   <vk-callout mode="badge" for="#as@addr:3" tone="focus">3</vk-callout>
 </vk-page>
+
+<vk-page id="word">
+  <vk-stack gap="normal">
+    <vk-label counter="6">word · 指到某几个字</vk-label>
+    <vk-code id="wc" lang="c" file="x.c" current="1">
+      <script type="text/plain" data-vk-source>
+int total = price * count;
+      </script>
+    </vk-code>
+    <vk-text id="wt" size="body">一句话里也能只圈住中间那几个字。</vk-text>
+  </vk-stack>
+  <vk-callout mode="ring" for="#wc@word:1:price"></vk-callout>
+  <vk-callout mode="note" for="#wt@word:中间那几个字" side="bottom">不是整行</vk-callout>
+</vk-page>
