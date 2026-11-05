@@ -40,10 +40,10 @@
   <vk-stack gap="normal">
     <vk-label counter="4">远距离</vk-label>
     <vk-text size="subhead">跨半帧的两个点也要连起来。</vk-text>
-    <vk-grid cols="12" gap="section">
-      <vk-box id="f1" span="3" surface="soft" pad="normal"><vk-text size="caption">上</vk-text></vk-box>
-      <vk-box id="f2" span="3" surface="tint" tone="focus" pad="normal"><vk-text size="caption" align="center">下</vk-text></vk-box>
-    </vk-grid>
+    <vk-canvas w="1500" h="380" pad="close">
+      <vk-box id="f1" x="0" y="0" w="420" h="120" surface="soft" pad="normal"><vk-text size="caption">左上</vk-text></vk-box>
+      <vk-box id="f2" x="900" y="240" w="420" h="120" surface="tint" tone="focus" pad="normal"><vk-text size="caption">右下</vk-text></vk-box>
+    </vk-canvas>
   </vk-stack>
   <vk-callout mode="arrow" from="#f1" to="#f2" shape="curve" tone="warn"></vk-callout>
 </vk-page>
