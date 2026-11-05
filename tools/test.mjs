@@ -162,6 +162,18 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const st of stale) console.error('    · 计数过期：' + st);
   }
 
+  /* "没有这个属性"这句话也会过期：真要加上了，文档就在骗人。 */
+  {
+    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
+    const head = specText.indexOf('### 没有这些属性');
+    const tail = specText.indexOf('## 7.5 配方');
+    const sec = head >= 0 && tail > head ? specText.slice(head, tail) : '';
+    const claims = [...sec.matchAll(/(vk-[a-z]+)`\s*\*\*没有\s*`([a-z-]+)`/g)];
+    const lies = claims.filter(([, tag, attr]) => Object.keys(attrsOf(tag) || {}).includes(attr)).map(([, tag, attr]) => tag + "." + attr);
+    ok(claims.length >= 2 && !lies.length, 'SPEC 说“没有”的属性确实没有');
+    for (const l of lies) console.error('    · ' + l + ' 其实已经有了，文档该改');
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {
