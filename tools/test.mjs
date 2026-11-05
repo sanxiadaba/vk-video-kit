@@ -81,6 +81,24 @@ for (const tag of TAG_NAMES) {
 }
 ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
 
+  /* 调色板一致性：语义色有纸面原值，就必须有深色页覆盖，否则深色页上它会"暗下去"。 */
+  {
+    // 读源码而不是构建产物：这条检查在渲染之前跑，构建产物可能还是上一版。
+    const css = ['base.css', 'components.css', 'callout.css'].map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
+    const semantics = ['info', 'ok', 'warn', 'err', 'focus'];
+    const tints = ['info', 'focus', 'ok', 'warn', 'err'];
+    const missing = [];
+    for (const k of semantics) {
+      if (!css.includes(`--vk-${k}-paper:`)) missing.push(`--vk-${k}-paper 没定义`);
+      if (!new RegExp(`--vk-${k}: var\\(--vk-dark|color-mix`).test(css)) missing.push(`--vk-${k} 没有深色版`);
+    }
+    for (const k of tints) {
+      if (!css.includes(`--vk-tint-${k}-paper:`)) missing.push(`--vk-tint-${k}-paper 没定义`);
+    }
+    ok(!missing.length, '深色页的调色板是成套的');
+    for (const m of missing) console.error('    · ' + m);
+  }
+
   /* 汇编解析：没有机器码的输入（--no-show-raw-insn / 手写 .s）不能崩。 */
   {
     const noBytes = parseAsm('0: push %rbp\n1: mov %esp,%ebp\n');
