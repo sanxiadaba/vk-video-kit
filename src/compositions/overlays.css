@@ -1,15 +1,8 @@
 /* ============================================================================
-   L4 · 覆盖层：圈选 / 聚光 / 批注气泡
+   L4 · 覆盖层：圈选 / 批注气泡
    ----------------------------------------------------------------------------
    只画在包含块上，不占布局；目标由 #id@part:arg 锚定。
    ========================================================================== */
-
-vk-ring,
-vk-pin {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-}
 
 .vk-ov-svg {
   position: absolute;
@@ -57,8 +50,6 @@ vk-pin {
 }
 .vk-pin-bd[data-tone='info'] { border-left-color: var(--vk-info); }
 /* 批注也有字号档：太小看不清，太大盖住被注的东西。 */
-vk-pin[size='label'] .vk-pin-bd { font-size: var(--vk-t-label); line-height: var(--vk-lh-label); }
-vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height: var(--vk-lh-subhead); }
 .vk-pin-bd[data-tone='focus'] { border-left-color: var(--vk-focus); }
 .vk-pin-bd[data-tone='err'] { border-left-color: var(--vk-err); }
 .vk-pin-bd[data-tone='ok'] { border-left-color: var(--vk-ok); }
@@ -164,9 +155,7 @@ vk-pin[size='subhead'] .vk-pin-bd { font-size: var(--vk-t-subhead); line-height:
 .vk-pin-bd[data-strength='ghost'] { background: var(--vk-surface-1); box-shadow: none; }
 
 /* ============================================================ vk-annotate
-   关系层合并后的本体：arrow / circle / note / badge 共用一套几何与令牌。
-   旧标签 vk-edge / vk-pin / vk-ring 的规则仍在原处，逐像素不动；
-   这里只补新标签的接线（同一批类名与令牌，所以两种标签看起来是同一个东西）。 */
+   关系层本体：arrow / circle / note / badge 共用一套几何与令牌。 */
 
 vk-annotate {
   position: absolute;
@@ -427,20 +416,16 @@ vk-note .vk-note-dot {
   line-height: 1;
 }
 
-/* ============================================================ vk-caption
+/* ======================================================== vk-label[for]
    归属说明：贴在块上（或下）的一行小字，不是块里的标签。
    位置由目标块的首字符决定（运行期量 Range），所以它和块共享左边界，
-   而不是和容器共享左边界。字号 / 墨色固定，作者没有旋钮。
-   减法第一波：这件事并进 vk-label（写 for 就是归属说明），
-   旧标签 vk-caption 继续可用，两条选择器共用同一套外观。 */
-vk-caption,
+   而不是和容器共享左边界。字号 / 墨色固定，作者没有旋钮。 */
 vk-label[for] {
   position: absolute;
   inset: 0;
   pointer-events: none;
 }
 
-vk-caption .vk-caption,
 vk-label[for] .vk-label.vk-caption {
   position: absolute;
   box-sizing: border-box;

@@ -172,7 +172,7 @@ async function domFacts(browser, file) {
         // 焦点面积按「墨的包围盒」算，不按元素盒：
         // 文本焦点（tone=focus 的指标）与圈选（绝对定位铺满整页）按盒算会虚高到 30–139%。
         // 只给「会盖住东西的」焦点算面积：色字（tone=focus）不遮挡，描边（ring）只有 4px 线。
-        if (el.matches('[tone="focus"], [data-tone="focus"], vk-ring')) continue;
+        if (el.matches('[tone="focus"], [data-tone="focus"], vk-annotate[data-mode="circle"], vk-box[ring]')) continue;
         const shape = el.querySelector?.('.vk-ov-svg rect, .vk-ov-svg ellipse, .vk-ov-svg path');
         let r = null;
         if (shape) r = shape.getBoundingClientRect();

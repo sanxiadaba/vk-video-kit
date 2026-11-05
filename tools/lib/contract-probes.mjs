@@ -113,7 +113,7 @@ export const PROBES = {
     for: {
       values: ['#lab-a', '#lab-b'],
       effect: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
-      why: '贴块（原 vk-caption）：for 先镜像到宿主（块里的标签也镜像）；真正的落点由 draw() 按目标首字符算，几何由 tests/merged-six.test.mjs 量。',
+      why: '贴块：for 先镜像到宿主（块里的标签也镜像）；真正的落点由 draw() 按目标首字符算，几何由 tests/primitives-forms.test.mjs 量。',
     },
   },
   'vk-panel': {
@@ -170,13 +170,6 @@ export const PROBES = {
       why: '倍率基准行必须真的把 ×N 标到条旁；0 与末行是最容易越界的两个端点。',
     },
   },
-  'vk-pin': {
-    w: {
-      values: ['200', '320'],
-      effect: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
-      why: 'w 只改气泡宽；宿主始终铺满整页，所以量 .vk-pin-bd 才对。',
-    },
-  },
   'vk-note': {
     for: {
       values: ['#nt-code', '#nt-a'],
@@ -191,13 +184,6 @@ export const PROBES = {
     size: {
       values: ['label', 'subhead'],
       why: '气泡字号：label 与 subhead 量得到变化；mega 会把气泡撑出安全区。',
-    },
-  },
-  'vk-caption': {
-    for: {
-      values: ['#cap-a', '#cap-b'],
-      effect: { on: '.vk-caption', kind: 'geometry', prop: 'x', expect: { not: '0px' } },
-      why: '说明的左边界由目标首字符决定；两个目标横向错开 120px，换一个真实目标 x 必须跟着走。',
     },
   },
   'vk-edge': {
@@ -340,14 +326,6 @@ export const PROBES = {
     },
   },
   'vk-bits': {},
-  'vk-rule': {
-    // neutral 就是默认态；只断 info / focus 这两个非默认值。
-    tone: {
-      values: ['info', 'focus'],
-      effect: { on: 'vk-rule', kind: 'style', prop: 'background-color' },
-      why: 'neutral 与默认态相同，断 info/focus 即可。',
-    },
-  },
   'vk-inline': {
     variant: {
       values: ['sup'],
@@ -411,7 +389,7 @@ export const PROBES = {
   },
   'vk-timeline': {
     // 标本把 size 定在 subhead（演示"一帧三个数字"的降档用法），
-    // 默认 title 200 与 hero 280 由 tests/gaps-kit.test.mjs 逐档测过；
+    // 默认 title 200 与 hero 280 由 tests/component-mass.test.mjs 逐档测过；
     // 契约只探 title 这一档，免得同一件事在两个地方各断言一次。
     size: {
       values: ['title'],
@@ -447,12 +425,12 @@ export const PROBES = {
   'vk-text': {
     size: {
       values: ['display', 'headline', 'caption', 'label', 'subhead', 'title', 'hero', 'mega'],
-      why: 'data 是 body 的字号（40）+ 等宽字体，字号本来就不变；等宽由 tests/batch-ef.test.mjs 的旧名用例断言。',
+      why: 'data 是 body 的字号（40）+ 等宽字体，字号本来就不变；等宽由 tests/typography-chrome.test.mjs 的旧名用例断言。',
     },
     icon: {
       values: ['check'],
       effect: { on: 'vk-text', kind: 'dom', prop: '.vk-text-ic' },
-      why: '图标是一个字形：写 icon 才出现图标槽，没写就没有空槽（原 vk-icon 并进这里）。',
+      why: '图标是一个字形：写 icon 才出现图标槽，没写就没有空槽。',
     },
     fit: {
       values: ['width'],
@@ -467,7 +445,7 @@ export const PROBES = {
     'fit-max': {
       values: ['24', '32'],
       effect: { on: 'vk-text', kind: 'attr', prop: 'data-fit-max', expectFromValue: 'raw' },
-      why: 'fit-min 现在是硬地板（默认 40），24 / 32 会被地板挡住；契约只断"上限被读到"，字号由 batch-primitives 的 780px 用例守（那里 fit-max=40 > 地板）。',
+      why: 'fit-min 现在是硬地板（默认 40），24 / 32 会被地板挡住；契约只断"上限被读到"，字号由 layout-pair 的 780px 用例守（那里 fit-max=40 > 地板）。',
     },
     measure: {
       values: ['16', 'none'],
@@ -534,20 +512,17 @@ export const PROBES = {
 export const EFFECT_OVERRIDES = {
   'vk-img.ratio': { on: 'vk-img .vk-img', kind: 'style', prop: 'aspect-ratio', expect: '2 / 1' },
   'vk-code.fold': { on: 'vk-code', kind: 'dom', prop: '.vk-line.is-fold' },
-  // chrome 的四个值改的是三处不同元素（none 藏窗头、min/dialog 藏地址栏），
-  // 单一 prop 量不了它。这里只要求"改了就变"，具体行为由 dom.test 的窗头用例守着。
-  'vk-window.chrome': { kind: 'any', reason: '四个值改三处元素，单一属性量不了' },
 };
 
 /** skipVisual 白名单：必须逐条写理由，否则契约失败。 */
 export const VISUAL_EXEMPT = {
-  'vk-pair.size': '轴符号是装饰件（aria-hidden / data-meta），12–200 的极端字号会超出并置块的高度；符号大小与中点位置由 tests/batch-primitives.test.mjs 单独守。',
-  'vk-text.size': 'display 160 在 888 高的标本台里必然换行并超出安全区；四档字号与行高由 tests/batch-ef.test.mjs 用短文本单独守。',
-  'vk-text.fit': 'fit 是为了"单行塞满"，字号可能被压到正文地板以下；填充精度由 tests/batch-primitives.test.mjs 的 780px 用例单独守。',
-  'vk-text.fit-min': '边界值会把字号钉在 48 / 56，标本里的长句会因此换行；字号是否恰好等于边界由 tests/batch-primitives.test.mjs 单独守。',
-  'vk-text.fit-max': '边界值会把 780px 的代码行压到 64 / 72，视觉审计只关心默认态；边界是否生效由 tests/batch-primitives.test.mjs 单独守。',
+  'vk-pair.size': '轴符号是装饰件（aria-hidden / data-meta），12–200 的极端字号会超出并置块的高度；符号大小与中点位置由 tests/layout-pair.test.mjs 单独守。',
+  'vk-text.size': 'display 160 在 888 高的标本台里必然换行并超出安全区；四档字号与行高由 tests/typography-chrome.test.mjs 用短文本单独守。',
+  'vk-text.fit': 'fit 是为了"单行塞满"，字号可能被压到正文地板以下；填充精度由 tests/layout-pair.test.mjs 的 780px 用例单独守。',
+  'vk-text.fit-min': '边界值会把字号钉在 48 / 56，标本里的长句会因此换行；字号是否恰好等于边界由 tests/layout-pair.test.mjs 单独守。',
+  'vk-text.fit-max': '边界值会把 780px 的代码行压到 64 / 72，视觉审计只关心默认态；边界是否生效由 tests/layout-pair.test.mjs 单独守。',
   'vk-compare.variant': 'stack 把两张完整图上下叠，总高由 ratio 与容器宽决定；标本台里必然会超出安全区。这是对照本身的几何，split 默认态仍过完整视觉审计。',
-  'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/gaps-six.test.mjs 的 zoom 用例守。',
+  'vk-compare.zoom': '放大块是追加在对照下方的第二块；标本台只有一张对照的位置，追加后会超出安全区。放大块自身的几何与像素由 tests/component-edges.test.mjs 的 zoom 用例守。',
   'vk-diff.variant': '切 split 整页重排；安全区由作者内容决定，结构差异已由 height 断言覆盖。',
   'vk-code.long': '长行怎么处理与内容相关；只断言 white-space 真的变了。',
   'vk-canvas.pad': '画布内缩只改子节点坐标，不产生新文字/颜色。',
@@ -560,23 +535,22 @@ export const VISUAL_EXEMPT = {
   'vk-cells.mass': 'hero 档把格子撑到 300px，标本台装不下；只断言 min-height 变了。',
   'vk-term.mass': 'hero 档把终端撑到整帧，标本台装不下；只断言行高变了。',
   'vk-table.mass': 'hero 档加内距会把表格撑出标本台；只断言内距变了。',
-  'vk-window.mass': 'window 的标本里没有 diff / 代码行，hero 只加高标题栏；行高确实随窗的体量变，由 tests/gaps-kit.test.mjs 覆盖。',
   'vk-diff.mass': 'hero 档把对照行撑高，标本台装不下；只断言行高变了。',
   'vk-tree.mass': 'hero 档把文件树撑到整帧，标本台放不下；只断言行高变了。',
   'vk-bits.mass': 'hero 档把位图行撑高，标本台放不下；只断言行高变了。',
   'vk-asm.mass': 'hero 档把反汇编撑高，标本台装不下；只断言行高变了。',
-  'vk-code.size': '160px 的内容字号会把标本台撑高；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
-  'vk-term.size': '160px 的终端会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
-  'vk-asm.size': '160px 的汇编会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
-  'vk-table.size': '160px 的表格会超出标本台；行距与字号由 tests/mechanism.test.mjs 量。',
-  'vk-diff.size': '160px 的对比会超出标本台；字号/行高比例由 tests/mechanism.test.mjs 逐项量。',
-  'vk-tree.size': '160px 的文件树会超出标本台；行高与字号由 tests/mechanism.test.mjs 量。',
-  'vk-code.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/mechanism.test.mjs 的 vk-asm 用例守。',
-  'vk-term.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
-  'vk-asm.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/mechanism.test.mjs 的 vk-asm 用例守。',
-  'vk-table.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
-  'vk-diff.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
-  'vk-tree.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/mechanism.test.mjs 守。',
+  'vk-code.size': '160px 的内容字号会把标本台撑高；字号/行高比例由 tests/layout-mechanism.test.mjs 逐项量。',
+  'vk-term.size': '160px 的终端会超出标本台；字号/行高比例由 tests/layout-mechanism.test.mjs 逐项量。',
+  'vk-asm.size': '160px 的汇编会超出标本台；字号/行高比例由 tests/layout-mechanism.test.mjs 逐项量。',
+  'vk-table.size': '160px 的表格会超出标本台；行距与字号由 tests/layout-mechanism.test.mjs 量。',
+  'vk-diff.size': '160px 的对比会超出标本台；字号/行高比例由 tests/layout-mechanism.test.mjs 逐项量。',
+  'vk-tree.size': '160px 的文件树会超出标本台；行高与字号由 tests/layout-mechanism.test.mjs 量。',
+  'vk-code.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/layout-mechanism.test.mjs 的 vk-asm 用例守。',
+  'vk-term.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/layout-mechanism.test.mjs 守。',
+  'vk-asm.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；填充精度由 tests/layout-mechanism.test.mjs 的 vk-asm 用例守。',
+  'vk-table.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/layout-mechanism.test.mjs 守。',
+  'vk-diff.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/layout-mechanism.test.mjs 守。',
+  'vk-tree.fit': 'fit="width" 按容器宽反算字号，可能大到超出标本台；机制由 tests/layout-mechanism.test.mjs 守。',
 };
 
 /**
@@ -584,7 +558,6 @@ export const VISUAL_EXEMPT = {
  * 当前 3 条。
  */
 export const EFFECT_ANY = [
-  { tag: 'vk-window', attr: 'url', reason: 'url 只在 chrome="browser" / "dialog" 时出现；单场景无法同时改两个属性。' },
   { tag: 'vk-timeline', attr: 'lanes', reason: 'lanes 只在 variant="lanes" 时生效；单场景无法同时改两个属性。' },
   { tag: 'vk-code', attr: 'fold-note', reason: 'fold-note 只在 fold 存在时出现；单场景无法同时改两个属性。' },
   {
@@ -597,7 +570,7 @@ export const EFFECT_ANY = [
   {
     tag: 'vk-layer',
     attr: 'fill',
-    reason: '叠层的高度由父容器与绝对定位的子元素共同决定，标本里 cover / contain 解出同一个盒子；落点由 tests/mechanism.test.mjs 的叠层用例守。',
+    reason: '叠层的高度由父容器与绝对定位的子元素共同决定，标本里 cover / contain 解出同一个盒子；落点由 tests/layout-mechanism.test.mjs 的叠层用例守。',
   },
   {
     tag: 'vk-list',

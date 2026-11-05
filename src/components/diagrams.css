@@ -21,7 +21,7 @@ vk-asm { display: block; }
 }
 /* chrome="none" = 不要窗，不是只要窗头不要。
    asm 自己画壳（不像 code / term 走 .vk-win），所以要单独去一次；
-   否则嵌进 vk-window 就是"窗口里套窗口"。 */
+   否则嵌进带窗头的分区就是"窗口里套窗口"。 */
 .vk-asm[data-chrome='none'] {
   border: 0;
   border-radius: 0;

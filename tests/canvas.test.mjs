@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await ctx.newPage();
 
@@ -28,6 +28,6 @@ test('vk-canvas 省略 w/h 时按子元素包围盒撑开', async () => {
 });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });

@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 import {
@@ -28,7 +28,7 @@ import {
 
 const tokens = readHexTokens(readTokenCss());
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -185,6 +185,6 @@ test('vk-panel：非法 tone / variant 在构建期报错', async () => {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });

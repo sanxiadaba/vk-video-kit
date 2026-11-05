@@ -8,15 +8,15 @@ director 管「元素怎么入场」，这里管「讲到哪一件、这一页�
 `<vk-page cues="…">` 读两种文件，也可以直接写 JSON：
 
 ```html
-<vk-page dur="9" cues="demo.srt" states="a,b" transition="fade">
+<vk-page dur="9" cues="cues.srt" states="a,b" transition="fade">
   <vk-text id="s1" cue="1">字符串不是值，是一块内存。</vk-text>
   <vk-text id="s2" cue="2">每个字节都有自己的地址。</vk-text>
   <vk-text id="s3" cue="3">相邻的字节，地址只差 1。</vk-text>
 </vk-page>
 ```
 
-- `cues="demo.srt"`：标准 SRT；
-- `cues="demo.json"`：`{ start, end, text, focus?, state?, page? }` 数组，或 `{ "cues": [...] }`；
+- `cues="cues.srt"`：标准 SRT；
+- `cues="cues.json"`：`{ start, end, text, focus?, state?, page? }` 数组，或 `{ "cues": [...] }`；
 - 内联：`<script type="application/json" data-vk-cues>…</script>`（SRT 用 `type="text/plain"` + `data-format="srt"`）。
 
 SRT 里 `focus=#id` / `state=b` / `page=2` 单独成行时是元数据，不显示：
@@ -48,7 +48,7 @@ cue 里的 `focus="#id"` 会把画面焦点移到那一件：
 `states="a,b,c"` 只声明名字；每一态的「一组属性」写在 JSON 里：
 
 ```html
-<vk-page cues="demo.srt" states="a,b">
+<vk-page cues="cues.srt" states="a,b">
   <script type="application/json" data-vk-states>{
     "a": { "#board": { "attrs": { "hidden": false } } },
     "b": { "#board": { "attrs": { "hidden": true }, "style": { "opacity": "0.35" } },
@@ -84,7 +84,7 @@ cue 写 `state="b"` 就切到 b 态。切换时新态属性落到 DOM，离开�
 录屏按字幕逐段截图：
 
 ```bash
-node bin/vk.mjs capture --cues _site/specimen/vk-cues.html --out-dir .tmp/cues
+node bin/vk.mjs capture --cues _site/specimen/vk-cues.html --out-dir shots/cues
 ```
 
 产物：`cue-01.png`、`cue-02.png`… + `cues.json`（每一段的时间、focus、state、文字）。

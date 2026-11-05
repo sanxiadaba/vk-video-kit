@@ -21,7 +21,7 @@
 ## 2 · 字号与颜色
 
 1. 字阶四档（手机横屏基准，1920 实际渲染 ≈780 / 0.406×）：`caption 48` · `body 56` · `headline 112` · `display 200`。`display` 一页最多一次，只给「本页唯一的答案」；`headline` 是标题；`body` 是正文与数据；`caption` 是标签、单位、脚注。旧名（`label` / `data` / `subhead` / `title`）别名到新档，`hero` 280 / `mega` 400 是「一个数字 / 一个词当家」的补充档，一帧最多一个。
-2. 要读懂的内容用 56；元数据、标签、密集 ASCII 数据用 48（`data-meta` 标记），任何可读文字不低于 48（`vk-legacy` 旧页按旧地板 28 / 40 / 96）。
+2. 要读懂的内容用 56；元数据、标签、密集 ASCII 数据用 48（`data-meta` 标记），任何可读文字不低于 48。
 3. 钴蓝只有一个含义：**正在讲这里**。它不做语法色——关键字与数字都是墨色 600，字符串是绿的。
 4. 语义色（对 / 错 / 注意）只出现在色条、底色、图标上，不写正文。
 5. 注意力只有一套词：`act` × `strength`。
@@ -91,10 +91,7 @@
 **能由组件内置状态说清的，不用覆盖层。** `current` / `state="mark"` / `state="err"` 已经是"这里"的答案；覆盖层只补组件没有的东西。
 
 关系层：`<vk-annotate>` 的 `mode` 决定它回答哪个问题；`<vk-note>` 负责"排进版面的注解"
-（边注 / 气泡 / 编号图例）。
-旧标签 `vk-edge` 是 `vk-annotate` 的别名（`mode="arrow"`）；`vk-pin` 是 `vk-note variant="bubble"`
-的别名；`vk-ring` 是 `vk-box ring` / `vk-annotate mode="circle"` 的旧名。
-它们继续可用；构建期会给一条迁移提示。
+（边注 / 气泡 / 编号图例）。`vk-edge` 是箭头形态的独立标签，与 `mode="arrow"` 同几何。
 
 | 形态 | 它回答 | 不该用来 |
 |---|---|---|
@@ -102,7 +99,6 @@
 | `mode="circle"` | 组件没有内置状态，但你要指一片区域 | 组件已经 `state="err"` / `state="mark"` 时再圈一遍 |
 | `mode="badge"` | 这是第几个点（①②③） | 当"强调"用；强调是 `tone` 和字号的事 |
 | `mode="note"` | 一句话钉在一个点上 | 复述标题或副题；一句话一个点 |
-| `vk-ring variant="dim"`（旧别名） | 这一屏只留一个目标 | 当"强调"用 |
 
 一个信号只用一种机制。两个叠在一起，观众要判断"它们是不是在说同一件事"，这个判断本身与讲解无关。
 
@@ -151,7 +147,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-text`** · 文字 — 一段文字：字阶、字重、墨阶、等宽、对齐、测量宽；可带一个语义图标（文字与图标共存）。
   - 属性：`size` · `weight` · `mono` · `align` · `format` · `fit` · `fit-min` · `fit-max` · `icon` · `at` · `dur` · `enter` · `ease` · `stagger` · `cue` · `act` · `strength` · `ink` · `tone`
   - 例：`<vk-text size="body" measure="body">52,980 字节：hello.c 经 gcc -E 把 stdio.h 抄进来。</vk-text>`
-- **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上（原 vk-caption）。
+- **`vk-label`** · 标签 — 一行小字：分类、进度、状态。四种墨阶 + 五种语义色，三种形态（kicker / chip / badge），可带一个图标；写 for 就贴到目标块上。
   - 属性：`variant` · `tone` · `ink` · `counter` · `section` · `icon` · `for` · `side` · `gap`
   - 例：`<vk-label variant="kicker" counter="3/4" section="汇编">汇编</vk-label>`
 - **`vk-inline`** · 行内 — 行内文字：代码、公式、上下标、链接。字号跟随所在文本行。
@@ -262,8 +258,8 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-annotate`** · 标注 — 关系与图示：mode="arrow"（从一个元素/坐标指向另一个）、mode="circle"（圈出目标，可双圈）、mode="note"（批注泡 / 引线标签 / 编号点，自动避开正文）、mode="badge"（编号点）。只画覆盖层，不改布局。
   - 属性：`mode` · `for` · `from` · `to` · `shape` · `dash` · `width` · `arrow` · `ring` · `double` · `note` · `n` · `size` · `strength` · `tone` · `label` · `gap` · `z` · `side` · `x` · `y` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-annotate id="vka-arrow" mode="arrow" from="#vka-src@side:right" for="#vka-out@side:left" label="gcc -c" tone="info">`
-- **`vk-note`** · 注解 — 三种注解：variant="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；variant="bubble" 是泡 + 引线（原 vk-pin）；variant="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
-  - 属性：`variant` · `for` · `side` · `leader` · `w` · `z` · `tone` · `strength` · `size` · `n` · `gap` · `x` · `y`
+- **`vk-note`** · 注解 — 三种注解：variant="margin" 用 1px 细线引到栏间空白（与正文基线对齐，自动选有空间的一侧）；variant="bubble" 是泡 + 引线；variant="legend" 在目标角上放编号点，页角给编号 + 说明。不占布局，也不占焦点名额。
+  - 属性：`variant` · `for` · `side` · `leader` · `w` · `z` · `tone` · `strength` · `size` · `n` · `gap` · `x` · `y` · `act` · `at` · `dur` · `enter` · `ease`
   - 例：`<vk-note variant="margin" for="#nt-code" side="auto" leader="line" w="360">main 的返回值写进 eax；0 表示程序正常结束。</vk-note>`
 
 ### L5 页面 · 一整张 1920×1080 的画布
@@ -274,15 +270,6 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-scene`** · 图示 — 五种讲解动作的组合容器：kind="compare|steps|locate|measure|cause"，按 kind 自动排布命名槽位（a/b、step、where/map、value/chart/ratio、a/b/why），作者只填内容。
   - 属性：`kind` · `current` · `labels` · `tone` · `arrow` · `cue`
   - 例：`<vk-scene kind="compare" labels="改前|改后" tone="info,ok" arrow="label:因为 include">`
-
-### 旧名（已合并，仍可用）
-
-- **`vk-icon`** → `vk-text` — 图标本质是一个字形：改用 <vk-text icon="check">，文字与图标可以共存。
-- **`vk-rule`** → `vk-box` — 一条线就是一块 1px 高的面：用 <vk-box border="hair">（或 vk-box 的 h + surface）。
-- **`vk-window`** → `vk-panel` — 窗就是带窗头的分区：用 <vk-panel chrome="dots" title="…">，窗头与内距是同一套属性。
-- **`vk-pin`** → `vk-note` — 批注泡是 vk-note 的一种形态：用 <vk-note variant="bubble">（泡 + 引线，属性同旧版）。
-- **`vk-ring`** → `vk-box` — 圈选是一块带环的面：用 <vk-box ring>（不占布局）；overlay 圈选用 vk-annotate mode="circle"。
-- **`vk-caption`** → `vk-label` — 归属说明就是贴到目标块上的一枚标签：用 <vk-label for="#id" side="top|bottom">。
 <!-- vk:tags:end -->
 
 ---
@@ -298,7 +285,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 - **`vk-cells` 的 `cols` 上限是 8**；8 列时地址会省略号截断，想要完整地址就减列或缩短地址。
 - **多行 `current`（`current="4-6"`）算一处焦点**：不要在一个组件里既写 `current` 又写 `focus`，那才是"两处"。
 - **带 `src` 的组件必须 `vk build`**：没预编译会 `stale`（`vk check` / `vk shot` 会红）。审阅页里出现空白帧，先怀疑这一条。
-- **`vk check` 逐页审计**：一个文档里有多张 `vk-page` 时，问题会带 `第 N 页`；不要以为"只查了第一页"。
+- **`vk check` 逐页自检**：一个文档里有多张 `vk-page` 时，问题会带 `第 N 页`；不要以为"只查了第一页"。
 - **`vk shot` 默认删坏图**：有 error 时截图会被删掉，`--keep` 才保留——看不到图不一定是没生成。
 
 ---
@@ -310,7 +297,7 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 ---
 
-## 11 · 表面与层次（14.1 / 批次 A）
+## 11 · 表面与层次
 
 - **`vk-panel`**：一块**内容分区**。`<vk-panel tone="info" variant="inset" title="输出" pad="md" radius="lg" border="hair">…</vk-panel>`。
   - 四档表面：`plain` 是默认的**无框无底**（透明，只是一块版面区域）/ `raised` 抬起（近白 + 投影）/ `inset` 凹下（灰）/ `dark` 深色（墨底白字）。
@@ -322,19 +309,18 @@ node bin/vk.mjs icons arrow     # 搜图标名
 
 > `vk-grid tracks` 仍是真轨道：`<vk-grid tracks="1fr 2fr">`、`"auto 1fr"`；只收 `fr` 与 `auto`，px 会在构建期报错。等分用 `cols="1..12"`（12 是默认坐标系，沟槽 `--vk-grid-gutter: 32px`），两条路互斥。
 
-## 12 · 版式与默认值（15.x / 手机横屏基准）
+## 12 · 版式与默认值（手机横屏基准）
 
 - **四档字号**：`caption 48` · `body 56` · `headline 112` · `display 200`。旧名 `label` / `data` / `subhead` / `title` 是别名；`hero` 280 / `mega` 400 是补充档。
 - **网格与版心**：`--vk-grid-cols: 12`、`--vk-grid-gutter: 32px`、`--vk-margin: 120px`；`.vk-frame` 是最宽 1680 的版心列，`.vk-safe` 是全宽容器的 120 边距。
 - **窗头**：`vk-term` / `vk-code` / `vk-asm` / `vk-tree` / `vk-bytes` / `vk-diff` 默认有三点 + 文件名/来源；`chrome="none"` 仍可用但构建期会提醒放到有上下文的容器里。三点随 `mass` 变 12 / 16 / 20px，窗头 56 / 72 / 88。
-- **页眉**：`<vk-label variant="kicker" counter="3/5" section="汇编">` → `工序 3/5 · 汇编`（不是页号）；左侧 4px 焦点色条。这条只是建议，默认不审计；`--style` 才判。
-- **属性收敛（15.2）**：列开关写 `columns="numbers,summary"`；间距写 `gap` / `pad`（`"24"` 或 `"24 48"`，先左右后上下）；箭头写 `arrow="end:open,size:40,scale:0.12,label:gcc"`；屏障写 `fence="after:4,label:…"`；工序进度写 `counter="3/5"`。旧名仍是别名（运行期折叠 + 构建期提示），见 [convergence-15b.md](convergence-15b.md)。
-- **兼容开关**：`<body class="vk-legacy">` 只切尺寸——回到 14.x 的字号（160 / 96 / 40 / 28）与窗头（40 / 56 / 72），审计地板跟着切回 28 / 40 / 96；panel 的底 / 框、kicker 的色条、grid 沟槽不跟着回退。
+- **页眉**：`<vk-label variant="kicker" counter="3/5" section="汇编">` → `工序 3/5 · 汇编`（不是页号）；左侧 4px 焦点色条。这条只是建议，默认不检查；`--style` 才判。
+- **属性名**：列开关写 `columns="numbers,summary"`；间距写 `gap` / `pad`（`"24"` 或 `"24 48"`，先左右后上下）；箭头写 `arrow="end:open,size:40,scale:0.12,label:gcc"`；屏障写 `fence="after:4,label:…"`；工序进度写 `counter="3/5"`。旧属性名由运行期折叠并给出构建期提示。
 - **库 vs 项目**：库只判客观错误；强调色 ≤1 / 深色块 ≤1 / 页眉措辞 / 120 边距是项目层 preset，默认关，用 `vk check --style` 或 `tools/style-preset.mjs` 打开（见 `docs/style-preset.md`）。图标白名单只是提醒。
 
-## 13 · 主题（16.0 · 调色板）
+## 13 · 主题 · 调色板
 
-- **三套内置主题**：`paper`（默认，纯白 / 冷墨 / 钴蓝，与 15.x 逐像素相同）· `graphite`（近白 / 暖墨 / 琥珀，适合长时间看）· `blueprint`（极浅蓝 / 深蓝墨 / 亮蓝，适合讲结构）。
+- **三套内置主题**：`paper`（默认，纯白 / 冷墨 / 钴蓝）· `graphite`（近白 / 暖墨 / 琥珀，适合长时间看）· `blueprint`（极浅蓝 / 深蓝墨 / 亮蓝，适合讲结构）。
 - **怎么挂**：`<vk-page theme="graphite">`，或 `<body data-theme="graphite">`，或任意祖先 `<div data-theme="blueprint">`（只影响这一块）。不写 = paper。
 - **只换颜色**：主题不动字号 / 行距 / 间距 / 圆角 / 线宽。三套主题下同一页面的包围盒与字号逐项相等（`tests/theme-geometry.test.mjs`）。
 - **对比度**：三套主题的正文都 ≥ 7:1，`ink="muted"` 标注 ≥ 4.5:1（`tests/theme-tokens.test.mjs`）。不要为了配色把墨提亮：主题里已经算好了。

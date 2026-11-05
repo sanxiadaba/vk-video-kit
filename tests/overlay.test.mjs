@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -10,7 +10,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await ctx.newPage();
 
@@ -26,58 +26,6 @@ const ready = async () => {
   await page.waitForTimeout(120);
 };
 
-test('vk-ring variant=dim 是语境控制器：目标不动，兄弟退后', async () => {
-  await page.setContent(
-    SHELL(`<vk-page>
-      <vk-cells id="mem" cols="4">
-        <li value="48" label="H"></li><li value="65" label="e"></li>
-        <li value="6C" label="l"></li><li value="00" filled></li>
-      </vk-cells>
-      <vk-ring variant="dim" for="#mem@cell:3" dim="0.3"></vk-ring>
-    </vk-page>`),
-    { waitUntil: 'load' }
-  );
-  await ready();
-  const r = await page.evaluate(() => {
-    const paper = document.querySelector('.vk-page');
-    const ov = document.querySelector('vk-ring');
-    const cells = [...document.querySelectorAll('#mem .vk-cell')];
-    return {
-      parentIsPage: ov.parentElement === paper,
-      opacities: cells.map((c) => Number(getComputedStyle(c).opacity)),
-      target: document.querySelector('#mem .vk-cell[data-cell="3"]').hasAttribute('data-vk-focus'),
-      veil: !!document.querySelector('vk-ring .vk-ov-svg > rect'),
-    };
-  });
-  assert.ok(r.parentIsPage, '聚光应该挂成 .vk-page 的子节点');
-  assert.equal(r.veil, false, '语境控制器不画白幕');
-  assert.ok(r.target, '目标要打上 data-vk-focus');
-  for (const [i, o] of r.opacities.entries()) {
-    if (i === 3) assert.ok(o > 0.99, `目标不该退后（实际 ${o}）`);
-    else assert.ok(Math.abs(o - 0.3) < 0.02, `第 ${i} 格应退到 0.3（实际 ${o}）`);
-  }
-});
-
-test('vk-ring 的 dim 与 keep', async () => {
-  await page.setContent(
-    SHELL(`<vk-page>
-      <vk-stack gap="md">
-        <vk-text id="a" size="body">甲</vk-text>
-        <vk-text id="b" size="body">乙</vk-text>
-        <vk-text id="c" size="body">丙</vk-text>
-      </vk-stack>
-      <vk-ring variant="dim" for="#b" dim="0.55" keep="#c"></vk-ring>
-    </vk-page>`),
-    { waitUntil: 'load' }
-  );
-  await ready();
-  const r = await page.evaluate(() => ({
-    a: Number(getComputedStyle(document.querySelector('#a')).opacity),
-    c: Number(getComputedStyle(document.querySelector('#c')).opacity),
-  }));
-  assert.ok(Math.abs(r.a - 0.55) < 0.02, `dim 应该被读成 0.55（实际 ${r.a}）`);
-  assert.ok(r.c > 0.99, `keep 里的节点不退后（实际 ${r.c}）`);
-});
 test('内容底量的是最后一点墨，且不算覆盖层', async () => {
   await page.setContent(
     SHELL(`<vk-page>
@@ -188,28 +136,8 @@ test('vk-compare：a 固定留左侧，label-a 与 a 同边', async () => {
 });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
-});
-
-test('ring variant="dim"：目标不动、兄弟退后、keep 保住', async () => {
-  await page.setContent(
-    SHELL(`<vk-page><vk-stack gap="md">
-      <vk-text id="t" size="body">重点</vk-text>
-      <vk-text id="o" size="body">该退后</vk-text>
-      <vk-text id="k" size="body">被保住</vk-text>
-    </vk-stack><vk-ring for="#t" variant="dim" dim="0.4" keep="#k"></vk-ring></vk-page>`),
-    { waitUntil: 'load' }
-  );
-  await page.evaluate(() => window.vk.ready());
-  const r = await page.evaluate(() => ({
-    t: getComputedStyle(document.querySelector('#t')).opacity,
-    o: getComputedStyle(document.querySelector('#o')).opacity,
-    k: getComputedStyle(document.querySelector('#k')).opacity,
-  }));
-  assert.equal(r.t, '1', '目标不该被压暗');
-  assert.equal(r.o, '0.4', '兄弟要退后到 dim');
-  assert.equal(r.k, '1', 'keep 里的元素不能退后');
 });
 
 test('批注泡自动选边：不压住正文', async () => {
@@ -218,7 +146,7 @@ test('批注泡自动选边：不压住正文', async () => {
     SHELL(`<vk-page align="top"><vk-stack gap="lg">
       <vk-text class="t" size="title" weight="bold">这一行不能被批注泡盖住</vk-text>
       <vk-box id="tgt" w="240" h="96" surface="soft"><vk-text size="body">目标</vk-text></vk-box>
-    </vk-stack><vk-pin for="#tgt">这里是一条批注</vk-pin></vk-page>`),
+    </vk-stack><vk-note variant="bubble" for="#tgt">这里是一条批注</vk-note></vk-page>`),
     { waitUntil: 'load' }
   );
   await page.evaluate(() => window.vk.ready());

@@ -27,7 +27,7 @@ import { startServer } from '../cli/serve.mjs';
 import { cacheEnabled, cacheKey, isCached, markCached, pageHash, sharedHash } from './lib/check-cache.mjs';
 import { SITE } from './lib/paths.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
-import { TAGS, ALIASES } from '../src/registry.mjs';
+import { TAGS } from '../src/registry.mjs';
 
 import { LIMITS } from '../src/shared/limits.mjs';
 
@@ -411,8 +411,7 @@ for (const target of list) {
   if (target.kind === 'specimen' && target.path.startsWith('specimen/')) {
     await page.evaluate(() => window.vk?.freeze?.());
     baseShot = await page.screenshot();
-    // 旧名页只有一句迁移说明，不参与"组件主帧"口径。
-    if (!ALIASES[target.tag]) {
+    {
       const bg = await page.evaluate(() => {
         const el = document.querySelector('.vk-page');
         const m = el ? getComputedStyle(el).backgroundColor.match(/rgba?\(([^)]+)\)/) : null;

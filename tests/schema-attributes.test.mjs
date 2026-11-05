@@ -1,23 +1,23 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { PNG } from 'pngjs';
 import { startServer } from '../cli/serve.mjs';
 import { TAGS, TAG_NAMES } from '../src/registry.mjs';
 
 /**
- * 属性收敛第二步（15.2）：四族 20 个旧名 → 3 个新名。
+ * 属性表：公开属性名的上限、旧名折叠与构建期提示。
  *
  * 这一组守的是「两套写法，同一张画面」：
  *   1. 旧写法折成新写法之后，宿主上的属性值必须是规范形式（运行期折叠的证据）；
  *   2. 在同一张标本页上把属性从旧写法换成新写法，整页逐像素必须一致；
- *   3. 属性名总数 ≤ 140（度量口径与 .tmp/converge/metrics.mjs 相同）；
+ *   3. 属性名总数有上限，防止同一个概念又长出第二套名字；
  *   4. 旧名在构建期给迁移提示，新写法不再提示。
  */
 
 /* ------------------------------------------------------------- 1 · 度量 */
 
-test('15.2 收敛：不同属性名从 160 降到 141（图示语汇 +1）', () => {
+test('属性表：公开属性名总数不超过 141', () => {
   const names = new Set();
   for (const tag of TAG_NAMES) {
     for (const name of Object.keys(TAGS[tag].attrs || {})) names.add(name);
@@ -58,7 +58,7 @@ test('15.2 收敛：不同属性名从 160 降到 141（图示语汇 +1）', () 
 
 /* -------------------------------------------- 2 · 构建期提示（纯函数） */
 
-test('15.2 收敛：旧名构建期提示，新写法不提示', async () => {
+test('属性改名：旧名构建期提示，新写法不提示', async () => {
   const { createVkHighlighter, transformHtml } = await import('../src/highlight.mjs');
   const highlighter = await createVkHighlighter(['c']);
   const warnings = [];
@@ -98,12 +98,12 @@ test('15.2 收敛：旧名构建期提示，新写法不提示', async () => {
 /* ------------------------------------------------ 3 · 运行期折叠 + 像素 */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const tabs = [];
 
 after(async () => {
   for (const tab of tabs) await tab.context().close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });
 
@@ -146,6 +146,9 @@ function pixels(buf) {
 }
 
 function assertSamePixels(a, b, label) {
+  // 快路径：同一浏览器对同一画面编码出的 PNG 字节一致，直接比缓冲，
+  // 省掉两次 1080p 解码与逐像素循环（只有不同时才解码定位第一个差异）。
+  if (a.equals(b)) return;
   const A = pixels(a);
   const B = pixels(b);
   assert.equal(A.png.width, B.png.width, `${label}：宽度不同`);
@@ -256,45 +259,8 @@ const FOLD_CASES = [
 
 const ALL = [...new Set(FOLD_CASES.flatMap((c) => [...Object.keys(c.newAttrs), ...Object.keys(c.oldAttrs)]))];
 
-/** 旧标签的标本页只有一句“已合并”，没有实例：用一张最小真页做旧的写法 ↔ 新的写法。 */
-async function openHtml(body) {
-  const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  const tab = await ctx.newPage();
-  tabs.push(tab);
-  await tab.setContent(
-    `<!doctype html><html><head><meta charset="utf-8"><base href="${base}/">
-<link rel="stylesheet" href="vk/fonts.css"><link rel="stylesheet" href="vk/vk.css"></head>
-<body style="margin:0"><vk-page align="top">${body}</vk-page><script src="dist/vk.js"></script></body></html>`,
-    { waitUntil: 'load' }
-  );
-  await settle(tab);
-  return tab;
-}
-
-test('15.2 收敛：vk-ring / vk-pin 的旧名折成 pad / gap，且逐像素一致', async () => {
-  const body = (ringAttrs, pinAttrs) => `
-    <vk-stack gap="lg">
-      <vk-box id="t" pad="md" surface="paper"><vk-text size="body">目标块</vk-text></vk-box>
-      <vk-ring for="#t" variant="rect" tone="focus" ${ringAttrs}></vk-ring>
-      <vk-pin for="#t" side="right" ${pinAttrs}>注</vk-pin>
-    </vk-stack>`;
-
-  const oldTab = await openHtml(body('pad-px="16"', 'gap-px="40"'));
-  const oldFolded = await oldTab.evaluate(() => {
-    const ring = document.querySelector('vk-ring');
-    const pin = document.querySelector('vk-pin');
-    return { ring: ring.getAttribute('pad'), pin: pin.getAttribute('gap') };
-  });
-  assert.deepEqual(oldFolded, { ring: '16', pin: '40' });
-  const oldShot = await oldTab.screenshot();
-
-  const newTab = await openHtml(body('pad="16"', 'gap="40"'));
-  const newShot = await newTab.screenshot();
-  assertSamePixels(oldShot, newShot, 'vk-ring / vk-pin 旧写法 vs 新写法');
-});
-
 for (const item of FOLD_CASES) {
-  test(`15.2 收敛：${item.tag} 旧写法折成新写法，且与新写法逐像素一致`, async () => {
+  test(`属性改名：${item.tag} 旧写法折成新写法，且与新写法逐像素一致`, async () => {
     const tab = await openSpecimen(item.tag);
 
     // 旧写法：先清空两套名字，只写旧名，等运行期折叠。

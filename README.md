@@ -27,12 +27,11 @@
 | L4 关系 | 3 | `vk-annotate` `vk-note` `vk-edge` |
 | L5 页面与组合 | 2 | `vk-page` `vk-scene` |
 
-> 减法：`vk-icon` / `vk-rule` / `vk-caption` / `vk-pin` / `vk-ring` / `vk-window` 已分别并进
-> `vk-text` / `vk-box` / `vk-label` / `vk-note` / `vk-box` / `vk-panel`。旧名仍是可用别名，
-> 构建期给一条迁移提示；`vk tags --aliases` 看清单。
+> 减法：`vk-icon` / `vk-rule` / `vk-caption` / `vk-pin` / `vk-ring` / `vk-window` 已经不存在，
+> 对应的能力分别在 `vk-text` / `vk-box` / `vk-label` / `vk-note` / `vk-box` / `vk-panel` 上。
 
 “一组东西的排版”（标题三件套、指标、引文、图窗、胶囊、荧光笔、提示、卡片）不占标签，**库也不提供**——它们是项目自己的 CSS（一集片子一个 `film.css`）。但**讲解动作**不是装饰：`compare / steps / locate / measure / cause` 是五个可复用的组合，收在 `vk-scene` 里，见下一节。
-规格在 [`docs/v14.md`](docs/v14.md)。
+属性参考在 [`docs/reference.md`](docs/reference.md)，作者手册在 [`docs/ai.md`](docs/ai.md)。
 
 ## 图示语汇 · vk-scene
 
@@ -81,7 +80,7 @@ npm run build
 
 **属性词表只有一份**（`src/shared/vocab.mjs`）：`tone` 六值一套、`fill="none|cover|contain"`、
 `current` 统一表示「当前项」（**序号 1 起，-1 = 没有当前**）、`size` 只表字号（密度写 `mass`）。
-旧名照旧可用（运行期折成新名并提示）；完整映射见 [docs/convergence-15.md](docs/convergence-15.md)。
+旧属性名由运行期折成新名并提示。
 
 排版只有一种写法：**分份**。容器给份（`cols` / `rows`），子项占份（`span`），撑满用 `stretch`（`fill` 只留给能填充的组件：img / panel / layer）：
 
@@ -99,7 +98,7 @@ node bin/vk.mjs build page.html   # 读取 src 或内联源码块，把高亮/�
 node bin/vk.mjs check page.html   # 结构自检：字号/对比度/安全区/溢出/重叠/空锚点
 node bin/vk.mjs shot page.html    # 出一张 1920×1080
 node bin/vk.mjs serve 8099        # 开发服务器；改 .c 刷新即见
-node bin/vk.mjs tags              # 全部标签（32 个，旧名用 --aliases）
+node bin/vk.mjs tags              # 全部标签（32 个）
 node bin/vk.mjs doc vk-code       # 某个标签的属性
 node bin/vk.mjs brief             # 30 行契约摘要（AI 入口）
 node bin/vk.mjs icons arrow       # 搜图标名
@@ -138,7 +137,7 @@ int main(void) { return 0; }
 <vk-term title="zsh" src="code/hello.term"></vk-term>
 ```
 
-diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns="numbers"` 关计数，`chrome="none"` 去窗头。diff 没有 `current` / `focus`——它表达“改了什么”，不是“正在讲哪行”；要指某一行用 `vk-ring` / `vk-spotlight` 的 `@line` 锚点。
+diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns="numbers"` 关计数，`chrome="none"` 去窗头。diff 没有 `current` / `focus`——它表达“改了什么”，不是“正在讲哪行”；要指某一行用 `vk-annotate mode="circle"` 的 `@line` 锚点。
 
 ### 数据形状
 
@@ -201,7 +200,7 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns=
 </vk-page>
 ```
 
-`vk-note variant="bubble"`（原 `vk-pin`）只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
+`vk-note variant="bubble"` 只钉一个目标；要同时圈/照亮多处，用 `vk-annotate mode="circle"`
 或 `vk-box ring`（它们的 `for` 用分号分隔多个目标）。
 
 | part | 用在 | 编号 |
@@ -249,12 +248,12 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns=
 
 三层：`--vk-theme-*`（库里唯一出现 hex 的地方）→ 语义名（`--vk-paper-*` / `--vk-ink-*` /
 `--vk-wash-*` / `--vk-focus-*` …，全部 = `var(--vk-theme-*)`）→ 组件（不写颜色）。
-默认主题与 15.x 逐像素相同（31 页 / 6428 万像素，0 差异）；三套主题下同一块内容的
-包围盒与字号逐项相等。完整变量表与派生公式见 [`docs/themes.md`](docs/themes.md)。
+默认主题就是纸色基准；三套主题下同一块内容的包围盒与字号逐项相等。
+完整变量表与派生公式见 [`docs/themes.md`](docs/themes.md)。
 
 ## 两条视觉规则
 
-1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / pin）用梅紫，其中 `em` 只画一条梅紫下划线，整块底高亮留给 `vk-mark`；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
+1. **钴蓝只做一件事：标出“正在讲这里”。** 当前行整行 16% 蓝底 + 左侧 4px 实心条；关键字与数字回到墨色 600，语法色只剩字符串的绿。作者加的标注（`em` / callout / tag / ring / 气泡）用梅紫，其中 `em` 只画一条梅紫下划线；asm 寄存器、时间线圆点、文件类型这些结构件回墨阶。
 2. **语义色不写正文。** 对 / 错 / 注意只出现在色条、底色、图标上；正文永远是墨色。
 
 **字阶四档：200 / 112 / 56 / 48，名字是 `display / headline / body / caption`。**
@@ -265,12 +264,9 @@ diff 默认上下对照，`variant="split"` 换成左右两窗并排；`columns=
 - `headline` 112：标题（手机 45px）；
 - `display` 200：一页最多一次，只给「本页唯一的答案」（手机 81px）。
 
-旧名继续可用，全部别名到四档：`label` → `caption`、`data` → `body`、`subhead` → `headline`、
+旧字号名继续可用，全部别名到四档：`label` → `caption`、`data` → `body`、`subhead` → `headline`、
 `title` → `display`；`hero` 280 / `mega` 400 保留为补充档（一个数字 / 一个词当家，一帧最多一个）。
-`display-2xl` / `display-xl` / `heading` / `meta` 仍是一版别名。
-
-旧页（14.x 的 160 / 96 / 40 / 28 + 旧窗头）在 `<body class="vk-legacy">` 上逐像素留档：
-字号与窗头读的是同一张表，不会一个回旧值、一个留新值。
+`display-2xl` / `display-xl` / `heading` / `meta` 仍是补充别名。
 
 `vk-text` 默认按字号取行宽（body 25 字 → 1400px，display 是版心上限 1680）；要铺满容器写 `measure="none"`。
 
@@ -308,8 +304,6 @@ npm run build       # 生成 _site/、dist/、vk/、types/ 与 metadata（含索
 npm run build:fast  # 同上但不截缩略图（约 3s）；测试与日常都用这个
 npm run dev         # build + watch 重建 + dev server（8099）
 npm run quick -- vk-code   # 单组件闭环：build + 该页门禁 + 截图（约 8s）
-npm run plan -- slice/deck.json  # 容量表 + 自动求解（改 cols 并写回）+ 跨帧建议
-npm run box -- slice/frames/07.html  # 打印一帧的盒子树
 npm run specimens   # 只重生成标本册
 npm run verify      # 只读校验：生成物与源码不一致就失败
 npm run test:fast   # verify + links + pack + 纯函数单测（需先 build）
@@ -317,8 +311,8 @@ npm test            # 全量（约 30s；首次 contract/gate 冷跑，暖缓存
 node cli/shot.mjs --batch a.html b.html --out-dir shots/   # 一个浏览器拍一组（12 帧约 3s）
 npm test -- --fast  # 只跑静态检查（不起浏览器）
 npm run contract    # 每个公开属性是否真的产生声明效果（4 路并行）
-npm run gate        # 40px 地板 / 对比度 / 安全区 / 裁切 / console / 溢出
-npm run gate:full   # 38 页全查（暖缓存约 2s；--force 冷跑约 9s）
+npm run gate        # 48px 地板 / 对比度 / 安全区 / 裁切 / console / 溢出
+npm run gate:full   # 全部页面（暖缓存更快）
 npm run gate:visual # 每个预设的像素差
 npm run links       # 站内链接门禁
 npm run capabilities # 能力矩阵：契约 / 标本 / 测试三件套，缺一件报红
@@ -326,7 +320,7 @@ npm run shot -- _site/specimen/vk-code.html
 node bin/vk.mjs shot page.html       # 出一张 1920×1080（--phone / --crop x,y,w,h）
 ```
 
-`vk check` 查 40px 地板、正文是否落在 52、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
+`vk check` 查 48px 地板、正文是否落在 56、对比度、安全区、溢出、裁切、空锚点、非覆盖层重叠；`vk shot` 的自检与它共用同一份 `VK.auditPage()`。构建缓存放在 `.vk-cache/`，删掉它等价于 `--force`。
 
 `npm run build` 之后：`_site/` 是完整静态站（索引 + 32 张标本页 + 契约宿主 + 资源），`dist/` 与 `vk/` 是本地页面引用的构建产物。生成物都不进 git。`npm run quick` 只碰一个标签；`npm test` 的检查缓存键是「共享产物 + 页面 + 工具」，任何一项变了自动失效。
 

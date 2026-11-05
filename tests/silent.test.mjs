@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 
@@ -22,7 +22,7 @@ import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vk-silent-'));
 
@@ -49,7 +49,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });

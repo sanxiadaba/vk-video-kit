@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -15,7 +15,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 const STEPS = ['预处理', '编译', '汇编', '链接', '运行'];
@@ -173,6 +173,6 @@ test('竖排：连接线转 90°，箭头朝下', async () => {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });

@@ -11,7 +11,7 @@ const SITE = '_site';
 const OUT = path.join(SITE, 'thumbs');
 const CACHE = '.vk-cache/thumbs.json';
 const PAD = 24;
-const WORKERS = 6;
+const WORKERS = Number(process.env.VK_THUMB_WORKERS || 8);
 
 const { TAG_NAMES } = await import('../src/registry.mjs');
 const { SCENES } = await import('../src/scenes/scenes.mjs');
@@ -61,7 +61,10 @@ if (!jobs.length) {
 }
 
 const t0 = Date.now();
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+// launchServer + connect：关闭时能直接杀进程。browser.close() 在多个 context
+// 下会逐个等 renderer 退出，实测这一项就要 10s 上下。
+const server = await chromium.launchServer({ channel: 'msedge' }).catch(() => chromium.launchServer());
+const browser = await chromium.connect(server.wsEndpoint());
 const chunks = Array.from({ length: WORKERS }, (_, i) => jobs.filter((_, j) => j % WORKERS === i));
 
 async function worker(list) {
@@ -91,6 +94,20 @@ async function worker(list) {
 }
 
 await Promise.all(chunks.map(worker));
-await browser.close();
+try {
+  const session = await browser.newBrowserCDPSession();
+  await session.send('Browser.close').catch(() => {});
+} catch {
+  /* 已经断开 */
+}
+const proc = server.process?.();
+if (proc && proc.exitCode === null) {
+  if (process.platform === 'win32') {
+    const { spawn } = await import('node:child_process');
+    spawn('taskkill', ['/pid', String(proc.pid), '/T', '/F'], { stdio: 'ignore', detached: true }).unref();
+  } else {
+    proc.kill('SIGKILL');
+  }
+}
 fs.writeFileSync(CACHE, JSON.stringify(next));
 console.log(`thumbs: ${jobs.length} 张（${((Date.now() - t0) / 1000).toFixed(1)}s）`);

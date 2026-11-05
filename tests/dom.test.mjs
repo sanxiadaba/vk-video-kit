@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
@@ -48,8 +48,8 @@ test('numbers=none 真的隐藏行号并恢复源码内距', async () => {
 });
 
 test('图标原型链名字不会把函数源码塞进 SVG', async () => {
-  await reset('<vk-icon name="constructor"></vk-icon>');
-  const html = await page.$eval('vk-icon svg', (e) => e.innerHTML);
+  await reset('<vk-text icon="constructor">x</vk-text>');
+  const html = await page.$eval('vk-text svg', (e) => e.innerHTML);
   assert.ok(!html.includes('native code'));
   assert.match(html, /<circle/);
 });
@@ -81,15 +81,15 @@ test('src 竞态：后发请求赢，旧响应不能覆盖', async () => {
 });
 
 test('list 重渲染保留嵌套元素身份与 <li> 属性', async () => {
-  await reset('<vk-list gap="sm"><li id="x"><vk-icon name="code"></vk-icon> one</li><li>two</li></vk-list>');
-  const before = await page.$eval('vk-list li', (e) => ({ id: e.id, icon: !!e.querySelector('vk-icon svg') }));
+  await reset('<vk-list gap="sm"><li id="x"><vk-text icon="code">x</vk-text> one</li><li>two</li></vk-list>');
+  const before = await page.$eval('vk-list li', (e) => ({ id: e.id, icon: !!e.querySelector('.vk-text-ic svg') }));
   await page.evaluate(() => document.querySelector('vk-list').setAttribute('gap', 'xl'));
   await sleep(50);
-  const after = await page.$eval('vk-list li', (e) => ({ id: e.id, icon: !!e.querySelector('vk-icon svg') }));
+  const after = await page.$eval('vk-list li', (e) => ({ id: e.id, icon: !!e.querySelector('.vk-text-ic svg') }));
   assert.deepEqual(after, before);
 });
 
-test('晚到的 page / title 内容进入内容槽，而不是留在宿主外', async () => {
+test('晚到的 page 内容进入内容槽，而不是留在宿主外', async () => {
   await reset('<vk-page><vk-text>one</vk-text></vk-page>');
   await page.evaluate(() => {
     const d = document.createElement('div');
@@ -100,12 +100,6 @@ test('晚到的 page / title 内容进入内容槽，而不是留在宿主外', 
   await sleep(80);
   const inBd = await page.$eval('vk-page .vk-page-bd', (e) => !!e.querySelector('#late'));
   assert.equal(inBd, true);
-
-  await reset('<vk-window>one</vk-window>');
-  await page.evaluate(() => document.querySelector('vk-window').append(document.createTextNode(' two')));
-  await sleep(80);
-  const text = await page.$eval('vk-window .vk-win-bd', (e) => e.textContent);
-  assert.match(text, /two/);
 });
 
 test('几何属性移除后不留幽灵尺寸', async () => {
@@ -298,40 +292,8 @@ test('7.0 深挖：bits 32 位字段、asm 顺序屏障', async () => {
   assert.equal(r.fields, 3);
 });
 
-test('窗头四档：browser 有地址栏 / plain 没三点 / none 没窗头', async () => {
-  await reset('<vk-window id="w" chrome="browser" url="127.0.0.1/x"><vk-text>内容</vk-text></vk-window>');
-  const look = () =>
-    page.evaluate(() => {
-      const w = document.querySelector('#w');
-      const hd = w.querySelector('.vk-hd');
-      return {
-        hd: hd ? getComputedStyle(hd).display : 'missing',
-        url: !!w.querySelector('.vk-br-url'),
-        dots: (() => {
-          const d = w.querySelector('.vk-dots');
-          return d ? getComputedStyle(d).display !== 'none' : false;
-        })(),
-      };
-    });
-  const browserMode = await look();
-  assert.notEqual(browserMode.hd, 'none', 'browser 要显示窗头');
-  assert.ok(browserMode.url, 'browser 要有地址栏');
-  assert.ok(browserMode.dots, 'browser 要有三点');
-
-  await page.evaluate(() => document.querySelector('#w').setAttribute('chrome', 'plain'));
-  await sleep(60);
-  const plain = await look();
-  assert.notEqual(plain.hd, 'none', 'plain 仍要有窗头');
-  assert.ok(!plain.dots, 'plain 不要三点（当卡片用）');
-
-  await page.evaluate(() => document.querySelector('#w').setAttribute('chrome', 'none'));
-  await sleep(60);
-  const none = await look();
-  assert.equal(none.hd, 'none', 'none 要把窗头整个收掉');
-});
-
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 
@@ -345,35 +307,6 @@ test('锚点真的能解析到运行时元素（cell / line），不是只过构
     line: !!document.querySelector('#c [data-line="2"]'),
   }));
   assert.deepEqual(found, { cell: true, line: true });
-});
-
-test('vk-page 内的 ring 与目标同坐标', async () => {
-  await reset(
-    '<vk-page align="top"><vk-stack><vk-box id="t" border="hair" pad="lg"><vk-text size="body">x</vk-text></vk-box></vk-stack>' +
-      '<vk-ring for="#t@side:right"></vk-ring></vk-page>'
-  );
-  await sleep(60);
-  const r = await page.evaluate(() => {
-    const t = document.querySelector('#t').getBoundingClientRect();
-    // 减法第一波：vk-ring 是一块带环的面（不是 SVG 形状）；side 锚点是零尺寸点，
-    // 环仍然以那个点为中心（pad-px 两侧对称）。
-    const s = document.querySelector('vk-ring').getBoundingClientRect();
-    return {
-      dx: Math.abs(s.left + s.width / 2 - t.right),
-      dy: Math.abs(s.top + s.height / 2 - (t.top + t.height / 2)),
-    };
-  });
-  assert.ok(r.dx <= 9 && r.dy <= 9, JSON.stringify(r));
-});
-
-test('隐藏目标不画 ring', async () => {
-  await reset('<vk-page><div id="h" hidden>x</div><vk-ring for="#h@point:50%,50%"></vk-ring></vk-page>');
-  await sleep(60);
-  const r = await page.evaluate(() => {
-    const ring = document.querySelector('vk-ring');
-    return { display: getComputedStyle(ring).display, w: ring.getBoundingClientRect().width };
-  });
-  assert.equal(r.display, 'none', '目标隐藏时环也不该画');
 });
 
 test('bits 64 位：索引 63..0，不重复', async () => {

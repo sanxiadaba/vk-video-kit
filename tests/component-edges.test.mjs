@@ -1,11 +1,11 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { PNG } from 'pngjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 六处「库缺口」的回归：
+ * 组件边界条件：窄卡、步骤、终端、注解与对照。
  *
  *   1. vk-bytes 窄卡片按「单格」量，不再把整行十六进制当成一格；
  *   2. vk-steps 的等权地图：done="none" / mark="N"；
@@ -18,7 +18,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1400 }, deviceScaleFactor: 1 });
 const page = await ctx.newPage();
 const logs = [];
@@ -331,6 +331,6 @@ test('vk-compare zoom="mark"：生成差异放大块，内容与 mark 区域一�
 });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });

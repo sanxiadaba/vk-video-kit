@@ -1,5 +1,4 @@
-import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, takeSlot, fillSlot, applyContentSize, fitContent } from './base.mjs';
-import { VkPanel } from './elements.mjs';
+import { esc, dedent, textSource, precompiledSource, numAttr, hash32, indexSet, safePosition, VkElement, define, plain, applyContentSize, fitContent } from './base.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { TONES, hasColumn, parseCompareLabels } from '../shared/vocab.mjs';
 import { iconOf } from './icons.mjs';
@@ -89,106 +88,8 @@ export class VkList extends VkElement {
 
 const CALLOUT_ICON = { info: 'info', ok: 'circle-check', warn: 'triangle-alert', err: 'circle-x' };
 
-
-/* ---------------------------------------------------------------- window */
-
-const WIN_CHROME = new Set(['min', 'none', 'plain', 'browser']);
-const WIN_PAD = new Set(['2xs', 'xs', 'sm', 'md', 'lg', 'xl', '2xl', '3xl']);
-const WIN_TONES = new Set(['info', 'focus', 'ok', 'warn', 'err']);
 /** 流程连接线的画法：箭头 / 细线 / 不画。 */
 const CONNECTORS = new Set(['arrow', 'line', 'none']);
-
-/**
- * 窗：旧名，转发到 vk-panel。
- *
- * 减法第一波：窗就是一块带窗头的分区（vk-panel chrome="dots"）。
- * 旧标签继续可用——DOM 仍是 .vk-win / .vk-hd / .vk-win-bd，逐像素不动；
- * 配置解析与 panel 共用（chrome 折成 dots|none，title / pad 同一套取值）。
- */
-export class VkWindow extends VkPanel {
-  static watchSource = true;
-  static slot = true;
-  static slotHost = '.vk-win-bd';
-  static renderedRoot = '.vk-win';
-
-  connectedCallback() {
-    super.connectedCallback?.();
-    this.dataset.vkAlias = 'vk-panel';
-  }
-
-  /** 新词表：旧 chrome 折成 panel 的 dots / none（min / browser 有窗头）。 */
-  _chrome() {
-    const raw = this.getAttribute('chrome') || 'min';
-    return raw === 'none' ? 'none' : 'dots';
-  }
-
-  capture() {}
-
-  render() {
-    // 旧词表仍按原样落在 .vk-win[data-chrome] 上：CSS 与旧测试都读它。
-    const chrome = WIN_CHROME.has(this.getAttribute('chrome')) ? this.getAttribute('chrome') : 'min';
-    this.dataset.chrome = this._chrome();
-    const pad = WIN_PAD.has(this.getAttribute('pad')) ? this.getAttribute('pad') : 'lg';
-    const tone = WIN_TONES.has(this.getAttribute('tone')) ? this.getAttribute('tone') : '';
-    const mass = ['compact', 'hero'].includes(this.getAttribute('mass')) ? this.getAttribute('mass') : 'normal';
-    const title = this.getAttribute('title') || '';
-    const url = this.getAttribute('url') || '';
-
-    if (!this._shell) {
-      const body = takeSlot(this);
-      this.innerHTML = win({
-        chrome: 'min',
-        cls: 'vk-win-tag',
-        head: '<span class="vk-file" data-meta><span class="vk-file-t"></span></span><span class="vk-br-url" data-meta><b class="vk-br-host"></b><span class="vk-br-path"></span></span>',
-        inner: '<div class="vk-win-bd" data-vk-part="bd"></div>',
-      });
-      this._shell = this.querySelector('.vk-win');
-      this._file = this.querySelector('.vk-file');
-      this._fileT = this.querySelector('.vk-file-t');
-      this._url = this.querySelector('.vk-br-url');
-      this._host = this.querySelector('.vk-br-host');
-      this._path = this.querySelector('.vk-br-path');
-      this._slot = this.querySelector('.vk-win-bd');
-      fillSlot(this._slot, body);
-    }
-
-    this._shell.dataset.chrome = chrome;
-    this._shell.dataset.pad = pad;
-    this._shell.dataset.mass = mass;
-    if (tone) this._shell.dataset.tone = tone;
-    else delete this._shell.dataset.tone;
-
-    this._fileT.textContent = title;
-    // 长标题在窗头里省略；title 悬停时还能看到全文。
-    this._file.title = title;
-    this._file.style.display = title ? '' : 'none';
-
-    // 只突出"在哪"：域名是主体，路径淡化；解析失败也不把整段 URL 塞进 host。
-    let host = '';
-    let path = '';
-    if (url) {
-      try {
-        const u = new URL(/^[a-z]+:\/\//i.test(url) ? url : `http://${url}`);
-        host = u.host;
-        path = u.pathname + u.search + u.hash;
-      } catch {
-        host = url;
-      }
-    }
-    this._host.textContent = host || '未设置地址';
-    this._host.classList.toggle('is-empty', !host);
-    this._path.textContent = path;
-    this._path.style.display = path ? '' : 'none';
-
-    const label = title || url;
-    this._shell.setAttribute('role', 'region');
-    if (label) this._shell.setAttribute('aria-label', label);
-    else this._shell.removeAttribute('aria-label');
-
-    const w = this.hasAttribute('w') ? numAttr(this, 'w', { min: 320, max: 1680, fallback: 0 }) : NaN;
-    this.style.width = Number.isFinite(w) ? w + 'px' : '100%';
-  }
-}
 
 /* --------------------------------------------------------------- filetree */
 
@@ -1477,7 +1378,6 @@ export class VkCompare extends VkElement {
 
 export function defineComponents() {
   define('vk-list', VkList);
-  define('vk-window', VkWindow);
   define('vk-tree', VkTree);
   define('vk-math', VkMath);
   define('vk-cells', VkCells);

@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -13,7 +13,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const ctx = await browser.newContext({ viewport: { width: 1920, height: 1080 } });
 const page = await ctx.newPage();
 const warnings = [];
@@ -180,40 +180,24 @@ test('vk-annotate badge：编号点钉在任意锚点上，位置跟着锚点走
   assert.ok(Math.abs(r.cy) < 4, `编号点应与锚点同高：dy=${r.cy}`);
 });
 
-test('旧标签是别名：vk-edge / vk-pin 与 vk-annotate 同几何；vk-ring 变成带环的面', async () => {
+test('vk-edge 与 vk-annotate mode="arrow" 同几何', async () => {
   await open(
     CANVAS(`
     <vk-edge id="edge" from="#a@side:right" to="#b@side:left" label="x"></vk-edge>
-    <vk-annotate id="ann" mode="arrow" shape="ortho" from="#a@side:right" to="#b@side:left" label="x"></vk-annotate>
-    <vk-pin id="pin" for="#b@side:top">同一句话</vk-pin>
-    <vk-annotate id="note" mode="note" note="bubble" for="#b@side:top" gap-px="24">同一句话</vk-annotate>
-    <vk-ring id="ring" for="#b" variant="ellipse" pad-px="12" stroke="4"></vk-ring>`)
+    <vk-annotate id="ann" mode="arrow" shape="ortho" from="#a@side:right" to="#b@side:left" label="x"></vk-annotate>`)
   );
   const r = await page.evaluate(() => {
     const d = (sel) => document.querySelector(sel).getAttribute('d');
-    const box = (sel) => document.querySelector(sel).getBoundingClientRect().toJSON();
-    const target = document.querySelector('#b').getBoundingClientRect().toJSON();
-    const ring = document.querySelector('#ring');
+    const label = (sel) => document.querySelector(sel).textContent.trim();
     return {
       edge: d('#edge .vk-edge-path'),
       annot: d('#ann .vk-edge-path'),
-      pin: box('#pin .vk-pin-bd'),
-      note: box('#note .vk-pin-bd'),
-      target,
-      ring: box('#ring'),
-      ringBorder: getComputedStyle(ring).borderTopWidth,
-      ringRadius: getComputedStyle(ring).borderTopLeftRadius,
+      edgeLabel: label('#edge .vk-edge-label'),
+      annotLabel: label('#ann .vk-edge-label'),
     };
   });
   assert.equal(r.edge, r.annot, 'vk-edge 的走线必须和 vk-annotate 一致');
-  for (const k of ['left', 'top', 'width', 'height']) {
-    assert.ok(Math.abs(r.pin[k] - r.note[k]) <= 1, `vk-pin 的气泡 ${k} 应和 vk-annotate 一致：${r.pin[k]} vs ${r.note[k]}`);
-  }
-  // vk-ring 不再是 SVG 形状库：它是一块带描边的面，几何 = 目标盒 + 两侧 pad-px（12）。
-  assert.ok(Math.abs(r.ring.width - (r.target.width + 24)) <= 1, `环宽 = 目标 + 2×pad：${r.ring.width} vs ${r.target.width}+24`);
-  assert.ok(Math.abs(r.ring.height - (r.target.height + 24)) <= 1, `环高 = 目标 + 2×pad：${r.ring.height}`);
-  assert.equal(r.ringBorder, '4px', 'stroke 落到描边宽度');
-  assert.equal(r.ringRadius, '50%', 'variant="ellipse" 是椭圆环');
+  assert.equal(r.edgeLabel, r.annotLabel, '标签文字一致');
 });
 
 test('vk-compare mark：百分比换成像素，split 下只标在所属的一半', async () => {
@@ -263,7 +247,7 @@ test('vk-compare mark：写错的坐标不画框，也不炸页面', async () =>
 });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 

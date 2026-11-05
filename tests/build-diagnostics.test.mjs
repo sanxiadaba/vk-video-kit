@@ -7,14 +7,14 @@ import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 import { hash32, stripAnsi } from '../src/shared/code.mjs';
 import { TAGS } from '../src/registry.mjs';
 
-/* 构建期能拦住的缺口：不留到运行期"看起来没问题"。 */
+/* 构建期报错：把错误拦在画面出现之前。 */
 
 const hl = await createVkHighlighter(['c']);
 const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'vk-gaps-build-'));
 
 after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
-test('④ vk-code 的 mark 找不到词时构建失败，并给出真实候选', async () => {
+test('vk-code 的 mark 找不到词时构建失败，并给出真实候选', async () => {
   await assert.rejects(
     () => transformHtml('<vk-code lang="c" mark="nope">int count = 0;</vk-code>', { file: 'p.html', highlighter: hl }),
     /mark="nope"[\s\S]*源码里实际有[\s\S]*count/
@@ -26,7 +26,7 @@ test('④ vk-code 的 mark 找不到词时构建失败，并给出真实候选',
   assert.ok(out.html.includes('data-vk-hl'));
 });
 
-test('⑤ vk-canvas 子节点缺 x 或 y 时构建失败，并指出缺哪个', async () => {
+test('vk-canvas 子节点缺 x 或 y 时构建失败，并指出缺哪个', async () => {
   await assert.rejects(
     () =>
       transformHtml('<vk-canvas w="600" h="300"><vk-box y="0" w="200" h="100"></vk-box></vk-canvas>', {
@@ -50,7 +50,7 @@ test('⑤ vk-canvas 子节点缺 x 或 y 时构建失败，并指出缺哪个', 
   assert.ok(out.html.includes('vk-canvas'));
 });
 
-test('⑦ vk-tree 的 collapsed 指错目录时构建失败，并给出真实目录候选', async () => {
+test('vk-tree 的 collapsed 指错目录时构建失败，并给出真实目录候选', async () => {
   const proj = path.join(dir, 'proj');
   fs.mkdirSync(path.join(proj, 'src'), { recursive: true });
   fs.writeFileSync(path.join(proj, 'src', 'a.c'), 'int a;\n');
@@ -64,7 +64,7 @@ test('⑦ vk-tree 的 collapsed 指错目录时构建失败，并给出真实目
   assert.ok(out.html.includes('data-vk-tree'));
 });
 
-test('② 构建期按剥离 ANSI 后的文本高亮与算 hash，HTML 里保留原文给运行期提示', async () => {
+test('构建期按剥离 ANSI 后的文本高亮与算 hash，HTML 里保留原文给运行期提示', async () => {
   const raw = '\u001b[31mint\u001b[0m x;';
   const out = await transformHtml(`<vk-code lang="c">${raw}</vk-code>`, { file: 'p.html', highlighter: hl });
   const hash = out.html.match(/data-vk-hash="([^"]+)"/)?.[1];
@@ -72,7 +72,7 @@ test('② 构建期按剥离 ANSI 后的文本高亮与算 hash，HTML 里保留
   assert.ok(out.html.includes('\u001b[31m'), '原文要留给运行时提示');
 });
 
-test('① vk-cells 的 <li> 接受 act：focus 构建通过、bogus 报可用值、state=current 仍提示退役', async () => {
+test('vk-cells 的 <li> 接受 act：focus 构建通过、bogus 报可用值、state=current 仍提示退役', async () => {
   const ok = await transformHtml(
     '<vk-cells cols="2"><li value="14" label="字节" act="focus"></li><li value="15"></li></vk-cells>',
     { file: 'p.html', highlighter: hl }
@@ -100,7 +100,7 @@ test('① vk-cells 的 <li> 接受 act：focus 构建通过、bogus 报可用值
   assert.match(warnings.join('\n'), /state="current" 已退役[\s\S]*<li act="focus">/, '退役提示必须指向现在能构建的写法');
 });
 
-test('⑧ vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
+test('vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
   const field = TAGS['vk-cells'].content.fields.find((f) => f.name === 'filled');
   assert.ok(field, 'vk-cells 的 filled 文档字段不见了');
   assert.match(field.label, /布尔/);
@@ -108,7 +108,7 @@ test('⑧ vk-cells 的 filled 文档与 <li filled> 布尔实现一致', () => {
   assert.equal(field.type, 'bool');
 });
 
-test('⑨ vk-compare：variant=side / stack 同时写 split 构建期警告，不静默忽略', async () => {
+test('vk-compare：variant=side / stack 同时写 split 构建期警告，不静默忽略', async () => {
   const warnings = [];
   const oldWarn = console.warn;
   console.warn = (...args) => warnings.push(args.join(' '));
@@ -124,9 +124,9 @@ test('⑨ vk-compare：variant=side / stack 同时写 split 构建期警告，�
   assert.match(warnings.join('\n'), /variant="side" 下 split 不起作用/, 'side 下 split 必须明确说它不起作用');
 });
 
-test('⑩ vk-pin 的 w 接受 200px，vk-bars 的 ratio-to 指空时构建期警告', async () => {
+test('vk-pin 的 w 接受 200px，vk-bars 的 ratio-to 指空时构建期警告', async () => {
   const pin = await transformHtml(
-    '<vk-page><vk-box id="x">目标</vk-box><vk-pin for="#x" w="200px">批注</vk-pin></vk-page>',
+    '<vk-page><vk-box id="x">目标</vk-box><vk-note variant="bubble" for="#x" w="200px">批注</vk-note></vk-page>',
     { file: 'p.html', highlighter: hl }
   );
   assert.match(pin.html, /w="200px"/);

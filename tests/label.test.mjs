@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 
@@ -14,7 +14,7 @@ import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
  */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -64,14 +64,14 @@ test('vk-text：不写 tone 时保持墨阶（默认 primary）', async () => {
   assert.equal(await color(tab, '#t'), 'rgb(11, 15, 20)', '默认必须仍是 ink=primary，逐像素不变');
 });
 
-test('vk-text：tone 覆盖 ink，且与 vk-icon 同色', async () => {
+test('vk-text：tone 覆盖 ink，图标与文字同色', async () => {
   const tab = await open(
-    '<vk-text id="t" size="body" ink="primary" tone="ok">对</vk-text><vk-icon id="i" name="circle-check" tone="ok"></vk-icon>'
+    '<vk-text id="t" size="body" ink="primary" tone="ok">对</vk-text><vk-text id="i" icon="circle-check" tone="ok">对</vk-text>'
   );
   assert.equal(await color(tab, '#t'), TEXT_TONE.ok);
-  // 图标用的是原色（底/线/图标档），文字用的是文字档：同一语义、两个用途。
-  const iconColor = await tab.evaluate(() => getComputedStyle(document.querySelector('#i .vk-icon')).color);
-  assert.equal(iconColor, 'rgb(10, 107, 87)', 'vk-icon 的 ok 仍是 --vk-ok（#0a6b57）');
+  // 图标是一个字形，颜色跟文字走：同一语义只有一个色。
+  const iconColor = await tab.evaluate(() => getComputedStyle(document.querySelector('#i .vk-text-ic')).color);
+  assert.equal(iconColor, TEXT_TONE.ok, '图标的 ok 与文字同色');
 });
 
 test('vk-text：act="focus" 与 strength 覆盖「高亮一段文字」', async () => {
@@ -166,6 +166,6 @@ test('vk-label：非法 icon 在构建期报错', async () => {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });

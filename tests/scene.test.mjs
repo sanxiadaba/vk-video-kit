@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -16,14 +16,14 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
 after(async () => {
   await page.close().catch(() => {});
-  await browser.close().catch(() => {});
+  await closeBrowser(browser);
   await close();
 });
 
@@ -230,7 +230,7 @@ test('cue 分段：槽上写 cue，得到 before / on / after 三段', async () 
     };
     return { t1: read(1), t3: read(3), t5: read(5) };
   });
-  await ctx.close();
+  await tab.close();
   assert.deepEqual(cueErrors, []);
   assert.deepEqual(r.t1, { a: 'on', b: 'before' }, '第 1 段只应出现 a');
   assert.deepEqual(r.t3, { a: 'after', b: 'on' }, '第 2 段 a 退到 55%，b 全亮');

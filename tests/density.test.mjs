@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 附录页被 20 个组件挤出来的最后四个密度缺口：
+ * 密度：行盒、列表、时间线与条的四档边界。
  *
  *   1. vk-file-t 的行盒比 caption 字的墨迹矮 —— 任何 chrome="min" 的窗都假报竖裁；
  *   2. vk-list 没有密度档，作者只能页内把 li 压到 1.2；
@@ -15,7 +15,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 const SHELL = (body) => `<!doctype html><html><head><meta charset="utf-8"><base href="${base}/">
@@ -40,49 +40,8 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
-});
-
-/* --------------------------------------------------------------- vk-window */
-
-test('vk-window：caption 标题行盒按墨迹撑开，不再报纵向裁切；20px 容器仍报', async () => {
-  const { tab } = await open(`
-    <vk-page>
-      <vk-window id="ok" title="pair.diff"><vk-text size="body">窗口里的一行正文，用来避免空帧误报。</vk-text></vk-window>
-    </vk-page>`);
-  const ok = await tab.evaluate(() => {
-    const inner = document.querySelector('#ok .vk-file-t');
-    return {
-      lineHeight: getComputedStyle(inner).lineHeight,
-      scroll: inner.scrollHeight,
-      client: inner.clientHeight,
-      clips: window.vk.auditPage().issues.filter((x) => x.type === 'clip-y'),
-    };
-  });
-
-  // caption 48 × 1.2 = 57.6：行盒仍要按墨迹撑开。
-  assert.equal(ok.lineHeight, '57.6px', `48px 标题的行高要够 1.2：${ok.lineHeight}`);
-  assert.ok(ok.scroll <= ok.client + 3, `标题行盒不该被墨迹撑破：${ok.scroll} > ${ok.client}`);
-  assert.deepEqual(ok.clips, [], `正常标题不该报纵向被裁：${JSON.stringify(ok.clips)}`);
-
-  // 真的塞不进 20px 时仍要报——修的是假报，不是把检查关掉。
-  const { tab: squeezed } = await open(`
-    <vk-page>
-      <div style="height:20px;overflow:hidden">
-        <vk-window id="bad" title="pair.diff"><vk-text size="body">窗口里的一行正文，用来避免空帧误报。</vk-text></vk-window>
-      </div>
-    </vk-page>`);
-  const bad = await squeezed.evaluate(() => {
-    const box = document.querySelector('div[style*="height:20px"]');
-    return {
-      boxH: box.clientHeight,
-      clips: window.vk.auditPage().issues.filter((x) => x.type === 'clip-y'),
-    };
-  });
-  assert.ok(bad.clips.length >= 1, '高度只有 20px 的容器必须继续报纵向被裁');
-  assert.equal(bad.clips[0].ch, bad.boxH, `报的应是那个 20px 容器：${JSON.stringify(bad.clips[0])}`);
-  assert.ok(bad.clips[0].sh > bad.clips[0].ch, `内容必须真的比容器高：${JSON.stringify(bad.clips[0])}`);
 });
 
 /* ----------------------------------------------------------------- vk-list */

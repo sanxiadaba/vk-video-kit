@@ -1,7 +1,7 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -22,7 +22,7 @@ const files = fs.existsSync('_site/specimen')
 assert.ok(files.length > 0, '没有标本页：先运行 npm run build');
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 780, height: 439 }, deviceScaleFactor: 1 });
 
 const offenders = [];
@@ -76,7 +76,7 @@ for (const file of files) {
   if (bad.length) offenders.push({ tag, bad });
 }
 
-await browser.close();
+await closeBrowser(browser);
 await close();
 
 for (const o of offenders) {
@@ -99,7 +99,7 @@ test('780×439 下没有元素横向溢出', () => {
 
 after(async () => {
   try {
-    await browser.close();
+    await closeBrowser(browser);
   } catch {
     /* 已关闭 */
   }

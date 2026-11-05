@@ -3,14 +3,14 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 
-/* 运行期才能知道的缺口：要让 DOM / console 留下可断言的状态。 */
+/* 运行期诊断：让 DOM / console 留下可断言的状态。 */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'vk-gaps-runtime-'));
 const hl = await createVkHighlighter(['asm']);
@@ -37,12 +37,12 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-test('① vk-asm：objdump 表头不画成指令，并说明跳过了几行', async () => {
+test('vk-asm：objdump 表头不画成指令，并说明跳过了几行', async () => {
   const asm = [
     'hello.exe:     file format pei-i386',
     '',
@@ -76,7 +76,7 @@ test('① vk-asm：objdump 表头不画成指令，并说明跳过了几行', as
   assert.match(logs.join('\n'), /跳过了 3 行非指令行/);
 });
 
-test('② vk-code / vk-term：ANSI 不露到画面上，文本正确', async () => {
+test('vk-code / vk-term：ANSI 不露到画面上，文本正确', async () => {
   const { tab, logs } = await open(
     '<vk-code id="c" lang="text">\u001b[31mred\u001b[0m line</vk-code>' +
       '<vk-term id="t">\u001b[32m$ echo hi\u001b[0m\nhi</vk-term>'
@@ -94,7 +94,7 @@ test('② vk-code / vk-term：ANSI 不露到画面上，文本正确', async () 
   assert.match(logs.join('\n'), /已忽略终端颜色控制符/);
 });
 
-test('③ vk-term：识别盘符 / PowerShell / [user@host] 提示符，price > 5 仍是输出', async () => {
+test('vk-term：识别盘符 / PowerShell / [user@host] 提示符，price > 5 仍是输出', async () => {
   const { tab, logs } = await open(
     '<vk-term id="t">C:\\src\\demo&gt; gcc hello.c -o hello\n' +
       'PS C:\\src&gt; dir\n' +
@@ -112,7 +112,7 @@ test('③ vk-term：识别盘符 / PowerShell / [user@host] 提示符，price > 
   assert.doesNotMatch(logs.join('\n'), /没有认出任何命令行/);
 });
 
-test('⑥ vk-table / vk-list / vk-steps 空数据：stale、没有空框、audit 报出来', async () => {
+test('vk-table / vk-list / vk-steps 空数据：stale、没有空框、audit 报出来', async () => {
   const { tab, logs } = await open(
     '<vk-page><vk-list id="l"></vk-list><vk-steps id="s"></vk-steps>' +
       '<vk-table id="t"><table></table></vk-table></vk-page>'
@@ -143,7 +143,7 @@ test('⑥ vk-table / vk-list / vk-steps 空数据：stale、没有空框、audit
   assert.match(logs.join('\n'), /这个表还没有行/);
 });
 
-test('⑨ vk-code 长行溢出同步测量：不跑 rAF 也有渐隐标记', async () => {
+test('vk-code 长行溢出同步测量：不跑 rAF 也有渐隐标记', async () => {
   const { tab } = await open('<main></main>');
   const r = await tab.evaluate(() => {
     // 故意不 await ready / 不等 rAF：渲染函数返回时就必须量好。
@@ -156,7 +156,7 @@ test('⑨ vk-code 长行溢出同步测量：不跑 rAF 也有渐隐标记', asy
   assert.equal(r.over, true, `sw=${r.sw} cw=${r.cw}`);
 });
 
-test('① vk-cells 的 <li act="focus"> 真的渲染出焦点格，而不是只过构建', async () => {
+test('vk-cells 的 <li act="focus"> 真的渲染出焦点格，而不是只过构建', async () => {
   const { tab } = await open(
     '<vk-page><vk-cells id="c" cols="3">' +
       '<li value="14" label="字节" act="focus"></li><li value="15" label="下一个"></li>' +
@@ -179,7 +179,7 @@ test('① vk-cells 的 <li act="focus"> 真的渲染出焦点格，而不是只�
   assert.equal(r.second.dataAct, undefined, '没写 act 的格子不该被带上焦点');
 });
 
-test('② 孤行判定已撤：默认审计不再报 orphan', async () => {
+test('孤行判定已撤：默认审计不再报 orphan', async () => {
   // 孤行是排版观感，不是客观错误；现在只留在 style-preset（默认关）。
   const text = '一二三四五六七八九十一二三四五六';
   const page = (scaled) => {
@@ -196,7 +196,7 @@ test('② 孤行判定已撤：默认审计不再报 orphan', async () => {
   assert.deepEqual(await orphanOf(page(false)), [], '默认路径不再做孤行判定');
 });
 
-test('⑥ vk-term 的 mass 三档同时改字号：compact < normal < hero', async () => {
+test('vk-term 的 mass 三档同时改字号：compact < normal < hero', async () => {
   const { tab } = await open(
     '<vk-page>' +
       '<vk-term id="c" mass="compact" prompt="$">$ echo hi\nhi</vk-term>' +
@@ -215,7 +215,7 @@ test('⑥ vk-term 的 mass 三档同时改字号：compact < normal < hero', asy
   assert.ok(r[2].fs >= r[1].fs * 1.4, `hero ${r[2].fs} 要明显大于 normal ${r[1].fs}`);
 });
 
-test('⑩ vk-timeline steps 与 at+span 矛盾：不静默撑大，warn 且留 data-*', async () => {
+test('vk-timeline steps 与 at+span 矛盾：不静默撑大，warn 且留 data-*', async () => {
   const { tab, logs } = await open(
     '<vk-timeline id="bad" variant="lanes" steps="3" lanes="主线程">' +
       '<li lane="主线程" at="2" span="2" label="读 x">x</li></vk-timeline>' +

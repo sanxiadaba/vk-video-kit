@@ -1,15 +1,15 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * demo 在「把画面讲清楚」时被逼出来的五个缺口。
+ * 对照与条：结构、几何与文字。
  * 这里只断言"观众能不能看懂"的那一层：结构、几何、文字里有没有要说的话。
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 const SHELL = (body) => `<!doctype html><html><head><meta charset="utf-8"><base href="${base}/">
@@ -34,7 +34,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 
@@ -169,9 +169,9 @@ test('vk-pin：w 只量气泡，接受 200 / 200px，vk check 不报硬宽', asy
     <vk-page><vk-stack gap="lg">
       <vk-box id="tgt" w="240" h="96" surface="soft"><vk-text size="body">目标</vk-text></vk-box>
     </vk-stack>
-    <vk-pin id="num" for="#tgt" side="right" w="200">数字</vk-pin>
-    <vk-pin id="px" for="#tgt" side="right" w="200px">单位</vk-pin>
-    <vk-pin id="def" for="#tgt" side="right">默认宽</vk-pin>
+    <vk-note variant="bubble" id="num" for="#tgt" side="right" w="200">数字</vk-note>
+    <vk-note variant="bubble" id="px" for="#tgt" side="right" w="200px">单位</vk-note>
+    <vk-note variant="bubble" id="def" for="#tgt" side="right">默认宽</vk-note>
     </vk-page>`);
   const r = await tab.evaluate(() => {
     const host = (id) => document.getElementById(id);
@@ -231,39 +231,3 @@ test('vk-timeline：li 的 value/note 渲染大数字 + 小说明，并压过 la
   assert.equal(r.oldDesc, 'Dennis Ritchie');
 });
 
-/* ----------------------------------------------------------------- window */
-
-test('vk-window：480px 里 20 字长标题不溢出、不裁半字', async () => {
-  const title = '12 B 有洞 · 8 B 没洞 · 这是一条很长的标题';
-  const { tab } = await open(`
-    <div style="width:480px">
-      <vk-window id="w" title="${title}">
-        <vk-text size="body">窗里的一句话。</vk-text>
-      </vk-window>
-    </div>`);
-  const r = await tab.evaluate(() => {
-    const win = document.querySelector('#w .vk-win');
-    const file = document.querySelector('#w .vk-file');
-    const inner = document.querySelector('#w .vk-file-t');
-    const ir = inner.getBoundingClientRect();
-    const wr = win.getBoundingClientRect();
-    return {
-      fullText: inner.textContent,
-      titleAttr: file.getAttribute('title'),
-      rightEdge: ir.right - wr.right,
-      fileFits: file.scrollWidth <= file.clientWidth,
-      innerClipped: inner.scrollWidth > inner.clientWidth,
-      textOverflow: getComputedStyle(inner).textOverflow,
-      whiteSpace: getComputedStyle(inner).whiteSpace,
-      overflow: getComputedStyle(inner).overflow,
-    };
-  });
-  assert.equal(r.fullText, title, '省略只是视觉，DOM 里要保留全文');
-  assert.equal(r.titleAttr, title, '悬停时还能看到全文');
-  assert.ok(r.rightEdge <= 1, `标题右缘不能超出窗口：${r.rightEdge}px`);
-  assert.ok(r.fileFits, '标题容器自己不能横向溢出');
-  assert.equal(r.textOverflow, 'ellipsis', '长标题要显示省略号，而不是裁半字');
-  assert.equal(r.whiteSpace, 'nowrap');
-  assert.equal(r.overflow, 'hidden');
-  assert.ok(r.innerClipped, '标题应真的被省略（scrollWidth > clientWidth）');
-});

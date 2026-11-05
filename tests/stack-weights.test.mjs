@@ -1,13 +1,13 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /* vk-stack 的权重分高：weights / ratio 把「剩余高度」按权重分给前 N 个直接子项。
    这里量的是真实布局：1:2:1 必须落成 1/4·1/2·1/4，列表之外的孩子必须保住内容高。 */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const ctx = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
 const page = await ctx.newPage();
 
@@ -94,6 +94,6 @@ test('去掉 weights 后回到默认等距（属性可撤）', async () => {
 });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });

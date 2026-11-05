@@ -1,24 +1,24 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { transformHtml } from '../src/highlight.mjs';
 
 /**
- * 批次 G + H：注解原语、图标白名单、深色限量，五条硬审计。
+ * 注解、图标白名单与项目层审美 preset。
  *
- * G1 vk-note：两种形态都"不是气泡"——边注是 1px 细线 + 栏间空白里的 caption，
+ * vk-note：两种形态都"不是气泡"——边注是 1px 细线 + 栏间空白里的 caption，
  *    与目标正文同基线；图例是目标角上的编号点 + 页角的对照表。
- * G2 图标白名单：vk-icon 只表达 ✓ / ! / ✗ / 方向，白名单外在构建期就红。
- * G3 深色块 ≤1：一页只能有一块"重"。
- * H1 强调色 ≤1；H4 页眉不许含文件名/页号；H5 内容必须在 120 边距内。
+ * 图标白名单：vk-icon 只表达 ✓ / ! / ✗ / 方向，白名单外在构建期就红。
+ * 深色块 ≤1：一页只能有一块"重"。
+ * 强调色 ≤1；页眉不许含文件名/页号；内容必须在 120 边距内。
  *
  * 几何都在真浏览器里量：细线的 1px、基线的像素差、编号点与目标角的重合，
  * 不是读一遍 CSS 就宣布"对了"。
  */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body, pageAttr = '') {
@@ -40,7 +40,7 @@ async function open(body, pageAttr = '') {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });
 
@@ -296,32 +296,18 @@ test('vk-note：构建期找不到目标 / 缺 for / 条目数对不上时直接
   assert.ok(ok.html.includes('<vk-note'), '找得到目标时构建通过');
 });
 
-test('vk-icon 白名单外：构建期只提醒，不再拦构建', async () => {
-  const ok = await transformHtml('<vk-icon name="check"></vk-icon>', { file: 'icon.html' });
-  assert.ok(ok.html.includes('data-vk-name="check"'), '白名单内的图标要内联');
-  const warn = console.warn;
-  const got = [];
-  console.warn = (...a) => got.push(a.join(' '));
-  let out;
-  try {
-    out = await transformHtml('<vk-icon name="rocket"></vk-icon>', { file: 'icon.html' });
-  } finally {
-    console.warn = warn;
-  }
-  assert.ok(out.html.includes('data-vk-name="rocket"'), '白名单外的图标也要内联，不拦构建');
-  // 减法第一波：vk-icon 已是别名，构建期先给一条"已合并到 vk-text"的提示；
-  // 图标白名单本身的提醒仍在（console 只摘首条，详情见 warnings）。
-  assert.match(got.join('\n'), /已合并到 <vk-text>/, '旧名先给一条迁移提示');
-  await assert.rejects(
-    () => transformHtml('<vk-icon name="not-a-real-icon"></vk-icon>', { file: 'icon.html' }),
-    /没有图标/,
-    '不存在的图标仍是"没有图标"（客观错误）'
-  );
-  // 新写法把白名单从"提醒"收紧成"错误"：vk-text 的 icon 是字形，不是装饰。
+test('vk-text icon：白名单内联，白名单外构建期报错', async () => {
+  const ok = await transformHtml('<vk-text icon="check">对</vk-text>', { file: 'icon.html' });
+  assert.ok(ok.html.includes('data-vk-icons'), '白名单内的图标要进页面图标表');
   await assert.rejects(
     () => transformHtml('<vk-text icon="rocket">x</vk-text>', { file: 'icon.html' }),
     /不在语义图标白名单/,
-    'vk-text 的 icon 白名单外要报错'
+    '白名单外的图标要报错'
+  );
+  await assert.rejects(
+    () => transformHtml('<vk-text icon="not-a-real-icon">x</vk-text>', { file: 'icon.html' }),
+    /没有图标/,
+    '不存在的图标是"没有图标"（客观错误）'
   );
 });
 
@@ -389,14 +375,14 @@ test('预设 · 深色块 ≤1：--style 下两块报一条，一块通过', asy
 });
 
 test('预设 · 图标白名单降级为提醒（level=warn，不是错误）', async () => {
-  const tab = await open('<vk-icon name="rocket" size="lg"></vk-icon>');
+  const tab = await open('<vk-text icon="rocket" size="body">x</vk-text>');
   const bad = (await auditTypes(tab, true)).filter((x) => x.type === 'icon');
   assert.equal(bad.length, 1, `白名单外的图标只提醒一次：${JSON.stringify(bad)}`);
   assert.equal(bad[0].level, 'warn', `图标提醒不能是 error：${bad[0].level}`);
   assert.ok(bad[0].what.includes('rocket'), `提醒要写出名字：${bad[0].what}`);
   assert.ok(bad[0].fix.includes('circle-check'), `fix 要给出可用名：${bad[0].fix}`);
 
-  const ok = await open('<vk-icon name="check" size="lg"></vk-icon>');
+  const ok = await open('<vk-text icon="check" size="body">x</vk-text>');
   const clean = (await auditTypes(ok, true)).filter((x) => x.type === 'icon');
   assert.equal(clean.length, 0, `白名单内的图标不该提醒：${JSON.stringify(clean)}`);
 });

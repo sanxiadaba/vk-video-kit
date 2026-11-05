@@ -2,16 +2,7 @@ import { VK, esc, numAttr, safePosition, resolveTarget, EDGES, VkElement, define
 import { cumulativeScaleX } from './geometry.mjs';
 import { formatNumber } from '../shared/format.mjs';
 import { iconOf, hasIcon } from './icons.mjs';
-import { isSemanticIcon } from '../shared/icons.mjs';
 import { parseCounter } from '../shared/vocab.mjs';
-
-/**
- * vk-icon —— 旧名，转发到 vk-text。
- *
- * 图标本质是一个字形：<vk-text icon="check"> 里文字与图标共存。
- * 旧标签只画图标（读 name），DOM / CSS / 尺寸档保持原样，所以旧页逐像素不动。
- * 构建期会给一条"已合并到 vk-text，旧名保留"的迁移提示。
- */
 
 /**
  * vk-img —— 一张图。
@@ -369,25 +360,22 @@ export class VkLabel extends VkElement {
 }
 
 /**
- * vk-icon 的旧实现搬进 vk-text 之后，这两个标签共用同一段图标内联：
- * 图标就是一个字形（1em，跟着字走），不是另一个标签。
- *
- * 旧 vk-icon 是它的子类：只画图标（读 name），新 vk-text 读 icon，文字与图标共存。
+ * vk-text 的图标槽：图标就是一个字形（1em，跟着字走），文字与图标共存。
  */
 export class VkText extends VkElement {
   static watchSource = false;
 
-  /** 图标名：新标签读 icon；旧 vk-icon 在子类里改读 name。 */
+  /** 图标名。 */
   _iconName() {
     return (this.getAttribute('icon') || '').trim();
   }
 
-  /** 能不能画：新标签只要有这个 Lucide 名；白名单由构建期把门（旧标签在子类里收紧）。 */
+  /** 能不能画：有这个 Lucide 名即可；语义白名单由构建期把关。 */
   _iconAllowed(name) {
     return hasIcon(name);
   }
 
-  /** 无障碍名：新标签里图标是文字的补充，默认 aria-hidden；旧 vk-icon 用 label。 */
+  /** 无障碍名：图标是文字的补充，默认 aria-hidden。 */
   _iconLabel() {
     return '';
   }
@@ -515,53 +503,6 @@ export class VkText extends VkElement {
 }
 
 /**
- * vk-icon —— 旧名，转发到 vk-text（同一个字形，只画图标）。
- *
- * 它只覆盖三件事：图标名读 name、白名单收在语义图标上、label 是无障碍名。
- * 其余（图标内联、尺寸档、颜色）与 <vk-text icon="…"> 共用一份实现。
- * 构建期会给一条"已合并到 vk-text，旧名保留"的迁移提示。
- */
-export class VkIcon extends VkText {
-  static watchSource = false;
-  static frame = false;
-  static renderedRoot = '.vk-icon';
-
-  connectedCallback() {
-    super.connectedCallback?.();
-    this.dataset.vkAlias = 'vk-text';
-  }
-
-  _iconName() {
-    return (this.getAttribute('name') || 'info').trim();
-  }
-
-  _iconAllowed(name) {
-    return hasIcon(name) && isSemanticIcon(name);
-  }
-
-  _iconLabel() {
-    return this.getAttribute('label') || '';
-  }
-
-  onAttr(name) {
-    if (name === 'name' || name === 'label') {
-      this.querySelector(':scope > .vk-icon[data-vk-inline]')?.remove();
-    }
-  }
-
-  render() {
-    // src 的自定义 SVG 由构建期内联；运行时保留构建产物，不再覆盖。
-    if (this.hasAttribute('src')) return;
-    const inline = this.querySelector(':scope > .vk-icon[data-vk-inline]');
-    if (inline && inline.dataset.vkName === this._iconName()) return;
-    // 旧名不认识时退到 info，并在 dataset 上留痕（构建期已经提醒过一次）。
-    this.dataset.vkUnknown = this._iconAllowed(this._iconName()) ? undefined : this._iconName();
-    if (this.dataset.vkUnknown === undefined) delete this.dataset.vkUnknown;
-    super.render();
-  }
-}
-
-/**
  * 行内文字：code / math / sup / sub / link。
  * 字号跟所在文本行（1em），不写死；math 由构建期把 KaTeX 产物放进 script。
  */
@@ -623,30 +564,11 @@ export class VkInline extends VkElement {
   }
 }
 
-/** 分隔线：旧名，转发到 vk-box。Frame 只负责 w；线是一块 1px 高的面。 */
-export class VkRule extends VkBox {
-  static watchSource = false;
-
-  connectedCallback() {
-    super.connectedCallback?.();
-    this.dataset.vkAlias = 'vk-box';
-  }
-
-  render() {
-    // 线的颜色 / 虚线 / 线宽仍由 vk-rule 的既有 CSS 给出；
-    // 这里只声明它是"一块面"，以及它就是 vk-box 的旧名。
-    this.dataset.vkBox = '';
-    this.dataset.vkRule = this.getAttribute('variant') || 'thin';
-  }
-}
-
 export function defineElements() {
-  define('vk-icon', VkIcon);
   define('vk-img', VkImg);
   define('vk-box', VkBox);
   define('vk-text', VkText);
   define('vk-label', VkLabel);
   define('vk-panel', VkPanel);
   define('vk-inline', VkInline);
-  define('vk-rule', VkRule);
 }

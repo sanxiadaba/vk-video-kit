@@ -219,8 +219,8 @@ export function setStrict(v) {
   STRICT = !!v;
 }
 
-/** 具名窗体的组件：它们自己带窗头，嵌进 vk-window 时必须 chrome="none"。 */
-const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes', 'vk-window']);
+/** 具名窗体的组件：它们自己带窗头，嵌进 vk-panel chrome="dots" 时必须 chrome="none"。 */
+const WINDOWED = new Set(['vk-code', 'vk-term', 'vk-diff', 'vk-figure', 'vk-tree', 'vk-bytes']);
 /** 每个组件支持的内部锚点（与运行时 resolveTarget 同一份约定）。 */
 const ANCHORS = {
   'vk-code': ['line', 'char'],
@@ -239,7 +239,7 @@ const ANCHORS = {
 /** 子节点 <i> 的合法属性由 registry 的 CHILD_ATTRS 统一声明。 */
 const INDEX_PART = new Set(['cell', 'byte', 'bit', 'event', 'row', 'step', 'item']);
 /** 允许自由坐标的覆盖层；其余标签的 x/y 只允许出现在 vk-canvas 里。 */
-const XY_OVERLAY = new Set(['vk-pin', 'vk-ring', 'vk-spotlight', 'vk-annotate', 'vk-note']);
+const XY_OVERLAY = new Set(['vk-spotlight', 'vk-annotate', 'vk-note']);
 const Z_OK = new Set([...XY_OVERLAY, 'vk-edge']);
 
 const countTag = (node, tag) => {
@@ -496,15 +496,14 @@ function validateRefs(doc, file, errors) {
     }
 
     // 6) 窗头嵌套：一个窗里再放一个带窗头的组件，会画出两条标题栏
-    if (tag === 'vk-window' || (tag === 'vk-panel' && (attr(node, 'chrome') || 'none').trim() === 'dots')) {
-      const outer = tag === 'vk-window' ? '<vk-window>' : '<vk-panel chrome="dots">';
+    if (tag === 'vk-panel' && (attr(node, 'chrome') || 'none').trim() === 'dots') {
       walk(node, (inner) => {
         if (inner === node || !inner.tagName) return;
         const innerChrome = (attr(inner, 'chrome') || '').trim();
         const windowed = WINDOWED.has(inner.tagName) || (inner.tagName === 'vk-panel' && innerChrome === 'dots');
         if (!windowed) return;
         if (innerChrome !== 'none') {
-          errors.push(`${file}:${lineOf(inner)} <${inner.tagName}> 在 ${outer} 里没写 chrome="none"，会出现两条窗头`);
+          errors.push(`${file}:${lineOf(inner)} <${inner.tagName}> 在 <vk-panel chrome="dots"> 里没写 chrome="none"，会出现两条窗头`);
         }
       });
     }
@@ -607,12 +606,6 @@ function validateAuthorHtml(doc, file, html = '') {
     }
     if (!tag || !tag.startsWith('vk-') || !TAGS[tag]) return;
     const def = TAGS[tag];
-    // 合并后的旧名：统一给一条迁移提示，不拦构建（旧页继续可用）。
-    if (def.aliasOf) {
-      warnings.push(
-        `${file}:${lineOf(node)} <${tag}> 已合并到 <${def.aliasOf}>，旧名保留：${def.aliasNote || '属性表见 docs/reference.md'}`
-      );
-    }
     const attrs = new Map((node.attrs || []).map((a) => [a.name, a.value]));
 
     // F1：六个"外部内容"组件默认有窗头。内联场景仍可 chrome="none"，
@@ -794,8 +787,8 @@ function validateAuthorHtml(doc, file, html = '') {
       }
     }
     // w/h 是像素摆位，同样只在坐标空间里成立。
-    // vk-pin 的 w 是气泡上限宽，不是宿主摆位：宿主铺满整页，这条不适用。
-    if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && tag !== 'vk-pin' && node.parentNode?.tagName !== 'vk-canvas') {
+    // 气泡的 w 是宽度上限，宿主铺满整页，不按像素摆位判。
+    if ((attrs.has('w') || attrs.has('h')) && tag !== 'vk-canvas' && tag !== 'vk-note' && node.parentNode?.tagName !== 'vk-canvas') {
       strictness(
         diag({
           file,
@@ -804,7 +797,7 @@ function validateAuthorHtml(doc, file, html = '') {
           what: '的 w/h 是像素摆位',
           wrote: [...attrs].filter(([n]) => n === 'w' || n === 'h').map(([n, v]) => `${n}="${v}"`).join(' '),
           should: '要分栏用 <vk-grid cols="3"> 配子项 span="2"；要撑满用 fill',
-          why: '像素值进不了容量检查，也进不了求解器——它只是把"摆不下"推迟到肉眼发现',
+          why: '像素值进不了容量检查——它只是把"摆不下"推迟到肉眼发现',
         })
       );
     }
@@ -836,10 +829,10 @@ function validateAuthorHtml(doc, file, html = '') {
         })
       );
     }
-    // pin 只钉一个点；分号是给 ring / spotlight 的多目标语法。
-    // 减法第一波：pin 的能力并进 vk-note kind="bubble"，这条规则跟着走。
+    // 气泡只钉一个点；分号是给多目标语法。
     if (
-      (tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('variant') || attrs.get('kind') || '').trim() === 'bubble')) &&
+      tag === 'vk-note' &&
+      (attrs.get('variant') || attrs.get('kind') || '').trim() === 'bubble' &&
       (attrs.get('for') || '').includes(';')
     ) {
       errors.push(
@@ -977,7 +970,7 @@ function validateAuthorHtml(doc, file, html = '') {
       }
       // 关系不是形容词：trace / badge / compare 各有自己的组件，元素上写它们没有意义。
       if (name === 'act' && (raw === 'trace' || raw === 'badge' || raw === 'compare')) {
-        const tool = { trace: 'vk-edge', badge: 'vk-pin', compare: 'vk-diff' }[raw];
+        const tool = { trace: 'vk-edge', badge: 'vk-note', compare: 'vk-diff' }[raw];
         errors.push(
           `${file}:${lineOf(node)} <${node.tagName}> 的 act="${raw}" 不是元素动作；关系用 <${tool}>（它是组件，不是形容词）。元素上可写：focus / context / mark`
         );
@@ -1166,8 +1159,8 @@ function validateAuthorHtml(doc, file, html = '') {
       if (spec.type === 'size') {
         const special = raw === 'fit' || raw === 'full';
         if (!special) {
-        // vk-pin / vk-note kind="bubble" 的 w 允许写 "200px"：运行时也认这个写法，别让作者被单位绊住。
-        const bubbleW = (tag === 'vk-pin' || (tag === 'vk-note' && (attrs.get('kind') || '').trim() === 'bubble')) && name === 'w';
+        // 气泡的 w 允许写 "200px"：运行时也认这个写法，别让作者被单位绊住。
+        const bubbleW = tag === 'vk-note' && (attrs.get('kind') || attrs.get('variant') || '').trim() === 'bubble' && name === 'w';
         const px = bubbleW ? raw.match(/^(\d+(?:\.\d+)?)px$/) : null;
           const n = Number(px ? px[1] : raw);
           const range = `${spec.min ?? '−∞'}…${spec.max ?? '∞'}`;
@@ -1215,28 +1208,18 @@ function validateAuthorHtml(doc, file, html = '') {
       if (caps > 1) errors.push(`${file}:${lineOf(node)} <vk-figure> 只能有一个 figcaption`);
       if (caps && attrs.has('caption')) errors.push(`${file}:${lineOf(node)} <vk-figure> 的 figcaption 和 caption 不能同时写`);
     }
-    const ICON_ATTR = { 'vk-icon': 'name', 'vk-label': 'icon', 'vk-text': 'icon' };
+    const ICON_ATTR = { 'vk-label': 'icon', 'vk-text': 'icon' };
     if (ICON_ATTR[tag] && attrs.has(ICON_ATTR[tag])) {
       const name = attrs.get(ICON_ATTR[tag]);
-      const where =
-        tag === 'vk-icon' ? '<vk-icon> 没有图标' : tag === 'vk-text' ? '<vk-text> 的 icon 没有图标' : '<vk-label> 的 icon 没有图标';
+      const where = tag === 'vk-text' ? '<vk-text> 的 icon 没有图标' : '<vk-label> 的 icon 没有图标';
       if (name && !ICONS[name]) {
         const near = Object.keys(ICONS).filter((n) => n.includes(name) || name.includes(n)).slice(0, 3);
         errors.push(`${file}:${lineOf(node)} ${where} "${name}"${near.length ? `；近似：${near.join(' / ')}` : ''}`);
       }
-      // vk-text 的 icon 是"字形"：白名单外直接报错（想用装饰图标就用 vk-icon / vk-label 的 icon）。
-      // 旧 vk-icon 的装饰图标仍然只提醒，不拦构建。
+      // vk-text 的 icon 是"字形"：白名单外直接报错（装饰图标用 vk-label 的 icon）。
       if (tag === 'vk-text' && name && ICONS[name] && !isSemanticIcon(name)) {
         errors.push(
           `${file}:${lineOf(node)} <vk-text icon="${name}"> 不在语义图标白名单里；可用：${ICON_WHITELIST_HINT}`
-        );
-      }
-      // 旧 vk-icon 的白名单只是提醒，不是错误（15.x）：图标可以表达语义，也可以只是装饰。
-      // 装饰图标不该让一整页构建失败——那是审美判断，属于项目，不属于库。
-      if (tag === 'vk-icon' && name && ICONS[name] && !isSemanticIcon(name)) {
-        warnings.push(
-          `${file}:${lineOf(node)} <vk-icon name="${name}"> 不在语义图标白名单里（只是提醒，不拦构建）；可用：${ICON_WHITELIST_HINT}。` +
-            `需要装饰就用版式与留白，需要语义就用上面这几个`
         );
       }
     }
@@ -1452,7 +1435,7 @@ function treeOf(abs, rootLabel, showHidden = false) {
 
 /* --------------------------------------------------------------- 图标注入 */
 
-/** 只把本页 <vk-icon> 用到的 SVG 注入页面；运行时不带全量图标表。 */
+/** 只把本页用到的 SVG 注入页面；运行时不带全量图标表。 */
 function applyIcons(html, names) {
   if (!names.size) return html;
   const map = {};
@@ -1496,7 +1479,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
   const bytesNodes = [];
   const asmNodes = [];
   const iconNames = new Set();
-  const iconNodes = [];
 
   walk(doc, (node) => {
     if (node.tagName === 'vk-code' || node.tagName === 'vk-diff') blocks.push(node);
@@ -1506,14 +1488,13 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     if (node.tagName === 'vk-tree') trees.push(node);
     if (node.tagName === 'vk-bytes') bytesNodes.push(node);
     if (node.tagName === 'vk-asm') asmNodes.push(node);
-    if (node.tagName === 'vk-icon') iconNodes.push(node);
     // vk-label 的图标在运行期画（它要跟着形态/文字一起重排），
     // 但名字必须在构建期进页面图标表，否则运行时查不到、退成圆心问号。
     if (node.tagName === 'vk-label') {
       const name = attr(node, 'icon');
       if (name && ICONS[name]) iconNames.add(name);
     }
-    // vk-text 的 icon（原 vk-icon）同理：名字得进页面图标表，运行期才画得出来。
+    // vk-text 的 icon 同理：名字得进页面图标表，运行期才画得出来。
     if (node.tagName === 'vk-text') {
       const name = attr(node, 'icon');
       if (name && ICONS[name]) iconNames.add(name);
@@ -1973,41 +1954,6 @@ export async function transformHtml(html, { file = '<memory>', highlighter } = {
     const hash = hash32(tex);
     const body = `<script type="text/vk-math" data-vk-math="${hash}" data-vk-tex="${esc(tex)}">${rendered}</script>`;
     edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner: `\n${escText(tex)}${body}\n` });
-  }
-
-  // 图标：构建期把静态 <vk-icon> 内联成 SVG；运行时看到标记直接复用，不闪。
-  for (const node of iconNodes) {
-    const loc = locOf(node);
-    if (!loc.startTag || !loc.endTag) continue;
-    const label = attr(node, 'label') || '';
-    const aria = label ? ` role="img" aria-label="${esc(label)}"` : ' aria-hidden="true"';
-    const src = attr(node, 'src');
-    if (src) {
-      const abs = path.resolve(path.dirname(file), src);
-      const line = lineOf(node);
-      if (!fs.existsSync(abs)) {
-        errors.push(`${file}:${line} <vk-icon> 找不到 ${src}`);
-        continue;
-      }
-      deps.push(abs);
-      const raw = fs.readFileSync(abs, 'utf8');
-      const m = raw.match(/<svg\b([^>]*)>([\s\S]*?)<\/svg>/i);
-      if (!m) {
-        errors.push(`${file}:${line} <vk-icon src="${src}"> 不是 SVG`);
-        continue;
-      }
-      const vb = (m[1].match(/viewBox\s*=\s*"([^"]+)"/i) || [])[1] || '0 0 24 24';
-      const body = m[2].replace(/<script\b[\s\S]*?<\/script>/gi, '').replace(/<style\b[\s\S]*?<\/style>/gi, '');
-      const inner = `<span class="vk-icon" data-vk-inline data-vk-src="${esc(src)}"${aria}><svg viewBox="${esc(vb)}">${body}</svg></span>`;
-      edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
-      continue;
-    }
-    // 没写 name 时不是"随便一枚图标"，而是白名单里的 info（"!" 这一档）。
-    const name = attr(node, 'name') || 'info';
-    if (ICONS[name]) iconNames.add(name);
-    const body = ICONS[name] || ICONS['info'];
-    const inner = `<span class="vk-icon" data-vk-inline data-vk-name="${esc(name)}"${aria}><svg viewBox="0 0 24 24">${body}</svg></span>`;
-    edits.push({ start: loc.startTag.endOffset, end: loc.endTag.startOffset, inner });
   }
 
   if (errors.length) {

@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 15.x 机制层：放大 / 构图 / 色阶。
+ * 机制层：字号、出血、填充、叠层与五档底。
  *
  *   content-size   size="160" 的字号与行高成比例；不写 size 像素不变
  *   bleed          bleed="x" 的元素左右边到画布 0
@@ -12,11 +12,11 @@ import { startServer } from '../cli/serve.mjs';
  *   layer-overlay  vk-layer 第一个铺底、其余叠上；文字有可读性保护
  *   surface-tones  五档底 paper / wash / tint / dark / accent
  *
- * 这一组是机制测试，不是 demo：全部用真实 DOM 计算样式量，不截图。
+ * 这一组是机制测试：全部用真实 DOM 计算样式量，不截图。
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -234,6 +234,6 @@ test('五档底色 surface：paper / wash / tint / dark / accent 的底与字色
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });

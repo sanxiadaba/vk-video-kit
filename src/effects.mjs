@@ -38,19 +38,6 @@ export const EFFECTS = {
   },
 
 
-  'vk-window': {
-    mass: { on: '.vk-hd', kind: 'style', prop: 'padding-top', skipVisual: true },
-
-    title: { on: '.vk-file', kind: 'text' },
-    chrome: { on: '.vk-hd', kind: 'style', prop: 'display' },
-    tone: { on: '.vk-win', kind: 'style', prop: 'border-top-color' },
-    pad: { on: '.vk-win-bd', kind: 'style', prop: 'padding-top' },
-    w: { on: 'vk-window', kind: 'geometry', prop: 'width' },
-  },
-
-
-
-
   'vk-bits': {
     mass: { on: '.vk-bit-row', kind: 'style', prop: 'min-height', skipVisual: true },
 
@@ -161,22 +148,16 @@ export const EFFECTS = {
   'vk-label': {
     // 三种形态的差别是「底」：kicker 透明、chip 浅底、badge 实色。
     variant: { on: '.vk-label', kind: 'style', prop: 'background-color' },
-    // 语义色落在字上（与 vk-text / vk-icon 同一套 token）。
+    // 语义色落在字上（与 vk-text 同一套 token）。
     tone: { on: 'vk-label', kind: 'style', prop: 'color' },
     ink: { on: 'vk-label', kind: 'style', prop: 'color' },
-    // 贴块（原 vk-caption）：for / anchor 先镜像到宿主（块里的标签也镜像，
+    // 贴块：for / side 先镜像到宿主（块里的标签也镜像，
     // 契约才读得到"改了就变"）；真正的落点由 draw() 的几何算。
     for: { on: 'vk-label', kind: 'attr', prop: 'data-for', expectFromValue: 'raw' },
     side: { on: 'vk-label', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
     // 净空：先镜像到宿主（块里的标签也镜像，契约才读得到"改了就变"）；
     // 真正的落点由 draw() 算，几何在 tests/fix-three.test.mjs 逐条量。
     gap: { on: 'vk-label', kind: 'attr', prop: 'data-gap', expectFromValue: 'raw' },
-  },
-
-  'vk-icon': {
-    tone: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-    ink: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-    size: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
   },
 
   'vk-img': {
@@ -188,11 +169,6 @@ export const EFFECTS = {
     radius: { on: 'vk-img .vk-img', kind: 'style', prop: 'border-radius' },
     w: { on: 'vk-img', kind: 'geometry', prop: 'width' },
     h: { on: 'vk-img', kind: 'geometry', prop: 'height' },
-  },
-
-  'vk-rule': {
-    variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
-    tone: { on: 'vk-rule', kind: 'style', prop: 'background-color' },
   },
 
   'vk-tree': {
@@ -231,7 +207,7 @@ export const EFFECTS = {
     pad: { on: 'vk-box', kind: 'style', prop: 'padding-top' },
     radius: { on: 'vk-box', kind: 'style', prop: 'border-radius' },
     border: { on: 'vk-box', kind: 'style', prop: 'border-top-width' },
-    // 描边环（原 vk-ring）：一圈 box-shadow，不占布局。
+    // 描边环：一圈 box-shadow，不占布局。
     ring: { on: 'vk-box', kind: 'style', prop: 'box-shadow', expect: { not: 'none' } },
     w: { on: 'vk-box', kind: 'geometry', prop: 'width' },
     h: { on: 'vk-box', kind: 'geometry', prop: 'height', skipVisual: true },
@@ -243,7 +219,7 @@ export const EFFECTS = {
     tone: { on: 'vk-panel', kind: 'style', prop: 'background-color' },
     // 标题带是一个 vk-label：title 改了，带里的字必须跟着改。
     title: { on: '.vk-panel-hd .vk-label-t', kind: 'text', expect: 'VKPROBE' },
-    // chrome="dots" 长出三点窗头（原 vk-window）：数一数真的有三枚点。
+    // chrome="dots" 长出三点窗头：数一数真的有三枚点。
     chrome: { kind: 'dom', prop: '.vk-dots i' },
     pad: { on: '.vk-panel-bd', kind: 'style', prop: 'padding-top' },
     radius: { on: 'vk-panel', kind: 'style', prop: 'border-radius' },
@@ -293,13 +269,6 @@ export const EFFECTS = {
     mark: { on: '.vk-tok', kind: 'style', prop: 'background-color' },
     // hero 档会把组件撑到整帧，标本台放不下；只验样式变了，不跑视觉审计。
   },
-
-  'vk-caption': {
-    // 换目标：说明框的 x 跟着目标首字符走。
-    for: { on: '.vk-caption', kind: 'geometry', prop: 'x', expect: { not: '0px' } },
-    // top / bottom 落在宿主的 data-side 上；实际 top 由 draw() 算。
-    side: { on: 'vk-caption', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
-  },
 };
 
 /* ---------------------------------------------------------------- v10 共享骨架
@@ -317,9 +286,9 @@ const COMMON = {
 };
 
 const COMMON_TAGS = [
-  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-pair', 'vk-flow', 'vk-rule',
+  'vk-box', 'vk-panel', 'vk-text', 'vk-stack', 'vk-grid', 'vk-pair', 'vk-flow',
   'vk-list', 'vk-code', 'vk-term', 'vk-diff', 'vk-table',
-  'vk-math', 'vk-compare', 'vk-window', 'vk-tree', 'vk-cells', 'vk-bytes',
+  'vk-math', 'vk-compare', 'vk-tree', 'vk-cells', 'vk-bytes',
   'vk-steps', 'vk-bits', 'vk-bars', 'vk-asm', 'vk-timeline',
 ];
 for (const tag of COMMON_TAGS) {
@@ -334,12 +303,8 @@ for (const tag of COMMON_TAGS) {
 /* 组件特有的 v10 属性 */
 Object.assign(EFFECTS['vk-text'], {
   emphasis: { on: 'vk-text', kind: 'style', prop: 'color' },
-  // 图标槽（原 vk-icon）：写了才出现，改名字只换这一个 span。
+  // 图标槽：写了才出现，改名字只换这一个 span。
   icon: { on: 'vk-text', kind: 'dom', prop: '.vk-text-ic' },
-});
-Object.assign(EFFECTS['vk-icon'], {
-  emphasis: { on: 'vk-icon .vk-icon', kind: 'style', prop: 'color' },
-  size: { on: 'vk-icon svg', kind: 'style', prop: 'width' },
 });
 Object.assign(EFFECTS['vk-img'], {
   border: { on: 'vk-img .vk-img', kind: 'style', prop: 'border-top-width' },
@@ -348,10 +313,6 @@ Object.assign(EFFECTS['vk-img'], {
 });
 Object.assign(EFFECTS['vk-mark'], {
   // variant 与 type 共用同一组 CSS；type 的 border-top-width 已覆盖。
-});
-Object.assign(EFFECTS['vk-rule'], {
-  variant: { on: 'vk-rule', kind: 'style', prop: 'height' },
-  dash: { on: 'vk-rule', kind: 'style', prop: 'background-image', expect: { not: 'none' } },
 });
 Object.assign(EFFECTS['vk-list'], {
   // 四种形态都镜像到 data-variant：bullet / check / define / ordered 各是各的值。
@@ -473,13 +434,13 @@ Object.assign((EFFECTS['vk-annotate'] ||= {}), {
 });
 
 Object.assign((EFFECTS['vk-note'] ||= {}), {
-  // 注解原语（批次 G1）：宿主上的 data-* 是作者写法的镜像；
-  // 真正的落点在 draw() 的几何里，由 tests/batch-gh.test.mjs 逐条量。
+  // 注解原语：宿主上的 data-* 是作者写法的镜像；
+  // 真正的落点在 draw() 的几何里，由 tests/notes-geometry.test.mjs 逐条量。
   variant: { on: 'vk-note', kind: 'attr', prop: 'data-variant', expectFromValue: 'raw' },
   side: { on: 'vk-note', kind: 'attr', prop: 'data-side', expectFromValue: 'raw' },
   leader: { on: 'vk-note', kind: 'attr', prop: 'data-leader', expectFromValue: 'raw' },
   z: { on: 'vk-note', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
-  // bubble（原 vk-pin）的旋钮：同样先镜像到宿主，落点由 vk-annotate 的 note 形态算。
+  // 气泡的旋钮：同样先镜像到宿主，落点由 vk-note 自己的几何算。
   tone: { on: 'vk-note', kind: 'attr', prop: 'data-tone', expectFromValue: 'raw' },
   strength: { on: 'vk-note', kind: 'attr', prop: 'data-strength', expectFromValue: 'raw' },
   size: { on: 'vk-note', kind: 'attr', prop: 'data-size', expectFromValue: 'raw' },
@@ -489,29 +450,6 @@ Object.assign((EFFECTS['vk-note'] ||= {}), {
   x: { on: 'vk-note', kind: 'attr', prop: 'data-x', expectFromValue: 'raw' },
   y: { on: 'vk-note', kind: 'attr', prop: 'data-y', expectFromValue: 'raw' },
   // for 的取值与几何断言在 tools/lib/contract-probes.mjs（要指到标本里的真实目标）。
-});
-
-Object.assign((EFFECTS['vk-pin'] ||= {}), {
-  tone: { on: '.vk-pin-bd', kind: 'style', prop: 'border-left-color' },
-  strength: { on: '.vk-pin-bd', kind: 'style', prop: 'background-color' },
-  gap: { on: '.vk-pin-bd', kind: 'style', prop: 'left' },
-  w: { on: '.vk-pin-bd', kind: 'geometry', prop: 'width' },
-  size: { on: '.vk-pin-bd', kind: 'style', prop: 'font-size' },
-  n: { on: '.vk-pin-n', kind: 'text' },
-  z: { on: 'vk-pin', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
-  leader: { kind: 'any', reason: '引线有无/形状都改 path' },
-  side: { kind: 'any', reason: '自动贴边，位置随目标变化' },
-  x: { kind: 'any', reason: '作者写死的气泡坐标' },
-  y: { kind: 'any', reason: '作者写死的气泡坐标' },
-});
-
-Object.assign((EFFECTS['vk-ring'] ||= {}), {
-  variant: { kind: 'any', reason: '矩形/椭圆/下划线是不同 SVG 元素' },
-  pad: { on: 'vk-ring', kind: 'geometry', prop: 'width' },
-  tone: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke' },
-  dash: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-dasharray', expect: { not: 'none' } },
-  width: { on: '.vk-ring-shape', kind: 'style', prop: 'stroke-width' },
-  z: { on: 'vk-ring', kind: 'style', prop: 'z-index', expectFromValue: 'raw' },
 });
 
 Object.assign((EFFECTS['vk-spotlight'] ||= {}), {
@@ -534,10 +472,6 @@ Object.assign(EFFECTS['vk-bytes'], {
 
 Object.assign(EFFECTS['vk-edge'], {
   via: { on: 'svg path', kind: 'attr', prop: 'd' },
-});
-
-Object.assign((EFFECTS['vk-rule'] ||= {}), {
-  orientation: { on: 'vk-rule', kind: 'style', prop: 'width' },
 });
 
 Object.assign((EFFECTS['vk-steps'] ||= {}), {

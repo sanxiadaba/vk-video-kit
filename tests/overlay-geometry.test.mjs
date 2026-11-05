@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 三个"真的坏了"的件：vk-note / vk-annotate / vk-label。
+ * 覆盖层的几何：注解、标注、标签。
  *
  * 这些用例量的是画面事实，不是读了哪条 CSS：
  *   1. vk-note 的文字块永远在目标那一侧的富余空间里，不越出画布；
@@ -17,7 +17,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -40,7 +40,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });
 

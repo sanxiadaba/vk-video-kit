@@ -1,7 +1,7 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { DEFAULTS, TAGS, TAG_NAMES, validate } from '../src/registry.mjs';
 import { EFFECTS } from '../src/effects.mjs';
@@ -99,7 +99,7 @@ test('默认值：数值 / 枚举默认值都在声明范围内', () => {
 const tags = TAG_NAMES.filter((tag) => DEFAULTS[tag] && fs.existsSync(`_site/specimen/${tag}.html`));
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
 const skipped = [];
@@ -135,7 +135,6 @@ async function auditTag(tag) {
       const settle = async () => {
         await window.vk?.ready?.();
         await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r)));
-        await new Promise((r) => setTimeout(r, 16));
       };
       // CSS 里等价的写法：读计算值时统一成一个规范名，避免 normal / start 这类假差异。
       const CANON = {
@@ -268,6 +267,6 @@ after(async () => {
   console.log(`默认值检查：行为验证 ${verified.length} 条，跳过 ${skipped.length} 条（上下文相关，见 CONTEXT_SENSITIVE）`);
   for (const s of skipped) console.log(`  · 跳过 ${s}`);
   await page.close().catch(() => {});
-  await browser.close().catch(() => {});
+  await closeBrowser(browser);
   await closeServer();
 });

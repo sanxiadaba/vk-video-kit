@@ -9,7 +9,7 @@
  *   node tools/specimens.mjs --check
  */
 import fs from 'node:fs';
-import { TAGS, TAG_NAMES, ALIASES, LAYERS, byLayer } from '../src/registry.mjs';
+import { TAGS, TAG_NAMES, LAYERS, byLayer } from '../src/registry.mjs';
 import { SCENES } from '../src/scenes/scenes.mjs';
 import { COMBOS } from '../src/scenes/combos.mjs';
 import { PRESETS } from '../src/scenes/presets.mjs';
@@ -225,53 +225,6 @@ const STATE_STRIP = {
   'vk-table': `<vk-table variant="matrix"><table><thead><tr><th>i\\j</th><th>0</th><th>1</th></tr></thead><tbody><tr><th>0</th><td state="current">52,980</td><td state="mark">635</td></tr><tr><th>1</th><td>760</td><td state="err">43,956</td></tr></tbody></table></vk-table>`,
   'vk-list': `<vk-list variant="check"><li state="ok">hello.i 是 52,980 字节</li><li state="warn">hello.s 只有 635 字节</li><li state="err">s[5] 漏掉 \\0</li></vk-list>`,
 };
-
-/** 旧名 → 新标签的示例属性：别名页给"旧写法 / 新写法"对照。 */
-const ALIAS_ATTR = {
-  'vk-icon': 'icon="check"',
-  'vk-rule': 'border="hair"',
-  'vk-window': 'chrome="dots" title="main.c"',
-  'vk-pin': 'kind="bubble"',
-  'vk-ring': 'ring',
-  'vk-caption': 'for="#id" anchor="above"',
-};
-
-/** 指向本标签的旧名（规格页底部列出，免得旧链接死掉、也免得别名页成孤儿）。 */
-const aliasesOf = (tag) => Object.entries(ALIASES).filter(([, a]) => a.to === tag);
-
-function aliasPage(alias) {
-  const info = ALIASES[alias];
-  const to = info.to;
-  const sample = ALIAS_ATTR[alias] || '';
-  const body = `<vk-page align="top" data-allow-void>
-  <vk-stack gap="md">
-    <vk-stack direction="row" gap="xs" align="baseline">
-      <a href="../index.html"><vk-text size="label" mono ink="muted" data-meta>← 索引</vk-text></a>
-      <vk-text size="label" mono ink="muted" data-meta>·</vk-text>
-      <vk-text size="label" mono ink="muted" data-meta>${esc(alias)}</vk-text>
-      <vk-text size="label" mono ink="muted" data-meta>· 旧名</vk-text>
-    </vk-stack>
-    <vk-stack gap="sm">
-      <vk-text size="subhead" weight="bold">${esc(alias)} → ${esc(to)}</vk-text>
-      <vk-text size="body" measure="body">${esc(info.note)}</vk-text>
-      <vk-stack direction="row" gap="md" align="center">
-        <vk-label variant="chip" tone="warn">旧名保留</vk-label>
-        <a href="${esc(to)}.html"><vk-text size="body" mono>看 ${esc(to)} 的属性与标本 →</vk-text></a>
-      </vk-stack>
-    </vk-stack>
-    <vk-stack gap="2xs">
-      <vk-text size="label" mono ink="muted" data-meta>旧写法（仍可用，构建期给一条迁移提示）</vk-text>
-      <vk-text size="label" mono>${esc(`<${alias} …>…</${alias}>`)}</vk-text>
-      <vk-text size="label" mono>${esc(`<${to}${sample ? ` ${sample}` : ''}>…</${to}>`)}</vk-text>
-    </vk-stack>
-  </vk-stack>
-</vk-page>`;
-  return shell(`vk · ${alias} · 旧名`, `<!-- vk:spec:${hash32(JSON.stringify(['alias', alias, to, info.note, sample, hash32(aliasPage.toString())]))} -->\n${body}`);
-}
-
-const ALIAS_ORDER = [...new Set(Object.values(ALIASES).map((a) => a.to))]
-  .sort((a, b) => ORDER.indexOf(a) - ORDER.indexOf(b))
-  .flatMap((to) => Object.keys(ALIASES).filter((alias) => ALIASES[alias].to === to));
 
 /* --------------------------------------------------------------- 主题标本页
    同一块内容并排三次：三套主题只换颜色。这一页是主题层的相册；"几何逐项相等"
@@ -515,19 +468,11 @@ function specPage(tag, no) {
         .join('\n')
     : `<div class="vk-state"><div class="vk-state-meta">没有外观预设：它的形状由内容决定。</div></div>`;
 
-  const aliases = aliasesOf(tag);
-  const aliasBlock = aliases.length
-    ? `<div class="vk-sheet-hd"><vk-text size="label" mono data-meta>旧名</vk-text><vk-text size="label" mono ink="muted" data-meta>已合并，旧名保留</vk-text></div>
-  <vk-stack direction="row" gap="md" align="baseline">${aliases
-    .map(([name]) => `<a href="${name}.html"><vk-text size="label" mono>${esc(name)}</vk-text></a>`)
-    .join('')}</vk-stack>`
-    : '';
   const sheet = `<section class="vk-sheet">
   <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>状态</vk-text><vk-text size="label" mono ink="muted" data-meta>${stateCount ? `${stateCount} 档 · 其余属性见 reference` : '无'}</vk-text></div>
   <div class="state-strip">${states}</div>
   <div class="vk-sheet-hd"><vk-text size="label" mono data-meta>最小写法</vk-text><vk-text size="label" mono ink="muted" data-meta>去掉 .spec-* 包装</vk-text></div>
   <pre class="vk-snippet">${snippetOf(rawBody, tag)}</pre>
-  ${aliasBlock}
 </section>`;
 
   return shell(`vk · ${tag} · ${def.name}`, `<!-- vk:spec:${specHash(tag, rawBody, presets)} -->\n${plate}\n${sheet}`);
@@ -647,8 +592,6 @@ files.set(`${SITE}/specimen/theme.html`, themePage());
 // 视频维度示例页：3 条字幕 + 可播放的字幕轨。索引页链到它，也是 vk capture --cues 的样本。
 files.set(`${SITE}/specimen/vk-cues.html`, cuesPage());
 files.set(`${SITE}/specimen/vk-cues.srt`, CUES_SRT);
-// 旧名页：一页一句"已合并到谁"，并链回新标签；新标签页底部也链回来（不是孤儿页）。
-for (const alias of ALIAS_ORDER) files.set(`${SITE}/specimen/${alias}.html`, aliasPage(alias));
 for (let n = 1; n <= PAGES; n++) files.set(`${SITE}/${pageHref(n)}`, indexPage(n));
 
 /**
@@ -683,7 +626,7 @@ let stale = 0;
 // 删掉已经不存在的标签的标本页。
 // 14.0 会一路删标签；生成器只写不删，残留的 vk-keys.html 会让 links 门禁
 // 报"不可达"，还会让索引链接到空页。这里按 registry 的现状清一遍。
-const live = new Set([...TAG_NAMES, ...ALIAS_ORDER].map((t) => `${t}.html`));
+const live = new Set(TAG_NAMES.map((t) => `${t}.html`));
 // 视频维度示例页不是标签独照，但同样由本生成器维护；不能当成"已删除标签"清掉。
 live.add('vk-cues.html');
 // 五个讲解动作的标本页也不是 tag 独照：它们是 vk-scene 的组合页。

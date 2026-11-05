@@ -1,26 +1,26 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { transformHtml } from '../src/highlight.mjs';
 import { WASH_TOKENS, readTokenCss, readHexTokens, rgbCss } from './lib/surface-tokens.mjs';
 
 /**
- * 批次 E + F：版式系统与组件默认值。
+ * 版式与窗头：字号、网格、版心、窗头与分区默认值。
  *
- * E1 四档主对比：display 200 / headline 112 / body 56 / caption 48（手机横屏基准）；
+ * 四档主对比：display 200 / headline 112 / body 56 / caption 48（手机横屏基准）；
  *    旧名（label / data / subhead / title）别名到新档，hero / mega 是补充档。
- * E2 网格与版心：--vk-grid-cols 12 / --vk-grid-gutter 32 / --vk-margin 120；
+ * 网格与版心：--vk-grid-cols 12 / --vk-grid-gutter 32 / --vk-margin 120；
  *    vk-grid cols="12" 的每栏宽可算（1680 - 11×32）/12。
- * F1 窗头：六个"外部内容"组件默认有三点；三点与窗头高度随 mass 缩放。
- * F2 vk-panel plain 默认无框无底；底色只在 tone / border / 显式 variant 时出现。
- * F3 kicker 是工序进度（工序 3/5 · 汇编），4px 焦点色条；不许写文件名 / 页号。
+ * 窗头：六个"外部内容"组件默认有三点；三点与窗头高度随 mass 缩放。
+ * vk-panel plain 默认无框无底；底色只在 tone / border / 显式 variant 时出现。
+ * kicker 是工序进度（工序 3/5 · 汇编），4px 焦点色条；不许写文件名 / 页号。
  */
 
 const tokens = readHexTokens(readTokenCss());
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body, pageAttr = '') {
@@ -54,7 +54,7 @@ const settle = (tab) =>
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });
 
@@ -261,49 +261,6 @@ test('vk-panel plain 默认无框无底，tone 才有 wash', async () => {
   assert.equal(r.plain.hd, 'rgba(0, 0, 0, 0)', `默认 panel 的标题带也透明：${r.plain.hd}`);
   assert.equal(r.tone.bg, rgbCss(tokens[WASH_TOKENS.info]), `tone="info" 才是 wash 底：${r.tone.bg}`);
   assert.equal(r.border.border, '2px', `border="hair" 才出现描边：${r.border.border}`);
-});
-
-test('legacy 兼容开关：旧字号与旧窗头一起回来（两个开关同一张表）', async () => {
-  const body =
-    '<vk-text id="b" size="body">旧正文</vk-text>' +
-    '<vk-panel id="p" title="分区"><vk-text size="body">x</vk-text></vk-panel>' +
-    '<vk-window id="w" title="a.txt"><vk-text size="body" mono>x</vk-text></vk-window>';
-  const legacyTab = await open(body, 'class="vk-legacy"');
-  const freshTab = await open(body);
-  const read = (tab) =>
-    tab.evaluate(() => {
-      const win = document.getElementById('w');
-      const root = win.querySelector('.vk-win');
-      const dot = win.querySelector('.vk-dots i');
-      const file = win.querySelector('.vk-file');
-      return {
-        body: getComputedStyle(document.getElementById('b')).fontSize,
-        bg: getComputedStyle(document.getElementById('p')).backgroundColor,
-        border: getComputedStyle(document.getElementById('p')).borderTopWidth,
-        dot: getComputedStyle(dot).width,
-        hd: getComputedStyle(root).getPropertyValue('--vk-win-hd').trim(),
-        fileH: getComputedStyle(file).height,
-        fileFs: getComputedStyle(file).fontSize,
-      };
-    });
-  const r = await read(legacyTab);
-  const fresh = await read(freshTab);
-  // 字号回到 14.x。
-  assert.equal(r.body, '40px', `legacy 页的 body 应回到 40：${r.body}`);
-  // legacy 只切尺寸：panel 的形状（默认无框无底）不跟着回退。
-  assert.equal(r.bg, 'rgba(0, 0, 0, 0)', `legacy 不改 panel 的底：${r.bg}`);
-  assert.equal(r.border, '0px', `legacy 不改 panel 的描边：${r.border}`);
-  // 窗头也回到 14.x：点 12 / 窗头 56 / chip 48 高 28 字。
-  assert.equal(r.dot, '12px', `legacy 的三点应回到 normal 12：${r.dot}`);
-  assert.equal(r.hd, '56px', `legacy 的窗头应回到 normal 56：${r.hd}`);
-  assert.equal(r.fileH, '48px', `legacy 的文件名 chip 应回到 48 高：${r.fileH}`);
-  assert.equal(r.fileFs, '28px', `legacy 的文件名 chip 应回到 28 字：${r.fileFs}`);
-  // 新页同一条链上是新值：两个开关不会一个回旧、一个留新。
-  assert.equal(fresh.body, '56px', `新页 body 应是 56：${fresh.body}`);
-  assert.equal(fresh.dot, '16px', `新页三点应是 normal 16：${fresh.dot}`);
-  assert.equal(fresh.hd, '72px', `新页窗头应是 normal 72：${fresh.hd}`);
-  assert.equal(fresh.fileH, '64px', `新页 chip 应是 64 高：${fresh.fileH}`);
-  assert.equal(fresh.fileFs, '48px', `新页 chip 应是 48 字：${fresh.fileFs}`);
 });
 
 /* --------------------------------------------------------------- F3 页眉 */

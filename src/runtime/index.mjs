@@ -21,10 +21,8 @@ import { defineCompositions } from './compositions.mjs';
 import { defineScene } from './scene.mjs';
 import { defineAsm } from './asm.mjs';
 import { defineTimeline } from './timeline.mjs';
-import { defineOverlays } from './overlays.mjs';
 import { defineAnnotate } from './annotate.mjs';
 import { defineNote } from './note.mjs';
-import { defineCaption } from './caption.mjs';
 import { installAudit } from './audit.mjs';
 import { installDirector } from './director.mjs';
 import { installCues } from './cues.mjs';
@@ -42,14 +40,10 @@ defineCompositions();
 defineScene();
 defineAsm();
 defineTimeline();
-// 关系层：vk-annotate 是本体，vk-edge 是它的旧名。
+// 关系层：vk-annotate 是本体，vk-edge 是箭头形态的旧入口。
 defineAnnotate();
-// 注解原语：边注 / 气泡（原 vk-pin）/ 编号图例。
+// 注解原语：边注 / 气泡 / 编号图例。
 defineNote();
-// 归属说明：贴在块上（或下）的一行小字（旧名 vk-caption，本体是 vk-label）。
-defineCaption();
-// 旧标签别名：vk-pin → vk-note kind="bubble"；vk-ring → vk-box ring。
-defineOverlays();
 installAudit(VK);
 installDirector(VK);
 // 视频维度：字幕轨驱动焦点 / 同页多态 / 页间转场。装在 director 之后，包住 seek。

@@ -18,9 +18,6 @@ import { auditStyle, STYLE_RULES } from './style-preset.mjs';
  *
  * 所有数值来自 shared/limits.mjs —— 这里不再有第二份定义。
  * 对比度分两档：正文 7:1，标注（ink="muted"，即 [data-meta] 里）4.5:1。
- *
- * `<body class="vk-legacy">` 的页按 14.x 的尺寸判（limits.legacy），
- * 否则迁移期的旧页会因为"28 < 48"整片变红，而它们的尺寸其实一个字没动。
  */
 
 const MIN_FONT = LIMITS.fontFloor;
@@ -30,22 +27,14 @@ const MUTED_RATIO = LIMITS.contrastMuted;
 const LARGE_RATIO = LIMITS.contrastLarge;
 const DATA_RATIO = LIMITS.contrastData;
 const LARGE_FONT = LIMITS.fontLarge;
-const OVERLAYS = new Set(['vk-edge', 'vk-pin', 'vk-ring', 'vk-annotate', 'vk-note', 'vk-label', 'vk-caption']);
-
-/** 旧页读旧地板：legacy 是"尺寸开关"，审计跟着它走，不另开一个开关。 */
-function limitsFor(stage) {
-  const legacy = !!stage?.closest?.('.vk-legacy, [data-vk-legacy]');
-  return legacy
-    ? { floor: LIMITS.legacy.fontFloor, body: LIMITS.legacy.fontBody, large: LIMITS.legacy.fontLarge }
-    : { floor: MIN_FONT, body: CONTENT_FONT, large: LARGE_FONT };
-}
+const OVERLAYS = new Set(['vk-edge', 'vk-annotate', 'vk-note', 'vk-label']);
 
 
 
 export function auditPage(root = document, options = {}) {
   const out = [];
   const stage = root.matches?.('.vk-page, .vk-stage') ? root : root.querySelector?.('.vk-page') || root.querySelector?.('.vk-stage') || root;
-  const limits = limitsFor(stage);
+  const limits = { floor: MIN_FONT, body: CONTENT_FONT, large: LARGE_FONT };
   const safe = safeBox(stage);
   const pageRect = stage.getBoundingClientRect();
 
@@ -113,7 +102,7 @@ export function auditPage(root = document, options = {}) {
     const r = el.getBoundingClientRect();
     if (r.width < 1 || r.height < 1) continue;
     if (el.closest('svg') || el.closest('.vk-sr')) continue;
-    const inOverlay = !!el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], vk-caption');
+    const inOverlay = !!el.closest('vk-edge, vk-annotate, vk-note, vk-label[for]');
     const inSideNav = !!el.closest('[data-side-nav]');
     const inBleed = !!el.closest('.vk-page-bleed');
 
@@ -236,7 +225,7 @@ export function auditPage(root = document, options = {}) {
   // 覆盖层压住正文：批注泡这类"画在别人身上"的东西，压住字就是错。
   // 13.x 把 pin/ring/edge 当"显式覆盖"整体排除了，于是第 10 站的批注泡盖住标题，
   // 门禁仍然说"干净"——这条就是补那个盲区。只查真正有底的泡，线条类不算。
-  for (const pin of stage.querySelectorAll('vk-pin, vk-annotate[data-mode="note"], vk-note[data-kind="bubble"]')) {
+  for (const pin of stage.querySelectorAll('vk-note[variant="bubble"], vk-annotate[data-mode="note"]')) {
     const bubble = pin.querySelector('.vk-pin-bd') || pin;
     const pr = bubble.getBoundingClientRect();
     if (pr.width < 4 || pr.height < 4) continue;
@@ -250,7 +239,7 @@ export function auditPage(root = document, options = {}) {
       if (w <= 4 || h <= 4) continue;
       const cover = (w * h) / (b.width * b.height);
       if (h > b.height * 0.4 && w > 60) {
-        out.push({ type: 'overlay-text', what: clip(bubble.className || 'vk-pin'), target: clip(t.className || t.tagName), cover: +cover.toFixed(2) });
+        out.push({ type: 'overlay-text', what: clip(bubble.className || 'vk-note'), target: clip(t.className || t.tagName), cover: +cover.toFixed(2) });
       }
     }
   }
@@ -310,9 +299,9 @@ export function auditPage(root = document, options = {}) {
   }
 
   // w 是硬宽：量出来必须等于写的数字（容忍 1.5px）。
-  // 覆盖层除外：vk-pin 的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
+  // 覆盖层除外：气泡的 w 量的是气泡 .vk-pin-bd，宿主本身铺满整页。
   for (const el of stage.querySelectorAll('[w]')) {
-    if (el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], vk-caption')) continue;
+    if (el.closest('vk-edge, vk-annotate, vk-note, vk-label[for]')) continue;
     const raw = (el.getAttribute('w') || '').trim();
     if (!/^\d+(?:\.\d+)?$/.test(raw)) continue;
     const cs = getComputedStyle(el);
@@ -480,7 +469,7 @@ export function metrics(root = document) {
     const fr = first?.getBoundingClientRect();
     // 覆盖层不算内容：vk-edge 的 svg 铺满整页，把它算进来"内容底"永远是 1080。
     const rects = [...safe.querySelectorAll('*')]
-      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-pin, vk-ring, vk-annotate, vk-note, vk-label[for], vk-caption, [data-vk-overlay]'))
+      .filter((el) => !el.closest('svg') && !el.closest('vk-edge, vk-annotate, vk-note, vk-label[for], [data-vk-overlay]'))
       .map((el) => el.getBoundingClientRect())
       .filter((r) => r.height > 0 && r.width > 0);
     const maxBottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.bottom;
@@ -548,7 +537,7 @@ export function focusRegions(stage) {
     addInk(el);
   // 圈选本身就是「看这里」：一个 ring 算一个焦点 region。
   // 但如果它圈的就是已经算过的焦点（聚光目标 / 高亮行），不再重复计数。
-  for (const el of stage.querySelectorAll('vk-ring, vk-box[ring], vk-annotate[data-mode="circle"]')) {
+  for (const el of stage.querySelectorAll('vk-box[ring], vk-annotate[data-mode="circle"]')) {
     const expr = el.getAttribute('for') || '';
     const anchor = expr ? resolveAnchor(stage, expr, el) : null;
     if (anchor?.el && found.has(anchor.el)) continue;

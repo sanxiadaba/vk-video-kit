@@ -1,20 +1,20 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 根因批次 R：把 demo 第 06 页靠页内 CSS 硬做的五件事补成原语。
+ * 五个基础原语：并置、塞满一行、贴块说明、表面与纸色。
  *
- *   R1 vk-pair      两块并置 + 中轴 + 可选中轴符号
- *   R2 vk-text       fit="width"：单行塞满容器
- *   R3 vk-caption   贴在目标块上方/下方，左边界对齐首字符
- *   R4 surface      代码窗 / 终端的 paper / dark / inset，与 current 共存
- *   R5 paper        默认纸色是纯白
+ *   vk-pair      两块并置 + 中轴 + 可选中轴符号
+ *   vk-text       fit="width"：单行塞满容器
+ *   vk-label   贴在目标块上方/下方，左边界对齐首字符
+ *   surface      代码窗 / 终端的 paper / dark / inset，与 current 共存
+ *   paper        默认纸色是纯白
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -267,14 +267,14 @@ test('vk-text fit="width"：scale(.5) 祖先下字号与 1:1 一致，视觉宽�
   assert.ok(Math.abs(r.one.textW - r.one.boxW) <= 2, `1:1 时文字也应填满：${r.one.textW} vs ${r.one.boxW}`);
 });
 
-test('vk-caption：左边界对齐目标块首字符（above / below）', async () => {
+test('vk-label for：左边界对齐目标块首字符（side=top / bottom）', async () => {
   const tab = await open(`
 <vk-page><div style="width:1200px">
   <vk-box id="tgt" surface="none" pad="lg">
     <vk-text size="headline" mono>printf("%s\\n", s);</vk-text>
   </vk-box>
-  <vk-caption id="c1" for="#tgt" side="top">你写的</vk-caption>
-  <vk-caption id="c2" for="#tgt" side="bottom">编译器给的</vk-caption>
+  <vk-label id="c1" for="#tgt" side="top">你写的</vk-label>
+  <vk-label id="c2" for="#tgt" side="bottom">编译器给的</vk-label>
 </div></vk-page>`);
   const r = await tab.evaluate(() => {
     const target = document.getElementById('tgt');
@@ -414,6 +414,6 @@ test('vk-page / body：空文档里的默认底色是纯白', async () => {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });

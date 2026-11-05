@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { measurePage } from '../tools/structure.mjs';
 
 /**
@@ -35,14 +35,14 @@ fs.writeFileSync(
 // 只有小标注的对照页：证明 36px 装饰字不会被行盒统计抬成主角。
 fs.writeFileSync(noteFile, shell('<span class="f-stat-unit">字节</span><span class="f-note">小标注：这一行不该抢主角</span>'));
 
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
-test('③ 主角统计纳入 span 文字行盒：大数字当家时面积 ≥10%，小标注被字号阈值挡住', async () => {
+test('主角统计纳入 span 文字行盒：大数字当家时面积 ≥10%，小标注被字号阈值挡住', async () => {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
   const big = await measurePage(page, statFile);
   const onlySmall = await measurePage(page, noteFile);

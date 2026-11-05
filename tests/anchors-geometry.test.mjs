@@ -6,11 +6,11 @@
  */
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const pageErrors = [];
 page.on('pageerror', (e) => pageErrors.push(e.message));
@@ -29,7 +29,7 @@ const numbers = (d) => (d.match(/-?\d+(?:\.\d+)?/g) || []).map(Number);
 const near = (a, b, tol = 2) => Math.abs(a - b) <= tol;
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 
@@ -61,14 +61,14 @@ test('@side:top 决定出线方向，不是自动选边', async () => {
 test('@region 圈住的是盒子里的百分比区域，不是整个盒子', async () => {
   await reset(`<vk-canvas id="cv" w="600" h="300">
     <vk-box id="b" x="300" y="100" w="200" h="100"></vk-box>
-    <vk-ring for="#b@region:50%,50%,50%,50%" variant="rect" pad-px="0"></vk-ring>
+    <vk-annotate mode="circle" ring="rect" gap="0" for="#b@region:50%,50%,50%,50%"></vk-annotate>
   </vk-canvas>`);
-  // 减法第一波：vk-ring 是一块带描边的面（不是 SVG 形状），量的就是它自己的盒子。
   const box = await page.evaluate(() => {
     const cv = document.querySelector('#cv').getBoundingClientRect();
-    const r = document.querySelector('vk-ring').getBoundingClientRect();
-    return { x: r.left - cv.left, y: r.top - cv.top, w: r.width, h: r.height };
+    const shape = document.querySelector('vk-annotate .vk-ring-shape').getBoundingClientRect();
+    return { x: shape.left - cv.left, y: shape.top - cv.top, w: shape.width, h: shape.height };
   });
-  assert.ok(near(box.x, 400) && near(box.y, 150), `区域左上角应在 (400,150)，实际 (${box.x},${box.y})`);
-  assert.ok(near(box.w, 100) && near(box.h, 50), `区域应是 100×50，实际 ${box.w}×${box.h}`);
+  // 圈选的外缘 = 目标区域 + 两侧 pad（默认 12）。
+  assert.ok(near(box.x, 388) && near(box.y, 138), `区域左上角应在 (388,138)，实际 (${box.x},${box.y})`);
+  assert.ok(near(box.w, 124) && near(box.h, 74), `区域应是 124×74，实际 ${box.w}×${box.h}`);
 });

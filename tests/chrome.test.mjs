@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -14,11 +14,11 @@ import { startServer } from '../cli/serve.mjs';
 const WINDOWY = ['vk-asm', 'vk-tree', 'vk-code', 'vk-term', 'vk-bytes', 'vk-diff'];
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 

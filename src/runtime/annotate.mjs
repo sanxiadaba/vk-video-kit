@@ -6,7 +6,7 @@
  *   <vk-annotate mode="note" note="bubble" for="#code@line:7">这里越界</vk-annotate>
  *   <vk-annotate mode="badge" for="#code@line:7" n="1"></vk-annotate>
  *
- * 旧标签 vk-edge / vk-pin / vk-ring 是别名：同一个类，`static legacy` 把 mode
+ * vk-edge 是箭头形态的独立入口：同一个类，`static legacy` 把 mode
  * 固定在 arrow / note / circle，读的仍然是旧词表（variant / stroke / arrow / cap…）。
  * 所以旧页面的 DOM、坐标、CSS 全部照旧；合并只发生在"谁在画"这一层。
  *
@@ -105,64 +105,6 @@ function anchorsOf(el, host) {
     .map((expr) => anchorOf(host, expr, el))
     // 隐藏 / 零尺寸的目标没有可画的盒子；不要把它画到 (0,0)。
     .filter((a) => a && a.el && a.el.getClientRects().length);
-}
-
-/**
- * 压暗：目标之外全部退后。vk-ring 的 variant="dim" 走这一条，vk-annotate
- * 的 circle 形态不暴露它（圈选是"画一圈"，压暗是另一件事，旧标签留着）。
- */
-/**
- * 压暗：目标之外全部退后。旧 vk-ring 的 variant="dim" 走这一条（别名保留），
- * vk-annotate 的 circle 形态不暴露它（圈选是"画一圈"，压暗是另一件事）。
- */
-export function applyDim(self) {
-  const host = hostOf(self);
-  if (!host) return;
-  if (getComputedStyle(host).position === 'static') host.style.position = 'relative';
-  const hr = host.getBoundingClientRect();
-  if (hr.width < 1 || hr.height < 1) return;
-  // 上一轮退后的兄弟要还原，否则重复渲染会越叠越暗
-  for (const el of self._dimmed || []) el.style.removeProperty('opacity');
-  self._dimmed = [];
-
-  const targets = anchorsOf(self, host);
-  if (!targets.length) {
-    self._warnOnce('target', '找不到 for 目标，聚光没有生效');
-    return;
-  }
-  self.style.zIndex = String(numAttr(self, 'z', { min: 0, max: 99, fallback: 30 }));
-  const dim = numAttr(self, 'dim', { min: 0, max: 1, fallback: 0.45 });
-  const keepSel = (self.getAttribute('keep') || '').split(';').map((s) => s.trim()).filter(Boolean);
-  const keep = new Set();
-  for (const sel of keepSel) {
-    try {
-      for (const el of host.querySelectorAll(sel)) keep.add(el);
-    } catch {
-      /* 选择器写错就当没写，不炸页面 */
-    }
-  }
-  const targetEls = new Set(targets.map((t) => t.el));
-  const skip = (el) => el.hasAttribute('data-vk-overlay') || el.matches('vk-edge, vk-pin, vk-ring, vk-annotate');
-  const kept = (el) => skip(el) || keep.has(el) || [...keep].some((k) => el.contains(k));
-
-  const seen = new Set();
-  for (const a of targets) {
-    let node = a.el;
-    while (node && node !== host && node.parentElement) {
-      for (const sib of node.parentElement.children) {
-        if (sib === node || sib.contains(a.el) || seen.has(sib) || kept(sib)) continue;
-        // 兄弟里还装着别的目标（多目标聚光）就也留着
-        if ([...targetEls].some((t) => sib.contains(t))) continue;
-        seen.add(sib);
-        sib.style.opacity = String(dim);
-        self._dimmed.push(sib);
-      }
-      node = node.parentElement;
-    }
-  }
-  // 目标自身挂上 focus 姿态，让审计与度量看得见
-  for (const el of targetEls) el.setAttribute('data-vk-focus', '');
-  self._targets = targetEls;
 }
 
 /* ------------------------------------------------------------------ 组件 */
@@ -676,12 +618,6 @@ export class VkAnnotate extends VkElement {
 
   _drawCircle() {
     const cfg = this._ringConfig();
-    // 圈选与压暗本来就是一件事的两种长相：都是"看这里"，一个画框、一个压暗兄弟。
-    // 压暗只在旧 vk-ring 的 variant="dim" 上存在。
-    if (cfg.figure === 'dim') {
-      applyDim(this);
-      return;
-    }
     if (this._frame() === null) return;
     if (!this._svg) return;
     this._svg.replaceChildren();

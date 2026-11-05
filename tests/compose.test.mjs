@@ -1,6 +1,6 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
@@ -14,13 +14,13 @@ import { startServer } from '../cli/serve.mjs';
  *   · 覆盖层（ring/pin/loupe）不遮住正文
  */
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const errors = [];
 page.on('pageerror', (e) => errors.push(e.message));
 
 after(async () => {
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 
@@ -47,8 +47,8 @@ test('代码 + 窗口 + 标注：覆盖层不遮正文', async () => {
     <vk-text size="title" weight="bold">一行 include 变成五万字节</vk-text>
     <vk-code lang="c" numbers="all">#include &lt;stdio.h&gt;
 int main(void) { return 0; }</vk-code>
-    <vk-ring for="vk-code .vk-line:nth-child(1)" variant="rect"></vk-ring>
-    <vk-pin for="vk-code" side="right">这一行把整个头文件拉进来</vk-pin>
+    <vk-annotate mode="circle" ring="rect" for="vk-code .vk-line:nth-child(1)"></vk-annotate>
+    <vk-note variant="bubble" for="vk-code" side="right">这一行把整个头文件拉进来</vk-note>
   `);
   assert.deepEqual(errors, []);
   assert.deepEqual(r.issues, []);
@@ -82,13 +82,13 @@ test('数据 + 指标 + 条形：grid 里不抢宽', async () => {
 
 test('长文 + 外壳 + 列表：不溢出安全区', async () => {
   const r = await mount(`
-    <vk-window chrome="min" title="main.c">
+    <vk-panel chrome="dots" title="main.c">
       <vk-list variant="bullet" gap="sm">
         <li>预处理器把 #include 展开成五万字节</li>
         <li>编译器把它变成汇编</li>
         <li>汇编器把汇编变成机器码</li>
       </vk-list>
-    </vk-window>
+    </vk-panel>
     <vk-text size="body" ink="secondary">变的一直是工具，不是这五步。</vk-text>
   `);
   assert.deepEqual(errors, []);

@@ -72,7 +72,7 @@
    直径 / 间距 / 窗头高度都由 --vk-chrome-* 驱动，并随 mass 缩放：
    compact 12 / normal 16 / hero 20（窗头 56 / 72 / 88）。
    三档的具体值在 tokens.css 的 --vk-chrome-*-{mass} 里；
-   这里只做"这一档读哪一组"，所以 vk-legacy 改一组值就能整体回退。 */
+   这里只做"这一档读哪一组"，所以改一组值就能整体调整。 */
 .vk-dots {
   display: inline-flex;
   align-items: center;
@@ -120,7 +120,7 @@
 
 /* 文件名是标题栏里唯一要读的字。字号跟 caption 档走（48），
    但小体量的窗头只有 56 高，chip 与字号都要跟着收一档，否则会顶出标题栏。
-   三档的高度与字号在 tokens.css 的 --vk-file-* 里，legacy 可整体回退。 */
+   三档的高度与字号在 tokens.css 的 --vk-file-* 里，可整体调整。 */
 .vk-win[data-mass='compact'] .vk-file {
   height: var(--vk-file-h-compact);
   padding: 0 10px 0 3px;
@@ -240,11 +240,8 @@
   display: none;
 }
 
-/* ------------------------------------------------------------ vk-window */
-/* 窗的公开标签：与 code / term / diff 共用同一个 .vk-win，不嵌套。 */
-vk-window { display: block; }
 /* 标题是窗头里唯一可伸缩的东西：宽不够时先缩它，再省略。 */
-vk-window .vk-file { flex: 0 1 auto; max-width: 100%; }
+.vk-win .vk-file { flex: 0 1 auto; max-width: 100%; }
 
 .vk-win-tag { overflow: hidden; border-top: 0 solid transparent; }
 .vk-win-tag[data-tone] { border-top-width: 4px; }

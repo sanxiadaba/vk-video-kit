@@ -1,10 +1,10 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 
 /**
- * 库级默认值（本批）：
+ * 库级默认值：
  *   1. vk-flow / vk-annotate 的箭头按容器高缩放，28–64；arrow-label 挂中轴词；
  *   2. vk-label variant="tag" 是 36px / .08em / 无底无框；
  *   3. vk-pair tone-a / tone-b 左右分色；
@@ -16,7 +16,7 @@ import { startServer } from '../cli/serve.mjs';
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 const logs = [];
 
@@ -42,7 +42,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 

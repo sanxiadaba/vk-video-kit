@@ -90,7 +90,7 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
     ['<vk-box w="50%"></vk-box>', /不是数字/],
     ['<vk-box w="-10"></vk-box>', /超出/],
     ['<vk-code lang="c" src="hello.c" typo="x"></vk-code>', /未知属性 typo/],
-    ['<vk-icon name="not-a-real-icon"></vk-icon>', /没有图标/],
+    ['<vk-text icon="not-a-real-icon">x</vk-text>', /没有图标/],
     ['<vk-text mono="false">x</vk-text>', /布尔属性/],
     ['<vk-canvas layout="flow"></vk-canvas>', /未知属性 layout/],
     ['<vk-page w="800"></vk-page>', /未知属性 w/],
@@ -100,12 +100,11 @@ test('构建期拒绝未知枚举、越界数字、未知属性、未知图标�
   }
 });
 
-test('图标构建期内联，未知图标仍然报错', async () => {
-  // 用白名单里的名字：装饰性图标（terminal / rocket …）现在会在构建期被拒。
-  const out = await transformHtml('<vk-icon name="circle-check"></vk-icon>', { file: 'icon.html', highlighter: hl });
-  assert.ok(out.html.includes('data-vk-inline'));
-  assert.ok(out.html.includes('data-vk-name="circle-check"'));
-  assert.ok(out.html.includes('<svg'));
+test('图标名进页面图标表，未知图标仍然报错', async () => {
+  // 用白名单里的名字：装饰性图标（terminal / rocket …）会在构建期被拒绝。
+  const out = await transformHtml('<vk-text icon="circle-check">对</vk-text>', { file: 'icon.html', highlighter: hl });
+  assert.ok(out.html.includes('data-vk-icons'));
+  assert.ok(out.html.includes('"circle-check"'));
 });
 
 test('tree current 必须存在', async () => {
@@ -139,13 +138,13 @@ test('源码里的 < 未转义时明确报错，不静默吞掉', async () => {
 test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套都在构建期报错', async () => {
   const cases = [
     ['<vk-nope></vk-nope>', /未知标签 <vk-nope>/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#nope">x</vk-pin>', /找不到 #nope/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@cell:9">x</vk-pin>', /越界/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@line:1">x</vk-pin>', /不支持 @line/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@point:120,50">x</vk-pin>', /0–100/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@side:middle">x</vk-pin>', /@side/],
-    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@region:10,10,20">x</vk-pin>', /@region/],
-    ['<vk-window><vk-code chrome="min">x</vk-code></vk-window>', /两条窗头/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#nope">x</vk-note>', /找不到 #nope/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@cell:9">x</vk-note>', /越界/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@line:1">x</vk-note>', /不支持 @line/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@point:120,50">x</vk-note>', /0–100/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@side:middle">x</vk-note>', /@side/],
+    ['<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@region:10,10,20">x</vk-note>', /@region/],
+    ['<vk-panel chrome="dots"><vk-code chrome="min">x</vk-code></vk-panel>', /两条窗头/],
     ['<vk-bars><li label="a"></li></vk-bars>', /缺数字 value/],
   ];
   for (const [html, re] of cases) {
@@ -155,10 +154,10 @@ test('引用关系：未知标签、找不到 id、锚点越界、窗头嵌套�
 
 test('引用关系：合法锚点不报错', async () => {
   const html =
-    '<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-pin for="#c@cell:1">x</vk-pin>' +
-    '<vk-pin for="#c@point:50%,100%">y</vk-pin>' +
-    '<vk-pin for="#c@side:right">z</vk-pin>' +
-    '<vk-pin for="#c@region:10%,10%,40%,40%">w</vk-pin>';
+    '<vk-cells id="c"><li value="1"></li><li value="2"></li></vk-cells><vk-note variant="bubble" for="#c@cell:1">x</vk-note>' +
+    '<vk-note variant="bubble" for="#c@point:50%,100%">y</vk-note>' +
+    '<vk-note variant="bubble" for="#c@side:right">z</vk-note>' +
+    '<vk-note variant="bubble" for="#c@region:10%,10%,40%,40%">w</vk-note>';
   const out = await transformHtml(html, { file: 'refs-ok.html', highlighter: hl });
   assert.ok(out.html.includes('id="c"'));
 });
@@ -247,9 +246,9 @@ test('inline lines：内联源码也按 lines 切', async () => {
 test('for 多目标：分号分隔，逐个校验', async () => {
   const html =
     '<vk-cells id="c"><li value="1"></li></vk-cells><vk-text id="t">x</vk-text>' +
-    '<vk-ring for="#c@side:right;#t@point:50%,50%"></vk-ring>';
+    '<vk-annotate mode="circle" for="#c@side:right;#t@point:50%,50%"></vk-annotate>';
   const out = await transformHtml(html, { file: 'multi-for.html', highlighter: hl });
-  assert.ok(out.html.includes('vk-ring'));
+  assert.ok(out.html.includes('vk-annotate'));
 });
 
 test('timeline lanes：lane 不在声明里直接报错', async () => {
@@ -275,20 +274,8 @@ after(() => fs.rmSync(dir, { recursive: true, force: true }));
 
 test('多余的闭合标签在构建期就报错（浏览器会默默丢掉它）', async () => {
   await assert.rejects(
-    () => transformHtml('<vk-page><vk-text>一段字</vk-text></vk-window></vk-page>', { file: 'stray.html', highlighter: hl }),
+    () => transformHtml('<vk-page><vk-text>一段字</vk-text></vk-panel></vk-page>', { file: 'stray.html', highlighter: hl }),
     /多余的闭合标签/
-  );
-});
-
-test('keep 写了已删的标签，构建期就报错', async () => {
-  // demo 第 9 帧的"半页灰"就是这一条：keep="vk-title"，标签删了，运行期静默跳过。
-  await assert.rejects(
-    () =>
-      transformHtml(
-        '<vk-page><vk-text id="a">字</vk-text><vk-ring for="#a" variant="dim" keep="vk-title"></vk-ring></vk-page>',
-        { file: 'keep.html', highlighter: hl }
-      ),
-    /keep="vk-title" 匹配不到任何元素/
   );
 });
 

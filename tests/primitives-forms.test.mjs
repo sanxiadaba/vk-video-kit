@@ -1,24 +1,17 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { transformHtml } from '../src/highlight.mjs';
 
 /**
- * 减法第一波：六个"能被更基础标签替代"的标签并掉，旧名保留为别名。
+ * 基础原语各自的形态：图标、描边环、贴块标签、气泡注解、窗头分区。
  *
- *   vk-icon    → vk-text（icon="名称"）
- *   vk-rule    → vk-box（border="hair" / 1px 高的面）
- *   vk-caption → vk-label（for + anchor）
- *   vk-pin     → vk-note（variant="bubble"）
- *   vk-ring    → vk-box（ring）
- *   vk-window  → vk-panel（chrome="dots"）
- *
- * 每个新属性至少一条断言；旧名再验一次"还能用 + 构建期有一条迁移提示"。
+ * 每个形态至少一条断言：这些是标签自己的属性，不是另一个标签。
  */
 
 const { base, close: closeServer } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 
 async function open(body) {
@@ -40,7 +33,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await closeServer();
 });
 
@@ -172,38 +165,33 @@ test('vk-label side：top / bottom 换方向', async () => {
   assert.equal(r.anchor, 'bottom');
 });
 
-test('vk-note variant="bubble"：泡 + 引线与旧 vk-pin 同几何', async () => {
+test('vk-note variant="bubble"：泡 + 引线的几何', async () => {
   const tab = await open(`
 <vk-canvas w="1200" h="600">
   <vk-box id="t" x="200" y="180" w="420" h="180" surface="soft" border="hair" radius="lg" pad="md">
     <vk-text size="subhead" mono>s[5]</vk-text>
   </vk-box>
   <vk-note id="n" variant="bubble" for="#t@side:right" side="right" n="1" tone="warn">这里越界</vk-note>
-  <vk-pin id="p" for="#t@side:right" side="right" n="1" tone="warn">这里越界</vk-pin>
 </vk-canvas>`);
   const r = await tab.evaluate(() => {
-    const box = (sel) => document.querySelector(sel).getBoundingClientRect().toJSON();
-    const q = (id) => document.querySelector(id);
+    const q = (sel) => document.querySelector(sel);
+    const rect = (sel) => q(sel).getBoundingClientRect().toJSON();
     return {
-      bubble: box('#n .vk-pin-bd'),
-      pin: box('#p .vk-pin-bd'),
-      bubbleText: q('#n .vk-pin-t').textContent.trim(),
-      pinText: q('#p .vk-pin-t').textContent.trim(),
-      bubbleLeader: !!q('#n .vk-pin-leader'),
-      pinLeader: !!q('#p .vk-pin-leader'),
+      bubble: rect('#n .vk-pin-bd'),
+      target: rect('#t'),
+      text: q('#n .vk-pin-t').textContent.trim(),
+      leader: !!q('#n .vk-pin-leader'),
       variant: q('#n').dataset.variant,
-      alias: q('#p').dataset.vkAlias,
+      side: q('#n').dataset.side,
       badge: q('#n .vk-pin-n').textContent.trim(),
     };
   });
-  for (const k of ['left', 'top', 'width', 'height']) {
-    assert.ok(Math.abs(r.bubble[k] - r.pin[k]) <= 1, `气泡 ${k} 应与旧 vk-pin 一致：${r.bubble[k]} vs ${r.pin[k]}`);
-  }
-  assert.equal(r.bubbleText, '这里越界');
-  assert.equal(r.pinText, '这里越界');
-  assert.ok(r.bubbleLeader && r.pinLeader, '两者都该有引线');
   assert.equal(r.variant, 'bubble', 'variant 落到 data-variant');
-  assert.equal(r.alias, 'vk-note', '旧名自己标明转发给谁');
+  assert.equal(r.side, 'right', 'side 落到 data-side');
+  assert.ok(r.bubble.left > r.target.right, `气泡应在目标右侧：${r.bubble.left} vs ${r.target.right}`);
+  assert.ok(Math.abs(r.bubble.top + r.bubble.height / 2 - (r.target.top + r.target.height / 2)) <= 2, '气泡与目标同高');
+  assert.equal(r.text, '这里越界');
+  assert.ok(r.leader, '气泡要有引线');
   assert.equal(r.badge, '1', '编号 n 仍是编号');
 });
 
@@ -233,61 +221,4 @@ test('vk-panel chrome="dots"：三点窗头与标题带', async () => {
   assert.equal(r.title, 'main.c', '标题仍在标题带里');
   assert.ok(r.hdH >= 60, `窗头应按窗的令牌撑高，实际 ${r.hdH}`);
   assert.equal(r.border, '2px', '窗体要有窗的边框');
-});
-
-test('六个旧标签是别名：转发到新标签并给一条构建期提示', async () => {
-  // 构建期：每条旧名一条迁移提示，不拦构建。
-  const warn = console.warn;
-  const got = [];
-  console.warn = (...a) => got.push(a.join(' '));
-  try {
-    await transformHtml(
-      `<vk-page><vk-box id="a" pad="md"><vk-text size="body">目标</vk-text></vk-box>
-        <vk-icon name="check"></vk-icon><vk-rule></vk-rule>
-        <vk-window title="main.c"><vk-text size="body">窗</vk-text></vk-window>
-        <vk-caption for="#a">注</vk-caption><vk-pin for="#a">注</vk-pin><vk-ring for="#a"></vk-ring></vk-page>`,
-      { file: 'aliases.html' }
-    );
-  } finally {
-    console.warn = warn;
-  }
-  const log = got.join('\n');
-  assert.match(log, /已合并到/, '旧标签要有一条迁移提示');
-  assert.match(log, /旧名保留/, '提示要说清旧名仍然可用');
-
-  // 运行期：六个旧名都还有自己的 DOM 与行为。
-  const tab = await open(`
-<vk-canvas w="1200" h="600">
-  <vk-box id="a" x="200" y="160" w="360" h="160" surface="soft" border="hair" radius="lg" pad="md">
-    <vk-text size="body">目标</vk-text>
-  </vk-box>
-  <vk-icon id="i" name="check" size="lg"></vk-icon>
-  <vk-rule id="r"></vk-rule>
-  <vk-window id="w" title="main.c"><vk-text size="body">窗里的内容</vk-text></vk-window>
-  <vk-caption id="c" for="#a">注</vk-caption>
-  <vk-pin id="p" for="#a" side="right">注</vk-pin>
-  <vk-ring id="g" for="#a" variant="rect" pad-px="8"></vk-ring>
-</vk-canvas>`);
-  const r = await tab.evaluate(() => {
-    const q = (s) => document.querySelector(s);
-    const rect = (el) => el.getBoundingClientRect();
-    return {
-      aliases: ['#i', '#r', '#w', '#c', '#p', '#g'].map((s) => q(s)?.dataset.vkAlias),
-      iconSvg: !!q('#i .vk-icon svg'),
-      ruleH: rect(q('#r')).height,
-      winBd: !!q('#w .vk-win-bd'),
-      caption: q('#c .vk-caption')?.textContent.trim(),
-      pinBd: !!q('#p .vk-pin-bd'),
-      ringW: rect(q('#g')).width,
-      targetW: rect(q('#a')).width,
-    };
-  });
-  assert.deepEqual(r.aliases, ['vk-text', 'vk-box', 'vk-panel', 'vk-label', 'vk-note', 'vk-box']);
-  assert.ok(r.iconSvg, 'vk-icon 仍画出图标');
-  assert.ok(r.ruleH > 0 && r.ruleH <= 4, `vk-rule 是一条 1px 级的线，实际 ${r.ruleH}`);
-  assert.ok(r.winBd, 'vk-window 仍有窗壳');
-  assert.equal(r.caption, '注', 'vk-caption 仍是一行归属说明');
-  assert.ok(r.pinBd, 'vk-pin 仍有气泡');
-  // 一个环 = 目标盒 + 两侧 pad-px（8）。
-  assert.ok(Math.abs(r.ringW - (r.targetW + 16)) <= 1, `vk-ring 应套住目标：${r.ringW} vs ${r.targetW}+16`);
 });

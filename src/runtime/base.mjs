@@ -1183,7 +1183,7 @@ VK.ready = async () => {
     await Promise.all([...VK._defs].map((n) => customElements.whenDefined(n)));
   }
 
-  // 别名也在等：旧页写 <vk-pin> 时，它和本体一样要渲染完。
+  // 自定义元素定义完不等于渲染完：字体、fetch、嵌套布局都要等到画面安静。
   const tags = ALL_TAG_NAMES.join(',');
   const unready = () =>
     [...document.querySelectorAll(tags)].some((el) => el.isConnected && typeof el.paint === 'function' && !el._done);

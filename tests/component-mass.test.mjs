@@ -1,19 +1,19 @@
 import test, { after } from 'node:test';
 import assert from 'node:assert/strict';
-import { chromium } from 'playwright-core';
+import { closeBrowser, launchBrowser } from './lib/browser-exit.mjs';
 import { startServer } from '../cli/serve.mjs';
 import { createVkHighlighter, transformHtml } from '../src/highlight.mjs';
 
 /**
- * demo 为塞进一页被迫"绕过"的四个能力缺口。
+ * 组件体量：字号档、角标、行高与气泡对比度。
  *
- * 四处绕过的共同点：页内 CSS 补了库本该有的东西。
+ * 四处共同点：这些本应是库的属性，而不是页内 CSS。
  * 这里逐条把它们变回库的属性，并且只断言观众能看见的那一层：
  * 字号档、角标与图像的重叠、行高与竖裁、气泡的不透明度与对比度。
  */
 
 const { base, close } = await startServer({ port: 0, root: '_site', transform: false });
-const browser = await chromium.launch({ channel: 'msedge' }).catch(() => chromium.launch());
+const browser = await launchBrowser({ channel: 'msedge' }).catch(() => launchBrowser());
 const opened = [];
 const hl = await createVkHighlighter(['c']);
 
@@ -39,7 +39,7 @@ async function open(body) {
 
 after(async () => {
   for (const ctx of opened) await ctx.close().catch(() => {});
-  await browser.close();
+  await closeBrowser(browser);
   await close();
 });
 
@@ -121,77 +121,6 @@ test('vk-compare：label-position="top" 时角标在图像内容区之外，默�
   );
 });
 
-/* ----------------------------------------------------------------- window */
-
-const DIFF = `-    char a;
-+    char b;`;
-
-test('vk-window：mass 三档真正压到 diff 行高，compact 不竖裁', async () => {
-  const win = (mass) =>
-    `<vk-window id="${mass}" mass="${mass}" chrome="none" pad="md"><vk-diff chrome="none" numbers="none" summary="none">${DIFF}</vk-diff></vk-window>`;
-  const { tab } = await open(win('compact') + win('normal') + win('hero'));
-  const r = await tab.evaluate(() => {
-    const read = (id) => {
-      const host = document.getElementById(id);
-      const diff = host.querySelector('vk-diff');
-      const lines = [...host.querySelectorAll('.vk-dline')];
-      const lens = lines.map((l) => {
-        const a = l.getBoundingClientRect();
-        const src = l.querySelector('.vk-dsrc').getBoundingClientRect();
-        return {
-          h: a.height,
-          inside: src.top >= a.top - 0.5 && src.bottom <= a.bottom + 0.5,
-          scroll: l.scrollHeight - l.clientHeight,
-        };
-      });
-      return {
-        win: host.getBoundingClientRect().height,
-        diff: diff.getBoundingClientRect().height,
-        line: lens[0].h,
-        inside: lens.every((x) => x.inside),
-        scroll: Math.max(...lens.map((x) => x.scroll)),
-      };
-    };
-    return { compact: read('compact'), normal: read('normal'), hero: read('hero') };
-  });
-
-  assert.ok(
-    r.compact.diff < r.normal.diff && r.normal.diff < r.hero.diff,
-    `同一份 diff 的三档高度必须严格递增：${r.compact.diff} / ${r.normal.diff} / ${r.hero.diff}`
-  );
-  assert.ok(
-    r.compact.win < r.normal.win && r.normal.win < r.hero.win,
-    `窗的总高也要跟着变：${r.compact.win} / ${r.normal.win} / ${r.hero.win}`
-  );
-  // 15.x：56px 字下三档行高 = max(58/70/88, 56 × 1.35/1.55/1.9) → 76 / 87 / 106。
-  assert.equal(Math.round(r.compact.line), 76, `compact 的 diff 行高应是 76：${r.compact.line}`);
-  assert.equal(Math.round(r.normal.line), 87, `normal 是 87：${r.normal.line}`);
-  assert.equal(Math.round(r.hero.line), 106, `hero 是 106：${r.hero.line}`);
-  // 竖裁：行盒比字矮时字会被 overflow:hidden 切掉上下沿。
-  assert.ok(r.compact.inside, 'compact 下正文必须完整落在行盒里');
-  assert.ok(r.compact.scroll <= 3, `compact 行盒的纵向溢出应可忽略：${r.compact.scroll}`);
-});
-
-test('vk-window：窗的 mass 也传给代码行（vk-code 不写自己的 mass 时跟随窗）', async () => {
-  const code = (mass) =>
-    `<vk-window id="c-${mass}" mass="${mass}" chrome="none" pad="md"><vk-code lang="c" chrome="none">${`int main(void) { return 0; }`}</vk-code></vk-window>`;
-  const { tab } = await open(code('compact') + code('normal') + code('hero'));
-  const r = await tab.evaluate(() => {
-    const h = (mass) => {
-      const host = document.getElementById('c-' + mass);
-      const line = host.querySelector('.vk-line');
-      const b = line.getBoundingClientRect();
-      return { h: b.height, fs: parseFloat(getComputedStyle(line).fontSize) };
-    };
-    return { compact: h('compact'), normal: h('normal'), hero: h('hero') };
-  });
-  assert.ok(
-    r.compact.h < r.normal.h && r.normal.h < r.hero.h,
-    `代码行高必须随窗的体量递增：${r.compact.h} / ${r.normal.h} / ${r.hero.h}`
-  );
-  assert.ok(r.compact.h >= r.compact.fs, `compact 行高不能小于字号（否则竖裁）：${r.compact.h} vs ${r.compact.fs}`);
-});
-
 /* -------------------------------------------------------------------- pin */
 
 /** 相对亮度与对比度：和 audit.mjs 算法一致（WCAG AA）。 */
@@ -213,7 +142,7 @@ test('vk-pin：strength="solid" 在深色底上不透明，文字/背景对比�
   const { tab } = await open(`
     <vk-canvas w="1200" h="480">
       <vk-box id="screen" x="40" y="80" w="680" h="320" style="background:#0d1117"></vk-box>
-      <vk-pin id="p" for="#screen" strength="solid" w="260">越界写越界</vk-pin>
+      <vk-note variant="bubble" id="p" for="#screen" strength="solid" w="260">越界写越界</vk-note>
     </vk-canvas>`);
   const r = await tab.evaluate(() => {
     const host = document.getElementById('p');
@@ -252,9 +181,9 @@ test('vk-pin：w=240 的短批注按内容自适应到不折行，长批注封�
   const { tab } = await open(`
     <vk-canvas w="1200" h="420">
       <vk-box id="t" x="40" y="60" w="400" h="280"></vk-box>
-      <vk-pin id="short" for="#t" side="right" w="240">短批注三个字</vk-pin>
-      <vk-pin id="num" for="#t" side="right" w="240" n="1">越界</vk-pin>
-      <vk-pin id="long" for="#t" side="right" w="240">${long}</vk-pin>
+      <vk-note variant="bubble" id="short" for="#t" side="right" w="240">短批注三个字</vk-note>
+      <vk-note variant="bubble" id="num" for="#t" side="right" w="240" n="1">越界</vk-note>
+      <vk-note variant="bubble" id="long" for="#t" side="right" w="240">${long}</vk-note>
     </vk-canvas>`);
   const r = await tab.evaluate(() => {
     const read = (id) => {
