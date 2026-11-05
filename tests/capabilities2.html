@@ -122,3 +122,18 @@ ok
     </vk-table>
   </vk-stack>
 </vk-page>
+
+<vk-page id="onlay">
+  <vk-stack gap="normal">
+    <vk-label counter="12">层 · 图上压一条说明</vk-label>
+    <vk-text size="subhead">图自己撑出盒子，说明叠在<em>上面</em>。</vk-text>
+    <vk-layer surface="paper">
+      <vk-img src="../assets/hello/asm-o0.png" alt="真实截图" ratio="30 / 9" fill="contain"></vk-img>
+      <vk-stack justify="end">
+        <vk-box surface="paper" pad="normal">
+          <vk-text size="body">真实截图，字垫了实底。</vk-text>
+        </vk-box>
+      </vk-stack>
+    </vk-layer>
+  </vk-stack>
+</vk-page>
