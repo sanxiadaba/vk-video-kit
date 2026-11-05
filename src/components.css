@@ -1325,13 +1325,13 @@ vk-label[variant='chip'] .vk-label-t,
 .vk-win > .vk-hd,
 .vk-diff-row,
 .vk-bar > .vk-bar-track,
-.vk-tl-item,
 .vk-compare-pane,
 vk-table tbody tr[tone] td {
   --vk-focus: var(--vk-focus-paper);
   --vk-ink-1: var(--vk-on-paper-1);
   --vk-ink-2: var(--vk-on-paper-2);
   --vk-ink-3: var(--vk-on-paper-3);
+  color: var(--vk-on-paper-1);
 }
 
 /* 深色页上的表格线：纸面发丝线在近黑上看不见，换成暗色系的线。 */
@@ -1342,4 +1342,36 @@ vk-box[surface='dark'] vk-table td,
 vk-layer[surface='dark'] vk-table th,
 vk-layer[surface='dark'] vk-table td {
   border-bottom-color: var(--vk-dark-rule);
+}
+
+/* ------------------------------------------------------------------ 深色页 · 流程件
+   步骤章、时间线、横条槽都按纸面设计的颜色，深色页上要换一套。 */
+vk-page[surface='dark'] .vk-step-n,
+vk-box[surface='dark'] .vk-step-n,
+vk-layer[surface='dark'] .vk-step-n {
+  border-color: var(--vk-dark-rule);
+  color: var(--vk-dark-fg2);
+}
+vk-page[surface='dark'] .vk-step[state='current'] > .vk-step-n,
+vk-box[surface='dark'] .vk-step[state='current'] > .vk-step-n,
+vk-layer[surface='dark'] .vk-step[state='current'] > .vk-step-n {
+  background: var(--vk-dark-accent);
+  border-color: var(--vk-dark-accent);
+  color: var(--vk-dark-bg);
+}
+vk-page[surface='dark'] .vk-step[data-done] > .vk-step-n,
+vk-box[surface='dark'] .vk-step[data-done] > .vk-step-n,
+vk-layer[surface='dark'] .vk-step[data-done] > .vk-step-n {
+  border-color: var(--vk-dark-ok);
+  color: var(--vk-dark-ok);
+}
+vk-page[surface='dark'] .vk-bar > .vk-bar-track,
+vk-box[surface='dark'] .vk-bar > .vk-bar-track,
+vk-layer[surface='dark'] .vk-bar > .vk-bar-track {
+  background: var(--vk-dark-rule);
+}
+vk-page[surface='dark'] .vk-tl-date,
+vk-box[surface='dark'] .vk-tl-date,
+vk-layer[surface='dark'] .vk-tl-date {
+  color: var(--vk-dark-meta);
 }
