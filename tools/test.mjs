@@ -359,7 +359,7 @@ let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/darks.html', 'tests/relations.html', 'tests/behaviour.html', 'episodes', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/darks.html', 'tests/relations.html', 'tests/recipes.html', 'tests/behaviour.html', 'episodes', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);

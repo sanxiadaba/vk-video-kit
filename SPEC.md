@@ -164,6 +164,75 @@ s[0] = 'H';
 **铺满整帧的图是背景**：`vk-img[bleed="all"]` 会绝对定位铺满画布，内容自动压在它上面。
 但图上的字必须在实底上（`vk-box surface="paper"`）—— 库不提供遮罩，别把正文直接压在照片上。
 
+
+## 7.5 配方
+
+五个最常用的组合。每一段都能直接贴进页面，渲染出来是干净的（`tests/recipes.html` 就是这五段）。
+
+**封面：左边标题，右边一张图**
+
+```html
+<vk-page id="1-cover">
+  <vk-grid cols="12" gap="normal">
+    <vk-stack span="6" gap="normal" justify="center">
+      <vk-label counter="1 / 8">第 6 集 · 编译链路</vk-label>
+      <vk-text size="subhead">从 .c 到 .exe，<br>中间发生了什么。</vk-text>
+    </vk-stack>
+    <vk-img span="6" src="../assets/hello/asm-o0.png" ratio="4 / 3" fill="contain" radius="md"></vk-img>
+  </vk-grid>
+</vk-page>
+```
+
+**代码 + 圈住一行**
+
+```html
+<vk-page id="2-code">
+  <vk-stack gap="normal">
+    <vk-label counter="2 / 8">代码 + 圈住一行</vk-label>
+    <vk-text size="subhead">关键就在<em>这一行</em>。</vk-text>
+    <vk-code id="c" lang="c" file="sum.c" src="../code/opt/sum.c" lines="1-3" current="2"></vk-code>
+  </vk-stack>
+  <vk-callout mode="ring" for="#c@line:2" tone="focus"></vk-callout>
+</vk-page>
+```
+
+**前后对照**
+
+```html
+<vk-pair symbol="vs">
+  <vk-code lang="c" file="a.c">…顺序访问…</vk-code>
+  <vk-code lang="c" file="b.c">…随机访问…</vk-code>
+</vk-pair>
+```
+
+**表格 + 一句结论**
+
+```html
+<vk-stack gap="normal">
+  <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
+  <vk-table variant="spec">
+    <table>
+      <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
+      <tr><td>L1</td><td>32 KB</td><td>1ns</td></tr>
+      <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+    </table>
+  </vk-table>
+  <vk-text size="caption" ink="muted">差两个数量级。</vk-text>
+</vk-stack>
+```
+
+**深色章节页**
+
+```html
+<vk-page id="5-chapter" surface="dark">
+  <vk-stack gap="wide">
+    <vk-label counter="5 / 8">第二章</vk-label>
+    <vk-text size="display">数据在哪，<br>决定它多快。</vk-text>
+    <vk-text size="body" ink="secondary">从缓存行到数组，从 1ns 到 100ns。</vk-text>
+  </vk-stack>
+</vk-page>
+```
+
 ## 8 内容从哪来
 
 **真实文本是唯一真相。** 两种写法，二选一：
