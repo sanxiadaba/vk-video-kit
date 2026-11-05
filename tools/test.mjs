@@ -81,6 +81,33 @@ for (const tag of TAG_NAMES) {
 }
 ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
 
+/* 同一选择器在两个 CSS 文件里写同一属性 = 后加载的静默覆盖前者，改一处另一处就变成谎。
+   （上一轮"层不会叠"的误判，就是因为没先看清规则写在哪个文件。） */
+{
+  const files = ['base.css', 'layout.css', 'components.css', 'callout.css'];
+  const map = new Map();
+  for (const f of files) {
+    const css = fs.readFileSync(path.join(ROOT, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
+    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
+      const sel = m[1].trim().replace(/\s+/g, ' ');
+      if (!sel || sel.startsWith('@') || sel.includes('%')) continue;
+      const decls = new Set(m[2].split(';').map((d) => d.split(':')[0].trim()).filter(Boolean));
+      const cur = map.get(sel) || [];
+      cur.push({ f, decls });
+      map.set(sel, cur);
+    }
+  }
+  const clashes = [];
+  for (const [sel, list] of map) {
+    if (list.length < 2) continue;
+    const owners = new Map();
+    for (const { f, decls } of list) for (const d of decls) owners.set(d, (owners.get(d) || new Set()).add(f));
+    for (const [prop, fs2] of owners) if (fs2.size > 1) clashes.push(`${sel} { ${prop} } → ${[...fs2].join(' / ')}`);
+  }
+  ok(map.size > 200 && !clashes.length, '样式规则没有跨文件冲突');
+  for (const c of clashes.slice(0, 5)) console.error('    · ' + c);
+}
+
   /* 文档漂移：CLI 上的每条命令、每个开关都得在 SPEC 里出现，否则作者看不到。 */
   {
     const bin = fs.readFileSync(path.join(ROOT, 'bin', 'vk.mjs'), 'utf8');
