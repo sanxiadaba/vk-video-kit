@@ -358,6 +358,50 @@ if (cmd === 'render' || cmd === 'check') {
   }
   const bad = report.some((r) => r.errors?.length || r.frames.some((f) => f.issues.length) || r.ready === false);
   process.exitCode = failed || bad ? 1 : 0;
+} else if (cmd === 'stats') {
+  // 一集的"体检表"：帧数、有主张的帧、占版心、焦点数、用到的件。
+  if (!inputs.length) {
+    console.error('用法：vk stats <file|dir>');
+    process.exit(2);
+  }
+  ensureLibrary();
+  publish();
+  const files = inputs.flatMap((i) => (fs.existsSync(i) ? collect(i) : []));
+  const built = [];
+  for (const f of files) {
+    const r = await buildPage(f);
+    if (r.ok) built.push(r);
+    else console.error(`✗ ${path.relative(ROOT, r.file)}\n  ${r.errors.join('\n  ')}`);
+  }
+  const browser = await launch();
+  try {
+    for (const b of built) {
+      const session = await openPage(browser, 'file:///' + b.out.split(path.sep).join('/'));
+      const rows = await session.page.evaluate(() =>
+        [...document.querySelectorAll('vk-page')].map((pg, i) => {
+          const stage = pg.querySelector('.vk-stage');
+          let maxFs = 0;
+          for (const el of stage.querySelectorAll('vk-text, vk-label, vk-box, vk-table caption')) {
+            maxFs = Math.max(maxFs, parseFloat(getComputedStyle(el).fontSize) || 0);
+          }
+          const m = window.vk.metrics(stage) || {};
+          const tags = new Set([...stage.querySelectorAll('*')].map((e) => e.localName).filter((t) => t.startsWith('vk-')));
+          return { id: pg.id || String(i + 1), maxFs, fill: m.fill || 0, focus: m.focus || 0, dark: pg.hasAttribute('surface') && pg.getAttribute('surface') === 'dark', tags: [...tags] };
+        })
+      );
+      const low = rows.filter((r) => r.maxFs <= 56).map((r) => r.id);
+      const dark = rows.filter((r) => r.dark).length;
+      const avg = Math.round(rows.reduce((n, r) => n + r.fill, 0) / rows.length);
+      const tags = new Set(rows.flatMap((r) => r.tags));
+      console.log(`\n${path.relative(ROOT, b.file)}  ·  ${rows.length} 帧`);
+      console.log(`  占版心 平均 ${avg}%（${Math.min(...rows.map((r) => r.fill))}–${Math.max(...rows.map((r) => r.fill))}）`);
+      console.log(`  字号只到正文 ${low.length} 帧${low.length ? '（可能缺一句主张）：' + low.join(' ') : ''}`);
+      console.log(`  深色 ${dark} 帧 · 用到 ${tags.size} 种件`);
+      await session.page.close();
+    }
+  } finally {
+    await browser.close();
+  }
 } else if (cmd === 'sheet') {
   // 联络图：把一串帧缩成小图拼在一张纸上。它不替代单帧渲染，是用来"一眼看完一集"的。
   if (!inputs.length) {
