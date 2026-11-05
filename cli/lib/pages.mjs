@@ -12,6 +12,17 @@ const CACHE = '.vk-cache/build.json';
 let highlighter = null;
 const getHighlighter = async () => (highlighter ||= await createVkHighlighter());
 
+/** 页面依赖 vk/ 与 dist/；没构建就报一句人话，不要让浏览器给出 16px 的假画面。 */
+export function assertBuilt() {
+  for (const [file, why] of [
+    ['vk/vk.css', '样式'],
+    ['vk/fonts.css', '字体'],
+    ['dist/vk.js', '运行时'],
+  ]) {
+    if (!fs.existsSync(file)) throw new Error(`缺少 ${file}（${why}）。先跑 npm run build。`);
+  }
+}
+
 /**
  * 产物路径保持与源同深度：
  *   pages/smoke.html → out/smoke.html；tests/pages/vk-code.html → out/pages/vk-code.html

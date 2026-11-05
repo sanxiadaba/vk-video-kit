@@ -21,10 +21,21 @@ import {
 } from './shared/vocab.mjs';
 import { tokenDiff } from './runtime/code-utils.mjs';
 import { dedent, expandLeadingTabs, hash32, indexRanges, isIndexList, lineSet, sliceLines, parseDiffItems, buildRows, LANG_ALIAS, EXT_LANG, SUPPORTED_LANGS, inferLang as inferLangShared, stripAnsi } from './shared/code.mjs';
-import { ICONS } from './icons.generated.mjs';
 import { ICON_WHITELIST_HINT, isSemanticIcon } from './shared/icons.mjs';
 import { diag } from './shared/diag.mjs';
 import { TAGS, TAG_NAMES, CHILD_ATTRS, CHILDREN, STATES, STATE_VALUES, CANVAS } from './schema.mjs';
+
+/** 图标表是构建产物：按需加载，没构建时给一句人话。 */
+let ICONS = {};
+async function loadIcons() {
+  if (Object.keys(ICONS).length) return ICONS;
+  try {
+    ({ ICONS } = await import('./icons.generated.mjs'));
+  } catch {
+    throw new Error('缺少 src/icons.generated.mjs（图标数据）。先跑 npm run build。');
+  }
+  return ICONS;
+}
 
 /* ------------------------------------------------------- 15.2 列开关 / 对照 */
 
@@ -1396,6 +1407,7 @@ function applyIcons(html, names) {
  * 返回 { html, count }。
  */
 export async function transformHtml(html, { file = '<memory>', highlighter } = {}) {
+  await loadIcons();
   const doc = parse(html, { sourceCodeLocationInfo: true });
   const { errors, warnings } = validateAuthorHtml(doc, file, html);
   if (errors.length) {

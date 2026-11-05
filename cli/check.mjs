@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { launch, openSession } from './lib/browser.mjs';
-import { resolvePage, collect } from './lib/pages.mjs';
+import { resolvePage, collect, assertBuilt } from './lib/pages.mjs';
 
 const args = process.argv.slice(2);
 const json = args.includes('--json');
@@ -33,6 +33,12 @@ for (const input of inputs) {
   else files.push(input);
 }
 
+try {
+  assertBuilt();
+} catch (e) {
+  console.error(`[vk] ${e.message}`);
+  process.exit(1);
+}
 const built = [];
 for (const f of files) {
   try {
@@ -79,3 +85,4 @@ if (json) {
   else console.log(`\n${all.length} 页全部干净`);
 }
 process.exitCode = all.some((x) => x.issues.length) ? 1 : 0;
+

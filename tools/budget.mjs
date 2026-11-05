@@ -30,7 +30,7 @@ let attrs = 0;
 for (const t of TAG_NAMES) attrs += Object.keys(TAGS[t].attrs || {}).length;
 const srcLines = countLines('src', ['.mjs', '.css']);
 // 生成物不计入预算：图标与高亮是 vendored 数据。
-const generated = ['src/icons.generated.mjs', 'src/highlight.mjs'];
+const generated = ['src/icons.generated.mjs', 'src/highlight.mjs'].filter((f) => fs.existsSync(f));
 const generatedLines = generated.reduce((n, f) => n + fs.readFileSync(f, 'utf8').split('\n').length, 0);
 const ownSrcLines = srcLines - generatedLines;
 const toolLines = countLines('cli', ['.mjs']) + countLines('tools', ['.mjs']);

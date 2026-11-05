@@ -12,7 +12,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { launch, openSession } from './lib/browser.mjs';
-import { resolvePage } from './lib/pages.mjs';
+import { resolvePage, assertBuilt } from './lib/pages.mjs';
 
 const args = process.argv.slice(2);
 const flag = (n) => args.includes(n);
@@ -37,6 +37,12 @@ const scale = W / 1920;
 const outDir = valueOf('--out-dir');
 const singleOut = valueOf('--out');
 
+try {
+  assertBuilt();
+} catch (e) {
+  console.error(`[vk] ${e.message}`);
+  process.exit(1);
+}
 const built = [];
 for (const input of inputs) {
   try {
@@ -118,3 +124,4 @@ if (json) {
 }
 const bad = report.some((i) => lines(i).length);
 process.exitCode = bad ? 1 : 0;
+
