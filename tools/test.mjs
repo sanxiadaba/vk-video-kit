@@ -219,6 +219,32 @@ console.log('\n覆盖');
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
 
+  /* SPEC §7 的属性表要等于 schema：多写一个（作者写了会报错）和少写一个（作者不知道）都是漂移。 */
+  {
+    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\\\|/g, '¦');
+    const rows = [...spec.matchAll(/^\| `(vk-[a-z]+)`[^|]*\|[^|]*\|([^|]*)\|/gm)];
+    const listed = new Map();
+    for (const [, tag, cell] of rows) {
+      const set = listed.get(tag) || new Set();
+      for (const m of cell.matchAll(/`([a-z-]+)`/g)) set.add(m[1]);
+      listed.set(tag, set);
+    }
+    const COMMON_ATTRS = ['span', 'row-span', 'grow', 'bleed'];
+    const drift = [];
+    for (const tag of TAG_NAMES) {
+      const have = listed.get(tag);
+      if (!have) {
+        drift.push(`${tag} 在 SPEC 的表里没有行`);
+        continue;
+      }
+      const want = Object.keys(attrsOf(tag)).filter((a) => !COMMON_ATTRS.includes(a));
+      for (const a of want) if (!have.has(a)) drift.push(`SPEC 缺 ${tag}.${a}`);
+      for (const a of have) if (!want.includes(a)) drift.push(`SPEC 多写了 ${tag}.${a}（schema 里没有）`);
+    }
+    ok(!drift.length, 'SPEC 的属性表与 schema 一致');
+    for (const d of drift.slice(0, 8)) console.error('    · ' + d);
+  }
+
   /* 帧计数写错（插帧后忘了重排）：构建期要报。 */
   {
     const probe = path.join(os.tmpdir(), 'vk-count-' + Date.now() + '.html');

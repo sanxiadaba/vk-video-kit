@@ -123,7 +123,7 @@ s[0] = 'H';
 | `vk-tree` | 文件树 | `src` `title` `depth` `current` `size` |
 | `vk-cells` | 内存格 | `addr` `stride`(每格几字节，默认 1) `cols` `current` `size` |
 | `vk-bytes` | 字节窗 | `src` `addr` `offset` `length` `cols` `current`（1 起，如 "1-3"） |
-| `vk-bits` | 位串 | `value`（`|` 分段：符号\|指数\|尾数）`label` `index` `group` `sign` |
+| `vk-bits` | 位串 | `value`（竖线分段：符号 \| 指数 \| 尾数）`label` `index` `group` `sign` |
 | `vk-steps` | 步骤条 | `current` `direction` `connector` `size` |
 | `vk-bars` | 横条 | `max` `unit` `tone` `scale` |
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
@@ -132,7 +132,7 @@ s[0] = 'H';
 | `vk-stack` | 竖排 | `gap` `align` `justify` `direction` `weights` |
 | `vk-grid` | 栅格 | `cols` `gap` `align` `ratio` |
 | `vk-canvas` | 自由摆 | `w` `h` `pad` |
-| `vk-layer` | 叠放 | `surface` `tone` `pad` |
+| `vk-layer` | 叠放 | `surface` `tone` |
 | `vk-pair` | 并置 | `direction` `split` `symbol` `gap` |
 | `vk-page` | 一帧 | `id`(帧名，出图用作文件名) `align`(top/center/bottom，默认 center) `surface`(paper/dark，默认 paper) |
 
