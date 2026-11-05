@@ -123,7 +123,11 @@ s[0] = 'H';
 | `vk-timeline` | 时间线 | `variant` `start` `end` `lanes` `current` |
 | `vk-compare` | 两张图对照 | `labels` `split` `variant` `mark` |
 | `vk-callout` | 圈 / 线 / 注 / 编号 | `mode` `for` `from` `to` `label` `side` `gap` `shape` `tone` |
-| `vk-stack` `vk-grid` `vk-canvas` `vk-layer` `vk-pair` | 排布 | 见第 6 节 |
+| `vk-stack` | 竖排 | `gap` `align` `justify` `direction` `weights` |
+| `vk-grid` | 栅格 | `cols` `gap` `align` `ratio` |
+| `vk-canvas` | 自由摆 | `w` `h` `pad` |
+| `vk-layer` | 叠放 | `surface` `tone` `pad` |
+| `vk-pair` | 并置 | `direction` `split` `symbol` `gap` |
 | `vk-page` | 一帧 | `id`(帧名，出图用作文件名) `align`(top/center/bottom，默认 center) `surface`(paper/dark，默认 paper) |
 
 属性的完整取值与默认值：`vk doc <tag>`；机器可读的一份：`vk brief --json`。

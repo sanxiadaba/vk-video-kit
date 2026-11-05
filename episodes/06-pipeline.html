@@ -1,6 +1,17 @@
+<vk-page id="0-cover" surface="dark">
+  <vk-grid cols="12" gap="normal">
+    <vk-stack span="6" gap="normal" justify="center">
+      <vk-label counter="第 6 集">编译链路</vk-label>
+      <vk-text size="subhead">从 .c 到 .exe，<br>中间发生了什么。</vk-text>
+      <vk-text size="caption" ink="muted">四个文件，四步，一次生成。</vk-text>
+    </vk-stack>
+    <vk-img span="6" src="../assets/hello/o0.png" ratio="4 / 3" radius="md"></vk-img>
+  </vk-grid>
+</vk-page>
+
 <vk-page id="1-hook">
   <vk-stack gap="wide">
-    <vk-label counter="1 / 7">编译</vk-label>
+    <vk-label counter="2 / 8">编译</vk-label>
     <vk-text size="headline">你按下 gcc 的那一秒，<br>发生了<em>四件事</em>。</vk-text>
     <vk-text size="body" ink="secondary">预处理、编译、汇编、链接。每步都有产物，都能单独跑。</vk-text>
   </vk-stack>
@@ -8,7 +19,7 @@
 
 <vk-page id="2-steps">
   <vk-stack gap="wide">
-    <vk-label counter="2 / 7">四步</vk-label>
+    <vk-label counter="3 / 8">四步</vk-label>
     <vk-text size="subhead">从 .c 到 .exe，中间有<em>四个文件</em>。</vk-text>
     <vk-steps current="2" size="subhead">
       <li>.i 预处理</li>
@@ -21,7 +32,7 @@
 
 <vk-page id="3-term">
   <vk-stack gap="close">
-    <vk-label counter="3 / 7">一条命令</vk-label>
+    <vk-label counter="4 / 8">一条命令</vk-label>
     <vk-term title="terminal" size="caption">
       <script type="text/plain" data-vk-source>
 $ gcc -save-temps main.c -o main.exe
@@ -37,7 +48,7 @@ main.c  main.i  main.s  main.o  main.exe
 
 <vk-page id="4-pre">
   <vk-stack gap="close">
-    <vk-label counter="4 / 7">预处理后</vk-label>
+    <vk-label counter="5 / 8">预处理后</vk-label>
     <vk-text size="subhead">展开后 860 行，<em>你的只有 4 行</em>。</vk-text>
     <vk-code lang="c" file="main.i" src="../code/pipe/main.i" lines="857-860" size="caption" current="2"></vk-code>
     <vk-text size="caption" ink="muted">前 856 行全是 stdio.h 的展开——编译器只关心最后这几行。</vk-text>
@@ -46,7 +57,7 @@ main.c  main.i  main.s  main.o  main.exe
 
 <vk-page id="5-obj">
   <vk-stack gap="normal">
-    <vk-label counter="5 / 7">目标文件</vk-label>
+    <vk-label counter="6 / 8">目标文件</vk-label>
     <vk-text size="subhead">.o 不是文本，<br>头四个字节说明<em>机器类型</em>。</vk-text>
     <vk-bytes src="../code/pipe/main.o" addr="0x0" cols="8" current="1-2"></vk-bytes>
     <vk-text size="caption" ink="muted">4c 01 = i386 的 COFF 头；换成 Linux 会是 7f 45 4c 46（ELF）。</vk-text>
@@ -55,7 +66,7 @@ main.c  main.i  main.s  main.o  main.exe
 
 <vk-page id="6-size">
   <vk-stack gap="close">
-    <vk-label counter="6 / 7">多大</vk-label>
+    <vk-label counter="7 / 8">多大</vk-label>
     <vk-text size="subhead">一步涨、一步缩，最后<em>又涨回去</em>。</vk-text>
     <vk-table variant="spec" mono size="caption">
       <table>
@@ -72,7 +83,7 @@ main.c  main.i  main.s  main.o  main.exe
 
 <vk-page id="7-end">
   <vk-stack gap="wide">
-    <vk-label counter="7 / 7">小结</vk-label>
+    <vk-label counter="8 / 8">小结</vk-label>
     <vk-text size="display">编译器不是<em>一步</em>，<br>是四步。</vk-text>
     <vk-text size="caption" ink="muted">下一集：链接器为什么说"找不到符号"。</vk-text>
   </vk-stack>
