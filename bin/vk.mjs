@@ -251,6 +251,32 @@ if (cmd === 'render' || cmd === 'check') {
     await browser.close();
   }
 
+  /* 每次渲染留一份快照：改了默认值之后，能直接看出"哪几帧变了"，不用逐张看。 */
+  const snapPath = path.join(OUT, '.vk-run.json');
+  const prev = (() => {
+    try {
+      return JSON.parse(fs.readFileSync(snapPath, 'utf8'));
+    } catch {
+      return {};
+    }
+  })();
+  const next = { ...prev };
+  const changed = [];
+  for (const r of report) {
+    const rel = path.relative(ROOT, r.file).split(path.sep).join('/');
+    for (const f of r.frames || []) {
+      if (!f.metrics) continue;
+      const key = rel + '#' + (f.id || f.index + 1);
+      const sig = [f.metrics.contentTop, f.metrics.contentBottom, f.metrics.fill, f.metrics.focus, f.issues.map((x) => x.type || x.what).join('|')].join(',');
+      if (prev[key] && prev[key] !== sig) changed.push(key);
+      next[key] = sig;
+    }
+  }
+  try {
+    fs.mkdirSync(OUT, { recursive: true });
+    fs.writeFileSync(snapPath, JSON.stringify(next, null, 1));
+  } catch {}
+
   if (json) {
     console.log(JSON.stringify(report, null, 2));
   } else {
@@ -275,6 +301,10 @@ if (cmd === 'render' || cmd === 'check') {
     }
     const bad = report.reduce((n, r) => n + (r.errors?.length || 0) + r.frames.reduce((k, f) => k + f.issues.length, 0), 0);
     console.log(bad ? `\n${bad} 条问题` : `\n干净：${report.reduce((n, r) => n + r.frames.length, 0)} 帧`);
+    if (changed.length) {
+      const head = changed.slice(0, 6).join('  ');
+      console.log(`比上次变了 ${changed.length} 帧：${head}${changed.length > 6 ? ` …` : ''}`);
+    }
   }
   const bad = report.some((r) => r.errors?.length || r.frames.some((f) => f.issues.length) || r.ready === false);
   process.exitCode = failed || bad ? 1 : 0;

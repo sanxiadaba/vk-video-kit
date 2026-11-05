@@ -16,7 +16,7 @@
     "test": "node tools/test.mjs",
     "assets": "node tools/assets.mjs",
     "assets:check": "node tools/assets.mjs --check",
-    "shots": "node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win",
+    "shots": "npm run assets && node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win",
     "sheet": "node bin/vk.mjs sheet episodes --cols 4"
   },
   "dependencies": {
