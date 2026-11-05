@@ -120,11 +120,6 @@ vk-layer {
   min-width: 0;
 }
 
-/* 铺满整帧的叠层：底出血，内容仍落在版心里。 */
-vk-layer[bleed='all'] {
-  padding: var(--vk-margin-y) var(--vk-margin-x);
-}
-
 /* 叠放顺序就是 DOM 顺序：全部定为 relative，后写的压在上面。
    否则定位过的子项（比如 vk-img）会盖住后面那些静态的。 */
 vk-layer > * {
