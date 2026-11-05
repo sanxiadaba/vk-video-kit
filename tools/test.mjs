@@ -109,6 +109,16 @@ ok(!/mass=/.test(spec), 'SPEC 里没有已删除的 mass');
 const tokens = execFileSync(process.execPath, ['tools/css.mjs', '--check'], { encoding: 'utf8' });
 ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
 
+/* ---------------------------------------------------------------- 素材 */
+console.log('\n素材');
+try {
+  const r = execFileSync(process.execPath, ['tools/assets.mjs', '--check'], { encoding: 'utf8' });
+  ok(/一致/.test(r), 'code/ 里的 .s / .dis 能追溯到 .c');
+} catch (e) {
+  bad++;
+  console.error('  ✗ 素材清单不一致：\n' + String(e.stderr || e.message).trim());
+}
+
 /* ---------------------------------------------------------------- 渲染 */
 console.log('\n验收帧');
 let report = [];
