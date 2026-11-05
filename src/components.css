@@ -609,7 +609,10 @@ vk-table {
   min-width: 0;
 }
 vk-table table {
-  width: 100%;
+  /* 表格按内容宽，不硬拉满版心：三列表被拉成 1680 宽时，列间距会大得读不出行。 */
+  width: auto;
+  min-width: min(100%, 820px);
+  max-width: 100%;
   border-collapse: collapse;
   font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: 1.45;
@@ -990,7 +993,7 @@ vk-bars {
   color: var(--vk-ink-2);
 }
 .vk-bar > .vk-bar-track {
-  height: 20px;
+  height: 24px;
   border-radius: var(--vk-radius-pill);
   background: var(--vk-soft);
   overflow: hidden;

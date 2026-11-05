@@ -93,6 +93,7 @@ export const TAGS = {
     summary: '12 栏网格。子项用 span / row-span 占份；列宽由份数算出，不能手写像素。',
     attrs: {
       cols: { type: 'int', min: 1, max: 12, default: 2, group: 'layout', label: '列数' },
+      ratio: { type: 'list', group: 'layout', label: '按比例分列，如 "1 8 23"（写了就不看 cols）' },
       gap: gap('normal'),
       align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '纵向对齐' },
     },

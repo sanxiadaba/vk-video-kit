@@ -81,6 +81,7 @@ s[0] = 'H';
 ```html
 <vk-stack gap="wide">…</vk-stack>                 <!-- 竖排；direction="row" 横排 -->
 <vk-grid cols="12" gap="normal">                  <!-- 12 栏，子项写 span / row-span -->
+<vk-grid ratio="1 8 23" gap="close">              <!-- 按比例分列：位域图例常用 -->
   <vk-code span="7">…</vk-code>
   <vk-stack span="5">…</vk-stack>
 </vk-grid>
@@ -90,6 +91,8 @@ s[0] = 'H';
 ```
 
 - `span` 只属于 `vk-grid` 的子项；`x / y / w / h / z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
+- **`vk-canvas` 是最后的逃生口**：坐标要自己算，元素高度变了位置就错。堆叠用 `vk-stack`、分栏用 `vk-grid`、
+  对照用 `vk-pair`。只有"必须按坐标摆"（示意图、连线两端）才用 canvas。
 
 ## 7 27 个件
 
@@ -184,7 +187,7 @@ vk brief --json                  # 全部件的契约（给机器读）
 vk icons arrow                   # 搜图标名
 ```
 
-产物在 `out/<同路径>`；一帧一张 PNG，多帧文件按 `<文件名>-<id>.png`。
+一集 = 一个 `episodes/*.html` 文件，里面按顺序写 `<vk-page id="1-xxx">`；产物在 `out/<同路径>`；一帧一张 PNG，多帧文件按 `<文件名>-<id>.png`。
 
 ## 11 自检判什么
 

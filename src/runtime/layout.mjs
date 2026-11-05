@@ -1,4 +1,4 @@
-import { VkElement, define, attrSpace, attrNum, attrText } from './base.mjs';
+import { VkElement, define, attrSpace, attrNum, attrText, warn } from './base.mjs';
 
 /* ------------------------------------------------------------------ 竖排 */
 export class VkStack extends VkElement {
@@ -32,7 +32,20 @@ export class VkStack extends VkElement {
 /* ------------------------------------------------------------------ 网格 */
 export class VkGrid extends VkElement {
   render() {
-    this.style.setProperty('--vk-cols', String(attrNum(this, 'cols', 2)));
+    const ratio = attrText(this, 'ratio').trim();
+    if (ratio) {
+      const list = ratio.split(/[\s,]+/).filter(Boolean).map(Number);
+      if (list.length && list.every((n) => Number.isFinite(n) && n > 0)) {
+        this.style.gridTemplateColumns = list.map((n) => `${n}fr`).join(' ');
+        this.style.removeProperty('--vk-cols');
+      } else {
+        warn(this, `ratio="${ratio}" 要是正数序列，如 "1 8 23"`);
+        this.style.removeProperty('grid-template-columns');
+      }
+    } else {
+      this.style.removeProperty('grid-template-columns');
+      this.style.setProperty('--vk-cols', String(attrNum(this, 'cols', 2)));
+    }
     const gap = attrSpace(this, 'gap', 'normal');
     if (gap) this.style.setProperty('--vk-gap', gap);
   }
