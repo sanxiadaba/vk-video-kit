@@ -20,14 +20,20 @@
   <vk-stack gap="normal">
     <vk-label counter="3 / 7">先看一个例子</vk-label>
     <vk-text size="subhead">8 和 7，只差<em>一个进位</em>。</vk-text>
-    <vk-bits value="00001000" index="none" size="caption"></vk-bits>
-    <vk-bits value="00000111" index="none" size="caption"></vk-bits>
-    <vk-bits value="00000000" index="down" size="caption"></vk-bits>
-    <vk-text size="caption" ink="muted">8、7、按位与的结果 —— 一位都不重，所以是 0。</vk-text>
+    <vk-grid cols="12" gap="wide">
+      <vk-stack span="6" gap="close">
+        <vk-bits value="00001000" label="8" index="none"></vk-bits>
+        <vk-bits value="00000111" label="7" index="none"></vk-bits>
+        <vk-bits value="00000000" label="与"></vk-bits>
+      </vk-stack>
+      <vk-stack span="6" gap="close" justify="center">
+        <vk-text size="body" ink="secondary">2 的幂只有<em>一位</em>是 1。</vk-text>
+        <vk-text size="body" ink="secondary">减一后它退位，低位全 1。</vk-text>
+        <vk-text size="body" ink="secondary">两边错开，按位与<em>全 0</em>。</vk-text>
+      </vk-stack>
+    </vk-grid>
   </vk-stack>
-</vk-page>
-
-<vk-page id="4-why">
+</vk-page><vk-page id="4-why">
   <vk-stack gap="normal">
     <vk-label counter="4 / 7">为什么一定为 0</vk-label>
     <vk-text size="subhead">2 的幂只有<em>一个 1</em>。</vk-text>
