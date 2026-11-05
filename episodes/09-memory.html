@@ -94,11 +94,13 @@ for (i = 0; i < n; i++)
 <vk-page id="7-why">
   <vk-stack gap="normal">
     <vk-label counter="7 / 8">于是代码要"顺着来"</vk-label>
+    <vk-text size="subhead">三条能立刻用上的规则。</vk-text>
     <vk-list variant="check" gap="close">
       <li>遍历用连续内存（数组而不是链表）</li>
       <li>少跳着访问大表</li>
       <li state="current">同一份数据用两次，先放局部变量里</li>
     </vk-list>
+    <vk-text size="caption" ink="muted">缓存不听话，但你可以让它少跑几趟内存。</vk-text>
   </vk-stack>
 </vk-page>
 

@@ -166,8 +166,11 @@ export function auditPage(stageEl) {
         getComputedStyle(el).display !== 'none' &&
         getComputedStyle(el).position !== 'absolute'
     );
+    // vk-layer 的存在意义就是叠放：里面的重叠是作者要的，不是错误。
+    const stackable = box.matches('vk-layer');
     for (let i = 0; i < kids.length; i++) {
       for (let j = i + 1; j < kids.length; j++) {
+        if (stackable) break;
         const a = kids[i].getBoundingClientRect();
         const b = kids[j].getBoundingClientRect();
         const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);

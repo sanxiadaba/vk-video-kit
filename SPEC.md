@@ -87,12 +87,13 @@ s[0] = 'H';
   <vk-stack span="5">…</vk-stack>
 </vk-grid>
 <vk-canvas w="1400" h="600">…子项写 x / y…</vk-canvas>
-<vk-layer>…第一个铺底，其余叠上去…</vk-layer>
+<vk-layer>…第一个铺底，其余按 DOM 顺序叠上去…</vk-layer>
 <vk-pair symbol="vs">…正好两块…</vk-pair>   <!-- `symbol` 写中轴上那个字；写了 split 就不画轴 -->
 ```
 
 - `span` 只属于 `vk-grid` 的子项；`x` `y` `w` `h` `z` 只属于 `vk-canvas` 的子项。写错位置构建期就红。
 - **`vk-canvas` 的子项要写清 `w` / `h`**：不写就按内容高，内容一变就超出画布（自检会报 `超出了 canvas Npx`）。
+- **`vk-layer` 里的重叠是对的**：自检不会报；要在一张图上压一块字，用 `vk-layer` + `vk-stack justify="end"`。
 - **`vk-canvas` 是最后的逃生口**：坐标要自己算，元素高度变了位置就错。堆叠用 `vk-stack`、分栏用 `vk-grid`、
   对照用 `vk-pair`。只有"必须按坐标摆"（示意图、连线两端）才用 canvas。
 
