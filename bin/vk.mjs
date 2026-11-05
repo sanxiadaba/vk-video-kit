@@ -184,8 +184,11 @@ async function launch() {
 async function openPage(browser, url) {
   const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
   const errors = [];
+  const warns = [];
   page.on('console', (m) => {
     if (m.type() === 'error') errors.push(m.text());
+    // 组件自己的 warn()（比如"cols 超出范围，按 8 处理"）：不拦，但要说出来。
+    else if (m.type() === 'warning') warns.push(m.text().replace(/\s*JSHandle@node\s*$/, ''));
   });
   page.on('pageerror', (e) => errors.push(e.message));
   await page.goto(url, { waitUntil: 'load' });
@@ -196,7 +199,7 @@ async function openPage(browser, url) {
       return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height };
     })
   );
-  return { page, errors, ready, frames };
+  return { page, errors, ready, frames, warns };
 }
 
 
@@ -260,6 +263,9 @@ if (cmd === 'render' || cmd === 'check') {
       }
       const url = 'file:///' + b.out.split(path.sep).join('/');
       const session = await openPage(browser, url);
+      if (session.warns?.length) {
+        for (const w of [...new Set(session.warns)]) console.error(`   提示：${w}`);
+      }
       const perFrame = [];
       for (let i = 0; i < session.frames.length; i++) {
         const f = session.frames[i];

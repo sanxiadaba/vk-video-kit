@@ -347,7 +347,7 @@ export const TAGS = {
     attrs: {
       addr: { type: 'text', content: true, group: 'content', label: '起始地址，如 "0x1000"' },
       stride: { type: 'int', min: 1, default: 1, group: 'content', label: '每格占几字节（int 数组写 4）' },
-      cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
+      cols: { type: 'int', min: 1, max: 16, default: 4, group: 'layout', label: '每行几格' },
       current: current(),
       size: sizeText('body'),
     },
