@@ -126,6 +126,7 @@ function editDistance(a, b) {
 
 function validate(root, file, errors) {
   const all = flatten(root);
+  const idSeen = {};
   for (const node of all) {
     const tag = node.tagName;
     if (!tag?.startsWith('vk-')) continue;
@@ -185,6 +186,19 @@ function validate(root, file, errors) {
     if (node.attrs?.some((a) => ['x', 'y', 'w', 'h', 'z'].includes(a.name)) && parent !== 'vk-canvas' && tag !== 'vk-canvas') {
       errors.push(`${file}:${lineOf(node)} <${tag}> 的 x / y / w / h / z 只在 <vk-canvas> 的子项上成立（父级是 <${parent || '无'}>）`);
     }
+    // id 是锚点和出图文件名的依据：重了就是静默覆盖，必须当场说。
+    const idAttr = node.attrs?.find((a) => a.name === 'id');
+    if (idAttr) {
+      const scope = tag === 'vk-page' ? 'page' : 'el';
+      const seen = (idSeen[scope] ||= new Map());
+      if (seen.has(idAttr.value)) {
+        const what = scope === 'page' ? '帧 id' : 'id';
+        errors.push(
+          `${file}:${lineOf(node)} ${what} \`${idAttr.value}\` 重复了（上一处在第 ${seen.get(idAttr.value)} 行）；出图会互相覆盖，锚点也只会指到第一个`
+        );
+      } else seen.set(idAttr.value, lineOf(node));
+    }
+
     // 子节点契约
     const kids = (node.childNodes || []).filter((c) => c.tagName && c.tagName !== 'script');
     const model = TAGS[tag].children;

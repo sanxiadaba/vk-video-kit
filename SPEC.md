@@ -30,6 +30,8 @@ s[0] = 'H';
 </vk-page>
 ```
 
+**`id` 不许重**：重名会让出图互相覆盖、锚点只指到第一个，构建期直接报错。
+
 一个文件可以写多帧：`<vk-page id="1-intro">…</vk-page><vk-page id="2-index">…</vk-page>`，
 `vk render a.html` 出 `a-1-intro.png`、`a-2-index.png`。
 

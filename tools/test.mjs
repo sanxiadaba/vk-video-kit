@@ -8,10 +8,13 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import os from 'node:os';
 import { execFileSync } from 'node:child_process';
 import * as parse5 from 'parse5';
 import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
 import { FONT, GAP, TONE, SURFACE, STATE, INK } from '../src/vocab.mjs';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
 
 let bad = 0;
 const ok = (cond, msg) => {
@@ -175,6 +178,20 @@ console.log('\n覆盖');
     }
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
+
+  /* 重名 id 会静默覆盖出图、也会让锚点只指到第一个：构建期必须红。 */
+  {
+    const probe = path.join(os.tmpdir(), 'vk-dup-' + Date.now() + '.html');
+    fs.writeFileSync(probe, '<vk-page id="same"><vk-text size="body">a</vk-text></vk-page>\n<vk-page id="same"><vk-text size="body">b</vk-text></vk-page>\n');
+    let caught = '';
+    try {
+      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'render', probe, '--json'], { stdio: 'pipe' });
+    } catch (e) {
+      caught = String(e.stdout || '') + String(e.stderr || '');
+    }
+    fs.rmSync(probe, { force: true });
+    ok(caught.includes('重复'), '重名 id 会在构建期报错');
+  }
   // 非默认取值：写成默认值没意义，但"非默认的取值"必须有人写过——否则那个取值没人验过。
   const COMMON_ATTRS = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
   const coldVals = [];
