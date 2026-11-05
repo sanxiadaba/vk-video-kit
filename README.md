@@ -10,6 +10,10 @@
 
 作者手册（给 AI 的入口）是 [SPEC.md](SPEC.md)；属性细节用 `vk doc <tag>`。
 
+## 素材
+
+`npm run assets` 编 C 源码、生成 `.s` / `.o` / `.dis`；`npm run shots` 把 `assets/hello/asm.html` 里的两帧截成 `asm-o0.png` / `asm-o2.png`（`vk render --shot .vk-win` 只截窗口本身，不要画布留白）。
+
 ## 性能
 
 这台机器上量过的数字：一帧约 0.2 秒（29 帧 6.0 秒，含构建与自检），联络图 29 帧约 9 秒。

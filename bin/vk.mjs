@@ -19,6 +19,8 @@ import { TAGS, TAG_NAMES, attrsOf, CHILD_ATTRS } from '../src/schema.mjs';
 
 const ROOT = process.cwd();
 const OUT = path.join(ROOT, 'out');
+/* 出图目录：默认 out/，--out 可以改（把帧当素材导出时用）。 */
+const PNG_DIR = () => path.resolve(val('--out') || OUT);
 const args = process.argv.slice(2);
 const cmd = args[0];
 const flag = (n) => args.includes(n);
@@ -26,7 +28,7 @@ const val = (n) => {
   const i = args.indexOf(n);
   return i >= 0 ? args[i + 1] : null;
 };
-const VALUE_FLAGS = new Set(['--out', '--width']);
+const VALUE_FLAGS = new Set(['--out', '--width', '--shot']);
 const inputs = args.slice(1).filter((a, i) => !a.startsWith('-') && !VALUE_FLAGS.has(args.slice(1)[i - 1]));
 
 const json = flag('--json');
@@ -227,8 +229,17 @@ if (cmd === 'render' || cmd === 'check') {
         if (cmd === 'render') {
           const base = path.basename(b.file, '.html');
           const suffix = (session.frames.length > 1 ? `-${f.id || String(i + 1).padStart(2, '0')}` : '') + (width !== 1920 ? `.${width}` : '');
-          png = path.join(OUT, `${base}${suffix}.png`);
-          await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
+          png = path.join(PNG_DIR(), `${base}${suffix}.png`);
+          fs.mkdirSync(path.dirname(png), { recursive: true });
+          const shotSel = val('--shot');
+          if (shotSel) {
+            // 只截这一帧里的某个元素：导出素材时不要画布留白。
+            const el = session.page.locator('.vk-stage').nth(i).locator(shotSel).first();
+            if (await el.count()) await el.screenshot({ path: png });
+            else await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
+          } else {
+            await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
+          }
           if (width !== 1920) await downscale(png, width);
         }
         perFrame.push({ id: f.id, index: i, issues: audit.issues, metrics: audit.metrics, png });
@@ -386,7 +397,8 @@ if (cmd === 'render' || cmd === 'check') {
 } else {
   console.log(`vk —— 单帧画面库
 
-  vk render <file|dir> [--phone] [--width N]   构建 + 自检 + 出图
+  vk render <file|dir> [--phone] [--width N] [--out DIR] [--shot SEL]
+                                               构建 + 自检 + 出图（--shot 只截某个元素，导出素材用）
   vk check  <file|dir>                         只自检
   vk doc <tag>                                 一个件的属性表
   vk brief [--json]                            全部件的契约
