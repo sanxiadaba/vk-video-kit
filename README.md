@@ -10,6 +10,10 @@
 
 作者手册（给 AI 的入口）是 [SPEC.md](SPEC.md)；属性细节用 `vk doc <tag>`。
 
+## 自查
+
+`npm run inert` 把每个件声明的属性逐个改一下，看有没有视觉变化——"声明了但没实现"的属性会在这里现形。它不是测试，是诊断。
+
 ## 素材
 
 `npm run assets` 编 C 源码、生成 `.s` / `.o` / `.dis`；`npm run shots` 把 `assets/hello/asm.html` 里的两帧截成 `asm-o0.png` / `asm-o2.png`（`vk render --shot .vk-win` 只截窗口本身，不要画布留白）。

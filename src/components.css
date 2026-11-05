@@ -25,8 +25,18 @@ vk-box[surface='soft'] {
   --vk-box-bw: var(--vk-line-w-hair);
   --vk-box-line: var(--vk-line-color);
 }
+/* 写了 tone 就该看得出来：描边先跟着语义色走。 */
+vk-box[tone] {
+  --vk-box-line: var(--vk-tone);
+}
+
+/* 没指定 surface 时，tone 自己带一层淡底。 */
+vk-box[tone]:not([surface]),
+vk-box[tone][surface='none'] {
+  --vk-box-bg: var(--vk-tint);
+}
 vk-box[surface='tint'] {
-  --vk-box-bg: var(--vk-tint-info);
+  --vk-box-bg: var(--vk-tint, var(--vk-tint-info));
 }
 vk-box[surface='tint'][tone='focus'] {
   --vk-box-bg: var(--vk-tint-focus);
@@ -133,8 +143,12 @@ vk-layer[surface='paper'] {
 vk-layer[surface='soft'] {
   background: var(--vk-soft);
 }
+vk-layer[tone]:not([surface]),
+vk-layer[tone][surface='none'] {
+  background: var(--vk-tint);
+}
 vk-layer[surface='tint'] {
-  background: var(--vk-tint-info);
+  background: var(--vk-tint, var(--vk-tint-info));
 }
 vk-layer[surface='tint'][tone='focus'] {
   background: var(--vk-tint-focus);

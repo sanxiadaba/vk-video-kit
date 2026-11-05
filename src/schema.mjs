@@ -30,8 +30,10 @@ export const COMMON = {
   'row-span': { type: 'int', min: 1, max: 12, default: 1, where: 'grid', group: 'layout', label: '跨几行' },
   grow: { type: 'bool', group: 'layout', label: '吃掉剩余空间' },
   bleed: { type: 'enum', values: ['none', 'x', 'y', 'all'], default: 'none', group: 'layout', label: '出血到画布边' },
-  state: { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' },
 };
+
+/* 项级状态：只出现在 <li> / 行 / 格上，容器自己不认。 */
+export const STATE_ATTR = { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' };
 
 /* 画布子项：只有 vk-canvas 的直接子节点认。 */
 export const CANVAS_ATTRS = {
@@ -290,7 +292,7 @@ export const TAGS = {
       gap: gap('close'),
       size: sizeText('body'),
     },
-    children: item({ tone: ITEM_TONE(), state: COMMON.state }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
+    children: item({ tone: ITEM_TONE(), state: STATE_ATTR }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
   },
 
   'vk-math': {
@@ -346,7 +348,7 @@ export const TAGS = {
       current: current(),
       size: sizeText('body'),
     },
-    children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: COMMON.state }, '<li value="61" label="s[0]">；地址自动按 addr + 序号 × stride 算。'),
+    children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: STATE_ATTR }, '<li value="61" label="s[0]">；地址自动按 addr + 序号 × stride 算。'),
   },
 
   'vk-bytes': {
@@ -416,7 +418,7 @@ export const TAGS = {
       lanes: { type: 'text', content: true, group: 'content', label: '泳道名（逗号分隔）' },
       current: current(),
     },
-    children: item({ date: { type: 'text', label: '日期' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: COMMON.state }, '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'),
+    children: item({ date: { type: 'text', label: '日期' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: STATE_ATTR }, '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'),
   },
 
   'vk-compare': {

@@ -43,7 +43,7 @@ s[0] = 'H';
 | `size` | 字号 | 六个档名 |
 | `gap` `pad` | 间距 | `none / close / normal / wide / section`，或像素数 |
 | `current` | 第几项 | **1 起**；`-1` = 没有当前（`vk-tree` 例外：写节点路径） |
-| `state` | 注意力 | `current`（现在讲这里）/ `mark`（作者标了一下） |
+| `state` | 注意力 | 只写在项上（`<li>` / 表格行）：`current` / `mark` |
 
 没有第二个词表达同一个意思。`tone` 管对错，`state` 管注意力，别混。
 
@@ -103,7 +103,7 @@ s[0] = 'H';
 
 | 件 | 画什么 | 属性 |
 |---|---|---|
-| （所有件） | 共享 | `span` `row-span` `grow` `bleed` `state` |
+| （所有件） | 共享 | `span` `row-span` `grow` `bleed` |
 | `vk-text` | 一段文字 | `size` `weight` `ink` `tone` `align` `measure` `icon` `mono` |
 | `vk-label` | 一行小字 | `variant`(kicker/chip/badge) `tone` `icon` `counter` |
 | `vk-inline` | 行内代码 / 公式 / 上下标 / 键位 | `variant` |

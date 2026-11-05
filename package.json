@@ -14,6 +14,7 @@
     "render": "node bin/vk.mjs render pages",
     "check": "node bin/vk.mjs check pages",
     "test": "node tools/test.mjs",
+    "inert": "node tools/inert.mjs",
     "assets": "node tools/assets.mjs",
     "assets:check": "node tools/assets.mjs --check",
     "shots": "npm run assets && node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win",
