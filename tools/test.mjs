@@ -145,6 +145,23 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const w of wrong.slice(0, 5)) console.error('    · ' + w);
   }
 
+  /* SPEC 里"27 个件""六个档名""间距五档"这类计数，会随词表变动而过期。 */
+  {
+    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
+    const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
+    const claims = [
+      ['27 个件', String(TAG_NAMES.length)],
+      ['六个档名', CN[Object.keys(FONT).length]],
+      ['间距五档', CN[Object.keys(GAP).length]],
+      ['三档墨', CN[INK.length]],
+    ];
+    const stale = claims
+      .filter(([phrase]) => !specText.includes(phrase))
+      .map(([phrase]) => phrase);
+    ok(!stale.length, 'SPEC 里的计数和词表一致');
+    for (const st of stale) console.error('    · 计数过期：' + st);
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {

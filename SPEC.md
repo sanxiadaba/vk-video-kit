@@ -69,7 +69,7 @@ s[0] = 'H';
 
 ## 4 间距与形
 
-- 间距只有五档：`close 16 / normal 32 / wide 64 / section 128`，加像素逃生口 `gap="48"`。
+- 间距五档：`none 0 / close 16 / normal 32 / wide 64 / section 128`，加像素逃生口 `gap="48"`。
 - 圆角 `none / md / pill`；描边 `none / hair / strong`；线宽 `hair 1 / rule 2 / strong 4`。
 - 库不出现 margin：父级给 `gap`，自己给 `pad`。
 
