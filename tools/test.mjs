@@ -401,8 +401,10 @@ try {
     for (let i = 0; i < a.data.length; i++) if (a.data[i] !== b.data[i]) diff++;
   } else diff = a.data.length;
   const ratio = diff / a.data.length;
-  ok(ratio < 0.002, 'README 的预览图与当前渲染一致');
-  if (ratio >= 0.002) console.error('    · 预览图过期了，跑 npm run preview');
+  // 阈值来自实测：同一份内容重渲染抖动约 0.0005%，改一个字约 0.038%。
+  const LIMIT = 0.0001;
+  ok(ratio < LIMIT, 'README 的预览图与当前渲染一致');
+  if (ratio >= LIMIT) console.error(`    · 预览图过期了（差异 ${(ratio * 100).toFixed(3)}%），跑 npm run preview`);
 } catch (e) {
   bad++;
   console.error('  ✗ 预览图检查失败：' + String(e.message).slice(0, 120));

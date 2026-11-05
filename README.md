@@ -12,7 +12,7 @@
 
 ![一集的样子：第九集「内存层级」的九帧](assets/preview.png)
 
-上面是 `episodes/09-memory.html` 的九帧原样缩略（`vk sheet` 出的联络图）：
+上面是 `episodes/09-memory.html` 的九帧原样缩略（`vk sheet` 出的联络图，`npm run preview` 重新生成）：
 深色章节页、钩子、嵌套盒子、对数横条、并置对照、表格、步骤、清单、深色收尾。
 
 ## 自查
