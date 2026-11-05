@@ -17,19 +17,21 @@
 <vk-page id="2-stack">
   <vk-stack gap="close">
     <vk-label counter="3 / 9">越靠上越快、越小、越贵</vk-label>
-    <vk-box surface="soft" pad="normal" title="内存 · 16 GB · 约 100ns">
-      <vk-box surface="tint" tone="info" pad="normal" title="L3 · 8 MB · 约 15ns">
-        <vk-box surface="tint" tone="ok" pad="normal" title="L2 · 256 KB · 约 4ns">
-          <vk-box surface="paper" border="hair" pad="normal" title="L1 · 32 KB · 约 1ns">
-            <vk-text size="caption" ink="muted">寄存器里没有的东西，从这里一层层往下找。</vk-text>
-          </vk-box>
-        </vk-box>
-      </vk-box>
-    </vk-box>
+    <vk-text size="subhead">寄存器装不下，就<em>一层层</em>往外找。</vk-text>
+    <vk-grid cols="12" gap="close">
+      <vk-box span="9" surface="soft" pad="close"><vk-text size="body">内存 · 16 GB · 约 100ns</vk-text></vk-box>
+      <vk-stack span="3" row-span="4" justify="between" pad="close">
+        <vk-text size="caption" ink="muted">最慢 · 最大</vk-text>
+        <vk-text size="subhead" ink="muted">↓</vk-text>
+        <vk-text size="caption" ink="muted">最快 · 最小</vk-text>
+      </vk-stack>
+      <vk-box span="9" surface="tint" tone="info" pad="close"><vk-text size="body">L3 · 8 MB · 约 15ns</vk-text></vk-box>
+      <vk-box span="9" surface="tint" tone="ok" pad="close"><vk-text size="body">L2 · 256 KB · 约 4ns</vk-text></vk-box>
+      <vk-box span="9" surface="paper" border="hair" pad="close"><vk-text size="body">L1 · 32 KB · 约 1ns</vk-text></vk-box>
+    </vk-grid>
+    <vk-text size="caption" ink="muted">四层都是真硬件：越近的越小、越快、越贵。</vk-text>
   </vk-stack>
-</vk-page>
-
-<vk-page id="3-bars">
+</vk-page><vk-page id="3-bars">
   <vk-stack gap="normal">
     <vk-label counter="4 / 9">差多少</vk-label>
     <vk-text size="subhead">对数刻度下，每格是<em>十倍</em>。</vk-text>

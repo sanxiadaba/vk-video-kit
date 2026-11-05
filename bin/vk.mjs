@@ -484,6 +484,13 @@ if (cmd === 'render' || cmd === 'check') {
     fs.writeFileSync(sheetHtml, html);
     const page = await browser.newPage({ viewport: { width: pageW, height: Math.min(pageH, 8000) }, deviceScaleFactor: 1 });
     await page.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
+    // 字体和图没落地就截图，同一份内容会出两张不一样的图（预览图检查就是这么闪过的）。
+    await page.evaluate(async () => {
+      await document.fonts.ready;
+      await Promise.all(
+        [...document.images].map((img) => (img.complete ? 0 : new Promise((done) => (img.onload = img.onerror = done))))
+      );
+    });
     await page.screenshot({ path: outFile, fullPage: true });
     await page.close();
     console.log(`${shots.length} 帧 → ${path.relative(ROOT, outFile)}`);
