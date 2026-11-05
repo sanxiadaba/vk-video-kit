@@ -37,6 +37,28 @@ const width = Number(val('--width') || 0) || (phone ? 780 : 1920);
 
 /* ---------------------------------------------------------------- 库构建 */
 
+const crypto = await import('node:crypto');
+
+/** 目录内容指纹：改了内容才算变，恢复成旧时间戳也不骗人。 */
+const digestOf = (dir, exts) => {
+  const h = crypto.createHash('sha1');
+  const walk = (p) => {
+    for (const e of fs.readdirSync(p, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
+      const abs = path.join(p, e.name);
+      if (e.isDirectory()) {
+        if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
+        walk(abs);
+      } else if (!exts.length || exts.some((x) => abs.endsWith(x))) {
+        h.update(abs);
+        h.update(fs.readFileSync(abs));
+      }
+    }
+  };
+  if (!fs.existsSync(dir)) return '';
+  walk(dir);
+  return h.digest('hex');
+};
+
 const newest = (dir, exts) => {
   let t = 0;
   const walk = (p) => {
@@ -57,13 +79,32 @@ function run(bin, argv) {
 }
 
 function ensureLibrary() {
-  const stale = (file, deps) => !fs.existsSync(file) || fs.statSync(file).mtimeMs < deps;
-  const srcT = Math.max(newest('src', ['.mjs', '.css']), fs.statSync('tools/build.mjs').mtimeMs);
+  const cacheFile = path.join(ROOT, '.vk-cache', 'lib.json');
+  let cache = {};
+  try {
+    cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
+  } catch {
+    cache = {};
+  }
+  const save = () => {
+    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
+    fs.writeFileSync(cacheFile, JSON.stringify(cache));
+  };
+  const srcDigest = digestOf('src', ['.mjs', '.css']);
+  const tokensDigest = digestOf('src', ['.mjs']);
   if (!fs.existsSync('vk/fonts.css')) run('node', ['tools/fonts.mjs']);
   if (!fs.existsSync('vk/katex.css')) run('node', ['tools/katex.mjs']);
   if (!fs.existsSync('src/icons.generated.mjs')) run('node', ['tools/icons.mjs']);
-  if (stale('src/tokens.generated.css', fs.statSync('src/vocab.mjs').mtimeMs)) run('node', ['tools/css.mjs']);
-  if (stale('vk/vk.css', srcT) || stale('dist/vk.js', srcT)) run('node', ['tools/build.mjs']);
+  if (!fs.existsSync('src/tokens.generated.css') || cache.tokens !== tokensDigest) {
+    run('node', ['tools/css.mjs']);
+    cache.tokens = tokensDigest;
+    save();
+  }
+  if (!fs.existsSync('vk/vk.css') || !fs.existsSync('dist/vk.js') || cache.lib !== srcDigest) {
+    run('node', ['tools/build.mjs']);
+    cache.lib = srcDigest;
+    save();
+  }
 }
 
 /* ---------------------------------------------------------------- 发布 */
@@ -79,7 +120,8 @@ function publish() {
   }
   for (const dir of ['vk', 'dist', 'assets']) {
     if (!fs.existsSync(dir)) continue;
-    const t = newest(dir, []);
+    // 同样按内容指纹：只改了 mtime 不该触发整目录重拷，内容变了则一定要拷。
+    const t = digestOf(dir, []);
     if (stamp[dir] === t && fs.existsSync(path.join(OUT, dir))) continue;
     fs.rmSync(path.join(OUT, dir), { recursive: true, force: true });
     fs.cpSync(dir, path.join(OUT, dir), { recursive: true });
