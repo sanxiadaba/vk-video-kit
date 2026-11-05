@@ -1329,6 +1329,15 @@ vk-label[variant='chip'] .vk-label-t,
 .vk-callout-note,
 vk-table tbody tr[tone] td {
   --vk-focus: var(--vk-focus-paper);
+  --vk-info: var(--vk-info-paper);
+  --vk-ok: var(--vk-ok-paper);
+  --vk-warn: var(--vk-warn-paper);
+  --vk-err: var(--vk-err-paper);
+  --vk-tint-info: var(--vk-tint-info-paper);
+  --vk-tint-focus: var(--vk-tint-focus-paper);
+  --vk-tint-ok: var(--vk-tint-ok-paper);
+  --vk-tint-warn: var(--vk-tint-warn-paper);
+  --vk-tint-err: var(--vk-tint-err-paper);
   --vk-ink-1: var(--vk-on-paper-1);
   --vk-ink-2: var(--vk-on-paper-2);
   --vk-ink-3: var(--vk-on-paper-3);

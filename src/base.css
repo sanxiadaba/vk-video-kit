@@ -60,6 +60,17 @@ vk-text[size='hero'] {
 vk-page[surface='dark'] {
   background: var(--vk-dark-bg);
   --vk-focus: var(--vk-dark-accent);
+  /* 语义色在近黑上要亮一档，否则线、图标、底标全都糊在背景里。 */
+  --vk-info: var(--vk-dark-accent);
+  --vk-ok: var(--vk-dark-ok);
+  --vk-warn: color-mix(in srgb, var(--vk-warn-paper) 45%, var(--vk-dark-fg));
+  --vk-err: color-mix(in srgb, var(--vk-err-paper) 45%, var(--vk-dark-fg));
+  /* 淡底也换：纸面淡底是浅的，深色页上要变成"暗底 + 一点语义色"。 */
+  --vk-tint-info: color-mix(in srgb, var(--vk-info) 24%, var(--vk-dark-bg1));
+  --vk-tint-focus: color-mix(in srgb, var(--vk-focus) 26%, var(--vk-dark-bg1));
+  --vk-tint-ok: color-mix(in srgb, var(--vk-ok) 24%, var(--vk-dark-bg1));
+  --vk-tint-warn: color-mix(in srgb, var(--vk-warn) 24%, var(--vk-dark-bg1));
+  --vk-tint-err: color-mix(in srgb, var(--vk-err) 24%, var(--vk-dark-bg1));
   color: var(--vk-dark-fg);
   --vk-ink-1: var(--vk-dark-fg);
   --vk-ink-2: var(--vk-dark-fg2);
@@ -146,6 +157,16 @@ vk-text {
 
 /* 纸面墨阶的原值：自带纸底的件（窗口）用它把自己重置回纸面。 */
 :root {
+  /* 纸面语义色的原值：深色底会把这四个换掉，浅底件用它们把自己换回来。 */
+  --vk-tint-info-paper: var(--vk-tint-info);
+  --vk-tint-focus-paper: var(--vk-tint-focus);
+  --vk-tint-ok-paper: var(--vk-tint-ok);
+  --vk-tint-warn-paper: var(--vk-tint-warn);
+  --vk-tint-err-paper: var(--vk-tint-err);
+  --vk-info-paper: var(--vk-info);
+  --vk-ok-paper: var(--vk-ok);
+  --vk-warn-paper: var(--vk-warn);
+  --vk-err-paper: var(--vk-err);
   --vk-focus-paper: var(--vk-focus);
   --vk-on-paper-1: var(--vk-ink-1);
   --vk-on-paper-2: var(--vk-ink-2);
@@ -156,6 +177,17 @@ vk-text {
 vk-layer[surface='dark'],
 vk-box[surface='dark'] {
   --vk-focus: var(--vk-dark-accent);
+  /* 语义色在近黑上要亮一档，否则线、图标、底标全都糊在背景里。 */
+  --vk-info: var(--vk-dark-accent);
+  --vk-ok: var(--vk-dark-ok);
+  --vk-warn: color-mix(in srgb, var(--vk-warn-paper) 45%, var(--vk-dark-fg));
+  --vk-err: color-mix(in srgb, var(--vk-err-paper) 45%, var(--vk-dark-fg));
+  /* 淡底也换：纸面淡底是浅的，深色页上要变成"暗底 + 一点语义色"。 */
+  --vk-tint-info: color-mix(in srgb, var(--vk-info) 24%, var(--vk-dark-bg1));
+  --vk-tint-focus: color-mix(in srgb, var(--vk-focus) 26%, var(--vk-dark-bg1));
+  --vk-tint-ok: color-mix(in srgb, var(--vk-ok) 24%, var(--vk-dark-bg1));
+  --vk-tint-warn: color-mix(in srgb, var(--vk-warn) 24%, var(--vk-dark-bg1));
+  --vk-tint-err: color-mix(in srgb, var(--vk-err) 24%, var(--vk-dark-bg1));
   --vk-ink-1: var(--vk-dark-fg);
   --vk-ink-2: var(--vk-dark-fg2);
   --vk-ink-3: var(--vk-dark-meta);
