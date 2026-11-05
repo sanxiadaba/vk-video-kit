@@ -1079,12 +1079,13 @@ vk-timeline {
   gap: var(--vk-gap-wide);
   padding-top: var(--vk-gap-wide);
 }
-.vk-tl::before {
+/* 轴不再整条画：每个点自己画到下一个点（含 gap），最后一格不画。 */
+.vk-tl-item:not(:last-child)::after {
   content: '';
   position: absolute;
   left: 0;
-  right: 0;
-  top: calc(var(--vk-gap-wide) / 2);
+  top: calc(var(--vk-gap-wide) * -1 + var(--vk-gap-wide) / 2);
+  width: calc(100% + var(--vk-gap-wide));
   height: var(--vk-line-w-rule);
   background: var(--vk-line-strong);
 }

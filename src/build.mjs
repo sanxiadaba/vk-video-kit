@@ -365,11 +365,17 @@ function buildAsm(node, file) {
   }</div><div class="vk-bd">${body}</div></div>`;
 }
 
-function buildBytes(node, file) {
+function buildBytes(node, file, errors) {
   const src = attrOf(node, 'src');
-  if (!src) return '';
+  if (!src) {
+    errors.push(`${file}:${lineOf(node)} <vk-bytes> 缺 src：写 src="文件.bin"`);
+    return '';
+  }
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
-  if (!fs.existsSync(abs)) return '';
+  if (!fs.existsSync(abs)) {
+    errors.push(`${file}:${lineOf(node)} <vk-bytes> 的 src="${src}" 找不到文件`);
+    return '';
+  }
   const buf = fs.readFileSync(abs);
   const start = Number(attrOf(node, 'offset') || 0) || 0;
   const len = Math.min(Number(attrOf(node, 'length') || 32) || 32, buf.length - start);
@@ -384,7 +390,7 @@ function buildBytes(node, file) {
       `<div class="vk-brow" data-vk-line="${i / cols + 1}"><span class="vk-baddr">0x${(base + start + i)
         .toString(16)
         .padStart(4, '0')}</span><span class="vk-hex">${chunk
-        .map((b, j) => `<i data-vk-byte="${start + i + j}">${b.toString(16).padStart(2, '0')}</i>`)
+        .map((b, j) => `<i data-vk-byte="${i + j + 1}">${b.toString(16).padStart(2, '0')}</i>`)
         .join('')}</span><span class="vk-ascii">${esc(ascii)}</span></div>`
     );
     void hex;
@@ -544,7 +550,7 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
       else if (tag === 'vk-diff') out = await buildDiff(node, file, errors);
       else if (tag === 'vk-math') out = await buildMath(node, file, errors);
       else if (tag === 'vk-asm') out = await buildAsm(node, file);
-      else if (tag === 'vk-bytes') out = await buildBytes(node, file);
+      else if (tag === 'vk-bytes') out = await buildBytes(node, file, errors);
       else if (tag === 'vk-tree') out = await buildTree(node, file);
       else if (tag === 'vk-inline' && attrOf(node, 'variant') === 'math') {
         const tex = inlineSource(node) || textOf(node);

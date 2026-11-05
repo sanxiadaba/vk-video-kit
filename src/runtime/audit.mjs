@@ -191,7 +191,7 @@ export function auditPage(stageEl) {
   }
 
   // 8. 空件：构建期没读到内容时，组件会渲染成一个空窗——它不报错，但什么也没讲。
-  const DATA_TAGS = ['vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-bytes', 'vk-tree', 'vk-math'];
+  const DATA_TAGS = ['vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-bytes', 'vk-tree', 'vk-math', 'vk-bits', 'vk-callout'];
   for (const tag of DATA_TAGS) {
     for (const el of stage.querySelectorAll(tag)) {
       if (el.closest('svg')) continue;
