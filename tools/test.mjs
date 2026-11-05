@@ -106,6 +106,26 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
   }
   ok(map.size > 200 && !clashes.length, '样式规则没有跨文件冲突');
 
+  /* 声明了却没实现：样式和运行时都不读它。 */
+  {
+    const cssText = files.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
+    const rtText =
+      fs.readdirSync(path.join(ROOT, 'src', 'runtime')).map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8')).join('\n') +
+      fs.readFileSync(path.join(ROOT, 'src', 'build.mjs'), 'utf8');
+    const quotes = [39, 34, 96].map((c) => String.fromCharCode(c));
+    const ghosts = [];
+    for (const tag of TAG_NAMES) {
+      for (const name of Object.keys(attrsOf(tag))) {
+        if (['span', 'row-span', 'grow', 'bleed', 'id', 'class'].includes(name)) continue;
+        const inCss = cssText.includes(tag + '[' + name) || cssText.includes('[' + name + '=') || cssText.includes('[' + name + ']');
+        const inRt = quotes.some((c) => rtText.includes(c + name + c));
+        if (!inCss && !inRt) ghosts.push(tag + "." + name);
+      }
+    }
+    ok(!ghosts.length, '每个属性都有实现');
+    for (const g of ghosts.slice(0, 6)) console.error('    · ' + g + ' 没有样式也没有运行时读取');
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {
