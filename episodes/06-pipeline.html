@@ -51,11 +51,13 @@ main.c  main.i  main.s  main.o  main.exe
   <vk-stack gap="close">
     <vk-label counter="5 / 8">预处理后</vk-label>
     <vk-text size="subhead">展开后 860 行，<em>你的只有 4 行</em>。</vk-text>
-    <vk-code lang="c" file="main.i" src="../code/pipe/main.i" lines="857-860" size="caption" current="2"></vk-code>
-    <vk-text size="caption" ink="muted">前 856 行全是 stdio.h 的展开——编译器只关心最后这几行。</vk-text>
+    <vk-bars max="860" unit="行">
+      <li value="856" label="stdio.h 展开"></li>
+      <li value="4" label="你写的" tone="focus"></li>
+    </vk-bars>
+    <vk-code lang="c" file="main.i" src="../code/pipe/main.i" lines="857-860" size="caption" current="2" long="clip"></vk-code>
   </vk-stack>
 </vk-page>
-
 <vk-page id="5-obj">
   <vk-stack gap="normal">
     <vk-label counter="6 / 8">目标文件</vk-label>
