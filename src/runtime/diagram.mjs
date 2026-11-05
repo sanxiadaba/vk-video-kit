@@ -152,6 +152,15 @@ export class VkSteps extends VkElement {
 
   }
 
+  /** 横排的每一格是不是折行了。折行 = 宽度不够，不用问作者。 */
+  _wrapped() {
+    for (const t of this.querySelectorAll('.vk-step-t')) {
+      const lh = parseFloat(getComputedStyle(t).lineHeight);
+      if (lh > 0 && t.getBoundingClientRect().height > lh * 1.6) return true;
+    }
+    return false;
+  }
+
   /** 量：够不够横排；编号章的中心在哪（连接线要对齐它）。 */
   place() {
     const steps = this.querySelectorAll('.vk-step');
@@ -160,8 +169,14 @@ export class VkSteps extends VkElement {
     const avail = availWidth(this);
     const written = attrEnum(this, 'direction', 'auto');
 
-    const dir = written === 'auto' ? (avail >= want ? 'horizontal' : 'vertical') : written;
+    let dir = written === 'auto' ? (avail >= want ? 'horizontal' : 'vertical') : written;
     if (dir !== this._dir) this._applyDirection(dir);
+
+    // 摆好之后再看一眼：横排里只要有一格文字折行了，就说明这个宽度不够——自己竖排。
+    if (written === 'auto' && dir === 'horizontal' && this._wrapped()) {
+      dir = 'vertical';
+      this._applyDirection(dir);
+    }
     if (written === 'horizontal' && avail < want) {
       warn(this, `horizontal 要约 ${want}px，容器只有 ${Math.round(avail)}px；写 direction="auto" 让它自己竖排`);
     }
