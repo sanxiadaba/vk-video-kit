@@ -422,7 +422,9 @@ console.log('\n覆盖');
     const blocks = [...sec.matchAll(/```html\n([\s\S]*?)```/g)].map((m) => m[1].replace(/\s+/g, ' ').trim());
     const page = fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').replace(/\s+/g, ' ').trim();
     const off = blocks.filter((b) => !page.includes(b));
-    ok(blocks.length >= 5 && !off.length, 'SPEC 的配方与 recipes.html 一致');
+    const frames = [...fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').matchAll(/<vk-page/g)].length;
+    ok(blocks.length >= 5 && !off.length && blocks.length === frames, 'SPEC 的配方与 recipes.html 一致');
+    if (blocks.length !== frames) console.error(`    · SPEC 有 ${blocks.length} 段，recipes.html 有 ${frames} 帧`);
     for (const b of off.slice(0, 3)) console.error('    · 对不上：' + b.slice(0, 60));
   }
 
