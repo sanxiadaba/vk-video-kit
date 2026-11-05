@@ -195,6 +195,23 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     for (const o of [...new Set(orphan)].slice(0, 6)) console.error('    · ' + o + ' 读了 schema 里没有的属性');
   }
 
+  /* 同一个常量在两个运行时文件里各写一份，改一处另一处就静静走偏。 */
+  {
+    const rtFiles = fs.readdirSync(path.join(ROOT, 'src', 'runtime')).filter((f) => f.endsWith('.mjs'));
+    const defs = new Map();
+    for (const f of rtFiles) {
+      const src = fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8');
+      for (const m of src.matchAll(/^(?:export )?(?:const|function) (\w+)/gm)) {
+        const list = defs.get(m[1]) || [];
+        list.push(f);
+        defs.set(m[1], list);
+      }
+    }
+    const dup = [...defs].filter(([, v]) => v.length > 1).map(([n, v]) => n + '（' + v.join(', ') + '）');
+    ok(!dup.length, '运行时没有重复定义的工具');
+    for (const d of dup.slice(0, 5)) console.error('    · ' + d + ' 在多个文件里各写了一份');
+  }
+
   /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
   const twice = [];
   for (const f of files) {

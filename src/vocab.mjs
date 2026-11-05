@@ -159,5 +159,8 @@ export const SPACE = Object.keys(GAP);
 /** 索引：一律 1 起，-1 表示「没有当前」。没有第二种基。 */
 export const INDEX_RULE = '1 起；-1 = 没有当前';
 
+/** 最小可读字号：手机 0.4× 之后 14.6px。自检和代码窗缩字号都读这一个。 */
+export const FONT_FLOOR = 36;
+
 /** 三个语义色的深色版：淡底上的字永远是 ink1，深色面上才换档。 */
 export const toneVar = (tone) => `--vk-${tone}`;

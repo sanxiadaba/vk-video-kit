@@ -1,4 +1,5 @@
 import { VkElement, define, attrLines, attrEnum } from './base.mjs';
+import { FONT_FLOOR as FLOOR } from '../vocab.mjs';
 
 /**
  * 代码 / 终端 / 差异 / 汇编：构建期已经把行和高亮排好了，
@@ -8,7 +9,6 @@ import { VkElement, define, attrLines, attrEnum } from './base.mjs';
  * 而不是让作者去猜"这行会不会被切掉"。
  */
 const BASE = 56;
-const FLOOR = 36;
 
 function fitToBox(host) {
   const win = host.querySelector('.vk-win');

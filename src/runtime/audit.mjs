@@ -7,7 +7,7 @@
    检查只负责"别画错"。所有判据对所有件一视同仁，没有组件特判。
    ========================================================================== */
 
-const FLOOR = 36; // 手机 0.4× 后 14.6px：再小就不是字了
+
 const TEXT_RATIO = 4.5;
 const LARGE_RATIO = 3;
 const LARGE = 112;
@@ -348,3 +348,4 @@ VK.resolveAnchor = resolveAnchorExport;
 
 /* 自检要用同一个锚点解析：从 base 再导出一次，避免两份实现。 */
 import { resolveTarget as resolveTargetExport, resolveAnchor as resolveAnchorExport } from './base.mjs';
+import { FONT_FLOOR as FLOOR } from '../vocab.mjs';
