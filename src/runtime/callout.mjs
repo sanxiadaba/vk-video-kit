@@ -359,10 +359,10 @@ export class VkCallout extends VkElement {
     const stage = stageOf(this);
     if (!stage) return;
     const W = stage.clientWidth;
-    // 目标在窗口里时，圆点放到窗口外面：压住正文或压住圈线都难看。
-    const owner =
-      a.el.closest('vk-code, vk-term, vk-diff, vk-box, vk-cells, vk-tree, vk-asm, vk-bytes') || a.el;
-    const ob = local(visibleBox(owner).getBoundingClientRect());
+    // 编号点贴着**目标本身**：贴窗口会把"第 2 格"标到整块的边上。
+    // 圆点是 44px、以锚点为中心，所以要再让半个点。
+    const owner = a.el.closest('vk-code, vk-term, vk-diff, vk-box, vk-cells, vk-tree, vk-asm, vk-bytes') || a.el;
+    const ob = r;
     const dot = document.createElement('div');
     dot.className = 'vk-callout-bd vk-callout-badge';
     dot.textContent = this._text || '1';

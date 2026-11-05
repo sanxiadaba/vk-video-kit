@@ -184,7 +184,8 @@ export function auditPage(stageEl) {
     for (const attr of ['for', 'from', 'to']) {
       const expr = c.getAttribute(attr);
       if (!expr) continue;
-      if (!window.vk?.resolveTarget?.(stage, expr, c)) {
+      const hit = window.vk?.resolveAnchor?.(stage, expr, c) || window.vk?.resolveTarget?.(stage, expr, c);
+      if (!hit) {
         issues.push({ type: 'anchor', what: `<vk-callout> 的 ${attr}="${expr}" 指不到东西`, fix: '写 #id / .class / vk-标签，或 #id@line:5' });
       }
     }
@@ -215,6 +216,26 @@ export function auditPage(stageEl) {
           what: `${name(kid)} 超出了 canvas ${over}px`,
           fix: '改它的 x / y / w / h，或把 canvas 的 h 放大',
         });
+      }
+    }
+  }
+
+  // 8.6 画布子项互相重叠：绝对定位写错就会叠在一起，肉眼在缩略图里看不出来。
+  for (const canvas of stage.querySelectorAll('vk-canvas')) {
+    const kids = [...canvas.children];
+    for (let i = 0; i < kids.length; i++) {
+      for (let j = i + 1; j < kids.length; j++) {
+        const a1 = kids[i].getBoundingClientRect();
+        const b1 = kids[j].getBoundingClientRect();
+        const w = Math.min(a1.right, b1.right) - Math.max(a1.left, b1.left);
+        const h = Math.min(a1.bottom, b1.bottom) - Math.max(a1.top, b1.top);
+        if (w > 2 && h > 2) {
+          issues.push({
+            type: 'canvas-overlap',
+            what: `${name(kids[i])} 和 ${name(kids[j])} 重叠了 ${Math.round(w)}×${Math.round(h)}px`,
+            fix: '改其中一个的 x / y / h；真要叠放，用 <vk-layer>',
+          });
+        }
       }
     }
   }
@@ -272,7 +293,8 @@ export function installAudit(VK) {
   VK.auditPages = auditPages;
   VK.metrics = metrics;
   VK.resolveTarget = resolveTargetExport;
+VK.resolveAnchor = resolveAnchorExport;
 }
 
 /* 自检要用同一个锚点解析：从 base 再导出一次，避免两份实现。 */
-import { resolveTarget as resolveTargetExport } from './base.mjs';
+import { resolveTarget as resolveTargetExport, resolveAnchor as resolveAnchorExport } from './base.mjs';

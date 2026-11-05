@@ -176,7 +176,8 @@ export function inkRect(el) {
 
 /* ---------------------------------------------------------------- 锚点 */
 
-const PARTS = ['line', 'cell', 'byte', 'bit', 'addr', 'step', 'event', 'lane', 'row', 'node', 'item'];
+// 只列"真会被指到"的部件：多一个空名字，作者写下去只会安静地指空。
+const PARTS = ['line', 'cell', 'byte', 'bit', 'addr', 'step', 'event', 'lane', 'node'];
 
 const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
 

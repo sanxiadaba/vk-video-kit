@@ -366,7 +366,7 @@ function buildAsm(node, file) {
         )}</span></div>`;
       }
       const { mnemonic, operands } = splitInsn(r.text);
-      return `<div class="vk-arow" data-vk-line="${n}"><span class="vk-aaddr">${esc(r.addr)}</span>${
+      return `<div class="vk-arow" data-vk-line="${n}"${r.addr ? ` data-vk-addr="${esc(r.addr)}"` : ''}><span class="vk-aaddr">${esc(r.addr)}</span>${
         showBytes ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
       }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)}</span></div>`;
     })

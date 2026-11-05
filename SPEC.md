@@ -170,14 +170,15 @@ s[0] = 'H';
 
 | part | 用在哪 | arg |
 |---|---|---|
-| `line` | code / diff / asm | 源文件行号（1 起） |
+| `line` | code / term / diff / asm | 源文件行号（1 起） |
 | `cell` | cells | 下标（0 起） |
-| `byte` | bytes | 字节偏移 |
+| `byte` | bytes | 字节偏移（0 起） |
 | `bit` | bits | 位下标（0 起） |
-| `addr` | asm | 指令地址 |
-| `event` / `lane` | timeline | 事件下标 / 泳道名 |
-| `node` | tree | 节点路径 |
-| `point` / `side` / `region` | 任意 | `x%,y%` / `top` / `x%,y%,w%,h%` |
+| `addr` | asm | 指令地址，如 `#a@addr:401136` |
+| `step` | steps | 第几步（0 起） |
+| `event` / `lane` | timeline | 事件下标（0 起）/ 泳道名 |
+| `node` | tree | 节点路径，如 `#t@node:src/main.c` |
+| `point` / `side` / `region` | 任意带 id 的件 | `x%,y%` / `top/right/bottom/left` / `x%,y%,w%,h%` |
 
 圈选按**字的墨迹**取框：`#c@line:5` 圈的是那一行的字，不是 1680 宽的行盒。
 
