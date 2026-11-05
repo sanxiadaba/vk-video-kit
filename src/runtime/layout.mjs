@@ -18,7 +18,7 @@ export class VkStack extends VkElement {
     const list = raw.split(/[\s,]+/).filter(Boolean).map(Number);
     if (!list.length || list.some((n) => !Number.isFinite(n) || n <= 0)) return;
     if (!this.hasAttribute('grow') && !this.hasAttribute('h')) {
-      console.warn('[vk] <vk-stack> 写了 weights，但容器没有确定高度：按内容高排。给它 grow 或 h。', this);
+      warn(this, 'weights 需要容器有确定高度：给 <vk-stack> 写 grow，或放进 vk-canvas 里给 h');
       return;
     }
     [...this.children].forEach((el, i) => {

@@ -453,6 +453,16 @@ vk-code[long='wrap'] .vk-src {
 .vk-win[data-surface='dark'] .vk-line.is-current .vk-ln {
   color: var(--vk-dark-accent);
 }
+/* 终端的三种行在深色底上要各自有颜色：命令最亮、输出次之、提示最暗。 */
+.vk-win[data-surface='dark'] .vk-cmd {
+  color: var(--vk-dark-fg);
+}
+.vk-win[data-surface='dark'] .vk-out {
+  color: var(--vk-dark-fg2);
+}
+.vk-win[data-surface='dark'] .vk-prompt {
+  color: var(--vk-dark-meta);
+}
 
 /* ------------------------------------------------------------------ 终端 */
 .vk-term .vk-line {
@@ -1221,6 +1231,11 @@ vk-compare {
   display: flex;
   justify-content: space-between;
   gap: var(--vk-gap-normal);
+}
+
+/* 堆叠对照：两张各占一半高度，560 会顶出画布。 */
+vk-compare[variant='stack'] {
+  --vk-compare-h: 320px;
 }
 
 /* 有放大块时主图要让出一半高度，否则整页会被顶出去。 */

@@ -489,6 +489,7 @@ export class VkCompare extends VkElement {
     for (const img of this.querySelectorAll('.vk-compare-pane[data-pane="a"] img, .vk-compare-pane[data-pane="b"] img')) {
       img.addEventListener('load', () => {
         this._syncAspect();
+        this._paintMarks(); // 图到了才知道留边多少，标记框要重画
         VK.invalidate(); // 图到了，pane 高变了，放大块要重量
       });
       img.addEventListener('error', () => warn(this, `图片加载失败：${img.getAttribute('src')}`));
@@ -507,7 +508,29 @@ export class VkCompare extends VkElement {
     const list = this._marks || [];
     for (const box of this.querySelectorAll('[data-marks]')) {
       for (const old of box.querySelectorAll('.vk-compare-mark')) old.remove();
-      if (list.length) box.insertAdjacentHTML('beforeend', list.map(markHtml).join(''));
+      if (!list.length) continue;
+      // 百分比是相对"图"的，不是相对"格"的：图按 contain 缩进格里会留边，
+      // 直接按格子百分比画，框就会飘到空白处。
+      const img = box.querySelector('img');
+      const pw = box.clientWidth;
+      const ph = box.clientHeight;
+      const iw = img?.naturalWidth || 0;
+      const ih = img?.naturalHeight || 0;
+      if (!pw || !ph || !iw || !ih) continue;
+      const s = Math.min(pw / iw, ph / ih);
+      const w = iw * s;
+      const h = ih * s;
+      const ox = (pw - w) / 2;
+      const oy = (ph - h) / 2;
+      box.insertAdjacentHTML(
+        'beforeend',
+        list
+          .map(
+            (m) =>
+              `<span class="vk-compare-mark" style="left:${ox + (m.left / 100) * w}px;top:${oy + (m.top / 100) * h}px;width:${(m.w / 100) * w}px;height:${(m.h / 100) * h}px"></span>`
+          )
+          .join('')
+      );
     }
   }
 

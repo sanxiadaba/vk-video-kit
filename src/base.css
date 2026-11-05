@@ -252,6 +252,21 @@ vk-text > .vk-text-ic svg {
   height: 1em;
 }
 
+/* 图标：1em 见方、跟着文字基线走。不限制的话内联 SVG 会按默认 300×150 撑开整段。 */
+.vk-ic {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  margin-right: 0.35em;
+}
+
+.vk-ic svg {
+  width: 100%;
+  height: 100%;
+}
+
 /* ------------------------------------------------------------------ 工具 */
 [bleed='all'] {
   margin: calc(var(--vk-margin-y) * -1) calc(var(--vk-margin-x) * -1);
