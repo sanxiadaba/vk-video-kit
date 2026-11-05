@@ -212,8 +212,9 @@ export function metrics(stageEl) {
   if (!stage) return null;
   const sr = stage.getBoundingClientRect();
   const scale = stage.offsetWidth ? sr.width / stage.offsetWidth : 1;
+  // 铺满整帧的背景不参与"内容占多满"：它是底，不是内容。
   const rects = [...stage.querySelectorAll('*')]
-    .filter((el) => !el.closest('svg') && !isOverlay(el) && !el.matches('vk-callout'))
+    .filter((el) => !el.closest('svg') && !isOverlay(el) && !el.matches('vk-callout') && !el.closest('[bleed="all"]'))
     .map((el) => el.getBoundingClientRect())
     .filter((r) => r.width > 1 && r.height > 1);
   const top = rects.length ? Math.min(...rects.map((r) => r.top)) : sr.top;
