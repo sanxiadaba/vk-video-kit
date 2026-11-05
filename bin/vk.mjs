@@ -201,10 +201,7 @@ if (cmd === 'render' || cmd === 'check') {
   let failed = 0;
   for (const f of files) {
     const r = await buildPage(f);
-    if (!r.ok) {
-      failed++;
-      for (const e of r.errors) console.error(`✗ ${e}`);
-    }
+    if (!r.ok) failed++;
     built.push(r);
   }
 
@@ -249,7 +246,7 @@ if (cmd === 'render' || cmd === 'check') {
       const rel = path.relative(ROOT, r.file);
       if (r.errors?.length && !r.frames?.length) {
         console.log(`✗ ${rel}`);
-        for (const e of r.errors) console.log(`   ${e}`);
+        for (const e of r.errors) console.log(`   ${String(e).split('\n').join('\n   ')}`);
         continue;
       }
       for (const f of r.frames) {

@@ -163,6 +163,15 @@ function validate(root, file, errors) {
     if (node.attrs?.some((a) => a.name === 'span' || a.name === 'row-span') && parent !== 'vk-grid') {
       errors.push(`${file}:${lineOf(node)} <${tag}> 的 span 只属于 <vk-grid> 的直接子项（父级是 <${parent || '无'}>）`);
     }
+    const spanAttr = node.attrs?.find((a) => a.name === 'span');
+    if (spanAttr && parent === 'vk-grid') {
+      const cols = Number(attrOf(node.parentNode, 'cols') || 2);
+      if (Number(spanAttr.value) > cols) {
+        errors.push(
+          `${file}:${lineOf(node)} <${tag}> 的 span="${spanAttr.value}" 超过父级 cols="${cols}"：这一行会被挤到下一行。改 span 或改 cols`
+        );
+      }
+    }
     if (node.attrs?.some((a) => ['x', 'y', 'w', 'h', 'z'].includes(a.name)) && parent !== 'vk-canvas' && tag !== 'vk-canvas') {
       errors.push(`${file}:${lineOf(node)} <${tag}> 的 x / y / w / h / z 只在 <vk-canvas> 的子项上成立（父级是 <${parent || '无'}>）`);
     }
@@ -497,6 +506,24 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
   const errors = [];
   const warnings = [];
   validate(doc, file, errors);
+
+  // 锚点里写死的 #id 必须在同一份文档里存在：不然运行期只会安静地不画。
+  const ids = new Set(flatten(doc).filter((n) => (n.attrs || []).some((a) => a.name === 'id')).map((n) => attrOf(n, 'id')));
+  for (const node of flatten(doc)) {
+    if (!node.tagName?.startsWith('vk-')) continue;
+    for (const a of node.attrs || []) {
+      if (!['for', 'from', 'to'].includes(a.name)) continue;
+      for (const piece of String(a.value).split(';')) {
+        const t = piece.trim();
+        if (!t.startsWith('#')) continue;
+        const id = t.slice(1).split('@')[0];
+        if (id && !ids.has(id)) {
+          errors.push(`${file}:${lineOf(node)} <${node.tagName}> 的 ${a.name}="${t}" 指向 #${id}，但这一页没有这个 id`);
+        }
+      }
+    }
+  }
+
   const edits = [];
 
   for (const node of flatten(doc)) {
@@ -509,22 +536,28 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
     const inner = html.slice(start, end);
     let out = null;
 
-    if (tag === 'vk-code') out = await buildCode(node, file, errors);
-    else if (tag === 'vk-term') out = await buildTerm(node, file, errors);
-    else if (tag === 'vk-diff') out = await buildDiff(node, file, errors);
-    else if (tag === 'vk-math') out = await buildMath(node, file, errors);
-    else if (tag === 'vk-asm') out = await buildAsm(node, file);
-    else if (tag === 'vk-bytes') out = await buildBytes(node, file);
-    else if (tag === 'vk-tree') out = await buildTree(node, file);
-    else if (tag === 'vk-inline' && attrOf(node, 'variant') === 'math') {
-      const tex = inlineSource(node) || textOf(node);
-      if (tex) {
-        try {
-          out = katex.renderToString(tex.trim(), { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' });
-        } catch (e) {
-          errors.push(`${file}:${lineOf(node)} 行内公式排版失败：${e.message}`);
+    try {
+      if (tag === 'vk-code') out = await buildCode(node, file, errors);
+      else if (tag === 'vk-term') out = await buildTerm(node, file, errors);
+      else if (tag === 'vk-diff') out = await buildDiff(node, file, errors);
+      else if (tag === 'vk-math') out = await buildMath(node, file, errors);
+      else if (tag === 'vk-asm') out = await buildAsm(node, file);
+      else if (tag === 'vk-bytes') out = await buildBytes(node, file);
+      else if (tag === 'vk-tree') out = await buildTree(node, file);
+      else if (tag === 'vk-inline' && attrOf(node, 'variant') === 'math') {
+        const tex = inlineSource(node) || textOf(node);
+        if (tex) {
+          try {
+            out = katex.renderToString(tex.trim(), { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' });
+          } catch (e) {
+            errors.push(`${file}:${lineOf(node)} 行内公式排版失败：${e.message}`);
+          }
         }
       }
+    } catch (e) {
+      // 单个件失败不要吃掉整页的其它错误：记下来，继续。
+      errors.push(e.message);
+      out = '';
     }
 
     const icon = node.attrs?.find((a) => a.name === 'icon')?.value;
@@ -543,6 +576,8 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
   for (const e of edits) result = result.slice(0, e.start) + e.html + result.slice(e.end);
 
   if (errors.length) {
+    // 按文件里的行号排序：作者改起来是自上而下的。
+    errors.sort((x, y) => Number((x.match(/:\s*(\d+)\s/) || [])[1] || 1e9) - Number((y.match(/:\s*(\d+)\s/) || [])[1] || 1e9));
     const err = new Error(errors.join('\n'));
     err.errors = errors;
     throw err;
