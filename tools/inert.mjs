@@ -9,6 +9,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import { execFileSync } from 'node:child_process';
 import { chromium } from 'playwright';
 import { TAG_NAMES, attrsOf } from '../src/schema.mjs';
 
@@ -30,6 +31,9 @@ if (!files.length) {
   }
 }
 
+/* out/ 里是库的镜像副本：探针跑之前先构建一遍，否则量的是上一版的行为。 */
+execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'check', ...files], { cwd: ROOT, stdio: 'ignore' });
+
 const browser = await chromium.launch({ channel: 'msedge', args: ['--allow-file-access-from-files'] });
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 
@@ -42,18 +46,21 @@ for (const rel of files) {
   if (!fs.existsSync(built)) continue;
   await page.goto('file:///' + built.split(path.sep).join('/'));
   await page.evaluate(() => window.vk.ready());
+  await page.evaluate(() =>
+    Promise.all([...document.images].filter((i) => !i.complete).map((i) => new Promise((done) => { i.onload = i.onerror = done; })))
+  );
 
   const plan = await page.evaluate(
     ({ VISUAL, tags, schema }) => {
       const sig = (stage) => {
         const parts = [];
         for (const el of stage.querySelectorAll('*')) {
-          if (el.closest('svg')) continue;
+          const inSvg = !!el.closest('svg');
           const r = el.getBoundingClientRect();
           if (r.width < 1 || r.height < 1) continue;
           const cs = getComputedStyle(el);
           parts.push(
-            [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderRadius, cs.fontSize, cs.fontWeight, cs.opacity, getComputedStyle(el, '::before').content, getComputedStyle(el, '::after').content].join('|')
+            [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderRadius, cs.objectFit, cs.objectPosition, cs.stroke, cs.strokeWidth, cs.fill, cs.backgroundImage, cs.filter, cs.fontFamily, cs.fontSize, cs.fontWeight, cs.opacity, (el.textContent || '').slice(0, 40), getComputedStyle(el, '::before').content, getComputedStyle(el, '::after').content].join('|')
           );
         }
         return parts.join('\n');
@@ -101,12 +108,12 @@ for (const rel of files) {
               const sig = (s) => {
                 const parts = [];
                 for (const e of s.querySelectorAll('*')) {
-                  if (e.closest('svg')) continue;
+                  const inSvg = !!e.closest('svg');
                   const r = e.getBoundingClientRect();
                   if (r.width < 1 || r.height < 1) continue;
                   const cs = getComputedStyle(e);
                   parts.push(
-                    [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderRadius, cs.fontSize, cs.fontWeight, cs.opacity, getComputedStyle(el, '::before').content, getComputedStyle(el, '::after').content].join('|')
+                    [Math.round(r.left), Math.round(r.top), Math.round(r.width), Math.round(r.height), cs.color, cs.backgroundColor, cs.borderTopColor, cs.borderRadius, cs.objectFit, cs.objectPosition, cs.stroke, cs.strokeWidth, cs.fill, cs.backgroundImage, cs.filter, cs.fontFamily, cs.fontSize, cs.fontWeight, cs.opacity, (e.textContent || '').slice(0, 40), getComputedStyle(el, '::before').content, getComputedStyle(el, '::after').content].join('|')
                   );
                 }
                 return parts.join('\n');
@@ -122,6 +129,11 @@ for (const rel of files) {
       { job }
     );
     if (changed === 'skip') continue;
+    if (changed !== 'inert' && changed !== 'ok') {
+      console.error('探针失败：', job.tag, job.name, changed);
+      process.exitCode = 1;
+      continue;
+    }
     tested++;
     const key0 = `${job.tag}.${job.name}=${job.value ?? ''}`;
     total.set(key0, (total.get(key0) || 0) + 1);
@@ -140,9 +152,14 @@ const rows = [...total.entries()]
   .map(([k, n]) => ({ k, n, inertCount: inert.get(k)?.count || 0, sample: inert.get(k)?.sample || '' }))
   .filter((r) => r.inertCount > 0)
   .sort((a, b) => b.inertCount / b.n - a.inertCount / a.n || b.inertCount - a.inertCount);
-console.log(`试了 ${tested} 次改动；下面按"改了没反应的比例"排序：`);
-for (const r of rows.slice(0, 30)) {
-  const pct = Math.round((r.inertCount / r.n) * 100);
-  console.log(`  ${String(pct + '%').padStart(4)}  ${r.k.padEnd(32)} ${r.inertCount}/${r.n}   例如 ${r.sample}`);
-}
+const dead = rows.filter((r) => r.inertCount === r.n && r.n >= 2);
+const cond = rows.filter((r) => r.inertCount < r.n || r.n < 2);
+console.log(`试了 ${tested} 次改动。`);
+console.log(`
+可疑（每次都看不出反应）：`);
+for (const r of dead.slice(0, 40)) console.log(`  ${r.k.padEnd(32)} ${r.inertCount}/${r.n}   例如 ${r.sample}`);
+if (!dead.length) console.log('  没有。');
+console.log(`
+条件性（有的内容看不出，可能是正常的）：`);
+for (const r of cond.slice(0, 20)) console.log(`  ${r.k.padEnd(32)} ${r.inertCount}/${r.n}`);
 if (!rows.length) console.log('  没有。每个属性都看得出来。');

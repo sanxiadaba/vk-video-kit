@@ -82,6 +82,11 @@ export class VkImg extends VkElement {
       this._img.addEventListener('load', () => delete this.dataset.error, { once: true });
       if (this._img.complete && this._img.naturalWidth === 0) this.dataset.error = '';
     }
+    // fill / position 改了就同步：只重建当 src 变过，属性后改也得跟得上。
+    if (this._img) {
+      this._img.style.objectFit = fill;
+      this._img.style.objectPosition = pos;
+    }
     if (ratio) this.style.aspectRatio = ratio;
     else this.style.removeProperty('aspect-ratio');
   }
