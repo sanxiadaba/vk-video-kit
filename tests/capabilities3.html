@@ -314,3 +314,16 @@ hello
     <vk-bits value="0|01111111|011" label="float" index="down"></vk-bits>
   </vk-stack>
 </vk-page>
+
+<vk-page id="darkcall" surface="dark">
+  <vk-stack gap="wide">
+    <vk-label counter="1">深色页上的标注</vk-label>
+    <vk-text id="a" size="body">这一行会被圈住</vk-text>
+    <vk-text id="b" size="body">从这里指到那里</vk-text>
+    <vk-text id="c" size="body">旁边挂一个注释</vk-text>
+  </vk-stack>
+  <vk-callout mode="ring" for="#a"></vk-callout>
+  <vk-callout mode="arrow" from="#b" to="#c" shape="straight" tone="focus"></vk-callout>
+  <vk-callout mode="note" for="#c" side="bottom">深色页上的注释</vk-callout>
+  <vk-callout mode="badge" for="#b">1</vk-callout>
+</vk-page>

@@ -68,9 +68,33 @@ vk-callout {
   height: 44px;
   translate: -50% -50%;
   border-radius: 50%;
-  background: var(--vk-info);
+  background: var(--vk-tone, var(--vk-info));
   color: var(--vk-paper);
   font-family: var(--vk-font-mono);
   font-size: 36px;
   line-height: 1;
+}
+
+/* ------------------------------------------------------------------ 深色页
+   语义色在近黑上都偏暗：标注的线、圈、编号要亮一档才看得见。 */
+vk-page[surface='dark'] .vk-callout-badge {
+  color: var(--vk-dark-bg);
+}
+vk-page[surface='dark'] .vk-callout:not([tone]) {
+  --vk-tone: var(--vk-dark-accent);
+}
+vk-page[surface='dark'] .vk-callout[tone='info'] {
+  --vk-tone: var(--vk-dark-accent);
+}
+vk-page[surface='dark'] .vk-callout[tone='ok'] {
+  --vk-tone: var(--vk-dark-ok);
+}
+vk-page[surface='dark'] .vk-callout[tone='warn'] {
+  --vk-tone: color-mix(in srgb, var(--vk-warn) 45%, var(--vk-dark-fg));
+}
+vk-page[surface='dark'] .vk-callout[tone='err'] {
+  --vk-tone: color-mix(in srgb, var(--vk-err) 45%, var(--vk-dark-fg));
+}
+vk-page[surface='dark'] .vk-callout[tone='focus'] {
+  --vk-tone: var(--vk-dark-accent);
 }

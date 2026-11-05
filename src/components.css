@@ -1326,6 +1326,7 @@ vk-label[variant='chip'] .vk-label-t,
 .vk-diff-row,
 .vk-bar > .vk-bar-track,
 .vk-compare-pane,
+.vk-callout-note,
 vk-table tbody tr[tone] td {
   --vk-focus: var(--vk-focus-paper);
   --vk-ink-1: var(--vk-on-paper-1);

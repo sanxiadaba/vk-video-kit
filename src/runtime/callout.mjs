@@ -88,7 +88,8 @@ export class VkCallout extends VkElement {
     const mode = this.dataset.mode;
     const tone = attrEnum(this, 'tone', 'info');
     svg.dataset.tone = tone;
-    const stroke = { info: 'var(--vk-info)', focus: 'var(--vk-focus)', ok: 'var(--vk-ok)', warn: 'var(--vk-warn)', err: 'var(--vk-err)', neutral: 'var(--vk-ink-1)' }[tone] || 'var(--vk-info)';
+    // 颜色交给 --vk-tone：深色页会把它换成亮一档的同语义色，写死在这里就换不动。
+const stroke = 'var(--vk-tone, var(--vk-info))';
 
     if (mode === 'arrow') this._arrow(svg, local, stroke, W, H);
     else if (mode === 'ring') this._ring(svg, local, stroke);
