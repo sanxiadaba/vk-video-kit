@@ -2,7 +2,7 @@
   <vk-stack gap="wide">
     <vk-label counter="1 / 7">读代码</vk-label>
     <vk-text size="headline">这行代码，<br>在判断<em>什么</em>？</vk-text>
-    <vk-text size="body" ink="secondary">没有注释、没有循环，只有三个符号：&amp;&amp; ! &amp;。</vk-text>
+    <vk-text size="body" ink="secondary">没有注释、没有循环，只有三个符号：<vk-inline variant="code">&amp;&amp;</vk-inline> <vk-inline variant="code">!</vk-inline> <vk-inline variant="code">&amp;</vk-inline>。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -20,8 +20,8 @@
   <vk-stack gap="normal">
     <vk-label counter="3 / 7">先看一个例子</vk-label>
     <vk-text size="subhead">8 和 7，只差<em>一个进位</em>。</vk-text>
-    <vk-bits value="00001000" index="down" size="caption"></vk-bits>
-    <vk-bits value="00000111" index="down" size="caption"></vk-bits>
+    <vk-bits value="00001000" index="none" size="caption"></vk-bits>
+    <vk-bits value="00000111" index="none" size="caption"></vk-bits>
     <vk-bits value="00000000" index="down" size="caption"></vk-bits>
     <vk-text size="caption" ink="muted">8、7、按位与的结果 —— 一位都不重，所以是 0。</vk-text>
   </vk-stack>

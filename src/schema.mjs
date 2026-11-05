@@ -315,6 +315,7 @@ export const TAGS = {
       src: { type: 'text', content: true, group: 'content', label: '目录' },
       title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
+      max: { type: 'int', min: 1, max: 40, default: 8, group: 'appearance', label: '最多显示几行（超了截断并留一行省略）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
       size: sizeText('caption'),
     },

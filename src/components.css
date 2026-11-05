@@ -1390,3 +1390,8 @@ vk-box[surface='dark'] .vk-tl-date,
 vk-layer[surface='dark'] .vk-tl-date {
   color: var(--vk-dark-meta);
 }
+
+/* 目录树被 max 截断时的那一行 */
+.vk-node.is-more {
+  color: var(--vk-ink-3);
+}
