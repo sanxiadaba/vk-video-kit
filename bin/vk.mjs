@@ -389,7 +389,7 @@ if (cmd === 'render' || cmd === 'check') {
           const CONTENT = ['vk-code', 'vk-term', 'vk-diff', 'vk-asm', 'vk-table', 'vk-list', 'vk-tree', 'vk-cells', 'vk-bytes', 'vk-bits', 'vk-steps', 'vk-bars', 'vk-timeline', 'vk-compare', 'vk-pair', 'vk-canvas', 'vk-img', 'vk-math'];
           // 没有内容件但有成排的盒子：那是示意图，不是纯文字。
           const shape = CONTENT.find((t) => stage.querySelector(t)) || (stage.querySelectorAll('vk-box').length >= 3 ? 'vk-box' : 'text');
-          return { id: pg.id || String(i + 1), maxFs, fill: m.fill || 0, focus: m.focus || 0, dark: pg.hasAttribute('surface') && pg.getAttribute('surface') === 'dark', shape, tags: [...tags] };
+          return { id: pg.id || String(i + 1), maxFs, unchecked: m.unchecked || 0, fill: m.fill || 0, focus: m.focus || 0, dark: pg.hasAttribute('surface') && pg.getAttribute('surface') === 'dark', shape, tags: [...tags] };
         })
       );
       const low = rows.filter((r) => r.maxFs <= 56).map((r) => r.id);
@@ -419,7 +419,8 @@ if (cmd === 'render' || cmd === 'check') {
       }
       console.log(`  节奏 ${rhythm}`);
       if (runs.length) console.log(`  连续同形：${runs.join('；')}`);
-      console.log(`  深色 ${dark} 帧 · 用到 ${tags.size} 种件`);
+      const unchecked = rows.reduce((n, r) => n + r.unchecked, 0);
+      console.log(`  深色 ${dark} 帧 · 用到 ${tags.size} 种件${unchecked ? ` · ${unchecked} 处文字压在图/渐变上（未查对比度）` : ''}`);
       await session.page.close();
     }
   } finally {

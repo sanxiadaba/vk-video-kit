@@ -87,6 +87,7 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
     const cmds = [...new Set([...bin.matchAll(/cmd === '([a-z]+)'/g)].map((m) => m[1]))];
     const flags = [...new Set([...bin.matchAll(/'(--[a-z]+)'/g)].map((m) => m[1]))].filter((f) => ['--phone', '--json', '--out', '--width', '--shot', '--cols'].includes(f));
+    ok(cmds.length >= 6 && flags.length >= 4, 'CLI 解析出 ' + cmds.length + ' 条命令、' + flags.length + ' 个开关');
     const missCmd = cmds.filter((c) => !spec.includes('vk ' + c));
     const missFlag = flags.filter((f) => !spec.includes(f));
     ok(!missCmd.length && !missFlag.length, 'SPEC 与 CLI 一致');
@@ -229,6 +230,7 @@ console.log('\n覆盖');
       for (const m of cell.matchAll(/`([a-z-]+)`/g)) set.add(m[1]);
       listed.set(tag, set);
     }
+    ok(listed.size >= 25, 'SPEC 的属性表解析出 ' + listed.size + ' 个件');
     const COMMON_ATTRS = ['span', 'row-span', 'grow', 'bleed'];
     const drift = [];
     for (const tag of TAG_NAMES) {

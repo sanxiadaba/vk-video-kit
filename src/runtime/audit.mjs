@@ -165,6 +165,43 @@ export function auditPage(stageEl) {
     }
   }
 
+  // 5.5 文字压在图/画布上：SPEC 说正文必须落在实底上，没垫底就是错。
+  {
+    const images = [...stage.querySelectorAll('vk-img, canvas')].filter((el) => !isOverlay(el) && el.getClientRects().length);
+    if (images.length) {
+      const textEls = [...stage.querySelectorAll('*')].filter(
+        (el) => !isOverlay(el) && !el.closest('vk-img') && [...el.childNodes].some((n) => n.nodeType === 3 && n.textContent.trim())
+      );
+      for (const el of textEls) {
+        const r = el.getBoundingClientRect();
+        if (r.width < 2 || r.height < 2) continue;
+        const hit = images.find((im) => {
+          const b = im.getBoundingClientRect();
+          return r.left < b.right - 2 && r.right > b.left + 2 && r.top < b.bottom - 2 && r.bottom > b.top + 2;
+        });
+        if (!hit) continue;
+        // 文字自己或祖先有实底就不算（比如纸卡片压在图上）
+        let n = el;
+        let solid = false;
+        while (n && n !== stage) {
+          const bg = parseColor(getComputedStyle(n).backgroundColor);
+          if (bg && bg.a > 0.9) {
+            solid = true;
+            break;
+          }
+          n = n.parentElement;
+        }
+        if (!solid) {
+          issues.push({
+            type: 'text-on-image',
+            what: `${name(el)} 直接压在图/画布上，字会看不清`,
+            fix: '给文字垫一个 vk-box surface="paper"，或把图换成背景色',
+          });
+        }
+      }
+    }
+  }
+
   // 6. 同级压字（覆盖层是显式覆盖，不算）
   const containers = [stage, ...stage.querySelectorAll('vk-canvas, vk-grid, vk-stack, vk-pair, vk-layer')];
   for (const box of containers) {
