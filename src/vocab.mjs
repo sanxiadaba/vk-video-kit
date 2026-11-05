@@ -151,7 +151,7 @@ export const FONT_FAMILY = {
 /* ------------------------------------------------------------------ 枚举 */
 export const TONE = ['neutral', 'info', 'focus', 'ok', 'warn', 'err'];
 export const STATE = ['current', 'mark'];
-export const SURFACE = ['paper', 'soft', 'tint', 'dark'];
+export const SURFACE = ['none', 'paper', 'soft', 'tint', 'dark'];
 export const INK = ['primary', 'secondary', 'muted'];
 export const SIZE = Object.keys(FONT);
 export const SPACE = Object.keys(GAP);

@@ -112,18 +112,23 @@ vk-text {
 /* 语义色只出现在线、图标、底标上；文字档是同一支色相的深版。 */
 [tone='info'] {
   --vk-tone: var(--vk-info);
+  --vk-tint: var(--vk-tint-info);
 }
 [tone='focus'] {
   --vk-tone: var(--vk-focus);
+  --vk-tint: var(--vk-tint-focus);
 }
 [tone='ok'] {
   --vk-tone: var(--vk-ok);
+  --vk-tint: var(--vk-tint-ok);
 }
 [tone='warn'] {
   --vk-tone: var(--vk-warn);
+  --vk-tint: var(--vk-tint-warn);
 }
 [tone='err'] {
   --vk-tone: var(--vk-err);
+  --vk-tint: var(--vk-tint-err);
 }
 [tone='neutral'] {
   --vk-tone: var(--vk-ink-1);

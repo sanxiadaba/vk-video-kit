@@ -41,6 +41,7 @@ vk-box[surface='tint'][tone='err'] {
   --vk-box-bg: var(--vk-tint-err);
 }
 vk-box[surface='dark'] {
+  color: var(--vk-dark-fg);
   --vk-box-bg: var(--vk-dark-bg);
   color: var(--vk-dark-fg);
 }
@@ -139,6 +140,7 @@ vk-layer[surface='tint'][tone='focus'] {
   background: var(--vk-tint-focus);
 }
 vk-layer[surface='dark'] {
+  color: var(--vk-dark-fg);
   background: var(--vk-dark-bg);
   color: var(--vk-dark-fg);
 }
@@ -177,8 +179,8 @@ vk-label[tone] .vk-label-t {
 vk-label[variant='chip'] .vk-label-t {
   padding: 0 var(--vk-gap-close);
   border-radius: var(--vk-radius-pill);
-  background: var(--vk-tint-info);
-  color: var(--vk-ink-2);
+  background: var(--vk-tint, var(--vk-tint-info));
+  color: var(--vk-tone, var(--vk-ink-2));
 }
 vk-label[variant='badge'] .vk-label-t {
   padding: 0 var(--vk-gap-close);
@@ -736,9 +738,6 @@ vk-list[variant='check'] li::before {
   content: '✓';
   color: var(--vk-tone, var(--vk-ok));
   font-weight: var(--vk-w-bold);
-}
-vk-list[variant='define'] li::before {
-  content: '';
 }
 vk-list li[state='current'] {
   color: var(--vk-focus);

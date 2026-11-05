@@ -62,17 +62,20 @@ for (const tag of TAG_NAMES) {
 }
 console.log(`  · 属性总数 ${TAG_NAMES.reduce((n, t) => n + Object.keys(TAGS[t].attrs).length, 0)}`);
 
-/* 词表本身就是取值来源：schema 里出现的枚举必须来自 vocab。 */
-const VOCAB = new Set([...TONE, ...SURFACE, ...STATE, ...INK, ...Object.keys(FONT), ...Object.keys(GAP)]);
+/* 词表本身就是取值来源：schema 里出现的枚举必须来自 vocab（可以是子集，不能自创）。 */
+const VOCAB_BY_ATTR = { tone: TONE, surface: SURFACE, state: STATE, ink: INK, size: Object.keys(FONT), gap: Object.keys(GAP) };
 for (const tag of TAG_NAMES) {
   for (const [name, spec] of Object.entries(attrsOf(tag))) {
-    if (name === 'tone' && spec.values && spec.values.join() !== TONE.join()) {
+    const pool = VOCAB_BY_ATTR[name];
+    if (!pool || !spec.values) continue;
+    const stray = spec.values.filter((v) => !pool.includes(v));
+    if (stray.length) {
       bad++;
-      console.error(`  ✗ ${tag}/tone 与词表不一致`);
+      console.error(`  ✗ ${tag}/${name} 有词表外的取值：${stray.join(' / ')}`);
     }
   }
 }
-ok(VOCAB.size > 20, '词表已加载');
+ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
 
 /* 每个公开属性都要有消费者：声明了却没人读 = 作者写了没效果。 */
 const GENERIC = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
@@ -154,7 +157,10 @@ console.log('\n覆盖');
     const walk = (n) => {
       if (n.tagName?.startsWith('vk-')) {
         seenTags.add(n.tagName);
-        for (const a of n.attrs || []) seen.add(n.tagName + '.' + a.name);
+        for (const a of n.attrs || []) {
+          seen.add(n.tagName + '.' + a.name);
+          seen.add(n.tagName + '.' + a.name + '=' + a.value);
+        }
       }
       for (const c of n.childNodes || []) walk(c);
       if (n.content) walk(n.content);
@@ -169,6 +175,21 @@ console.log('\n覆盖');
     }
   }
   ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
+  // 非默认取值：写成默认值没意义，但"非默认的取值"必须有人写过——否则那个取值没人验过。
+  const COMMON_ATTRS = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
+  const coldVals = [];
+  for (const tag of TAG_NAMES) {
+    for (const [name, spec] of Object.entries(attrsOf(tag))) {
+      if (COMMON_ATTRS.has(name) || !spec.values) continue;
+      for (const v of spec.values) {
+        if (v === spec.default) continue;
+        if (!seen.has(`${tag}.${name}=${v}`)) coldVals.push(`${tag}.${name}=${v}`);
+      }
+    }
+  }
+  ok(!coldVals.length, '每个非默认取值都被真帧用过');
+  for (const v of coldVals) console.error(`    · ${v} —— 写一帧用它，或把它从词表里删掉`);
+
   const coldTags = TAG_NAMES.filter((t) => !seenTags.has(t));
   ok(!coldTags.length, '每个件都被真帧用过');
   for (const c of coldTags) console.error(`    · ${c} —— 加一帧用它，否则它只是存在`);
@@ -191,7 +212,7 @@ let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/relations.html', 'episodes', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/relations.html', 'episodes', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);
@@ -204,7 +225,7 @@ try {
   }
 }
 const frames = report.flatMap((r) => r.frames || []);
-ok(frames.length >= 55, `渲染出 ${frames.length} 帧`);
+ok(frames.length >= 60, `渲染出 ${frames.length} 帧`);
 let issues = 0;
 for (const r of report) {
   for (const f of r.frames || []) {

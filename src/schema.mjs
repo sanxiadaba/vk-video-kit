@@ -44,6 +44,11 @@ export const CANVAS_ATTRS = {
 
 /* ------------------------------------------------------------------ 取值 */
 const size = (def = 'body') => ({ type: 'enum', values: SIZE, default: def, group: 'type', label: '字号' });
+// 数据件（代码 / 表格 / 树 / 字节…）的字号只到 subhead：
+// 给它们 200、280 这种档位没有意义，只会让词表里多出一堆没人写、也没人验的取值。
+// 正文字只认中性色和焦点色：语义色（ok / warn / err）只在线、图标、底标上。
+const toneText = (def = 'neutral') => ({ type: 'enum', values: ['neutral', 'focus'], default: def, group: 'tone', label: '语调' });
+const sizeText = (def = 'body') => ({ type: 'enum', values: ['caption', 'body', 'subhead'], default: def, group: 'type', label: '字号' });
 const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '间距（档名或像素）' });
 const pad = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
 const tone = (def = 'neutral') => ({ type: 'enum', values: TONE, default: def, group: 'appearance', label: '语调' });
@@ -162,7 +167,7 @@ export const TAGS = {
       size: size('body'),
       weight: { type: 'enum', values: ['regular', 'medium', 'bold'], default: 'regular', group: 'type', label: '字重' },
       ink: { type: 'enum', values: INK, default: 'primary', group: 'appearance', label: '墨阶' },
-      tone: { type: 'enum', values: TONE, group: 'appearance', label: '语调' },
+      tone: toneText(),
       align: { type: 'enum', values: ['left', 'center', 'right'], default: 'left', group: 'layout', label: '对齐' },
       measure: { type: 'measure', group: 'layout', label: '行宽（字数；none = 铺满）' },
       icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
@@ -177,7 +182,7 @@ export const TAGS = {
     summary: '一行小字：分类、编号、状态。kicker 纯字 / chip 浅底 / badge 实色。',
     attrs: {
       variant: { type: 'enum', values: ['kicker', 'chip', 'badge'], default: 'kicker', group: 'appearance', label: '形态' },
-      tone: tone('neutral'),
+      tone: { type: 'enum', values: TONE, group: 'appearance', label: '语调' },
       icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
       counter: { type: 'text', group: 'appearance', label: '序号，如 "3/5"' },
     },
@@ -222,7 +227,7 @@ export const TAGS = {
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       focus: { type: 'lines', group: 'state', label: '聚光行' },
       fold: { type: 'lines', group: 'state', label: '折叠行（缺口）' },
-      size: size('body'),
+      size: sizeText('body'),
       long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行' },
       chrome: chrome('min'),
       mark: { type: 'text', group: 'state', label: '标出的词（窗口里所有出现处）' },
@@ -239,7 +244,7 @@ export const TAGS = {
       title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
       prompt: { type: 'text', default: '$', group: 'appearance', label: '提示符' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: size('body'),
+      size: sizeText('body'),
       surface: surface(['paper', 'dark'], 'paper'),
       chrome: chrome('min'),
     },
@@ -256,7 +261,7 @@ export const TAGS = {
       file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
       lang: { type: 'text', content: true, group: 'content', label: '语言' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: size('body'),
+      size: sizeText('body'),
     },
     children: source('src 指向真实 diff 文本，或内联 <script type="text/plain" data-vk-source>。必须有 lang。'),
   },
@@ -266,9 +271,9 @@ export const TAGS = {
     name: '表格',
     summary: '表格：原生 <table>，数字列自动右对齐、单位列自动挂靠。行可写 tone / state。',
     attrs: {
-      variant: { type: 'enum', values: ['ledger', 'spec', 'matrix'], default: 'ledger', group: 'appearance', label: '形态' },
+      variant: { type: 'enum', values: ['ledger', 'spec'], default: 'ledger', group: 'appearance', label: '形态' },
       mono: { type: 'bool', group: 'appearance', label: '等宽' },
-      size: size('body'),
+      size: sizeText('body'),
       caption: { type: 'text', content: true, group: 'content', label: '表题（表下方一行小字）' },
     },
     children: { kind: 'table', hint: '写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err" state="current"。' },
@@ -279,9 +284,9 @@ export const TAGS = {
     name: '列表',
     summary: '列表：要点 / 清单 / 定义 / 有序。条目写成 <li>。',
     attrs: {
-      variant: { type: 'enum', values: ['bullet', 'check', 'ordered', 'define'], default: 'bullet', group: 'appearance', label: '形态' },
+      variant: { type: 'enum', values: ['bullet', 'check', 'ordered'], default: 'bullet', group: 'appearance', label: '形态' },
       gap: gap('close'),
-      size: size('body'),
+      size: sizeText('body'),
     },
     children: item({ tone: ITEM_TONE(), state: COMMON.state }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
   },
@@ -293,7 +298,7 @@ export const TAGS = {
     attrs: {
       src: { type: 'text', content: true, group: 'content', label: '源文件' },
       display: { type: 'bool', group: 'appearance', label: '独立成行' },
-      size: size('body'),
+      size: sizeText('body'),
     },
     children: source('src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写 TeX。'),
   },
@@ -307,7 +312,7 @@ export const TAGS = {
       title: { type: 'text', content: true, group: 'content', label: '窗头标题' },
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
-      size: size('caption'),
+      size: sizeText('caption'),
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
   },
@@ -321,7 +326,7 @@ export const TAGS = {
       lines: { type: 'text', content: true, group: 'content', label: '行段' },
       file: { type: 'text', content: true, group: 'content', label: '窗头文件名' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: size('body'),
+      size: sizeText('body'),
       chrome: chrome('min'),
       bytes: { type: 'bool', group: 'appearance', label: '显示机器码列（默认不显示）' },
     },
@@ -336,7 +341,7 @@ export const TAGS = {
       addr: { type: 'text', content: true, group: 'content', label: '起始地址，如 "0x1000"' },
       cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
       current: current(),
-      size: size('body'),
+      size: sizeText('body'),
     },
     children: item({ value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: COMMON.state }, '<li value="61" label="s[0]">；地址自动按 addr + 序号算。'),
   },
@@ -379,7 +384,7 @@ export const TAGS = {
       current: current(),
       direction: { type: 'enum', values: ['auto', 'horizontal', 'vertical'], default: 'auto', group: 'layout', label: '方向' },
       connector: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连接线' },
-      size: size('body'),
+      size: sizeText('body'),
     },
     children: item({ tone: ITEM_TONE() }, '每一步写成 <li>；可写 tone 标语义。'),
   },
