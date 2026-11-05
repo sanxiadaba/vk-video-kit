@@ -138,6 +138,36 @@ ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
   for (const m of misses) console.error(`    · ${m}`);
 }
 
+/* ---------------------------------------------------------------- 覆盖 */
+console.log('\n覆盖');
+{
+  const COMMON = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
+  const seen = new Set();
+  const files = [];
+  for (const dir of ['episodes', 'tests/acceptance', 'tests']) {
+    if (!fs.existsSync(dir)) continue;
+    for (const f of fs.readdirSync(dir)) if (f.endsWith('.html')) files.push(path.join(dir, f));
+  }
+  for (const f of files) {
+    const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
+    const walk = (n) => {
+      if (n.tagName?.startsWith('vk-')) for (const a of n.attrs || []) seen.add(n.tagName + '.' + a.name);
+      for (const c of n.childNodes || []) walk(c);
+      if (n.content) walk(n.content);
+    };
+    walk(doc);
+  }
+  const cold = [];
+  for (const tag of TAG_NAMES) {
+    for (const name of Object.keys(attrsOf(tag))) {
+      if (COMMON.has(name)) continue;
+      if (!seen.has(tag + '.' + name)) cold.push(tag + '.' + name);
+    }
+  }
+  ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
+  for (const c of cold) console.error(`    · ${c} —— 在 tests/capabilities*.html 里加一帧，或把它删掉`);
+}
+
 /* ---------------------------------------------------------------- 素材 */
 console.log('\n素材');
 try {
