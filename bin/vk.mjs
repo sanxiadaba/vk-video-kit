@@ -21,6 +21,10 @@ import { buildShowcase } from '../tools/showcase.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'out');
 const PAGES = path.join(ROOT, '.vk-cache', 'pages');
+const FRAMES = path.join(ROOT, '.vk-cache', 'frames');
+let LIB_STAMP = '';
+const frameKey = (file, id, width) =>
+  crypto.createHash('sha1').update(LIB_STAMP + ':' + fs.readFileSync(file, 'utf8') + ':' + id + ':' + width).digest('hex');
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -83,6 +87,7 @@ function ensureLibrary() {
   };
   const stamp = [digestOf(path.join(ROOT, 'src'), ['.mjs', '.css']), digestOf(path.join(ROOT, 'tools'), ['.mjs']), fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')].join(':');
   const digest = crypto.createHash('sha1').update(stamp).digest('hex');
+  LIB_STAMP = digest;
 
   if (!fs.existsSync(path.join(ROOT, 'vk/fonts.css'))) run('node', ['tools/fonts.mjs']);
   if (!fs.existsSync(path.join(ROOT, 'vk/katex.css'))) run('node', ['tools/katex.mjs']);
@@ -107,6 +112,11 @@ async function buildPage(file) {
   const rel = path.relative(ROOT, abs);
   // 仓库外的页也能渲：放到 _outside/ 下，不往 .vk-cache 外面写。
   const out = path.join(PAGES, rel.startsWith('..') ? path.join('_outside', path.basename(abs)) : rel);
+  const stamp = crypto.createHash('sha1').update(LIB_STAMP + ':' + html).digest('hex');
+  const stampFile = out + '.stamp';
+  if (fs.existsSync(out) && fs.existsSync(stampFile) && fs.readFileSync(stampFile, 'utf8') === stamp) {
+    return { file, ok: true, out, count: 0, cached: true };
+  }
   let res;
   try {
     res = await transformHtml(html, { file: abs });
@@ -115,6 +125,7 @@ async function buildPage(file) {
   }
   fs.mkdirSync(path.dirname(out), { recursive: true });
   fs.writeFileSync(out, res.html);
+  fs.writeFileSync(stampFile, stamp);
   return { file, ok: true, out, count: res.count };
 }
 
@@ -138,11 +149,15 @@ function collect(p) {
 async function launch() {
   const { chromium } = await import('playwright');
   const opts = { args: ['--font-render-hinting=none', '--allow-file-access-from-files'] };
-  try {
-    return await chromium.launch(opts);
-  } catch {
-    return await chromium.launch({ ...opts, channel: 'msedge' });
+  // 依次试：自带 Chromium → 系统 Chrome（CI 的 ubuntu 镜像自带）→ Edge（Windows）。
+  for (const channel of [undefined, 'chrome', 'msedge']) {
+    try {
+      return await chromium.launch(channel ? { ...opts, channel } : opts);
+    } catch {
+      /* 下一个 */
+    }
   }
+  throw new Error('找不到可用浏览器：跑 npx playwright install chromium，或装 Chrome/Edge');
 }
 
 async function openPage(browser, url) {
@@ -233,6 +248,19 @@ if (cmd === 'render' || cmd === 'check') {
       const perFrame = [];
       for (let i = 0; i < frames.length; i++) {
         const f = frames[i];
+        const key = frameKey(b.file, f.id || f.index, width);
+        const cachePng = path.join(FRAMES, key + '.png');
+        const cacheJson = path.join(FRAMES, key + '.json');
+        if (cmd === 'render' && fs.existsSync(cachePng) && fs.existsSync(cacheJson)) {
+          const base = path.basename(b.file, '.html');
+          const suffix = (session.frames.length > 1 ? `-${f.id || String(f.index + 1).padStart(2, '0')}` : '') + (width !== 1920 ? `.${width}` : '');
+          const png = path.join(pngDir(), `${base}${suffix}.png`);
+          fs.mkdirSync(path.dirname(png), { recursive: true });
+          fs.copyFileSync(cachePng, png);
+          const cached = JSON.parse(fs.readFileSync(cacheJson, 'utf8'));
+          perFrame.push({ id: f.id, index: f.index, issues: cached.issues, metrics: cached.metrics, png: rel(png) });
+          continue;
+        }
         const audit = await session.page.evaluate((idx) => {
           if (!window.vk?.auditPage) {
             return { issues: [{ code: 'frame', message: '页面里没有 vk 运行时（window.vk 不存在）', fix: '片段页不用管；整页 HTML 要引 dist/vk.js' }], metrics: null };
@@ -248,6 +276,9 @@ if (cmd === 'render' || cmd === 'check') {
           fs.mkdirSync(path.dirname(png), { recursive: true });
           await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
           if (width !== 1920) await downscale(png, width);
+          fs.mkdirSync(FRAMES, { recursive: true });
+          fs.copyFileSync(png, cachePng);
+          fs.writeFileSync(cacheJson, JSON.stringify(audit));
         }
         perFrame.push({ id: f.id, index: f.index, issues: audit.issues, metrics: audit.metrics, png: png ? rel(png) : null });
       }
@@ -320,12 +351,24 @@ if (cmd === 'render' || cmd === 'check') {
     for (const f of session.frames) {
       const png = path.join(outDir, 'frames', `${base}-${f.id || f.index + 1}.png`);
       fs.mkdirSync(path.dirname(png), { recursive: true });
-      await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
-      const audit = await session.page.evaluate((idx) => {
-        if (!window.vk?.auditPage) return { issues: [{ message: '页面里没有 vk 运行时' }], metrics: null };
-        const stage = document.querySelectorAll('.vk-stage')[idx];
-        return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
-      }, f.index);
+      const key = frameKey(b.file, f.id || f.index, 1920);
+      const cachePng = path.join(FRAMES, key + '.png');
+      const cacheJson = path.join(FRAMES, key + '.json');
+      let audit;
+      if (fs.existsSync(cachePng) && fs.existsSync(cacheJson)) {
+        fs.copyFileSync(cachePng, png);
+        audit = JSON.parse(fs.readFileSync(cacheJson, 'utf8'));
+      } else {
+        await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
+        audit = await session.page.evaluate((idx) => {
+          if (!window.vk?.auditPage) return { issues: [{ message: '页面里没有 vk 运行时' }], metrics: null };
+          const stage = document.querySelectorAll('.vk-stage')[idx];
+          return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
+        }, f.index);
+        fs.mkdirSync(FRAMES, { recursive: true });
+        fs.copyFileSync(png, cachePng);
+        fs.writeFileSync(cacheJson, JSON.stringify(audit));
+      }
       entries.push({ id: f.id || `frame-${f.index + 1}`, caption: f.caption, tags: f.tags, surface: f.surface, png: `frames/${path.basename(png)}`, issues: audit.issues, metrics: audit.metrics });
     }
     await session.page.close();
