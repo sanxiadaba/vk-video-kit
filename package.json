@@ -2,7 +2,7 @@
   "name": "vk-video-kit",
   "version": "17.0.0",
   "private": true,
-  "description": "单帧画面库：27 个件、一套词汇、1920×1080。给编程科普视频用。",
+  "description": "1920×1080 画面组件库：27 个组件，构建期预处理，只出图。",
   "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
@@ -11,17 +11,11 @@
   },
   "scripts": {
     "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/css.mjs && node tools/build.mjs",
-    "render": "node bin/vk.mjs render pages",
-    "check": "node bin/vk.mjs check pages",
     "test": "node tools/test.mjs",
     "inert": "node tools/inert.mjs",
     "assets": "node tools/assets.mjs",
     "assets:check": "node tools/assets.mjs --check",
     "shots": "npm run assets && node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win",
-    "sheet": "node bin/vk.mjs sheet episodes --cols 4",
-    "serve": "node tools/serve.mjs",
-    "preview": "node bin/vk.mjs sheet episodes/09-memory.html --cols 3 --width 560 --out assets/preview.png",
-    "darks": "node bin/vk.mjs render tests/darks.html"
   },
   "dependencies": {
     "katex": "^0.16.11",

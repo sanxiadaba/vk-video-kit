@@ -3,20 +3,10 @@
     "src": "adt/array.c",
     "srcHash": "a98d407e309dd5d1",
     "outputs": {
-      "adt/array.exe": "8ee9b3637bc3d20c"
+      "adt/array.exe": "d960104fe82077e8"
     },
     "needs": [
       "adt/array.exe"
-    ]
-  },
-  "adt/list.c": {
-    "src": "adt/list.c",
-    "srcHash": "2f962e954bc71ef6",
-    "outputs": {
-      "adt/list.exe": "a8f373927711c0e3"
-    },
-    "needs": [
-      "adt/list.exe"
     ]
   },
   "bsearch/bsearch.c": {
@@ -49,32 +39,6 @@
       "opt/add-o0.dis",
       "opt/o2.dis",
       "opt/add-o2.dis"
-    ]
-  },
-  "pipe/main.c": {
-    "src": "pipe/main.c",
-    "srcHash": "d3429fab2dcc9c62",
-    "outputs": {
-      "pipe/main.i": "2dccae872b855bc6",
-      "pipe/main.s": "3239d09816c803cc",
-      "pipe/main.o": "94b20013bcdfc509",
-      "pipe/main.exe": "d58f8245c1f5ed59"
-    },
-    "needs": [
-      "pipe/main.i",
-      "pipe/main.s",
-      "pipe/main.o",
-      "pipe/main.exe"
-    ]
-  },
-  "read/pow2.c": {
-    "src": "read/pow2.c",
-    "srcHash": "d91281e60e92f4f7",
-    "outputs": {
-      "read/pow2.exe": "1faf0647fa4d53de"
-    },
-    "needs": [
-      "read/pow2.exe"
     ]
   }
 }

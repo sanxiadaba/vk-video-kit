@@ -1,13 +1,7 @@
-/**
- * 素材可追溯：code/ 里的 .s / .dis 都是从 .c 现编出来的。
+/** 生成并校验 code/ 里的编译产物：.s / .dis / .exe 都由 .c 现编。
  *
- *   npm run assets           重新生成（需要 gcc）
+ *   npm run assets            重新生成（需要 gcc）
  *   npm run assets -- --check 只校验（不需要 gcc，进测试）
- *
- * 两道锁：
- *   1. .c 的哈希变了，但没重新生成 → "源改了"
- *   2. 生成物被手改了 → "输出被改过"
- * 汇编里的一条指令必须能追到一行 C，否则分镜就在讲假话。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -34,31 +28,8 @@ const RECIPES = [
     ],
   },
   {
-    src: 'pipe/main.c',
-    outputs: [
-      { file: 'pipe/main.i', cmd: ['gcc', '-std=gnu99', '-E', 'pipe/main.c', '-o', 'pipe/main.i'] },
-      { file: 'pipe/main.s', cmd: ['gcc', '-std=gnu99', '-S', '-O0', 'pipe/main.c', '-o', 'pipe/main.s'] },
-      { file: 'pipe/main.o', cmd: ['gcc', '-std=gnu99', '-c', 'pipe/main.s', '-o', 'pipe/main.o'] },
-      { file: 'pipe/main.exe', cmd: ['gcc', 'pipe/main.o', '-o', 'pipe/main.exe'] },
-    ],
-  },
-  {
     src: 'adt/array.c',
-    outputs: [
-      { file: 'adt/array.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/array.c', '-o', 'adt/array.exe'] },
-    ],
-  },
-  {
-    src: 'adt/list.c',
-    outputs: [
-      { file: 'adt/list.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/list.c', '-o', 'adt/list.exe'] },
-    ],
-  },
-  {
-    src: 'read/pow2.c',
-    outputs: [
-      { file: 'read/pow2.exe', cmd: ['gcc', '-std=gnu99', '-O0', 'read/pow2.c', '-o', 'read/pow2.exe'] },
-    ],
+    outputs: [{ file: 'adt/array.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/array.c', '-o', 'adt/array.exe'] }],
   },
 ];
 

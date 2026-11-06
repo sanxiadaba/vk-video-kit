@@ -141,7 +141,7 @@ export const TAGS = {
     attrs: {
       split: { type: 'num', min: 20, max: 80, default: 50, group: 'layout', label: '左块占比（%）' },
       direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向' },
-      symbol: { type: 'enum', values: ['none', '→', '=', 'vs', '+'], default: 'none', group: 'appearance', label: '轴上符号' },
+      symbol: { type: 'enum', values: ['none', '→', '=', 'vs'], default: 'none', group: 'appearance', label: '轴上符号' },
       gap: gap('wide'),
     },
     children: { kind: 'slot', exactly: 2 },

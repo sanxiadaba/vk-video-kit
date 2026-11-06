@@ -1,64 +1,29 @@
-# vk · 单帧画面库
+# vk
 
-给编程科普视频用的**元素层**：把一个内容单元（代码 / 终端 / 改动 / 表格 / 树 / 字节 / 位 / 公式 / 图 / 文字）
-画成 1920×1080 上正确、清晰、可测量的那个东西，再把若干单元摆进一帧。
+给 1920×1080 画面用的组件库。一个组件画一种内容：代码、终端、汇编、差异、表格、清单、文件树、内存格、字节、位串、步骤、横条、时间线、图对照、公式、图片、文字、标注。
 
-- **不做**：文案、讲解架构、版面模板、时间轴 / 动画 / 播放 / 转场 / 录屏 / 渲染。
-- **做**：27 个件、五种排布、一套词汇（六档字号 / 四个语义色 / 三档墨 / 一种纸）、
-  构建期预编译（Shiki / KaTeX / hexdump / 树 / 图标）、客观自检、出图。
-- **手机横屏基准**：1920 收到约 780 宽（0.406×），正文 56px ≈ 22.7 设备像素。
+- 27 个组件，固定 1920×1080，安全区 1680×888。
+- 一套词汇：六档字号、六档间距、三档墨、五种表面、六个语调。
+- 构建期预处理：语法高亮、公式、字节、文件树、汇编、图标。
+- 只出图：`vk render` 把写好的页面渲染成 PNG。
 
-作者手册（给 AI 的入口）是 [SPEC.md](SPEC.md)；属性细节用 `vk doc <tag>`。
-
-![一集的样子：第九集「内存层级」的九帧](assets/preview.png)
-
-上面是 `episodes/09-memory.html` 的九帧原样缩略（`vk sheet` 出的联络图，`npm run preview` 重新生成）：
-深色章节页、钩子、嵌套盒子、对数横条、并置对照、表格、步骤、清单、深色收尾。
-
-## 自查
-
-`vk stats episodes/` 给每集出体检表；`npm run inert` 把每个件声明的属性逐个改一下，看有没有视觉变化——"声明了但没实现"的属性会在这里现形。它不是测试，是诊断。
-
-`npm run serve` 起一个只读静态服务器（默认 <http://127.0.0.1:8788/out/>），用浏览器翻图；`vk clean` 清掉 `out/` 里旧版本留下的产物。
-
-`npm test` 跑 131 条断言，分四类：
-
-- **契约**：27 个件的属性、取值、子节点、模式作用域
-- **文档**：SPEC 的件表/取值表/配方/计数是否和 schema、夹具对得上；README 的件数；
-  "说没有的属性"是否真的没有；CLI 的每条命令都写进 SPEC
-- **代码健康**：样式跨文件冲突、同文件重复、死类、死属性、孤儿属性读取、重复工具、
-  没人读的 CSS 变量
-- **渲染**：184 帧全部零问题（真浏览器，含 780 宽），外加 4 条行为断言（代码窗缩字号、
-  步骤条竖排、数字列右对齐、注释不压内容）和预览图新鲜度
-
-## 素材
-
-`npm run assets` 编 C 源码、生成 `.s` / `.o` / `.dis`；`npm run shots` 把 `assets/hello/asm.html` 里的两帧截成 `asm-o0.png` / `asm-o2.png`（`vk render --shot .vk-win` 只截窗口本身，不要画布留白）。
-
-## 性能
-
-这台机器上量过的数字：11 集 78 帧约 25 秒（每帧约 0.32 秒，含构建与自检），
-联络图 78 帧约 29 秒（要逐帧重新出图再拼）。
-拆开看：每个文件约 3 秒（构建检查 + 打开页面），之后每帧 0.05–0.2 秒（看帧里有什么：
-代码窗、表格、内存格比纯文字贵）。同一份文件里多帧是一次加载、逐帧截图，
-所以加帧很便宜；跨文件才是主要成本。
+不做文案、不做版面模板、不做时间轴和动画。这是画面层，不是内容层。
 
 ## 安装
 
 ```bash
 npm install
-npm run build        # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
+npm run build     # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
 ```
 
 ## 写一帧
 
-一个文件只写 `<vk-page>`，其余由构建注入：
+一个页面就是一张 1920×1080 的图。作者只写 `<vk-page>`，其余由构建注入。
 
 ```html
 <vk-page>
   <vk-stack gap="wide">
-    <vk-label counter="1 / 4">内存</vk-label>
-    <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
+    <vk-text size="headline">标题</vk-text>
     <vk-code id="c" lang="c" file="hello.c" current="2">
       <script type="text/plain" data-vk-source>
 char s[] = "hello";
@@ -66,50 +31,50 @@ s[0] = 'H';
       </script>
     </vk-code>
   </vk-stack>
-  <vk-callout mode="note" for="#c@line:2">把 H 写进第一个字节</vk-callout>
+  <vk-callout mode="note" for="#c@line:2">第一行</vk-callout>
 </vk-page>
 ```
 
 ```bash
-vk render pages/01.html      # 构建 + 自检 + 出图（多帧文件一次出 N 张）
-vk render pages/ --phone     # 780 宽，按手机尺度看
-vk check  pages/             # 只自检
-vk doc vk-code               # 一件的属性表
-vk brief --json              # 全部件的契约
+vk render pages/01.html    # 构建 + 自检 + 出图
+vk render pages/ --phone   # 780 宽
+vk check  pages/           # 只自检
+vk doc vk-code             # 一个组件的属性表
+vk brief --json            # 全部组件的契约（JSON）
+vk icons arrow             # 搜图标
+vk clean                   # 清掉 out/ 与缓存
 ```
 
-**构建只写 `out/`，不改源文件。**
+完整规则见 [SPEC.md](SPEC.md)。
 
-## 自检判什么
+## 自检
 
-只判客观错误：出画布 / 出安全区、内容被裁或截断、非覆盖层压字、字号低于 36px、
-对比度不足、锚点指不到、渲染失败、数据过期、空帧。
+`vk render` 会报客观错误：出画布、出安全区、内容被裁或截断、非覆盖层重叠、字号低于 36px、对比度不足、锚点指不到、渲染失败、素材过期、空帧、文字压图。
 
-**不判**焦点几个、留白多少、标题多长。好看不靠门禁，靠默认值和组件的自动适配：
-代码窗放不下会自己缩字号，步骤条窄了会自己竖排，注释自动避开内容，表格数字自动右对齐。
+不判审美：留白、标题长短、焦点数量都不管。放不下时组件自己处理——代码窗先加宽再缩字号，步骤条窄了竖排，注释避开内容，表格数字右对齐。
 
 ## 测试
 
 ```bash
-npm test        # 契约 / 文档 / 代码健康 / 184 帧渲染（真浏览器，约 70s）
+npm test        # 契约 + 文档 + 代码健康 + 全部测试页渲染，约 70 秒
 ```
 
-验收帧在 `tests/acceptance/`（真实教学内容，不是模板），组件总表在 `tests/sheet.html`、`tests/sheet2.html`、`tests/capabilities.html`、`tests/capabilities2.html`，
-真分镜在 `episodes/`（一整段 6–10 帧的连续内容，也是回归用例）。
+测试页在 `tests/`，覆盖 27 个组件的各种状态，也包括深色页、对比度、行为（缩字号 / 竖排 / 对齐）。
 
 ## 结构
 
 ```
-src/vocab.mjs          唯一词表：字号 / 行高 / 间距 / 颜色 / 字体
-src/schema.mjs         公开 API：27 个件、属性、默认值、子节点契约
-src/build.mjs          构建期：校验 + 高亮 / 公式 / 字节 / 树 / 汇编 / 图标
-src/runtime/           运行期：底座 / 排布 / 件 / 关系 / 自检
-src/*.css              tokens(生成) → base → layout → components → callout
-bin/vk.mjs             一条命令：render / check / doc / brief / icons
-tools/                 字体 / 图标 / KaTeX / CSS 生成 / 打包 / 测试
-tests/acceptance/      12 帧真实教学验收帧（回归用）
+src/vocab.mjs      词表：字号 / 行高 / 间距 / 颜色 / 字体
+src/schema.mjs     组件契约：27 个组件的属性、取值、默认值
+src/build.mjs      构建：校验 + 高亮 / 公式 / 字节 / 树 / 汇编 / 图标
+src/runtime/       运行时：基础 / 排布 / 组件 / 标注 / 自检
+src/*.css          样式：tokens → base → layout → components → callout
+bin/vk.mjs         命令行
+tools/             字体 / 图标 / KaTeX / CSS 生成 / 打包 / 素材 / 测试
+code/              测试用的示例源码与编译产物
+assets/            字体与测试图片
 ```
 
 ## 许可
 
-MIT。字体 OFL 1.1、Shiki MIT、KaTeX MIT、Lucide ISC，见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+MIT。字体 OFL 1.1，Shiki MIT，KaTeX MIT，Lucide ISC。

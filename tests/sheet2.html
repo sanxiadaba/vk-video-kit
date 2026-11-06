@@ -130,3 +130,22 @@
     <vk-text size="caption" ink="muted">ratio 固定比例，fill="contain" 不裁切。</vk-text>
   </vk-stack>
 </vk-page>
+
+<vk-page id="cover-all">
+  <vk-stack gap="close" pad="close">
+    <vk-text size="caption" mono ink="muted">没有别处用到的属性集中在这一帧</vk-text>
+    <vk-grid cols="12" gap="close">
+      <vk-box span="6" surface="paper" border="hair" ring pad="close"><vk-text size="caption">vk-box ring</vk-text></vk-box>
+      <vk-box span="6" surface="soft" pad="close"><vk-text size="caption">vk-stack pad</vk-text></vk-box>
+    </vk-grid>
+    <vk-pair symbol="→">
+      <vk-box surface="tint" tone="ok" pad="close"><vk-text size="caption">→</vk-text></vk-box>
+      <vk-box surface="tint" tone="warn" pad="close"><vk-text size="caption">+</vk-text></vk-box>
+    </vk-pair>
+    <vk-bars scale="log" max="100" unit="次">
+      <li value="10" label="十"></li>
+      <li value="100" label="百" tone="ok"></li>
+    </vk-bars>
+    <vk-bytes src="../code/http/head.bin" cols="4" current="1" length="4"></vk-bytes>
+  </vk-stack>
+</vk-page>

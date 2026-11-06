@@ -272,7 +272,7 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
         else if (e.name.endsWith('.html')) for (const m of fs.readFileSync(full, 'utf8').matchAll(/[\w-]+/g)) seen.add(m[0]);
       }
     };
-    for (const d of ['out', 'episodes', 'tests']) if (fs.existsSync(path.join(ROOT, d))) walkDir(path.join(ROOT, d));
+    for (const d of ['out', 'tests']) if (fs.existsSync(path.join(ROOT, d))) walkDir(path.join(ROOT, d));
     const dead = [...names].filter((c) => !seen.has(c) && !runtime.includes(c));
     ok(names.size > 80 && !dead.length, '没有写了却没人用的类');
     for (const d of dead.slice(0, 6)) console.error('    · .' + d + ' 没有任何一帧用到');
@@ -286,7 +286,7 @@ ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
     const bin = fs.readFileSync(path.join(ROOT, 'bin', 'vk.mjs'), 'utf8');
     const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
     const cmds = [...new Set([...bin.matchAll(/cmd === '([a-z]+)'/g)].map((m) => m[1]))];
-    const flags = [...new Set([...bin.matchAll(/'(--[a-z]+)'/g)].map((m) => m[1]))].filter((f) => ['--phone', '--json', '--out', '--width', '--shot', '--cols'].includes(f));
+    const flags = [...new Set([...bin.matchAll(/'(--[a-z]+)'/g)].map((m) => m[1]))].filter((f) => ['--phone', '--json', '--out', '--width', '--shot'].includes(f));
     ok(cmds.length >= 6 && flags.length >= 4, 'CLI 解析出 ' + cmds.length + ' 条命令、' + flags.length + ' 个开关');
     const missCmd = cmds.filter((c) => !spec.includes('vk ' + c));
     const missFlag = flags.filter((f) => !spec.includes(f));
@@ -361,9 +361,7 @@ ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
 {
   const used = new Map();
   const files = [];
-  for (const dir of ['episodes', 'tests/acceptance']) {
-    for (const f of fs.readdirSync(dir)) if (f.endsWith('.html')) files.push(path.join(dir, f));
-  }
+  for (const f of fs.readdirSync('tests')) if (f.endsWith('.html')) files.push(path.join('tests', f));
   for (const f of files) {
     const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
     const walk = (n) => {
@@ -392,10 +390,7 @@ console.log('\n覆盖');
   const seen = new Set();
   const seenTags = new Set();
   const files = [];
-  for (const dir of ['episodes', 'tests/acceptance', 'tests']) {
-    if (!fs.existsSync(dir)) continue;
-    for (const f of fs.readdirSync(dir)) if (f.endsWith('.html')) files.push(path.join(dir, f));
-  }
+  for (const f of fs.readdirSync('tests')) if (f.endsWith('.html')) files.push(path.join('tests', f));
   for (const f of files) {
     const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
     const walk = (n) => {
@@ -423,7 +418,7 @@ console.log('\n覆盖');
   /* SPEC「配方」里的每一段都要和 tests/recipes.html 逐字一致：抄错了例子比没有例子更糟。 */
   {
     const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\r/g, '');
-    const sec = spec.slice(spec.indexOf('## 7.5 配方'), spec.indexOf('## 8 内容从哪来'));
+    const sec = spec.slice(spec.indexOf('## 7.5 配方'), spec.indexOf('## 8 关系'));
     const blocks = [...sec.matchAll(/```html\n([\s\S]*?)```/g)].map((m) => m[1].replace(/\s+/g, ' ').trim());
     const page = fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').replace(/\s+/g, ' ').trim();
     const off = blocks.filter((b) => !page.includes(b));
@@ -521,21 +516,13 @@ try {
   console.error('  ✗ 素材清单不一致：\n' + String(e.stderr || e.message).trim());
 }
 
-/* 录进分镜的程序输出不能和程序对不上：跑一遍，比文本。 */
-try {
-  const run = execFileSync(path.join(ROOT, 'code', 'read', 'pow2.exe'), { encoding: 'utf8' });
-  const saved = fs.readFileSync(path.join(ROOT, 'code', 'read', 'run.txt'), 'utf8');
-  ok(run.replace(/\r/g, '') === saved.replace(/\r/g, ''), 'code/read/run.txt 和程序实际输出一致');
-} catch (e) {
-  bad++;
-  console.error('  ✗ 跑不动 code/read/pow2.exe：' + String(e.message).slice(0, 100));
-}
 
 /* ---------------------------------------------------------------- 渲染 */
 console.log('\n自动适配');
 {
   /* 库承诺的"自己会变好"：代码窗缩字号、步骤条竖排、数字列右对齐、注释不压内容。
      这些都是行为，不是属性，只能真跑一遍量。 */
+  execFileSync(process.execPath, ['bin/vk.mjs', 'render', 'tests/behaviour.html'], { cwd: ROOT, stdio: 'pipe' });
   const { chromium: pw } = await import('playwright');
   const b = await pw.launch({ channel: 'msedge', args: ['--allow-file-access-from-files'] });
   const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
@@ -589,7 +576,7 @@ let report = [];
 try {
   const out = execFileSync(
     process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/acceptance', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/darks.html', 'tests/relations.html', 'tests/recipes.html', 'tests/contrast.html', 'gallery/index.html', 'tests/behaviour.html', 'episodes', '--json'],
+    ['bin/vk.mjs', 'render', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/darks.html', 'tests/relations.html', 'tests/recipes.html', 'tests/contrast.html', 'tests/behaviour.html', '--json'],
     { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
   );
   report = JSON.parse(out);
@@ -603,31 +590,6 @@ try {
 }
 const frames = report.flatMap((r) => r.frames || []);
 ok(frames.length >= 60, `渲染出 ${frames.length} 帧`);
-
-/* README 里的预览图是仓库门面：内容与当前渲染对不上，它就在撒谎。 */
-try {
-  const tmp = path.join(ROOT, 'out', 'preview-check.png');
-  execFileSync(process.execPath, ['bin/vk.mjs', 'sheet', 'episodes/09-memory.html', '--cols', '3', '--width', '560', '--out', tmp], {
-    cwd: ROOT,
-    stdio: 'pipe',
-    maxBuffer: 64 * 1024 * 1024,
-  });
-  const { PNG } = await import('pngjs');
-  const a = PNG.sync.read(fs.readFileSync(path.join(ROOT, 'assets', 'preview.png')));
-  const b = PNG.sync.read(fs.readFileSync(tmp));
-  let diff = 0;
-  if (a.width === b.width && a.height === b.height) {
-    for (let i = 0; i < a.data.length; i++) if (a.data[i] !== b.data[i]) diff++;
-  } else diff = a.data.length;
-  const ratio = diff / a.data.length;
-  // 阈值来自实测：同一份内容重渲染抖动约 0.0005%，改一个字约 0.038%。
-  const LIMIT = 0.0001;
-  ok(ratio < LIMIT, 'README 的预览图与当前渲染一致');
-  if (ratio >= LIMIT) console.error(`    · 预览图过期了（差异 ${(ratio * 100).toFixed(3)}%），跑 npm run preview`);
-} catch (e) {
-  bad++;
-  console.error('  ✗ 预览图检查失败：' + String(e.message).slice(0, 120));
-}
 
 let issues = 0;
 for (const r of report) {
