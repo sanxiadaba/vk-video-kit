@@ -12,7 +12,7 @@
 | `vk-code` | 6 行 | 再多会缩到 44px 地板，然后被裁（自检会报） |
 | `vk-term` | 7 行 | 终端行高比代码小 |
 | `vk-table` | 4 行 | 表头另算 |
-| `vk-tree` | 8 行 | 超了末尾留一行「…还有更多」 |
+| `vk-tree` | 6 行 | 超了末尾留一行「…还有更多」 |
 | `vk-cells` | 2 行 | `cols=4` 时 8 格 |
 | `vk-steps` | 5 步 | 横排；再长换 `direction="vertical"` |
 | `vk-bars` | 6 条 | |

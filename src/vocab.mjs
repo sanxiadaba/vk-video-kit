@@ -160,7 +160,7 @@ export const CAPACITY = {
   diff: 5,
   asm: 5,
   table: 4, // 数据行（表头另算）
-  tree: 8,
+  tree: 6,
   cells: 2, // 行（cols 列一行）
   bits: 16, // 位；32 位请用 index="sparse"
   steps: 5, // 横排

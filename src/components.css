@@ -73,8 +73,8 @@ vk-box > .vk-box-hd {
   border-radius: inherit;
   border-end-start-radius: 0;
   border-end-end-radius: 0;
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-1);
 }
@@ -107,8 +107,9 @@ vk-label {
   align-items: center;
   gap: var(--vk-gap-close);
   max-width: 100%;
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  font-weight: var(--vk-w-medium);
   color: var(--vk-ink-3);
   white-space: nowrap;
 }
@@ -249,11 +250,11 @@ vk-asm {
   display: flex;
   align-items: center;
   gap: var(--vk-gap-close);
-  min-height: var(--vk-gap-wide);
+  min-height: calc(var(--vk-gap-wide) + var(--vk-gap-close));
   padding: 0 var(--vk-gap-normal);
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
   background: var(--vk-soft);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1;
   color: var(--vk-ink-2);
   white-space: nowrap;
@@ -500,8 +501,8 @@ vk-table td {
 /* 表头：不依赖作者写 <thead>（浏览器会把裸 <tr> 包进 tbody）。 */
 vk-table th {
   border-bottom: var(--vk-line-w-strong) solid var(--vk-line-strong);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-2);
   white-space: nowrap;
@@ -518,8 +519,8 @@ vk-table tbody tr[state='current'] td { background: var(--vk-tint-focus); }
 vk-table tbody tr[tone] td { background: var(--vk-tint); }
 vk-table .vk-cap {
   margin-bottom: var(--vk-gap-close);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
 
@@ -576,8 +577,8 @@ vk-tree {
   display: flex;
   flex-direction: column;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-cs, var(--vk-fs-caption));
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-cs, var(--vk-fs-body));
+  line-height: var(--vk-lh-body);
 }
 .vk-node > .vk-tname {
   display: block;
@@ -650,8 +651,8 @@ vk-cells {
 }
 .vk-cell > .vk-cell-l {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
 .vk-cell > .vk-cell-v {
@@ -713,8 +714,8 @@ vk-bits {
   font-size: var(--vk-cs, var(--vk-fs-body));
 }
 .vk-bits-label {
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
 .vk-bit-row {
@@ -783,13 +784,13 @@ vk-steps[data-direction='vertical'] .vk-step:last-child { padding-bottom: 0; }
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: calc(var(--vk-fs-body) + var(--vk-gap-close));
-  height: calc(var(--vk-fs-body) + var(--vk-gap-close));
+  width: calc(var(--vk-fs-body) + var(--vk-gap-normal));
+  height: calc(var(--vk-fs-body) + var(--vk-gap-normal));
   border: var(--vk-line-w-rule) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
 .vk-step > .vk-step-t {
@@ -889,8 +890,8 @@ vk-timeline {
 .vk-tl-range {
   margin-bottom: var(--vk-gap-close);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
 .vk-tl {
@@ -934,8 +935,8 @@ vk-timeline {
 }
 .vk-tl-item .vk-tl-date {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
 .vk-tl-item .vk-tl-t {
@@ -964,8 +965,8 @@ vk-timeline {
   min-width: 6em;
   padding-top: var(--vk-gap-wide);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
 
@@ -997,8 +998,8 @@ vk-compare {
 .vk-compare-label {
   margin-bottom: var(--vk-gap-close);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
 .vk-compare-mark {

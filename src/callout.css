@@ -68,8 +68,8 @@ vk-callout {
   border-radius: var(--vk-radius-pill);
   background: var(--vk-paper);
   color: var(--vk-ink-2);
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
   font-weight: var(--vk-w-medium);
   white-space: nowrap;
 }
@@ -85,6 +85,6 @@ vk-callout {
   background: var(--vk-tone, var(--vk-info));
   color: var(--vk-on-focus);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1;
 }

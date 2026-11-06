@@ -325,10 +325,10 @@ export const TAGS = {
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
       max: { type: 'int', min: 1, max: 40, default: 10, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
-      size: sizeText('caption'),
+      size: sizeText('body'),
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
-    capacity: { max: 10, unit: '行' },
+    capacity: { max: 6, unit: '行' },
   },
 
   'vk-asm': {
