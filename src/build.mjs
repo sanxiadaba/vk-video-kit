@@ -17,6 +17,8 @@ import { dedent, expandLeadingTabs, stripAnsi, lineSet, LANG_ALIAS, SUPPORTED_LA
 import { parseAsm, splitInsn } from './shared/asm.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+/** 错误信息里的路径：相对库根。`file` 本身可以是绝对路径（在别的目录里跑 vk 时）。 */
+const label = (f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join('/') || String(f);
 
 
 /* ---------------------------------------------------------------- 工具 */
@@ -87,11 +89,11 @@ function inlineSource(node) {
 function readSource(node, file, what) {
   const src = attrOf(node, 'src');
   const inline = inlineSource(node);
-  if (src && inline != null) throw new Error(`${file}:${lineOf(node)} <${node.tagName}> 同时写了 src 和内联源码：只能二选一`);
+  if (src && inline != null) throw new Error(`${label(file)}:${lineOf(node)} <${node.tagName}> 同时写了 src 和内联源码：只能二选一`);
   if (!src && inline == null) return null;
   if (inline != null) return dedent(expandLeadingTabs(stripAnsi(inline)));
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
-  if (!fs.existsSync(abs)) throw new Error(`${file}:${lineOf(node)} <${node.tagName}> 的 src="${src}" 找不到文件`);
+  if (!fs.existsSync(abs)) throw new Error(`${label(file)}:${lineOf(node)} <${node.tagName}> 的 src="${src}" 找不到文件`);
   return dedent(expandLeadingTabs(stripAnsi(fs.readFileSync(abs, 'utf8'))));
 }
 
@@ -116,12 +118,12 @@ async function buildCode(node, file, errors) {
   const lang = attrOf(node, 'lang') || inferLang(attrOf(node, 'src') || attrOf(node, 'file') || '') || 'text';
   const text = readSource(node, file, 'code');
   if (text == null) {
-    errors.push(`${file}:${lineOf(node)} <vk-code> 没有源码：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-code> 没有源码：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
     return '';
   }
   const { start, lines } = sliceRange(text, attrOf(node, 'lines'));
   if (!lines.length) {
-    errors.push(`${file}:${lineOf(node)} <vk-code> 的 lines="${attrOf(node, 'lines')}" 超出源码范围（共 ${text.split('\n').length} 行）`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-code> 的 lines="${attrOf(node, 'lines')}" 超出源码范围（共 ${text.split('\n').length} 行）`);
     return '';
   }
   const code = lines.join('\n');
@@ -129,7 +131,7 @@ async function buildCode(node, file, errors) {
   try {
     body = await highlight(code, lang);
   } catch (e) {
-    errors.push(`${file}:${lineOf(node)} ${e.message}`);
+    errors.push(`${label(file)}:${lineOf(node)} ${e.message}`);
     return '';
   }
   const rows = body.split('\n');
@@ -164,7 +166,7 @@ async function buildCode(node, file, errors) {
 async function buildTerm(node, file, errors) {
   const text = readSource(node, file, 'term');
   if (text == null) {
-    errors.push(`${file}:${lineOf(node)} <vk-term> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-term> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
     return '';
   }
   const prompt = attrOf(node, 'prompt') || '$';
@@ -200,7 +202,7 @@ async function buildTerm(node, file, errors) {
 async function buildDiff(node, file, errors) {
   const text = readSource(node, file, 'diff');
   if (text == null) {
-    errors.push(`${file}:${lineOf(node)} <vk-diff> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-diff> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
     return '';
   }
   const lang = attrOf(node, 'lang');
@@ -229,7 +231,7 @@ async function buildDiff(node, file, errors) {
       try {
         body = await highlight(r.text || ' ', lang);
       } catch (e) {
-        errors.push(`${file}:${lineOf(node)} ${e.message}`);
+        errors.push(`${label(file)}:${lineOf(node)} ${e.message}`);
         return '';
       }
     }
@@ -250,13 +252,13 @@ function buildMath(node, file, errors) {
   // 三种写法都收：src 文件、内联 <script>、直接写在标签里的 TeX。
   const text = readSource(node, file, 'math') ?? textOf(node);
   if (text == null || !text.trim()) {
-    errors.push(`${file}:${lineOf(node)} <vk-math> 没有内容：写 src="文件.tex"，或把 TeX 直接写在标签里`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-math> 没有内容：写 src="文件.tex"，或把 TeX 直接写在标签里`);
     return '';
   }
   try {
     return katex.renderToString(text.trim(), { displayMode: !!node.attrs.some((a) => a.name === 'display'), throwOnError: true, strict: false, output: 'htmlAndMathml' });
   } catch (e) {
-    errors.push(`${file}:${lineOf(node)} 公式排版失败：${e.message}`);
+    errors.push(`${label(file)}:${lineOf(node)} 公式排版失败：${e.message}`);
     return '';
   }
 }
@@ -300,12 +302,12 @@ function buildAsm(node, file) {
 function buildBytes(node, file, errors) {
   const src = attrOf(node, 'src');
   if (!src) {
-    errors.push(`${file}:${lineOf(node)} <vk-bytes> 缺 src：写 src="文件.bin"`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-bytes> 缺 src：写 src="文件.bin"`);
     return '';
   }
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
   if (!fs.existsSync(abs)) {
-    errors.push(`${file}:${lineOf(node)} <vk-bytes> 的 src="${src}" 找不到文件`);
+    errors.push(`${label(file)}:${lineOf(node)} <vk-bytes> 的 src="${src}" 找不到文件`);
     return '';
   }
   const buf = fs.readFileSync(abs);
@@ -358,7 +360,7 @@ function buildTree(node, file) {
     try {
       data = JSON.parse((inline.childNodes || []).map((c) => c.value || '').join(''));
     } catch (e) {
-      throw new Error(`${file}:${lineOf(node)} <vk-tree> 的内联 JSON 解析失败：${e.message}`);
+      throw new Error(`${label(file)}:${lineOf(node)} <vk-tree> 的内联 JSON 解析失败：${e.message}`);
     }
     let budget = Number(attrOf(node, 'max') || 10) || 10;
     let more = false;
@@ -384,7 +386,7 @@ function buildTree(node, file) {
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
-  if (!fs.existsSync(abs)) throw new Error(`${file}:${lineOf(node)} <vk-tree> 的 src="${src}" 找不到目录`);
+  if (!fs.existsSync(abs)) throw new Error(`${label(file)}:${lineOf(node)} <vk-tree> 的 src="${src}" 找不到目录`);
   // 目录树也有一帧的容量上限：超了就先截断，末尾留一行说明，别撑爆画布。
   let budget = Number(attrOf(node, 'max') || 10) || 10;
   const walk = (dir, level, base) => {
@@ -534,7 +536,7 @@ export async function transformHtml(rawHtml, { file }) {
   const doc = isFull ? parse(rawHtml, { sourceCodeLocationInfo: true }) : parseFragment(rawHtml, { sourceCodeLocationInfo: true });
   if (isFull) rewritePageLinks(doc, file);
 
-  const problems = validate(doc, file);
+  const problems = validate(doc, label(file));
   const errors = problems.slice();
   const warnings = [];
 
@@ -549,7 +551,7 @@ export async function transformHtml(rawHtml, { file }) {
         if (!t.startsWith('#')) continue;
         const id = t.slice(1).split('@')[0];
         if (id && !ids.has(id)) {
-          errors.push({ file, line: lineOf(node), message: `<${node.tagName}> 的 ${a.name}="${t}" 指向 #${id}，但这一页没有这个 id`, fix: '改成页里存在的 id，或给目标加 id' });
+          errors.push({ file: label(file), line: lineOf(node), message: `<${node.tagName}> 的 ${a.name}="${t}" 指向 #${id}，但这一页没有这个 id`, fix: '改成页里存在的 id，或给目标加 id' });
         }
       }
     }
@@ -588,9 +590,7 @@ export async function transformHtml(rawHtml, { file }) {
         const svg = await iconSvg(icon);
         if (!svg) {
           const near = suggestIcon(icon);
-          errors.push({
-            file,
-            line: lineOf(node),
+          errors.push({ file: label(file), line: lineOf(node),
             message: `<${tag}> 的 icon="${icon}" 找不到`,
             fix: near ? `是想写 "${near}"？全表用 vk icons <词> 搜` : '全表用 vk icons <词> 搜；图标名是 Lucide 的 kebab 名',
           });
@@ -598,7 +598,7 @@ export async function transformHtml(rawHtml, { file }) {
       }
     } catch (e) {
       if (process.env.VK_DEBUG) console.error('DEBUG', tag, e.stack);
-      errors.push({ file, line: lineOf(node), message: `<${tag}> 构建失败：${e.message}`, fix: '看这条错误的上一行；通常是 src 路径或行段写错' });
+      errors.push({ file: label(file), line: lineOf(node), message: `<${tag}> 构建失败：${e.message}`, fix: '看这条错误的上一行；通常是 src 路径或行段写错' });
     }
   }
 

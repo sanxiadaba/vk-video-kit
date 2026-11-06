@@ -102,11 +102,13 @@ function ensureLibrary() {
 async function buildPage(file) {
   const { transformHtml } = await import('../src/build.mjs');
   const html = fs.readFileSync(file, 'utf8');
-  const rel = path.relative(ROOT, path.resolve(file));
-  const out = path.join(PAGES, rel);
+  const abs = path.resolve(file);
+  const rel = path.relative(ROOT, abs);
+  // 仓库外的页也能渲：放到 _outside/ 下，不往 .vk-cache 外面写。
+  const out = path.join(PAGES, rel.startsWith('..') ? path.join('_outside', path.basename(abs)) : rel);
   let res;
   try {
-    res = await transformHtml(html, { file: rel });
+    res = await transformHtml(html, { file: abs });
   } catch (e) {
     return { file, ok: false, errors: e.errors || [{ file: rel, line: 1, message: e.message }] };
   }
@@ -200,7 +202,11 @@ if (cmd === 'render' || cmd === 'check') {
   }
   ensureLibrary();
 
-  const files = inputs.flatMap((i) => (fs.existsSync(path.resolve(ROOT, i)) ? collect(path.resolve(ROOT, i)) : []));
+  // 相对路径按「你站的地方」算，不按库根：在 tests/ 里跑 `vk check frames.html` 也得成立。
+  const files = inputs.flatMap((i) => {
+    const abs = path.resolve(process.cwd(), i);
+    return fs.existsSync(abs) ? collect(abs) : [];
+  });
   if (!files.length) {
     console.error(`[vk] 找不到 ${inputs.join(' ')}`);
     process.exit(2);

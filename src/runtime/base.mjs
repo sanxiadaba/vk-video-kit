@@ -118,16 +118,6 @@ export function spaceCss(raw) {
   return Number.isFinite(n) ? `${n}px` : '';
 }
 
-export function readData(el) {
-  const s = el.querySelector(':scope > script[data-vk]');
-  if (!s) return null;
-  try {
-    return JSON.parse(s.textContent);
-  } catch {
-    return null;
-  }
-}
-
 export function warn(el, message) {
   const key = message.slice(0, 60);
   el._warned ||= new Set();
