@@ -163,7 +163,24 @@ async function buildCode(node, file, errors) {
   return `<div class="vk-win" data-chrome="${chrome}">${head}<div class="vk-bd">${out.join('')}</div></div>`;
 }
 
-async function buildTerm(node, file, errors) {
+function cmdHtml(cmd) {
+  const out = [];
+  let first = true;
+  for (const m of cmd.matchAll(/"[^"]*"|'[^']*'|\S+/g)) {
+    const tok = m[0];
+    let cls = 'vk-arg';
+    if (first) {
+      cls = 'vk-cmd';
+      first = false;
+    } else if (/^--?[\w]/.test(tok)) cls = 'vk-flag';
+    else if (/^["']/.test(tok)) cls = 'vk-arg-str';
+    else if (tok.includes('/')) cls = 'vk-path';
+    out.push(`<span class="${cls}">${esc(tok)}</span>`);
+  }
+  return out.join(' ');
+}
+
+function buildTerm(node, file, errors) {
   const text = readSource(node, file, 'term');
   if (text == null) {
     errors.push(`${label(file)}:${lineOf(node)} <vk-term> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
@@ -180,9 +197,7 @@ async function buildTerm(node, file, errors) {
     const p = line.startsWith(prompt) ? prompt : '';
     if (p) {
       const cmd = line.slice(p.length).trim();
-      parts.push(
-        `<div class="vk-line" data-vk-line="${n}"><span class="vk-prompt">${esc(p)}</span> <span class="vk-cmd">${esc(cmd)}</span></div>`
-      );
+      parts.push(`<div class="vk-line" data-vk-line="${n}"><span class="vk-prompt">${esc(p)}</span>${cmdHtml(cmd)}</div>`);
     } else {
       const isErr = /\b(error|Error|ERROR|fatal|failed|not found|No such)\b|错误|失败/.test(line);
       parts.push(`<div class="vk-line" data-vk-line="${n}"><span class="${isErr ? 'vk-err' : 'vk-out'}">${esc(line)}</span></div>`);
@@ -210,7 +225,11 @@ async function buildDiff(node, file, errors) {
   for (const line of text.split('\n')) {
     if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) continue;
     if (line.startsWith('@@')) {
-      rows.push({ kind: 'hunk', text: line });
+      // git 的 @@ -1,4 +1,4 @@ 对观众是噪音：只留「改的是哪几行」。
+      const m = line.match(/^@@\s+-(\d+)(?:,(\d+))?\s+\+(\d+)(?:,(\d+))?\s+@@/);
+      const a = m ? Number(m[1]) : 0;
+      const count = m && m[2] !== undefined ? Number(m[2]) : 1;
+      rows.push({ kind: 'hunk', text: m ? (count > 1 ? `第 ${a}–${a + count - 1} 行` : `第 ${a} 行`) : line });
       continue;
     }
     if (line.startsWith('+')) rows.push({ kind: 'add', text: line.slice(1) });
@@ -339,19 +358,34 @@ function treeHtml(node, rows, title) {
   return `<div class="vk-win">${head}<div class="vk-bd vk-tree">${rows.join('')}</div></div>`;
 }
 
-/** 一个节点：名字 + 子节点。缩进与导线由 CSS 画，不靠 └── 字符。 */
-function treeNode(name, isDir, nodePath, kids = '') {
+/** 文件类型：图标与颜色都按这个走。 */
+const kindOf = (name, isDir) => {
+  if (isDir) return 'dir';
+  if (/\.(c|h|cc|cpp|js|mjs|ts|tsx|py|go|rs|java|sh)$/i.test(name)) return 'code';
+  if (/\.(bin|exe|o|obj|dis|s|elf)$/i.test(name)) return 'binary';
+  return 'file';
+};
+
+/** 一个节点：图标 + 名字 + 子节点。缩进与导线由 CSS 画，不靠 └── 字符。 */
+function treeNode(name, isDir, nodePath, kids = '', icon = '') {
   return (
-    `<div class="vk-node" data-vk-node="${esc(nodePath)}"${isDir ? ' data-dir' : ''}>` +
-    `<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span>` +
+    `<div class="vk-node" data-vk-node="${esc(nodePath)}" data-kind="${kindOf(name, isDir)}"${isDir ? ' data-dir' : ''}>` +
+    `<span class="vk-tname-row">${icon}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
     (kids ? `<div class="vk-kids">${kids}</div>` : '') +
     `</div>`
   );
 }
 
-function buildTree(node, file) {
+async function buildTree(node, file) {
   const src = attrOf(node, 'src');
   const depth = Number(attrOf(node, 'depth') || 3) || 3;
+  const ICONS = {
+    dir: await iconSvg('folder'),
+    code: await iconSvg('braces'),
+    binary: await iconSvg('binary'),
+    file: await iconSvg('file'),
+  };
+  const nodeHtml = (name, isDir, p, kids = '') => treeNode(name, isDir, p, kids, ICONS[kindOf(name, isDir)]);
 
   if (!src) {
     const inline = (node.childNodes || []).find((c) => c.tagName === 'script');
@@ -376,7 +410,7 @@ function buildTree(node, file) {
         const name = typeof it === 'string' ? it : it.name;
         const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
         const p = base ? `${base}/${name}` : name;
-        rows.push(treeNode(name, isDir, p, it.children ? walk(it.children, level + 1, p) : ''));
+        rows.push(nodeHtml(name, isDir, p, it.children ? walk(it.children, level + 1, p) : ''));
       }
       return rows.join('');
     };
@@ -405,7 +439,7 @@ function buildTree(node, file) {
       }
       budget--;
       const p = base ? `${base}/${e.name}` : e.name;
-      rows.push(treeNode(e.name, e.isDirectory(), p, e.isDirectory() ? walk(path.join(dir, e.name), level + 1, p) : ''));
+      rows.push(nodeHtml(e.name, e.isDirectory(), p, e.isDirectory() ? walk(path.join(dir, e.name), level + 1, p) : ''));
     }
     return rows.join('');
   };

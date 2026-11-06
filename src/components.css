@@ -363,15 +363,19 @@ vk-code[long='wrap'] .vk-src {
 }
 
 /* ------------------------------------------------------------------ 终端 */
-.vk-term .vk-line { padding-left: var(--vk-gap-normal); gap: var(--vk-inset-sm); }
+.vk-term .vk-line { padding-left: var(--vk-gap-normal); gap: var(--vk-gap-close); }
 .vk-term .vk-prompt {
   color: var(--vk-ink-3);
   user-select: none;
 }
 .vk-term .vk-cmd {
   color: var(--vk-ink-1);
-  font-weight: var(--vk-w-medium);
+  font-weight: var(--vk-w-bold);
 }
+.vk-term .vk-flag { color: var(--vk-syn-type); }
+.vk-term .vk-arg-str { color: var(--vk-syn-string); }
+.vk-term .vk-path { color: var(--vk-ink-2); }
+.vk-term .vk-arg { color: var(--vk-ink-1); }
 .vk-term .vk-out { color: var(--vk-ink-2); }
 .vk-term .vk-err { color: var(--vk-err); }
 
@@ -415,7 +419,11 @@ vk-code[long='wrap'] .vk-src {
 .vk-diff-row.is-current .vk-ln { color: var(--vk-focus); }
 .vk-diff-row.is-dim { color: var(--vk-ink-3); }
 .vk-diff-hunk {
-  padding: var(--vk-gap-close) var(--vk-gap-normal) 0;
+  margin: var(--vk-gap-close) var(--vk-gap-normal) var(--vk-inset-xs);
+  padding: 0 var(--vk-inset-md);
+  align-self: flex-start;
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-soft);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
@@ -500,6 +508,7 @@ vk-table td {
 }
 /* 表头：不依赖作者写 <thead>（浏览器会把裸 <tr> 包进 tbody）。 */
 vk-table th {
+  background: var(--vk-soft);
   border-bottom: var(--vk-line-w-strong) solid var(--vk-line-strong);
   font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
@@ -580,13 +589,27 @@ vk-tree {
   font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
 }
-.vk-node > .vk-tname {
-  display: block;
+.vk-tname-row {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-gap-close);
   padding-right: var(--vk-gap-normal);
+}
+.vk-node .vk-tname {
   white-space: nowrap;
   color: var(--vk-ink-1);
 }
-.vk-node[data-dir] > .vk-tname { font-weight: var(--vk-w-bold); }
+.vk-node[data-dir] .vk-tname { font-weight: var(--vk-w-bold); }
+/* 文件类型图标：颜色只用来分类，不抢焦点。 */
+.vk-tname-row .vk-ic {
+  width: 1.25em;
+  height: 1.25em;
+  margin-right: 0;
+  color: var(--vk-ink-3);
+}
+.vk-node[data-kind='dir'] .vk-ic { color: var(--vk-ink-2); }
+.vk-node[data-kind='code'] .vk-ic { color: var(--vk-syn-type); }
+.vk-node[data-kind='binary'] .vk-ic { color: var(--vk-syn-number); }
 /* 子节点：一条竖导线 + 每个节点一条横短线。导线是缩进的唯一来源。 */
 .vk-node > .vk-kids {
   display: flex;

@@ -335,11 +335,14 @@ if (cmd === 'render' || cmd === 'check') {
     }
 
     const index = path.join(outDir, 'index.html');
-    fs.writeFileSync(index, buildShowcase({ entries, source: rel(abs) }), 'utf8');
+    const sheetHtml = path.join(outDir, 'sheet.html');
+    // 页面按手机尺度排（每帧约 880 宽）；整页图用紧凑四列，只当总览。
+    fs.writeFileSync(index, buildShowcase({ entries, source: rel(abs), cols: 2 }), 'utf8');
+    fs.writeFileSync(sheetHtml, buildShowcase({ entries, source: rel(abs), cols: 4 }), 'utf8');
 
     // 整页图：给“一眼扫完”和 AI 读图用。同一次浏览器会话，不重开。
     const sheet = await browser.newPage({ viewport: { width: 1920, height: 1200 }, deviceScaleFactor: 1 });
-    await sheet.goto('file:///' + index.split(path.sep).join('/'), { waitUntil: 'load' });
+    await sheet.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
     await sheet.evaluate(() => Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))));
     await sheet.screenshot({ path: path.join(outDir, 'sheet.png'), fullPage: true });
     await sheet.close();

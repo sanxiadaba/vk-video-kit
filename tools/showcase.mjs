@@ -27,7 +27,7 @@ const esc = (s) =>
  * @param {{entries: {id:string,caption:string,tags:string[],png:string,issues:{message:string}[]}[], source:string}} input
  * @returns {string} 完整 HTML
  */
-export function buildShowcase({ entries, source }) {
+export function buildShowcase({ entries, source, cols = 2 }) {
   // 每个件出现几次：越少越是这一帧的主角。
   const freq = new Map();
   for (const e of entries) for (const t of e.tags) freq.set(t, (freq.get(t) || 0) + 1);
@@ -77,14 +77,14 @@ export function buildShowcase({ entries, source }) {
 <style>
   :root { color-scheme: light; }
   * { box-sizing: border-box; }
-  body { margin: 0; padding: 40px 48px 64px; background: #eef0f4; color: #0b0f14;
+  body { margin: 0 auto; padding: 40px 48px 64px; max-width: ${cols === 2 ? 1840 : 1920}px; background: #eef0f4; color: #0b0f14;
          font: 15px/1.5 -apple-system, "Segoe UI", "Noto Sans SC", "Microsoft YaHei", sans-serif; }
   header { display: flex; align-items: baseline; gap: 16px; margin-bottom: 28px; }
   h1 { margin: 0; font-size: 26px; letter-spacing: -0.01em; }
   header p { margin: 0; color: #5c6674; }
   h2 { margin: 36px 0 14px; font-size: 15px; font-weight: 600; color: #333d4b; }
   h2 small { font-weight: 400; color: #8b95a3; margin-left: 6px; }
-  .grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 18px; }
+  .grid { display: grid; grid-template-columns: repeat(${cols}, minmax(0, 1fr)); gap: ${cols === 2 ? 24 : 18}px; }
   .card { display: block; text-decoration: none; color: inherit; background: #fff; border-radius: 10px;
           overflow: hidden; border: 1px solid rgba(11,15,20,.10); }
   .card.is-bad { border-color: #b3261e; box-shadow: 0 0 0 1px #b3261e inset; }
