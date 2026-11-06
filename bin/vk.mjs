@@ -13,9 +13,10 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
 import { contract, markdown } from '../src/contract.mjs';
+import { buildShowcase } from '../tools/showcase.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'out');
@@ -29,7 +30,7 @@ const val = (n) => {
   return i >= 0 ? args[i + 1] : null;
 };
 const VALUE_FLAGS = new Set(['--out', '--width', '--shot', '--frame']);
-const KNOWN_FLAGS = new Set([...VALUE_FLAGS, '--phone', '--json', '--md', '--all', '--version']);
+const KNOWN_FLAGS = new Set([...VALUE_FLAGS, '--phone', '--json', '--md', '--all', '--no-open', '--version']);
 const badFlag = args.slice(1).find((a) => a.startsWith('-') && !KNOWN_FLAGS.has(a));
 if (badFlag) {
   console.error(`[vk] 不认识的参数 ${badFlag}；可用：${[...KNOWN_FLAGS].join(' ')}`);
@@ -159,7 +160,10 @@ async function openPage(browser, url) {
   const frames = await page.evaluate(() =>
     [...document.querySelectorAll('vk-page')].map((p, i) => {
       const r = p.getBoundingClientRect();
-      return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height };
+      // 这一帧用了哪些件、它自己在讲什么：看板的分组与说明都从这儿来，不另维护一张表。
+      const tags = [...new Set([...p.querySelectorAll('*')].map((el) => el.localName).filter((t) => t.startsWith('vk-')))];
+      const label = p.querySelector('vk-label .vk-label-t') || p.querySelector('vk-label');
+      return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height, tags, caption: (label?.textContent || '').trim() };
     })
   );
   return { page, errors, ready, frames, warns };
@@ -288,6 +292,74 @@ if (cmd === 'render' || cmd === 'check') {
 
   const bad = report.some((r) => !r.frames.length || r.errors.length || r.frames.some((f) => f.issues.length));
   process.exitCode = bad ? 1 : 0;
+} else if (cmd === 'showcase') {
+  /* 一条命令：渲染 → 排成看板 → 打开。目的只有一个：让你立刻看到这个库长什么样。 */
+  ensureLibrary();
+  const target = inputs[0] || 'tests/frames.html';
+  const fromCwd = path.resolve(process.cwd(), target);
+  const abs = fs.existsSync(fromCwd) ? fromCwd : path.resolve(ROOT, target);
+  if (!fs.existsSync(abs)) {
+    console.error(`[vk] 找不到 ${target}`);
+    process.exit(2);
+  }
+  const outDir = path.join(ROOT, 'out', 'showcase');
+  fs.rmSync(outDir, { recursive: true, force: true });
+
+  const b = await buildPage(abs);
+  if (!b.ok) {
+    console.error(`✗ ${rel(abs)}`);
+    for (const e of b.errors) console.error(`   ${e.file}:${e.line} ${e.message}${e.fix ? ` → ${e.fix}` : ''}`);
+    process.exit(1);
+  }
+
+  const browser = await launch();
+  const entries = [];
+  try {
+    const session = await openPage(browser, 'file:///' + b.out.split(path.sep).join('/'));
+    const base = path.basename(b.file, '.html');
+    for (const f of session.frames) {
+      const png = path.join(outDir, 'frames', `${base}-${f.id || f.index + 1}.png`);
+      fs.mkdirSync(path.dirname(png), { recursive: true });
+      await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
+      const audit = await session.page.evaluate((idx) => {
+        if (!window.vk?.auditPage) return { issues: [{ message: '页面里没有 vk 运行时' }], metrics: null };
+        const stage = document.querySelectorAll('.vk-stage')[idx];
+        return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
+      }, f.index);
+      entries.push({ id: f.id || `frame-${f.index + 1}`, caption: f.caption, tags: f.tags, png: `frames/${path.basename(png)}`, issues: audit.issues, metrics: audit.metrics });
+    }
+    await session.page.close();
+    if (!entries.length) {
+      console.error(`[vk] ${rel(abs)} 里没有 <vk-page>`);
+      process.exit(1);
+    }
+
+    const index = path.join(outDir, 'index.html');
+    fs.writeFileSync(index, buildShowcase({ entries, source: rel(abs) }), 'utf8');
+
+    // 整页图：给“一眼扫完”和 AI 读图用。同一次浏览器会话，不重开。
+    const sheet = await browser.newPage({ viewport: { width: 1920, height: 1200 }, deviceScaleFactor: 1 });
+    await sheet.goto('file:///' + index.split(path.sep).join('/'), { waitUntil: 'load' });
+    await sheet.evaluate(() => Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))));
+    await sheet.screenshot({ path: path.join(outDir, 'sheet.png'), fullPage: true });
+    await sheet.close();
+
+    const dirty = entries.filter((e) => e.issues.length);
+    console.log(`看板：${rel(index)}（${entries.length} 帧${dirty.length ? `，${dirty.length} 帧有问题` : ''}）`);
+    console.log(`整页：${rel(path.join(outDir, 'sheet.png'))}`);
+    if (!flag('--no-open')) {
+      try {
+        const spawnOpts = { detached: true, stdio: 'ignore' };
+        if (process.platform === 'win32') spawn('cmd', ['/c', 'start', '', index], spawnOpts).unref();
+        else if (process.platform === 'darwin') spawn('open', [index], spawnOpts).unref();
+        else spawn('xdg-open', [index], spawnOpts).unref();
+      } catch {
+        /* 打不开就算了，路径已经打印出来了 */
+      }
+    }
+  } finally {
+    await browser.close();
+  }
 } else if (cmd === 'clean') {
   const all = flag('--all');
   const targets = [OUT, path.join(ROOT, '.vk-cache'), ...(all ? [path.join(ROOT, 'vk'), path.join(ROOT, 'dist'), path.join(ROOT, 'src/tokens.generated.css')] : [])];
@@ -357,6 +429,7 @@ if (cmd === 'render' || cmd === 'check') {
 
   vk render <file|dir> [--frame id] [--phone] [--out DIR] [--json]
   vk check  <file|dir> [--frame id] [--json]
+  vk showcase [file|dir] [--no-open]   渲染并把所有帧排成一页看板，自动打开
   vk doc    <tag> [--json]
   vk brief  [--json|--md]
   vk icons  <query>
