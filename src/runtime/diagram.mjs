@@ -222,6 +222,10 @@ export class VkBars extends VkElement {
     const positive = rows.map((r) => r.value).filter((v) => v != null && v > 0);
     const max = fixed > 0 ? fixed : positive.length ? Math.max(...positive) : 1;
 
+    const scaleRow =
+      fixed > 0
+        ? `<div class="vk-bar vk-bars-scale"><span></span><span class="vk-bars-scale-ends"><span>0</span><span>${thousands(max)}${unit ? ' ' + esc(unit) : ''}</span></span><span></span></div>`
+        : '';
     this.innerHTML = rows
       .map((r) => {
         const attr = [
@@ -240,7 +244,7 @@ export class VkBars extends VkElement {
           `</div>`
         );
       })
-      .join('');
+      .join('') + scaleRow;
 
     this._cols = '';
   }

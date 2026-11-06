@@ -958,6 +958,12 @@ vk-bars {
   flex-direction: column;
   gap: var(--vk-gap-close);
 }
+.vk-bars-scale .vk-bars-scale-ends {
+  display: flex;
+  justify-content: space-between;
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+}
 .vk-bar {
   display: grid;
   grid-template-columns: max-content 1fr auto;
