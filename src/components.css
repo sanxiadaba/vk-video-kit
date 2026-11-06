@@ -254,7 +254,7 @@ vk-asm {
   padding: 0 var(--vk-gap-normal);
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
   background: var(--vk-soft);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: 1;
   color: var(--vk-ink-2);
   white-space: nowrap;
@@ -501,7 +501,7 @@ vk-table td {
 /* 表头：不依赖作者写 <thead>（浏览器会把裸 <tr> 包进 tbody）。 */
 vk-table th {
   border-bottom: var(--vk-line-w-strong) solid var(--vk-line-strong);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-2);
@@ -519,7 +519,7 @@ vk-table tbody tr[state='current'] td { background: var(--vk-tint-focus); }
 vk-table tbody tr[tone] td { background: var(--vk-tint); }
 vk-table .vk-cap {
   margin-bottom: var(--vk-gap-close);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
@@ -651,7 +651,7 @@ vk-cells {
 }
 .vk-cell > .vk-cell-l {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
@@ -714,7 +714,7 @@ vk-bits {
   font-size: var(--vk-cs, var(--vk-fs-body));
 }
 .vk-bits-label {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
@@ -789,7 +789,7 @@ vk-steps[data-direction='vertical'] .vk-step:last-child { padding-bottom: 0; }
   border: var(--vk-line-w-rule) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
@@ -890,7 +890,7 @@ vk-timeline {
 .vk-tl-range {
   margin-bottom: var(--vk-gap-close);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-3);
 }
@@ -935,7 +935,7 @@ vk-timeline {
 }
 .vk-tl-item .vk-tl-date {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }

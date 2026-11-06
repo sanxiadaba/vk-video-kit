@@ -63,7 +63,7 @@ int bsearch(const int *a, int n, int key) {
   <vk-stack gap="normal">
     <vk-label>终端</vk-label>
     <vk-text size="subhead">跑一遍，<em>输出自己说话</em>。</vk-text>
-    <vk-term id="py" title="python3" size="caption">
+    <vk-term id="py" title="python3">
       <script type="text/plain" data-vk-source>
 $ python3 -c "print(0.1 + 0.2)"
 0.30000000000000004
@@ -95,7 +95,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="normal">
     <vk-label>表格</vk-label>
     <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
-    <vk-table size="caption" caption="同一台机器，一次读 64 字节。">
+    <vk-table caption="同一台机器，一次读 64 字节。">
       <table>
         <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
         <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td></tr>
@@ -123,7 +123,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="normal">
     <vk-label>文件树</vk-label>
     <vk-text size="subhead">编译产物比源码<em>大得多</em>。</vk-text>
-    <vk-tree src="../code" depth="2" max="6" title="code/" current="opt" size="caption"></vk-tree>
+    <vk-tree src="../code" depth="2" max="6" title="code/" current="opt"></vk-tree>
   </vk-stack>
 </vk-page>
 
@@ -131,7 +131,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="wide">
     <vk-label>内存格</vk-label>
     <vk-text size="subhead">一格一个 int，地址<em>每次加 4</em>。</vk-text>
-    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3" size="caption">
+    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3">
       <li value="1" label="a[0]"></li>
       <li value="2" label="a[1]"></li>
       <li value="3" label="a[2]"></li>
@@ -153,7 +153,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="wide">
     <vk-label>位域</vk-label>
     <vk-text size="subhead">一个 float，<em>三段</em>。</vk-text>
-    <vk-bits value="0 01111111 011" index="down" group="4" sign label="float" size="caption"></vk-bits>
+    <vk-bits value="0 01111111 011" index="down" group="4" sign label="float"></vk-bits>
   </vk-stack>
 </vk-page>
 
@@ -186,7 +186,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="wide">
     <vk-label>时间线</vk-label>
     <vk-text size="subhead">编码的故事，<em>五十年</em>。</vk-text>
-    <vk-timeline start="1963" end="2010" current="2" size="caption">
+    <vk-timeline start="1963" end="2010" current="2">
       <li date="1963" label="ASCII" note="7 位，128 个字符"></li>
       <li date="1991" label="Unicode" note="给所有语言留位置"></li>
       <li date="2010" label="Emoji" note="字符表开始装表情"></li>
@@ -201,7 +201,7 @@ hello.c:3: error: expected ';'
     <vk-pair symbol="vs" gap="wide">
       <vk-stack gap="close">
         <vk-label>顺序访问 · a[i]</vk-label>
-        <vk-code lang="c" file="a.c" size="caption">
+        <vk-code lang="c" file="a.c">
           <script type="text/plain" data-vk-source>
 for (i = 0; i < n; i++)
     sum += a[i];
@@ -210,7 +210,7 @@ for (i = 0; i < n; i++)
       </vk-stack>
       <vk-stack gap="close">
         <vk-label>跳着访问 · a[idx[i]]</vk-label>
-        <vk-code lang="c" file="b.c" size="caption">
+        <vk-code lang="c" file="b.c">
           <script type="text/plain" data-vk-source>
 for (i = 0; i < n; i++)
     sum += a[idx[i]];
@@ -302,7 +302,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
   <vk-stack gap="normal">
     <vk-label>深色页</vk-label>
     <vk-text size="subhead">深色是<em>选项</em>，浅底件自动适配。</vk-text>
-    <vk-code id="d" lang="c" file="dark.c" size="caption">
+    <vk-code id="d" lang="c" file="dark.c">
       <script type="text/plain" data-vk-source>
 int a = 1;
       </script>
