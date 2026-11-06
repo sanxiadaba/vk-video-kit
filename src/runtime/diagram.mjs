@@ -387,8 +387,14 @@ export class VkTimeline extends VkElement {
 function parseMarks(raw, host) {
   const out = [];
   for (const piece of String(raw || '').split(';')) {
-    const tok = piece.trim();
+    let tok = piece.trim();
     if (!tok) continue;
+    let pane = null;
+    const m = tok.match(/^([ab])\s*:\s*(.*)$/i);
+    if (m) {
+      pane = m[1].toLowerCase();
+      tok = m[2];
+    }
     const nums = tok.split(',').map((s) => Number(s.trim()));
     if (nums.length !== 4 || nums.some((n) => !Number.isFinite(n))) {
       warn(host, `mark="${tok}" 不是 x1,y1,x2,y2`);
@@ -403,7 +409,7 @@ function parseMarks(raw, host) {
       warn(host, `mark="${tok}" 面积是 0，跳过`);
       continue;
     }
-    out.push({ left, top, w, h });
+    out.push({ left, top, w, h, pane });
   }
   return out;
 }
@@ -489,7 +495,9 @@ export class VkCompare extends VkElement {
     const list = this._marks || [];
     for (const box of this.querySelectorAll('[data-marks]')) {
       for (const old of box.querySelectorAll('.vk-compare-mark')) old.remove();
-      if (!list.length) continue;
+      const pane = box.dataset.pane;
+      const marks = list.filter((m) => !m.pane || m.pane === pane);
+      if (!marks.length) continue;
       // 百分比是相对"图"的，不是相对"格"的：图按 contain 缩进格里会留边，
       // 直接按格子百分比画，框就会飘到空白处。
       const img = box.querySelector('img');
@@ -505,7 +513,7 @@ export class VkCompare extends VkElement {
       const oy = (ph - h) / 2;
       box.insertAdjacentHTML(
         'beforeend',
-        list
+        marks
           .map(
             (m) =>
               `<span class="vk-compare-mark" style="left:${ox + (m.left / 100) * w}px;top:${oy + (m.top / 100) * h}px;width:${(m.w / 100) * w}px;height:${(m.h / 100) * h}px"></span>`

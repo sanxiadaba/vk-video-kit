@@ -473,7 +473,7 @@ export const TAGS = {
     attrs: {
       labels: { type: 'text', group: 'content', label: '两张图与角标："a.png,b.png|改前|改后"' },
       variant: { type: 'enum', values: ['side', 'stack'], default: 'side', group: 'appearance', label: '形态' },
-      mark: { type: 'text', group: 'appearance', label: '差异框：x1,y1,x2,y2（%；多组用 ;）' },
+      mark: { type: 'text', group: 'appearance', label: '差异框：x1,y1,x2,y2（%；多组用 ;；前缀 a:/b: 只标一格）' },
     },
     content: 'none',
   },
