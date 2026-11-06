@@ -10,8 +10,6 @@ import { pathToFileURL } from 'node:url';
 import { parse, parseFragment } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
-import { CANVAS_ATTRS } from './schema.mjs';
-import { GAP } from './vocab.mjs';
 import { validate } from './contract.mjs';
 import { dedent, expandLeadingTabs, stripAnsi, lineSet, LANG_ALIAS, SUPPORTED_LANGS, inferLang } from './shared/code.mjs';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
@@ -617,6 +615,5 @@ export async function transformHtml(rawHtml, { file }) {
   return { html: isFull ? body : wrapFragment(body), count: rendered.size, warnings };
 }
 
-export const vars = { CANVAS_ATTRS, GAP };
 
 

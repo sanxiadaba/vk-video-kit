@@ -42,20 +42,10 @@ export function dedent(text) {
   return lines.map((l) => (l.trim() ? l.slice(min) : '')).join('\n');
 }
 
-/** 与 cli/build.mjs 共用的 32 位内容指纹。 */
-export function hash32(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16);
-}
-
 /**
  * 索引语法的唯一解析器：`1` / `1-8` / `1,3-5` → [{from,to}]。
- * 保留书写顺序；非法片段直接忽略（要报错先用 isIndexList）。
- * 基准不在这里决定：源码行 1 起、数据下标 0 起，由调用方各自解释。
+ * 保留书写顺序；非法片段直接忽略。基准不在这里决定：
+ * 源码行 1 起、锚点 1 起，由调用方各自解释。
  */
 const INDEX_PART = /^(\d+)(?:\s*-\s*(\d+))?$/;
 export function indexRanges(value) {
@@ -68,15 +58,6 @@ export function indexRanges(value) {
     out.push({ from, to });
   }
   return out;
-}
-
-/** 整串是否全部由合法索引片段组成（空串算合法）。 */
-export function isIndexList(value) {
-  return String(value || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .every((part) => INDEX_PART.test(part));
 }
 
 /**
@@ -99,28 +80,7 @@ export function lineSet(value) {
  * 数据下标列表："3" / "2-4" / "1,5" → Set{2,3,4}（0 起、含端点）。
  * 与 lineSet 同一套语法，只是基准不同。
  */
-export const MAX_INDEX = 10000;
-export function indexSet(value) {
-  const set = new Set();
-  for (const { from, to } of indexRanges(value)) {
-    if (from > MAX_INDEX) continue;
-    const end = Math.min(Math.max(from, to), MAX_INDEX);
-    for (let i = from; i <= end; i++) set.add(i);
-  }
-  return set;
-}
 
-/** "12-18" / "7" → 文件里截出的那几行；越界自动收敛，malformed 返回全文。 */
-export function sliceLines(text, spec) {
-  const raw = String(spec || '').trim();
-  if (!raw) return String(text);
-  const m = raw.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-  if (!m) return String(text);
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
-  const a = Math.max(1, parseInt(m[1], 10));
-  const b = Math.min(lines.length, Math.max(a, m[2] ? parseInt(m[2], 10) : a));
-  return lines.slice(a - 1, b).join('\n');
-}
 /* -------------------------------------------------------------- language */
 
 export const LANG_ALIAS = {

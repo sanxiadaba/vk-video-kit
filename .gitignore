@@ -6,8 +6,6 @@ dist/
 vk/
 out/
 assets/fonts/
-src/icons.generated.mjs
-icons.json
 
 # 本地缓存 / 临时
 .vk-cache/

@@ -84,7 +84,7 @@ export const TRACKING = {
 export const WEIGHT = { regular: 400, medium: 500, bold: 600 };
 
 /* ------------------------------------------------------------------ 间距
-   作者能写的五档 + 像素逃生口（gap="48"）。
+   作者能写的五档 + 像素值（gap="48"）。
    没有 2xs…3xl 这种八档刻度：档位越多，作者越是在猜。 */
 export const GAP = {
   none: 0,

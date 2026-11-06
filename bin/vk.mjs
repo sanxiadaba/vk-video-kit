@@ -280,7 +280,7 @@ if (cmd === 'render' || cmd === 'check') {
         } else {
           console.log(`✓ ${r.file}${tag}${f.png ? `  → ${f.png}` : ''}`);
         }
-        if (f.metrics) console.log(`   墨迹 y ${f.metrics.contentTop}–${f.metrics.contentBottom}（占版心 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}`);
+        if (f.metrics) console.log(`   内容 y ${f.metrics.contentTop}–${f.metrics.contentBottom}（占版心 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}`);
       }
       for (const e of r.errors) console.log(`   ✗ ${e.message}${e.fix ? ` → ${e.fix}` : ''}`);
       for (const w of r.warns || []) console.log(`   提示：${w}`);

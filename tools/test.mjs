@@ -196,7 +196,7 @@ ok(behave.textAlign !== 'right', `文字列不右对齐（${behave.textAlign}）
 ok(behave.markers === 2, `markers 画出来了（${behave.markers} 个）`);
 ok(behave.byte1, '@byte 是 1 起');
 ok(behave.treeMore, '文件树超行数留了说明行');
-ok(/rgb\(11, 15, 20\)|rgb\(17, 21, 28\)/.test(behave.darkPaper), `深色页里的纸面窗仍是深字（${behave.darkPaper}）`);
+ok(/rgb\(11, 15, 20\)|rgb\(17, 21, 28\)/.test(behave.darkPaper), `深色页里的浅底窗仍是深字（${behave.darkPaper}）`);
 
 /* ------------------------------------------------------------------ 四、确定 */
 group('确定');

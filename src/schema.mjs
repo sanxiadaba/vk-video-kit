@@ -464,7 +464,7 @@ export const TAGS = {
     layer: 'relation',
     name: '标注',
     summary:
-      '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标（按字的墨迹，不按整行盒子），note 是带引线的注释气泡，badge 是编号点。它不改布局。',
+      '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标（按字的范围取框，不按整行盒子），note 是带引线的注释气泡，badge 是编号点。它不改布局。',
     attrs: {
       mode: { type: 'enum', values: ['arrow', 'ring', 'note', 'badge'], default: 'arrow', group: 'appearance', label: '形态' },
       // 下面几个属性只在某几种形态下有用：写错形态时它是个哑属性，构建期直接拦。
