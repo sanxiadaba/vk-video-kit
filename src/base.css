@@ -69,25 +69,16 @@ vk-page[data-align='band'] .vk-stage > vk-stack:first-child {
   flex: 1 1 auto;
   min-height: 0;
 }
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-label {
-  margin-bottom: calc(var(--vk-gap-normal) - var(--vk-gap, var(--vk-gap-normal)));
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child {
+  gap: var(--vk-gap-wide);
 }
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-label {
+  margin-bottom: calc(var(--vk-gap-normal) - var(--vk-gap-wide));
+}
+/* 标题要压得住标签：400 的 84px 比 500 的 56px 还轻。 */
 vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'],
 vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] {
-  margin-bottom: calc(var(--vk-gap, var(--vk-gap-normal)) * -1);
-}
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'] + :not(vk-text),
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] + :not(vk-text) {
-  margin-top: auto;
-}
-/* 标题后的说明/结论是标题的一部分，不要被推到带中心。 */
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'] + vk-text,
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] + vk-text {
-  margin-top: 0;
-  margin-bottom: 0;
-}
-vk-page[data-align='band'] .vk-stage > vk-stack:first-child > :last-child {
-  margin-bottom: auto;
+  font-weight: var(--vk-w-bold);
 }
 vk-page[align='center'] .vk-stage { justify-content: center; }
 

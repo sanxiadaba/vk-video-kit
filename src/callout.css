@@ -42,16 +42,9 @@ vk-callout {
 }
 /* 圈压在件上，它的 color-scheme 由 JS 按「落点那块面」写：深色页里的代码窗是浅底，
    圈必须是深墨，跟着页面走会变成一道看不见的浅线。 */
-.vk-ring {
-  stroke: var(--vk-focus);
-}
-/* 行级：淡蓝底 + 蓝框，像用荧光笔划了一行。 */
-.vk-ring.is-line {
-  fill: var(--vk-tint-focus);
-  fill-opacity: 0.3;
-}
 .vk-ring.is-block {
   fill: none;
+  stroke: var(--vk-ink-1);
 }
 .vk-note-leader {
   stroke: var(--vk-ink-2);

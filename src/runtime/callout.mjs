@@ -42,7 +42,7 @@ const LINK = {
     bowMax: 200,
     shaft: 0.62, // 线只画到头长 62% 处，圆头才不会从尖端冒出来
   },
-  ring: { w: 5, padX: 12, padY: 2, padXBlock: 20, padYBlock: 14, radius: 16 },
+  ring: { w: 5, padX: 8, padY: 2, padXBlock: 24, padYBlock: 16, radius: 8 },
   leader: { w: 10, dot: 12, min: 64 },
 };
 
@@ -308,6 +308,16 @@ export class VkCallout extends VkElement {
     const R = LINK.ring;
     // 行级的圈：淡底 + 细蓝框，读作「划重点」；块级只描边，不盖住内容。
     const isLine = !!a.el?.closest?.('.vk-line, .vk-diff-row, .vk-arow');
+    if (this._ringLine) {
+      this._ringLine.classList.remove('vk-ring-line');
+      this._ringLine = null;
+    }
+    if (isLine) {
+      const row = a.el.closest('.vk-line, .vk-diff-row, .vk-arow');
+      row.classList.add('vk-ring-line');
+      this._ringLine = row;
+      return;
+    }
     const padX = isLine ? R.padX : R.padXBlock;
     const padY = isLine ? R.padY : R.padYBlock;
     const w = r.w + padX * 2;

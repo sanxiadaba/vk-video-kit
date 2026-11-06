@@ -49,10 +49,10 @@
 | `vk-diff` | `size`、`file`、`chrome` | body | hunk 标签按实际行列算 |
 | `vk-asm` | `size`、`file`、`lines`、`current`、`bytes` | body | 助记符/寄存器/立即数分色 |
 | `vk-tree` | `size`、`depth`、`max`、`current`、`icons`、`icon-*`、`chrome` | body | |
-| `vk-table` | `size`、`caption`、`variant` | body | 满版宽 |
+| `vk-table` | `size`、`caption`、`variant` | body | 三分之二宽（1120） |
 | `vk-cells` | `cols`、`stride`、`addr`、`size`、`current`、`markers` | body | |
 | `vk-bytes` | `size`、`cols`、`offset`、`length`、`current` | body | |
-| `vk-bits` | `size`、`index`、`group`、`sign`、`label` | body | |
+| `vk-bits` | `value`、`size`、`index`、`group`、`sign`、`label` | body | `value` 用 `|` 分段（符号|阶码|尾数），`field-labels="符号,阶码,尾数"` 给每段起名，段间自动留 64px |
 | `vk-steps` | `size`、`direction`、`connector`、`current`、`done` | body | 连接件跟 callout 同一把尺子 |
 | `vk-bars` | `size`、`max`、`unit`、`current` | body | 标签列按内容宽 |
 | `vk-timeline` | `size`、`start`、`end`、`current` | body | 轴 8px、点 32px |

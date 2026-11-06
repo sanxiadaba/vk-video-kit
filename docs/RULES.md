@@ -62,7 +62,7 @@
 <vk-page style="--vk-focus: light-dark(#c2410c, #ff9a7a)">
 ```
 
-常改的变量：`--vk-focus`、`--vk-ok`、`--vk-warn`、`--vk-err`、`--vk-paper`、`--vk-soft`、`--vk-ink-1/2/3`、`--vk-syn-keyword`、`--vk-syn-string`、`--vk-syn-number`、`--vk-syn-comment`。线宽是 `--vk-line-w-hair/rule/strong`（默认 4/4/8），结构线墨色是 `--vk-line`。
+常改的变量：`--vk-focus`、`--vk-ok`、`--vk-warn`、`--vk-err`、`--vk-paper`、`--vk-soft`、`--vk-ink-1/2/3`、`--vk-syn-keyword`、`--vk-syn-string`、`--vk-syn-number`、`--vk-syn-comment`。线宽是 `--vk-line-w-hair/rule/strong`（默认 4/8/10），结构线墨色是 `--vk-line`。
 
 语义不要打乱：焦点蓝只表示「正在看这里」，绿=对/字符串，琥珀=数字，紫=结构词，红=错。
 

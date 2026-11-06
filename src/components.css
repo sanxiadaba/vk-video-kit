@@ -92,8 +92,8 @@ vk-box > .vk-box-bd {
   gap: var(--vk-inset-sm);
 }
 .vk-dots i {
-  width: var(--vk-inset-md);
-  height: var(--vk-inset-md);
+  width: var(--vk-gap-normal);
+  height: var(--vk-gap-normal);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-ink-3);
 }
@@ -319,7 +319,8 @@ vk-asm {
   width: 2.8em;
   padding: 0 var(--vk-gap-close);
   text-align: right;
-  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.8);
+  /* 手机地板：行号不低于 44px（780 下 17.9px），否则比正文低 20%。 */
+  font-size: max(44px, calc(var(--vk-cs, var(--vk-fs-body)) * 0.8));
   line-height: calc(var(--vk-lh-body) / 0.8);
   color: var(--vk-ink-2);
   background: var(--vk-soft);
@@ -363,6 +364,11 @@ vk-cells[data-markers] { padding-top: var(--vk-gap-wide); }
 .vk-line.is-dim .c {
   color: var(--vk-ink-3);
 }
+/* 行级圈：把纸染蓝，字不动。 */
+.vk-line.vk-ring-line,
+.vk-diff-row.vk-ring-line,
+.vk-arow.vk-ring-line { background: var(--vk-tint-focus); }
+.vk-line.vk-ring-line .vk-ln { background: var(--vk-tint-focus); }
 .vk-line.is-fold { color: var(--vk-ink-2); font-style: normal; }
 .vk-line.is-fold .vk-ln { color: var(--vk-ink-3); }
 .vk-line.is-fold .vk-src { letter-spacing: 0.04em; }
@@ -372,7 +378,7 @@ vk-cells[data-markers] { padding-top: var(--vk-gap-wide); }
 :is(.vk-src, .vk-dsrc) .c { color: var(--vk-syn-comment); }
 :is(.vk-src, .vk-dsrc) .n { color: var(--vk-syn-number); }
 :is(.vk-src, .vk-dsrc) .f { color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
-:is(.vk-src, .vk-dsrc) .o { color: var(--vk-ink-2); }
+:is(.vk-src, .vk-dsrc) .o { color: var(--vk-syn-operator); }
 /* 汇编：助记符=结构词，寄存器=结构词但轻一档，立即数=数字 */
 .vk-ainsn { color: var(--vk-syn-keyword); font-weight: var(--vk-w-bold); }
 .vk-areg { color: var(--vk-syn-keyword); font-style: normal; }
@@ -421,7 +427,7 @@ vk-code[long='wrap'] .vk-src {
   flex: 0 0 auto;
   width: 2.6em;
   text-align: right;
-  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.72);
+  font-size: max(44px, calc(var(--vk-cs, var(--vk-fs-body)) * 0.72));
   line-height: calc(var(--vk-lh-body) / 0.72);
   color: var(--vk-ink-3);
   user-select: none;
@@ -515,7 +521,7 @@ vk-table {
   min-width: 0;
 }
 vk-table {
-  width: var(--vk-block-w, 100%);
+  width: var(--vk-block-two-thirds);
 }
 vk-table table {
   width: 100%;
@@ -547,7 +553,7 @@ vk-table th {
   white-space: nowrap;
 }
 vk-table td {
-  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-color);
   font-size: var(--vk-cs, var(--vk-fs-body));
   color: var(--vk-ink-1);
 }
@@ -606,7 +612,9 @@ vk-list li[state='current'] { color: var(--vk-focus); }
 
 /* ------------------------------------------------------------------ 文件树 */
 vk-tree .vk-win {
-  min-width: calc(var(--vk-safe-w) * 0.46);
+  width: var(--vk-block-two-thirds);
+  min-width: 0;
+  max-width: 100%;
 }
 vk-tree {
   display: block;
@@ -646,7 +654,7 @@ vk-tree {
   flex-direction: column;
   margin-left: 0.55em;
   padding-left: 1.1em;
-  border-left: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-left: var(--vk-line-w-rule) solid var(--vk-line-color);
 }
 .vk-kids > .vk-node { position: relative; }
 .vk-kids > .vk-node::before {
@@ -655,7 +663,7 @@ vk-tree {
   left: -1.1em;
   top: 0.7em;
   width: 0.7em;
-  height: var(--vk-line-w-hair);
+  height: var(--vk-line-w-rule);
   background: var(--vk-line-color);
 }
 .vk-node[data-current] > .vk-tname {
@@ -677,7 +685,7 @@ vk-cells {
   gap: var(--vk-inset-xs);
   min-width: 0;
   padding: var(--vk-gap-normal);
-  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border: var(--vk-line-w-rule) solid var(--vk-line-color);
   border-radius: var(--vk-radius-md);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
@@ -690,8 +698,8 @@ vk-cells {
   translate: -50% calc(-100% - var(--vk-inset-sm));
   padding: 0 var(--vk-gap-close);
   border-radius: var(--vk-radius-pill);
-  background: var(--vk-focus);
-  color: var(--vk-on-focus);
+  background: var(--vk-ink-2);
+  color: var(--vk-paper);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
   line-height: 1.15;
@@ -704,7 +712,7 @@ vk-cells {
 }
 .vk-cell > .vk-cell-l {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-cs, var(--vk-fs-body));
+  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.6);
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
@@ -756,7 +764,17 @@ vk-bytes {
   background: var(--vk-focus);
   color: var(--vk-on-focus);
 }
-.vk-brow > .vk-ascii { color: var(--vk-ink-3); }
+.vk-brow > .vk-ascii {
+  display: inline-flex;
+  color: var(--vk-ink-1);
+}
+.vk-brow > .vk-ascii i {
+  font-style: normal;
+}
+.vk-brow > .vk-ascii i[data-current] {
+  background: var(--vk-focus);
+  color: var(--vk-on-focus);
+}
 
 /* ------------------------------------------------------------------ 位 */
 vk-bits {
@@ -779,9 +797,21 @@ vk-bits {
 /* 一段 = 一个语义字段（符号 / 指数 / 尾数）。段之间留一档，比组间距大。 */
 .vk-bit-field {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vk-inset-xs);
+}
+.vk-bit-field-row {
+  display: flex;
   align-items: flex-end;
 }
-.vk-bit-field-gap { margin-left: var(--vk-inset-lg); }
+.vk-bit-field-l {
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-3);
+  white-space: nowrap;
+}
+.vk-bit-field-gap { margin-left: var(--vk-gap-wide); }
 .vk-bit {
   display: flex;
   flex-direction: column;
@@ -804,7 +834,10 @@ vk-bits {
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-1);
 }
-.vk-bit[data-sign] .vk-bit-v { color: var(--vk-err); }
+.vk-bit[data-sign] .vk-bit-v {
+  color: var(--vk-syn-keyword);
+  font-weight: var(--vk-w-bold);
+}
 
 /* ------------------------------------------------------------------ 步骤 */
 vk-steps {
@@ -863,6 +896,11 @@ vk-steps[data-direction='vertical'] .vk-step:last-child { padding-bottom: 0; }
 .vk-step[data-done] > .vk-step-n {
   border-color: var(--vk-ok);
   color: var(--vk-ok);
+  background: var(--vk-tint-ok);
+}
+vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step[data-done]:not(:last-child)::before,
+vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step[data-done]:not(:last-child)::after {
+  background: var(--vk-ok);
 }
 /* 连接线全部由 CSS 画：横排在 .vk-step 右外侧，竖排在编号章下方。
    运行期不再插节点，字号/间距怎么变都不会错位。 */
@@ -871,20 +909,20 @@ vk-steps[data-direction='horizontal'] .vk-step { position: relative; }
 vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last-child)::before {
   content: '';
   position: absolute;
-  top: calc((var(--vk-fs-body) + var(--vk-gap-normal)) / 2 - 6px);
+  top: calc((var(--vk-fs-body) + var(--vk-gap-normal)) / 2 - 8px);
   left: calc(var(--vk-fs-body) + var(--vk-gap-normal) + 24px);
-  width: calc(100% + var(--vk-gap-wide) - var(--vk-fs-body) - 68px);
-  height: 12px;
+  width: calc(100% + var(--vk-gap-wide) - var(--vk-fs-body) - 80px);
+  height: 16px;
   border-radius: var(--vk-radius-pill);
   background: var(--vk-ink-1);
 }
 vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last-child)::after {
   content: '';
   position: absolute;
-  top: calc((var(--vk-fs-body) + var(--vk-gap-normal)) / 2 - 16px);
-  left: calc(100% + var(--vk-gap-wide) + var(--vk-gap-normal) - 44px);
-  width: 28px;
-  height: 32px;
+  top: calc((var(--vk-fs-body) + var(--vk-gap-normal)) / 2 - 24px);
+  left: calc(100% + var(--vk-gap-wide) + var(--vk-gap-normal) - 60px);
+  width: 40px;
+  height: 48px;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
   background: var(--vk-ink-1);
 }

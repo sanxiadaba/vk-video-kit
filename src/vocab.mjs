@@ -30,7 +30,7 @@ export const FONT_FLOOR = 44;
 
 /** 线宽。手机 0.406× 之后，2px 只有 0.8px、视频编码一压就没了；最细取 3。
  *  strong 是「正在看这里」和箭头用的，宁可重一点也不要不明显。 */
-export const LINE_W = { hair: 4, rule: 4, strong: 8 };
+export const LINE_W = { hair: 4, rule: 8, strong: 10 };
 
 /* 一帧只有三档宽度：满版 / 三分之二 / 半版（半版两列 + gap = 满版）。 */
 export const BLOCK = { full: 1680, 'two-thirds': 1120, half: 824 };
@@ -115,8 +115,8 @@ export const PAINT = {
   ink1: ['#0b0f14', '#f2f6fb'],
   ink2: ['#333d4b', '#cdd7e4'],
   ink3: ['#5c6674', '#9aa7b8'],
-  line: ['rgba(11, 15, 20, 0.22)', 'rgba(255, 255, 255, 0.26)'],
-  lineStrong: ['rgba(11, 15, 20, 0.32)', 'rgba(255, 255, 255, 0.36)'],
+  line: ['rgba(11, 15, 20, 0.45)', 'rgba(255, 255, 255, 0.50)'],
+  lineStrong: ['rgba(11, 15, 20, 0.55)', 'rgba(255, 255, 255, 0.60)'],
   focus: ['#1b3fd6', '#7aa2ff'],
   info: ['#3a4454', '#8fa6c8'],
   ok: ['#0a6b57', '#6fdcb2'],
@@ -136,13 +136,15 @@ export const PAINT = {
    三支色的 OKLCH 色相约 356° / 173° / 65°，在 780 宽下仍分得开；
    函数名与变量名不占色相，靠 600 字重和正文黑分层。 */
 export const SYNTAX = {
-  string: ['#0e6b57', '#7fd9b6'],
+  string: ['#0b7a63', '#7fd9b6'],
   // 注释比正文轻（纸面 4.6:1），但仍是可读的字，不靠透明度。
   comment: ['#6a7686', '#94a3b8'],
   // 数字/常量给青铜：暖，但比语义 err 的砖红更暗、更低饱和。
-  number: ['#9a5b00', '#edb96b'],
+  number: ['#8f5200', '#edb96b'],
   // 结构词（关键字/类型/宏）用莓红：C 里出现最多，必须与正文分开。
-  keyword: ['#96305f', '#e8a0c2'],
+  keyword: ['#8a3a5e', '#d79ab8'],
+  // 算子/标点比正文浅一档：它是噪音层，不能和变量抢黑。
+  operator: ['#566173', '#94a3b8'],
 };
 
 /* 窗口三点：观众一眼认出「这是窗口」。两个面共用同一组色。 */

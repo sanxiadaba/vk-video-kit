@@ -42,24 +42,24 @@ const TOKEN_THEME = {
   settings: [
     { settings: { foreground: '#0B0F14', background: '#ffffff' } },
     { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#6A7686' } },
-    { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated', 'punctuation.definition.string'], settings: { foreground: '#0E6B57' } },
+    { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated', 'punctuation.definition.string'], settings: { foreground: '#0B7A63' } },
     // 常量与数字同一档：None / True 是字面量，不是结构词。
-    { scope: ['constant.numeric', 'constant.language', 'support.constant', 'constant.character.format.placeholder'], settings: { foreground: '#9A5B00' } },
+    { scope: ['constant.numeric', 'constant.language', 'support.constant', 'constant.character.format.placeholder'], settings: { foreground: '#8F5200' } },
     // Go 的包名是名字，不是结构词；否则 package main 会读成两个关键字。
     { scope: ['entity.name.function', 'support.function', 'variable.function', 'entity.name.type.package'], settings: { foreground: '#101826' } },
     // 算子、括号、分号是噪音：退到墨阶二。[] 在 C 里报 storage.modifier，单独归到这里。
-    { scope: ['keyword.operator', 'punctuation', 'meta.brace', 'storage.modifier.array'], settings: { foreground: '#475467' } },
+    { scope: ['keyword.operator', 'punctuation', 'meta.brace', 'storage.modifier.array'], settings: { foreground: '#566173' } },
     // 结构词。directive 的 # 也归结构词，否则 #include 会裂成灰 # + 彩 include。
-    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control', 'entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag', 'punctuation.definition.directive'], settings: { foreground: '#96305F' } },
+    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control', 'entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag', 'punctuation.definition.directive'], settings: { foreground: '#8A3A5E' } },
   ],
 };
 const COLOR_CLASS = {
-  '#0E6B57': 's',
+  '#0B7A63': 's',
   '#6A7686': 'c',
-  '#9A5B00': 'n',
-  '#96305F': 'k',
+  '#8F5200': 'n',
+  '#8A3A5E': 'k',
   '#101826': 'f',
-  '#475467': 'o',
+  '#566173': 'o',
 };
 
 let highlighter = null;
@@ -404,7 +404,9 @@ function buildBytes(node, file, errors) {
         .toString(16)
         .padStart(4, '0')}</span><span class="vk-hex">${chunk
         .map((b, j) => `<i data-vk-byte="${i + j + 1}">${b.toString(16).padStart(2, '0')}</i>`)
-        .join('')}</span><span class="vk-ascii">${esc(ascii)}</span></div>`
+        .join('')}</span><span class="vk-ascii">${[...ascii]
+          .map((ch, j) => `<i data-vk-byte="${i + j + 1}">${esc(ch)}</i>`)
+          .join('')}</span></div>`
     );
     void hex;
   }

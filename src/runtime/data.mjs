@@ -246,6 +246,7 @@ export class VkBits extends VkElement {
     const mode = attrEnum(this, 'index')
     const group = Number(attrEnum(this, 'group')) || 1
     const sign = attrBool(this, 'sign')
+    const fieldLabels = String(attrText(this, 'field-labels') || '').split(/[,，]/).map((s) => s.trim())
 
     const row = document.createElement('div')
     row.className = 'vk-bit-row'
@@ -254,6 +255,8 @@ export class VkBits extends VkElement {
     fields.forEach((field, fi) => {
       const box = document.createElement('div')
       box.className = 'vk-bit-field'
+      const inner = document.createElement('div')
+      inner.className = 'vk-bit-field-row'
       field.forEach((bit, bi) => {
         const cell = document.createElement('div')
         cell.className = 'vk-bit'
@@ -276,8 +279,15 @@ export class VkBits extends VkElement {
         // 组边界：字段内每 N 位多 8px（字段之间由 .vk-bit-field 的间距负责）。
         if (bi > 0 && bi % group === 0) cell.style.marginLeft = '8px'
         seen++
-        box.append(cell)
+        inner.append(cell)
       })
+      if (fieldLabels[fi]) {
+        const lab = document.createElement('span')
+        lab.className = 'vk-bit-field-l'
+        lab.textContent = fieldLabels[fi]
+        box.append(lab)
+      }
+      box.append(inner)
       if (fi > 0) box.classList.add('vk-bit-field-gap')
       row.append(box)
     })

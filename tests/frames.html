@@ -41,7 +41,7 @@ int main(void) {
   <vk-stack gap="normal">
     <vk-label>折叠与标词</vk-label>
     <vk-text size="subhead">中间七行<em>不重要</em>。</vk-text>
-    <vk-code id="fold" lang="c" file="bsearch.c" fold="2-7" current="9" mark="return">
+    <vk-code id="fold" lang="c" file="bsearch.c" fold="2-7" mark="return">
       <script type="text/plain" data-vk-source>
 int bsearch(const int *a, int n, int key) {
   int lo = 0, hi = n - 1;
@@ -131,7 +131,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="wide">
     <vk-label>内存格</vk-label>
     <vk-text size="subhead">一格一个 int，地址<em>每次加 4</em>。</vk-text>
-    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3">
+    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3" size="subhead">
       <li value="1" label="a[0]"></li>
       <li value="2" label="a[1]"></li>
       <li value="3" label="a[2]"></li>
@@ -153,7 +153,8 @@ hello.c:3: error: expected ';'
   <vk-stack gap="wide">
     <vk-label>位域</vk-label>
     <vk-text size="subhead">一个 float，<em>三段</em>。</vk-text>
-    <vk-bits value="0 01111111 011" index="down" group="4" sign label="float"></vk-bits>
+    <vk-bits value="0|01111111|011" index="down" sign label="float" field-labels="符号,阶码,尾数" size="subhead"></vk-bits>
+    <vk-text size="body" ink="muted">符号位的 0 表示正数。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -167,6 +168,7 @@ hello.c:3: error: expected ';'
       <li>汇编</li>
       <li>链接</li>
     </vk-steps>
+    <vk-text size="body" ink="muted">每一步都能单独重跑。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -231,7 +233,7 @@ for (i=0; i<n; i++)
       </vk-box>
       <vk-box span="5" surface="soft" pad="normal">
         <vk-stack gap="close">
-          <vk-icon name="eye" size="body" tone="focus"></vk-icon>
+          <vk-icon name="eye" size="caption" tone="none"></vk-icon>
           <vk-text size="caption" ink="muted">看到的东西</vk-text>
           <vk-list variant="check" size="caption">
             <li>地址是 16 进制</li>
@@ -261,7 +263,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
   <vk-stack gap="normal">
     <vk-label>两张图对照</vk-label>
     <vk-text size="subhead">同样的源码，<em>两种优化</em>。</vk-text>
-    <vk-compare labels="../assets/compare/fixtures-before.png,../assets/compare/fixtures-after.png|改前|改后" variant="side"></vk-compare>
+    <vk-compare labels="../assets/compare/fixtures-before.png,../assets/compare/fixtures-after.png|改前 · 未优化|改后 · -O2" variant="side"></vk-compare>
   </vk-stack>
 </vk-page>
 
@@ -284,7 +286,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
   <vk-stack gap="normal">
     <vk-label>坐标画布</vk-label>
     <vk-text size="subhead">只能按<em>坐标</em>摆的时候才用它。</vk-text>
-    <vk-canvas w="1680" h="300">
+    <vk-canvas w="1680" h="520">
       <vk-box id="c1" x="0" y="0" w="520" surface="soft" pad="normal">
         <vk-text size="caption" ink="muted">x=0 · y=0</vk-text>
       </vk-box>
