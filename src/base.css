@@ -1,0 +1,289 @@
+/* ============================================================================
+   v18 · 底座
+   ----------------------------------------------------------------------------
+   画布、版心、字阶、墨阶、状态。这一层只有「一帧怎样算立住」，不画任何具体件。
+   所有数值来自 tokens.generated.css（由 vocab.mjs 生成）。
+
+   主题只有一条规则：谁声明表面，谁写 color-scheme。
+   所有颜色 token 都是 light-dark(纸面, 暗面)，所以一个面说一次，整棵子树自动正确，
+   三层嵌套也不会漏 —— 不靠继承的 color，也不靠运行期扫描。
+   ========================================================================== */
+
+/* ------------------------------------------------------------------ 重置 */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+  background: var(--vk-paper);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+  -webkit-font-smoothing: antialiased;
+  /* 中文与西文/数字之间的自动间距，以及行首标点的挤压：
+     不写这两行，作者就得在「从 .c 到 .exe」里手打空格。 */
+  text-spacing-trim: trim-start;
+  text-autospace: normal;
+}
+
+body {
+  width: var(--vk-canvas-w);
+}
+
+/* ------------------------------------------------------------------ 画布 */
+vk-page {
+  position: relative;
+  display: block;
+  width: var(--vk-canvas-w);
+  height: var(--vk-canvas-h);
+  overflow: hidden;
+  background: var(--vk-paper);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+}
+
+/* 深色的一帧：一行 color-scheme，墨、线、语义色、淡底、语法色一起换。 */
+vk-page[surface='dark'] {
+  color-scheme: dark;
+  background: var(--vk-paper);
+}
+
+/* 版心：内容不越过的边界。三类对齐共用同一个盒子。 */
+.vk-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: var(--vk-margin-y) var(--vk-margin-x);
+}
+
+vk-page[align='top'] .vk-stage {
+  justify-content: flex-start;
+}
+vk-page[align='bottom'] .vk-stage {
+  justify-content: flex-end;
+}
+
+/* ------------------------------------------------------------------ 面
+   任何声明了表面的容器都写 color-scheme：纸、软底、淡底是 light，深面是 dark。
+   组件自己的材质（代码窗）也走这一条规则，所以嵌几层都对。 */
+[surface='paper'],
+[surface='soft'],
+[surface='tint'] {
+  color-scheme: light;
+}
+[surface='dark'] {
+  color-scheme: dark;
+}
+
+/* ------------------------------------------------------------------ 字
+   一档字号 = 一个行盒（行高是无单位比例，代码窗缩字号时行盒跟着缩）。 */
+vk-text {
+  display: block;
+  margin: 0;
+  max-width: var(--vk-measure-body);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  letter-spacing: var(--vk-track-body);
+  color: inherit;
+  font-family: var(--vk-font-sans);
+  text-wrap: pretty;
+  overflow-wrap: break-word;
+  line-break: strict;
+}
+
+vk-text[size='caption'] {
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  letter-spacing: var(--vk-track-caption);
+  max-width: var(--vk-measure-caption);
+}
+vk-text[size='body'] {
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  max-width: var(--vk-measure-body);
+}
+vk-text[size='subhead'] {
+  font-size: var(--vk-fs-subhead);
+  line-height: var(--vk-lh-subhead);
+  max-width: var(--vk-measure-subhead);
+}
+vk-text[size='headline'] {
+  font-size: var(--vk-fs-headline);
+  line-height: var(--vk-lh-headline);
+  letter-spacing: var(--vk-track-headline);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-headline);
+}
+vk-text[size='display'] {
+  font-size: var(--vk-fs-display);
+  line-height: var(--vk-lh-display);
+  letter-spacing: var(--vk-track-display);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-display);
+}
+vk-text[size='hero'] {
+  font-size: var(--vk-fs-hero);
+  line-height: var(--vk-lh-hero);
+  letter-spacing: var(--vk-track-hero);
+  font-weight: var(--vk-w-bold);
+  max-width: var(--vk-measure-hero);
+}
+
+/* 短句均衡断行：标题最常出现的「孤字」由它兜住。 */
+vk-text[size='headline'],
+vk-text[size='subhead'],
+vk-text[size='caption'] {
+  text-wrap: balance;
+}
+
+vk-text[weight='medium'] {
+  font-weight: var(--vk-w-medium);
+}
+vk-text[weight='bold'] {
+  font-weight: var(--vk-w-bold);
+}
+vk-text[mono] {
+  font-family: var(--vk-font-mono);
+}
+vk-text[align='center'] {
+  text-align: center;
+  margin-inline: auto;
+}
+vk-text[align='right'] {
+  text-align: right;
+  margin-inline: auto 0;
+}
+vk-text[align='left'] {
+  margin-inline: 0 auto;
+}
+
+/* ------------------------------------------------------------ 墨与状态
+   三档墨 + 一个焦点色 + 四个语义色。语义色只出现在线、图标、底标上。 */
+[ink='secondary'] {
+  color: var(--vk-ink-2);
+}
+[ink='muted'] {
+  color: var(--vk-ink-3);
+}
+
+[tone='neutral'] {
+  --vk-tone: var(--vk-ink-1);
+  --vk-tint: var(--vk-soft);
+}
+[tone='info'] {
+  --vk-tone: var(--vk-info);
+  --vk-tint: var(--vk-tint-info);
+}
+[tone='focus'] {
+  --vk-tone: var(--vk-focus);
+  --vk-tint: var(--vk-tint-focus);
+}
+[tone='ok'] {
+  --vk-tone: var(--vk-ok);
+  --vk-tint: var(--vk-tint-ok);
+}
+[tone='warn'] {
+  --vk-tone: var(--vk-warn);
+  --vk-tint: var(--vk-tint-warn);
+}
+[tone='err'] {
+  --vk-tone: var(--vk-err);
+  --vk-tint: var(--vk-tint-err);
+}
+
+/* state 只有两个词：current（现在讲这里）/ mark（作者标了一下）。
+   语义对错用 tone，不要用 state。 */
+[state='current'] {
+  --vk-state: var(--vk-focus);
+}
+[state='mark'] {
+  --vk-state: var(--vk-info);
+}
+
+/* ------------------------------------------------------------ 强调
+   em：作者想让观众看这里（一条细下划线，跨行自动断开）。
+   mark：荧光笔底，用于「这一段原文」而不是整句。 */
+vk-text em {
+  font-style: normal;
+  text-decoration: underline;
+  text-decoration-color: var(--vk-focus);
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.16em;
+}
+vk-text strong {
+  font-weight: var(--vk-w-bold);
+}
+vk-text mark {
+  color: inherit;
+  background: var(--vk-tint-focus);
+  padding: 0 0.12em;
+  border-radius: var(--vk-radius-md);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+vk-text[state='current'] {
+  color: var(--vk-tone, var(--vk-focus));
+}
+
+/* 图标与文字共存：图标是 1em 的字形，挂在文字前面。 */
+.vk-ic {
+  display: inline-flex;
+  flex: 0 0 auto;
+  width: 1em;
+  height: 1em;
+  vertical-align: -0.14em;
+  margin-right: 0.35em;
+}
+.vk-ic svg {
+  width: 100%;
+  height: 100%;
+}
+
+/* ------------------------------------------------------------ 数字
+   表格、地址、条值、代码行号、时间：凡是「要对齐的数字」都用等宽数字。 */
+vk-table,
+vk-cells,
+vk-bytes,
+vk-bits,
+vk-bars,
+vk-timeline,
+vk-steps,
+.vk-win {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ------------------------------------------------------------------ 出血
+   只有横向出血是安全的：负的外边距不会让后面的兄弟位移。
+   整帧出血（all）只给图：它走绝对定位，从文档流里摘出去，不影响别人。
+   纵向出血会拉动兄弟，所以没有这个取值。 */
+[bleed='x'] {
+  margin-inline: calc(var(--vk-margin-x) * -1);
+}
+vk-img[bleed='all'] {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  margin: 0;
+}
+.vk-stage > * {
+  z-index: 1;
+}
+
+/* 只给读屏/调试用，不出现在画面上。 */
+.vk-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}

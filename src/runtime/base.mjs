@@ -1,222 +1,261 @@
-/* runtime · base
-   组件基类：属性 → 渲染 → 布局。没有时间维度，没有别名折叠。 */
+/* ============================================================================
+   v17 · 运行期底座
+   ----------------------------------------------------------------------------
+   三件事：属性怎么读（spec）、画布怎么量（stage）、关系怎么指（anchor）。
+   组件只有一种 DOM 形状：宿主 > .vk-hd? + .vk-bd > 作者内容。
+   ========================================================================== */
 
-import { TAGS, TAG_NAMES, ALL_TAG_NAMES, observedOf } from '../schema.mjs';
-import { MASS, SIZE_TIERS, parseSpace, spaceCss, parseCounter } from '../shared/vocab.mjs';
-import { dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel } from '../shared/code.mjs';
-import { applyFrame, auditOverflow } from './frame.mjs';
-import { wrapCharRange } from './code-utils.mjs';
+import { GAP, CANVAS } from '../vocab.mjs';
+import { TAGS, attrsOf, observedOf } from '../schema.mjs';
 
-export { TAGS, TAG_NAMES, ALL_TAG_NAMES, dedent, expandLeadingTabs, hash32, indexSet, lineSet, langKey, langLabel };
-
-const ROOT = typeof window !== 'undefined' ? window : globalThis;
 const HAS_DOM = typeof document !== 'undefined';
 const Base = typeof HTMLElement !== 'undefined' ? HTMLElement : class {};
 
-/**
- * 等一帧。rAF 在后台标签页 / display:none 的 iframe 里会被暂停，
- * 只等它会让 vk.ready() 和 layout 永久挂起；setTimeout 是所有环境的底线。
- */
-export function nextFrame() {
-  return new Promise((resolve) => {
-    let done = false;
+export const VK = ((typeof window !== 'undefined' ? window : globalThis).vk ||= {});
+VK.version = typeof __VK_VERSION__ !== 'undefined' ? __VK_VERSION__ : 'dev';
+
+export const esc = (s) =>
+  String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+export const nextFrame = () =>
+  new Promise((done) => {
+    let fired = false;
     const fin = () => {
-      if (done) return;
-      done = true;
-      resolve();
+      if (fired) return;
+      fired = true;
+      done();
     };
     if (typeof requestAnimationFrame === 'function' && !document.hidden) requestAnimationFrame(fin);
     setTimeout(fin, 32);
   });
+
+/* ---------------------------------------------------------------- 读属性 */
+
+const specOf = (el, name) => TAGS[el.localName] && attrsOf(el.localName)[name];
+
+export function attrRaw(el, name) {
+  const v = el.getAttribute(name);
+  return v == null || v === '' ? null : v;
 }
 
-export const VK = (ROOT.vk = ROOT.vk || {});
-VK.version = typeof __VK_VERSION__ !== 'undefined' ? __VK_VERSION__ : 'dev';
-VK._defs = new Set();
-VK._errors = [];
-VK._tags = TAG_NAMES;
+export function attrText(el, name, fallback = '') {
+  const v = attrRaw(el, name);
+  return v == null ? fallback : v;
+}
 
-/* ------------------------------------------------------------------ utils */
+export function attrBool(el, name) {
+  return el.hasAttribute(name);
+}
 
-export const esc = (s) =>
-  String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
-
-/** 只允许 CSS object-position 的字符；分号/花括号不能进 style。 */
-export const safePosition = (v) => (/^[\w.%\s-]+$/.test(v || '') ? v : '50% 50%');
-
-/** 读一个数字属性：非数字/越界按范围截断并警告，别让 NaN 和负数进布局。 */
-export function numAttr(el, name, { min = -Infinity, max = Infinity, fallback = 0 } = {}) {
-  const raw = el.getAttribute(name);
-  if (raw == null || raw.trim() === '') return fallback;
-  const n = Number(raw);
-  if (!Number.isFinite(n)) {
-    el._warnOnce?.(`range:${name}`, `的 ${name}="${raw}" 不是数字，按 ${fallback} 处理`);
-    return fallback;
+export function attrEnum(el, name, fallback) {
+  const v = attrRaw(el, name);
+  if (v == null) return specOf(el, name)?.default ?? fallback;
+  const spec = specOf(el, name);
+  if (spec?.values && !spec.values.includes(v)) {
+    warn(el, `${name}="${v}" 不在词表里（${spec.values.join(' / ')}），按 ${spec.default ?? fallback} 处理`);
+    return spec.default ?? fallback;
   }
+  return v;
+}
+
+/** 数字：范围只从 schema 读，组件里不再各写一份 clamp。 */
+export function attrNum(el, name, fallback = 0) {
+  const v = attrRaw(el, name);
+  const spec = specOf(el, name);
+  if (v == null) return spec?.default ?? fallback;
+  const n = Number(v);
+  if (!Number.isFinite(n)) {
+    warn(el, `${name}="${v}" 不是数字`);
+    return spec?.default ?? fallback;
+  }
+  const min = spec?.min ?? -Infinity;
+  const max = spec?.max ?? Infinity;
   if (n < min || n > max) {
-    const v = Math.min(max, Math.max(min, n));
-    el._warnOnce?.(`range:${name}`, `的 ${name}="${raw}" 超出 ${min}…${max}，按 ${v} 处理`);
-    return v;
+    const c = Math.min(max, Math.max(min, n));
+    warn(el, `${name}="${v}" 超出 ${min}…${max}，按 ${c} 处理`);
+    return c;
   }
   return n;
 }
 
-/** 源码只从 textContent 取 —— innerHTML 解析会把 `List<String>` 变成 `List<string>` */
-export const textSource = (el) => el.textContent.replace(/\r\n?/g, '\n');
+/** 索引：1 起，-1 = 没有当前。 */
+export function attrIndex(el, name, fallback = -1) {
+  const n = attrNum(el, name, fallback);
+  return Number.isFinite(n) ? Math.trunc(n) : fallback;
+}
 
-/** 构建期把真实文件的源码放进 data-vk-src；它是机器数据，不是作者手写的第二份。 */
-export function precompiledSource(el) {
-  const s = el.querySelector(':scope > script[data-vk-src]');
-  if (!s) return null;
-  try {
-    const text = JSON.parse(s.textContent).text;
-    return typeof text === 'string' ? text : null;
-  } catch {
-    return null;
+/** 行段："4-6" / "4,7,9" / "4-"（到底）。返回 1 起的行号 Set 或 null。 */
+export function attrLines(el, name) {
+  const v = attrRaw(el, name);
+  if (v == null) return null;
+  const out = new Set();
+  for (const piece of v.split(',')) {
+    const tok = piece.trim();
+    if (!tok) continue;
+    const m = tok.match(/^(\d+)\s*(?:-\s*(\d+)?)?$/);
+    if (!m) continue;
+    const from = Number(m[1]);
+    const to = m[2] === undefined ? from : Number(m[2]) || from + 200;
+    for (let i = from; i <= to; i++) out.add(i);
   }
+  return out;
 }
 
-/** 作者漏了转义时明确警告，不静默吞掉 */
-export function warnIfParsed(el) {
-  const junk = [...el.children].filter(
-    (c) =>
-      !(
-        c.tagName === 'SCRIPT' &&
-        (c.hasAttribute('data-vk-hl') ||
-          c.hasAttribute('data-vk-hl-diff') ||
-          c.hasAttribute('data-vk-src') ||
-          c.hasAttribute('data-vk-source') ||
-          c.hasAttribute('data-vk-term') ||
-          c.hasAttribute('data-vk-asm') ||
-          c.hasAttribute('data-vk-tree'))
-      )
-  );
-  if (!junk.length) return false;
-  el.dataset.vkParsed = '1';
-  console.warn(
-    `[vk] <${el.tagName.toLowerCase()}> 里出现了 HTML 元素。源码里的 "<" 必须写成 "&lt;"，否则会被浏览器解析掉。`,
-    el
-  );
-  return true;
+/** 间距：档名或像素。 */
+export function attrSpace(el, name, fallback) {
+  const v = attrRaw(el, name);
+  const def = specOf(el, name)?.default ?? fallback;
+  return spaceCss(v == null ? def : v);
 }
 
-/* --------------------------------------------------------------- 安全查询 */
+export function spaceCss(raw) {
+  const text = String(raw ?? '').trim().toLowerCase();
+  if (!text) return '';
+  if (text === 'none' || text === '0') return '0px';
+  // 档名走 token：改 vocab 里的间距，所有组件一起变；写像素才原样。
+  if (text in GAP) return `var(--vk-gap-${text})`;
+  const n = Number(text.replace(/px$/, ''));
+  return Number.isFinite(n) ? `${n}px` : '';
+}
 
-/** 作者写的选择器不能把整个 layout 拖垮。 */
-export function safeQuery(root, sel, owner) {
-  if (!root || !sel) return null;
-  try {
-    return root.querySelector(sel);
-  } catch {
-    owner?._warnOnce?.('selector', `的 ${sel} 不是有效选择器`);
-    return null;
+export function warn(el, message) {
+  const key = message.slice(0, 60);
+  el._warned ||= new Set();
+  if (el._warned.has(key)) return;
+  el._warned.add(key);
+  console.warn(`[vk] <${el.localName}> ${message}`, el);
+}
+
+/* ---------------------------------------------------------------- 画布 */
+
+export function stageOf(el) {
+  return el.closest?.('.vk-stage') || document.querySelector('.vk-stage');
+}
+
+export function stageScale(stageEl) {
+  const r = stageEl.getBoundingClientRect();
+  return stageEl.offsetWidth ? r.width / stageEl.offsetWidth : 1;
+}
+
+/**
+ * 墨迹矩形：元素里"真正有字"的那一块。
+ * 圈一行代码时，行盒是 1680 宽，字只有 400 —— 圈要照着字走。
+ */
+export function inkRect(el) {
+  const base = el.getBoundingClientRect();
+  let out = null;
+  const range = document.createRange();
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    if (!n.textContent.trim()) continue;
+    range.selectNodeContents(n);
+    for (const r of range.getClientRects()) {
+      if (r.width < 0.5 || r.height < 0.5) continue;
+      out = out
+        ? {
+            left: Math.min(out.left, r.left),
+            top: Math.min(out.top, r.top),
+            right: Math.max(out.right, r.right),
+            bottom: Math.max(out.bottom, r.bottom),
+          }
+        : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    }
   }
+  if (!out) return base;
+  return { left: out.left, top: out.top, right: out.right, bottom: out.bottom, width: out.right - out.left, height: out.bottom - out.top };
 }
 
-/* ------------------------------------------------------------- 关系层寻址 */
+/* ---------------------------------------------------------------- 锚点 */
 
-/** 内部件锚点：part -> 属性名。编号一律 0 起（代码行除外，用源文件行号）。 */
-const ANCHOR_ATTR = {
-  line: 'data-line',
-  cell: 'data-cell',
-  byte: 'data-byte',
-  bit: 'data-bit',
-  field: 'data-field',
-  addr: 'data-addr',
-  event: 'data-event',
-  lane: 'data-lane',
-  row: 'data-row',
-  node: 'data-node-path',
-  step: 'data-step',
-  item: 'data-item',
-};
+// 只列"真会被指到"的部件：多一个空名字，作者写下去只会安静地指空。
+const PARTS = ['line', 'word', 'cell', 'byte', 'bit', 'addr', 'step', 'event', 'lane', 'node'];
 
 const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
 
-/**
- * `for` / `from` / `to` 的解析：CSS 选择器，或 `#id@part:arg`。
- * 后者能被构建期静态校验，是"AI 写错了却看起来没事"的唯一拦法。
- */
+/* 在一行 / 一个件里找到某段字的矩形：箭头要指向 a[2]，不是整行。 */
+function parseWordArgs(args) {
+  const first = (args[0] || '').trim();
+  if (/^\d+$/.test(first)) return { lineArg: first, needle: args.slice(1).join(':').trim() };
+  return { lineArg: '', needle: args.join(':').trim() };
+}
+
+function wordRect(host, lineArg, needle) {
+  const row = /^\d+$/.test(lineArg) ? host.querySelector(`[data-vk-line="${lineArg}"]`) : host;
+  if (!row || !needle) return null;
+  const walker = document.createTreeWalker(row, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  let text = '';
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    nodes.push({ node: n, start: text.length });
+    text += n.textContent;
+  }
+  const i = text.indexOf(needle);
+  if (i < 0) return null;
+  const at = (off) => {
+    for (let k = nodes.length - 1; k >= 0; k--) {
+      if (off >= nodes[k].start) return { node: nodes[k].node, offset: Math.min(off - nodes[k].start, nodes[k].node.textContent.length) };
+    }
+    return { node: nodes[0].node, offset: 0 };
+  };
+  const range = document.createRange();
+  const a = at(i);
+  const b = at(i + needle.length);
+  range.setStart(a.node, a.offset);
+  range.setEnd(b.node, b.offset);
+  const r = range.getBoundingClientRect();
+  return r.width > 0 || r.height > 0 ? r : null;
+}
+
 export function resolveTarget(root, expr, owner) {
-  if (!root || !expr) return null;
-  const raw = String(expr).trim();
+  const raw = String(expr ?? '').trim();
+  if (!raw || !root) return null;
   const at = raw.indexOf('@');
   if (raw.startsWith('#') && at > 1) {
     const id = raw.slice(1, at);
     const [part, ...args] = raw.slice(at + 1).split(':');
     const host = safeQuery(root, `#${cssEscape(id)}`, owner);
-    if (!host) {
-      owner?._warnOnce?.(`target:${id}`, `找不到 #${id}`);
-      return null;
+    if (!host) return null;
+    if (part === 'line') {
+      const n = (args[0] || '').trim();
+      return host.querySelector(`[data-vk-line="${cssEscape(n)}"]`) || null;
     }
-    if (part === 'line' || part === 'char') {
-      const lineNo = (args[0] || '').trim();
-      const lineEl = host.querySelector(
-        `.vk-line[data-line="${cssEscape(lineNo)}"], [data-vk-part="line"][data-line="${cssEscape(lineNo)}"]`
-      );
-      if (!lineEl) {
-        owner?._warnOnce?.(`target:${id}:${lineNo}`, `#${id} 没有第 ${lineNo} 行`);
-        return null;
-      }
-      if (part === 'line') return lineEl;
-      const [s, e] = (args[1] || '').split('-').map((n) => parseInt(n, 10));
-      if (!Number.isFinite(s) || !Number.isFinite(e) || e <= s) {
-        owner?._warnOnce?.(`target:${id}:range`, `#${id} 的字符区间 "${args[1] || ''}" 不合法（应为 起-止）`);
-        return lineEl;
-      }
-      return wrapCharRange(lineEl.querySelector('.vk-src'), s, e, 'vk-char', `x${lineNo}`) || lineEl;
+    if (part === 'word') {
+      const { lineArg, needle } = parseWordArgs(args);
+      return wordRect(host, lineArg, needle) ? host : null;
     }
-    const attr = ANCHOR_ATTR[part];
-    if (!attr) {
-      owner?._warnOnce?.(
-        `target:${id}:${part}`,
-        `#${id} 不支持 @${part}；支持 ${Object.keys(ANCHOR_ATTR).join(' / ')}`
-      );
+    if (!PARTS.includes(part)) {
+      warn(owner, `不支持 @${part}；可用 ${PARTS.join(' / ')}`);
       return null;
     }
     const want = args.join(':');
-    const el = host.querySelector(`[${attr}="${cssEscape(want)}"]`);
-    if (!el) {
-      owner?._warnOnce?.(`target:${id}:${part}:${want}`, `#${id} 没有 ${part}="${want}"`);
-      return null;
-    }
-    return el;
+    return host.querySelector(`[data-vk-${part}="${cssEscape(want)}"]`) || null;
   }
   return safeQuery(root, raw, owner);
 }
 
-/* --------------------------------------------------------- 几何锚点（P2） */
+export function safeQuery(root, sel, owner) {
+  try {
+    return root.querySelector(sel);
+  } catch {
+    warn(owner, `"${sel}" 不是有效选择器`);
+    return null;
+  }
+}
 
-const SIDES = new Set(['top', 'right', 'bottom', 'left']);
-const clampPct = (n) => Math.max(0, Math.min(100, n));
-
-/**
- * 关系锚点：`#id@point:x%,y%` / `#id@side:top` / `#id@region:x%,y%,w%,h%`，
- * 或原有的 `#id@part:arg` 与 CSS 选择器。
- *
- * 返回 `{ el, rect, side }`：rect 是视觉坐标里的 DOMRect 形状，side 是显式指定的贴边。
- * 百分比一律相对目标自己的盒子：盒子改了尺寸，锚点跟着走。
- */
 export function resolveAnchor(root, expr, owner) {
-  const raw = String(expr || '').trim();
+  const raw = String(expr ?? '').trim();
   const at = raw.indexOf('@');
   if (raw.startsWith('#') && at > 1) {
     const part = raw.slice(at + 1).split(':')[0];
     if (part === 'point' || part === 'side' || part === 'region') {
       const id = raw.slice(1, at);
       const host = safeQuery(root, `#${cssEscape(id)}`, owner);
-      if (!host) {
-        owner?._warnOnce?.(`target:${id}`, `找不到 #${id}`);
-        return null;
-      }
+      if (!host) return null;
       const r = host.getBoundingClientRect();
-      const args = raw.slice(at + part.length + 2);
+      const argsRaw = raw.slice(at + part.length + 2);
       if (part === 'side') {
-        const side = args.trim();
-        if (!SIDES.has(side)) {
-          owner?._warnOnce?.(`target:${id}:side`, `#${id} 的 @side 只能是 top / right / bottom / left`);
-          return null;
-        }
+        const side = argsRaw.trim();
+        if (!['top', 'right', 'bottom', 'left'].includes(side)) return null;
         const rect = { left: r.left, top: r.top, width: 0, height: 0 };
         if (side === 'right') rect.left = r.right;
         if (side === 'bottom') rect.top = r.bottom;
@@ -224,13 +263,9 @@ export function resolveAnchor(root, expr, owner) {
         else rect.left = r.left + r.width / 2;
         return { el: host, rect, side };
       }
-      const nums = args.split(',').map((s) => parseFloat(s));
-      const want = part === 'point' ? 2 : 4;
-      if (nums.length !== want || nums.some((n) => !Number.isFinite(n))) {
-        owner?._warnOnce?.(`target:${id}:${part}`, `#${id} 的 @${part} 需要 ${want} 个数字（0–100，可带 %）`);
-        return null;
-      }
-      const [x, y, w = 0, h = 0] = nums.map(clampPct);
+      const args = argsRaw.split(',').map((s) => parseFloat(s));
+      if (args.some((n) => !Number.isFinite(n))) return null;
+      const [x, y, w = 0, h = 0] = args.map((n) => Math.max(0, Math.min(100, n)));
       const rect =
         part === 'point'
           ? { left: r.left + (r.width * x) / 100, top: r.top + (r.height * y) / 100, width: 0, height: 0 }
@@ -242,507 +277,57 @@ export function resolveAnchor(root, expr, owner) {
             };
       return { el: host, rect, side: null };
     }
+    if (part === 'line') {
+      const el = resolveTarget(root, raw, owner);
+      if (!el) return null;
+      return { el, rect: inkRect(el), side: null };
+    }
+    if (part === 'word') {
+      const id = raw.slice(1, at);
+      const host = safeQuery(root, `#${cssEscape(id)}`, owner);
+      if (!host) return null;
+      const { lineArg, needle } = parseWordArgs(raw.slice(at + part.length + 2).split(':'));
+      const rect = wordRect(host, lineArg, needle);
+      return rect ? { el: host, rect, side: null } : null;
+    }
   }
   const el = resolveTarget(root, raw, owner);
   return el ? { el, rect: el.getBoundingClientRect(), side: null } : null;
 }
 
-/* ---------------------------------------------------------------- 读取源码 */
+/* ---------------------------------------------------------------- 子节点 */
 
-/** 没有构建也没有 dev server 时，至少把 src 文件读出来显示纯文本 */
-const pendingSources = new Set();
-
-export function fetchSource(el) {
-  const src = el.getAttribute('src');
-  if (!src || typeof fetch !== 'function') return;
-  const token = (el._srcToken = (el._srcToken || 0) + 1);
-  el._abort?.abort();
-  const ctrl = typeof AbortController !== 'undefined' ? new AbortController() : null;
-  el._abort = ctrl;
-  el._loading = true;
-  let url;
-  try {
-    url = new URL(src, document.baseURI).href;
-  } catch {
-    el._loading = false;
-    return;
-  }
-  const p = fetch(url, { signal: ctrl?.signal })
-    .then((r) => {
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.text();
-    })
-    .then((t) => {
-      if (el._srcToken !== token || el.getAttribute('src') !== src) return;
-      el._loading = false;
-      el._fetched = true;
-      el.onFetched?.(t);
-      el.paint();
-    })
-    .catch((e) => {
-      if (e?.name === 'AbortError') {
-        if (el._srcToken === token) el._loading = false;
-        return;
-      }
-      el._loading = false;
-      el._warnOnce?.('fetch', `读取 ${src} 失败：${e.message}。构建时跑 npx vk build 把源码内联。`);
-    })
-    .finally(() => {
-      clearTimeout(timer);
-      if (el._abort === ctrl) el._abort = null;
-      pendingSources.delete(p);
-    });
-  const timer = setTimeout(() => {
-    if (el._srcToken !== token) return;
-    el._loading = false;
-    el._warnOnce?.('fetch', `读取 ${src} 超时（8s）。构建时跑 npx vk build 把源码内联。`);
-    ctrl?.abort();
-  }, 8000);
-  pendingSources.add(p);
+export function takeSlot(el) {
+  if (el._slot) return el._slot;
+  el._slot = [...el.childNodes].filter((n) => {
+    if (n.nodeType === 3) return !!n.textContent.trim();
+    if (n.nodeType !== 1) return false;
+    return n.tagName !== 'SCRIPT' && !n.hasAttribute('data-vk');
+  });
+  return el._slot;
 }
 
-/* --------------------------------------------------------------- 15.2 间距落点 */
-
-/** 档位 / 像素 → inline 值；不认识的 token 返回空串（保留 CSS 默认）。 */
-
-/**
- * 把 pad / gap 落到真正的内距 / 沟槽上。
- *
- * 之所以由 JS 写而不再用 `[pad='md lg']` 这类选择器：两个轴的组合是 8×8，
- * CSS 要么写 64 条规则，要么没法表达。这里只写四条 longhand / 两条 gap。
- */
-export function applySpacing(el) {
-  const tag = el.tagName?.toLowerCase();
-  if (tag === 'vk-box') {
-    const parsed = parseSpace(el.getAttribute('pad'));
-    const x = parsed ? spaceCss(parsed.x) : '';
-    const y = parsed ? spaceCss(parsed.y) : '';
-    for (const side of ['Left', 'Right']) {
-      if (x) el.style[`padding${side}`] = x;
-      else el.style.removeProperty(`padding-${side.toLowerCase()}`);
-    }
-    for (const side of ['Top', 'Bottom']) {
-      if (y) el.style[`padding${side}`] = y;
-      else el.style.removeProperty(`padding-${side.toLowerCase()}`);
-    }
-    return;
-  }
-  if (tag === 'vk-grid') {
-    const parsed = parseSpace(el.getAttribute('gap'));
-    const x = parsed ? spaceCss(parsed.x) : '';
-    const y = parsed ? spaceCss(parsed.y) : '';
-    if (x) el.style.columnGap = x;
-    else el.style.removeProperty('column-gap');
-    if (y) el.style.rowGap = y;
-    else el.style.removeProperty('row-gap');
-  }
-}
-
-/**
- * 行宽：作者写的是「一行几个字」，不是像素。
- *
- *   measure="20"   一行最多 20 个字（1em = 一个汉字宽，所以随字号自动缩放）
- *   measure="none" 不限，铺满容器
- *   不写           按字号档的默认行宽（CSS 里的 --vk-measure-*）
- *
- * 中英混排时 ch 不等于汉字宽，所以这里用 em 而不是 ch：一汉字 ≈ 1em。
- */
-export function applyMeasure(el) {
-  const v = el.getAttribute?.('measure');
-  if (v === null) return;
-  if (v === 'none') {
-    el.style.maxWidth = 'none';
-    return;
-  }
-  // 直接引用 token，行为和 12.x 一致。新名（caption / headline / display）是同一件事。
-  if (['caption', 'label', 'body', 'headline', 'subhead', 'display', 'title', 'hero'].includes(v)) {
-    el.style.maxWidth = `var(--vk-measure-${v})`;
-    return;
-  }
-  const n = Number(v);
-  if (Number.isInteger(n) && n >= 8 && n <= 60) el.style.maxWidth = n + 'em';
-  else el._warnOnce?.('measure', `的 measure="${v}" 只能是 none、8–60 的整数（一行几个字）或档名（caption/body/headline/display，旧名照旧可用）`);
-}
-
-/* --------------------------------------------------------------- 内容字号 */
-
-/** size 允许的语义档：数值是像素，名字是同一套字号 token（唯一真源在 vocab）。 */
-const CONTENT_SIZE_TIERS = new Set(SIZE_TIERS);
-
-/**
- * 内容组件的字号：size="160" 是像素，size="body" 是语义档。
- *
- * 只写一个宿主变量 --vk-cs；行高、行号、内距、语法色块都在 CSS 里从它派生，
- * 所以不会出现"字放大了、行号还是 48"这种半缩放。不写 size 时不动变量，
- */
-export function applyContentSize(el) {
-  const raw = (el.getAttribute?.('size') || '').trim();
-  const fit = el.getAttribute?.('fit') === 'width';
-  if (raw) {
-    const n = Number(raw);
-    if (Number.isFinite(n) && n > 0) el.style.setProperty('--vk-cs', n + 'px');
-    else if (CONTENT_SIZE_TIERS.has(raw)) el.style.setProperty('--vk-cs', `var(--vk-t-${raw})`);
-    else {
-      el.style.removeProperty('--vk-cs');
-      el._warnOnce?.('size', `的 size="${raw}" 不是像素数，也不是字号档名（body / headline / caption …），已忽略`);
-    }
-  } else {
-    el.style.removeProperty('--vk-cs');
-  }
-  if (raw) el.dataset.contentSize = raw;
-  else delete el.dataset.contentSize;
-  if (fit) el.dataset.fit = 'width';
-  else delete el.dataset.fit;
-  if (fit) el.dataset.vkPlace = '';
-  else if (el.hasAttribute('data-vk-place')) {
-    el.removeAttribute('data-vk-place');
-    el._unregisterPlace?.();
-  }
-}
-
-/**
- * fit="width" 的内容块：把最宽的一行放大/缩小到容器宽。
- *
- * 做法和 vk-text 的 fit 同一个思路（量自然宽 → 按比例改字号），只是量的是
- * 整块内容：临时把内容根设成 max-content，量完还原。行高/内距也随字号走，
- */
-export function fitContent(el, rootSel) {
-  if (!HAS_DOM || !el.isConnected || el.getAttribute?.('fit') !== 'width') return;
-  const root = el.querySelector(rootSel);
-  if (!root) return;
-  const target = root.parentElement?.clientWidth || el.clientWidth;
-  if (!target) return;
-
-  const naturalWidth = () => {
-    const prev = [root.style.width, root.style.maxWidth, root.style.overflow];
-    root.style.width = 'max-content';
-    root.style.maxWidth = 'none';
-    root.style.overflow = 'visible';
-    const w = root.offsetWidth;
-    [root.style.width, root.style.maxWidth, root.style.overflow] = prev;
-    return w;
-  };
-
-  const fitOnce = () => {
-    const natural = naturalWidth();
-    if (!natural) return false;
-    const current = parseFloat(getComputedStyle(root).fontSize) || 0;
-    if (!current) return false;
-    const next = Math.max(8, current * (target / natural));
-    el.style.setProperty('--vk-cs', next.toFixed(2) + 'px');
-    return Math.abs(next - current) > 0.05;
-  };
-
-  fitOnce();
-  // 第二遍只吸收 hinting / 小数像素的误差；不会来回震荡。
-  const natural = naturalWidth();
-  if (natural) {
-    const current = parseFloat(getComputedStyle(root).fontSize) || 0;
-    if (current) el.style.setProperty('--vk-cs', Math.max(8, current * (target / natural)).toFixed(2) + 'px');
-  }
-}
-
-/* --------------------------------------------------------------- 出血 */
-
-/**
- * 出血：通用属性 bleed="x|y|all|none"。
- *
- * 真正的几何在 CSS 里（负 margin + 100% + 2×版心边距），这里只把作者写的值
- */
-export function applyBleed(el) {
-  const raw = (el.getAttribute?.('bleed') || '').trim();
-  if (!raw || raw === 'none') delete el.dataset.bleed;
-  else el.dataset.bleed = raw;
-}
-
-/* --------------------------------------------------------------- 生命周期 */
-
-/**
- * 组件基类。
- * · 属性变了就重渲染 —— React 里改 props 画面会跟着变
- * · 子节点被整体替换时重新取源，局部改动忽略并警告
- * · 单个元件抛错不再拖垮全局 layout / ready
- */
-export class VkElement extends Base {
-  static get observedAttributes() {
-    return this.__observed || [];
-  }
-
-  constructor() {
-    super();
-    this._done = false;
-    this._rendering = false;
-    this._mo = null;
-    this._warned = new Set();
-    this._srcToken = 0;
-    this._loading = false;
-    this._abort = null;
-    this._paintScheduled = false;
-    this._placeRegistered = false;
-    this._dirty = false;
-    this._dirtyAttrs = [];
-  }
-
-  connectedCallback() {
-    applySpacing(this);
-    applyMeasure(this);
-    applyBleed(this);
-    this._registerPlace();
-    if (this._done) {
-      this._attachObserver();
-      if (this._dirty) {
-        const pending = this._dirtyAttrs.slice();
-        this._dirty = false;
-        this._dirtyAttrs = [];
-        for (const [name, value] of pending) this.onAttr?.(name, value);
-        this._schedulePaint();
-      }
-      VK._invalidate();
-      return;
-    }
-    if (!HAS_DOM) return;
-    if (document.readyState === 'loading') {
-      this._defer();
-      return;
-    }
-    this._init();
-  }
-
-  _defer() {
-    if (this._boot) return;
-    this._boot = () => {
-      this._boot = null;
-      if (!this.isConnected || this._done) return;
-      this._init();
-    };
-    document.addEventListener('DOMContentLoaded', this._boot, { once: true });
-  }
-
-  _init() {
-    if (this._done) return;
-    try {
-      this.capture?.();
-      this.paint();
-    } catch (e) {
-      this._fail(e);
-    }
-    this._done = true;
-    this._attachObserver();
-  }
-
-  _attachObserver() {
-    if (!this.constructor.watchSource || this._mo) return;
-    this._mo = new MutationObserver((records) => {
-      if (this._rendering) return;
-      // 父级只关心"作者直接改了宿主"，不关心子组件自己的内部重绘。
-      const relevant = records.filter((r) => this._isOwnMutation(r.target));
-      if (!relevant.length) return;
-      const root = this.constructor.renderedRoot;
-      if (root && this.querySelector(root)) {
-        if (this.constructor.slot && this.adoptExtras()) return;
-        if (!this.hasExtras()) return;
-        this._warnOnce('mutation', '的 DOM 被局部修改，已忽略。请整体替换 textContent / innerHTML。');
-        return;
-      }
-      try {
-        this.capture?.();
-        this.paint();
-      } catch (e) {
-        this._fail(e);
-      }
-    });
-    this._observe();
-  }
-
-  _observe() {
-    this._mo?.observe(this, { childList: true, characterData: true, subtree: true });
-  }
-
-  /** 这次改动是不是"宿主自己的"，而不是后代自定义元素的内部实现。 */
-  _isOwnMutation(target) {
-    let n = target;
-    while (n && n !== this) {
-      if (n.nodeType === 1 && n.tagName.length > 3 && n.tagName.startsWith('VK-')) return false;
-      n = n.parentNode;
-    }
-    return n === this;
-  }
-
-  /**
-   * 槽组件在首次渲染后，作者又往宿主里追加了节点：
-   * 直接并入槽容器，不重绘整棵子树（重绘会搬走已有的节点）。
-   */
-  hasExtras() {
-    const rootSel = this.constructor.renderedRoot;
-    return [...this.childNodes].some((n) => {
-      if (n.nodeType === 3) return !!n.textContent.trim();
-      if (n.nodeType !== 1) return false;
-      if (n.tagName === 'SCRIPT' || n.tagName === 'SVG') return false;
-      try {
-        return !(rootSel && n.matches(rootSel));
-      } catch {
-        return true;
-      }
-    });
-  }
-
-  adoptExtras() {
-    const slotSel = this.constructor.slotHost;
-    const rootSel = this.constructor.renderedRoot;
-    if (!slotSel) return false;
-    const host = this.querySelector(slotSel);
-    if (!host) return false;
-    const extras = [...this.childNodes].filter((n) => {
-      if (n.nodeType === 3) return !!n.textContent.trim();
-      if (n.nodeType !== 1) return false;
-      if (n.tagName === 'SCRIPT' || n.tagName === 'SVG') return false;
-      try {
-        return !(rootSel && n.matches(rootSel));
-      } catch {
-        return true;
-      }
-    });
-    if (!extras.length) return false;
-    for (const n of extras) host.append(n);
-    VK._invalidate();
-    return true;
-  }
-
-  disconnectedCallback() {
-    if (this._boot) {
-      document.removeEventListener('DOMContentLoaded', this._boot);
-      this._boot = null;
-    }
-    this._loading = false;
-    this._mo?.disconnect();
-    this._mo = null;
-    this._unregisterPlace();
-    EDGES.delete(this);
-    // 注意：这里**不 abort** fetch。
-    // 槽组件搬运节点（remove + append）会触发一次 disconnect/connect；
-    // 如果在这里 abort，正在读的 src 会被掐死，重连后又因为 _done 不再重取。
-  }
-
-  attributeChangedCallback(name, oldValue, newValue) {
-    if (!this._done || oldValue === newValue) return;
-    // 行宽 / 间距是纯样式，不重建子树，属性一变就立刻重算。
-    if (name === 'measure') applyMeasure(this);
-    if (name === 'bleed') applyBleed(this);
-    if (name === 'pad' || name === 'gap') applySpacing(this);
-    if (!this.isConnected) {
-      this._dirty = true;
-      this._dirtyAttrs.push([name, newValue]);
-      return;
-    }
-    try {
-      this.onAttr?.(name, newValue);
-      this._schedulePaint();
-    } catch (e) {
-      this._fail(e);
-    }
-  }
-
-  /** 同一 tick 内多个属性变化只重绘一次。 */
-  _schedulePaint() {
-    if (this._paintScheduled) return;
-    this._paintScheduled = true;
-    queueMicrotask(() => {
-      this._paintScheduled = false;
-      if (this.isConnected) this.paint();
-      else this._dirty = true;
-    });
-  }
-
-  paint() {
-    if (typeof this.render !== 'function') return;
-    this._rendering = true;
-    this._mo?.disconnect();
-    try {
-      this.render();
-      // 模板里的缩进空白会在自定义元素里生成额外的行盒（实测多出 32px 高度）
-      for (const n of [...this.childNodes]) {
-        if (n.nodeType === 3 && !n.textContent.trim()) n.remove();
-      }
-      // Frame：w/h/x/y 由共享原语统一应用；纯 CSS 组件跳过。
-      if (this.constructor.frame !== false) applyFrame(this);
-    } catch (e) {
-      this._fail(e);
-    } finally {
-      this._rendering = false;
-      this._observe();
-      this._mo?.takeRecords();
-    }
-    this._registerPlace();
-    VK._invalidate();
-  }
-
-  _registerPlace() {
-    if (this._placeRegistered || !this.hasAttribute('data-vk-place')) return;
-    this._placeRegistered = true;
-    PLACE.add(this);
-  }
-
-  _unregisterPlace() {
-    if (!this._placeRegistered) return;
-    this._placeRegistered = false;
-    PLACE.delete(this);
-  }
-
-  _warnOnce(key, message) {
-    if (this._warned.has(key)) return;
-    this._warned.add(key);
-    console.warn(`[vk] <${this.tagName.toLowerCase()}> ${message}`, this);
-  }
-
-  _fail(e) {
-    this.dataset.vkError = '1';
-    if (VK._errors.length > 100) VK._errors.shift();
-    VK._errors.push({ el: this, error: e, at: Date.now() });
-    console.error(`[vk] <${this.tagName.toLowerCase()}> 渲染失败：${e?.message || e}`, e);
-  }
-
-  /**
-   * 预编译缺失 / 过期时警告一次。
-   *
-   * build:false 用于"没有构建产物可补"的情况（比如位数据写错）：
-   * 否则提示会让人去跑 vk build，而真正要改的是这一块的属性。
-   */
-  stale(reason, { build = true } = {}) {
-    this.dataset.vkStale = '1';
-    if (this._loading) return;
-    this._warnOnce('stale', build ? `${reason}。运行 npx vk build 生成预编译数据。` : reason);
-  }
+export function fillSlot(host, nodes) {
+  for (const n of nodes || []) host.appendChild(n);
+  return host;
 }
 
 /* ---------------------------------------------------------------- 布局 */
 
-/**
- * 布局队列。整个 window 只有一份：
- * `document.write` / `setContent` 这类场景会在同一个 window 上重新执行本 bundle，
- * 自定义元素注册表仍在（注册表属于 window），元素用的还是上一份的类——
- */
-export const PLACE = VK._place instanceof Set ? VK._place : new Set();
-export const EDGES = VK._edges instanceof Set ? VK._edges : new Set();
-VK._place = PLACE;
-VK._edges = EDGES;
+export const PLACE = (VK._place ||= new Set());
+export const EDGES = (VK._edges ||= new Set());
 
 export function layout() {
   if (!HAS_DOM) return;
-  // 第一次排一次全页，之后只排注册过的 dirty 元素。
-  if (!PLACE.size && !EDGES.size) {
-    for (const el of document.querySelectorAll('[data-vk-place]')) PLACE.add(el);
-  }
-  // 需要排版的画布先摆，连线才有东西可量
   for (const el of PLACE) {
     if (!el.isConnected) {
       PLACE.delete(el);
       continue;
     }
-    if (!el.getClientRects().length) continue;
     try {
       el.place?.();
     } catch (e) {
-      el._fail?.(e);
+      el.fail?.(e);
     }
   }
   for (const el of EDGES) {
@@ -753,144 +338,153 @@ export function layout() {
     try {
       el.draw?.();
     } catch (e) {
-      el._fail?.(e);
+      el.fail?.(e);
     }
   }
 }
 
-let rafPending = 0;
-let rafTimer = 0;
-VK._invalidate = () => {
-  if (rafPending) return;
+let pending = 0;
+let timer = 0;
+VK.invalidate = () => {
+  if (pending) return;
   const run = () => {
-    if (!rafPending) return;
-    if (typeof cancelAnimationFrame === 'function') cancelAnimationFrame(rafPending);
-    clearTimeout(rafTimer);
-    rafPending = 0;
+    if (!pending) return;
+    if (pending > 0 && typeof cancelAnimationFrame === 'function') cancelAnimationFrame(pending);
+    clearTimeout(timer);
+    pending = 0;
     layout();
   };
-  if (typeof requestAnimationFrame === 'function' && !document.hidden) rafPending = requestAnimationFrame(run);
-  // 后台标签页 / 隐藏 iframe 里 rAF 会被暂停，不能让 layout 永远不跑。
-  rafTimer = setTimeout(run, 64);
-  if (!rafPending) rafPending = -1;
+  pending = typeof requestAnimationFrame === 'function' && !document.hidden ? requestAnimationFrame(run) : 1;
+  timer = setTimeout(run, 64);
 };
 
-/** 公开 API：手动重排一次（类型里有声明，就必须真的存在） */
-VK.layout = layout;
-VK.auditOverflow = auditOverflow;
+/* ---------------------------------------------------------------- 基类 */
 
-/** 渲染器的等待点 */
+export class VkElement extends Base {
+  static get observedAttributes() {
+    return this.__observed || [];
+  }
+
+  constructor() {
+    super();
+    this._painted = false;
+    this._paintQueued = false;
+    this._warned = new Set();
+    this._slot = null;
+    this._place = false;
+  }
+
+  connectedCallback() {
+    if (!HAS_DOM) return;
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', () => this.isConnected && this._paint(), { once: true });
+      return;
+    }
+    this._paint();
+  }
+
+  attributeChangedCallback(name, oldV, newV) {
+    if (oldV === newV || !this._painted || !this.isConnected) return;
+    if (this._paintQueued) return;
+    this._paintQueued = true;
+    queueMicrotask(() => {
+      this._paintQueued = false;
+      if (this.isConnected) this._paint();
+    });
+  }
+
+  _paint() {
+    try {
+      this.render?.();
+      this.frame();
+      this._painted = true;
+      if (this.place) this.registerPlace();
+      if (this.draw) this.registerEdge();
+      VK.invalidate();
+    } catch (e) {
+      this.fail(e);
+    }
+  }
+
+  registerPlace() {
+    if (this._place) return;
+    this._place = true;
+    PLACE.add(this);
+  }
+
+  registerEdge() {
+    EDGES.add(this);
+  }
+
+  fail(e) {
+    this.dataset.vkError = '1';
+    (VK._errors ||= []).push({ el: this, error: e });
+    console.error(`[vk] <${this.localName}> 渲染失败：${e?.message || e}`, e);
+  }
+
+  stale(what) {
+    this.dataset.vkStale = '1';
+    warn(this, `${what}。运行 vk render 重新生成。`);
+  }
+
+  /** 画布子项：w / h / x / y / z 的**唯一**写者。 */
+  frame() {
+    const host = this.parentElement;
+    if (!host || host.localName !== 'vk-canvas') return;
+    if (this.hasAttribute('z')) this.style.zIndex = String(attrNum(this, 'z'));
+    if (this.hasAttribute('x')) this.style.left = `${attrNum(this, 'x')}px`;
+    if (this.hasAttribute('y')) this.style.top = `${attrNum(this, 'y')}px`;
+    if (this.hasAttribute('w')) this.style.width = `${attrNum(this, 'w')}px`;
+    if (this.hasAttribute('h')) this.style.height = `${attrNum(this, 'h')}px`;
+    this.style.position = 'absolute';
+  }
+}
+
+export function define(tag, ctor) {
+  if (!TAGS[tag]) throw new Error(`[vk] 未注册的标签：${tag}`);
+  ctor.__observed = observedOf(tag);
+  (VK._defs ||= new Set()).add(tag);
+  if (typeof customElements === 'undefined') return;
+  if (!customElements.get(tag)) customElements.define(tag, ctor);
+}
+
+/* ---------------------------------------------------------------- 就绪 */
+
+VK.layout = layout;
+
+/* 就绪：等每个件画完、字体到齐、图片解码，然后量两条布局，再放行截图。
+   主题不需要在这里做任何事 —— 颜色由 color-scheme + light-dark() 决定，
+   一个面声明一次，嵌套几层都对。 */
 VK.ready = async () => {
   if (!HAS_DOM) return true;
   if (document.readyState === 'loading') {
     await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
   }
-  if (typeof customElements !== 'undefined') {
-    await Promise.all([...VK._defs].map((n) => customElements.whenDefined(n)));
-  }
-
-  // 自定义元素定义完不等于渲染完：字体、fetch、嵌套布局都要等到画面安静。
-  const tags = ALL_TAG_NAMES.join(',');
-  const unready = () =>
-    [...document.querySelectorAll(tags)].some((el) => el.isConnected && typeof el.paint === 'function' && !el._done);
-
-  // 一次快照不够：元素会在 whenDefined 之后的微任务里升级，
-  // 嵌套组件/晚到 fetch 也可能在 ready 之后才开始。等到连续两帧都安静为止。
+  const tags = Object.keys(TAGS).join(',');
   const deadline = Date.now() + 15000;
   let quiet = 0;
   while (Date.now() < deadline) {
-    const pending = pendingSources.size;
-    const pendingEls = unready();
+    const unready = [...document.querySelectorAll(tags)].some((el) => el.isConnected && !el._painted);
     await nextFrame();
-    if (!pending && !pendingEls && !pendingSources.size && !unready()) {
-      quiet++;
-      if (quiet >= 2) break;
-    } else {
-      quiet = 0;
-    }
+    if (!unready && ![...document.querySelectorAll(tags)].some((el) => el.isConnected && !el._painted)) {
+      if (++quiet >= 2) break;
+    } else quiet = 0;
   }
-  const timedOut = Date.now() >= deadline;
-  if (timedOut) {
-    document.documentElement.setAttribute('data-vk-ready', 'timeout');
-    console.warn('[vk] ready 超时：仍有组件或源码没有就绪');
-  }
-
-  const withTimeout = (p, ms) => Promise.race([p, new Promise((r) => setTimeout(r, ms))]);
-  await withTimeout(document.fonts?.ready || Promise.resolve(), 8000);
-  await withTimeout(
-    Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))),
-    8000
-  );
+  await document.fonts?.ready;
+  await Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
   await nextFrame();
   layout();
   await nextFrame();
   layout();
-  if (!timedOut) document.documentElement.setAttribute('data-vk-ready', '');
-  return !timedOut;
+  const ok = Date.now() < deadline;
+  document.documentElement.setAttribute('data-vk-ready', ok ? '' : 'timeout');
+  return ok;
 };
+export { CANVAS };
 
-/* -------------------------------------------------------------- 注册 */
-
-export const plain = () => class extends Base {};
-
-/**
- * 登记一个标签。
- * observed 属性从 registry 取 —— 不再手写第二份清单。
- */
-export function define(tag, ctor) {
-  const def = TAGS[tag];
-  if (!def) throw new Error(`[vk] 未注册的标签：${tag}`);
-  ctor.__observed = observedOf(tag);
-  VK._defs.add(tag);
-  if (typeof customElements === 'undefined') return;
-  if (!customElements.get(tag)) customElements.define(tag, ctor);
-}
-
-/** 给测试与调试用 */
-VK._internals = { dedent, hash32, indexSet, lineSet, expandLeadingTabs };
-
-/* ------------------------------------------------------------------ 插槽 */
-
-/**
- * 容器组件的内容槽。
- *
- * 关键：**移动节点，不序列化 HTML**。
- * 如果先读 innerHTML 再重渲染，子组件可能已经渲染完，读到的就是渲染结果，
- * 于是把「已经变成窗口的代码块」当成源码再渲染一遍。移动节点没有这个问题，
- * 而且保留元素身份 —— 重渲染不会让子组件的状态丢失。
- */
-export function takeSlot(el) {
-  const rootSel = el.constructor.renderedRoot;
-  const stillRendered = !rootSel || !!el.querySelector(rootSel);
-  if (!el._slotNodes || !stillRendered) {
-    el._slotNodes = [...el.childNodes].filter((n) => {
-      if (n.nodeType !== 1) return n.nodeType === 3 && n.textContent.trim() ? true : false;
-      return !(n.tagName === 'SCRIPT');
-    });
-  } else {
-    // 作者在渲染后又直接追加了内容：把它并入槽，而不是静默丢掉。
-    const extras = [...el.childNodes].filter((n) => {
-      if (n.nodeType === 3) return !!n.textContent.trim();
-      if (n.nodeType !== 1) return false;
-      if (n.tagName === 'SCRIPT' || n.tagName === 'SVG') return false;
-      try {
-        return !(rootSel && n.matches(rootSel));
-      } catch {
-        return true;
-      }
-    });
-    for (const n of extras) if (!el._slotNodes.includes(n)) el._slotNodes.push(n);
-  }
-  for (const n of el._slotNodes) if (n.parentNode) n.parentNode.removeChild(n);
-  return el._slotNodes;
-}
-
-/** 把槽节点塞进宿主元素 */
-export function fillSlot(host, nodes) {
-  for (const n of nodes || []) host.appendChild(n);
-  return host;
-}
-
-if (HAS_DOM && document.fonts?.ready) document.fonts.ready.then(() => layout());
-
+/** 字号：档名走 token，像素原样。 */
+export const sizeCss = (size) => {
+  const text = String(size ?? '').trim();
+  return /^\d+(\.\d+)?$/.test(text) ? `${text}px` : `var(--vk-fs-${text})`;
+};
 

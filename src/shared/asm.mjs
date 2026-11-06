@@ -8,11 +8,14 @@
  */
 
 // 机器码段可以为空：`objdump --no-show-raw-insn` 与部分反汇编器只给地址。
-const OBJDUMP = /^\s*([0-9a-f]{4,16}):\s*((?:[0-9a-f]{2}\s+)*)\s*(.+)$/i;
+// MinGW 的 .o 反汇编地址只有 1–3 位（0:、12:）；GNU ELF 通常是 4–8 位。
+const OBJDUMP = /^\s*([0-9a-f]{1,16}):\s*((?:[0-9a-f]{2}\s+)+)?\s*(.+)$/i;
 // objdump 把超过 7 字节的指令折行：续行没有地址，只有缩进的机器码字节。
 // 它不是一条独立指令，必须并回上一条；否则屏幕上会多出一行只有 `00` 的"指令"。
 const OBJDUMP_CONT = /^\s+((?:[0-9a-f]{2}(?:\s+|$))+)$/i;
-const LABEL_ADDR = /^\s*([0-9a-f]{4,16})\s+<([^>]+)>:\s*$/i;
+const LABEL_ADDR = /^\s*([0-9a-f]{1,16})\s+<([^>]+)>:\s*$/i;
+/** 地址去掉前导零：ELF 的 0000000000401136 读起来是 401136。 */
+const normAddr = (s) => String(s).replace(/^0+(?=[0-9a-f])/i, '');
 const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
 
 /**
@@ -62,8 +65,8 @@ export function parseAsm(text) {
     }
     const lab = raw.match(LABEL_ADDR);
     if (lab) {
-      labels.push({ addr: lab[1], name: lab[2], line });
-      rows.push({ line, kind: 'label', addr: lab[1], bytes: '', text: lab[2] });
+      labels.push({ addr: normAddr(lab[1]), name: lab[2], line });
+      rows.push({ line, kind: 'label', addr: normAddr(lab[1]), bytes: '', text: lab[2] });
       return;
     }
     const obj = raw.match(OBJDUMP);
@@ -71,8 +74,9 @@ export function parseAsm(text) {
       rows.push({
         line,
         kind: 'insn',
-        addr: obj[1],
-        bytes: obj[2].trim().replace(/\s+/g, ' '),
+        addr: normAddr(obj[1]),
+        // 机器码段可以缺席（--no-show-raw-insn）：分组是 undefined，不是空串。
+        bytes: (obj[2] || '').trim().replace(/\s+/g, ' '),
         text: obj[3].trim(),
       });
       return;

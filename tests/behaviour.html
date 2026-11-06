@@ -1,0 +1,68 @@
+<!-- 行为验收：这些帧只用来量「组件有没有按承诺自适应」，不是画面范本。 -->
+
+<vk-page id="shrink">
+  <vk-stack gap="normal">
+    <vk-label>自动缩字号</vk-label>
+    <vk-code id="shrink" lang="c" file="long.c">
+      <script type="text/plain" data-vk-source>
+int sum = compute(alpha, beta, gamma, delta);
+      </script>
+    </vk-code>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="numtable">
+  <vk-stack gap="normal">
+    <vk-label>数字列右对齐</vk-label>
+    <vk-table id="numtable" size="caption">
+      <table>
+        <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
+        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td></tr>
+        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+        <tr><td>SSD</td><td>1 TB</td><td>100µs</td></tr>
+      </table>
+    </vk-table>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="markers">
+  <vk-stack gap="wide">
+    <vk-label>三个指针</vk-label>
+    <vk-cells id="marks" cols="8" current="4" markers="lo:1,mid:4" size="caption">
+      <li value="2"></li><li value="3"></li><li value="5"></li><li value="7"></li>
+      <li value="11"></li><li value="13"></li><li value="17"></li><li value="19"></li>
+    </vk-cells>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bytes">
+  <vk-stack gap="normal">
+    <vk-label>字节窗</vk-label>
+    <vk-bytes id="buf" src="../code/hello.bin" length="16" current="1-2"></vk-bytes>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bigtree">
+  <vk-stack gap="normal">
+    <vk-label>文件树截断</vk-label>
+    <vk-tree id="bigtree" max="4" size="caption">
+      <script type="text/plain" data-vk-tree>
+[{"name":"src","children":[{"name":"a.c"},{"name":"b.c"},{"name":"c.c"}]},{"name":"lib","children":[{"name":"x.c"},{"name":"y.c"}]},{"name":"Makefile"},{"name":"README.md"}]
+      </script>
+    </vk-tree>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="darkpaper" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label>深色页里的纸面窗</vk-label>
+    <vk-code id="darkpaper" lang="c" file="ok.c">
+      <script type="text/plain" data-vk-source>
+int a = 1;
+      </script>
+    </vk-code>
+  </vk-stack>
+</vk-page>
+
+
+

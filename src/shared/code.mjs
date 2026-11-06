@@ -1,11 +1,10 @@
 /**
  * vk 共享纯函数 —— 构建期与运行时唯一的一份。
  *
- * 这里不允许出现 DOM / Node API：src/highlight.mjs、src/runtime/*.mjs
- * 都直接 import 这个文件，et al. 由 esbuild 打进浏览器 bundle。
+ * 这里不允许出现 DOM / Node API：src/build.mjs 与 src/runtime/*.mjs 都 import 它，
+ * 由 esbuild 打进浏览器 bundle。
  *
- * 之前 dedent / hash32 / sliceLines / buildRows / tokenDiff 在构建期和运行时
- * 各有一份，靠注释“保持同步”。现在只有这一份，tests/shared.test.mjs 校验它。
+ * 同一套规则只有这一份：去缩进、去 ANSI、行段、语言别名。
  */
 
 /** 行首 tab 按 4 列展开 */
@@ -43,20 +42,10 @@ export function dedent(text) {
   return lines.map((l) => (l.trim() ? l.slice(min) : '')).join('\n');
 }
 
-/** 与 cli/build.mjs 共用的 32 位内容指纹。 */
-export function hash32(str) {
-  let h = 2166136261;
-  for (let i = 0; i < str.length; i++) {
-    h ^= str.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return (h >>> 0).toString(16);
-}
-
 /**
  * 索引语法的唯一解析器：`1` / `1-8` / `1,3-5` → [{from,to}]。
- * 保留书写顺序；非法片段直接忽略（要报错先用 isIndexList）。
- * 基准不在这里决定：源码行 1 起、数据下标 0 起，由调用方各自解释。
+ * 保留书写顺序；非法片段直接忽略。基准不在这里决定：
+ * 源码行 1 起、锚点 1 起，由调用方各自解释。
  */
 const INDEX_PART = /^(\d+)(?:\s*-\s*(\d+))?$/;
 export function indexRanges(value) {
@@ -69,15 +58,6 @@ export function indexRanges(value) {
     out.push({ from, to });
   }
   return out;
-}
-
-/** 整串是否全部由合法索引片段组成（空串算合法）。 */
-export function isIndexList(value) {
-  return String(value || '')
-    .split(',')
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .every((part) => INDEX_PART.test(part));
 }
 
 /**
@@ -100,196 +80,6 @@ export function lineSet(value) {
  * 数据下标列表："3" / "2-4" / "1,5" → Set{2,3,4}（0 起、含端点）。
  * 与 lineSet 同一套语法，只是基准不同。
  */
-export const MAX_INDEX = 10000;
-export function indexSet(value) {
-  const set = new Set();
-  for (const { from, to } of indexRanges(value)) {
-    if (from > MAX_INDEX) continue;
-    const end = Math.min(Math.max(from, to), MAX_INDEX);
-    for (let i = from; i <= end; i++) set.add(i);
-  }
-  return set;
-}
-
-/** "12-18" / "7" → 文件里截出的那几行；越界自动收敛，malformed 返回全文。 */
-export function sliceLines(text, spec) {
-  const raw = String(spec || '').trim();
-  if (!raw) return String(text);
-  const m = raw.match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-  if (!m) return String(text);
-  const lines = String(text).replace(/\r\n?/g, '\n').split('\n');
-  const a = Math.max(1, parseInt(m[1], 10));
-  const b = Math.min(lines.length, Math.max(a, m[2] ? parseInt(m[2], 10) : a));
-  return lines.slice(a - 1, b).join('\n');
-}
-
-/**
- * git 的 index 表头只认 40/7 位十六进制对：`index 3f9a2b1..8c4d5e6 100644`。
- * 会从画面上消失——diff 少一行，右下角却还写着"改了几行"。
- */
-const INDEX_HEADER = /^index [0-9a-f]{7,}\.\.[0-9a-f]{7,}(?:\s|$)/i;
-
-/** 表头路径像不像路径：git 的 a/ b/、带目录、带扩展名、/dev/null、带引号。 */
-const headerPath = (s) => {
-  const t = String(s || '').trim();
-  if (!t) return false;
-  if (t === '/dev/null' || /^"/.test(t)) return true;
-  if (/^[ab]\//.test(t)) return true;
-  return /[\\/]/.test(t) || /\.\w{1,8}$/.test(t);
-};
-
-/**
- * 真实 git diff / 手写行段 → { sign, text }；hunk 起始行挂在第一条内容行上。
- *
- * 表头（`--- ` / `+++ ` / `index `）和正文共用同一批字符：
- * 所以表头只在**能证明它是表头**时跳过（diff --git 之后、或 ---/+++ 成对且像路径），
- * 其余一律当正文——宁可多显示一行，也不能让一行悄悄消失。
- */
-export function parseDiffItems(source) {
-  const lines = String(source).split('\n');
-  const out = [];
-  let pendingOld = null;
-  let pendingNew = null;
-  let sawHunk = false;
-  let gitHeader = false; // 已经进了 diff --git 的表头区（遇到第一个 @@ 结束）
-  let skipNewHeader = false; // 上一行刚跳过 "--- <路径>"，紧随的 "+++ ..." 也是表头
-
-  for (let i = 0; i < lines.length; i++) {
-    const line = lines[i];
-    if (/^diff --git /.test(line)) {
-      gitHeader = true;
-      continue;
-    }
-    if (gitHeader && INDEX_HEADER.test(line)) continue;
-    if (skipNewHeader && /^\+\+\+ /.test(line)) {
-      skipNewHeader = false;
-      continue;
-    }
-    skipNewHeader = false;
-    if (/^--- /.test(line)) {
-      const next = lines[i + 1] || '';
-      const after = lines[i + 2] || '';
-      const isHeader =
-        gitHeader || (/^\+\+\+ /.test(next) && (headerPath(line.slice(4)) || /^@@/.test(after) || out.length === 0));
-      if (isHeader) {
-        skipNewHeader = true;
-        continue;
-      }
-    }
-    const hunk = line.match(/^@@\s+-(\d+)(?:,\d+)?\s+\+(\d+)(?:,\d+)?\s+@@/);
-    if (hunk) {
-      pendingOld = Number(hunk[1]);
-      pendingNew = Number(hunk[2]);
-      sawHunk = true;
-      gitHeader = false;
-      continue;
-    }
-    if (/^\\ No newline at end of file/.test(line)) continue;
-    if (!line) {
-      if (sawHunk) continue;
-      out.push({ sign: '', text: '' });
-      continue;
-    }
-    const m = line.match(/^([ +-])/);
-    const item = m ? { sign: m[1] === ' ' ? '' : m[1], text: line.slice(1) } : { sign: '', text: line };
-    if (pendingOld != null && pendingNew != null) {
-      item.oldStart = pendingOld;
-      item.newStart = pendingNew;
-      pendingOld = null;
-      pendingNew = null;
-    }
-    out.push(item);
-  }
-  return out;
-}
-
-/** 把连续的增删配成一对一对的行；上下文行两边都出现。 */
-export function buildRows(items) {
-  const rows = [];
-  let i = 0;
-  while (i < items.length) {
-    if (!items[i].sign) {
-      rows.push({ left: items[i], right: items[i], ctx: true });
-      i++;
-      continue;
-    }
-    const chunk = [];
-    while (i < items.length && items[i].sign) chunk.push(items[i++]);
-    const del = chunk.filter((x) => x.sign === '-');
-    const add = chunk.filter((x) => x.sign === '+');
-    const n = Math.max(del.length, add.length);
-    for (let k = 0; k < n; k++) rows.push({ left: del[k] || null, right: add[k] || null });
-  }
-  return rows;
-}
-
-/* ---------------------------------------------------------------- diff */
-
-/** 把代码行切成 token：字符串 / 注释 / 标识符 / 数字 / 多字符运算符 / 标点 / 空白 */
-const TOKEN_RE =
-  /("(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|`(?:\\.|[^`\\])*`|\/\/[^\n]*|\/\*[\s\S]*?\*\/|\b\d+(?:\.\d+)?\b|[A-Za-z_$][\w$]*|<=|>=|==|!=|&&|\|\||\+\+|--|->|<<|>>|[-+*/%=<>!&|^~?:;,.()[\]{}]|\s+)/g;
-
-export function tokenize(s) {
-  const out = [];
-  let last = 0;
-  let m;
-  TOKEN_RE.lastIndex = 0;
-  while ((m = TOKEN_RE.exec(s))) {
-    if (m.index > last) out.push({ text: s.slice(last, m.index), start: last, end: m.index });
-    out.push({ text: m[0], start: m.index, end: m.index + m[0].length });
-    last = m.index + m[0].length;
-  }
-  if (last < s.length) out.push({ text: s.slice(last), start: last, end: s.length });
-  return out;
-}
-
-const mergeRanges = (ranges) => {
-  const out = [];
-  for (const r of ranges.sort((x, y) => x[0] - y[0])) {
-    const last = out[out.length - 1];
-    if (last && r[0] <= last[1]) last[1] = Math.max(last[1], r[1]);
-    else out.push([r[0], r[1]]);
-  }
-  return out;
-};
-
-/**
- * token 级 diff：`<=` 和 `<` 各算一个整体，不会只标出 `=`。
- * 返回 [左区间[], 右区间[]]，区间是 UTF-16 下标。空白变化不标（看不见）。
- */
-export function tokenDiff(a, b) {
-  const A = tokenize(a);
-  const B = tokenize(b);
-  if (A.length * B.length > 60000) return [[[0, a.length]], [[0, b.length]]];
-  const n = A.length;
-  const m = B.length;
-  const dp = Array.from({ length: n + 1 }, () => new Uint16Array(m + 1));
-  for (let i = n - 1; i >= 0; i--) {
-    for (let j = m - 1; j >= 0; j--) {
-      dp[i][j] = A[i].text === B[j].text ? dp[i + 1][j + 1] + 1 : Math.max(dp[i + 1][j], dp[i][j + 1]);
-    }
-  }
-  const aR = [];
-  const bR = [];
-  let i = 0;
-  let j = 0;
-  const push = (list, t) => {
-    if (t.text.trim()) list.push([t.start, t.end]);
-  };
-  while (i < n && j < m) {
-    if (A[i].text === B[j].text) {
-      i++;
-      j++;
-    } else if (dp[i + 1][j] >= dp[i][j + 1]) {
-      push(aR, A[i++]);
-    } else {
-      push(bR, B[j++]);
-    }
-  }
-  while (i < n) push(aR, A[i++]);
-  while (j < m) push(bR, B[j++]);
-  return [mergeRanges(aR), mergeRanges(bR)];
-}
 
 /* -------------------------------------------------------------- language */
 

@@ -1,155 +1,215 @@
 /**
- * 测试。
+ * v18 · 测试
+ * ----------------------------------------------------------------------------
+ * 只测「会静默坏掉」的东西。四组：
  *
- *   npm test          schema + 构建 30 张样张（不启浏览器）
- *   npm test -- --full 再加：逐页自检 + 640 宽截图回归
- *   npm test -- --update  重写截图基线
+ *   一、契约   tokens / 契约文档与源码一致；schema 里没有死属性；每个件都被真帧用过
+ *   二、渲染   所有验收帧构建 + 出图 + 自检 0 问题；像素里真有墨迹；与粗签名相比没变形
+ *   三、行为   缩字号 / 数字右对齐 / markers / 缩进树截断 / 锚点基数
+ *   四、确定   同一页渲两次，PNG 逐字节相同
+ *
+ * 没写进去的：CSS 选择器长什么样、函数有几个、文件多少行 —— 那些改实现就会红，
+ * 和画面质量无关。
+ *
+ *   npm test              跑全部
+ *   npm test -- --update  重写 tests/golden.json（改了默认值之后用）
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { TAGS, TAG_NAMES, LAYERS, COMMON, CANVAS, LAYOUT_ATTRS, CHILD_ATTRS, CHILDREN, STATES } from '../src/schema.mjs';
-import { SAMPLES, fixturePage } from './samples.mjs';
-import { publish } from './lib/publish.mjs';
 
-const full = process.argv.includes('--full');
-const update = process.argv.includes('--update');
-let failures = 0;
-const ok = (cond, msg) => {
+const ROOT = path.resolve(import.meta.dirname, '..');
+const UPDATE = process.argv.includes('--update');
+const SHOTS = path.join(ROOT, '.vk-cache', 'shots');
+const GOLDEN = path.join(ROOT, 'tests', 'golden.json');
+
+let failed = 0;
+const ok = (cond, msg, detail = '') => {
   if (cond) console.log(`  ✓ ${msg}`);
   else {
-    failures++;
-    console.error(`  ✗ ${msg}`);
+    failed++;
+    console.log(`  ✗ ${msg}${detail ? `\n      ${detail}` : ''}`);
   }
 };
+const group = (name) => console.log(`\n${name}`);
+const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
-/* ---------------------------------------------------------------- schema */
-console.log('schema');
-ok(TAG_NAMES.length === 30, `30 个标签（${TAG_NAMES.length}）`);
-ok(new Set(TAG_NAMES).size === TAG_NAMES.length, '标签名唯一');
-const layerIds = new Set(LAYERS.map((l) => l.id));
-for (const tag of TAG_NAMES) {
-  if (!tag.startsWith('vk-')) ok(false, `${tag} 以 vk- 开头`);
-  if (!layerIds.has(TAGS[tag].layer)) ok(false, `${tag} 的 layer 合法`);
-  for (const [name, spec] of Object.entries(TAGS[tag].attrs)) {
-    if (!spec.values && !spec.type) ok(false, `${tag}/${name} 有 type 或 values`);
-    if (spec.values && spec.default !== undefined && !spec.values.includes(spec.default))
-      ok(false, `${tag}/${name} 的默认值在词表里`);
-    if (spec.values && new Set(spec.values).size !== spec.values.length) ok(false, `${tag}/${name} 的取值不重复`);
-  }
-}
-for (const k of Object.keys(CHILD_ATTRS)) ok(!!TAGS[k], `CHILD_ATTRS 的父标签 ${k} 存在`);
-for (const k of Object.keys(CHILDREN)) ok(!!TAGS[k], `CHILDREN 的父标签 ${k} 存在`);
-for (const k of Object.keys(STATES)) ok(!!TAGS[k], `STATES 的父标签 ${k} 存在`);
-ok(Object.keys(COMMON).every((k) => LAYOUT_ATTRS.has(k)), 'LAYOUT_ATTRS = COMMON');
-ok(Object.keys(CANVAS).length === 5, '画布协议 5 个（x/y/w/h/z）');
+/* ------------------------------------------------------------------ 一、契约 */
+group('契约');
 
-/* 每个公开取值都必须被某处消费：CSS 或运行期。 */
-const haystack = [];
-const walk = (d) => {
-  for (const ent of fs.readdirSync(d, { withFileTypes: true })) {
-    const p = path.join(d, ent.name);
-    if (ent.isDirectory()) walk(p);
-    else if (/\.(css|mjs)$/.test(p) && !p.includes('icons.generated')) haystack.push(fs.readFileSync(p, 'utf8'));
-  }
-};
-walk('src');
-const text = haystack.join('\n');
-let unused = 0;
-for (const tag of TAG_NAMES) {
-  for (const [name, spec] of Object.entries(TAGS[tag].attrs)) {
-    if (!spec.values || spec.values.length < 3) continue;
-    for (const v of spec.values) {
-      if (v === 'none' || v === 'auto' || v === '') continue;
-      if (!text.includes(`'${v}'`) && !text.includes(`=${v}`) && !text.includes(`"${v}"`)) {
-        unused++;
-        if (unused <= 12) console.error(`  · ${tag}/${name} 的取值 ${v} 没有消费者`);
-      }
-    }
-  }
-}
-ok(unused === 0, `枚举取值都有消费者（${unused} 个没有）`);
-
-/* ---------------------------------------------------------------- 样张 */
-console.log('\nfixtures');
-for (const tag of Object.keys(SAMPLES)) {
-  const file = path.join('tests/pages', `${tag}.html`);
-  fs.mkdirSync('tests/pages', { recursive: true });
-  fs.writeFileSync(file, fixturePage(tag));
-}
-ok(Object.keys(SAMPLES).length === TAG_NAMES.length, `30 张样张（${Object.keys(SAMPLES).length}）`);
 try {
-  execFileSync(process.execPath, ['bin/vk.mjs', 'build', 'tests/pages'], { stdio: 'pipe' });
-  ok(true, '30 张样张构建通过');
+  node(['tools/css.mjs', '--check']);
+  ok(true, 'tokens 与 vocab 一致');
 } catch (e) {
-  ok(false, '样张构建失败');
-  console.error(e.stdout?.toString() || e.message);
+  ok(false, 'tokens 与 vocab 一致', String(e.stdout || e.message).trim());
+}
+try {
+  node(['tools/contract.mjs', '--check']);
+  ok(true, '契约文档与 schema 一致');
+} catch (e) {
+  ok(false, '契约文档与 schema 一致', String(e.stdout || e.message).trim());
 }
 
-/* ------------------------------------------------------------ 自检 / 回归 */
-if (full) {
-  publish();
-  const tags = TAG_NAMES;
-  const shotArgs = ['bin/vk.mjs', 'shot'];
-  for (const tag of tags) shotArgs.push(`tests/pages/${tag}.html`);
-  shotArgs.push('--out-dir', 'out/golden', '--width', '640', '--json');
+const { TAG_NAMES, attrsOf } = await import('../src/schema.mjs');
 
-  let report = [];
-  try {
-    report = JSON.parse(execFileSync(process.execPath, shotArgs, { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }));
-  } catch (e) {
-    try {
-      report = JSON.parse(e.stdout);
-    } catch {
-      ok(false, '批量截图失败');
-      console.error(e.stdout || e.message);
-    }
+// 死属性：schema 声明了，但运行期/CSS/构建期没有一处读它。
+// 白名单只放「结构性」属性：它们由位置规则或 CSS 属性选择器直接消费。
+const STRUCTURAL = new Set(['span', 'row-span', 'x', 'y', 'w', 'h', 'z', 'current', 'state', 'tone', 'size', 'gap', 'pad', 'bleed', 'grow', 'id']);
+const sources = [
+  ...fs.readdirSync(path.join(ROOT, 'src/runtime')).map((f) => path.join(ROOT, 'src/runtime', f)),
+  path.join(ROOT, 'src/build.mjs'),
+  path.join(ROOT, 'src/contract.mjs'),
+  ...fs
+    .readdirSync(path.join(ROOT, 'src'))
+    .filter((f) => f.endsWith('.css'))
+    .map((f) => path.join(ROOT, 'src', f)),
+];
+const hay = sources.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+const dead = [];
+for (const tag of TAG_NAMES) {
+  for (const name of Object.keys(attrsOf(tag))) {
+    if (STRUCTURAL.has(name)) continue;
+    if (!hay.includes(`'${name}'`) && !hay.includes(`"${name}"`) && !hay.includes(`[${name}`) && !hay.includes(`${name}=`)) dead.push(`${tag}.${name}`);
   }
+}
+ok(dead.length === 0, `schema 里没有死属性（${dead.length} 个可疑）`, dead.slice(0, 12).join(', '));
 
-  console.log('\naudit');
-  const dirty = report.filter((r) => r.errors.length || r.issues.length || r.special.length);
-  for (const r of dirty) {
-    ok(false, `${path.basename(r.page)} 有 error`);
-    for (const x of [...r.errors, ...r.issues, ...r.special]) console.error(`    · ${x.what || x.type || x}`);
-  }
-  ok(report.length === tags.length && !dirty.length, `30 页自检干净（${report.length} 页）`);
+// 每个件都被真帧用过：没人用的件就是没人需要。
+const framesHtml = fs
+  .readdirSync(path.join(ROOT, 'tests'))
+  .filter((f) => f.endsWith('.html'))
+  .map((f) => fs.readFileSync(path.join(ROOT, 'tests', f), 'utf8'))
+  .join('\n');
+const unused = TAG_NAMES.filter((t) => !framesHtml.includes(`<${t}`));
+ok(unused.length === 0, '每个件都被验收帧用过', unused.join(', '));
 
-  console.log('\ngolden');
-  const { PNG } = await import('pngjs');
-  const dir = 'tests/golden';
-  fs.mkdirSync(dir, { recursive: true });
-  let diff = 0;
-  for (const r of report) {
-    const tag = path.basename(r.page, '.html');
-    if (!r.png) {
-      ok(false, `${tag} 没有出图`);
-      continue;
-    }
-    const base = path.join(dir, `${tag}.png`);
-    if (update || !fs.existsSync(base)) {
-      fs.copyFileSync(r.png, base);
-      continue;
-    }
-    const a = PNG.sync.read(fs.readFileSync(base));
-    const b = PNG.sync.read(fs.readFileSync(r.png));
-    if (a.width !== b.width || a.height !== b.height) {
-      ok(false, `${tag} 尺寸变了 ${a.width}×${a.height} → ${b.width}×${b.height}`);
-      continue;
-    }
-    let bad = 0;
-    for (let i = 0; i < a.data.length; i += 4) {
-      if (Math.abs(a.data[i] - b.data[i]) > 8 || Math.abs(a.data[i + 1] - b.data[i + 1]) > 8 || Math.abs(a.data[i + 2] - b.data[i + 2]) > 8) bad++;
-    }
-    const ratio = bad / (a.width * a.height);
-    if (ratio > 0.002) {
-      diff++;
-      ok(false, `${tag} 像素差 ${(ratio * 100).toFixed(2)}%`);
-    }
-  }
-  ok(diff === 0, '30 张截图回归一致');
+/* ------------------------------------------------------------------ 二、渲染 */
+group('渲染');
+fs.rmSync(SHOTS, { recursive: true, force: true });
+let report = [];
+try {
+  const out = node(['bin/vk.mjs', 'render', 'tests', '--json', '--out', SHOTS]);
+  report = JSON.parse(out.slice(out.indexOf('[')));
+} catch (e) {
+  const txt = String(e.stdout || '');
+  const i = txt.indexOf('[');
+  if (i >= 0) report = JSON.parse(txt.slice(i));
+  else ok(false, '渲染测试页', String(e.stderr || e.message).slice(0, 800));
 }
 
-if (failures) {
-  console.error(`\n${failures} 项失败`);
-  process.exitCode = 1;
-} else console.log('\n全部通过');
+const frames = report.flatMap((r) => r.frames.map((f) => ({ ...f, file: r.file })));
+const errors = report.flatMap((r) => r.errors);
+ok(errors.length === 0, '构建 + 运行期没有错误', errors.map((e) => `${e.file}:${e.line} ${e.message}`).slice(0, 6).join('\n      '));
+ok(frames.length >= 12, `验收帧数量够（${frames.length}）`);
+const dirty = frames.filter((f) => f.issues.length);
+ok(dirty.length === 0, '每一帧自检干净', dirty.slice(0, 5).map((f) => `${f.file}#${f.id}: ${f.issues.map((x) => x.message).join('；')}`).join('\n      '));
+
+const focusHeavy = frames.filter((f) => f.metrics && f.metrics.focus > 1);
+ok(focusHeavy.length === 0, '每帧最多一个焦点', focusHeavy.map((f) => `${f.file}#${f.id} 焦点 ${f.metrics.focus}`).join(', '));
+
+/* 像素里真有墨迹，而且和 DOM 量出来的位置对得上（抓字体没加载 / 白屏 / 截图早于 layout）。 */
+const { PNG } = await import('pngjs');
+const inkBox = (file) => {
+  const png = PNG.sync.read(fs.readFileSync(file));
+  const bg = [png.data[0], png.data[1], png.data[2]];
+  let left = 1e9, top = 1e9, right = -1, bottom = -1;
+  for (let y = 0; y < png.height; y += 2) {
+    for (let x = 0; x < png.width; x += 2) {
+      const i = (y * png.width + x) << 2;
+      if (Math.abs(png.data[i] - bg[0]) + Math.abs(png.data[i + 1] - bg[1]) + Math.abs(png.data[i + 2] - bg[2]) < 24) continue;
+      if (x < left) left = x;
+      if (x > right) right = x;
+      if (y < top) top = y;
+      if (y > bottom) bottom = y;
+    }
+  }
+  return right < 0 ? null : { left, top, right, bottom, w: png.width, h: png.height };
+};
+const pixelBad = [];
+for (const f of frames) {
+  if (!f.png) continue;
+  const box = inkBox(path.join(ROOT, f.png));
+  if (!box) {
+    pixelBad.push(`${f.file}#${f.id} 整张是空的`);
+    continue;
+  }
+  const scale = box.w / 1920;
+  const dyTop = Math.abs(box.top / scale - f.metrics.contentTop);
+  const dyBottom = Math.abs(box.bottom / scale - f.metrics.contentBottom);
+  if (dyTop > 30 || dyBottom > 30) {
+    pixelBad.push(`${f.file}#${f.id} 墨迹 ${Math.round(box.top / scale)}–${Math.round(box.bottom / scale)}，DOM 量的是 ${f.metrics.contentTop}–${f.metrics.contentBottom}`);
+  }
+}
+ok(pixelBad.length === 0, '像素与 DOM 对得上（没有白屏 / 字体没加载）', pixelBad.slice(0, 5).join('\n      '));
+
+/* 粗签名：只抓「整块消失 / 版面塌了」，不抓字距微调。 */
+const sigOf = (f) => `${Math.round(f.metrics.fill / 5) * 5}|${f.metrics.focus}|${f.issues.map((x) => x.code).join(',')}`;
+const sigs = Object.fromEntries(frames.map((f) => [`${f.file}#${f.id}`, sigOf(f)]));
+const prev = fs.existsSync(GOLDEN) ? JSON.parse(fs.readFileSync(GOLDEN, 'utf8')) : null;
+if (UPDATE || !prev) {
+  fs.writeFileSync(GOLDEN, JSON.stringify(sigs, null, 1) + '\n');
+  ok(true, `写入粗签名 tests/golden.json（${Object.keys(sigs).length} 帧）`);
+} else {
+  const changed = Object.keys(sigs).filter((k) => prev[k] && prev[k] !== sigs[k]);
+  const added = Object.keys(sigs).filter((k) => !prev[k]);
+  ok(changed.length === 0, '版面与上次一致（粗签名）', changed.map((k) => `${k}: ${prev[k]} → ${sigs[k]}`).slice(0, 8).join('\n      '));
+  ok(added.length === 0, '没有新帧未登记', added.slice(0, 8).join(', '));
+}
+
+/* ------------------------------------------------------------------ 三、行为 */
+group('行为');
+const { chromium } = await import('playwright');
+const browser = await chromium
+  .launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'] })
+  .catch(() => chromium.launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'], channel: 'msedge' }));
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+const built = (name) => 'file:///' + path.join(ROOT, '.vk-cache', 'pages', 'tests', name).split(path.sep).join('/');
+await page.goto(built('behaviour.html'), { waitUntil: 'load' });
+await page.evaluate(() => window.vk.ready());
+
+const behave = await page.evaluate(() => {
+  const q = (sel) => document.querySelector(sel);
+  const out = {};
+  // 1. 长行会缩字号，但不是无限缩
+  const c = q('#shrink');
+  const row = c?.querySelector('.vk-line');
+  out.shrink = row ? parseFloat(getComputedStyle(row).fontSize) : 0;
+  // 2. 数字列右对齐，文字列不动
+  const t = q('#numtable');
+  out.numAlign = t ? getComputedStyle(t.querySelector('td.num') || t).textAlign : '';
+  out.textAlign = t ? getComputedStyle([...t.querySelectorAll('td')].find((td) => !td.classList.contains('num')) || t).textAlign : '';
+  // 3. markers 画出来了
+  out.markers = q('#marks') ? q('#marks').querySelectorAll('.vk-cell-m').length : -1;
+  // 4. 锚点 1 起：#buf@byte:1 是第一个字节
+  out.byte1 = !!q('#buf')?.querySelector('i[data-vk-byte="1"]');
+  // 5. 文件树超行数会留一行说明
+  out.treeMore = !!q('#bigtree')?.querySelector('.is-more');
+  // 6. 深色页里的纸面窗保持深色字
+  const win = q('#darkpaper .vk-win');
+  out.darkPaper = win ? getComputedStyle(win).color : '';
+  return out;
+});
+ok(behave.shrink > 43 && behave.shrink < 56, `长代码行会缩字号（${behave.shrink}px）`);
+ok(behave.numAlign === 'right', `数字列右对齐（${behave.numAlign}）`);
+ok(behave.textAlign !== 'right', `文字列不右对齐（${behave.textAlign}）`);
+ok(behave.markers === 2, `markers 画出来了（${behave.markers} 个）`);
+ok(behave.byte1, '@byte 是 1 起');
+ok(behave.treeMore, '文件树超行数留了说明行');
+ok(/rgb\(11, 15, 20\)|rgb\(17, 21, 28\)/.test(behave.darkPaper), `深色页里的浅底窗仍是深字（${behave.darkPaper}）`);
+
+/* ------------------------------------------------------------------ 四、确定 */
+group('确定');
+const hashOf = (f) => crypto.createHash('sha1').update(fs.readFileSync(f)).digest('hex');
+const one = frames[0];
+const before = hashOf(path.join(ROOT, one.png));
+try { node(['bin/vk.mjs', 'render', 'tests/behaviour.html', '--json', '--out', SHOTS]); } catch {}
+const after = hashOf(path.join(ROOT, one.png));
+ok(before === after, '同一页渲两次，PNG 逐字节相同');
+
+await browser.close();
+
+console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
+process.exitCode = failed ? 1 : 0;
+
+

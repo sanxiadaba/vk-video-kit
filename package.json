@@ -1,8 +1,8 @@
 {
   "name": "vk-video-kit",
-  "version": "16.0.0",
+  "version": "18.0.0",
   "private": true,
-  "description": "把内容做成画面单元：30 个标签、一层（元素 / 排布 / 数据 / 关系 / 页面）、1920×1080。",
+  "description": "1920×1080 单帧画面库：27 个件，构建期预处理，只出图。",
   "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
@@ -10,33 +10,26 @@
     "vk": "bin/vk.mjs"
   },
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
-    "fixtures": "node tools/fixtures.mjs",
-    "gallery": "node tools/gallery.mjs",
-    "serve": "node cli/serve.mjs 8099",
-    "check": "node bin/vk.mjs check pages",
-    "shot": "node bin/vk.mjs shot",
-    "test": "npm run build && node tools/test.mjs",
-    "test:fast": "node tools/test.mjs --fast",
-    "budget": "node tools/budget.mjs"
-  },
-  "dependencies": {
-    "katex": "^0.16.11",
-    "parse5": "^7.3.0",
-    "shiki": "^4.5.0"
+    "build": "node tools/css.mjs && node tools/contract.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
+    "test": "node tools/test.mjs",
+    "assets": "node tools/assets.mjs",
+    "assets:check": "node tools/assets.mjs --check"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/noto-sans-sc": "^5.3.1",
     "esbuild": "^0.28.2",
+    "katex": "^0.16.11",
     "lucide": "^1.61.0",
+    "parse5": "^7.3.0",
     "playwright": "^1.64.1",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "shiki": "^4.5.0"
   },
   "license": "MIT",
   "author": "jun",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11"
   }
 }

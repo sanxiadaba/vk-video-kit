@@ -1,108 +1,103 @@
-# vk · 单帧画面库
+# vk
 
-给编程科普视频用的**元素层**：把一个内容单元（代码 / 终端 / diff / 树 / 字节 / 位 / 表格 / 公式 / 图 / 文字）
-画成 1920×1080 画布上正确、清晰、可测量的那个东西，并把若干单元按份摆进画布。
+给 1920×1080 画面用的**单帧组件库**：一个件画一种内容，一帧就是一张图。
+不做文案、不做分镜、不做动画、不做视频渲染——这是画面层，不是内容层。
 
-- **不做**：文案、讲解架构、版面模板、时间轴 / 动画 / 播放 / 转场 / 录屏 / 渲染。
-- **做**：30 个标签、一套布局协议、一套词汇（六档字号 / 六色语义 / 三档墨 / 一种纸）、
-  构建期预编译（Shiki / KaTeX / hexdump / 树 / 图标）、结构自检、出图。
-- **手机横屏基准**：1920 收到约 780 宽（0.406×），正文 56px ≈ 22.7 设备像素。
+- 27 个件：代码 / 终端 / 汇编 / 差异 / 表格 / 清单 / 文件树 / 内存格 / 字节 / 位 / 步骤 / 横条 / 时间线 / 图对照 / 公式 / 图片 / 文字 / 标注……
+- 一套词汇：六档字号、五档间距、三档文字色（`ink`）、五种表面、六个语调。索引一律 1 起。
+- 构建期预处理：语法高亮、公式、字节、文件树、汇编、图标。运行期零依赖。
+- 只出图：`vk render` 把写好的页面渲成 PNG。
 
-作者手册（给 AI 的入口）是 [SPEC.md](SPEC.md)。属性细节用 `vk doc <tag>` 查。
+观众在手机横屏上看：1920 的帧缩到约 **780 宽（0.406×）**。
+所以字号地板是 44px（手机 17.9px），线宽最小 2px（手机 0.8px）。
 
-## 安装与构建
+## 先看它长什么样
 
 ```bash
 npm install
-npm run build        # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
+vk showcase          # 渲染 tests/frames.html 的 23 帧，排成一页看板并自动打开
+```
+
+产物在 `out/showcase/`：`index.html`（缩略图墙，点开看 1920）、`sheet.png`（整页一张图）。
+看板是生成物，不入库：改完组件重跑一次就更新。
+在线版（main 推送后由 Actions 自动更新）：https://sanxiadaba.github.io/vk-video-kit/
+
+## 安装
+
+```bash
+npm install
+npm run build     # 生成 vk/vk.css、vk/fonts.css、dist/vk.js
 ```
 
 ## 写一帧
 
 ```html
-<link rel="stylesheet" href="vk/fonts.css">
-<link rel="stylesheet" href="vk/vk.css">
-
-<vk-page align="center">
-  <vk-stack gap="md">
-    <vk-text size="headline">字符串不是值，是<em>一块内存</em></vk-text>
-    <vk-code lang="c" file="hello.c" src="../code/hello.c" lines="4-6" current="5"></vk-code>
+<vk-page>
+  <vk-stack gap="normal">
+    <vk-label counter="1 / 8">第 3 集 · 指针</vk-label>
+    <vk-text size="subhead">下标是<em>偏移量</em>。</vk-text>
+    <vk-code id="c" lang="c" file="a.c" current="2">
+      <script type="text/plain" data-vk-source>
+int a[3] = {1, 2, 3};
+a[1]         // 从 a 起走一个 int
+      </script>
+    </vk-code>
   </vk-stack>
+  <vk-callout mode="ring" for="#c@line:2"></vk-callout>
 </vk-page>
-
-<script src="dist/vk.js"></script>
 ```
 
 ```bash
-node bin/vk.mjs build pages/a.html       # pages/ → out/，编译代码 / 公式 / 字节 / 树 / 图标
-node bin/vk.mjs check pages/a.html       # 结构自检（字号 / 对比度 / 安全区 / 溢出 / 重叠 / 焦点）
-node bin/vk.mjs shot pages/a.html        # 出 out/a.png（--phone 出 780 宽）
+vk render pages/01.html --phone   # 构建 + 自检 + 出图（780 宽，按手机尺度看）
+vk check  pages/                  # 只自检
+vk doc    vk-code                 # 一个件的属性表
+vk brief  --json                  # 全部契约（给机器读）
+vk icons  arrow                   # 搜图标名
+vk clean  [--all]                 # 删 out/ 与缓存
 ```
 
-**构建只写 `out/`，不改源文件。**
+## 文档
 
-## 30 个标签
-
-| 层 | 标签 |
+| 文件 | 解决什么 |
 |---|---|
-| 原子 6 | `box` `panel` `text` `label` `inline` `img` |
-| 排布 6 | `stack` `grid` `layer` `pair` `flow` `canvas` |
-| 数据 15 | `list` `code` `term` `diff` `table` `math` `compare` `tree` `cells` `bytes` `steps` `bits` `bars` `asm` `timeline` |
-| 关系 2 | `annotate` `note` |
-| 页面 1 | `page` |
+| [docs/START.md](docs/START.md) | 最短路径：一个能跑的页 + 五个词 + 六条铁律 |
+| [docs/RULES.md](docs/RULES.md) | 一帧容量、选件、颜色语义、深色页、锚点、拆帧 |
+| [docs/PITFALLS.md](docs/PITFALLS.md) | 15 个会静默出错的坑，附报错原文 |
+| [docs/CONTRACT.md](docs/CONTRACT.md) | 全部件与属性的契约（**生成物**，别手改） |
 
-同一件事只有一个写法：`tone` 六值、`size` 六档、`current` 1 起、
-`state="current|mark|ok|warn|err"`、`columns` 一个列开关。
-没有别名、没有旧写法、没有 `at` / `cue` / `enter`。
+## 自检判五类
 
-## 自检与出图
+没画布 / 渲染失败 / 资源失败 / 文字被裁 / 锚点指空。
+其余（留白、重叠、焦点数、对比度、密度）不判：那是默认值和作者的判断。
+`vk render` 会顺手打一行「内容 y 96–410（占版心 35%）· 焦点 1」，用来对比相邻帧。
 
-```bash
-node bin/vk.mjs check pages/             # 多页共用一个浏览器
-node bin/vk.mjs shot pages/a.html --phone
-node bin/vk.mjs shot pages/a.html --width 640 --out out/a.png
-node bin/vk.mjs doc vk-code              # 属性 / 取值 / 默认值
-node bin/vk.mjs brief                    # 属性清单（--json 给机器）
-node bin/vk.mjs tags                     # 30 个标签
-node bin/vk.mjs icons arrow              # 搜 Lucide 图标名
-```
-
-`vk check` 只判客观错误：字号地板、对比度、安全区、溢出、裁切、非覆盖层重叠、
-一处以上焦点、空锚点、渲染失败、素材过期、空帧。
-
-## 测试与预算
+## 测试
 
 ```bash
-npm test             # 构建 + schema + 30 张样张（不启浏览器）
-npm test -- --full   # + 30 页自检 + 640 宽截图回归（约 9s）
-npm run budget       # 标签 / 属性 / 行数预算，超了直接红
+npm test               # 契约 + 渲染 + 行为 + 确定性，约 20 秒
+npm test -- --update   # 改了默认值之后重写粗签名
 ```
-
-样张在 `tests/pages/`，由 `npm test` 生成，只用于构建与回归，不是模板。
-`vk build` 有内容哈希缓存，只重编改过的页；`vk check` 与 `vk shot` 一组页共用一个浏览器和字体缓存。
-
-## 画廊
-
-```bash
-npm run gallery      # → out/index.html + out/c/*.html + 30 张 640 宽截图
-npm run serve        # → http://127.0.0.1:8099/
-```
-
-点缩略图进组件详情：实时 1920 帧、属性表、最小写法、上下一个。
-`out/` 是自包含的静态站（已镜像 vk / dist / assets），推 `main` 后由
-`.github/workflows/pages.yml` 发布到 GitHub Pages。
 
 ## 结构
 
 ```
-src/schema.mjs      公开 API 的唯一来源（标签 / 属性 / 取值 / 默认值 / 子节点 / 状态）
-src/runtime/        组件实现
-src/*.css           样式层（tokens → elements → layout → components → page → relations）
-cli/                build / check / shot
-tools/              构建、样张、画廊、预算、测试
-pages/              作者页（源）；构建产物在 out/
+src/vocab.mjs      值：字号 / 行高 / 间距 / 颜色（light-dark 成对）/ 容量 / 地板
+src/schema.mjs     契约：27 个件的属性、取值、默认值、子节点
+src/contract.mjs   校验 + 文档生成（schema 驱动的唯一路径）
+src/build.mjs      构建：校验 + 高亮 / 公式 / 字节 / 树 / 汇编 / 图标
+src/runtime/       运行时：底座 / 排布 / 面与字 / 内容 / 图 / 标注 / 自检
+src/*.css          样式：tokens（生成）→ base → layout → components → callout
+bin/vk.mjs         命令行
+tools/             字体 / KaTeX / CSS 生成 / 契约生成 / 打包 / 素材 / 测试
+docs/              给作者看的四页
+tests/             验收帧 + 行为页 + 粗签名
+code/              测试用的示例源码与编译产物
 ```
+
+主题只有一条规则：**谁声明表面，谁写 `color-scheme`**。所有颜色 token 都是
+`light-dark(浅色, 深色)`，所以深色页里放浅色卡片、卡片里再放深色块，嵌套几层都对。
 
 ## 许可
 
-MIT。字体 OFL 1.1、Shiki MIT、KaTeX MIT、Lucide ISC，见 [THIRD-PARTY-NOTICES.md](THIRD-PARTY-NOTICES.md)。
+MIT。字体 OFL 1.1，Shiki MIT，KaTeX MIT，Lucide ISC。
+
