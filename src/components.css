@@ -511,8 +511,9 @@ vk-math {
   font-size: var(--vk-cs, var(--vk-fs-body));
   line-height: var(--vk-lh-body);
 }
-vk-math .katex-display { margin: 0; text-align: left; }
-vk-math .katex-display > .katex { text-align: left; }
+/* KaTeX 的样式在 CSS 层外，普通选择器压不住，必须 important。 */
+vk-math .katex-display { margin: 0; text-align: left !important; }
+vk-math .katex-display > .katex { text-align: left !important; }
 
 /* ------------------------------------------------------------------ 表格
    表格按内容宽，不硬拉满版心：三列表被拉成 1680 宽时，列间距会大得读不出行。 */
