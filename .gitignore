@@ -20,3 +20,8 @@ desktop.ini
 
 # 编译产物
 code/**/*.exe
+
+# 评审临时产物
+.tmp*/
+.live/
+.view-*.png
