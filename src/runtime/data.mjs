@@ -17,10 +17,9 @@ const normPath = (raw) =>
     .replace(/\/+$/, '')
 
 /* ------------------------------------------------------------------ 表格 */
-/* 数字列：按列判断，只给那一列的格子加 .num（对齐交给 CSS）。 */
-// 1000、20000、1,000、12.5、0.2、50% 都算数字；
-// 原来的写法只认 1–3 位或逗号分组，于是 "1000" 被当成文字，整列不右对齐。
-const NUM = /^-?\d[\d,]*(?:\.\d+)?%?$/
+/* 数字列：按列判断，只给那一列的格子加 .num（对齐交给 CSS）。
+   1000、1,000、12.5、0.2、50%、32 KB、1ns、5 毫秒 都算数字；0x1F 不算（那是地址）。 */
+const NUM = /^-?\d[\d,]*(?:\.\d+)?(?![xX][0-9a-fA-F])\s*(?:%|[A-Za-zµ]{1,4}|[\u4e00-\u9fa5]{1,2})?$/
 
 export class VkTable extends VkElement {
   render() {
@@ -50,30 +49,38 @@ export class VkTable extends VkElement {
 
   /**
    * 数字列右对齐：按列判断，只给那一列的格子加 class。
-   * （整张表加 .num 会把后面的文字列也右对齐。）
+   * 合并单元格（colspan）时按「这一格从第几列开始」算，否则后面的列全错位。
    */
   _align(table) {
     for (const cell of table.querySelectorAll('td, th')) cell.classList.remove('num')
     const body = table.tBodies[0]
     if (!body) return
-    const cols = new Map()
+    const stat = new Map()
     for (const row of body.rows) {
-      for (const [i, cell] of [...row.cells].entries()) {
-        if (i === 0) continue
+      let col = 0
+      for (const cell of row.cells) {
         const text = (cell.textContent || '').trim()
-        if (!text) continue
-        const stat = cols.get(i) || { num: 0, total: 0 }
-        stat.total++
-        if (NUM.test(text)) stat.num++
-        cols.set(i, stat)
+        if (col > 0 && text) {
+          const s = stat.get(col) || { num: 0, total: 0 }
+          s.total++
+          if (NUM.test(text)) s.num++
+          stat.set(col, s)
+        }
+        col += Math.max(1, cell.colSpan || 1)
       }
     }
-    for (const [i, stat] of cols) {
-      if (!(stat.num >= 2 && stat.num * 3 >= stat.total * 2)) continue
-      for (const row of body.rows) row.cells[i]?.classList.add('num')
-      const head = table.tHead?.rows[0]
-      head?.cells[i]?.classList.add('num')
+    const numeric = new Set()
+    for (const [col, s] of stat) if (s.num >= 2 && s.num * 3 >= s.total * 2) numeric.add(col)
+    if (!numeric.size) return
+    const mark = (row) => {
+      let col = 0
+      for (const cell of row.cells) {
+        if (numeric.has(col)) cell.classList.add('num')
+        col += Math.max(1, cell.colSpan || 1)
+      }
     }
+    for (const row of body.rows) mark(row)
+    if (table.tHead?.rows[0]) mark(table.tHead.rows[0])
   }
 }
 
@@ -111,7 +118,8 @@ export class VkTree extends VkElement {
 }
 
 /* ------------------------------------------------------------------ 内存格 */
-/* 一格一个 div：标签、值、地址。地址从 addr 起算，每格 1 字节。 */
+/* 一格一个 div：标签、值、地址。地址从 addr 起算，每格 stride 字节。
+   排序/二分这类画面天然有 2-3 个指针，用一个 current 表达不了，所以有 markers。 */
 export class VkCells extends VkElement {
   render() {
     if (this._items == null) this._items = takeSlot(this).filter((n) => n.nodeType === 1 && n.localName === 'li')
@@ -130,10 +138,26 @@ export class VkCells extends VkElement {
     const hit = current >= 1 && current <= items.length ? current - 1 : -1
     if (current !== -1 && hit < 0) warn(this, `current="${current}" 超出 1…${items.length}`)
 
+    // markers="lo:1,hi:8,mid:3"：额外的指针，1 起，最多三个。
+    const marks = new Map()
+    const raw = attrText(this, 'markers').trim()
+    if (raw) {
+      for (const piece of raw.split(',')) {
+        const [label, at] = piece.split(':').map((s) => (s || '').trim())
+        const n = Number(at)
+        if (!label || !Number.isInteger(n) || n < 1 || n > items.length) {
+          warn(this, `markers 的 "${piece}" 不对：写 名字:第几格（1 起，最多 ${items.length}）`)
+          continue
+        }
+        marks.set(n - 1, label)
+      }
+      if (marks.size > 3) warn(this, 'markers 最多三个：再多观众就不知道该看哪个')
+    }
+
     const cells = items.map((li, i) => {
       const cell = document.createElement('div')
       cell.className = 'vk-cell'
-      cell.dataset.vkCell = String(i)
+      cell.dataset.vkCell = String(i + 1)
       // 空格子不是"没加载"，是"这一格没用上"：标出来，样式压淡。
       if (!li.textContent.trim() && !li.getAttribute('label')) cell.dataset.empty = '1'
 
@@ -155,6 +179,13 @@ export class VkCells extends VkElement {
         a.className = 'vk-cell-a'
         a.textContent = `0x${(start + i * stride).toString(16).padStart(4, '0')}`
         cell.append(a)
+      }
+      if (marks.has(i)) {
+        const m = document.createElement('span')
+        m.className = 'vk-cell-m'
+        m.dataset.vkDeco = ''
+        m.textContent = marks.get(i)
+        cell.append(m)
       }
 
       const tone = attrEnum(li, 'tone')
@@ -225,7 +256,7 @@ export class VkBits extends VkElement {
       field.forEach((bit, bi) => {
         const cell = document.createElement('div')
         cell.className = 'vk-bit'
-        cell.dataset.vkBit = String(seen)
+        cell.dataset.vkBit = String(seen + 1)
 
         // 序号：down 从 n-1 递减，up 从 0 递增，none 没有，sparse 只标 8 的倍数位。
         if (mode !== 'none') {
@@ -281,3 +312,4 @@ export function defineData() {
   define('vk-bytes', VkBytes)
   define('vk-bits', VkBits)
 }
+

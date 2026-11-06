@@ -1,8 +1,8 @@
 {
   "name": "vk-video-kit",
-  "version": "17.0.0",
+  "version": "18.0.0",
   "private": true,
-  "description": "1920×1080 画面组件库：27 个组件，构建期预处理，只出图。",
+  "description": "1920×1080 单帧画面库：27 个件，构建期预处理，只出图。",
   "type": "module",
   "main": "dist/vk.esm.js",
   "module": "dist/vk.esm.js",
@@ -10,30 +10,26 @@
     "vk": "bin/vk.mjs"
   },
   "scripts": {
-    "build": "node tools/icons.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/css.mjs && node tools/build.mjs",
+    "build": "node tools/css.mjs && node tools/contract.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
     "test": "node tools/test.mjs",
-    "inert": "node tools/inert.mjs",
     "assets": "node tools/assets.mjs",
-    "assets:check": "node tools/assets.mjs --check",
-    "shots": "npm run assets && node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win"
-  },
-  "dependencies": {
-    "katex": "^0.16.11",
-    "parse5": "^7.3.0",
-    "shiki": "^4.5.0"
+    "assets:check": "node tools/assets.mjs --check"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.3.0",
     "@fontsource/jetbrains-mono": "^5.3.0",
     "@fontsource/noto-sans-sc": "^5.3.1",
     "esbuild": "^0.28.2",
+    "katex": "^0.16.11",
     "lucide": "^1.61.0",
+    "parse5": "^7.3.0",
     "playwright": "^1.64.1",
-    "pngjs": "^7.0.0"
+    "pngjs": "^7.0.0",
+    "shiki": "^4.5.0"
   },
   "license": "MIT",
   "author": "jun",
   "engines": {
-    "node": ">=20"
+    "node": ">=20.11"
   }
 }

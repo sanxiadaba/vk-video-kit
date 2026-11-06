@@ -1,71 +1,68 @@
-<vk-page id="code-shrink">
+<!-- 行为验收：这些帧只用来量「组件有没有按承诺自适应」，不是画面范本。 -->
+
+<vk-page id="shrink">
   <vk-stack gap="normal">
-    <vk-label counter="1">很长的代码行：窗口先长宽，再缩字号</vk-label>
-    <vk-code id="long" lang="c" file="long.c">
+    <vk-label>自动缩字号</vk-label>
+    <vk-code id="shrink" lang="c" file="long.c">
       <script type="text/plain" data-vk-source>
-int total = compute(alpha_param, beta_param, gamma_param);
+int sum = compute(alpha, beta, gamma, delta);
       </script>
     </vk-code>
   </vk-stack>
 </vk-page>
 
-<vk-page id="code-normal">
+<vk-page id="numtable">
   <vk-stack gap="normal">
-    <vk-label counter="2">短代码行：不缩</vk-label>
-    <vk-code id="short" lang="c" file="short.c">
-      <script type="text/plain" data-vk-source>
-int x = 1;
-      </script>
-    </vk-code>
+    <vk-label>数字列右对齐</vk-label>
+    <vk-table id="numtable" size="caption">
+      <table>
+        <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
+        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td></tr>
+        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+        <tr><td>SSD</td><td>1 TB</td><td>100µs</td></tr>
+      </table>
+    </vk-table>
   </vk-stack>
 </vk-page>
 
-<vk-page id="steps-narrow">
-  <vk-grid cols="12" gap="close">
-    <vk-steps id="steps" span="4" current="1">
-      <li>先要拿到原始数据</li>
-      <li>再把它换算成同一单位</li>
-      <li>最后才谈得上比较</li>
-    </vk-steps>
-  </vk-grid>
+<vk-page id="markers">
+  <vk-stack gap="wide">
+    <vk-label>三个指针</vk-label>
+    <vk-cells id="marks" cols="8" current="4" markers="lo:1,mid:4" size="caption">
+      <li value="2"></li><li value="3"></li><li value="5"></li><li value="7"></li>
+      <li value="11"></li><li value="13"></li><li value="17"></li><li value="19"></li>
+    </vk-cells>
+  </vk-stack>
 </vk-page>
 
-<vk-page id="table-num">
-  <vk-table id="table" variant="ledger">
-    <table>
-      <tr><th>项目</th><th>次</th><th>毫秒</th></tr>
-      <tr><td>顺序</td><td>1000</td><td>12.5</td></tr>
-      <tr><td>二分</td><td>14</td><td>0.2</td></tr>
-    </table>
-  </vk-table>
-</vk-page>
-
-<vk-page id="note-avoid">
+<vk-page id="bytes">
   <vk-stack gap="normal">
-    <vk-label counter="5">注释放不下就挪开</vk-label>
-    <vk-code id="target" lang="c" file="x.c" current="2">
+    <vk-label>字节窗</vk-label>
+    <vk-bytes id="buf" src="../code/hello.bin" length="16" current="1-2"></vk-bytes>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bigtree">
+  <vk-stack gap="normal">
+    <vk-label>文件树截断</vk-label>
+    <vk-tree id="bigtree" max="4" size="caption">
+      <script type="text/plain" data-vk-tree>
+[{"name":"src","children":[{"name":"a.c"},{"name":"b.c"},{"name":"c.c"}]},{"name":"lib","children":[{"name":"x.c"},{"name":"y.c"}]},{"name":"Makefile"},{"name":"README.md"}]
+      </script>
+    </vk-tree>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="darkpaper" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label>深色页里的纸面窗</vk-label>
+    <vk-code id="darkpaper" lang="c" file="ok.c">
       <script type="text/plain" data-vk-source>
 int a = 1;
-int b = 2;
       </script>
     </vk-code>
   </vk-stack>
-  <vk-callout mode="note" for="#target@line:2">这一行在写内存</vk-callout>
 </vk-page>
 
-<vk-page id="layer-stack">
-  <vk-layer>
-    <vk-img id="layimg" src="../assets/hello/asm-o0.png" alt="底" ratio="4 / 1" fill="contain"></vk-img>
-    <vk-stack justify="end">
-      <vk-box id="laynote" surface="paper" pad="close">
-        <vk-text size="body">叠上去的说明</vk-text>
-      </vk-box>
-    </vk-stack>
-  </vk-layer>
-</vk-page>
-<vk-page id="pair-split">
-  <vk-pair symbol="vs">
-    <vk-box id="pleft" surface="tint" tone="ok" pad="close"><vk-text size="body">左</vk-text></vk-box>
-    <vk-box id="pright" surface="tint" tone="warn" pad="close"><vk-text size="body">右</vk-text></vk-box>
-  </vk-pair>
-</vk-page>
+
+

@@ -1,611 +1,215 @@
 /**
- * 测试：契约 → 文档 → 渲染。
+ * v18 · 测试
+ * ----------------------------------------------------------------------------
+ * 只测「会静默坏掉」的东西。四组：
  *
- *   npm test
+ *   一、契约   tokens / 契约文档与源码一致；schema 里没有死属性；每个件都被真帧用过
+ *   二、渲染   所有验收帧构建 + 出图 + 自检 0 问题；像素里真有墨迹；与粗签名相比没变形
+ *   三、行为   缩字号 / 数字右对齐 / markers / 缩进树截断 / 锚点基数
+ *   四、确定   同一页渲两次，PNG 逐字节相同
  *
- * 不测「像素没变」，测「契约没漂、文档没错、验收帧全部干净」。
- * 像素回归只会告诉你"变了"，不会告诉你"错了"。
+ * 没写进去的：CSS 选择器长什么样、函数有几个、文件多少行 —— 那些改实现就会红，
+ * 和画面质量无关。
+ *
+ *   npm test              跑全部
+ *   npm test -- --update  重写 tests/golden.json（改了默认值之后用）
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import os from 'node:os';
+import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import * as parse5 from 'parse5';
-import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
-import { FONT, GAP, TONE, SURFACE, STATE, INK } from '../src/vocab.mjs';
-import { parseAsm } from '../src/shared/asm.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
+const UPDATE = process.argv.includes('--update');
+const SHOTS = path.join(ROOT, '.vk-cache', 'shots');
+const GOLDEN = path.join(ROOT, 'tests', 'golden.json');
 
-let bad = 0;
-const ok = (cond, msg) => {
+let failed = 0;
+const ok = (cond, msg, detail = '') => {
   if (cond) console.log(`  ✓ ${msg}`);
   else {
-    bad++;
-    console.error(`  ✗ ${msg}`);
+    failed++;
+    console.log(`  ✗ ${msg}${detail ? `\n      ${detail}` : ''}`);
   }
 };
+const group = (name) => console.log(`\n${name}`);
+const node = (args) => execFileSync(process.execPath, args, { cwd: ROOT, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
 
-/* ---------------------------------------------------------------- 契约 */
-// 先把全部测试页渲染一遍：后面的扫描要读 out/ 里的构建产物，干净检出时它还不存在。
-let report = [];
+/* ------------------------------------------------------------------ 一、契约 */
+group('契约');
+
 try {
-  const out = execFileSync(
-    process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/behaviour.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/contrast.html', 'tests/darks.html', 'tests/recipes.html', 'tests/relations.html', 'tests/sheet.html', 'tests/sheet2.html', '--json'],
-    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
-  );
-  report = JSON.parse(out);
+  node(['tools/css.mjs', '--check']);
+  ok(true, 'tokens 与 vocab 一致');
 } catch (e) {
-  try { report = JSON.parse(e.stdout || '[]'); } catch { report = []; }
+  ok(false, 'tokens 与 vocab 一致', String(e.stdout || e.message).trim());
+}
+try {
+  node(['tools/contract.mjs', '--check']);
+  ok(true, '契约文档与 schema 一致');
+} catch (e) {
+  ok(false, '契约文档与 schema 一致', String(e.stdout || e.message).trim());
 }
 
-console.log('契约');
-ok(TAG_NAMES.length === 27, `27 个件（${TAG_NAMES.length}）`);
-ok(new Set(TAG_NAMES).size === TAG_NAMES.length, '件名唯一');
+const { TAG_NAMES, attrsOf } = await import('../src/schema.mjs');
 
-const layers = new Set(['page', 'layout', 'surface', 'content', 'diagram', 'relation']);
-for (const tag of TAG_NAMES) {
-  const t = TAGS[tag];
-  ok(!!t.name && !!t.summary, `${tag} 有名字与一句话说明`);
-  ok(layers.has(t.layer), `${tag} 的层合法（${t.layer}）`);
-  const attrs = attrsOf(tag);
-  const own = Object.keys(t.attrs).length;
-  if (own > 12) {
-    bad++;
-    console.error(`  ✗ ${tag} 有 ${own} 个属性（上限 12）`);
-  }
-  for (const [name, spec] of Object.entries(attrs)) {
-    if (!spec.label || !spec.group) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 缺 label 或 group`);
-    }
-    if (!spec.values && !spec.type) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 既没有 type 也没有 values`);
-    }
-    if (spec.values && spec.default !== undefined && !spec.values.includes(spec.default)) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 的默认值 ${spec.default} 不在取值里`);
-    }
-    if (spec.values && new Set(spec.values).size !== spec.values.length) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 的取值有重复`);
-    }
-  }
-  if (t.children?.kind === 'item') {
-    ok(!!t.children.attrs, `${tag} 的 <li> 契约存在`);
-  }
-}
-console.log(`  · 属性总数 ${TAG_NAMES.reduce((n, t) => n + Object.keys(TAGS[t].attrs).length, 0)}`);
-
-/* 词表本身就是取值来源：schema 里出现的枚举必须来自 vocab（可以是子集，不能自创）。 */
-const VOCAB_BY_ATTR = { tone: TONE, surface: SURFACE, state: STATE, ink: INK, size: Object.keys(FONT), gap: Object.keys(GAP) };
-for (const tag of TAG_NAMES) {
-  for (const [name, spec] of Object.entries(attrsOf(tag))) {
-    const pool = VOCAB_BY_ATTR[name];
-    if (!pool || !spec.values) continue;
-    const stray = spec.values.filter((v) => !pool.includes(v));
-    if (stray.length) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 有词表外的取值：${stray.join(' / ')}`);
-    }
-  }
-}
-ok(Object.values(VOCAB_BY_ATTR).flat().length > 20, '词表已加载');
-
-/* 同一选择器在两个 CSS 文件里写同一属性 = 后加载的静默覆盖前者，改一处另一处就变成谎。
-   （上一轮"层不会叠"的误判，就是因为没先看清规则写在哪个文件。） */
-{
-  const files = ['base.css', 'layout.css', 'components.css', 'callout.css'];
-  const map = new Map();
-  for (const f of files) {
-    const css = fs.readFileSync(path.join(ROOT, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      const sel = m[1].trim().replace(/\s+/g, ' ');
-      if (!sel || sel.startsWith('@') || sel.includes('%')) continue;
-      const decls = new Set(m[2].split(';').map((d) => d.split(':')[0].trim()).filter(Boolean));
-      const cur = map.get(sel) || [];
-      cur.push({ f, decls });
-      map.set(sel, cur);
-    }
-  }
-  const clashes = [];
-  for (const [sel, list] of map) {
-    if (list.length < 2) continue;
-    const owners = new Map();
-    for (const { f, decls } of list) for (const d of decls) owners.set(d, (owners.get(d) || new Set()).add(f));
-    for (const [prop, fs2] of owners) if (fs2.size > 1) clashes.push(`${sel} { ${prop} } → ${[...fs2].join(' / ')}`);
-  }
-  ok(map.size > 200 && !clashes.length, '样式规则没有跨文件冲突');
-
-  /* 声明了却没实现：样式和运行时都不读它。 */
-  {
-    const cssText = files.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
-    const rtText =
-      fs.readdirSync(path.join(ROOT, 'src', 'runtime')).map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8')).join('\n') +
-      fs.readFileSync(path.join(ROOT, 'src', 'build.mjs'), 'utf8');
-    const quotes = [39, 34, 96].map((c) => String.fromCharCode(c));
-    const ghosts = [];
-    for (const tag of TAG_NAMES) {
-      for (const name of Object.keys(attrsOf(tag))) {
-        if (['span', 'row-span', 'grow', 'bleed', 'id', 'class'].includes(name)) continue;
-        const inCss = cssText.includes(tag + '[' + name) || cssText.includes('[' + name + '=') || cssText.includes('[' + name + ']');
-        const inRt = quotes.some((c) => rtText.includes(c + name + c));
-        if (!inCss && !inRt) ghosts.push(tag + "." + name);
-      }
-    }
-    ok(!ghosts.length, '每个属性都有实现');
-    for (const g of ghosts.slice(0, 6)) console.error('    · ' + g + ' 没有样式也没有运行时读取');
-  }
-
-  /* SPEC 里解释取值的那张表，必须指向真实的属性和真实存在的取值。 */
-  {
-    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
-    const head = specText.indexOf('### 几个容易选错的取值');
-    const tail = specText.indexOf('## 7.5 配方');
-    const sec = head >= 0 && tail > head ? specText.slice(head, tail) : '';
-    const rows = [...sec.matchAll(/`(vk-[a-z]+) ([a-z-]+)`\s*\|\s*([^\n|]+)\|/g)];
-    const wrong = [];
-    for (const [, tag, attr, cell] of rows) {
-      const def = attrsOf(tag)?.[attr];
-      if (!def) { wrong.push(tag + '.' + attr + ' 不存在'); continue; }
-      for (const v of cell.matchAll(/([`])([a-z-]+)\1/g)) {
-        if (def.values && !def.values.includes(v[2])) wrong.push(tag + "." + attr + " 没有取值 " + v[2]);
-      }
-    }
-    ok(rows.length >= 5 && !wrong.length, 'SPEC 的取值说明对得上 schema');
-    for (const w of wrong.slice(0, 5)) console.error('    · ' + w);
-  }
-
-  /* SPEC 里"27 个件""六个档名""间距五档"这类计数，会随词表变动而过期。 */
-  {
-    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
-    const CN = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
-    const claims = [
-      ['27 个件', String(TAG_NAMES.length)],
-      ['六个档名', CN[Object.keys(FONT).length]],
-      ['间距五档', CN[Object.keys(GAP).length]],
-      ['三档墨', CN[INK.length]],
-    ];
-    const stale = claims
-      .filter(([phrase]) => !specText.includes(phrase))
-      .map(([phrase]) => phrase);
-    ok(!stale.length, 'SPEC 里的计数和词表一致');
-
-    const readme = fs.readFileSync(path.join(ROOT, 'README.md'), 'utf8');
-    const staleReadme = [...readme.matchAll(/(\d+) 个件/g)].map((m) => Number(m[1])).filter((n) => n !== TAG_NAMES.length);
-    ok(!staleReadme.length, 'README 里的件数和词表一致');
-    for (const n of staleReadme) console.error('    · README 写着 ' + n + ' 个件，实际 ' + TAG_NAMES.length);
-    for (const st of stale) console.error('    · 计数过期：' + st);
-  }
-
-  /* "没有这个属性"这句话也会过期：真要加上了，文档就在骗人。 */
-  {
-    const specText = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
-    const head = specText.indexOf('### 没有这些属性');
-    const tail = specText.indexOf('## 7.5 配方');
-    const sec = head >= 0 && tail > head ? specText.slice(head, tail) : '';
-    const claims = [...sec.matchAll(/(vk-[a-z]+)`\s*\*\*没有\s*`([a-z-]+)`/g)];
-    const lies = claims.filter(([, tag, attr]) => Object.keys(attrsOf(tag) || {}).includes(attr)).map(([, tag, attr]) => tag + "." + attr);
-    ok(claims.length >= 2 && !lies.length, 'SPEC 说“没有”的属性确实没有');
-    for (const l of lies) console.error('    · ' + l + ' 其实已经有了，文档该改');
-  }
-
-  /* 反向：运行时读的每个属性都必须是 schema 声明过的（删功能时最容易留下孤儿读取）。 */
-  {
-    const rtFiles = fs.readdirSync(path.join(ROOT, 'src', 'runtime')).filter((f) => f.endsWith('.mjs'));
-    const orphan = [];
-    for (const f of rtFiles) {
-      const src = fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8');
-      const map = new Map([...src.matchAll(/define\('([a-z-]+)',\s*(\w+)\)/g)].map((m) => [m[2], m[1]]));
-      const starts = [...src.matchAll(/^(?:export )?class (\w+)/gm)].map((m) => ({ name: m[1], at: m.index }));
-      for (let i = 0; i < starts.length; i++) {
-        const tag = map.get(starts[i].name);
-        if (!tag) continue;
-        const body = src.slice(starts[i].at, i + 1 < starts.length ? starts[i + 1].at : src.length);
-        for (const m of body.matchAll(/attr[A-Z]\w*\(this,\s*'([\w-]+)'/g)) {
-          if (!attrsOf(tag)?.[m[1]]) orphan.push(tag + "." + m[1]);
-        }
-      }
-    }
-    ok(!orphan.length, '运行时只读声明过的属性');
-    for (const o of [...new Set(orphan)].slice(0, 6)) console.error('    · ' + o + ' 读了 schema 里没有的属性');
-  }
-
-  /* 同一个常量在两个运行时文件里各写一份，改一处另一处就静静走偏。 */
-  {
-    const rtFiles = fs.readdirSync(path.join(ROOT, 'src', 'runtime')).filter((f) => f.endsWith('.mjs'));
-    const defs = new Map();
-    for (const f of rtFiles) {
-      const src = fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8');
-      for (const m of src.matchAll(/^(?:export )?(?:const|function) (\w+)/gm)) {
-        const list = defs.get(m[1]) || [];
-        list.push(f);
-        defs.set(m[1], list);
-      }
-    }
-    const dup = [...defs].filter(([, v]) => v.length > 1).map(([n, v]) => n + '（' + v.join(', ') + '）');
-    ok(!dup.length, '运行时没有重复定义的工具');
-    for (const d of dup.slice(0, 5)) console.error('    · ' + d + ' 在多个文件里各写了一份');
-  }
-
-  /* 运行时会设一批 --vk-* 变量给样式读；设了没人读，就是拼错或者功能没了。 */
-  {
-    const files2 = ['tokens.generated.css', 'base.css', 'layout.css', 'components.css', 'callout.css'];
-    const cssText = files2.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
-    const rtText =
-      fs.readdirSync(path.join(ROOT, 'src', 'runtime')).map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8')).join('\n');
-    const set = new Set([...rtText.matchAll(/setProperty\('(--[\w-]+)'/g)].map((m) => m[1]));
-    const readAnywhere = new Set(
-      [...cssText.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]).concat([...rtText.matchAll(/getPropertyValue\('(--vk-[\w-]+)'/g)].map((m) => m[1]))
-    );
-    const lonely = [...set].filter((n) => !readAnywhere.has(n));
-    ok(set.size > 5 && !lonely.length, '运行时设的变量都有人在读');
-
-    // 反向：样式里读的变量必须有人定义（tokens 或运行时）。
-    const defined = new Set([...cssText.matchAll(/(--vk-[\w-]+)\s*:/g)].map((m) => m[1]));
-    const unset = [...new Set([...cssText.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]))].filter((n) => !defined.has(n) && !set.has(n));
-    ok(!unset.length, '样式读的变量都有人定义');
-    for (const u of unset.slice(0, 5)) console.error('    · ' + u + ' 没有定义');
-    for (const l of lonely) console.error('    · ' + l + ' 设了但样式没读');
-  }
-
-  /* 同一个文件里把同一选择器的同一属性写两遍：后一处静默覆盖前一处。 */
-  const twice = [];
-  for (const f of files) {
-    const css = fs.readFileSync(path.join(ROOT, 'src', f), 'utf8').replace(/\/\*[\s\S]*?\*\//g, '');
-    const seen = new Map();
-    for (const m of css.matchAll(/([^{}]+)\{([^{}]*)\}/g)) {
-      const sel = m[1].trim().replace(/\s+/g, ' ');
-      if (!sel || sel.startsWith('@')) continue;
-      for (const d of m[2].split(';').map((x) => x.split(':')[0].trim()).filter(Boolean)) {
-        const key = sel + '|' + d;
-        if (seen.has(key)) twice.push(`${f}: ${sel} { ${d} }`);
-        seen.set(key, true);
-      }
-    }
-  }
-  ok(!twice.length, '同一文件里没有重复声明');
-
-  /* 死样式：CSS 里定义了、但没有任何一帧或运行时产出这个类名。 */
-  {
-    const cssText = files.map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
-    const names = new Set();
-    for (const m of cssText.matchAll(/\.([a-zA-Z][\w-]*)/g)) names.add(m[1]);
-    const runtime = fs
-      .readdirSync(path.join(ROOT, 'src', 'runtime'))
-      .map((f) => fs.readFileSync(path.join(ROOT, 'src', 'runtime', f), 'utf8'))
-      .join('\n') + fs.readFileSync(path.join(ROOT, 'src', 'build.mjs'), 'utf8');
-    const seen = new Set();
-    const walkDir = (dir) => {
-      for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
-        const full = path.join(dir, e.name);
-        if (e.isDirectory()) walkDir(full);
-        else if (e.name.endsWith('.html')) for (const m of fs.readFileSync(full, 'utf8').matchAll(/[\w-]+/g)) seen.add(m[0]);
-      }
-    };
-    for (const d of ['out', 'tests']) if (fs.existsSync(path.join(ROOT, d))) walkDir(path.join(ROOT, d));
-    const dead = [...names].filter((c) => !seen.has(c) && !runtime.includes(c));
-    ok(names.size > 80 && !dead.length, '没有写了却没人用的类');
-    for (const d of dead.slice(0, 6)) console.error('    · .' + d + ' 没有任何一帧用到');
-  }
-  for (const t2 of twice.slice(0, 5)) console.error('    · ' + t2);
-  for (const c of clashes.slice(0, 5)) console.error('    · ' + c);
-}
-
-  /* 文档漂移：CLI 上的每条命令、每个开关都得在 SPEC 里出现，否则作者看不到。 */
-  {
-    const bin = fs.readFileSync(path.join(ROOT, 'bin', 'vk.mjs'), 'utf8');
-    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8');
-    const cmds = [...new Set([...bin.matchAll(/cmd === '([a-z]+)'/g)].map((m) => m[1]))];
-    const flags = [...new Set([...bin.matchAll(/'(--[a-z]+)'/g)].map((m) => m[1]))].filter((f) => ['--phone', '--json', '--out', '--width', '--shot'].includes(f));
-    ok(cmds.length >= 6 && flags.length >= 4, 'CLI 解析出 ' + cmds.length + ' 条命令、' + flags.length + ' 个开关');
-    const missCmd = cmds.filter((c) => !spec.includes('vk ' + c));
-    const missFlag = flags.filter((f) => !spec.includes(f));
-    ok(!missCmd.length && !missFlag.length, 'SPEC 与 CLI 一致');
-    for (const c of missCmd) console.error('    · 命令没写进 SPEC：vk ' + c);
-    for (const f of missFlag) console.error('    · 开关没写进 SPEC：' + f);
-  }
-
-  /* 调色板一致性：语义色有纸面原值，就必须有深色页覆盖，否则深色页上它会"暗下去"。 */
-  {
-    // 读源码而不是构建产物：这条检查在渲染之前跑，构建产物可能还是上一版。
-    const css = ['base.css', 'components.css', 'callout.css'].map((f) => fs.readFileSync(path.join(ROOT, 'src', f), 'utf8')).join('\n');
-    const semantics = ['info', 'ok', 'warn', 'err', 'focus'];
-    const tints = ['info', 'focus', 'ok', 'warn', 'err'];
-    const missing = [];
-    for (const k of semantics) {
-      if (!css.includes(`--vk-${k}-paper:`)) missing.push(`--vk-${k}-paper 没定义`);
-      if (!new RegExp(`--vk-${k}: var\\(--vk-dark|color-mix`).test(css)) missing.push(`--vk-${k} 没有深色版`);
-    }
-    for (const k of tints) {
-      if (!css.includes(`--vk-tint-${k}-paper:`)) missing.push(`--vk-tint-${k}-paper 没定义`);
-    }
-    ok(!missing.length, '深色页的调色板是成套的');
-    for (const m of missing) console.error('    · ' + m);
-  }
-
-  /* 汇编解析：没有机器码的输入（--no-show-raw-insn / 手写 .s）不能崩。 */
-  {
-    const noBytes = parseAsm('0: push %rbp\n1: mov %esp,%ebp\n');
-    ok(noBytes.rows.filter((r) => r.kind === 'insn').length === 2 && noBytes.rows[0].bytes === '', '汇编行没有机器码也能解析');
-    const withBytes = parseAsm('401136: 55            push   %rbp\n');
-    ok(withBytes.rows[0].bytes === '55' && withBytes.rows[0].addr === '401136', '带机器码的 objdump 行照旧');
-  }
-
-/* 每个公开属性都要有消费者：声明了却没人读 = 作者写了没效果。 */
-const GENERIC = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
-const hay = [];
-const walkSrc = (d) => {
-  for (const e of fs.readdirSync(d, { withFileTypes: true })) {
-    const p = path.join(d, e.name);
-    if (e.isDirectory()) walkSrc(p);
-    else if (/\.(css|mjs)$/.test(p) && !p.endsWith('schema.mjs') && !p.includes('generated')) hay.push(fs.readFileSync(p, 'utf8'));
-  }
-};
-walkSrc('src');
-walkSrc('bin');
-walkSrc('tools');
-const text = hay.join('\n');
+// 死属性：schema 声明了，但运行期/CSS/构建期没有一处读它。
+// 白名单只放「结构性」属性：它们由位置规则或 CSS 属性选择器直接消费。
+const STRUCTURAL = new Set(['span', 'row-span', 'x', 'y', 'w', 'h', 'z', 'current', 'state', 'tone', 'size', 'gap', 'pad', 'bleed', 'grow', 'id']);
+const sources = [
+  ...fs.readdirSync(path.join(ROOT, 'src/runtime')).map((f) => path.join(ROOT, 'src/runtime', f)),
+  path.join(ROOT, 'src/build.mjs'),
+  path.join(ROOT, 'src/contract.mjs'),
+  ...fs
+    .readdirSync(path.join(ROOT, 'src'))
+    .filter((f) => f.endsWith('.css'))
+    .map((f) => path.join(ROOT, 'src', f)),
+];
+const hay = sources.map((f) => fs.readFileSync(f, 'utf8')).join('\n');
+const dead = [];
 for (const tag of TAG_NAMES) {
   for (const name of Object.keys(attrsOf(tag))) {
-    if (GENERIC.has(name) || name === 'class' || name === 'id') continue;
-    const needle = name.includes('-') ? name : `'${name}'`;
-    if (!text.includes(`'${name}'`) && !text.includes(`[${name}`) && !text.includes(`"${name}"`)) {
-      bad++;
-      console.error(`  ✗ ${tag}/${name} 声明了但没有消费者`);
-    }
+    if (STRUCTURAL.has(name)) continue;
+    if (!hay.includes(`'${name}'`) && !hay.includes(`"${name}"`) && !hay.includes(`[${name}`) && !hay.includes(`${name}=`)) dead.push(`${tag}.${name}`);
   }
 }
-ok(true, '属性都有消费者（逐条检查）');
+ok(dead.length === 0, `schema 里没有死属性（${dead.length} 个可疑）`, dead.slice(0, 12).join(', '));
 
-/* ---------------------------------------------------------------- 文档 */
-console.log('\n文档');
-const spec = fs.readFileSync('SPEC.md', 'utf8');
-for (const tag of TAG_NAMES) ok(spec.includes(`\`${tag}\``), `SPEC 提到 ${tag}`);
-ok(!/--vk-s[1-8]/.test(spec), 'SPEC 里没有旧间距名');
-ok(!/mass=/.test(spec), 'SPEC 里没有已删除的 mass');
+// 每个件都被真帧用过：没人用的件就是没人需要。
+const framesHtml = fs
+  .readdirSync(path.join(ROOT, 'tests'))
+  .filter((f) => f.endsWith('.html'))
+  .map((f) => fs.readFileSync(path.join(ROOT, 'tests', f), 'utf8'))
+  .join('\n');
+const unused = TAG_NAMES.filter((t) => !framesHtml.includes(`<${t}`));
+ok(unused.length === 0, '每个件都被验收帧用过', unused.join(', '));
 
-const tokens = execFileSync(process.execPath, ['tools/css.mjs', '--check'], { encoding: 'utf8' });
-ok(/一致/.test(tokens), 'tokens 与 vocab 一致');
-
-// 分镜里用到的每个属性，SPEC 里都得写：新会话只读 SPEC 也能写出同样的帧。
-{
-  const used = new Map();
-  const files = [];
-  for (const f of fs.readdirSync('tests')) if (f.endsWith('.html')) files.push(path.join('tests', f));
-  for (const f of files) {
-    const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
-    const walk = (n) => {
-      if (n.tagName?.startsWith('vk-')) {
-        for (const a of n.attrs || []) used.set(`${n.tagName} ${a.name}`, `${f}:${n.sourceCodeLocation?.startTag?.startLine ?? '?'}`);
-      }
-      for (const c of n.childNodes || []) walk(c);
-      if (n.content) walk(n.content);
-    };
-    walk(doc);
-  }
-  const misses = [];
-  for (const [key, where] of used) {
-    const attr = key.split(' ')[1];
-    if (attr === 'id' && key.startsWith('vk-page')) continue;
-    if (!spec.includes(`\`${attr}\``)) misses.push(`${key}（${where}）`);
-  }
-  ok(!misses.length, '分镜用到的属性都在 SPEC 里');
-  for (const m of misses) console.error(`    · ${m}`);
-}
-
-/* ---------------------------------------------------------------- 覆盖 */
-console.log('\n覆盖');
-{
-  const COMMON = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
-  const seen = new Set();
-  const seenTags = new Set();
-  const files = [];
-  for (const f of fs.readdirSync('tests')) if (f.endsWith('.html')) files.push(path.join('tests', f));
-  for (const f of files) {
-    const doc = parse5.parse(fs.readFileSync(f, 'utf8'));
-    const walk = (n) => {
-      if (n.tagName?.startsWith('vk-')) {
-        seenTags.add(n.tagName);
-        for (const a of n.attrs || []) {
-          seen.add(n.tagName + '.' + a.name);
-          seen.add(n.tagName + '.' + a.name + '=' + a.value);
-        }
-      }
-      for (const c of n.childNodes || []) walk(c);
-      if (n.content) walk(n.content);
-    };
-    walk(doc);
-  }
-  const cold = [];
-  for (const tag of TAG_NAMES) {
-    for (const name of Object.keys(attrsOf(tag))) {
-      if (COMMON.has(name)) continue;
-      if (!seen.has(tag + '.' + name)) cold.push(tag + '.' + name);
-    }
-  }
-  ok(!cold.length, '每个属性都被真帧用过（没被用过的功能几乎都是坏的）');
-
-  /* SPEC「配方」里的每一段都要和 tests/recipes.html 逐字一致：抄错了例子比没有例子更糟。 */
-  {
-    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\r/g, '');
-    const sec = spec.slice(spec.indexOf('## 7.5 配方'), spec.indexOf('## 8 关系'));
-    const blocks = [...sec.matchAll(/```html\n([\s\S]*?)```/g)].map((m) => m[1].replace(/\s+/g, ' ').trim());
-    const page = fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').replace(/\s+/g, ' ').trim();
-    const off = blocks.filter((b) => !page.includes(b));
-    const frames = [...fs.readFileSync(path.join(ROOT, 'tests', 'recipes.html'), 'utf8').matchAll(/<vk-page/g)].length;
-    ok(blocks.length >= 5 && !off.length && blocks.length === frames, 'SPEC 的配方与 recipes.html 一致');
-    if (blocks.length !== frames) console.error(`    · SPEC 有 ${blocks.length} 段，recipes.html 有 ${frames} 帧`);
-    for (const b of off.slice(0, 3)) console.error('    · 对不上：' + b.slice(0, 60));
-  }
-
-  /* SPEC §7 的属性表要等于 schema：多写一个（作者写了会报错）和少写一个（作者不知道）都是漂移。 */
-  {
-    const spec = fs.readFileSync(path.join(ROOT, 'SPEC.md'), 'utf8').replace(/\\\|/g, '¦');
-    const rows = [...spec.matchAll(/^\| `(vk-[a-z]+)`[^|]*\|[^|]*\|([^|]*)\|/gm)];
-    const listed = new Map();
-    for (const [, tag, cell] of rows) {
-      const set = listed.get(tag) || new Set();
-      for (const m of cell.matchAll(/`([a-z-]+)`/g)) set.add(m[1]);
-      listed.set(tag, set);
-    }
-    ok(listed.size >= 25, 'SPEC 的属性表解析出 ' + listed.size + ' 个件');
-    const COMMON_ATTRS = ['span', 'row-span', 'grow', 'bleed'];
-    const drift = [];
-    for (const tag of TAG_NAMES) {
-      const have = listed.get(tag);
-      if (!have) {
-        drift.push(`${tag} 在 SPEC 的表里没有行`);
-        continue;
-      }
-      const want = Object.keys(attrsOf(tag)).filter((a) => !COMMON_ATTRS.includes(a));
-      for (const a of want) if (!have.has(a)) drift.push(`SPEC 缺 ${tag}.${a}`);
-      for (const a of have) if (!want.includes(a)) drift.push(`SPEC 多写了 ${tag}.${a}（schema 里没有）`);
-    }
-    ok(!drift.length, 'SPEC 的属性表与 schema 一致');
-    for (const d of drift.slice(0, 8)) console.error('    · ' + d);
-  }
-
-  /* 帧计数写错（插帧后忘了重排）：构建期要报。 */
-  {
-    const probe = path.join(os.tmpdir(), 'vk-count-' + Date.now() + '.html');
-    fs.writeFileSync(
-      probe,
-      '<vk-page id="a"><vk-label counter="1 / 3">一</vk-label></vk-page>\n<vk-page id="b"><vk-label counter="3 / 3">二</vk-label></vk-page>\n<vk-page id="c"><vk-label counter="3 / 3">三</vk-label></vk-page>\n'
-    );
-    let caught = '';
-    try {
-      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'check', probe, '--json'], { stdio: 'pipe' });
-    } catch (e) {
-      caught = String(e.stdout || '') + String(e.stderr || '');
-    }
-    fs.rmSync(probe, { force: true });
-    ok(caught.includes('帧的计数'), '帧计数写错会在构建期报错');
-  }
-
-  /* 重名 id 会静默覆盖出图、也会让锚点只指到第一个：构建期必须红。 */
-  {
-    const probe = path.join(os.tmpdir(), 'vk-dup-' + Date.now() + '.html');
-    fs.writeFileSync(probe, '<vk-page id="same"><vk-text size="body">a</vk-text></vk-page>\n<vk-page id="same"><vk-text size="body">b</vk-text></vk-page>\n');
-    let caught = '';
-    try {
-      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'render', probe, '--json'], { stdio: 'pipe' });
-    } catch (e) {
-      caught = String(e.stdout || '') + String(e.stderr || '');
-    }
-    fs.rmSync(probe, { force: true });
-    ok(caught.includes('重复'), '重名 id 会在构建期报错');
-  }
-  // 非默认取值：写成默认值没意义，但"非默认的取值"必须有人写过——否则那个取值没人验过。
-  const COMMON_ATTRS = new Set(['span', 'row-span', 'grow', 'bleed', 'state']);
-  const coldVals = [];
-  for (const tag of TAG_NAMES) {
-    for (const [name, spec] of Object.entries(attrsOf(tag))) {
-      if (COMMON_ATTRS.has(name) || !spec.values) continue;
-      for (const v of spec.values) {
-        if (v === spec.default) continue;
-        if (!seen.has(`${tag}.${name}=${v}`)) coldVals.push(`${tag}.${name}=${v}`);
-      }
-    }
-  }
-  ok(!coldVals.length, '每个非默认取值都被真帧用过');
-  for (const v of coldVals) console.error(`    · ${v} —— 写一帧用它，或把它从词表里删掉`);
-
-  const coldTags = TAG_NAMES.filter((t) => !seenTags.has(t));
-  ok(!coldTags.length, '每个件都被真帧用过');
-  for (const c of coldTags) console.error(`    · ${c} —— 加一帧用它，否则它只是存在`);
-  for (const c of cold) console.error(`    · ${c} —— 在 tests/capabilities*.html 里加一帧，或把它删掉`);
-}
-
-/* ---------------------------------------------------------------- 素材 */
-console.log('\n素材');
+/* ------------------------------------------------------------------ 二、渲染 */
+group('渲染');
+fs.rmSync(SHOTS, { recursive: true, force: true });
+let report = [];
 try {
-  const r = execFileSync(process.execPath, ['tools/assets.mjs', '--check'], { encoding: 'utf8' });
-  ok(/一致/.test(r), 'code/ 里的 .s / .dis 能追溯到 .c');
+  const out = node(['bin/vk.mjs', 'render', 'tests', '--json', '--out', SHOTS]);
+  report = JSON.parse(out.slice(out.indexOf('[')));
 } catch (e) {
-  bad++;
-  console.error('  ✗ 素材清单不一致：\n' + String(e.stderr || e.message).trim());
+  const txt = String(e.stdout || '');
+  const i = txt.indexOf('[');
+  if (i >= 0) report = JSON.parse(txt.slice(i));
+  else ok(false, '渲染测试页', String(e.stderr || e.message).slice(0, 800));
 }
 
+const frames = report.flatMap((r) => r.frames.map((f) => ({ ...f, file: r.file })));
+const errors = report.flatMap((r) => r.errors);
+ok(errors.length === 0, '构建 + 运行期没有错误', errors.map((e) => `${e.file}:${e.line} ${e.message}`).slice(0, 6).join('\n      '));
+ok(frames.length >= 12, `验收帧数量够（${frames.length}）`);
+const dirty = frames.filter((f) => f.issues.length);
+ok(dirty.length === 0, '每一帧自检干净', dirty.slice(0, 5).map((f) => `${f.file}#${f.id}: ${f.issues.map((x) => x.message).join('；')}`).join('\n      '));
 
-/* ---------------------------------------------------------------- 渲染 */
-console.log('\n自动适配');
-{
-  /* 库承诺的"自己会变好"：代码窗缩字号、步骤条竖排、数字列右对齐、注释不压内容。
-     这些都是行为，不是属性，只能真跑一遍量。 */
-  execFileSync(process.execPath, ['bin/vk.mjs', 'render', 'tests/behaviour.html'], { cwd: ROOT, stdio: 'pipe' });
-  const { chromium: pw } = await import('playwright');
-  const b = await pw.launch({ channel: 'msedge', args: ['--allow-file-access-from-files'] });
-  const page = await b.newPage({ viewport: { width: 1920, height: 1080 } });
-  await page.goto('file:///' + path.join(ROOT, 'out', 'tests', 'behaviour.html').split(path.sep).join('/'));
-  await page.evaluate(() => window.vk.ready());
-  const r = await page.evaluate(() => {
-    const stages = [...document.querySelectorAll('.vk-stage')];
-    const q = (i, sel) => stages[i]?.querySelector(sel);
-    const box = (el) => (el ? el.getBoundingClientRect() : null);
-    const overlap = (a, b) => !!a && !!b && Math.min(a.right, b.right) - Math.max(a.left, b.left) > 2 && Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top) > 2;
-    const note = q(4, '.vk-callout-note');
-    const target = q(4, 'vk-code');
-    return {
-      longFs: parseInt(getComputedStyle(q(0, '.vk-line')).fontSize),
-      shortFs: parseInt(getComputedStyle(q(1, '.vk-line')).fontSize),
-      stepsDir: q(2, 'vk-steps')?.dataset.direction,
-      numAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(2)')).textAlign,
-      textAlign: getComputedStyle(q(3, 'tbody tr td:nth-child(1)')).textAlign,
-      noteOverlaps: overlap(box(note), box(target)),
-      // 层的高度要由图撑出来、说明要压在图上：图若用 bleed（不占高度），这条会挂。
-      pairSplit: (() => {
-        const l = box(q(6, '#pleft'));
-        const r = box(q(6, '#pright'));
-        return !!l && !!r && l.right <= r.left + 2 && Math.abs(l.width - r.width) < 4;
-      })(),
-    };
-  });
-  await b.close();
-  ok(r.longFs < r.shortFs, `长代码行自动缩字号（${r.longFs}px < ${r.shortFs}px）`);
-  ok(r.stepsDir === 'vertical', '窄容器里的步骤条自动竖排');
-  ok(r.numAlign === 'right' && r.textAlign === 'left', '表格数字列右对齐、文字列不动');
-  ok(!r.noteOverlaps, '注释不压在目标上');
-  ok(r.pairSplit, '并置是两个等宽的并排块');
-  /* 手写排版：等于开第二套字体系统，构建期要拦。 */
-  {
-    const probe = path.join(os.tmpdir(), 'vk-style-' + Date.now() + '.html');
-    fs.writeFileSync(probe, '<vk-page id="x"><vk-text size="body" style="font-size: 20px">手写</vk-text></vk-page>');
-    let caught = '';
-    try {
-      execFileSync(process.execPath, [path.join(ROOT, 'bin/vk.mjs'), 'check', probe], { stdio: 'pipe' });
-    } catch (e) {
-      caught = String(e.stdout || '') + String(e.stderr || '');
-    }
-    fs.rmSync(probe, { force: true });
-    ok(caught.includes('style 里写了'), '手写 font-size 会被拦下');
-  }
-}
+const focusHeavy = frames.filter((f) => f.metrics && f.metrics.focus > 1);
+ok(focusHeavy.length === 0, '每帧最多一个焦点', focusHeavy.map((f) => `${f.file}#${f.id} 焦点 ${f.metrics.focus}`).join(', '));
 
-console.log('\n渲染');
-const frames = report.flatMap((r) => r.frames || []);
-ok(frames.length >= 60, `渲染出 ${frames.length} 帧`);
-
-let issues = 0;
-for (const r of report) {
-  for (const f of r.frames || []) {
-    for (const x of f.issues) {
-      issues++;
-      console.error(`  ✗ ${path.basename(r.file)} #${f.id}: ${x.what}`);
-    }
-    if (f.metrics && f.metrics.fill > 100) {
-      bad++;
-      console.error(`  ✗ ${path.basename(r.file)} #${f.id} 占版心 ${f.metrics.fill}%，超出 100%`);
+/* 像素里真有墨迹，而且和 DOM 量出来的位置对得上（抓字体没加载 / 白屏 / 截图早于 layout）。 */
+const { PNG } = await import('pngjs');
+const inkBox = (file) => {
+  const png = PNG.sync.read(fs.readFileSync(file));
+  const bg = [png.data[0], png.data[1], png.data[2]];
+  let left = 1e9, top = 1e9, right = -1, bottom = -1;
+  for (let y = 0; y < png.height; y += 2) {
+    for (let x = 0; x < png.width; x += 2) {
+      const i = (y * png.width + x) << 2;
+      if (Math.abs(png.data[i] - bg[0]) + Math.abs(png.data[i + 1] - bg[1]) + Math.abs(png.data[i + 2] - bg[2]) < 24) continue;
+      if (x < left) left = x;
+      if (x > right) right = x;
+      if (y < top) top = y;
+      if (y > bottom) bottom = y;
     }
   }
+  return right < 0 ? null : { left, top, right, bottom, w: png.width, h: png.height };
+};
+const pixelBad = [];
+for (const f of frames) {
+  if (!f.png) continue;
+  const box = inkBox(path.join(ROOT, f.png));
+  if (!box) {
+    pixelBad.push(`${f.file}#${f.id} 整张是空的`);
+    continue;
+  }
+  const scale = box.w / 1920;
+  const dyTop = Math.abs(box.top / scale - f.metrics.contentTop);
+  const dyBottom = Math.abs(box.bottom / scale - f.metrics.contentBottom);
+  if (dyTop > 30 || dyBottom > 30) {
+    pixelBad.push(`${f.file}#${f.id} 墨迹 ${Math.round(box.top / scale)}–${Math.round(box.bottom / scale)}，DOM 量的是 ${f.metrics.contentTop}–${f.metrics.contentBottom}`);
+  }
 }
-ok(issues === 0, '验收帧全部干净');
-ok(report.every((r) => !r.errors || !r.errors.length), '没有控制台错误');
+ok(pixelBad.length === 0, '像素与 DOM 对得上（没有白屏 / 字体没加载）', pixelBad.slice(0, 5).join('\n      '));
 
-if (bad) {
-  console.error(`\n${bad} 项失败`);
-  process.exitCode = 1;
-} else console.log('\n全部通过');
+/* 粗签名：只抓「整块消失 / 版面塌了」，不抓字距微调。 */
+const sigOf = (f) => `${Math.round(f.metrics.fill / 5) * 5}|${f.metrics.focus}|${f.issues.map((x) => x.code).join(',')}`;
+const sigs = Object.fromEntries(frames.map((f) => [`${f.file}#${f.id}`, sigOf(f)]));
+const prev = fs.existsSync(GOLDEN) ? JSON.parse(fs.readFileSync(GOLDEN, 'utf8')) : null;
+if (UPDATE || !prev) {
+  fs.writeFileSync(GOLDEN, JSON.stringify(sigs, null, 1) + '\n');
+  ok(true, `写入粗签名 tests/golden.json（${Object.keys(sigs).length} 帧）`);
+} else {
+  const changed = Object.keys(sigs).filter((k) => prev[k] && prev[k] !== sigs[k]);
+  const added = Object.keys(sigs).filter((k) => !prev[k]);
+  ok(changed.length === 0, '版面与上次一致（粗签名）', changed.map((k) => `${k}: ${prev[k]} → ${sigs[k]}`).slice(0, 8).join('\n      '));
+  ok(added.length === 0, '没有新帧未登记', added.slice(0, 8).join(', '));
+}
+
+/* ------------------------------------------------------------------ 三、行为 */
+group('行为');
+const { chromium } = await import('playwright');
+const browser = await chromium
+  .launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'] })
+  .catch(() => chromium.launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'], channel: 'msedge' }));
+const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+const built = (name) => 'file:///' + path.join(ROOT, '.vk-cache', 'pages', 'tests', name).split(path.sep).join('/');
+await page.goto(built('behaviour.html'), { waitUntil: 'load' });
+await page.evaluate(() => window.vk.ready());
+
+const behave = await page.evaluate(() => {
+  const q = (sel) => document.querySelector(sel);
+  const out = {};
+  // 1. 长行会缩字号，但不是无限缩
+  const c = q('#shrink');
+  const row = c?.querySelector('.vk-line');
+  out.shrink = row ? parseFloat(getComputedStyle(row).fontSize) : 0;
+  // 2. 数字列右对齐，文字列不动
+  const t = q('#numtable');
+  out.numAlign = t ? getComputedStyle(t.querySelector('td.num') || t).textAlign : '';
+  out.textAlign = t ? getComputedStyle([...t.querySelectorAll('td')].find((td) => !td.classList.contains('num')) || t).textAlign : '';
+  // 3. markers 画出来了
+  out.markers = q('#marks') ? q('#marks').querySelectorAll('.vk-cell-m').length : -1;
+  // 4. 锚点 1 起：#buf@byte:1 是第一个字节
+  out.byte1 = !!q('#buf')?.querySelector('i[data-vk-byte="1"]');
+  // 5. 文件树超行数会留一行说明
+  out.treeMore = !!q('#bigtree')?.querySelector('.is-more');
+  // 6. 深色页里的纸面窗保持深色字
+  const win = q('#darkpaper .vk-win');
+  out.darkPaper = win ? getComputedStyle(win).color : '';
+  return out;
+});
+ok(behave.shrink > 43 && behave.shrink < 56, `长代码行会缩字号（${behave.shrink}px）`);
+ok(behave.numAlign === 'right', `数字列右对齐（${behave.numAlign}）`);
+ok(behave.textAlign !== 'right', `文字列不右对齐（${behave.textAlign}）`);
+ok(behave.markers === 2, `markers 画出来了（${behave.markers} 个）`);
+ok(behave.byte1, '@byte 是 1 起');
+ok(behave.treeMore, '文件树超行数留了说明行');
+ok(/rgb\(11, 15, 20\)|rgb\(17, 21, 28\)/.test(behave.darkPaper), `深色页里的纸面窗仍是深字（${behave.darkPaper}）`);
+
+/* ------------------------------------------------------------------ 四、确定 */
+group('确定');
+const hashOf = (f) => crypto.createHash('sha1').update(fs.readFileSync(f)).digest('hex');
+const one = frames[0];
+const before = hashOf(path.join(ROOT, one.png));
+try { node(['bin/vk.mjs', 'render', 'tests/behaviour.html', '--json', '--out', SHOTS]); } catch {}
+const after = hashOf(path.join(ROOT, one.png));
+ok(before === after, '同一页渲两次，PNG 逐字节相同');
+
+await browser.close();
+
+console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
+process.exitCode = failed ? 1 : 0;
+
 

@@ -1,10 +1,12 @@
-/* 基础：重置、舞台、六档字号与行高、墨阶、出血、深色页的调色板切换。
-   这里不放任何"某个件长什么样"的规则——那是 components.css 的事。 */
 /* ============================================================================
-   v17 · 底座
+   v18 · 底座
    ----------------------------------------------------------------------------
-   画布、版心、字阶、墨阶、状态。这一层只有"一帧怎样算立住"，不画任何具体件。
+   画布、版心、字阶、墨阶、状态。这一层只有「一帧怎样算立住」，不画任何具体件。
    所有数值来自 tokens.generated.css（由 vocab.mjs 生成）。
+
+   主题只有一条规则：谁声明表面，谁写 color-scheme。
+   所有颜色 token 都是 light-dark(纸面, 暗面)，所以一个面说一次，整棵子树自动正确，
+   三层嵌套也不会漏 —— 不靠继承的 color，也不靠运行期扫描。
    ========================================================================== */
 
 /* ------------------------------------------------------------------ 重置 */
@@ -22,6 +24,10 @@ body {
   color: var(--vk-ink-1);
   font-family: var(--vk-font-sans);
   -webkit-font-smoothing: antialiased;
+  /* 中文与西文/数字之间的自动间距，以及行首标点的挤压：
+     不写这两行，作者就得在「从 .c 到 .exe」里手打空格。 */
+  text-spacing-trim: trim-start;
+  text-autospace: normal;
 }
 
 body {
@@ -36,18 +42,17 @@ vk-page {
   height: var(--vk-canvas-h);
   overflow: hidden;
   background: var(--vk-paper);
-  font-family: var(--vk-font-sans);
   color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
+}
+
+/* 深色的一帧：一行 color-scheme，墨、线、语义色、淡底、语法色一起换。 */
+vk-page[surface='dark'] {
+  color-scheme: dark;
+  background: var(--vk-paper);
 }
 
 /* 版心：内容不越过的边界。三类对齐共用同一个盒子。 */
-/* 大标题排两行时把长度摊匀：第二行不会只剩一两个字。 */
-vk-text[size='headline'],
-vk-text[size='display'],
-vk-text[size='hero'] {
-  text-wrap: balance;
-}
-
 .vk-stage {
   position: relative;
   display: flex;
@@ -58,27 +63,6 @@ vk-text[size='hero'] {
   padding: var(--vk-margin-y) var(--vk-margin-x);
 }
 
-/* 深色的一帧：整张纸换掉，墨阶跟着换。 */
-vk-page[surface='dark'] {
-  background: var(--vk-dark-bg);
-  --vk-focus: var(--vk-dark-accent);
-  /* 语义色在近黑上要亮一档，否则线、图标、底标全都糊在背景里。 */
-  --vk-info: var(--vk-dark-accent);
-  --vk-ok: var(--vk-dark-ok);
-  --vk-warn: color-mix(in srgb, var(--vk-warn-paper) 45%, var(--vk-dark-fg));
-  --vk-err: color-mix(in srgb, var(--vk-err-paper) 45%, var(--vk-dark-fg));
-  /* 淡底也换：纸面淡底是浅的，深色页上要变成"暗底 + 一点语义色"。 */
-  --vk-tint-info: color-mix(in srgb, var(--vk-info) 24%, var(--vk-dark-bg1));
-  --vk-tint-focus: color-mix(in srgb, var(--vk-focus) 26%, var(--vk-dark-bg1));
-  --vk-tint-ok: color-mix(in srgb, var(--vk-ok) 24%, var(--vk-dark-bg1));
-  --vk-tint-warn: color-mix(in srgb, var(--vk-warn) 24%, var(--vk-dark-bg1));
-  --vk-tint-err: color-mix(in srgb, var(--vk-err) 24%, var(--vk-dark-bg1));
-  color: var(--vk-dark-fg);
-  --vk-ink-1: var(--vk-dark-fg);
-  --vk-ink-2: var(--vk-dark-fg2);
-  --vk-ink-3: var(--vk-dark-meta);
-}
-
 vk-page[align='top'] .vk-stage {
   justify-content: flex-start;
 }
@@ -86,111 +70,34 @@ vk-page[align='bottom'] .vk-stage {
   justify-content: flex-end;
 }
 
+/* ------------------------------------------------------------------ 面
+   任何声明了表面的容器都写 color-scheme：纸、软底、淡底是 light，深面是 dark。
+   组件自己的材质（代码窗）也走这一条规则，所以嵌几层都对。 */
+[surface='paper'],
+[surface='soft'],
+[surface='tint'] {
+  color-scheme: light;
+}
+[surface='dark'] {
+  color-scheme: dark;
+}
+
 /* ------------------------------------------------------------------ 字
-   一档字号 = 一个行盒高度（都是 4 的倍数）。行宽用 em，所以"一行几个字"
-   不随字号漂移。 */
-vk-text {
-  font-size: var(--vk-fs-body);
-  line-height: var(--vk-lh-body);
-  letter-spacing: var(--vk-track-body);
-}
-
-/* ------------------------------------------------------------------ 墨
-   四档墨只有三档：primary / secondary / muted。
-   muted 是"不读第二遍的字"，但在任何底色上都还 ≥4.5:1。 */
-[ink='secondary'] {
-  color: var(--vk-ink-2);
-}
-[ink='muted'] {
-  color: var(--vk-ink-3);
-}
-
-/* 语义色只出现在线、图标、底标上；文字档是同一支色相的深版。 */
-[tone='info'] {
-  --vk-tone: var(--vk-info);
-  --vk-tint: var(--vk-tint-info);
-}
-[tone='focus'] {
-  --vk-tone: var(--vk-focus);
-  --vk-tint: var(--vk-tint-focus);
-}
-[tone='ok'] {
-  --vk-tone: var(--vk-ok);
-  --vk-tint: var(--vk-tint-ok);
-}
-[tone='warn'] {
-  --vk-tone: var(--vk-warn);
-  --vk-tint: var(--vk-tint-warn);
-}
-[tone='err'] {
-  --vk-tone: var(--vk-err);
-  --vk-tint: var(--vk-tint-err);
-}
-[tone='neutral'] {
-  --vk-tone: var(--vk-ink-1);
-}
-
-/* 纸面墨阶的原值：自带纸底的件（窗口）用它把自己重置回纸面。 */
-:root {
-  /* 纸面语义色的原值：深色底会把这四个换掉，浅底件用它们把自己换回来。 */
-  --vk-tint-info-paper: var(--vk-tint-info);
-  --vk-tint-focus-paper: var(--vk-tint-focus);
-  --vk-tint-ok-paper: var(--vk-tint-ok);
-  --vk-tint-warn-paper: var(--vk-tint-warn);
-  --vk-tint-err-paper: var(--vk-tint-err);
-  --vk-info-paper: var(--vk-info);
-  --vk-ok-paper: var(--vk-ok);
-  --vk-warn-paper: var(--vk-warn);
-  --vk-err-paper: var(--vk-err);
-  --vk-focus-paper: var(--vk-focus);
-  --vk-on-paper-1: var(--vk-ink-1);
-  --vk-on-paper-2: var(--vk-ink-2);
-  --vk-on-paper-3: var(--vk-ink-3);
-}
-
-/* 深色底把墨阶整体换掉：正文、次要、弱化都变成暗色前景。 */
-vk-layer[surface='dark'],
-vk-box[surface='dark'] {
-  --vk-focus: var(--vk-dark-accent);
-  /* 语义色在近黑上要亮一档，否则线、图标、底标全都糊在背景里。 */
-  --vk-info: var(--vk-dark-accent);
-  --vk-ok: var(--vk-dark-ok);
-  --vk-warn: color-mix(in srgb, var(--vk-warn-paper) 45%, var(--vk-dark-fg));
-  --vk-err: color-mix(in srgb, var(--vk-err-paper) 45%, var(--vk-dark-fg));
-  /* 淡底也换：纸面淡底是浅的，深色页上要变成"暗底 + 一点语义色"。 */
-  --vk-tint-info: color-mix(in srgb, var(--vk-info) 24%, var(--vk-dark-bg1));
-  --vk-tint-focus: color-mix(in srgb, var(--vk-focus) 26%, var(--vk-dark-bg1));
-  --vk-tint-ok: color-mix(in srgb, var(--vk-ok) 24%, var(--vk-dark-bg1));
-  --vk-tint-warn: color-mix(in srgb, var(--vk-warn) 24%, var(--vk-dark-bg1));
-  --vk-tint-err: color-mix(in srgb, var(--vk-err) 24%, var(--vk-dark-bg1));
-  --vk-ink-1: var(--vk-dark-fg);
-  --vk-ink-2: var(--vk-dark-fg2);
-  --vk-ink-3: var(--vk-dark-meta);
-}
-
-/* ------------------------------------------------------------------ 状态
-   state 只有两个词：current（现在讲这里）/ mark（作者标了一下）。
-   语义对错用 tone，不要用 state。 */
-[state='current'] {
-  --vk-state: var(--vk-focus);
-}
-[state='mark'] {
-  --vk-state: var(--vk-info);
-}
-
-/* ------------------------------------------------------------------ 文字 */
+   一档字号 = 一个行盒（行高是无单位比例，代码窗缩字号时行盒跟着缩）。 */
 vk-text {
   display: block;
   margin: 0;
-  max-width: 25em;
+  max-width: var(--vk-measure-body);
+  font-size: var(--vk-fs-body);
+  line-height: var(--vk-lh-body);
+  letter-spacing: var(--vk-track-body);
   color: inherit;
   font-family: var(--vk-font-sans);
   text-wrap: pretty;
-  overflow-wrap: anywhere;
+  overflow-wrap: break-word;
   line-break: strict;
 }
 
-/* 行宽：写了 measure 就是"一行几个字"，不写按字号档。 */
 vk-text[size='caption'] {
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
@@ -229,7 +136,7 @@ vk-text[size='hero'] {
   max-width: var(--vk-measure-hero);
 }
 
-/* 短句均衡断行：标题最常出现的"孤字"（一块内 / 存。）由它兜住。 */
+/* 短句均衡断行：标题最常出现的「孤字」由它兜住。 */
 vk-text[size='headline'],
 vk-text[size='subhead'],
 vk-text[size='caption'] {
@@ -257,29 +164,75 @@ vk-text[align='left'] {
   margin-inline: 0 auto;
 }
 
-/* 尺寸逐字缩放：measure 写数字时是"一行几个字"，n 个字 = n em。 */
-vk-text[tone] {
-  color: var(--vk-tone);
+/* ------------------------------------------------------------ 墨与状态
+   三档墨 + 一个焦点色 + 四个语义色。语义色只出现在线、图标、底标上。 */
+[ink='secondary'] {
+  color: var(--vk-ink-2);
+}
+[ink='muted'] {
+  color: var(--vk-ink-3);
 }
 
-/* em：作者想让观众看这里。一条细下划线；跨行时由 text-decoration 自动断开。 */
+[tone='neutral'] {
+  --vk-tone: var(--vk-ink-1);
+  --vk-tint: var(--vk-soft);
+}
+[tone='info'] {
+  --vk-tone: var(--vk-info);
+  --vk-tint: var(--vk-tint-info);
+}
+[tone='focus'] {
+  --vk-tone: var(--vk-focus);
+  --vk-tint: var(--vk-tint-focus);
+}
+[tone='ok'] {
+  --vk-tone: var(--vk-ok);
+  --vk-tint: var(--vk-tint-ok);
+}
+[tone='warn'] {
+  --vk-tone: var(--vk-warn);
+  --vk-tint: var(--vk-tint-warn);
+}
+[tone='err'] {
+  --vk-tone: var(--vk-err);
+  --vk-tint: var(--vk-tint-err);
+}
+
+/* state 只有两个词：current（现在讲这里）/ mark（作者标了一下）。
+   语义对错用 tone，不要用 state。 */
+[state='current'] {
+  --vk-state: var(--vk-focus);
+}
+[state='mark'] {
+  --vk-state: var(--vk-info);
+}
+
+/* ------------------------------------------------------------ 强调
+   em：作者想让观众看这里（一条细下划线，跨行自动断开）。
+   mark：荧光笔底，用于「这一段原文」而不是整句。 */
 vk-text em {
   font-style: normal;
   text-decoration: underline;
-  text-decoration-color: var(--vk-info);
-  text-decoration-thickness: 0.045em;
-  text-underline-offset: 0.18em;
+  text-decoration-color: var(--vk-focus);
+  text-decoration-thickness: 0.05em;
+  text-underline-offset: 0.16em;
 }
 vk-text strong {
   font-weight: var(--vk-w-bold);
+}
+vk-text mark {
+  color: inherit;
+  background: var(--vk-tint-focus);
+  padding: 0 0.12em;
+  border-radius: var(--vk-radius-md);
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
 vk-text[state='current'] {
   color: var(--vk-tone, var(--vk-focus));
 }
 
 /* 图标与文字共存：图标是 1em 的字形，挂在文字前面。 */
-
-/* 图标：1em 见方、跟着文字基线走。不限制的话内联 SVG 会按默认 300×150 撑开整段。 */
 .vk-ic {
   display: inline-flex;
   flex: 0 0 auto;
@@ -288,33 +241,41 @@ vk-text[state='current'] {
   vertical-align: -0.14em;
   margin-right: 0.35em;
 }
-
 .vk-ic svg {
   width: 100%;
   height: 100%;
 }
 
-/* ------------------------------------------------------------------ 工具 */
-[bleed='all'] {
-  margin: calc(var(--vk-margin-y) * -1) calc(var(--vk-margin-x) * -1);
+/* ------------------------------------------------------------ 数字
+   表格、地址、条值、代码行号、时间：凡是「要对齐的数字」都用等宽数字。 */
+vk-table,
+vk-cells,
+vk-bytes,
+vk-bits,
+vk-bars,
+vk-timeline,
+vk-steps,
+.vk-win {
+  font-variant-numeric: tabular-nums;
 }
 
-/* 内容压在整帧背景之上：flex 子项的 z-index 不需要 position 就生效。 */
-/* 深色底上的重点线：--vk-info 在近黑上太暗，换暗色系的强调色。 */
-vk-page[surface='dark'] vk-text em,
-vk-box[surface='dark'] vk-text em,
-vk-layer[surface='dark'] vk-text em {
-  text-decoration-color: var(--vk-dark-accent);
-}
-
-.vk-stage > * {
-  z-index: 1;
-}
+/* ------------------------------------------------------------------ 出血
+   只有横向出血是安全的：负的外边距不会让后面的兄弟位移。
+   整帧出血（all）只给图：它走绝对定位，从文档流里摘出去，不影响别人。
+   纵向出血会拉动兄弟，所以没有这个取值。 */
 [bleed='x'] {
   margin-inline: calc(var(--vk-margin-x) * -1);
 }
-[bleed='y'] {
-  margin-block: calc(var(--vk-margin-y) * -1);
+vk-img[bleed='all'] {
+  position: absolute;
+  inset: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  margin: 0;
+}
+.vk-stage > * {
+  z-index: 1;
 }
 
 /* 只给读屏/调试用，不出现在画面上。 */

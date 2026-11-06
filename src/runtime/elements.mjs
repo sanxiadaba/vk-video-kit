@@ -1,4 +1,4 @@
-import { VkElement, define, attrText, attrSpace, esc, warn, takeSlot, fillSlot } from './base.mjs';
+import { VkElement, define, attrText, attrEnum, attrSpace, esc, warn, takeSlot, fillSlot } from './base.mjs';
 
 /* ------------------------------------------------------------------ 文字 */
 /** 文字是纯 CSS 的：size / ink / tone / align 都由属性选择器完成。 */
@@ -66,7 +66,9 @@ export class VkImg extends VkElement {
     const src = attrText(this, 'src');
     const alt = attrText(this, 'alt');
     const ratio = attrText(this, 'ratio');
-    const fill = this.getAttribute('fill') === 'contain' ? 'contain' : 'cover';
+    // 默认完整显示（contain）：截图里的字被裁掉是静默的数据丢失，要裁得作者自己写 cover。
+    const burst = this.getAttribute('bleed') === 'all';
+    const fill = attrEnum(this, 'fill', burst ? 'cover' : 'contain');
     const pos = attrText(this, 'position', '50% 50%');
     if (!src) {
       warn(this, '缺 src');
@@ -142,3 +144,4 @@ export function defineElements() {
   define('vk-img', VkImg);
   define('vk-box', VkBox);
 }
+

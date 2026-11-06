@@ -2,12 +2,8 @@
   "adt/array.c": {
     "src": "adt/array.c",
     "srcHash": "a98d407e309dd5d1",
-    "outputs": {
-      "adt/array.exe": "d960104fe82077e8"
-    },
-    "needs": [
-      "adt/array.exe"
-    ]
+    "outputs": {},
+    "needs": []
   },
   "bsearch/bsearch.c": {
     "src": "bsearch/bsearch.c",

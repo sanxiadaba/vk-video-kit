@@ -1,6 +1,8 @@
-/* 圈选层：ring / arrow / bracket / side 与说明气泡。绝对定位覆盖整帧，不属于任何件。 */
 /* ============================================================================
-   v17 · 关系层样式
+   v18 · 关系层
+   ----------------------------------------------------------------------------
+   ring / arrow / bracket / side 与说明气泡：绝对定位覆在整帧上，不属于任何件。
+   颜色只走 var(--vk-tone) / 墨阶：深色页由 color-scheme 自动换，没有第二套。
    ========================================================================== */
 
 vk-callout {
@@ -14,21 +16,28 @@ vk-callout {
   z-index: 3;
   pointer-events: none;
 }
-
 .vk-callout-svg {
   position: absolute;
   inset: 0;
   overflow: visible;
   pointer-events: none;
 }
-
+/* 线宽只有一个来源：SVG 的 presentation attribute（JS 里写的 stroke-width）优先级最低，
+   这一条覆盖它。改 vocab 的 LINE_W，箭头和圈一起变。 */
+.vk-callout-svg path,
+.vk-callout-svg line,
+.vk-callout-svg rect,
+.vk-callout-svg ellipse,
+.vk-callout-svg circle {
+  stroke-width: var(--vk-line-w-rule);
+}
 .vk-callout-bd {
   position: absolute;
   pointer-events: none;
 }
 
 .vk-callout-note {
-  max-width: 720px;
+  max-width: calc(var(--vk-safe-w) * 0.43);
   padding: var(--vk-gap-close) var(--vk-gap-normal);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
@@ -36,7 +45,7 @@ vk-callout {
   color: var(--vk-ink-1);
   font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
-  line-height: 1.35;
+  line-height: var(--vk-lh-caption);
   text-wrap: pretty;
 }
 
@@ -54,10 +63,10 @@ vk-callout {
 }
 
 .vk-callout-label {
-  translate: -50% -135%;
+  translate: -50% calc(-100% - var(--vk-gap-close));
   color: var(--vk-ink-2);
   font-size: var(--vk-fs-caption);
-  line-height: 1.4;
+  line-height: var(--vk-lh-caption);
   white-space: nowrap;
 }
 
@@ -65,37 +74,13 @@ vk-callout {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: calc(var(--vk-inset-xl) + var(--vk-inset-xs));
+  height: calc(var(--vk-inset-xl) + var(--vk-inset-xs));
   translate: -50% -50%;
-  border-radius: 50%;
+  border-radius: var(--vk-radius-pill);
   background: var(--vk-tone, var(--vk-info));
   color: var(--vk-paper);
   font-family: var(--vk-font-mono);
-  font-size: 36px;
+  font-size: var(--vk-fs-caption);
   line-height: 1;
-}
-
-/* ------------------------------------------------------------------ 深色页
-   语义色在近黑上都偏暗：标注的线、圈、编号要亮一档才看得见。 */
-vk-page[surface='dark'] .vk-callout-badge {
-  color: var(--vk-dark-bg);
-}
-vk-page[surface='dark'] .vk-callout:not([tone]) {
-  --vk-tone: var(--vk-dark-accent);
-}
-vk-page[surface='dark'] .vk-callout[tone='info'] {
-  --vk-tone: var(--vk-dark-accent);
-}
-vk-page[surface='dark'] .vk-callout[tone='ok'] {
-  --vk-tone: var(--vk-dark-ok);
-}
-vk-page[surface='dark'] .vk-callout[tone='warn'] {
-  --vk-tone: color-mix(in srgb, var(--vk-warn) 45%, var(--vk-dark-fg));
-}
-vk-page[surface='dark'] .vk-callout[tone='err'] {
-  --vk-tone: color-mix(in srgb, var(--vk-err) 45%, var(--vk-dark-fg));
-}
-vk-page[surface='dark'] .vk-callout[tone='focus'] {
-  --vk-tone: var(--vk-dark-accent);
 }

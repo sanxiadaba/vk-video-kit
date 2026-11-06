@@ -1,28 +1,29 @@
-import { VkElement, define, attrLines, attrEnum } from './base.mjs';
-import { FONT_FLOOR as FLOOR } from '../vocab.mjs';
+import { VkElement, define, attrLines, attrEnum, warn } from './base.mjs';
+import { FONT, FONT_FLOOR } from '../vocab.mjs';
 
 /**
  * 代码 / 终端 / 差异 / 汇编：构建期已经把行和高亮排好了，
- * 运行期只做两件事：标出"哪一行是当前"，以及**装不下时按比例缩小字号**。
+ * 运行期只做两件事：标出「哪一行是当前」，以及**装不下时按比例缩小字号**。
  *
- * 自适应是这本库的态度：默认不折行、不裁掉内容，组件自己保证装得下，
- * 而不是让作者去猜"这行会不会被切掉"。
+ * size 是上限，不是合同：写 body 表示「最多 56px」，放不下时组件会缩，
+ * 缩到 44px 地板还放不下，就交给自检报「文字被裁」——不静默切掉。
  */
-const BASE = 56;
+const sizePx = (tier) => FONT[tier] || FONT.body;
 
 function fitToBox(host) {
   const win = host.querySelector('.vk-win');
-  if (!win || host.hasAttribute('size')) return;
-  host.style.setProperty('--vk-cs', BASE + 'px');
-  // 从基准字号往下试：行号列不随字号等比缩，所以一步算不准，迭代到收敛。
-  for (let i = 0; i < 5; i++) {
+  if (!win) return;
+  const start = sizePx(attrEnum(host, 'size') || 'body');
+  host.style.setProperty('--vk-cs', `${start}px`);
+  // 从起始字号往下试：行号列不随字号等比缩，所以一步算不准，迭代到收敛。
+  for (let i = 0; i < 6; i++) {
     let need = 0;
     for (const row of host.querySelectorAll('[data-vk-line]')) need = Math.max(need, row.scrollWidth);
     const have = win.clientWidth;
-    const cs = Number.parseFloat(host.style.getPropertyValue('--vk-cs')) || BASE;
+    const cs = Number.parseFloat(host.style.getPropertyValue('--vk-cs')) || start;
     if (!need || !have) return;
     if (need <= have - 4) return;
-    const next = Math.max(FLOOR, cs * ((have - 6) / need));
+    const next = Math.max(FONT_FLOOR, cs * ((have - 6) / need));
     if (Math.abs(next - cs) < 0.4) return;
     host.style.setProperty('--vk-cs', next.toFixed(2) + 'px');
   }
@@ -54,7 +55,6 @@ export class VkCode extends VkElement {
       this.stale('缺少预编译的代码');
       return;
     }
-    this.style.setProperty('--vk-cs', `var(--vk-fs-${attrEnum(this, 'size', 'body')})`);
     paintState(this);
     this.registerPlace();
   }
@@ -68,11 +68,13 @@ export class VkCode extends VkElement {
     for (const old of this.querySelectorAll('.vk-mark')) old.replaceWith(...old.childNodes);
     const word = (this.getAttribute('mark') || '').trim();
     if (!word) return;
+    let hit = 0;
     for (const src of this.querySelectorAll('.vk-src')) {
       const walker = document.createTreeWalker(src, NodeFilter.SHOW_TEXT);
       const targets = [];
       for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent.includes(word)) targets.push(n);
       for (const node of targets) {
+        hit++;
         const parts = node.textContent.split(word);
         const frag = document.createDocumentFragment();
         parts.forEach((p, i) => {
@@ -87,6 +89,7 @@ export class VkCode extends VkElement {
         node.replaceWith(frag);
       }
     }
+    if (!hit) warn(this, `mark="${word}" 在这个窗口里找不到：它是一段原文，不是正则`);
   }
 }
 
@@ -97,9 +100,6 @@ export class VkTerm extends VkElement {
       return;
     }
     paintState(this);
-    // 写了 size 就按它来（fitToBox 不再改字号）；没写则由 fitToBox 自适应。
-    if (this.hasAttribute('size')) this.style.setProperty('--vk-cs', `var(--vk-fs-${attrEnum(this, 'size', 'body')})`);
-    else this.style.removeProperty('--vk-cs');
     this.registerPlace();
   }
 

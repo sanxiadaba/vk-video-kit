@@ -1,8 +1,8 @@
-/* 排布：grid / stack / pair / layer / canvas 的内部位置关系，以及每类件在舞台上的定位。
-   只写"在哪儿、多宽多高"，不写颜色和字体（后者归 components.css）。 */
 /* ============================================================================
-   v17 · 排布
-   只输出位置与尺寸，自己不画任何东西。间距只走 gap，库里不出现 margin。
+   v18 · 排布
+   ----------------------------------------------------------------------------
+   只写「在哪儿、多宽多高」，不画任何东西。
+   间距只走 gap；这里不出现 margin，出现的位置计算全部用 token。
    ========================================================================== */
 
 .vk-stage > * {
@@ -23,7 +23,6 @@ vk-stack {
   padding: var(--vk-pad, 0);
   min-width: 0;
 }
-
 vk-stack[direction='row'] {
   flex-direction: row;
 }
@@ -73,7 +72,6 @@ vk-grid {
   padding: var(--vk-pad, 0);
   min-width: 0;
 }
-
 vk-grid > * {
   min-width: 0;
 }
@@ -117,15 +115,14 @@ vk-canvas {
   min-width: 0;
 }
 
-/* ------------------------------------------------------------------ 叠层 */
+/* ------------------------------------------------------------------ 叠层
+   只负责叠：叠放顺序就是 DOM 顺序，全部定为 relative，后写的压在上面。 */
 vk-layer {
   position: relative;
   display: grid;
+  padding: var(--vk-pad, 0);
   min-width: 0;
 }
-
-/* 叠放顺序就是 DOM 顺序：全部定为 relative，后写的压在上面。
-   否则定位过的子项（比如 vk-img）会盖住后面那些静态的。 */
 vk-layer > * {
   grid-area: 1 / 1;
   position: relative;
@@ -139,54 +136,61 @@ vk-pair {
   display: grid;
   grid-template-columns:
     calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2)
-    calc((100 - var(--vk-split, 50)) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
+    calc(100% - var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
   gap: var(--vk-gap, var(--vk-gap-wide));
   min-width: 0;
 }
-
 vk-pair[direction='vertical'] {
   grid-template-columns: minmax(0, 1fr);
   grid-template-rows:
     calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2)
-    calc((100 - var(--vk-split, 50)) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
+    calc(100% - var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2);
 }
 
-/* 中轴：一条 2px 的线，落在两块之间。 */
+/* 中轴：一条结构线，落在两块之间。 */
 vk-pair[data-axis]::before {
   content: '';
   position: absolute;
-  left: calc(var(--vk-split, 50) * 1% - var(--vk-gap, var(--vk-gap-wide)) / 2 + var(--vk-gap, var(--vk-gap-wide)) / 2);
-  top: 8%;
-  height: 84%;
+  left: calc(var(--vk-split, 50) * 1%);
+  top: var(--vk-gap-wide);
+  bottom: var(--vk-gap-wide);
   width: var(--vk-line-w-rule);
   translate: -50% 0;
   background: var(--vk-line-strong);
 }
-
 vk-pair[direction='vertical'][data-axis]::before {
-  left: 8%;
   top: calc(var(--vk-split, 50) * 1%);
-  width: 84%;
+  right: var(--vk-gap-wide);
+  left: var(--vk-gap-wide);
+  width: auto;
   height: var(--vk-line-w-rule);
   translate: 0 -50%;
 }
 
-/* 轴上的符号：→ / = / vs。 */
+/* 对照的乐趣在于「一样宽才好比」：并置里的窗口铺满各自那一栏。 */
+vk-pair vk-code .vk-win,
+vk-pair vk-diff .vk-win,
+vk-pair vk-asm .vk-win,
+vk-pair vk-term .vk-win,
+vk-pair vk-img img {
+  width: 100%;
+}
+
+/* 轴上的符号：→ / = / vs。缝宽由 runtime 撑到 section，这里只管排版。 */
 vk-pair[data-symbol]::after {
   content: attr(data-symbol);
   position: absolute;
   left: calc(var(--vk-split, 50) * 1%);
   top: 50%;
   translate: -50% -50%;
-  padding: 0 var(--vk-gap-close);
+  padding: 0 var(--vk-inset-sm);
   background: var(--vk-paper);
   color: var(--vk-ink-2);
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   line-height: 1;
   white-space: nowrap;
 }
-
 vk-pair[direction='vertical'][data-symbol]::after {
   left: 50%;
   top: calc(var(--vk-split, 50) * 1%);

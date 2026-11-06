@@ -27,10 +27,6 @@ const RECIPES = [
       { file: 'opt/add-o2.dis', sliceOf: 'opt/o2.dis', symbol: '_add' },
     ],
   },
-  {
-    src: 'adt/array.c',
-    outputs: [{ file: 'adt/array.exe', cmd: ['gcc', '-std=gnu99', '-O2', 'adt/array.c', '-o', 'adt/array.exe'] }],
-  },
 ];
 
 function walkC(dir, out = []) {
@@ -131,3 +127,4 @@ function check() {
 
 if (process.argv.includes('--check')) check();
 else generate();
+

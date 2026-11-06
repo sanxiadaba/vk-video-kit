@@ -1,18 +1,23 @@
 /**
- * 构建期：读作者页 → 校验 → 把"要算的东西"算好 → 写 out/<同路径>。
+ * 构建期：读作者页 → 校验 → 把"要算的东西"算好 → 写出去。
  *
- * 只改 out/，永不改源文件。产物路径与源同深度，所以作者写的 ../assets / ../vk
- * 在 out/ 里仍然指得到（out/ 里有一份镜像的 vk / dist / assets）。
+ * 只写 .vk-cache/pages/，永不改源文件。产物里所有库地址都是绝对 file://，
+ * 所以出图不需要再复制一份 vk/ dist/ assets/。
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { parse } from 'parse5';
+import { pathToFileURL } from 'node:url';
+import { parse, parseFragment } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
-import { TAGS, attrsOf, CANVAS_ATTRS, TAG_NAMES } from './schema.mjs';
+import { CANVAS_ATTRS } from './schema.mjs';
 import { GAP } from './vocab.mjs';
+import { validate } from './contract.mjs';
 import { dedent, expandLeadingTabs, stripAnsi, lineSet, LANG_ALIAS, SUPPORTED_LANGS, inferLang } from './shared/code.mjs';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
+
+const ROOT = path.resolve(import.meta.dirname, '..');
+
 
 /* ---------------------------------------------------------------- 工具 */
 
@@ -100,169 +105,10 @@ function sliceRange(text, spec) {
   return { start: a, lines: lines.slice(a - 1, Math.max(a, b)) };
 }
 
-/* ---------------------------------------------------------------- 校验 */
-
-const SUGGEST = (name, pool) => {
-  let best = '';
-  let dist = 99;
-  for (const p of pool) {
-    const d = editDistance(name, p);
-    if (d < dist) {
-      dist = d;
-      best = p;
-    }
-  }
-  return dist <= 2 ? best : '';
-};
-function editDistance(a, b) {
-  const m = a.length;
-  const n = b.length;
-  const dp = Array.from({ length: m + 1 }, (_, i) => [i]);
-  for (let j = 1; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++)
-    for (let j = 1; j <= n; j++) dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-  return dp[m][n];
-}
-
-/** node 是不是 page 的后代（parse5 的节点只有 parentNode）。 */
-function within(node, page) {
-  let n = node;
-  while (n) {
-    if (n === page) return true;
-    n = n.parentNode;
-  }
-  return false;
-}
-
-function validate(root, file, errors) {
-  const all = flatten(root);
-  const idSeen = {};
-
-  /* 帧计数：<vk-label counter="3 / 9"> 要和实际顺序、总数对得上。
-     中间插一帧就得全体重排，靠人眼很容易漏。 */
-  const pages = all.filter((n) => n.tagName === 'vk-page');
-  // 只有当每一帧都写了 "N / M" 才算帧计数；只写了一条的多半是栏目标签。
-  const counterOf = (pg) => {
-    const label = all.find((n) => n.tagName === 'vk-label' && within(n, pg));
-    return (label?.attrs || []).find((a) => a.name === 'counter')?.value || '';
-  };
-  const allNumbered = pages.length > 1 && pages.every((pg) => /^\d+\s*\/\s*\d+$/.test(counterOf(pg)));
-  if (allNumbered) {
-    pages.forEach((pg, i) => {
-      const value = counterOf(pg);
-      const m = String(value).match(/^(\d+)\s*\/\s*(\d+)$/);
-      if (!m) return;
-      const [n, total] = [Number(m[1]), Number(m[2])];
-      if (n !== i + 1) errors.push(`${file}:${lineOf(pg)} 第 ${i + 1} 帧的计数写成了 "${value}"（应是 ${i + 1} / ${pages.length}）`);
-      else if (total !== pages.length) errors.push(`${file}:${lineOf(pg)} 帧总数写成了 ${total}，这个文件有 ${pages.length} 帧`);
-    });
-  }
-  for (const node of all) {
-    const tag = node.tagName;
-    if (!tag?.startsWith('vk-')) continue;
-    if (!TAGS[tag]) {
-      const hint = SUGGEST(tag, TAG_NAMES);
-      errors.push(`${file}:${lineOf(node)} 未知标签 <${tag}>${hint ? `，是想写 <${hint}>？` : ''}`);
-      continue;
-    }
-    const spec = attrsOf(tag);
-    const parent = node.parentNode?.tagName;
-    for (const { name, value } of node.attrs || []) {
-      if (name === 'style') {
-        // 排版只有一个来源：size / ink / weight。手写这几样等于开第二套字体系统。
-        const bad = String(value).match(/(?:^|;)\s*(font-size|line-height|color|font-family|font-weight|letter-spacing)\s*:/i);
-        if (bad) {
-          errors.push(
-            `${file}:${lineOf(node)} <${tag}> 的 style 里写了 ${bad[1]}：排版只走 size / ink / weight / align，不要手写`
-          );
-        }
-        continue;
-      }
-      if (name.startsWith('data-') || name.startsWith('aria-') || ['id', 'class', 'title', 'role', 'hidden'].includes(name)) continue;
-      const def = spec[name];
-      const canvasOk = parent === 'vk-canvas' && name in CANVAS_ATTRS;
-      if (!def && !canvasOk) {
-        const hint = SUGGEST(name, Object.keys(spec));
-        errors.push(`${file}:${lineOf(node)} <${tag}> 不认识属性 ${name}="${value}"${hint ? `，是想写 ${hint}？` : `；可用：${Object.keys(spec).join(', ')}`}`);
-        continue;
-      }
-      const s = def || CANVAS_ATTRS[name];
-      if (s.values && !s.values.includes(value)) {
-        errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${value}" 不在词表里；可用：${s.values.join(' / ')}`);
-      }
-      if (s.type === 'bool' && value !== '' && value !== 'true') {
-        errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name} 是开关，只写 ${name} 就行`);
-      }
-      if (s.type === 'index' && !/^-?\d+$/.test(value)) {
-        errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${value}" 要是整数（1 起；-1 = 没有）`);
-      }
-      if (s.type === 'space' && !(value in GAP) && !/^\d+(\.\d+)?(px)?$/.test(value)) {
-        errors.push(`${file}:${lineOf(node)} <${tag}> 的 ${name}="${value}" 不是间距；可用：${Object.keys(GAP).join(' / ')} 或像素数`);
-      }
-      // 有的属性只在某几种形态下有用：写错形态它就是个哑属性，构建期就说清楚。
-      if (s.modes) {
-        const modeAttr = (node.attrs || []).find((a) => a.name === 'mode');
-        const mode = modeAttr?.value ?? spec.mode?.default ?? '';
-        if (mode && !s.modes.includes(mode)) {
-          errors.push(
-            `${file}:${lineOf(node)} <${tag}> 的 ${name} 只在 mode=${s.modes.map((m) => '\u201c' + m + '\u201d').join(' / ')} 时有用；现在的 mode 是 ${mode}，这个属性不会生效`
-          );
-        }
-      }
-    }
-    // span 只在 grid 子项上成立；x/y 只在 canvas 子项上。
-    if (node.attrs?.some((a) => a.name === 'span' || a.name === 'row-span') && parent !== 'vk-grid') {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 的 span 只属于 <vk-grid> 的直接子项（父级是 <${parent || '无'}>）`);
-    }
-    const spanAttr = node.attrs?.find((a) => a.name === 'span');
-    if (spanAttr && parent === 'vk-grid') {
-      const cols = Number(attrOf(node.parentNode, 'cols') || 2);
-      if (Number(spanAttr.value) > cols) {
-        errors.push(
-          `${file}:${lineOf(node)} <${tag}> 的 span="${spanAttr.value}" 超过父级 cols="${cols}"：这一行会被挤到下一行。改 span 或改 cols`
-        );
-      }
-    }
-    if (node.attrs?.some((a) => ['x', 'y', 'w', 'h', 'z'].includes(a.name)) && parent !== 'vk-canvas' && tag !== 'vk-canvas') {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 的 x / y / w / h / z 只在 <vk-canvas> 的子项上成立（父级是 <${parent || '无'}>）`);
-    }
-    // id 是锚点和出图文件名的依据：重了就是静默覆盖，必须当场说。
-    const idAttr = node.attrs?.find((a) => a.name === 'id');
-    if (idAttr) {
-      const scope = tag === 'vk-page' ? 'page' : 'el';
-      const seen = (idSeen[scope] ||= new Map());
-      if (seen.has(idAttr.value)) {
-        const what = scope === 'page' ? '帧 id' : 'id';
-        errors.push(
-          `${file}:${lineOf(node)} ${what} \`${idAttr.value}\` 重复了（上一处在第 ${seen.get(idAttr.value)} 行）；出图会互相覆盖，锚点也只会指到第一个`
-        );
-      } else seen.set(idAttr.value, lineOf(node));
-    }
-
-    // 子节点契约
-    const kids = (node.childNodes || []).filter((c) => c.tagName && c.tagName !== 'script');
-    const model = TAGS[tag].children;
-    if (model?.kind === 'item') {
-      const bad = kids.filter((c) => c.tagName !== 'li');
-      if (bad.length) errors.push(`${file}:${lineOf(node)} <${tag}> 的条目要写成 <li>，而不是 <${bad[0].tagName}>`);
-      for (const li of kids.filter((c) => c.tagName === 'li')) {
-        for (const { name, value } of li.attrs || []) {
-          if (name.startsWith('data-') || name.startsWith('aria-') || ['id', 'class'].includes(name)) continue;
-          if (!(name in (model.attrs || {}))) {
-            errors.push(`${file}:${lineOf(li)} <${tag}> 的 <li> 不认识属性 ${name}="${value}"；可用：${Object.keys(model.attrs || {}).join(', ') || '无'}`);
-          }
-        }
-      }
-      if (!kids.some((c) => c.tagName === 'li')) errors.push(`${file}:${lineOf(node)} <${tag}> 还没有条目：每一条写成 <li>`);
-    }
-    if (model?.kind === 'table' && !kids.some((c) => c.tagName === 'table')) {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 里要有原生 <table>`);
-    }
-    if (model?.kind === 'slot' && model.exactly && kids.length !== model.exactly) {
-      errors.push(`${file}:${lineOf(node)} <${tag}> 需要正好 ${model.exactly} 个子项（现在 ${kids.length} 个）`);
-    }
-  }
-}
+/* ---------------------------------------------------------------- 校验
+   规则与报错全部在 src/contract.mjs（schema 驱动）。这里只负责把构建期算出来的
+   东西塞回文档树。
+   ------------------------------------------------------------------------- */
 
 /* ---------------------------------------------------------------- 内容件 */
 
@@ -351,12 +197,13 @@ async function buildTerm(node, file, errors) {
   return `<div class="vk-win vk-term" data-chrome="${chrome}">${head}<div class="vk-bd">${parts.join('')}</div></div>`;
 }
 
-function buildDiff(node, file, errors) {
+async function buildDiff(node, file, errors) {
   const text = readSource(node, file, 'diff');
   if (text == null) {
     errors.push(`${file}:${lineOf(node)} <vk-diff> 没有内容：写 src="文件" 或内联 <script type="text/plain" data-vk-source>`);
     return '';
   }
+  const lang = attrOf(node, 'lang');
   const rows = [];
   for (const line of text.split('\n')) {
     if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) continue;
@@ -369,20 +216,34 @@ function buildDiff(node, file, errors) {
     else rows.push({ kind: 'same', text: line.replace(/^ /, '') });
   }
   let n = 0;
-  const html = rows
-    .map((r) => {
-      if (r.kind === 'hunk') return `<div class="vk-diff-hunk">${esc(r.text)}</div>`;
-      n++;
-      return `<div class="vk-diff-row ${r.kind === 'same' ? '' : r.kind}" data-vk-line="${n}"><span class="vk-sign">${
+  const parts = [];
+  for (const r of rows) {
+    if (r.kind === 'hunk') {
+      parts.push(`<div class="vk-diff-hunk">${esc(r.text)}</div>`);
+      continue;
+    }
+    n++;
+    // 有 lang 才上语法色：diff 的 +/- 是语义色，语法色在右半边，两边不抢。
+    let body = esc(r.text);
+    if (lang) {
+      try {
+        body = await highlight(r.text || ' ', lang);
+      } catch (e) {
+        errors.push(`${file}:${lineOf(node)} ${e.message}`);
+        return '';
+      }
+    }
+    parts.push(
+      `<div class="vk-diff-row ${r.kind === 'same' ? '' : r.kind}" data-vk-line="${n}"><span class="vk-sign">${
         r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '
-      }</span><span class="vk-dsrc">${esc(r.text)}</span></div>`;
-    })
-    .join('');
+      }</span><span class="vk-dsrc">${body}</span></div>`
+    );
+  }
   const add = rows.filter((r) => r.kind === 'add').length;
   const del = rows.filter((r) => r.kind === 'del').length;
   return `<div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
     attrOf(node, 'file') ? `<span class="vk-file">${esc(attrOf(node, 'file'))}</span>` : ''
-  }</div><div class="vk-bd">${html}</div><div class="vk-diff-foot">+${add} / −${del}</div></div>`;
+  }</div><div class="vk-bd">${parts.join('')}</div><div class="vk-diff-foot">+${add} / −${del}</div></div>`;
 }
 
 function buildMath(node, file, errors) {
@@ -499,25 +360,33 @@ function buildTree(node, file) {
     } catch (e) {
       throw new Error(`${file}:${lineOf(node)} <vk-tree> 的内联 JSON 解析失败：${e.message}`);
     }
+    let budget = Number(attrOf(node, 'max') || 10) || 10;
+    let more = false;
     const walk = (items, level, base) => {
-      if (level > depth) return '';
-      return (items || [])
-        .map((it) => {
-          const name = typeof it === 'string' ? it : it.name;
-          const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
-          const p = base ? `${base}/${name}` : name;
-          return treeNode(name, isDir, p, it.children ? walk(it.children, level + 1, p) : '');
-        })
-        .join('');
+      if (level > depth || budget <= 0) return '';
+      const rows = [];
+      for (const it of items || []) {
+        if (budget <= 0) {
+          more = true;
+          break;
+        }
+        budget--;
+        const name = typeof it === 'string' ? it : it.name;
+        const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
+        const p = base ? `${base}/${name}` : name;
+        rows.push(treeNode(name, isDir, p, it.children ? walk(it.children, level + 1, p) : ''));
+      }
+      return rows.join('');
     };
     const list = Array.isArray(data) ? data : data.children || [data];
-    return treeHtml(node, [walk(list, 1, '')], attrOf(node, 'title'));
+    const body = walk(list, 1, '');
+    return treeHtml(node, [body + (more ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'));
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
   if (!fs.existsSync(abs)) throw new Error(`${file}:${lineOf(node)} <vk-tree> 的 src="${src}" 找不到目录`);
   // 目录树也有一帧的容量上限：超了就先截断，末尾留一行说明，别撑爆画布。
-  let budget = Number(attrOf(node, 'max') || 8) || 8;
+  let budget = Number(attrOf(node, 'max') || 10) || 10;
   const walk = (dir, level, base) => {
     if (level > depth || budget <= 0) return '';
     const entries = fs
@@ -532,64 +401,142 @@ function buildTree(node, file) {
       const p = base ? `${base}/${e.name}` : e.name;
       rows.push(treeNode(e.name, e.isDirectory(), p, e.isDirectory() ? walk(path.join(dir, e.name), level + 1, p) : ''));
     }
-    if (budget <= 0 && entries.length) rows.push('<div class="vk-node is-more">…</div>');
+    if (budget <= 0 && entries.length) rows.push('<div class="vk-node is-more">…还有更多</div>');
     return rows.join('');
   };
   return treeHtml(node, [walk(abs, 1, '')], attrOf(node, 'title'));
 }
 
 /* ---------------------------------------------------------------- 图标 */
-let ICONS = null;
+/* 直接读 lucide 的图标节点（[[tag, attrs], …]），不生成中间文件。
+   全表 2169 个，按需查；名字是 kebab-case。 */
+let ICON_MAP = null;
 const loadIcons = async () => {
-  if (ICONS) return ICONS;
-  try {
-    ({ ICONS } = await import('./icons.generated.mjs'));
-  } catch {
-    throw new Error('缺少图标数据：先跑 npm run build');
+  if (ICON_MAP) return ICON_MAP;
+  const lucide = await import('lucide');
+  ICON_MAP = new Map();
+  for (const [name, nodes] of Object.entries(lucide.icons || {})) {
+    ICON_MAP.set(name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase(), nodes);
   }
-  return ICONS;
+  return ICON_MAP;
 };
 
+const iconInner = (nodes) =>
+  (nodes || [])
+    .map(([tag, attrs]) => `<${tag}${Object.entries(attrs || {}).map(([k, v]) => ` ${k}="${esc(v)}"`).join('')}/>`)
+    .join('');
+
 async function iconSvg(name) {
-  const icons = await loadIcons();
+  const map = await loadIcons();
   const key = String(name).trim().toLowerCase().replace(/[_\s]+/g, '-');
-  const inner = icons[key];
-  if (!inner) return null;
-  return `<span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${inner}</svg></span>`;
+  const nodes = map.get(key);
+  if (!nodes) return null;
+  return `<span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconInner(nodes)}</svg></span>`;
+}
+
+function suggestIcon(name) {
+  const key = String(name).trim().toLowerCase();
+  let best = '';
+  let score = 99;
+  for (const k of ICON_MAP.keys()) {
+    if (k.includes(key) || key.includes(k)) return k;
+    const d = Math.abs(k.length - key.length);
+    if (d < score) {
+      score = d;
+      best = k;
+    }
+  }
+  return best;
+}
+
+/* ---------------------------------------------------------------- 主流程 */
+
+/* ---------------------------------------------------------------- 序列化 */
+
+/** 挂在树上的原始 HTML 片段：序列化时原样输出（构建期已经排好，不能再被转义）。 */
+const raw = (html) => ({ nodeName: '#raw', value: html, childNodes: [], attrs: [] });
+
+const VOID = new Set(['img', 'br', 'hr', 'meta', 'link', 'input', 'source', 'area', 'base', 'col', 'embed', 'param', 'track', 'wbr']);
+
+const attrText = (attrs) => (attrs || []).map((a) => (a.value ? ` ${a.name}="${esc(a.value)}"` : ` ${a.name}`)).join('');
+
+function serialize(node) {
+  if (!node) return '';
+  switch (node.nodeName) {
+    case '#document':
+    case '#document-fragment':
+      return (node.childNodes || []).map(serialize).join('');
+    case '#documentType':
+      return '<!doctype html>';
+    case '#text':
+      return esc(node.value || '');
+    case '#comment':
+      return `<!--${node.data || ''}-->`;
+    case '#raw':
+      return node.value;
+    default: {
+      const tag = node.tagName;
+      if (!tag) return (node.childNodes || []).map(serialize).join('');
+      const open = `<${tag}${attrText(node.attrs)}>`;
+      if (VOID.has(tag)) return open;
+      return `${open}${(node.childNodes || []).map(serialize).join('')}</${tag}>`;
+    }
+  }
+}
+
+/* ---------------------------------------------------------------- 路径 */
+const abs = (p) => pathToFileURL(p).href;
+const LIBS = {
+  fonts: abs(path.join(ROOT, 'vk/fonts.css')),
+  css: abs(path.join(ROOT, 'vk/vk.css')),
+  js: abs(path.join(ROOT, 'dist/vk.js')),
+};
+
+/** 作者写的相对路径 → 绝对 file:// 地址。构建产物不再复制一份 vk/ dist/ assets/。 */
+function toAbs(src, file) {
+  if (!src || /^[a-z]+:|^\/\//i.test(src)) return src;
+  return abs(path.resolve(path.dirname(path.resolve(file)), src.split('#')[0].split('?')[0]));
+}
+
+function rewritePageLinks(doc, file) {
+  for (const node of flatten(doc)) {
+    if (node.nodeName !== 'link' && node.nodeName !== 'script') continue;
+    const name = node.nodeName === 'link' ? 'href' : 'src';
+    const a = (node.attrs || []).find((x) => x.name === name);
+    if (a) a.value = toAbs(a.value, file);
+  }
 }
 
 /* ---------------------------------------------------------------- 主流程 */
 
 /**
  * 作者页默认是「片段」：只写 <vk-page>，head 与资源由构建注入。
- * 这样页面不必知道自己在第几层目录（../vk 还是 ../../vk），
- * 也不用每次抄一遍 link/script —— 那正是最容易错的地方。
+ * 注入的是绝对 file:// 地址：产物落在哪里都指得到，构建期也不用再复制一份库。
  */
-function wrapFragment(body, depth) {
-  const up = '../'.repeat(depth);
+function wrapFragment(body) {
   return `<!doctype html>
 <html lang="zh-CN">
 <head>
 <meta charset="utf-8">
-<link rel="stylesheet" href="${up}vk/fonts.css">
-<link rel="stylesheet" href="${up}vk/vk.css">
+<link rel="stylesheet" href="${LIBS.fonts}">
+<link rel="stylesheet" href="${LIBS.css}">
 </head>
 <body>
 ${body}
-<script src="${up}dist/vk.js"></script>
+<script src="${LIBS.js}"></script>
 </body>
 </html>
 `;
 }
 
-export async function transformHtml(rawHtml, { file, outRel = '' }) {
+export async function transformHtml(rawHtml, { file }) {
   const isFull = /<html[\s>]/i.test(rawHtml);
-  const depth = outRel ? outRel.split('/').length - 1 : 0;
-  const html = rawHtml;
-  const doc = parse(html, { sourceCodeLocationInfo: true });
-  const errors = [];
+  const doc = isFull ? parse(rawHtml, { sourceCodeLocationInfo: true }) : parseFragment(rawHtml, { sourceCodeLocationInfo: true });
+  if (isFull) rewritePageLinks(doc, file);
+
+  const problems = validate(doc, file);
+  const errors = problems.slice();
   const warnings = [];
-  validate(doc, file, errors);
 
   // 锚点里写死的 #id 必须在同一份文档里存在：不然运行期只会安静地不画。
   const ids = new Set(flatten(doc).filter((n) => (n.attrs || []).some((a) => a.name === 'id')).map((n) => attrOf(n, 'id')));
@@ -602,72 +549,74 @@ export async function transformHtml(rawHtml, { file, outRel = '' }) {
         if (!t.startsWith('#')) continue;
         const id = t.slice(1).split('@')[0];
         if (id && !ids.has(id)) {
-          errors.push(`${file}:${lineOf(node)} <${node.tagName}> 的 ${a.name}="${t}" 指向 #${id}，但这一页没有这个 id`);
+          errors.push({ file, line: lineOf(node), message: `<${node.tagName}> 的 ${a.name}="${t}" 指向 #${id}，但这一页没有这个 id`, fix: '改成页里存在的 id，或给目标加 id' });
         }
       }
     }
   }
 
-  const edits = [];
-
+  /* 第一阶段：只读地把要算的东西算好（异步，逐个等）。 */
+  const rendered = new Map();
+  const icons = new Map();
   for (const node of flatten(doc)) {
     const tag = node.tagName;
     if (!tag?.startsWith('vk-')) continue;
-    const loc = node.sourceCodeLocation;
-    if (!loc?.startTag || !loc?.endTag) continue;
-    const start = loc.startTag.endOffset;
-    const end = loc.endTag.startOffset;
-    const inner = html.slice(start, end);
-    let out = null;
-
     try {
-      if (tag === 'vk-code') out = await buildCode(node, file, errors);
-      else if (tag === 'vk-term') out = await buildTerm(node, file, errors);
-      else if (tag === 'vk-diff') out = await buildDiff(node, file, errors);
-      else if (tag === 'vk-math') out = await buildMath(node, file, errors);
-      else if (tag === 'vk-asm') out = await buildAsm(node, file);
-      else if (tag === 'vk-bytes') out = await buildBytes(node, file, errors);
-      else if (tag === 'vk-tree') out = await buildTree(node, file);
+      if (tag === 'vk-code') rendered.set(node, await buildCode(node, file, errors));
+      else if (tag === 'vk-term') rendered.set(node, await buildTerm(node, file, errors));
+      else if (tag === 'vk-diff') rendered.set(node, await buildDiff(node, file, errors));
+      else if (tag === 'vk-math') rendered.set(node, await buildMath(node, file, errors));
+      else if (tag === 'vk-asm') rendered.set(node, await buildAsm(node, file, errors));
+      else if (tag === 'vk-bytes') rendered.set(node, await buildBytes(node, file, errors));
+      else if (tag === 'vk-tree') rendered.set(node, await buildTree(node, file, errors));
       else if (tag === 'vk-inline' && attrOf(node, 'variant') === 'math') {
         const tex = inlineSource(node) || textOf(node);
-        if (tex) {
-          try {
-            out = katex.renderToString(tex.trim(), { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' });
-          } catch (e) {
-            errors.push(`${file}:${lineOf(node)} 行内公式排版失败：${e.message}`);
-          }
+        if (tex) rendered.set(node, katex.renderToString(tex.trim(), { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' }));
+      } else if (tag === 'vk-img') {
+        const a = (node.attrs || []).find((x) => x.name === 'src');
+        if (a && a.value) a.value = toAbs(a.value, file);
+      } else if (tag === 'vk-compare') {
+        // labels="a.png,b.png|改前|改后"：前两段是图片路径，要换成绝对地址。
+        const a = (node.attrs || []).find((x) => x.name === 'labels');
+        if (a && a.value) {
+          const [srcs, ...caps] = a.value.split('|');
+          a.value = [srcs.split(',').map((s) => toAbs(s.trim(), file)).join(','), ...caps].join('|');
         }
       }
+      const icon = attrOf(node, 'icon');
+      if (icon && (tag === 'vk-text' || tag === 'vk-label')) {
+        const svg = await iconSvg(icon);
+        if (!svg) {
+          const near = suggestIcon(icon);
+          errors.push({
+            file,
+            line: lineOf(node),
+            message: `<${tag}> 的 icon="${icon}" 找不到`,
+            fix: near ? `是想写 "${near}"？全表用 vk icons <词> 搜` : '全表用 vk icons <词> 搜；图标名是 Lucide 的 kebab 名',
+          });
+        } else icons.set(node, svg);
+      }
     } catch (e) {
-      // 单个件失败不要吃掉整页的其它错误：记下来，继续。
       if (process.env.VK_DEBUG) console.error('DEBUG', tag, e.stack);
-      errors.push(`${file}:${lineOf(node)} <${tag}> 构建失败：${e.message}`);
-      out = '';
+      errors.push({ file, line: lineOf(node), message: `<${tag}> 构建失败：${e.message}`, fix: '看这条错误的上一行；通常是 src 路径或行段写错' });
     }
-
-    const icon = node.attrs?.find((a) => a.name === 'icon')?.value;
-    if (icon && (tag === 'vk-text' || tag === 'vk-label')) {
-      const svg = await iconSvg(icon);
-      if (!svg) errors.push(`${file}:${lineOf(node)} <${tag}> 的 icon="${icon}" 不是 Lucide 图标名`);
-      else out = svg + (out ?? inner);
-    }
-
-    if (out != null) edits.push({ start, end, html: out });
   }
 
-  // 从不重叠的最内层开始替换：按起点从大到小。
-  edits.sort((a, b) => b.start - a.start);
-  let result = html;
-  for (const e of edits) result = result.slice(0, e.start) + e.html + result.slice(e.end);
+  /* 第二阶段：把算好的片段挂回树上。嵌套件（label 里的行内公式）天然正确。 */
+  for (const [node, html] of rendered) node.childNodes = [raw(html)];
+  for (const [node, svg] of icons) node.childNodes = [raw(svg), ...node.childNodes];
+  // 图标之外的元素（不需要重排的）保持原样；作者写的 <script data-vk-source> 跟着内容一起被替换掉了。
 
+  const body = serialize(doc);
   if (errors.length) {
-    // 按文件里的行号排序：作者改起来是自上而下的。
-    errors.sort((x, y) => Number((x.match(/:\s*(\d+)\s/) || [])[1] || 1e9) - Number((y.match(/:\s*(\d+)\s/) || [])[1] || 1e9));
-    const err = new Error(errors.join('\n'));
-    err.errors = errors;
-    throw err;
+    errors.sort((a, b) => (a.line || 0) - (b.line || 0));
+    const e = new Error(errors.map((x) => `${x.file}:${x.line} ${x.message}${x.fix ? ` → ${x.fix}` : ''}`).join('\n'));
+    e.errors = errors;
+    throw e;
   }
-  return { html: isFull ? result : wrapFragment(result, depth), count: edits.length, warnings };
+  return { html: isFull ? body : wrapFragment(body), count: rendered.size, warnings };
 }
 
 export const vars = { CANVAS_ATTRS, GAP };
+
+

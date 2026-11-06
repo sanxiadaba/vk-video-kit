@@ -108,7 +108,7 @@ export class VkSteps extends VkElement {
     lis.forEach((node, i) => {
       const tone = itemAttr(this, node, 'tone');
       const attr = [
-        `data-vk-step="${i}"`,
+        `data-vk-step="${i + 1}"`,
         tone ? `tone="${esc(tone)}"` : '',
         cur === i + 1 ? 'state="current"' : '',
         cur > 0 && i + 1 < cur ? 'data-done' : '',
@@ -327,7 +327,7 @@ export class VkTimeline extends VkElement {
     const own = itemAttr(this, node, 'state');
     const state = cur === i + 1 ? 'current' : own;
     const attr = [
-      `data-vk-event="${i}"`,
+      `data-vk-event="${i + 1}"`,
       tone ? `tone="${esc(tone)}"` : '',
       state ? `state="${esc(state)}"` : '',
     ]
@@ -522,3 +522,4 @@ export function defineDiagram() {
   define('vk-timeline', VkTimeline);
   define('vk-compare', VkCompare);
 }
+
