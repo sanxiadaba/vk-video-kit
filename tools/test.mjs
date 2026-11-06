@@ -27,6 +27,19 @@ const ok = (cond, msg) => {
 };
 
 /* ---------------------------------------------------------------- 契约 */
+// 先把全部测试页渲染一遍：后面的扫描要读 out/ 里的构建产物，干净检出时它还不存在。
+let report = [];
+try {
+  const out = execFileSync(
+    process.execPath,
+    ['bin/vk.mjs', 'render', 'tests/behaviour.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/contrast.html', 'tests/darks.html', 'tests/recipes.html', 'tests/relations.html', 'tests/sheet.html', 'tests/sheet2.html', '--json'],
+    { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
+  );
+  report = JSON.parse(out);
+} catch (e) {
+  try { report = JSON.parse(e.stdout || '[]'); } catch { report = []; }
+}
+
 console.log('契约');
 ok(TAG_NAMES.length === 27, `27 个件（${TAG_NAMES.length}）`);
 ok(new Set(TAG_NAMES).size === TAG_NAMES.length, '件名唯一');
@@ -571,23 +584,7 @@ console.log('\n自动适配');
   }
 }
 
-console.log('\n验收帧');
-let report = [];
-try {
-  const out = execFileSync(
-    process.execPath,
-    ['bin/vk.mjs', 'render', 'tests/sheet.html', 'tests/sheet2.html', 'tests/capabilities.html', 'tests/capabilities2.html', 'tests/capabilities3.html', 'tests/darks.html', 'tests/relations.html', 'tests/recipes.html', 'tests/contrast.html', 'tests/behaviour.html', '--json'],
-    { encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }
-  );
-  report = JSON.parse(out);
-} catch (e) {
-  try {
-    report = JSON.parse(e.stdout || '[]');
-  } catch {
-    bad++;
-    console.error('  ✗ 渲染失败：', (e.stdout || e.message).slice(0, 400));
-  }
-}
+console.log('\n渲染');
 const frames = report.flatMap((r) => r.frames || []);
 ok(frames.length >= 60, `渲染出 ${frames.length} 帧`);
 
