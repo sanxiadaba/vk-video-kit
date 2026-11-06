@@ -85,7 +85,13 @@ function ensureLibrary() {
     fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
     fs.writeFileSync(cacheFile, JSON.stringify(cache));
   };
-  const stamp = [digestOf(path.join(ROOT, 'src'), ['.mjs', '.css']), digestOf(path.join(ROOT, 'tools'), ['.mjs']), fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')].join(':');
+  const stamp = [
+    digestOf(path.join(ROOT, 'src'), ['.mjs', '.css']),
+    digestOf(path.join(ROOT, 'tools'), ['.mjs']),
+    digestOf(path.join(ROOT, 'assets'), ['.png', '.jpg', '.jpeg', '.webp']),
+    digestOf(path.join(ROOT, 'code'), ['.c', '.h', '.dis', '.s', '.diff', '.txt', '.json', '.py', '.md']),
+    fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
+  ].join(':');
   const digest = crypto.createHash('sha1').update(stamp).digest('hex');
   LIB_STAMP = digest;
 
@@ -383,12 +389,24 @@ if (cmd === 'render' || cmd === 'check') {
     fs.writeFileSync(index, buildShowcase({ entries, source: rel(abs), cols: 2 }), 'utf8');
     fs.writeFileSync(sheetHtml, buildShowcase({ entries, source: rel(abs), cols: 4 }), 'utf8');
 
-    // 整页图：给“一眼扫完”和 AI 读图用。同一次浏览器会话，不重开。
-    const sheet = await browser.newPage({ viewport: { width: 1920, height: 1200 }, deviceScaleFactor: 1 });
-    await sheet.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
-    await sheet.evaluate(() => Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))));
-    await sheet.screenshot({ path: path.join(outDir, 'sheet.png'), fullPage: true });
-    await sheet.close();
+    // 整页图：给“一眼扫完”和 AI 读图用。同一次浏览器会话，不重开；图没变就复用。
+    const sheetPath = path.join(outDir, 'sheet.png');
+    const sheetKey = crypto
+      .createHash('sha1')
+      .update(LIB_STAMP + ':' + entries.map((e) => `${e.id}:${e.png}:${e.caption || ''}`).join('|'))
+      .digest('hex');
+    const sheetCache = path.join(ROOT, '.vk-cache', 'sheets', sheetKey + '.png');
+    if (fs.existsSync(sheetCache)) {
+      fs.copyFileSync(sheetCache, sheetPath);
+    } else {
+      const sheet = await browser.newPage({ viewport: { width: 1920, height: 1200 }, deviceScaleFactor: 1 });
+      await sheet.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
+      await sheet.evaluate(() => Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))));
+      await sheet.screenshot({ path: sheetPath, fullPage: true });
+      await sheet.close();
+      fs.mkdirSync(path.dirname(sheetCache), { recursive: true });
+      fs.copyFileSync(sheetPath, sheetCache);
+    }
 
     const dirty = entries.filter((e) => e.issues.length);
     console.log(`看板：${rel(index)}（${entries.length} 帧${dirty.length ? `，${dirty.length} 帧有问题` : ''}）`);

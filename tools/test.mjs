@@ -126,43 +126,54 @@ const inkBox = (file) => {
   }
   return right < 0 ? null : { left, top, right, bottom, w: png.width, h: png.height };
 };
-const pixelBad = [];
-for (const f of frames) {
-  if (!f.png) continue;
-  const box = inkBox(path.join(ROOT, f.png));
-  if (!box) {
-    pixelBad.push(`${f.file}#${f.id} 整张是空的`);
-    continue;
-  }
-  const scale = box.w / 1920;
-  const dyTop = Math.abs(box.top / scale - f.metrics.contentTop);
-  const dyBottom = Math.abs(box.bottom / scale - f.metrics.contentBottom);
-  if (dyTop > 60 || dyBottom > 60) {
-    pixelBad.push(`${f.file}#${f.id} 墨迹 ${Math.round(box.top / scale)}–${Math.round(box.bottom / scale)}，DOM 量的是 ${f.metrics.contentTop}–${f.metrics.contentBottom}`);
-  }
-}
-ok(pixelBad.length === 0, '像素与 DOM 对得上（没有白屏 / 字体没加载）', pixelBad.slice(0, 5).join('\n      '));
-
-/* 粗签名：只抓「整块消失 / 版面塌了」，不抓字距微调。 */
-const sigOf = (f) => `${Math.round(f.metrics.fill / 5) * 5}|${f.metrics.focus}|${f.issues.map((x) => x.code).join(',')}`;
-const sigs = Object.fromEntries(frames.map((f) => [`${f.file}#${f.id}`, sigOf(f)]));
-const prev = fs.existsSync(GOLDEN) ? JSON.parse(fs.readFileSync(GOLDEN, 'utf8')) : null;
-if (UPDATE || !prev) {
-  fs.writeFileSync(GOLDEN, JSON.stringify(sigs, null, 1) + '\n');
-  ok(true, `写入粗签名 tests/golden.json（${Object.keys(sigs).length} 帧）`);
+// 像素/粗签名是在 Windows 上生成的；Linux runner 的字形度量不同，会误报。
+// 正常推送由 Pages 的 Linux 检查覆盖构建、渲染自检、行为、确定性；
+// 完整的 Windows 套件用 workflow_dispatch 手动跑。
+const VISUAL = process.platform === 'win32' && process.env.VK_SKIP_VISUAL !== '1';
+if (!VISUAL) {
+  console.log('  · 跳过像素/粗签名（非 Windows 或 VK_SKIP_VISUAL=1）');
 } else {
-  const changed = Object.keys(sigs).filter((k) => prev[k] && prev[k] !== sigs[k]);
-  const added = Object.keys(sigs).filter((k) => !prev[k]);
-  ok(changed.length === 0, '版面与上次一致（粗签名）', changed.map((k) => `${k}: ${prev[k]} → ${sigs[k]}`).slice(0, 8).join('\n      '));
-  ok(added.length === 0, '没有新帧未登记', added.slice(0, 8).join(', '));
+  const pixelBad = [];
+  for (const f of frames) {
+    if (!f.png) continue;
+    const box = inkBox(path.join(ROOT, f.png));
+    if (!box) {
+      pixelBad.push(`${f.file}#${f.id} 整张是空的`);
+      continue;
+    }
+    const scale = box.w / 1920;
+    const dyTop = Math.abs(box.top / scale - f.metrics.contentTop);
+    const dyBottom = Math.abs(box.bottom / scale - f.metrics.contentBottom);
+    if (dyTop > 60 || dyBottom > 60) {
+      pixelBad.push(`${f.file}#${f.id} 墨迹 ${Math.round(box.top / scale)}–${Math.round(box.bottom / scale)}，DOM 量的是 ${f.metrics.contentTop}–${f.metrics.contentBottom}`);
+    }
+  }
+  ok(pixelBad.length === 0, '像素与 DOM 对得上（没有白屏 / 字体没加载）', pixelBad.slice(0, 5).join('\n      '));
+
+  /* 粗签名：只抓「整块消失 / 版面塌了」，不抓字距微调。 */
+  const sigOf = (f) => `${Math.round(f.metrics.fill / 5) * 5}|${f.metrics.focus}|${f.issues.map((x) => x.code).join(',')}`;
+  const sigs = Object.fromEntries(frames.map((f) => [`${f.file}#${f.id}`, sigOf(f)]));
+  const prev = fs.existsSync(GOLDEN) ? JSON.parse(fs.readFileSync(GOLDEN, 'utf8')) : null;
+  if (UPDATE || !prev) {
+    fs.writeFileSync(GOLDEN, JSON.stringify(sigs, null, 1) + '\n');
+    ok(true, `写入粗签名 tests/golden.json（${Object.keys(sigs).length} 帧）`);
+  } else {
+    const changed = Object.keys(sigs).filter((k) => prev[k] && prev[k] !== sigs[k]);
+    const added = Object.keys(sigs).filter((k) => !prev[k]);
+    ok(changed.length === 0, '版面与上次一致（粗签名）', changed.map((k) => `${k}: ${prev[k]} → ${sigs[k]}`).slice(0, 8).join('\n      '));
+    ok(added.length === 0, '没有新帧未登记', added.slice(0, 8).join(', '));
+  }
+
 }
 
 /* ------------------------------------------------------------------ 三、行为 */
 group('行为');
 const { chromium } = await import('playwright');
+const bopts = { args: ['--font-render-hinting=none', '--allow-file-access-from-files'] };
 const browser = await chromium
-  .launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'] })
-  .catch(() => chromium.launch({ args: ['--font-render-hinting=none', '--allow-file-access-from-files'], channel: 'msedge' }));
+  .launch(bopts)
+  .catch(() => chromium.launch({ ...bopts, channel: 'chrome' }))
+  .catch(() => chromium.launch({ ...bopts, channel: 'msedge' }));
 const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
 const built = (name) => 'file:///' + path.join(ROOT, '.vk-cache', 'pages', 'tests', name).split(path.sep).join('/');
 await page.goto(built('behaviour.html'), { waitUntil: 'load' });

@@ -1,10 +1,13 @@
 name: ci
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # 全量 Windows 套件很贵（Windows runner 按 2 倍计费）。
+  # 正常推送由 Pages 的 Linux 检查覆盖；需要像素/粗签名时手动跑这一条。
   workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
 
 permissions:
   contents: read

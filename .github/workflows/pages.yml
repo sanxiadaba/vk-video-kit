@@ -3,6 +3,16 @@ name: pages
 on:
   push:
     branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'bin/**'
+      - 'assets/**'
+      - 'code/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pages.yml'
   workflow_dispatch:
 
 permissions:
@@ -44,6 +54,9 @@ jobs:
       - if: steps.fonts.outputs.cache-hit != 'true'
         run: timeout 240 sudo apt-get install -y --no-install-recommends fonts-noto-cjk
 
+      - run: npm test
+        env:
+          VK_SKIP_VISUAL: '1'
       - run: node bin/vk.mjs showcase --no-open
       - uses: actions/configure-pages@v6
       - uses: actions/upload-pages-artifact@v5
