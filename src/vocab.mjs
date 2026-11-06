@@ -36,12 +36,10 @@ export const LINE_W = { hair: 4, rule: 8, strong: 10 };
 export const BLOCK = { full: 1680, 'two-thirds': 1120, half: 824 };
 
 /* ---------------------------------------------------------------- 字号
-   六档。相邻比 1.17 / 1.50 / 1.57 / 1.52 / 1.40。
-   caption 与 body 只差 1.17 —— 它们不是视觉对比，是语义分层：
-   body 是可读正文的地板，caption 是「元信息」：只写不用读第二遍的东西
-   （来源、单位、编号、上一帧的指代）。结论句用 body，不要用 caption。 */
+   手机 0.406× 之后，48 只剩 19.5px —— 不再有「小字」这一档。
+   caption 与 body 同号（56），层级靠颜色/字重；只有行号允许 44 的下限。 */
 export const FONT = {
-  caption: 48,
+  caption: 56,
   body: 56,
   subhead: 84,
   headline: 132,
@@ -52,7 +50,7 @@ export const FONT = {
 /* 行高：无单位比例，跟着字号走。
    代码窗会把字号往下缩，px 行高不会跟着缩，行盒就散了。 */
 export const LINE = {
-  caption: 1.34,
+  caption: 1.43,
   body: 1.43,
   subhead: 1.43,
   headline: 1.33,

@@ -701,12 +701,12 @@ vk-cells {
   top: 0;
   left: 50%;
   translate: -50% calc(-100% - var(--vk-inset-sm));
-  padding: 0 var(--vk-gap-close);
+  padding: var(--vk-inset-sm) var(--vk-gap-normal);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-ink-2);
   color: var(--vk-paper);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
+  font-size: calc(var(--vk-fs-body) * 1.15);
   line-height: 1.15;
   font-weight: var(--vk-w-bold);
   white-space: nowrap;
@@ -717,7 +717,7 @@ vk-cells {
 }
 .vk-cell > .vk-cell-l {
   font-family: var(--vk-font-mono);
-  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.6);
+  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.7);
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
 }
