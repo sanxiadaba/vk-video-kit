@@ -13,7 +13,7 @@
 | diff 行 | 5 |
 | 汇编行 | 5 |
 | 表格数据行 | 4 |
-| 文件树行 | 6 |
+| 文件树行 | 5 |
 | 内存格行 | 2 |
 | 位 | 16 |
 | 步骤（横排） | 5 |
@@ -40,7 +40,7 @@
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
 | `id` | 文本 | — |  | 帧名（出图文件名） |
-| `align` | top / center / bottom | center |  | 纵向对齐 |
+| `align` | band / center / top / bottom | band |  | 纵向对齐 |
 | `surface` | paper / dark | paper |  | 底色 |
 
 ### L1 排布
@@ -284,7 +284,7 @@ src 指向真实 diff 文本，或内联 <script type="text/plain" data-vk-sourc
 src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写 TeX。
 
 **`vk-tree`** · 文件树 —— 文件树：src 指向真实目录，构建期扫描层级；缩进与树线是真的，不是列表。
-  一帧容量：6 行。
+  一帧容量：5 行。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
@@ -298,6 +298,12 @@ src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写
 | `max` | 整数 | 10 | 1–40 | 最多显示几行（超了会留一行说明） |
 | `current` | 文本 | — |  | 当前节点路径 |
 | `size` | caption / body / subhead | body |  | 字号 |
+| `icons` | auto / none | auto |  | 图标 |
+| `icon-dir` | 文本 | — |  | 目录图标（Lucide 名） |
+| `icon-code` | 文本 | — |  | 代码文件图标 |
+| `icon-binary` | 文本 | — |  | 二进制文件图标 |
+| `icon-file` | 文本 | — |  | 普通文件图标 |
+| `chrome` | min / none | min |  | 窗头 |
 
 src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。
 

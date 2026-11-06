@@ -77,10 +77,13 @@
   --vk-tint-err: light-dark(#f8ebeb, #2b1717);
   --vk-on-focus: light-dark(#ffffff, #0b0f14);
 
-  --vk-syn-string: light-dark(#0b6b4f, #8fe3c0);
-  --vk-syn-comment: light-dark(#667085, #8b97a8);
-  --vk-syn-number: light-dark(#8a4b00, #f0b45c);
-  --vk-syn-keyword: light-dark(#6f2da8, #c9a6ff);
+  --vk-syn-string: light-dark(#0e6b57, #7fd9b6);
+  --vk-syn-comment: light-dark(#6a7686, #94a3b8);
+  --vk-syn-number: light-dark(#9a5b00, #edb96b);
+  --vk-syn-keyword: light-dark(#96305f, #e8a0c2);
+  --vk-block-full: 1680px;
+  --vk-block-two-thirds: 1120px;
+  --vk-block-half: 824px;
   --vk-dot-red: #ff5f57;
   --vk-dot-yellow: #febc2e;
   --vk-dot-green: #28c840;

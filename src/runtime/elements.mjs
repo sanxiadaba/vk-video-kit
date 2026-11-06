@@ -2,6 +2,12 @@ import { VkElement, define, attrText, attrEnum, attrSpace, esc, warn, takeSlot, 
 
 /* ------------------------------------------------------------------ 文字 */
 /** 文字是纯 CSS 的：size / ink / tone / align 都由属性选择器完成。 */
+export class VkIcon extends VkElement {
+  render() {
+    // 图标本身由构建期注入；这里只负责「画完了」的登记。
+  }
+}
+
 export class VkText extends VkElement {
   render() {
     const m = (this.getAttribute('measure') || '').trim();
@@ -138,6 +144,7 @@ export class VkMath extends VkElement {
 
 export function defineElements() {
   define('vk-math', VkMath);
+define('vk-icon', VkIcon);
   define('vk-text', VkText);
   define('vk-label', VkLabel);
   define('vk-inline', VkInline);

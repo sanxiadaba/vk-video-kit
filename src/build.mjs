@@ -33,25 +33,31 @@ const isText = (n) => n.nodeName === '#text' || typeof n.value === 'string';
 const textOf = (node) => (node.childNodes || []).map((c) => (isText(c) ? c.value : c.tagName === 'script' ? '' : textOf(c))).join('');
 
 /* ---------------------------------------------------------------- 主题 */
-/* 只用来分词：颜色 → class，颜色本身不写进产物。语法只有三个颜色。 */
+/* 只用来分词：颜色 → class，颜色本身不写进产物。语法只有三个色相 + 一个灰。
+   只写「叶子」scope：容器型 scope（meta.* / source.*）会把整段染色，
+   上一轮 meta.function-call 就是把实参也染成了函数色。 */
 const TOKEN_THEME = {
   name: 'vk',
   type: 'light',
   settings: [
     { settings: { foreground: '#0B0F14', background: '#ffffff' } },
-    { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#667085' } },
-    { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated'], settings: { foreground: '#0B6B4F' } },
-    { scope: ['constant.numeric', 'constant.language', 'support.constant'], settings: { foreground: '#8A4B00' } },
-    { scope: ['entity.name.function', 'support.function', 'variable.function'], settings: { foreground: '#101826' } },
-    { scope: ['keyword.operator', 'punctuation', 'meta.brace'], settings: { foreground: '#475467' } },
-    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control', 'entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: '#6F2DA8' } },
+    { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#6A7686' } },
+    { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated', 'punctuation.definition.string'], settings: { foreground: '#0E6B57' } },
+    // 常量与数字同一档：None / True 是字面量，不是结构词。
+    { scope: ['constant.numeric', 'constant.language', 'support.constant', 'constant.character.format.placeholder'], settings: { foreground: '#9A5B00' } },
+    // Go 的包名是名字，不是结构词；否则 package main 会读成两个关键字。
+    { scope: ['entity.name.function', 'support.function', 'variable.function', 'entity.name.type.package'], settings: { foreground: '#101826' } },
+    // 算子、括号、分号是噪音：退到墨阶二。[] 在 C 里报 storage.modifier，单独归到这里。
+    { scope: ['keyword.operator', 'punctuation', 'meta.brace', 'storage.modifier.array'], settings: { foreground: '#475467' } },
+    // 结构词。directive 的 # 也归结构词，否则 #include 会裂成灰 # + 彩 include。
+    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control', 'entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag', 'punctuation.definition.directive'], settings: { foreground: '#96305F' } },
   ],
 };
 const COLOR_CLASS = {
-  '#0B6B4F': 's',
-  '#667085': 'c',
-  '#8A4B00': 'n',
-  '#6F2DA8': 'k',
+  '#0E6B57': 's',
+  '#6A7686': 'c',
+  '#9A5B00': 'n',
+  '#96305F': 'k',
   '#101826': 'f',
   '#475467': 'o',
 };
@@ -229,20 +235,61 @@ async function buildDiff(node, file, errors) {
   }
   const lang = attrOf(node, 'lang');
   const rows = [];
+  // 行号按实际 diff 行走：删除归旧文件，增加/上下文归新文件。
+  let oldNo = 1;
+  let newNo = 1;
   for (const line of text.split('\n')) {
     if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) continue;
     if (line.startsWith('@@')) {
       // git 的 @@ -1,4 +1,4 @@ 对观众是噪音：只留「改的是哪几行」。
       const m = line.match(/^@@\s+-(\d+)(?:,(\d+))?\s+\+(\d+)(?:,(\d+))?\s+@@/);
-      const a = m ? Number(m[1]) : 0;
-      const count = m && m[2] !== undefined ? Number(m[2]) : 1;
-      rows.push({ kind: 'hunk', text: m ? (count > 1 ? `第 ${a}–${a + count - 1} 行` : `第 ${a} 行`) : line });
+      const oldStart = m ? Number(m[1]) : 1;
+      const newStart = m ? Number(m[3]) : 1;
+      if (m) {
+        oldNo = oldStart;
+        newNo = newStart;
+      }
+      // 标签等读完这一组行再写：header 的计数可能和实际内容对不上。
+      rows.push({ kind: 'hunk', text: m ? '' : line, raw: line, header: !!m });
       continue;
     }
-    if (line.startsWith('+')) rows.push({ kind: 'add', text: line.slice(1) });
-    else if (line.startsWith('-')) rows.push({ kind: 'del', text: line.slice(1) });
-    else rows.push({ kind: 'same', text: line.replace(/^ /, '') });
+    if (line.startsWith('+')) rows.push({ kind: 'add', text: line.slice(1), old: null, new: newNo++ });
+    else if (line.startsWith('-')) rows.push({ kind: 'del', text: line.slice(1), old: oldNo++, new: null });
+    else rows.push({ kind: 'same', text: line.replace(/^ /, ''), old: oldNo++, new: newNo++ });
   }
+
+  // 标签按实际显示的改动行算，不信 header 的计数：
+  // 头写 -1,4 而实际只有三行时，不能说「第 1–4 行」。
+  const spanOf = (nums) => {
+    const lo = Math.min(...nums);
+    const hi = Math.max(...nums);
+    return lo === hi ? `${lo}` : `${lo}–${hi}`;
+  };
+  for (let i = 0; i < rows.length; i++) {
+    const h = rows[i];
+    if (h.kind !== 'hunk' || !h.header) continue;
+    const body = [];
+    for (let j = i + 1; j < rows.length && rows[j].kind !== 'hunk'; j++) body.push(rows[j]);
+    if (!body.length) {
+      h.text = h.raw;
+      continue;
+    }
+    const dels = body.filter((r) => r.kind === 'del');
+    const adds = body.filter((r) => r.kind === 'add');
+    if (dels.length || adds.length) {
+      // 有新版就报新版行号（观众看的是改完的文件）；只有删除才报旧版。
+      const changed = (adds.length ? adds : dels).map((r) => (r.kind === 'add' ? r.new : r.old));
+      const range = spanOf(changed);
+      h.text = !dels.length ? `新增第 ${range} 行` : !adds.length ? `删除第 ${range} 行` : `改第 ${range} 行`;
+    } else {
+      const olds = body.filter((r) => r.kind === 'same').map((r) => r.old);
+      const news = body.filter((r) => r.kind === 'same').map((r) => r.new);
+      const or = spanOf(olds);
+      const nr = spanOf(news);
+      h.text = or === nr ? `第 ${or} 行` : `旧 ${or} 行 → 新 ${nr} 行`;
+    }
+  }
+
   let n = 0;
   const parts = [];
   for (const r of rows) {
@@ -261,10 +308,14 @@ async function buildDiff(node, file, errors) {
         return '';
       }
     }
+    // 行号一列：删除给旧文件行号，增加/上下文给新文件行号。
+    // 只有一列，780 宽下代码行不会被双列行号挤小；+/- 已经说明在哪一边。
+    const ln = r.kind === 'del' ? r.old : r.new;
     parts.push(
-      `<div class="vk-diff-row ${r.kind === 'same' ? '' : r.kind}" data-vk-line="${n}"><span class="vk-sign">${
-        r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '
-      }</span><span class="vk-dsrc">${body}</span></div>`
+      `<div class="vk-diff-row ${r.kind === 'same' ? '' : r.kind}" data-vk-line="${n}">` +
+        `<span class="vk-ln">${ln}</span>` +
+        `<span class="vk-sign">${r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '}</span>` +
+        `<span class="vk-dsrc">${body}</span></div>`
     );
   }
   const add = rows.filter((r) => r.kind === 'add').length;
@@ -316,7 +367,9 @@ function buildAsm(node, file) {
       const { mnemonic, operands } = splitInsn(r.text);
       return `<div class="vk-arow" data-vk-line="${n}"${r.addr ? ` data-vk-addr="${esc(r.addr)}"` : ''}><span class="vk-aaddr">${esc(r.addr)}</span>${
         showBytes ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
-      }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)}</span></div>`;
+      }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)
+        .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)
+        .replace(/\$?0x[0-9a-f]+/gi, (m) => `<i class="vk-aimm">${m}</i>`)}</span></div>`;
     })
     .join('');
   const lines = attrOf(node, 'lines');
@@ -358,8 +411,8 @@ function buildBytes(node, file, errors) {
   return `<div class="vk-win"><div class="vk-bd">${rows.join('')}</div></div>`;
 }
 
-function treeHtml(node, rows, title) {
-  const head = title
+function treeHtml(node, rows, title, chrome = 'min') {
+  const head = title && chrome !== 'none'
     ? `<div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">${esc(title)}</span></div>`
     : '';
   return `<div class="vk-win">${head}<div class="vk-bd vk-tree">${rows.join('')}</div></div>`;
@@ -386,11 +439,15 @@ function treeNode(name, isDir, nodePath, kids = '', icon = '') {
 async function buildTree(node, file) {
   const src = attrOf(node, 'src');
   const depth = Number(attrOf(node, 'depth') || 3) || 3;
+  // 图标不是写死的：每种节点都可以换 Lucide 名，也可以整棵树关掉。
+  const off = attrOf(node, 'icons') === 'none';
+  const ICON_ATTR = { dir: 'icon-dir', code: 'icon-code', binary: 'icon-binary', file: 'icon-file' };
+  const pick = (kind, fallback) => (off ? Promise.resolve('') : iconSvg(attrOf(node, ICON_ATTR[kind]) || fallback));
   const ICONS = {
-    dir: await iconSvg('folder'),
-    code: await iconSvg('braces'),
-    binary: await iconSvg('binary'),
-    file: await iconSvg('file'),
+    dir: await pick('dir', 'folder'),
+    code: await pick('code', 'file'),
+    binary: await pick('binary', 'file'),
+    file: await pick('file', 'file'),
   };
   const nodeHtml = (name, isDir, p, kids = '') => treeNode(name, isDir, p, kids, ICONS[kindOf(name, isDir)]);
 
@@ -423,7 +480,7 @@ async function buildTree(node, file) {
     };
     const list = Array.isArray(data) ? data : data.children || [data];
     const body = walk(list, 1, '');
-    return treeHtml(node, [body + (more ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'));
+    return treeHtml(node, [body + (more ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
@@ -451,7 +508,7 @@ async function buildTree(node, file) {
     return rows.join('');
   };
   const body = walk(abs, 1, '');
-  return treeHtml(node, [body + (truncated ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'));
+  return treeHtml(node, [body + (truncated ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
 }
 
 /* ---------------------------------------------------------------- 图标 */
@@ -616,6 +673,13 @@ export async function transformHtml(rawHtml, { file }) {
       else if (tag === 'vk-asm') rendered.set(node, await buildAsm(node, file, errors));
       else if (tag === 'vk-bytes') rendered.set(node, await buildBytes(node, file, errors));
       else if (tag === 'vk-tree') rendered.set(node, await buildTree(node, file, errors));
+      else if (tag === 'vk-icon') {
+        const name = attrOf(node, 'name') || '';
+        const svg = await iconSvg(name);
+        if (!svg) {
+          errors.push({ file: label(file), line: lineOf(node), message: `<vk-icon> 的 name="${name}" 找不到`, fix: '写 Lucide 的 kebab 名，如 cpu / folder / lightbulb' });
+        } else rendered.set(node, svg);
+      }
       else if (tag === 'vk-inline' && attrOf(node, 'variant') === 'math') {
         const tex = inlineSource(node) || textOf(node);
         if (tex) rendered.set(node, katex.renderToString(tex.trim(), { displayMode: false, throwOnError: true, strict: false, output: 'htmlAndMathml' }));

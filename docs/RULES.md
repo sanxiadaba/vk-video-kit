@@ -2,6 +2,8 @@
 
 数字与取值不在这里抄一遍：见 `CONTRACT.md` 或 `vk doc <tag>`。
 
+定制（图标、颜色、形状、组合）见 [CUSTOMIZE.md](CUSTOMIZE.md)。
+
 ## 一、一帧的容量
 
 版心 888 高。一个标题块（label 64 + gap 32 + subhead 120 + gap 32）约 248，剩下 **640**。
@@ -12,7 +14,7 @@
 | `vk-code` | 6 行 | 再多会缩到 44px 地板，然后被裁（自检会报） |
 | `vk-term` | 7 行 | 终端行高比代码小 |
 | `vk-table` | 4 行 | 表头另算 |
-| `vk-tree` | 6 行 | 超了末尾留一行「…还有更多」 |
+| `vk-tree` | 5 行 | 超了末尾留一行「…还有更多」 |
 | `vk-cells` | 2 行 | `cols=4` 时 8 格 |
 | `vk-steps` | 5 步 | 横排；再长换 `direction="vertical"` |
 | `vk-bars` | 6 条 | |

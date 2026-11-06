@@ -1,7 +1,7 @@
 <!-- 验收帧：每一帧是一个能上片的画面，同时当视觉回归的基准。
      不是模板库——它们不承担「照着抄」的职责，只证明每个件在手机尺度上成立。 -->
 
-<vk-page id="cover">
+<vk-page id="cover" align="center">
   <vk-stack gap="normal">
     <vk-label counter="第 3 集">指针与内存</vk-label>
     <vk-text size="headline">地址不是编号，<br>是<em>偏移量</em>。</vk-text>
@@ -123,7 +123,7 @@ hello.c:3: error: expected ';'
   <vk-stack gap="normal">
     <vk-label>文件树</vk-label>
     <vk-text size="subhead">编译产物比源码<em>大得多</em>。</vk-text>
-    <vk-tree src="../code" depth="2" max="6" title="code/" current="opt"></vk-tree>
+    <vk-tree src="../code" depth="2" max="5" title="code/" current="opt" icons="auto" icon-dir="folder" icon-code="file" icon-binary="file" icon-file="file"></vk-tree>
   </vk-stack>
 </vk-page>
 
@@ -225,12 +225,13 @@ for (i=0; i<n; i++)
   <vk-stack gap="normal">
     <vk-label>面与图</vk-label>
     <vk-text size="subhead">截图放在<em>实底上</em>，字才看得清。</vk-text>
-    <vk-grid cols="12" gap="normal">
-      <vk-box span="7" surface="paper" border="hair" title="screenshot.png" pad="normal">
+    <vk-grid cols="12" gap="normal" align="start">
+      <vk-box span="7" surface="paper" border="hair" pad="normal">
         <vk-img src="../assets/compare/fixtures-after.png" ratio="16 / 9"></vk-img>
       </vk-box>
       <vk-box span="5" surface="soft" pad="normal">
         <vk-stack gap="close">
+          <vk-icon name="eye" size="body" tone="focus"></vk-icon>
           <vk-text size="caption" ink="muted">看到的东西</vk-text>
           <vk-list variant="check" size="caption">
             <li>地址是 16 进制</li>
@@ -310,5 +311,8 @@ int a = 1;
     <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
   </vk-stack>
 </vk-page>
+
+
+
 
 

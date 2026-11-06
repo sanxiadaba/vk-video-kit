@@ -15,7 +15,13 @@ export class VkPage extends VkElement {
       fillSlot(stage, kids);
       this._stage = stage;
     }
-    this.dataset.align = attrEnum(this, 'align', 'center');
+    this.dataset.align = attrEnum(this, 'align', 'band');
+    // 标题带：首个子栈吃满版心，内容才能在剩余带里居中（.vk-stage > * 的 flex:0 会压住 CSS 规则）。
+    const first = this._stage && this._stage.firstElementChild;
+    if (first && first.tagName === 'VK-STACK') {
+      if (this.dataset.align === 'band') first.style.flex = '1 1 auto';
+      else first.style.removeProperty('flex');
+    }
   }
 }
 

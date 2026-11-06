@@ -23,6 +23,7 @@ import {
   LINE_W,
   PAINT,
   SYNTAX,
+  BLOCK,
   DOTS,
   FONT_FAMILY,
 } from '../src/vocab.mjs';
@@ -77,6 +78,7 @@ pair('on-focus', 'onFocus');
 
 rows.push('');
 for (const [k, v] of Object.entries(SYNTAX)) push(`syn-${k}`, `light-dark(${v[0]}, ${v[1]})`);
+for (const [k, v] of Object.entries(BLOCK)) push(`block-${k}`, `${v}px`);
 for (const [k, v] of Object.entries(DOTS)) push(`dot-${k}`, v);
 
 const css = `/* vk · 由 tools/css.mjs 从 src/vocab.mjs 生成 —— 不要手改。

@@ -176,6 +176,8 @@ export function metrics(stageEl) {
   const scale = stage.offsetWidth ? sr.width / stage.offsetWidth : 1;
   const rects = [...stage.querySelectorAll('*')]
     .filter((el) => !el.closest('svg') && !isDeco(el) && !isOverlay(el) && !el.closest('[bleed="all"]'))
+    // 透明排布容器不是「内容」：它们撑满版心，会把 bbox 拉成整页。
+    .filter((el) => !el.matches('vk-stack, vk-grid, vk-layer'))
     .map((el) => el.getBoundingClientRect())
     .filter((r) => r.width > 1 && r.height > 1);
   const top = rects.length ? Math.min(...rects.map((r) => r.top)) : sr.top;

@@ -82,7 +82,7 @@ export const TAGS = {
     summary: '一帧 1920×1080 的坐标系。align 决定内容在版心（1680×888）里的纵向位置。',
     attrs: {
       id: { type: 'text', group: 'content', label: '帧名（出图文件名）' },
-      align: { type: 'enum', values: ['top', 'center', 'bottom'], default: 'center', group: 'layout', label: '纵向对齐' },
+      align: { type: 'enum', values: ['band', 'center', 'top', 'bottom'], default: 'band', group: 'layout', label: '纵向对齐' },
       surface: { type: 'enum', values: ['paper', 'dark'], default: 'paper', group: 'appearance', label: '底色' },
     },
     children: { kind: 'slot' },
@@ -184,6 +184,18 @@ export const TAGS = {
       mono: { type: 'bool', group: 'appearance', label: '等宽' },
     },
     content: 'text',
+  },
+
+  'vk-icon': {
+    layer: 'text',
+    name: '图标',
+    summary: '单独放一个 Lucide 图标：行内、盒里、标题旁都可以。',
+    attrs: {
+      name: { type: 'text', group: 'content', label: '图标名（Lucide kebab）' },
+      size: sizeText('body'),
+      tone: { type: 'enum', values: ['none', 'focus', 'ok', 'warn', 'err', 'info'], default: 'none', group: 'appearance', label: '颜色' },
+    },
+    children: { kind: 'none' },
   },
 
   'vk-label': {
@@ -326,9 +338,15 @@ export const TAGS = {
       max: { type: 'int', min: 1, max: 40, default: 10, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
       size: sizeText('body'),
+      icons: { type: 'enum', values: ['auto', 'none'], default: 'auto', group: 'appearance', label: '图标' },
+      'icon-dir': { type: 'text', group: 'appearance', label: '目录图标（Lucide 名）' },
+      'icon-code': { type: 'text', group: 'appearance', label: '代码文件图标' },
+      'icon-binary': { type: 'text', group: 'appearance', label: '二进制文件图标' },
+      'icon-file': { type: 'text', group: 'appearance', label: '普通文件图标' },
+      chrome: chrome('min'),
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
-    capacity: { max: 6, unit: '行' },
+    capacity: { max: 5, unit: '行' },
   },
 
   'vk-asm': {

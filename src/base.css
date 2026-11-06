@@ -54,19 +54,50 @@ vk-page[surface='dark'] {
 
 /* 版心：内容不越过的边界。三类对齐共用同一个盒子。 */
 .vk-stage {
+  --vk-block-w: var(--vk-block-full);
   position: relative;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
   width: 100%;
   height: 100%;
   padding: var(--vk-margin-y) var(--vk-margin-x);
 }
+/* 标题带：标签顶恒 96，标题→内容恒 64，内容在剩余带里居中。
+   条带 = 标签 80 + 32 + 标题行盒（subhead 120 / headline 176）。 */
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-label {
+  margin-bottom: calc(var(--vk-gap-normal) - var(--vk-gap, var(--vk-gap-normal)));
+}
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'],
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] {
+  margin-bottom: calc(var(--vk-gap, var(--vk-gap-normal)) * -1);
+}
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'] + :not(vk-text),
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] + :not(vk-text) {
+  margin-top: auto;
+}
+/* 标题后的说明/结论是标题的一部分，不要被推到带中心。 */
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='subhead'] + vk-text,
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > vk-text[size='headline'] + vk-text {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+vk-page[data-align='band'] .vk-stage > vk-stack:first-child > :last-child {
+  margin-bottom: auto;
+}
+vk-page[align='center'] .vk-stage { justify-content: center; }
 
-vk-page[align='top'] .vk-stage {
+vk-page[data-align='center'] .vk-stage {
+  justify-content: center;
+}
+vk-page[data-align='top'] .vk-stage {
   justify-content: flex-start;
 }
-vk-page[align='bottom'] .vk-stage {
+vk-page[data-align='bottom'] .vk-stage {
   justify-content: flex-end;
 }
 

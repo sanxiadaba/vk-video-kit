@@ -18,6 +18,74 @@ const NS = 'http://www.w3.org/2000/svg';
 const visibleBox = (el) => el?.querySelector?.(':scope > .vk-win') || el;
 
 /**
+ * 连接件的尺子 —— 四种角色，靠「形状 + 端点」分开，不靠堆颜色。
+ *
+ *   bar（当前行条，在 components.css）  状态：焦点蓝 · 平头 · 贴行内缘 · 无圆角
+ *   arrow  有方向  粗线 + 实心三角头，箭尖离目标 10px
+ *   ring   闭合    行级是胶囊、块级是圆角框：贴着字、离开行
+ *   leader 开放    细一档 + 端点圆点，点与目标边框相切
+ *
+ * 颜色只有一个分工：蓝 = 状态，墨 = 关系。语义色（ok/warn/err）不画在线上 ——
+ * 一根 500px 长的红线会被读成「出事了」，而它只是「这里有关系」。
+ *
+ * 手机是 0.406×：12px→4.9px，10px→4.1px，68px 的头→28px。都明显粗于代码字干。
+ */
+const LINK = {
+  arrow: {
+    w: 12,
+    head: 68, // 头长；半张角 0.40rad ⇒ 头宽 53，稳而不尖
+    spread: 0.4,
+    start: 14, // 起点离源件边框
+    end: 10, // 箭尖离目标边框：指到跟前，不是停在一米外
+    bow: 0.3, // 曲线控制点 = 弦长 × 0.3
+    bowMin: 56,
+    bowMax: 200,
+    shaft: 0.62, // 线只画到头长 62% 处，圆头才不会从尖端冒出来
+  },
+  ring: { w: 5, padX: 12, padY: 2, padXBlock: 20, padYBlock: 14, radius: 16 },
+  leader: { w: 10, dot: 12, min: 64 },
+};
+
+/**
+ * 目标落在一块什么底上？圈画在件上（深色页里的代码窗仍是浅底），
+ * 所以圈的墨色跟着**件**走；箭头与引线画在页面上，跟着页面走。
+ * 判法：从目标往上找第一块不透明的底色，看它的亮度。
+ * 不用 elementFromPoint：帧在页面里是竖排的，取点会落在视口外。
+ */
+function onDark(el) {
+  for (let n = el; n && n.nodeType === 1; n = n.parentElement) {
+    const nums = getComputedStyle(n).backgroundColor.match(/[\d.]+/g);
+    if (!nums) continue;
+    const [r, g, b, a = 1] = nums.map(Number);
+    if (a < 0.5) continue;
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b < 128;
+  }
+  return false;
+}
+
+/** 沿折线从尾巴收掉 dist；最后一段不够就吃掉上一段。箭头要收进头里。 */
+function trimTail(pts, dist) {
+  const out = pts.map((p) => ({ ...p }));
+  let left = dist;
+  while (out.length > 2 && left > 0) {
+    const b = out[out.length - 1];
+    const a = out[out.length - 2];
+    const seg = Math.hypot(b.x - a.x, b.y - a.y);
+    if (seg > left) {
+      const k = (seg - left) / seg;
+      out[out.length - 1] = { x: a.x + (b.x - a.x) * k, y: a.y + (b.y - a.y) * k };
+      left = 0;
+    } else {
+      out.pop();
+      left -= seg;
+    }
+  }
+  return out;
+}
+
+const at = (p) => `${Math.round(p.x * 10) / 10} ${Math.round(p.y * 10) / 10}`;
+
+/**
  * vk-callout —— 画在别人身上的一层。
  *
  *   arrow  从一个锚点连到另一个锚点（直线 / 折线 / 曲线）
@@ -54,14 +122,6 @@ export class VkCallout extends VkElement {
     const scale = stageScale(stage);
     const W = stage.offsetWidth;
     const H = stage.offsetHeight;
-    // 版心（画布减去外边距）：气泡要落在版心里，跟内容一个边界。
-    const scs = getComputedStyle(stage);
-    const safe = {
-      x: Number.parseFloat(scs.paddingLeft) || 0,
-      y: Number.parseFloat(scs.paddingTop) || 0,
-      r: W - (Number.parseFloat(scs.paddingRight) || 0),
-      b: H - (Number.parseFloat(scs.paddingBottom) || 0),
-    };
     const local = (r) => ({
       x: (r.left - sr.left) / scale,
       y: (r.top - sr.top) / scale,
@@ -87,12 +147,11 @@ export class VkCallout extends VkElement {
 
     const mode = this.dataset.mode;
     const tone = attrEnum(this, 'tone', 'info');
-    svg.dataset.tone = tone;
-    // 颜色交给 --vk-tone：深色页会把它换成亮一档的同语义色，写死在这里就换不动。
-const stroke = 'var(--vk-tone, var(--vk-info))';
 
-    if (mode === 'arrow') this._arrow(svg, local, stroke, W, H);
-    else if (mode === 'ring') this._ring(svg, local, stroke);
+    // 颜色在 callout.css（.vk-arrow / .vk-ring / .vk-note-leader），不在这里写死：
+    // 墨色要跟着 color-scheme 走，深色页才换得动。
+    if (mode === 'arrow') this._arrow(svg, local);
+    else if (mode === 'ring') this._ring(svg, local);
     else if (mode === 'note') this._note(local, W, H, tone);
     else if (mode === 'badge') this._badge(local);
   }
@@ -109,7 +168,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     return a;
   }
 
-  _arrow(svg, local, stroke, W, H) {
+  _arrow(svg, local) {
     const stage = stageOf(this);
     const fromExpr = attrText(this, 'from');
     const toExpr = attrText(this, 'to');
@@ -133,22 +192,40 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const p1 = this._borderPoint(A, B);
     const p2 = this._borderPoint(B, A);
     const shape = attrEnum(this, 'shape', 'curve');
-    const gap = 24;
+    const L = LINK.arrow;
+    const trim = L.head * L.shaft;
+
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const len = Math.hypot(dx, dy) || 1;
     const ux = dx / len;
     const uy = dy / len;
-    const s = { x: p1.x + ux * gap, y: p1.y + uy * gap };
-    const e = { x: p2.x - ux * gap, y: p2.y - uy * gap };
 
-    let d;
-    let tail = { x: s.x - e.x, y: s.y - e.y };
-    if (shape === 'straight') d = `M${s.x} ${s.y} L${e.x} ${e.y}`;
-    else if (shape === 'ortho') {
-      const mid = (s.x + e.x) / 2;
-      d = `M${s.x} ${s.y} L${mid} ${s.y} L${mid} ${e.y} L${e.x} ${e.y}`;
-      tail = { x: mid - e.x, y: 0 };
+    let d = '';
+    let tip = { x: p2.x - ux * L.end, y: p2.y - uy * L.end };
+    let dir = { x: ux, y: uy };
+    let mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+
+    if (shape === 'straight') {
+      const s = { x: p1.x + ux * L.start, y: p1.y + uy * L.start };
+      const end = { x: tip.x - ux * trim, y: tip.y - uy * trim };
+      d = `M${at(s)} L${at(end)}`;
+      mid = { x: (s.x + tip.x) / 2, y: (s.y + tip.y) / 2 };
+    } else if (shape === 'ortho') {
+      // 折线：从源件法线方向出去，横竖各走一半，再贴着目标法线方向进。
+      const s = { x: p1.x + ux * L.start, y: p1.y + uy * L.start };
+      tip = { x: p2.x - ux * L.end, y: p2.y - uy * L.end };
+      const horizontal = Math.abs(ux) >= Math.abs(uy);
+      const knee = horizontal ? (s.x + tip.x) / 2 : (s.y + tip.y) / 2;
+      const pts = horizontal
+        ? [s, { x: knee, y: s.y }, { x: knee, y: tip.y }, tip]
+        : [s, { x: s.x, y: knee }, { x: tip.x, y: knee }, tip];
+      const trimmed = trimTail(pts, trim);
+      d = trimmed.map((p, i) => `${i ? 'L' : 'M'}${at(p)}`).join(' ');
+      dir = { x: tip.x - pts[2].x, y: tip.y - pts[2].y };
+      const dl = Math.hypot(dir.x, dir.y) || 1;
+      dir = { x: dir.x / dl, y: dir.y / dl };
+      mid = { x: (s.x + tip.x) / 2, y: (s.y + tip.y) / 2 };
     } else {
       // 曲线要「贴着边出、贴着边进」：控制点沿边的法线走，而不是沿弦垂直偏移。
       const normal = (rect, p) => {
@@ -160,50 +237,55 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
       };
       const n1 = normal(A, p1);
       const n2 = normal(B, p2);
-      const sx = p1.x + n1.x * gap;
-      const sy = p1.y + n1.y * gap;
-      const ex = p2.x + n2.x * gap;
-      const ey = p2.y + n2.y * gap;
-      const room = Math.abs(n1.x) ? Math.abs(ex - sx) : Math.abs(ey - sy);
-      const bow = Math.max(48, Math.min(280, len * 0.38, room * 0.45));
-      const c1 = { x: sx + n1.x * bow, y: sy + n1.y * bow };
-      const c2 = { x: ex + n2.x * bow, y: ey + n2.y * bow };
-      d = `M${sx} ${sy} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${ex} ${ey}`;
-      tail = { x: ex - c2.x, y: ey - c2.y };
+      const s = { x: p1.x + n1.x * L.start, y: p1.y + n1.y * L.start };
+      tip = { x: p2.x + n2.x * L.end, y: p2.y + n2.y * L.end };
+      const room = Math.abs(n1.x) ? Math.abs(tip.x - s.x) : Math.abs(tip.y - s.y);
+      const bow = Math.max(L.bowMin, Math.min(L.bowMax, len * L.bow, room * 0.45));
+      const c1 = { x: s.x + n1.x * bow, y: s.y + n1.y * bow };
+      // 终点控制点在目标外侧：线段从那一侧「顶」进边框，箭尖才正对目标。
+      const c2 = { x: tip.x + n2.x * bow, y: tip.y + n2.y * bow };
+      dir = { x: tip.x - c2.x, y: tip.y - c2.y };
+      const dl = Math.hypot(dir.x, dir.y) || 1;
+      dir = { x: dir.x / dl, y: dir.y / dl };
+      // 终点连同控制点一起往回收 trim：切线方向不变，但线端藏进头里。
+      const c2t = { x: c2.x - dir.x * trim, y: c2.y - dir.y * trim };
+      const et = { x: tip.x - dir.x * trim, y: tip.y - dir.y * trim };
+      d = `M${at(s)} C${at(c1)} ${at(c2t)} ${at(et)}`;
+      mid = {
+        x: (s.x + 3 * c1.x + 3 * c2.x + tip.x) / 8,
+        y: (s.y + 3 * c1.y + 3 * c2.y + tip.y) / 8,
+      };
     }
 
     const path = document.createElementNS(NS, 'path');
     path.setAttribute('d', d);
     path.setAttribute('class', 'vk-arrow');
     path.setAttribute('fill', 'none');
-    path.setAttribute('stroke', stroke);
-    path.setAttribute('stroke-width', '4');
+    path.setAttribute('stroke-width', String(L.w));
     path.setAttribute('stroke-linecap', 'round');
+    path.setAttribute('stroke-linejoin', 'round');
     svg.appendChild(path);
 
-    const ang = Math.atan2(tail.y, tail.x);
-    const tip = document.createElementNS(NS, 'path');
-    const size = 40;
-    const half = 0.5;
-    tip.setAttribute(
-      'd',
-      `M${e.x} ${e.y} L${e.x - size * Math.cos(ang - half)} ${e.y - size * Math.sin(ang - half)} L${e.x - size * Math.cos(ang + half)} ${
-        e.y - size * Math.sin(ang + half)
-      } Z`
-    );
-    tip.setAttribute('fill', stroke);
-    svg.appendChild(tip);
+    // 实心三角头：底边平、半张角 0.40rad。线已经收进头里，尖端是尖的。
+    const ang = Math.atan2(dir.y, dir.x);
+    const hw = L.head * Math.sin(L.spread);
+    const bx = tip.x - Math.cos(ang) * L.head;
+    const by = tip.y - Math.sin(ang) * L.head;
+    const px = Math.cos(ang + Math.PI / 2) * hw;
+    const py = Math.sin(ang + Math.PI / 2) * hw;
+    const head = document.createElementNS(NS, 'path');
+    head.setAttribute('d', `M${at(tip)} L${at({ x: bx + px, y: by + py })} L${at({ x: bx - px, y: by - py })} Z`);
+    head.setAttribute('class', 'vk-arrow-head');
+    svg.appendChild(head);
 
     if (this._text) {
       const box = document.createElement('div');
       box.className = 'vk-callout-bd vk-callout-label';
       box.textContent = this._text;
-      box.style.left = `${(s.x + e.x) / 2}px`;
-      box.style.top = `${(s.y + e.y) / 2}px`;
+      box.style.left = `${mid.x}px`;
+      box.style.top = `${mid.y}px`;
       this._root.appendChild(box);
     }
-    void W;
-    void H;
   }
 
   /** 从盒子中心向外，取边框上的交点。 */
@@ -219,25 +301,27 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     return { x: cx + dx * s, y: cy + dy * s };
   }
 
-  _ring(svg, local, stroke) {
+  _ring(svg, local) {
     const a = this._target();
     if (!a) return;
     const r = local(a.rect);
-    const padX = 18;
-    const padY = 10;
-    const shape = attrEnum(this, 'shape', 'curve'); // 未用：ring 的形状由宽高比决定
-    void shape;
+    const R = LINK.ring;
+    // 行级的圈：淡底 + 细蓝框，读作「划重点」；块级只描边，不盖住内容。
+    const isLine = !!a.el?.closest?.('.vk-line, .vk-diff-row, .vk-arow');
+    const padX = isLine ? R.padX : R.padXBlock;
+    const padY = isLine ? R.padY : R.padYBlock;
+    const w = r.w + padX * 2;
+    const h = r.h + padY * 2;
     const el = document.createElementNS(NS, 'rect');
     el.setAttribute('x', String(r.x - padX));
     el.setAttribute('y', String(r.y - padY));
-    el.setAttribute('width', String(r.w + padX * 2));
-    el.setAttribute('height', String(r.h + padY * 2));
-    el.setAttribute('rx', String(Math.min(28, Math.min(r.w, r.h) / 2)));
-    el.setAttribute('class', 'vk-ring');
-    el.setAttribute('fill', 'none');
-    el.setAttribute('stroke', stroke);
-    el.setAttribute('stroke-width', '4');
-    el.setAttribute('stroke-linecap', 'round');
+    el.setAttribute('width', String(w));
+    el.setAttribute('height', String(h));
+    el.setAttribute('rx', String(Math.min(isLine ? R.radius : 24, Math.min(w, h) / 2)));
+    el.setAttribute('class', isLine ? 'vk-ring is-line' : 'vk-ring is-block');
+    el.setAttribute('stroke-width', String(R.w));
+    // 圈压在件上：墨色跟着件走。深色页里的代码窗仍是浅底，圈必须是深墨。
+    el.style.colorScheme = onDark(a.el) ? 'dark' : 'light';
     svg.appendChild(el);
   }
 
@@ -270,7 +354,8 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const bw = Math.min(maxW, Math.max(minW, box.offsetWidth));
     const bh = box.offsetHeight;
 
-    const gap = this.hasAttribute('gap') ? Number.parseFloat(attrSpace(this, 'gap', 'normal')) || 96 : 96;
+    // 引线要有「一段」的长度：气泡离目标 112，点再吃掉 12，剩下的才是看得见的那根线。
+    const gap = this.hasAttribute('gap') ? Number.parseFloat(attrSpace(this, 'gap', 'normal')) || 112 : 112;
     const sideAttr = attrEnum(this, 'side', 'auto');
     // 版心（画布减去外边距）：气泡要落在版心里，跟内容一个边界。
     const scs = getComputedStyle(stage);
@@ -325,7 +410,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     for (const side of order) {
       const c0 = space[side];
       const fit = {
-        left: clamp(c0.left, safe.x + 8, Math.max(safe.x + 8, safe.r - bw - 8)),
+        left: clamp(c0.left, safe.x + 4, Math.max(safe.x + 4, safe.r - bw - 4)),
         top: clamp(c0.top, safe.y + 8, Math.max(safe.y + 8, safe.b - bh - 8)),
         side,
         bw,
@@ -346,11 +431,18 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
 
     // 引线：从气泡边缘连到目标的**容器**边缘（不是字的中间），
     // 否则线会横穿正在讲的那行代码。
+    // 端点外推到「刚好相切」：圆心离边框一个半径，圆和边框相切、谁也不压谁。
+    // 这样引线整根都活在同一块底上（页面），深色页不会出现半白半黑的点。
+    const D = LINK.leader.dot;
     const from = { x: spot.left, y: spot.top, w: bw, h: bh };
     const p1 = this._borderPoint(from, ob);
     let p2;
     if (owner === a.el) {
-      p2 = this._borderPoint(r, from);
+      const on = this._borderPoint(r, from);
+      const vx = on.x - p1.x;
+      const vy = on.y - p1.y;
+      const vl = Math.hypot(vx, vy) || 1;
+      p2 = { x: on.x + (vx / vl) * D, y: on.y + (vy / vl) * D };
     } else {
       // 目标在窗口里：引线落在窗口边缘「对齐那一行」的位置，不穿进正文。
       const cx = r.x + r.w / 2;
@@ -359,26 +451,28 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
       const right = from.x > ob.x + ob.w / 2;
       const vertical = Math.abs(from.y + from.h / 2 - (ob.y + ob.h / 2)) > Math.abs(from.x + from.w / 2 - (ob.x + ob.w / 2));
       p2 = vertical
-        ? { x: Math.min(Math.max(cx, ob.x + 4), ob.x + ob.w - 4), y: below ? ob.y + ob.h + 16 : ob.y - 16 }
-        : { x: right ? ob.x + ob.w + 16 : ob.x - 16, y: Math.min(Math.max(cy, ob.y + 4), ob.y + ob.h - 4) };
+        ? { x: Math.min(Math.max(cx, ob.x + D + 4), ob.x + ob.w - D - 4), y: below ? ob.y + ob.h + D : ob.y - D }
+        : { x: right ? ob.x + ob.w + D : ob.x - D, y: Math.min(Math.max(cy, ob.y + D + 4), ob.y + ob.h - D - 4) };
     }
     const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
-    const line = document.createElementNS(NS, 'line');
-    line.setAttribute('x1', String(p1.x));
-    line.setAttribute('y1', String(p1.y));
-    line.setAttribute('x2', String(p2.x));
-    line.setAttribute('y2', String(p2.y));
-    line.setAttribute('class', 'vk-note-leader');
-    line.setAttribute('stroke', 'var(--vk-ink-2)');
-    line.setAttribute('stroke-width', 'var(--vk-line-w-strong)');
-    line.setAttribute('stroke-linecap', 'round');
-    if (dist >= 24) this._svg.appendChild(line);
-    const dot = document.createElementNS(NS, 'circle');
-    dot.setAttribute('cx', String(p2.x));
-    dot.setAttribute('cy', String(p2.y));
-    dot.setAttribute('r', '12');
-    dot.setAttribute('fill', 'var(--vk-ink-2)');
-    this._svg.appendChild(dot);
+    // 太短的引线不如不画：一颗孤零零的点会被当成标点符号。
+    if (dist >= LINK.leader.min) {
+      const line = document.createElementNS(NS, 'line');
+      line.setAttribute('x1', String(p1.x));
+      line.setAttribute('y1', String(p1.y));
+      line.setAttribute('x2', String(p2.x));
+      line.setAttribute('y2', String(p2.y));
+      line.setAttribute('class', 'vk-note-leader');
+      line.setAttribute('stroke-width', String(LINK.leader.w));
+      line.setAttribute('stroke-linecap', 'round');
+      this._svg.appendChild(line);
+      const dot = document.createElementNS(NS, 'circle');
+      dot.setAttribute('cx', String(p2.x));
+      dot.setAttribute('cy', String(p2.y));
+      dot.setAttribute('r', String(D));
+      dot.setAttribute('class', 'vk-note-dot');
+      this._svg.appendChild(dot);
+    }
   }
 
   _badge(local) {
