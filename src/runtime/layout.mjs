@@ -105,7 +105,11 @@ export class VkPair extends VkElement {
     this.style.setProperty('--vk-split', String(attrNum(this, 'split', 50)));
     // 轴上有字时，中间那条缝要容得下它：没显式写 gap 就把缝放大一档。
     const symbol = attrText(this, 'symbol', 'none');
-    const gap = this.hasAttribute('gap') ? attrSpace(this, 'gap', 'wide') : spaceCss(symbol === 'none' ? 'wide' : 'section');
+    const gap = this.hasAttribute('gap')
+      ? attrSpace(this, 'gap', 'wide')
+      : spaceCss(symbol === 'none' ? 'wide' : 'section');
+    // 轴上有字时，缝宽 = section + wide：字放在缝里，才压不到两边的窗。
+    if (!this.hasAttribute('gap') && symbol !== 'none') this.style.setProperty('--vk-gap', 'calc(var(--vk-gap-section) * 2)');
     if (gap) this.style.setProperty('--vk-gap', gap);
     // split 是不对称分栏：中轴上那个字会被挤进窄的一边，索性不画。
     if (symbol === 'none' || this.hasAttribute('split')) {

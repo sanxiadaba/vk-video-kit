@@ -271,7 +271,7 @@ vk-asm {
   display: flex;
   flex-direction: column;
   min-width: 0;
-  padding: var(--vk-gap-close) 0;
+  padding: var(--vk-gap-normal) 0;
 }
 
 /* ------------------------------------------------------------------ 代码 */
@@ -286,37 +286,54 @@ vk-asm {
   color: var(--vk-ink-1);
 }
 .vk-line {
-  gap: var(--vk-gap-normal);
+  gap: 0;
   overflow: visible;
-  padding-right: var(--vk-gap-normal);
   min-height: calc(var(--vk-cs, var(--vk-fs-body)) * var(--vk-lh-body));
 }
+/* 行号是一列，不是飘在左边的几个数字：给底色、右分隔线和内距，
+   读者才知道「这里是行号，右边是代码」。 */
 .vk-line .vk-ln {
   flex: 0 0 auto;
-  width: 3.2em;
+  width: 2.8em;
+  padding: 0 var(--vk-gap-close);
   text-align: right;
-  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.72);
-  line-height: calc(var(--vk-lh-body) / 0.72);
-  color: var(--vk-ink-3);
+  font-size: calc(var(--vk-cs, var(--vk-fs-body)) * 0.8);
+  line-height: calc(var(--vk-lh-body) / 0.8);
+  color: var(--vk-ink-2);
+  background: var(--vk-soft);
+  border-right: var(--vk-line-w-hair) solid var(--vk-line-color);
   user-select: none;
 }
 .vk-line .vk-src {
   flex: 0 0 auto;
-  padding-right: var(--vk-gap-normal);
+  padding: 0 var(--vk-gap-normal) 0 var(--vk-gap-close);
 }
 /* 当前行：一条实心焦点条 + 焦点淡底。 */
-.vk-line.is-current {
-  background: var(--vk-tint-focus);
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
-}
+.vk-line.is-current { background: var(--vk-tint-focus); }
 .vk-line.is-current .vk-ln {
   color: var(--vk-focus);
   font-weight: var(--vk-w-bold);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+/* 终端没有 gutter，蓝条画在行首。 */
+
+/* 纸面终端：一块软底面板，和代码窗区分开；深色终端由 color-scheme 处理。 */
+vk-term .vk-win[data-surface='paper'] {
+  background: var(--vk-soft);
+}
+vk-term .vk-win[data-surface='paper'] > .vk-hd {
+  background: var(--vk-paper);
+}
+
+/* 有指针的内存格：顶上留出一行，胶囊不顶到上一行。 */
+vk-cells[data-markers] { padding-top: var(--vk-gap-wide); }
+.vk-term .vk-line.is-current {
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
 .vk-mark {
   border-radius: calc(var(--vk-radius-md) / 3);
   background: var(--vk-tint-focus);
-  box-shadow: inset 0 calc(var(--vk-line-w-hair) * -1) 0 var(--vk-focus);
+  box-shadow: inset 0 calc(var(--vk-line-w-strong) * -1) 0 var(--vk-focus);
 }
 /* 聚光之外的行退到墨阶三，不用 opacity：0.35 在深底上只有 2.3:1。 */
 .vk-line.is-dim,
@@ -324,17 +341,16 @@ vk-asm {
 .vk-line.is-dim .c {
   color: var(--vk-ink-3);
 }
-.vk-line.is-fold {
-  justify-content: flex-start;
-  color: var(--vk-ink-3);
-  font-style: normal;
-  letter-spacing: 0.24em;
-}
-/* 语法：只有三个颜色。关键字靠字重，数字退到墨阶。 */
-.vk-src .k { font-weight: var(--vk-w-bold); }
+.vk-line.is-fold { color: var(--vk-ink-2); font-style: normal; }
+.vk-line.is-fold .vk-ln { color: var(--vk-ink-3); }
+.vk-line.is-fold .vk-src { letter-spacing: 0.04em; }
+/* 语法：四支色 + 一个字重。焦点蓝不参与语法，一帧里的蓝只表示「正在看这里」。 */
+.vk-src .k { color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
 .vk-src .s { color: var(--vk-syn-string); }
 .vk-src .c { color: var(--vk-syn-comment); }
-.vk-src .f { font-weight: var(--vk-w-bold); }
+.vk-src .n { color: var(--vk-syn-number); }
+.vk-src .t { color: var(--vk-syn-type); }
+.vk-src .f { color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
 /* 长行：默认不折（窗口负责裁），写 long="wrap" 才折。 */
 vk-code[long='wrap'] .vk-line {
   white-space: pre-wrap;
@@ -346,7 +362,7 @@ vk-code[long='wrap'] .vk-src {
 }
 
 /* ------------------------------------------------------------------ 终端 */
-.vk-term .vk-line { padding-left: var(--vk-gap-normal); }
+.vk-term .vk-line { padding-left: var(--vk-gap-normal); gap: var(--vk-inset-sm); }
 .vk-term .vk-prompt {
   color: var(--vk-ink-3);
   user-select: none;
@@ -361,7 +377,7 @@ vk-code[long='wrap'] .vk-src {
 /* ------------------------------------------------------------------ 差异 */
 .vk-diff-row {
   gap: var(--vk-gap-close);
-  padding-right: var(--vk-gap-normal);
+  padding: 0 var(--vk-gap-normal);
 }
 .vk-diff-row .vk-sign {
   flex: 0 0 auto;
@@ -400,9 +416,9 @@ vk-code[long='wrap'] .vk-src {
 .vk-diff-hunk {
   padding: var(--vk-gap-close) var(--vk-gap-normal) 0;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-micro);
-  line-height: var(--vk-lh-micro);
-  color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-2);
 }
 .vk-diff-foot {
   padding: var(--vk-gap-close) var(--vk-gap-normal);
@@ -415,15 +431,18 @@ vk-code[long='wrap'] .vk-src {
 /* ------------------------------------------------------------------ 汇编 */
 .vk-arow {
   gap: var(--vk-gap-close);
+  padding: 0 var(--vk-gap-normal);
 }
 .vk-arow > * { flex: 0 0 auto; }
 .vk-arow > .vk-aaddr {
-  width: 5.4em;
-  color: var(--vk-ink-3);
+  width: 3.2em;
+  padding-right: var(--vk-gap-close);
+  text-align: right;
+  color: var(--vk-ink-2);
 }
 .vk-arow > .vk-abytes {
-  width: 5.6em;
-  color: var(--vk-ink-3);
+  width: 7em;
+  color: var(--vk-ink-2);
 }
 .vk-arow > .vk-ainsn {
   width: 4.4em;
@@ -474,7 +493,7 @@ vk-table th.num {
 }
 vk-table th,
 vk-table td {
-  padding: var(--vk-inset-md) var(--vk-gap-normal);
+  padding: var(--vk-inset-lg) var(--vk-gap-normal);
   text-align: left;
   vertical-align: baseline;
 }
@@ -611,15 +630,15 @@ vk-cells {
   position: absolute;
   top: 0;
   left: 50%;
-  translate: -50% calc(-100% - var(--vk-inset-xs));
-  padding: 0 var(--vk-inset-sm);
-  border: var(--vk-line-w-hair) solid var(--vk-focus);
+  translate: -50% calc(-100% - var(--vk-inset-sm));
+  padding: 0 var(--vk-gap-close);
   border-radius: var(--vk-radius-pill);
-  background: var(--vk-paper);
-  color: var(--vk-focus);
+  background: var(--vk-focus);
+  color: var(--vk-on-focus);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-micro);
-  line-height: var(--vk-lh-micro);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.15;
+  font-weight: var(--vk-w-bold);
   white-space: nowrap;
 }
 .vk-cell[data-empty] {
@@ -640,9 +659,9 @@ vk-cells {
 }
 .vk-cell > .vk-cell-a {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-micro);
-  line-height: var(--vk-lh-micro);
-  color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-2);
 }
 .vk-cell[state='current'] {
   border-color: var(--vk-focus);
@@ -662,10 +681,11 @@ vk-bytes {
 .vk-brow {
   display: flex;
   gap: var(--vk-gap-normal);
+  padding: 0 var(--vk-gap-normal);
   white-space: pre;
 }
 .vk-brow > * { flex: 0 0 auto; }
-.vk-brow > .vk-baddr { color: var(--vk-ink-3); }
+.vk-brow > .vk-baddr { color: var(--vk-ink-2); }
 .vk-brow > .vk-hex {
   display: inline-flex;
   gap: 0.62em;
@@ -677,7 +697,7 @@ vk-bytes {
 .vk-brow > .vk-hex i[data-current] {
   border-radius: var(--vk-radius-none);
   background: var(--vk-focus);
-  color: var(--vk-paper);
+  color: var(--vk-on-focus);
 }
 .vk-brow > .vk-ascii { color: var(--vk-ink-3); }
 
@@ -712,12 +732,12 @@ vk-bits {
   gap: var(--vk-inset-xs);
   /* 位值只有一位，但序号可能两位（15…0）：给序号留够宽，否则会挤成一串。 */
   min-width: 2ch;
-  padding: var(--vk-inset-xs) 0;
+  padding: var(--vk-inset-xs) var(--vk-inset-sm);
 }
 .vk-bit .vk-bit-i {
-  font-size: var(--vk-fs-micro);
-  line-height: var(--vk-lh-micro);
-  color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
+  line-height: var(--vk-lh-caption);
+  color: var(--vk-ink-2);
   letter-spacing: 0;
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -733,7 +753,7 @@ vk-bits {
 vk-steps {
   position: relative;
   display: flex;
-  gap: var(--vk-gap-wide);
+  gap: calc(var(--vk-gap-wide) + var(--vk-gap-normal));
   min-width: 0;
 }
 vk-steps[data-direction='vertical'] {
@@ -760,8 +780,8 @@ vk-steps[data-direction='vertical'] .vk-step:last-child { padding-bottom: 0; }
   flex: 0 0 auto;
   align-items: center;
   justify-content: center;
-  width: var(--vk-fs-body);
-  height: var(--vk-fs-body);
+  width: calc(var(--vk-fs-body) + var(--vk-gap-close));
+  height: calc(var(--vk-fs-body) + var(--vk-gap-close));
   border: var(--vk-line-w-rule) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   font-family: var(--vk-font-mono);
@@ -777,7 +797,7 @@ vk-steps[data-direction='vertical'] .vk-step:last-child { padding-bottom: 0; }
 .vk-step[state='current'] > .vk-step-n {
   border-color: var(--vk-focus);
   background: var(--vk-focus);
-  color: var(--vk-paper);
+  color: var(--vk-on-focus);
 }
 .vk-step[state='current'] > .vk-step-t {
   color: var(--vk-focus);
@@ -797,9 +817,10 @@ vk-steps[data-direction='horizontal'][data-connector='arrow'] .vk-step:not(:last
   left: 100%;
   width: var(--vk-step-gap, var(--vk-gap-wide));
   text-align: center;
-  font-size: calc(var(--vk-step-t-size, var(--vk-fs-body)) * 0.7);
+  font-size: calc(var(--vk-step-t-size, var(--vk-fs-body)) * 1.1);
   line-height: 1;
-  color: var(--vk-line-strong);
+  top: var(--vk-inset-xs);
+  color: var(--vk-ink-2);
 }
 vk-steps[data-direction='horizontal'][data-connector='line'] .vk-step:not(:last-child)::after {
   content: '';
@@ -839,7 +860,7 @@ vk-bars {
 }
 .vk-bar > .vk-bar-l { color: var(--vk-ink-2); }
 .vk-bar > .vk-bar-track {
-  height: var(--vk-inset-lg);
+  height: calc(var(--vk-inset-lg) + var(--vk-inset-sm));
   overflow: hidden;
   border-radius: var(--vk-radius-pill);
   background: var(--vk-line-color);
@@ -897,9 +918,9 @@ vk-timeline {
   content: '';
   position: absolute;
   left: 0;
-  top: calc(var(--vk-gap-wide) * -0.5 - var(--vk-gap-close) / 2);
-  width: var(--vk-gap-close);
-  height: var(--vk-gap-close);
+  top: calc(var(--vk-gap-wide) * -0.5 - var(--vk-inset-lg) / 2);
+  width: var(--vk-inset-lg);
+  height: var(--vk-inset-lg);
   border: var(--vk-line-w-rule) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-paper);
@@ -912,7 +933,7 @@ vk-timeline {
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
-  color: var(--vk-ink-3);
+  color: var(--vk-ink-2);
 }
 .vk-tl-item .vk-tl-t {
   font-size: var(--vk-cs, var(--vk-fs-body));
@@ -987,3 +1008,4 @@ vk-compare {
 vk-compare[data-variant='stack'] {
   --vk-compare-h: calc(var(--vk-safe-h) * 0.36);
 }
+

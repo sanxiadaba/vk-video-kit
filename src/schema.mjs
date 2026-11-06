@@ -256,7 +256,7 @@ export const TAGS = {
       prompt: { type: 'text', default: '$', group: 'appearance', label: '提示符' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       size: sizeText('body'),
-      surface: surface(['paper', 'dark'], 'dark'),
+      surface: surface(['paper', 'dark'], 'paper'),
       chrome: chrome('min'),
     },
     children: source('src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。'),

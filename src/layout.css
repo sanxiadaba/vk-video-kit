@@ -185,9 +185,10 @@ vk-pair[data-symbol]::after {
   translate: -50% -50%;
   padding: 0 var(--vk-inset-sm);
   background: var(--vk-paper);
-  color: var(--vk-ink-2);
+  color: var(--vk-ink-1);
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-caption);
+  font-size: calc(var(--vk-fs-caption) * 1.5);
+  font-weight: var(--vk-w-bold);
   line-height: 1;
   white-space: nowrap;
 }

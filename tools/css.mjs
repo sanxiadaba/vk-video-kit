@@ -13,7 +13,6 @@ import fs from 'node:fs';
 import {
   CANVAS,
   FONT,
-  FONT_MICRO,
   LINE,
   MEASURE,
   TRACKING,
@@ -49,8 +48,6 @@ for (const [tier, px] of Object.entries(FONT)) {
   push(`measure-${tier}`, `${MEASURE[tier]}em`);
   push(`track-${tier}`, `${TRACKING[tier]}em`);
 }
-push('fs-micro', `${FONT_MICRO}px`);
-push('lh-micro', '1.3');
 
 rows.push('');
 for (const [name, px] of Object.entries(GAP)) push(`gap-${name}`, `${px}px`);
@@ -76,6 +73,7 @@ pair('line-strong', 'lineStrong');
 pair('focus', 'focus');
 for (const t of ['info', 'ok', 'warn', 'err']) pair(t, t);
 for (const t of ['Info', 'Focus', 'Ok', 'Warn', 'Err']) pair(`tint-${t.toLowerCase()}`, `tint${t}`);
+pair('on-focus', 'onFocus');
 
 rows.push('');
 for (const [k, v] of Object.entries(SYNTAX)) push(`syn-${k}`, `light-dark(${v[0]}, ${v[1]})`);

@@ -29,7 +29,7 @@ vk-callout {
 .vk-callout-svg rect,
 .vk-callout-svg ellipse,
 .vk-callout-svg circle {
-  stroke-width: var(--vk-line-w-rule);
+  stroke-width: var(--vk-line-w-strong);
 }
 .vk-callout-bd {
   position: absolute;
@@ -37,14 +37,14 @@ vk-callout {
 }
 
 .vk-callout-note {
-  max-width: calc(var(--vk-safe-w) * 0.43);
-  padding: var(--vk-gap-close) var(--vk-gap-normal);
-  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  max-width: calc(var(--vk-safe-w) * 0.5);
+  padding: var(--vk-inset-lg) var(--vk-gap-normal);
+  border: var(--vk-line-w-rule) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: var(--vk-lh-caption);
   text-wrap: pretty;
 }
@@ -64,9 +64,13 @@ vk-callout {
 
 .vk-callout-label {
   translate: -50% calc(-100% - var(--vk-gap-close));
+  padding: 0 var(--vk-inset-sm);
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-paper);
   color: var(--vk-ink-2);
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
+  font-weight: var(--vk-w-medium);
   white-space: nowrap;
 }
 
@@ -74,12 +78,12 @@ vk-callout {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: calc(var(--vk-inset-xl) + var(--vk-inset-xs));
-  height: calc(var(--vk-inset-xl) + var(--vk-inset-xs));
+  width: calc(var(--vk-inset-xl) + var(--vk-gap-close));
+  height: calc(var(--vk-inset-xl) + var(--vk-gap-close));
   translate: -50% -50%;
   border-radius: var(--vk-radius-pill);
   background: var(--vk-tone, var(--vk-info));
-  color: var(--vk-paper);
+  color: var(--vk-on-focus);
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
   line-height: 1;

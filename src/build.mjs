@@ -40,12 +40,14 @@ const TOKEN_THEME = {
   settings: [
     { settings: { foreground: '#0B0F14', background: '#ffffff' } },
     { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#667085' } },
-    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control'], settings: { foreground: '#101826' } },
     { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated'], settings: { foreground: '#0B6B4F' } },
-    { scope: ['entity.name.function', 'support.function', 'entity.name.class', 'entity.name.type', 'support.class'], settings: { foreground: '#101826' } },
+    { scope: ['constant.numeric', 'constant.language', 'constant.character', 'support.constant'], settings: { foreground: '#8A4B00' } },
+    { scope: ['entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: '#4A3A8F' } },
+    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control'], settings: { foreground: '#101826' } },
+    { scope: ['entity.name.function', 'support.function', 'variable.function'], settings: { foreground: '#101826' } },
   ],
 };
-const COLOR_CLASS = { '#101826': 'k', '#0B6B4F': 's', '#667085': 'c' };
+const COLOR_CLASS = { '#101826': 'k', '#0B6B4F': 's', '#667085': 'c', '#8A4B00': 'n', '#4A3A8F': 't' };
 
 let highlighter = null;
 const getHighlighter = async () => {
@@ -143,12 +145,12 @@ async function buildCode(node, file, errors) {
       continue;
     }
     if (folded) {
-      out.push(`<div class="vk-line is-fold" data-meta>⋯ 省略 ${folded} 行</div>`);
+      out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-src">省略 ${folded} 行</span></div>`);
       folded = 0;
     }
     out.push(`<div class="vk-line" data-vk-line="${n}"><span class="vk-ln">${n}</span><span class="vk-src">${rows[i] || ' '}</span></div>`);
   }
-  if (folded) out.push(`<div class="vk-line is-fold" data-meta>⋯ 省略 ${folded} 行</div>`);
+  if (folded) out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-src">省略 ${folded} 行</span></div>`);
   const file2 = attrOf(node, 'file');
   const range = attrOf(node, 'lines');
   const chrome = attrOf(node, 'chrome') || 'min';

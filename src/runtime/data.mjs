@@ -154,6 +154,7 @@ export class VkCells extends VkElement {
       if (marks.size > 3) warn(this, 'markers 最多三个：再多观众就不知道该看哪个')
     }
 
+    this.toggleAttribute('data-markers', marks.size > 0)
     const cells = items.map((li, i) => {
       const cell = document.createElement('div')
       cell.className = 'vk-cell'

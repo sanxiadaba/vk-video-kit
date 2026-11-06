@@ -125,7 +125,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const p1 = this._borderPoint(A, B);
     const p2 = this._borderPoint(B, A);
     const shape = attrEnum(this, 'shape', 'curve');
-    const gap = 12;
+    const gap = 24;
     const dx = p2.x - p1.x;
     const dy = p2.y - p1.y;
     const len = Math.hypot(dx, dy) || 1;
@@ -142,7 +142,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     } else {
       const mx = (s.x + e.x) / 2;
       const my = (s.y + e.y) / 2;
-      const bow = Math.min(120, len * 0.18);
+      const bow = Math.min(160, len * 0.22);
       d = `M${s.x} ${s.y} Q${mx - uy * bow} ${my + ux * bow} ${e.x} ${e.y}`;
     }
 
@@ -157,8 +157,8 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
 
     const ang = Math.atan2(e.y - s.y, e.x - s.x);
     const tip = document.createElementNS(NS, 'path');
-    const size = 22;
-    const half = 0.42;
+    const size = 40;
+    const half = 0.5;
     tip.setAttribute(
       'd',
       `M${e.x} ${e.y} L${e.x - size * Math.cos(ang - half)} ${e.y - size * Math.sin(ang - half)} L${e.x - size * Math.cos(ang + half)} ${

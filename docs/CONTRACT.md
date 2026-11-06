@@ -218,7 +218,7 @@ src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。�
 | `prompt` | 文本 | $ |  | 提示符 |
 | `current` | 行段 | — |  | 当前行（1 起） |
 | `size` | caption / body / subhead | body |  | 字号 |
-| `surface` | paper / dark | dark |  | 表面 |
+| `surface` | paper / dark | paper |  | 表面 |
 | `chrome` | min / none | min |  | 窗头 |
 
 src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。

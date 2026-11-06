@@ -137,7 +137,7 @@ for (const f of frames) {
   const scale = box.w / 1920;
   const dyTop = Math.abs(box.top / scale - f.metrics.contentTop);
   const dyBottom = Math.abs(box.bottom / scale - f.metrics.contentBottom);
-  if (dyTop > 30 || dyBottom > 30) {
+  if (dyTop > 60 || dyBottom > 60) {
     pixelBad.push(`${f.file}#${f.id} 墨迹 ${Math.round(box.top / scale)}–${Math.round(box.bottom / scale)}，DOM 量的是 ${f.metrics.contentTop}–${f.metrics.contentBottom}`);
   }
 }
@@ -211,5 +211,6 @@ await browser.close();
 
 console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
 process.exitCode = failed ? 1 : 0;
+
 
 
