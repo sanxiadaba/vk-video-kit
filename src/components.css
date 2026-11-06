@@ -733,9 +733,9 @@ vk-cells {
   color: var(--vk-ink-2);
 }
 .vk-cell[state='current'] {
-  border-color: var(--vk-focus);
+  border-color: var(--vk-line-color);
   background: var(--vk-tint-focus);
-  box-shadow: 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
 vk-cells .vk-cell[tone] { border-color: var(--vk-tone); }
 .vk-cell[tone='err'] { background: var(--vk-tint-err); }
