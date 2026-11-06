@@ -153,13 +153,14 @@ export const FONT_FAMILY = {
    剩下 640 给内容。这些是「再多就一定放不下」的行数，写进契约和文档；
    构建期只提示，不拦 —— 拆不拆帧是作者的判断。 */
 export const CAPACITY = {
-  rows: 8, // 版心能放几个行级单元
-  code: 8, // 代码行
-  term: 10, // 终端行
-  diff: 8,
-  asm: 8,
-  table: 5, // 数据行（表头另算）
-  tree: 10,
+  rows: 8, // 版心能放几个行级单元（正文 80px 一行）
+  // 下面这些是「还带一个标题块（label + 一句话）」时的真实上限，实测出来的。
+  code: 6, // 代码行（窗口头 64 + 上下内距 64 之外）
+  term: 7,
+  diff: 5,
+  asm: 5,
+  table: 4, // 数据行（表头另算）
+  tree: 8,
   cells: 2, // 行（cols 列一行）
   bits: 16, // 位；32 位请用 index="sparse"
   steps: 5, // 横排

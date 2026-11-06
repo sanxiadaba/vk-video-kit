@@ -554,7 +554,7 @@ vk-list[variant='ordered'] { counter-reset: vk-li; }
 vk-list[variant='ordered'] li { counter-increment: vk-li; }
 vk-list[variant='ordered'] li::before {
   content: counter(vk-li) '.';
-  color: var(--vk-ink-3);
+  color: var(--vk-ink-2);
   font-variant-numeric: tabular-nums;
 }
 vk-list[variant='check'] li::before {
@@ -565,6 +565,9 @@ vk-list[variant='check'] li::before {
 vk-list li[state='current'] { color: var(--vk-focus); }
 
 /* ------------------------------------------------------------------ 文件树 */
+vk-tree .vk-win {
+  min-width: calc(var(--vk-safe-w) * 0.46);
+}
 vk-tree {
   display: block;
   min-width: 0;

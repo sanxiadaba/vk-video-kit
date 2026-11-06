@@ -387,10 +387,11 @@ function buildTree(node, file) {
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
   if (!fs.existsSync(abs)) throw new Error(`${label(file)}:${lineOf(node)} <vk-tree> 的 src="${src}" 找不到目录`);
-  // 目录树也有一帧的容量上限：超了就先截断，末尾留一行说明，别撑爆画布。
+  // 目录树也有一帧的容量上限：超了就截断，只在末尾留一行说明（不在每一层各留一行）。
   let budget = Number(attrOf(node, 'max') || 10) || 10;
+  let truncated = false;
   const walk = (dir, level, base) => {
-    if (level > depth || budget <= 0) return '';
+    if (level > depth) return '';
     const entries = fs
       .readdirSync(dir, { withFileTypes: true })
       .filter((e) => !e.name.startsWith('.'))
@@ -398,15 +399,18 @@ function buildTree(node, file) {
       .slice(0, 20);
     const rows = [];
     for (const e of entries) {
-      if (budget <= 0) break;
+      if (budget <= 0) {
+        truncated = true;
+        break;
+      }
       budget--;
       const p = base ? `${base}/${e.name}` : e.name;
       rows.push(treeNode(e.name, e.isDirectory(), p, e.isDirectory() ? walk(path.join(dir, e.name), level + 1, p) : ''));
     }
-    if (budget <= 0 && entries.length) rows.push('<div class="vk-node is-more">…还有更多</div>');
     return rows.join('');
   };
-  return treeHtml(node, [walk(abs, 1, '')], attrOf(node, 'title'));
+  const body = walk(abs, 1, '');
+  return treeHtml(node, [body + (truncated ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'));
 }
 
 /* ---------------------------------------------------------------- 图标 */

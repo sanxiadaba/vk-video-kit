@@ -45,7 +45,7 @@ vk doc    vk-code                 # 一个件的属性表；全部契约看 docs
 
 1. **一帧一件事**。装不下就是这一帧讲多了：拆帧，不是缩字。
 2. **标题一行 12 字**（`headline`）。超过就换 `subhead`，或者拆成两行。
-3. **一帧 8 行预算**。代码 8 行、表 5 行、树 10 行、cells 2 行——见 `RULES.md`。
+3. **一帧 8 行预算**。代码 6 行、表 4 行、树 8 行、cells 2 行——见 `RULES.md`。
 4. **一个焦点**。`current`、`em`、`tone="focus"` 加起来，一帧只该有一处「看这里」。
 5. **不要手写 `style`**。字号/行高/颜色只走 `size` / `ink` / `weight`，构建期会拦。
 6. **结论用 `body`，不要用 `caption`**。`caption` 是元信息（来源、单位、编号），手机 19.5px。
@@ -55,3 +55,4 @@ vk doc    vk-code                 # 一个件的属性表；全部契约看 docs
 - 每个件的属性、默认值、一帧容量：`docs/CONTRACT.md`（生成物，别手改）
 - 容量、选件、颜色语义、深色页：`docs/RULES.md`
 - 12 个会静默出错的坑：`docs/PITFALLS.md`
+
