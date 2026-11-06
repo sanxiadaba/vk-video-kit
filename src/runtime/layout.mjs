@@ -108,16 +108,14 @@ export class VkPair extends VkElement {
     const gap = this.hasAttribute('gap')
       ? attrSpace(this, 'gap', 'wide')
       : spaceCss(symbol === 'none' ? 'wide' : 'section');
-    // 轴上有字时，缝宽 = section + wide：字放在缝里，才压不到两边的窗。
-    if (!this.hasAttribute('gap') && symbol !== 'none') this.style.setProperty('--vk-gap', 'calc(var(--vk-gap-section) * 2)');
     if (gap) this.style.setProperty('--vk-gap', gap);
+    // 轴上有字时，缝宽 = section×2：字放在缝里，才压不到两边的窗。
+    if (!this.hasAttribute('gap') && symbol !== 'none') this.style.setProperty('--vk-gap', 'calc(var(--vk-gap-section) * 2)');
     // split 是不对称分栏：中轴上那个字会被挤进窄的一边，索性不画。
     if (symbol === 'none' || this.hasAttribute('split')) {
       delete this.dataset.symbol;
-      delete this.dataset.axis;
     } else {
       this.dataset.symbol = symbol;
-      this.dataset.axis = '';
     }
   }
 }

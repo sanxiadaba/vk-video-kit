@@ -198,12 +198,12 @@ hello.c:3: error: expected ';'
   <vk-stack gap="normal">
     <vk-label>前后对照</vk-label>
     <vk-text size="subhead">同一个循环，<em>一个顺、一个跳</em>。</vk-text>
-    <vk-pair symbol="vs" gap="wide">
+    <vk-pair symbol="vs">
       <vk-stack gap="close">
         <vk-label>顺序访问 · a[i]</vk-label>
         <vk-code lang="c" file="a.c">
           <script type="text/plain" data-vk-source>
-for (i = 0; i < n; i++)
+for (i=0; i<n; i++)
     sum += a[i];
           </script>
         </vk-code>
@@ -212,7 +212,7 @@ for (i = 0; i < n; i++)
         <vk-label>跳着访问 · a[idx[i]]</vk-label>
         <vk-code lang="c" file="b.c">
           <script type="text/plain" data-vk-source>
-for (i = 0; i < n; i++)
+for (i=0; i<n; i++)
     sum += a[idx[i]];
           </script>
         </vk-code>
@@ -310,3 +310,5 @@ int a = 1;
     <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
   </vk-stack>
 </vk-page>
+
+

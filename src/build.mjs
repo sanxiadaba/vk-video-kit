@@ -42,12 +42,19 @@ const TOKEN_THEME = {
     { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#667085' } },
     { scope: ['string', 'string.quoted', 'string.template', 'string.interpolated'], settings: { foreground: '#0B6B4F' } },
     { scope: ['constant.numeric', 'constant.language', 'support.constant'], settings: { foreground: '#8A4B00' } },
-    { scope: ['entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: '#4A3A8F' } },
-    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control'], settings: { foreground: '#101826' } },
     { scope: ['entity.name.function', 'support.function', 'variable.function'], settings: { foreground: '#101826' } },
+    { scope: ['keyword.operator', 'punctuation', 'meta.brace'], settings: { foreground: '#475467' } },
+    { scope: ['keyword', 'storage.type', 'storage.modifier', 'keyword.control', 'entity.name.type', 'support.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: '#6F2DA8' } },
   ],
 };
-const COLOR_CLASS = { '#101826': 'k', '#0B6B4F': 's', '#667085': 'c', '#8A4B00': 'n', '#4A3A8F': 't' };
+const COLOR_CLASS = {
+  '#0B6B4F': 's',
+  '#667085': 'c',
+  '#8A4B00': 'n',
+  '#6F2DA8': 'k',
+  '#101826': 'f',
+  '#475467': 'o',
+};
 
 let highlighter = null;
 const getHighlighter = async () => {

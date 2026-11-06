@@ -1,0 +1,179 @@
+(node:39880) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+================================================================================================
+cover  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «第 3 集指针与内存
+    地址不是编号，是偏»
+    · vk-stack x=120 y=252 w=1680 h=575  right=1800 bottom=828
+    T vk-text 132px lines=6 left=120 right=1035 top=372 bot=707 «地址不是编号，是偏移量。»
+    T vk-text 56px lines=7 left=120 right=1128 top=749 bot=828 «从 a[0] 到 a[3]，中间隔了三个 int。»
+================================================================================================
+inline  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «行内元素
+    一个 int 占 4 字节，所»
+    · vk-stack x=120 y=268 w=1680 h=543  right=1800 bottom=812
+    T vk-text 84px lines=4 left=120 right=1631 top=383 bot=501 «一个 int 占 4 字节，所以下标要乘 4。»
+    T vk-text 56px lines=30 left=120 right=1320 top=534 bot=693 «公式可以写在句子里：a[i]=∗(a+i)a[i] = *(»
+    T vk-text 56px lines=7 left=120 right=1173 top=738 bot=806 «整段重点用 下划线，一段原文用 荧光底。»
+================================================================================================
+code-ring  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «2 / 16代码 + 圈一行
+    这一行在改»
+    · vk-stack x=120 y=93 w=1680 h=895  right=1800 bottom=987
+    · vk-callout x=0 y=-2160 w=0 h=0  right=0 bottom=-2160
+    ~ rect.vk-ring box=185,625,535,94 w=7px cap=round [184.546875,625.015625,534.765625,94,28]
+    T vk-text 84px lines=4 left=120 right=792 top=214 bot=315 «这一行在改内存。»
+================================================================================================
+code-fold  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «折叠与标词
+    中间七行不重要。
+    b»
+    · vk-stack x=120 y=93 w=1680 h=895  right=1800 bottom=987
+    T vk-text 84px lines=4 left=120 right=792 top=214 bot=315 «中间七行不重要。»
+================================================================================================
+term  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «终端
+    跑一遍，输出自己说话。
+    p»
+    · vk-stack x=120 y=173 w=1680 h=735  right=1800 bottom=907
+    · vk-callout x=0 y=-4320 w=0 h=0  right=0 bottom=-4320
+    ~ line.vk-note-leader box=1166,672,64,0 w=7px cap=round [1230,672.09375,1166,672.015625]
+    ~ circle.- box=1157,663,18,18 w=7px cap=butt [1166,672.015625,9]
+    T vk-text 84px lines=4 left=120 right=1044 top=294 bot=395 «跑一遍，输出自己说话。»
+================================================================================================
+diff  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «改动
+    把 1 改成 2，快了一倍。
+  »
+    · vk-stack x=120 y=121 w=1680 h=838  right=1800 bottom=959
+    T vk-text 84px lines=7 left=120 right=1143 top=236 bot=353 «把 1 改成 2，快了一倍。»
+================================================================================================
+asm  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «汇编
+    C 里一行，这儿四条指令。
+   »
+    · vk-stack x=120 y=133 w=1680 h=815  right=1800 bottom=947
+    T vk-text 84px lines=4 left=120 right=1129 top=254 bot=355 «C 里一行，这儿四条指令。»
+================================================================================================
+table  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «表格
+    越往下，越慢也越大。
+    
+ »
+    · vk-stack x=120 y=97 w=1680 h=886  right=1800 bottom=983
+    T vk-text 84px lines=4 left=120 right=960 top=218 bot=319 «越往下，越慢也越大。»
+================================================================================================
+list  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «有序步骤
+    取一个值，要经过三次寻址。
+ »
+    · vk-stack x=120 y=224 w=1680 h=633  right=1800 bottom=856
+    T vk-text 84px lines=4 left=120 right=1212 top=345 bot=446 «取一个值，要经过三次寻址。»
+    T vk-text 48px lines=1 left=120 right=792 top=794 bot=853 «每一次都可能是一次内存访问。»
+================================================================================================
+tree  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «文件树
+    编译产物比源码大得多。
+    »
+    · vk-stack x=120 y=53 w=1680 h=975  right=1800 bottom=1027
+    T vk-text 84px lines=4 left=120 right=1044 top=174 bot=275 «编译产物比源码大得多。»
+================================================================================================
+cells  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «内存格
+    一格一个 int，地址每次加 4»
+    · vk-stack x=120 y=213 w=1680 h=655  right=1800 bottom=867
+    T vk-text 84px lines=4 left=120 right=1243 top=366 bot=467 «一格一个 int，地址每次加 4。»
+================================================================================================
+bytes  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «字节窗
+    一个字符串，就是一连串字节。
+ »
+    · vk-stack x=120 y=245 w=1680 h=590  right=1800 bottom=835
+    T vk-text 84px lines=4 left=120 right=1296 top=366 bot=467 «一个字符串，就是一连串字节。»
+    T vk-text 48px lines=1 left=120 right=738 top=773 bot=832 «右边是同一批字节的 ASCII。»
+================================================================================================
+bits  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «位域
+    一个 float，三段。
+    »
+    · vk-stack x=120 y=250 w=1680 h=581  right=1800 bottom=830
+    T vk-text 84px lines=4 left=120 right=825 top=403 bot=504 «一个 float，三段。»
+================================================================================================
+steps  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «步骤
+    从源码到程序，四步。
+    01»
+    · vk-stack x=120 y=284 w=1680 h=512  right=1800 bottom=796
+    T vk-text 84px lines=4 left=120 right=960 top=437 bot=538 «从源码到程序，四步。»
+================================================================================================
+bars  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «量级
+    同样的活，差了四倍。
+    数组»
+    · vk-stack x=120 y=272 w=1680 h=537  right=1800 bottom=808
+    T vk-text 84px lines=4 left=120 right=960 top=393 bot=494 «同样的活，差了四倍。»
+    T vk-text 48px lines=1 left=120 right=744 top=746 bot=805 «八百万次累加，同一台机器。»
+================================================================================================
+timeline  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «时间线
+    编码的故事，五十年。
+    1»
+    · vk-stack x=120 y=168 w=1680 h=745  right=1800 bottom=912
+    T vk-text 84px lines=4 left=120 right=960 top=321 bot=422 «编码的故事，五十年。»
+================================================================================================
+pair  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «前后对照
+    同一个循环，一个顺、一个跳。
+»
+    · vk-stack x=120 y=218 w=1680 h=644  right=1800 bottom=862
+    T vk-text 84px lines=4 left=120 right=1296 top=339 bot=440 «同一个循环，一个顺、一个跳。»
+================================================================================================
+box-img  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «面与图
+    截图放在实底上，字才看得清。
+ »
+    · vk-stack x=120 y=63 w=1680 h=954  right=1800 bottom=1017
+    T vk-text 84px lines=4 left=120 right=1296 top=184 bot=285 «截图放在实底上，字才看得清。»
+    T vk-text 48px lines=1 left=1154 right=1394 top=364 bot=423 «看到的东西»
+================================================================================================
+math  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «公式
+    T(n)=2T(n2)+O(n)T»
+    · vk-stack x=120 y=163 w=1680 h=755  right=1800 bottom=918
+    T vk-text 48px lines=1 left=120 right=866 top=855 bot=914 «每层做 O(n) 的活，一共 log n 层。»
+================================================================================================
+compare  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «两张图对照
+    同样的源码，两种优化。
+  »
+    · vk-stack x=120 y=80 w=1680 h=920  right=1800 bottom=1000
+    T vk-text 84px lines=4 left=120 right=1044 top=201 bot=302 «同样的源码，两种优化。»
+================================================================================================
+layers  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «叠放
+    图注压在图的上面，落在实底上。
+ »
+    · vk-stack x=120 y=108 w=1680 h=864  right=1800 bottom=972
+    T vk-text 84px lines=4 left=120 right=1380 top=229 bot=330 «图注压在图的上面，落在实底上。»
+    T vk-text 48px lines=1 left=156 right=769 top=874 bot=933 «README 里的那张图 · 2024»
+================================================================================================
+canvas  align=center surface=paper
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «坐标画布
+    只能按坐标摆的时候才用它。
+ »
+    · vk-stack x=120 y=258 w=1680 h=564  right=1800 bottom=822
+    · vk-callout x=0 y=-22680 w=0 h=0  right=0 bottom=-22680
+    ~ path.vk-arrow box=559,589,697,150 w=7px cap=round "M616 589.25 C366.2096078709191 589.25 1006.2096078709192 739.25 1256 739.25"
+    ~ path.- box=1222,715,35,38 w=7px cap=butt "M1256.6332085463728 733.7734082530561 L1221.5299060707578 752.9504297972243 L1221.5299060
+    T vk-text 84px lines=4 left=120 right=1212 top=379 bot=480 «只能按坐标摆的时候才用它。»
+    T vk-text 48px lines=1 left=155 right=370 top=559 bot=618 «x=0 · y=0»
+    T vk-text 48px lines=1 left=715 right=1048 top=859 bot=918 «x=560 · y=300»
+    T vk-text 48px lines=1 left=1315 right=1646 top=709 bot=768 «x=1160 · y=150»
+================================================================================================
+dark  align=center surface=dark
+  div x=0 y=0 w=1920 h=1080 gap=normal fs=16px «深色页
+    深色是选项，浅底件自动适配。
+ »
+    · vk-stack x=120 y=248 w=1680 h=585  right=1800 bottom=832
+    T vk-text 84px lines=4 left=120 right=1296 top=369 bot=470 «深色是选项，浅底件自动适配。»
+    T vk-text 48px lines=1 left=120 right=888 top=770 bot=829 «代码窗仍是浅底深字，周围是深色。»

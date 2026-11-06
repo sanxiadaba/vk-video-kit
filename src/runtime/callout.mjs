@@ -120,8 +120,16 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const a = resolveAnchor(stage, fromExpr, this);
     const b = resolveAnchor(stage, toExpr, this);
     if (!a || !b) return;
-    const A = local(a.rect);
-    const B = local(b.rect);
+    // @side 锚点是零尺寸点；法线要用「盒子」算，不能拿点算。
+    const boxOf = (anchor) => {
+      const r = anchor.rect;
+      if (r.width >= 4 && r.height >= 4) return local(r);
+      const el = anchor.el;
+      if (el) return local(visibleBox(el).getBoundingClientRect());
+      return local(r);
+    };
+    const A = boxOf(a);
+    const B = boxOf(b);
     const p1 = this._borderPoint(A, B);
     const p2 = this._borderPoint(B, A);
     const shape = attrEnum(this, 'shape', 'curve');
@@ -135,15 +143,33 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const e = { x: p2.x - ux * gap, y: p2.y - uy * gap };
 
     let d;
+    let tail = { x: s.x - e.x, y: s.y - e.y };
     if (shape === 'straight') d = `M${s.x} ${s.y} L${e.x} ${e.y}`;
     else if (shape === 'ortho') {
       const mid = (s.x + e.x) / 2;
       d = `M${s.x} ${s.y} L${mid} ${s.y} L${mid} ${e.y} L${e.x} ${e.y}`;
+      tail = { x: mid - e.x, y: 0 };
     } else {
-      const mx = (s.x + e.x) / 2;
-      const my = (s.y + e.y) / 2;
-      const bow = Math.min(160, len * 0.22);
-      d = `M${s.x} ${s.y} Q${mx - uy * bow} ${my + ux * bow} ${e.x} ${e.y}`;
+      // 曲线要「贴着边出、贴着边进」：控制点沿边的法线走，而不是沿弦垂直偏移。
+      const normal = (rect, p) => {
+        const dx = p.x - (rect.x + rect.w / 2);
+        const dy = p.y - (rect.y + rect.h / 2);
+        return Math.abs(dx) / Math.max(rect.w / 2, 1) >= Math.abs(dy) / Math.max(rect.h / 2, 1)
+          ? { x: Math.sign(dx) || 1, y: 0 }
+          : { x: 0, y: Math.sign(dy) || 1 };
+      };
+      const n1 = normal(A, p1);
+      const n2 = normal(B, p2);
+      const sx = p1.x + n1.x * gap;
+      const sy = p1.y + n1.y * gap;
+      const ex = p2.x + n2.x * gap;
+      const ey = p2.y + n2.y * gap;
+      const room = Math.abs(n1.x) ? Math.abs(ex - sx) : Math.abs(ey - sy);
+      const bow = Math.max(48, Math.min(280, len * 0.38, room * 0.45));
+      const c1 = { x: sx + n1.x * bow, y: sy + n1.y * bow };
+      const c2 = { x: ex + n2.x * bow, y: ey + n2.y * bow };
+      d = `M${sx} ${sy} C${c1.x} ${c1.y} ${c2.x} ${c2.y} ${ex} ${ey}`;
+      tail = { x: ex - c2.x, y: ey - c2.y };
     }
 
     const path = document.createElementNS(NS, 'path');
@@ -155,7 +181,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     path.setAttribute('stroke-linecap', 'round');
     svg.appendChild(path);
 
-    const ang = Math.atan2(e.y - s.y, e.x - s.x);
+    const ang = Math.atan2(tail.y, tail.x);
     const tip = document.createElementNS(NS, 'path');
     const size = 40;
     const half = 0.5;
@@ -244,7 +270,7 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
     const bw = Math.min(maxW, Math.max(minW, box.offsetWidth));
     const bh = box.offsetHeight;
 
-    const gap = Number.parseFloat(attrSpace(this, 'gap', 'normal')) || 32;
+    const gap = this.hasAttribute('gap') ? Number.parseFloat(attrSpace(this, 'gap', 'normal')) || 96 : 96;
     const sideAttr = attrEnum(this, 'side', 'auto');
     // 版心（画布减去外边距）：气泡要落在版心里，跟内容一个边界。
     const scs = getComputedStyle(stage);
@@ -333,23 +359,25 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
       const right = from.x > ob.x + ob.w / 2;
       const vertical = Math.abs(from.y + from.h / 2 - (ob.y + ob.h / 2)) > Math.abs(from.x + from.w / 2 - (ob.x + ob.w / 2));
       p2 = vertical
-        ? { x: Math.min(Math.max(cx, ob.x + 4), ob.x + ob.w - 4), y: below ? ob.y + ob.h : ob.y }
-        : { x: right ? ob.x + ob.w : ob.x, y: Math.min(Math.max(cy, ob.y + 4), ob.y + ob.h - 4) };
+        ? { x: Math.min(Math.max(cx, ob.x + 4), ob.x + ob.w - 4), y: below ? ob.y + ob.h + 16 : ob.y - 16 }
+        : { x: right ? ob.x + ob.w + 16 : ob.x - 16, y: Math.min(Math.max(cy, ob.y + 4), ob.y + ob.h - 4) };
     }
+    const dist = Math.hypot(p2.x - p1.x, p2.y - p1.y);
     const line = document.createElementNS(NS, 'line');
     line.setAttribute('x1', String(p1.x));
     line.setAttribute('y1', String(p1.y));
     line.setAttribute('x2', String(p2.x));
     line.setAttribute('y2', String(p2.y));
     line.setAttribute('class', 'vk-note-leader');
-    line.setAttribute('stroke', 'var(--vk-ink-3)');
-    line.setAttribute('stroke-width', '2');
-    this._svg.appendChild(line);
+    line.setAttribute('stroke', 'var(--vk-ink-2)');
+    line.setAttribute('stroke-width', 'var(--vk-line-w-strong)');
+    line.setAttribute('stroke-linecap', 'round');
+    if (dist >= 24) this._svg.appendChild(line);
     const dot = document.createElementNS(NS, 'circle');
     dot.setAttribute('cx', String(p2.x));
     dot.setAttribute('cy', String(p2.y));
-    dot.setAttribute('r', '6');
-    dot.setAttribute('fill', 'var(--vk-ink-3)');
+    dot.setAttribute('r', '12');
+    dot.setAttribute('fill', 'var(--vk-ink-2)');
     this._svg.appendChild(dot);
   }
 
@@ -382,3 +410,4 @@ const stroke = 'var(--vk-tone, var(--vk-info))';
 export function defineCallout() {
   define('vk-callout', VkCallout);
 }
+

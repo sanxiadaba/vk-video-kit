@@ -1,0 +1,207 @@
+(node:39768) [UNDICI-EHPA] Warning: EnvHttpProxyAgent is experimental, expect them to change at any time.
+(Use `node --trace-warnings ...` to show where the warning was created)
+====================================================================================================
+cover pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,252,1680,80 ink=[120,252 → 634,333] lines=1 «第 3 集指针与内存»
+  T2 vk-text[132px] box=120,365,1584,351 ink=[120,372 → 1035,707] lines=2 «地址不是编号，是偏移量。»
+  T2 vk-text[56px] box=120,748,1400,80 ink=[120,749 → 1128,828] lines=1 «从 a[0] 到 a[3]，中间隔了三个 int。»
+  ⇒ ink bottom=828  box bottom=1080  bottom whitespace=252  top ink=252
+====================================================================================================
+inline pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,268,1680,80 ink=[120,268 → 344,348] lines=1 «行内元素»
+  T2 vk-text[84px] box=120,380,1512,120 ink=[120,383 → 1631,501] lines=1 «一个 int 占 4 字节，所以下标要乘 4。»
+  T2 vk-text[56px] box=120,533,1400,167 ink=[120,534 → 1320,693] lines=2 «公式可以写在句子里：a[i]=∗(a+i)a[i] »
+  T2 vk-text[56px] box=120,732,1400,80 ink=[120,738 → 1173,806] lines=1 «整段重点用 下划线，一段原文用 荧光底。»
+  ⇒ ink bottom=812  box bottom=1080  bottom whitespace=268  top ink=268
+====================================================================================================
+code-ring pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,93,1680,80 ink=[120,93 → 692,173] lines=1 «2 / 16代码 + 圈一行»
+  T2 vk-text[84px] box=120,205,1512,120 ink=[120,214 → 792,315] lines=1 «这一行在改内存。»
+  C2 vk-code#hello box=120,357,1680,631 right=1800 bottom=987
+  .vk-win box=120,357,885,631 fs=56px
+  .vk-line box=123,472,879,80 fs=56px
+  .vk-line box=123,552,879,80 fs=56px
+  .vk-line box=123,632,879,80 fs=56px
+  .vk-line box=123,712,879,80 fs=56px
+  .vk-line box=123,792,879,80 fs=56px
+  .vk-line box=123,872,879,80 fs=56px
+  ~ rect.vk-ring box=185,625,535,94 sw=7px stroke=rgb(58, 68, 84) [184.546875,625.015625,534.765625,94,28]
+  ⇒ ink bottom=987  box bottom=1080  bottom whitespace=93  top ink=93
+====================================================================================================
+code-fold pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,93,1680,80 ink=[120,93 → 400,173] lines=1 «折叠与标词»
+  T2 vk-text[84px] box=120,205,1512,120 ink=[120,214 → 792,315] lines=1 «中间七行不重要。»
+  C2 vk-code#fold box=120,357,1680,631 right=1800 bottom=987
+  .vk-win box=120,357,1624,631 fs=56px
+  .vk-line box=123,472,1618,80 fs=56px
+  .vk-line is-fold box=123,552,1618,80 fs=56px
+  .vk-line box=123,632,1618,80 fs=56px
+  .vk-line is-current box=123,712,1618,80 fs=56px
+  .vk-line box=123,792,1618,80 fs=56px
+  .vk-line box=123,872,1618,80 fs=56px
+  ⇒ ink bottom=987  box bottom=1080  bottom whitespace=93  top ink=93
+====================================================================================================
+term pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,173,1680,80 ink=[120,173 → 232,253] lines=1 «终端»
+  T2 vk-text[84px] box=120,285,1512,120 ink=[120,294 → 1044,395] lines=1 «跑一遍，输出自己说话。»
+  C2 vk-term#py box=120,437,1680,470 right=1800 bottom=907
+  .vk-win vk-term box=120,437,1046,470 fs=56px
+  .vk-line box=123,552,1040,80 fs=56px
+  .vk-line box=123,632,1040,80 fs=56px
+  .vk-line box=123,712,1040,80 fs=56px
+  .vk-line box=123,792,1040,80 fs=56px
+  ~ line.vk-note-leader box=1166,672,64,0 sw=7px stroke=rgb(51, 61, 75) [1230,672.09375,1166,672.015625]
+  ~ circle.- box=1157,663,18,18 sw=7px stroke=none [1166,672.015625,9]
+  ⇒ ink bottom=1080  box bottom=1080  bottom whitespace=0  top ink=0
+====================================================================================================
+diff pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,121,1680,80 ink=[120,121 → 232,201] lines=1 «改动»
+  T2 vk-text[84px] box=120,233,1512,120 ink=[120,236 → 1143,353] lines=1 «把 1 改成 2，快了一倍。»
+  C2 vk-diff box=120,385,1680,574 right=1800 bottom=959
+  .vk-win box=120,385,1229,574 fs=56px
+  ⇒ ink bottom=959  box bottom=1080  bottom whitespace=121  top ink=121
+====================================================================================================
+asm pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,133,1680,80 ink=[120,133 → 232,213] lines=1 «汇编»
+  T2 vk-text[84px] box=120,245,1512,120 ink=[120,254 → 1129,355] lines=1 «C 里一行，这儿四条指令。»
+  C2 vk-asm box=120,397,1680,550 right=1800 bottom=947
+  .vk-win box=120,397,1233,550 fs=56px
+  ⇒ ink bottom=947  box bottom=1080  bottom whitespace=133  top ink=133
+====================================================================================================
+table pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,97,1680,80 ink=[120,97 → 232,177] lines=1 «表格»
+  T2 vk-text[84px] box=120,209,1512,120 ink=[120,218 → 960,319] lines=1 «越往下，越慢也越大。»
+  C2 vk-table box=120,361,1680,621 right=1800 bottom=983
+  ⇒ ink bottom=983  box bottom=1080  bottom whitespace=97  top ink=97
+====================================================================================================
+list pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,224,1680,80 ink=[120,224 → 344,304] lines=1 «有序步骤»
+  T2 vk-text[84px] box=120,336,1512,120 ink=[120,345 → 1212,446] lines=1 «取一个值，要经过三次寻址。»
+  T2 vk-text[48px] box=120,792,1536,64 ink=[120,794 → 792,853] lines=1 «每一次都可能是一次内存访问。»
+  C2 vk-list box=120,488,1680,272 right=1800 bottom=760
+  ⇒ ink bottom=856  box bottom=1080  bottom whitespace=224  top ink=224
+====================================================================================================
+tree pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,53,1680,80 ink=[120,53 → 288,133] lines=1 «文件树»
+  T2 vk-text[84px] box=120,165,1512,120 ink=[120,174 → 1044,275] lines=1 «编译产物比源码大得多。»
+  C2 vk-tree box=120,317,1680,711 right=1800 bottom=1027
+  .vk-win box=120,317,773,711 fs=16px
+  ⇒ ink bottom=1027  box bottom=1080  bottom whitespace=53  top ink=53
+====================================================================================================
+cells pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,213,1680,80 ink=[120,213 → 288,293] lines=1 «内存格»
+  T2 vk-text[84px] box=120,357,1512,120 ink=[120,366 → 1243,467] lines=1 «一格一个 int，地址每次加 4。»
+  C2 vk-cells box=120,541,1680,327 right=1800 bottom=867
+  .vk-cell box=120,605,408,263 fs=16px
+  .vk-cell-l box=135,620,378,80 fs=56px
+  .vk-cell-v box=135,704,378,80 fs=56px
+  .vk-cell-a box=135,788,378,64 fs=48px
+  .vk-cell-m box=279,545,90,55 fs=48px
+  .vk-cell is-current box=544,605,408,263 fs=16px
+  .vk-cell-l box=559,620,378,80 fs=56px
+  .vk-cell-v box=559,704,378,80 fs=56px
+  ⇒ ink bottom=867  box bottom=1080  bottom whitespace=213  top ink=213
+====================================================================================================
+bytes pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,245,1680,80 ink=[120,245 → 288,325] lines=1 «字节窗»
+  T2 vk-text[84px] box=120,357,1512,120 ink=[120,366 → 1296,467] lines=1 «一个字符串，就是一连串字节。»
+  T2 vk-text[48px] box=120,771,1536,64 ink=[120,773 → 738,832] lines=1 «右边是同一批字节的 ASCII。»
+  C2 vk-bytes box=120,509,1680,230 right=1800 bottom=739
+  .vk-win box=120,509,1382,230 fs=55.84px
+  ⇒ ink bottom=835  box bottom=1080  bottom whitespace=245  top ink=245
+====================================================================================================
+bits pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,250,1680,80 ink=[120,250 → 232,330] lines=1 «位域»
+  T2 vk-text[84px] box=120,394,1512,120 ink=[120,403 → 825,504] lines=1 «一个 float，三段。»
+  C2 vk-bits box=120,578,1680,253 right=1800 bottom=830
+  .vk-bits-label box=120,578,1680,80 fs=56px
+  .vk-bit-row box=120,674,1680,156 fs=56px
+  .vk-bit-field box=120,674,835,156 fs=56px
+  .vk-bit box=120,674,74,156 fs=56px
+  .vk-bit box=194,674,74,156 fs=56px
+  .vk-bit box=267,674,67,156 fs=56px
+  .vk-bit box=334,674,67,156 fs=56px
+  .vk-bit box=410,674,67,156 fs=56px
+  ⇒ ink bottom=830  box bottom=1080  bottom whitespace=250  top ink=250
+====================================================================================================
+steps pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,284,1680,80 ink=[120,284 → 232,364] lines=1 «步骤»
+  T2 vk-text[84px] box=120,428,1512,120 ink=[120,437 → 960,538] lines=1 «从源码到程序，四步。»
+  C2 vk-steps box=120,612,1680,184 right=1800 bottom=796
+  ⇒ ink bottom=796  box bottom=1080  bottom whitespace=284  top ink=284
+====================================================================================================
+bars pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,272,1680,80 ink=[120,272 → 232,352] lines=1 «量级»
+  T2 vk-text[84px] box=120,384,1512,120 ink=[120,393 → 960,494] lines=1 «同样的活，差了四倍。»
+  T2 vk-text[48px] box=120,744,1536,64 ink=[120,746 → 744,805] lines=1 «八百万次累加，同一台机器。»
+  C2 vk-bars box=120,536,1680,176 right=1800 bottom=712
+  ⇒ ink bottom=808  box bottom=1080  bottom whitespace=272  top ink=272
+====================================================================================================
+timeline pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,168,1680,80 ink=[120,168 → 288,248] lines=1 «时间线»
+  T2 vk-text[84px] box=120,312,1512,120 ink=[120,321 → 960,422] lines=1 «编码的故事，五十年。»
+  C2 vk-timeline box=120,496,1680,417 right=1800 bottom=912
+  .vk-tl-range box=120,496,1680,80 fs=56px
+  .vk-tl box=120,592,1680,321 fs=16px
+  .vk-tl-item box=120,656,517,257 fs=16px
+  .vk-tl-date box=120,656,517,80 fs=56px
+  .vk-tl-t box=120,752,517,80 fs=56px
+  .vk-tl-note box=120,848,517,64 fs=48px
+  .vk-tl-item box=701,656,517,257 fs=16px
+  .vk-tl-date box=701,656,517,80 fs=56px
+  ⇒ ink bottom=912  box bottom=1080  bottom whitespace=168  top ink=168
+====================================================================================================
+pair pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,218,1680,80 ink=[120,218 → 344,298] lines=1 «前后对照»
+  T2 vk-text[84px] box=120,330,1512,120 ink=[120,339 → 1296,440] lines=1 «同一个循环，一个顺、一个跳。»
+  C2 vk-pair box=120,482,1680,380 right=1800 bottom=862
+  .vk-win box=120,578,802,283 fs=46.65px
+  .vk-win box=992,578,802,283 fs=46.65px
+  ⇒ ink bottom=862  box bottom=1080  bottom whitespace=218  top ink=218
+====================================================================================================
+box-img pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,63,1680,80 ink=[120,63 → 288,143] lines=1 «面与图»
+  T2 vk-text[84px] box=120,175,1512,120 ink=[120,184 → 1296,285] lines=1 «截图放在实底上，字才看得清。»
+  C2 vk-grid box=120,327,1680,689 right=1800 bottom=1017
+  C3 vk-box box=120,327,967,689 right=1087 bottom=1017
+  C3 vk-box box=1119,327,681,689 right=1800 bottom=1017
+  ⇒ ink bottom=1017  box bottom=1080  bottom whitespace=63  top ink=63
+====================================================================================================
+math pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,163,1680,80 ink=[120,163 → 232,243] lines=1 «公式»
+  T2 vk-text[48px] box=120,853,1536,64 ink=[120,855 → 866,914] lines=1 «每层做 O(n) 的活，一共 log n 层。»
+  C2 vk-math box=120,371,1680,355 right=1800 bottom=725
+  ⇒ ink bottom=918  box bottom=1080  bottom whitespace=163  top ink=163
+====================================================================================================
+compare pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,80,1680,80 ink=[120,80 → 400,160] lines=1 «两张图对照»
+  T2 vk-text[84px] box=120,192,1512,120 ink=[120,201 → 1044,302] lines=1 «同样的源码，两种优化。»
+  C2 vk-compare box=120,344,1680,656 right=1800 bottom=1000
+  ⇒ ink bottom=1000  box bottom=1080  bottom whitespace=80  top ink=80
+====================================================================================================
+layers pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,108,1680,80 ink=[120,108 → 232,188] lines=1 «叠放»
+  T2 vk-text[84px] box=120,220,1512,120 ink=[120,229 → 1380,330] lines=1 «图注压在图的上面，落在实底上。»
+  C2 vk-layer box=120,372,1680,600 right=1800 bottom=972
+  C3 vk-img box=120,372,1680,600 right=1800 bottom=972
+  ⇒ ink bottom=972  box bottom=1080  bottom whitespace=108  top ink=108
+====================================================================================================
+canvas pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,258,1680,80 ink=[120,258 → 344,338] lines=1 «坐标画布»
+  T2 vk-text[84px] box=120,370,1512,120 ink=[120,379 → 1212,480] lines=1 «只能按坐标摆的时候才用它。»
+  C2 vk-canvas box=120,522,1680,300 right=1800 bottom=822
+  C3 vk-box#c1 box=120,522,520,134 right=640 bottom=656
+  C3 vk-box box=680,822,520,134 right=1200 bottom=956
+  C3 vk-box#c3 box=1280,672,520,134 right=1800 bottom=806
+  ~ path.vk-arrow box=559,589,697,150 sw=7px stroke=rgb(58, 68, 84) "M616 589.25 C366.2096078709191 589.25 1006.2096078709192 739.25 1256 739.25"
+  ~ path.- box=1222,715,35,38 sw=7px stroke=none "M1256.6332085463728 733.7734082530561 L1221.5299060707578 752.9504297972243 L12
+  ⇒ ink bottom=1080  box bottom=1080  bottom whitespace=0  top ink=0
+====================================================================================================
+dark pad=120,96,120,96 align=center
+  T2 vk-label[56px] box=120,248,1680,80 ink=[120,248 → 288,328] lines=1 «深色页»
+  T2 vk-text[84px] box=120,360,1512,120 ink=[120,369 → 1296,470] lines=1 «深色是选项，浅底件自动适配。»
+  T2 vk-text[48px] box=120,768,1536,64 ink=[120,770 → 888,829] lines=1 «代码窗仍是浅底深字，周围是深色。»
+  C2 vk-code#d box=120,512,1680,224 right=1800 bottom=736
+  .vk-win box=120,512,483,224 fs=52.04px
+  .vk-line box=123,627,477,74 fs=52.04px
+  ⇒ ink bottom=832  box bottom=1080  bottom whitespace=248  top ink=248

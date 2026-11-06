@@ -346,12 +346,12 @@ vk-cells[data-markers] { padding-top: var(--vk-gap-wide); }
 .vk-line.is-fold .vk-ln { color: var(--vk-ink-3); }
 .vk-line.is-fold .vk-src { letter-spacing: 0.04em; }
 /* 语法：四支色 + 一个字重。焦点蓝不参与语法，一帧里的蓝只表示「正在看这里」。 */
-.vk-src .k { color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
+.vk-src .k { color: var(--vk-syn-keyword); font-weight: var(--vk-w-bold); }
 .vk-src .s { color: var(--vk-syn-string); }
 .vk-src .c { color: var(--vk-syn-comment); }
 .vk-src .n { color: var(--vk-syn-number); }
-.vk-src .t { color: var(--vk-syn-type); }
 .vk-src .f { color: var(--vk-ink-1); font-weight: var(--vk-w-bold); }
+.vk-src .o { color: var(--vk-ink-2); }
 /* 长行：默认不折（窗口负责裁），写 long="wrap" 才折。 */
 vk-code[long='wrap'] .vk-line {
   white-space: pre-wrap;
@@ -372,7 +372,7 @@ vk-code[long='wrap'] .vk-src {
   color: var(--vk-ink-1);
   font-weight: var(--vk-w-bold);
 }
-.vk-term .vk-flag { color: var(--vk-syn-type); }
+.vk-term .vk-flag { color: var(--vk-syn-keyword); }
 .vk-term .vk-arg-str { color: var(--vk-syn-string); }
 .vk-term .vk-path { color: var(--vk-ink-2); }
 .vk-term .vk-arg { color: var(--vk-ink-1); }
@@ -608,7 +608,7 @@ vk-tree {
   color: var(--vk-ink-3);
 }
 .vk-node[data-kind='dir'] .vk-ic { color: var(--vk-ink-2); }
-.vk-node[data-kind='code'] .vk-ic { color: var(--vk-syn-type); }
+.vk-node[data-kind='code'] .vk-ic { color: var(--vk-syn-keyword); }
 .vk-node[data-kind='binary'] .vk-ic { color: var(--vk-syn-number); }
 /* 子节点：一条竖导线 + 每个节点一条横短线。导线是缩进的唯一来源。 */
 .vk-node > .vk-kids {

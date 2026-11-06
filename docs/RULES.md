@@ -46,6 +46,26 @@
 - 正文要强调用 `<em>`（一条焦点色下划线）或 `<mark>`（淡底），不要用 `tone` 上色。
 - `tone` 与 `state` 分工：对错用 `tone`，注意力用 `state`。
 
+### 改颜色 / 改线宽
+
+颜色和线宽都是 CSS 变量，**写在 `vk-page` 上就整帧生效**，子件全部继承：
+
+```html
+<vk-page style="--vk-focus: #c2410c; --vk-syn-keyword: #0e7490">
+```
+
+深色页要一对值，写成 `light-dark(浅, 深)`：
+
+```html
+<vk-page style="--vk-focus: light-dark(#c2410c, #ff9a7a)">
+```
+
+常改的变量：`--vk-focus`、`--vk-ok`、`--vk-warn`、`--vk-err`、`--vk-paper`、`--vk-soft`、`--vk-ink-1/2/3`、`--vk-syn-keyword`、`--vk-syn-string`、`--vk-syn-number`、`--vk-syn-comment`。线宽是 `--vk-line-w-hair/rule/strong`（默认 4/4/8），结构线墨色是 `--vk-line`。
+
+语义不要打乱：焦点蓝只表示「正在看这里」，绿=对/字符串，琥珀=数字，紫=结构词，红=错。
+
+组件级粗调还有 `tone`（neutral/focus/ok/warn/err）、`border`（none/hair/strong）、`surface`（paper/soft/dark）。字号、行高、字体、直接写 `color` 仍会被构建拦下——那是版面合同。
+
 ## 四、深色页
 
 - 整帧反白：`<vk-page surface="dark">`。墨、线、语义色、淡底、语法色一起换。

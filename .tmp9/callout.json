@@ -1,0 +1,383 @@
+{
+ "cover": {
+  "pageRect": [
+   0,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "inline": {
+  "pageRect": [
+   1080,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "code-ring": {
+  "pageRect": [
+   2160,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": true,
+  "svg": {
+   "rect": [
+    0,
+    0,
+    1920,
+    1080
+   ],
+   "viewBox": "0 0 1920 1080",
+   "shapes": [
+    {
+     "k": "rect",
+     "cls": "vk-ring",
+     "box": [
+      185,
+      625,
+      535,
+      94
+     ],
+     "sw": "7px",
+     "fill": "none",
+     "a": [
+      184.546875,
+      625.015625,
+      534.765625,
+      94,
+      28
+     ]
+    }
+   ]
+  },
+  "html": "svg.[object SVGAnimatedString] [0,0 1920x1080]",
+  "calloutRect": [
+   0,
+   0,
+   1920,
+   1080
+  ]
+ },
+ "code-fold": {
+  "pageRect": [
+   3240,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "term": {
+  "pageRect": [
+   4320,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": true,
+  "svg": {
+   "rect": [
+    0,
+    0,
+    1920,
+    1080
+   ],
+   "viewBox": "0 0 1920 1080",
+   "shapes": [
+    {
+     "k": "line",
+     "cls": "vk-note-leader",
+     "box": [
+      1166,
+      672,
+      64,
+      0
+     ],
+     "sw": "7px",
+     "fill": "rgb(0, 0, 0)",
+     "a": [
+      1230,
+      672.09375,
+      1166,
+      672.015625
+     ]
+    },
+    {
+     "k": "circle",
+     "cls": null,
+     "box": [
+      1157,
+      663,
+      18,
+      18
+     ],
+     "sw": "7px",
+     "fill": "rgb(51, 61, 75)",
+     "a": [
+      1166,
+      672.015625,
+      9
+     ]
+    }
+   ]
+  },
+  "html": "svg.[object SVGAnimatedString] [0,0 1920x1080] div.vk-callout-bd vk-callout-note [1230,607 520x131]",
+  "calloutRect": [
+   0,
+   0,
+   1920,
+   1080
+  ]
+ },
+ "diff": {
+  "pageRect": [
+   5400,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "asm": {
+  "pageRect": [
+   6480,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "table": {
+  "pageRect": [
+   7560,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "list": {
+  "pageRect": [
+   8640,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "tree": {
+  "pageRect": [
+   9720,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "cells": {
+  "pageRect": [
+   10800,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "bytes": {
+  "pageRect": [
+   11880,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "bits": {
+  "pageRect": [
+   12960,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "steps": {
+  "pageRect": [
+   14040,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "bars": {
+  "pageRect": [
+   15120,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "timeline": {
+  "pageRect": [
+   16200,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "pair": {
+  "pageRect": [
+   17280,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "box-img": {
+  "pageRect": [
+   18360,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "math": {
+  "pageRect": [
+   19440,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "compare": {
+  "pageRect": [
+   20520,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "layers": {
+  "pageRect": [
+   21600,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ },
+ "canvas": {
+  "pageRect": [
+   22680,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": true,
+  "svg": {
+   "rect": [
+    0,
+    0,
+    1920,
+    1080
+   ],
+   "viewBox": "0 0 1920 1080",
+   "shapes": [
+    {
+     "k": "path",
+     "cls": "vk-arrow",
+     "box": [
+      559,
+      589,
+      697,
+      150
+     ],
+     "sw": "7px",
+     "fill": "none",
+     "a": "M616 589.25 C366.2096078709191 589.25 1006.2096078709192 739.25 1256 739.25"
+    },
+    {
+     "k": "path",
+     "cls": null,
+     "box": [
+      1222,
+      715,
+      35,
+      38
+     ],
+     "sw": "7px",
+     "fill": "rgb(58, 68, 84)",
+     "a": "M1256.6332085463728 733.7734082530561 L1221.5299060707578 752.9504297972243 L1221.5299060707578 714.596386708888 Z"
+    }
+   ]
+  },
+  "html": "svg.[object SVGAnimatedString] [0,0 1920x1080] div.vk-callout-bd vk-callout-label [896,568 128x80]",
+  "calloutRect": [
+   0,
+   0,
+   1920,
+   1080
+  ]
+ },
+ "dark": {
+  "pageRect": [
+   23760,
+   0,
+   1920,
+   1080
+  ],
+  "hasCallout": false,
+  "svg": null,
+  "html": ""
+ }
+}

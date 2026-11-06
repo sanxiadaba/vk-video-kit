@@ -1,0 +1,276 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<link rel="stylesheet" href="file:///D:/test/test52/vk/fonts.css">
+<link rel="stylesheet" href="file:///D:/test/test52/vk/vk.css">
+</head>
+<body>
+<!-- 验收帧：每一帧是一个能上片的画面，同时当视觉回归的基准。
+     不是模板库——它们不承担「照着抄」的职责，只证明每个件在手机尺度上成立。 -->
+
+<vk-page id="cover">
+  <vk-stack gap="normal">
+    <vk-label counter="第 3 集">指针与内存</vk-label>
+    <vk-text size="headline">地址不是编号，<br>是<em>偏移量</em>。</vk-text>
+    <vk-text size="body" ink="secondary">从 <vk-inline variant="code">a[0]</vk-inline> 到 <vk-inline variant="code">a[3]</vk-inline>，中间隔了三个 int。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="inline">
+  <vk-stack gap="normal">
+    <vk-label>行内元素</vk-label>
+    <vk-text size="subhead">一个 <vk-inline variant="code">int</vk-inline> 占 4 字节，所以下标要乘 4。</vk-text>
+    <vk-text size="body">公式可以写在句子里：<vk-inline variant="math"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>a</mi><mo stretchy="false">[</mo><mi>i</mi><mo stretchy="false">]</mo><mo>=</mo><mo>∗</mo><mo stretchy="false">(</mo><mi>a</mi><mo>+</mo><mi>i</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">a[i] = *(a + i)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">a</span><span class="mopen">[</span><span class="mord mathnormal">i</span><span class="mclose">]</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord">∗</span><span class="mopen">(</span><span class="mord mathnormal">a</span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal">i</span><span class="mclose">)</span></span></span></span></vk-inline>，键位写 <vk-inline variant="keys">Ctrl + C</vk-inline>。</vk-text>
+    <vk-text size="body">整段重点用 <em>下划线</em>，一段原文用 <mark>荧光底</mark>。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="code-ring">
+  <vk-stack gap="normal">
+    <vk-label counter="2 / 16">代码 + 圈一行</vk-label>
+    <vk-text size="subhead">这一行在<em>改内存</em>。</vk-text>
+    <vk-code id="hello" lang="c" file="hello.c"><div class="vk-win" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">hello.c</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-ln">1</span><span class="vk-src"><span class="t">int</span><span class="f"> main</span><span class="o">(</span><span class="t">void</span><span class="o">)</span><span class="o"> {</span></span></div><div class="vk-line" data-vk-line="2"><span class="vk-ln">2</span><span class="vk-src"><span class="t">  char</span> s<span class="k">[]</span><span class="o"> =</span><span class="o"> &quot;</span><span class="s">hello</span><span class="o">&quot;</span><span class="o">;</span></span></div><div class="vk-line" data-vk-line="3"><span class="vk-ln">3</span><span class="vk-src">  s<span class="o">[</span><span class="n">0</span><span class="o">]</span><span class="o"> =</span><span class="o"> &#39;</span><span class="s">H</span><span class="o">&#39;</span><span class="o">;</span></span></div><div class="vk-line" data-vk-line="4"><span class="vk-ln">4</span><span class="vk-src"><span class="f">  printf</span><span class="o">(</span><span class="o">&quot;</span><span class="s">%s\n</span><span class="o">&quot;</span><span class="o">,</span><span class="f"> s</span><span class="o">);</span></span></div><div class="vk-line" data-vk-line="5"><span class="vk-ln">5</span><span class="vk-src"><span class="k">  return</span><span class="n"> 0</span><span class="o">;</span></span></div><div class="vk-line" data-vk-line="6"><span class="vk-ln">6</span><span class="vk-src"><span class="o">}</span></span></div></div></div></vk-code>
+
+  </vk-stack>
+  <vk-callout mode="ring" for="#hello@line:3"></vk-callout>
+</vk-page>
+
+<vk-page id="code-fold">
+  <vk-stack gap="normal">
+    <vk-label>折叠与标词</vk-label>
+    <vk-text size="subhead">中间七行<em>不重要</em>。</vk-text>
+    <vk-code id="fold" lang="c" file="bsearch.c" fold="2-7" current="9" mark="return"><div class="vk-win" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">bsearch.c</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-ln">1</span><span class="vk-src"><span class="t">int</span><span class="f"> bsearch</span><span class="o">(</span><span class="k">const</span><span class="t"> int</span><span class="o"> *</span>a<span class="o">,</span><span class="t"> int</span> n<span class="o">,</span><span class="t"> int</span> key<span class="o">)</span><span class="o"> {</span></span></div><div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-src">省略 6 行</span></div><div class="vk-line" data-vk-line="8"><span class="vk-ln">8</span><span class="vk-src"><span class="k">    else</span> hi <span class="o">=</span> mid <span class="o">-</span><span class="n"> 1</span><span class="o">;</span></span></div><div class="vk-line" data-vk-line="9"><span class="vk-ln">9</span><span class="vk-src"><span class="o">  }</span></span></div><div class="vk-line" data-vk-line="10"><span class="vk-ln">10</span><span class="vk-src"><span class="k">  return</span><span class="o"> -</span><span class="n">1</span><span class="o">;</span></span></div><div class="vk-line" data-vk-line="11"><span class="vk-ln">11</span><span class="vk-src"><span class="o">}</span></span></div></div></div></vk-code>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="term">
+  <vk-stack gap="normal">
+    <vk-label>终端</vk-label>
+    <vk-text size="subhead">跑一遍，<em>输出自己说话</em>。</vk-text>
+    <vk-term id="py" title="python3"><div class="vk-win vk-term" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">python3</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-prompt">$</span><span class="vk-cmd">python3</span> <span class="vk-flag">-c</span> <span class="vk-arg-str">&quot;print(0.1 + 0.2)&quot;</span></div><div class="vk-line" data-vk-line="2"><span class="vk-out">0.30000000000000004</span></div><div class="vk-line" data-vk-line="3"><span class="vk-prompt">$</span><span class="vk-cmd">gcc</span> <span class="vk-arg">hello.c</span> <span class="vk-flag">-o</span> <span class="vk-arg">hello</span></div><div class="vk-line" data-vk-line="4"><span class="vk-err">hello.c:3: error: expected &#39;;&#39;</span></div></div></div></vk-term>
+  </vk-stack>
+  <vk-callout mode="note" for="#py@line:2" side="right" tone="info">浮点数不是精确的</vk-callout>
+</vk-page>
+
+<vk-page id="diff">
+  <vk-stack gap="normal">
+    <vk-label>改动</vk-label>
+    <vk-text size="subhead">把 <vk-inline variant="code">1</vk-inline> 改成 <vk-inline variant="code">2</vk-inline>，快了一倍。</vk-text>
+    <vk-diff file="sum.c" lang="c" src="../code/snippets/loop.diff"><div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">sum.c</span></div><div class="vk-bd"><div class="vk-diff-hunk">第 1–4 行</div><div class="vk-diff-row del" data-vk-line="1"><span class="vk-sign">−</span><span class="vk-dsrc"><span class="k">for</span><span class="o"> (</span><span class="t">int</span> i <span class="o">=</span><span class="n"> 0</span><span class="o">;</span> i <span class="o">&lt;</span> n<span class="o">;</span> i<span class="o">++)</span></span></div><div class="vk-diff-row add" data-vk-line="2"><span class="vk-sign">+</span><span class="vk-dsrc"><span class="k">for</span><span class="o"> (</span><span class="t">int</span> i <span class="o">=</span> n <span class="o">-</span><span class="n"> 1</span><span class="o">;</span> i <span class="o">&gt;=</span><span class="n"> 0</span><span class="o">;</span> i<span class="o">--)</span></span></div><div class="vk-diff-row " data-vk-line="3"><span class="vk-sign"> </span><span class="vk-dsrc">    sum <span class="o">+=</span> a<span class="o">[</span>i<span class="o">];</span></span></div></div><div class="vk-diff-foot">+1 / −1</div></div></vk-diff>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="asm">
+  <vk-stack gap="normal">
+    <vk-label>汇编</vk-label>
+    <vk-text size="subhead">C 里一行，<em>这儿四条指令</em>。</vk-text>
+    <vk-asm file="add-o2.dis" src="../code/opt/add-o2.dis" lines="1-6" current="3"><div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">add-o2.dis</span><span class="vk-range">1-6</span></div><div class="vk-bd"><div class="vk-arow vk-alabel" data-vk-line="1"><span class="vk-aaddr"></span><span class="vk-ainsn">&lt;_add&gt;:</span></div><div class="vk-arow" data-vk-line="2" data-vk-addr="0"><span class="vk-aaddr">0</span><span class="vk-ainsn">mov</span><span class="vk-aops">0x8(%esp),%eax</span></div><div class="vk-arow" data-vk-line="3" data-vk-addr="4"><span class="vk-aaddr">4</span><span class="vk-ainsn">add</span><span class="vk-aops">0x4(%esp),%eax</span></div><div class="vk-arow" data-vk-line="4" data-vk-addr="8"><span class="vk-aaddr">8</span><span class="vk-ainsn">ret</span><span class="vk-aops"></span></div><div class="vk-arow" data-vk-line="5" data-vk-addr="9"><span class="vk-aaddr">9</span><span class="vk-ainsn">lea</span><span class="vk-aops">0x0(%esi,%eiz,1),%esi</span></div></div></div></vk-asm>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="table">
+  <vk-stack gap="normal">
+    <vk-label>表格</vk-label>
+    <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
+    <vk-table caption="同一台机器，一次读 64 字节。">
+      <table>
+        <tbody><tr><th>层级</th><th>容量</th><th>延迟</th></tr>
+        <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td></tr>
+        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td></tr>
+        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+      </tbody></table>
+    </vk-table>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="list">
+  <vk-stack gap="normal">
+    <vk-label>有序步骤</vk-label>
+    <vk-text size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-text>
+    <vk-list variant="ordered" size="body">
+      <li>取数组首地址</li>
+      <li>加上下标 × 4</li>
+      <li>读出那 4 个字节</li>
+    </vk-list>
+    <vk-text size="caption" ink="muted">每一次都可能是一次内存访问。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="tree">
+  <vk-stack gap="normal">
+    <vk-label>文件树</vk-label>
+    <vk-text size="subhead">编译产物比源码<em>大得多</em>。</vk-text>
+    <vk-tree src="../code" depth="2" max="6" title="code/" current="opt"><div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">code/</span></div><div class="vk-bd vk-tree"><div class="vk-node" data-vk-node="adt" data-kind="dir" data-dir><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="vk-tname">adt/</span></span><div class="vk-kids"><div class="vk-node" data-vk-node="adt/array.c" data-kind="code"><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg></span><span class="vk-tname">array.c</span></span></div></div></div><div class="vk-node" data-vk-node="bsearch" data-kind="dir" data-dir><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="vk-tname">bsearch/</span></span><div class="vk-kids"><div class="vk-node" data-vk-node="bsearch/bsearch.c" data-kind="code"><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3H7a2 2 0 0 0-2 2v5a2 2 0 0 1-2 2 2 2 0 0 1 2 2v5c0 1.1.9 2 2 2h1"/><path d="M16 21h1a2 2 0 0 0 2-2v-5c0-1.1.9-2 2-2a2 2 0 0 1-2-2V5a2 2 0 0 0-2-2h-1"/></svg></span><span class="vk-tname">bsearch.c</span></span></div></div></div><div class="vk-node" data-vk-node="opt" data-kind="dir" data-dir><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="vk-tname">opt/</span></span><div class="vk-kids"><div class="vk-node" data-vk-node="opt/add-o0.dis" data-kind="binary"><span class="vk-tname-row"><span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="14" y="14" width="4" height="6" rx="2"/><rect x="6" y="4" width="4" height="6" rx="2"/><path d="M6 20h4"/><path d="M14 10h4"/><path d="M6 14h2v6"/><path d="M14 4h2v6"/></svg></span><span class="vk-tname">add-o0.dis</span></span></div></div></div><div class="vk-node is-more">…还有更多</div></div></div></vk-tree>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="cells">
+  <vk-stack gap="wide">
+    <vk-label>内存格</vk-label>
+    <vk-text size="subhead">一格一个 int，地址<em>每次加 4</em>。</vk-text>
+    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3">
+      <li value="1" label="a[0]"></li>
+      <li value="2" label="a[1]"></li>
+      <li value="3" label="a[2]"></li>
+      <li value="4" label="a[3]"></li>
+    </vk-cells>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bytes">
+  <vk-stack gap="normal">
+    <vk-label>字节窗</vk-label>
+    <vk-text size="subhead">一个字符串，<em>就是一连串字节</em>。</vk-text>
+    <vk-bytes src="../code/hello.bin" length="16" cols="8" current="1-5"><div class="vk-win"><div class="vk-bd"><div class="vk-brow" data-vk-line="1"><span class="vk-baddr">0x0000</span><span class="vk-hex"><i data-vk-byte="1">68</i><i data-vk-byte="2">65</i><i data-vk-byte="3">6c</i><i data-vk-byte="4">6c</i><i data-vk-byte="5">6f</i><i data-vk-byte="6">00</i><i data-vk-byte="7">77</i><i data-vk-byte="8">6f</i></span><span class="vk-ascii">hello·wo</span></div><div class="vk-brow" data-vk-line="2"><span class="vk-baddr">0x0008</span><span class="vk-hex"><i data-vk-byte="9">72</i><i data-vk-byte="10">6c</i><i data-vk-byte="11">64</i><i data-vk-byte="12">00</i><i data-vk-byte="13">01</i><i data-vk-byte="14">02</i><i data-vk-byte="15">04</i><i data-vk-byte="16">08</i></span><span class="vk-ascii">rld·····</span></div></div></div></vk-bytes>
+    <vk-text size="caption" ink="muted">右边是同一批字节的 ASCII。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bits">
+  <vk-stack gap="wide">
+    <vk-label>位域</vk-label>
+    <vk-text size="subhead">一个 float，<em>三段</em>。</vk-text>
+    <vk-bits value="0 01111111 011" index="down" group="4" sign label="float"></vk-bits>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="steps">
+  <vk-stack gap="wide">
+    <vk-label>步骤</vk-label>
+    <vk-text size="subhead">从源码到程序，<em>四步</em>。</vk-text>
+    <vk-steps current="2">
+      <li>预处理</li>
+      <li>编译</li>
+      <li>汇编</li>
+      <li>链接</li>
+    </vk-steps>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="bars">
+  <vk-stack gap="normal">
+    <vk-label>量级</vk-label>
+    <vk-text size="subhead">同样的活，差了<em>四倍</em>。</vk-text>
+    <vk-bars max="30" unit="毫秒" size="body">
+      <li value="5" label="数组"></li>
+      <li value="23" label="链表" state="current"></li>
+    </vk-bars>
+    <vk-text size="caption" ink="muted">八百万次累加，同一台机器。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="timeline">
+  <vk-stack gap="wide">
+    <vk-label>时间线</vk-label>
+    <vk-text size="subhead">编码的故事，<em>五十年</em>。</vk-text>
+    <vk-timeline start="1963" end="2010" current="2">
+      <li date="1963" label="ASCII" note="7 位，128 个字符"></li>
+      <li date="1991" label="Unicode" note="给所有语言留位置"></li>
+      <li date="2010" label="Emoji" note="字符表开始装表情"></li>
+    </vk-timeline>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="pair">
+  <vk-stack gap="normal">
+    <vk-label>前后对照</vk-label>
+    <vk-text size="subhead">同一个循环，<em>一个顺、一个跳</em>。</vk-text>
+    <vk-pair symbol="vs" gap="wide">
+      <vk-stack gap="close">
+        <vk-label>顺序访问 · a[i]</vk-label>
+        <vk-code lang="c" file="a.c"><div class="vk-win" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">a.c</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-ln">1</span><span class="vk-src"><span class="k">for</span><span class="o"> (</span>i <span class="o">=</span><span class="n"> 0</span><span class="o">;</span> i <span class="o">&lt;</span> n<span class="o">;</span> i<span class="o">++)</span></span></div><div class="vk-line" data-vk-line="2"><span class="vk-ln">2</span><span class="vk-src">    sum <span class="o">+=</span> a<span class="o">[</span>i<span class="o">];</span></span></div></div></div></vk-code>
+      </vk-stack>
+      <vk-stack gap="close">
+        <vk-label>跳着访问 · a[idx[i]]</vk-label>
+        <vk-code lang="c" file="b.c"><div class="vk-win" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">b.c</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-ln">1</span><span class="vk-src"><span class="k">for</span><span class="o"> (</span>i <span class="o">=</span><span class="n"> 0</span><span class="o">;</span> i <span class="o">&lt;</span> n<span class="o">;</span> i<span class="o">++)</span></span></div><div class="vk-line" data-vk-line="2"><span class="vk-ln">2</span><span class="vk-src">    sum <span class="o">+=</span> a<span class="o">[</span>idx<span class="o">[</span>i<span class="o">]];</span></span></div></div></div></vk-code>
+      </vk-stack>
+    </vk-pair>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="box-img">
+  <vk-stack gap="normal">
+    <vk-label>面与图</vk-label>
+    <vk-text size="subhead">截图放在<em>实底上</em>，字才看得清。</vk-text>
+    <vk-grid cols="12" gap="normal">
+      <vk-box span="7" surface="paper" border="hair" title="screenshot.png" pad="normal">
+        <vk-img src="file:///D:/test/test52/assets/compare/fixtures-after.png" ratio="16 / 9"></vk-img>
+      </vk-box>
+      <vk-box span="5" surface="soft" pad="normal">
+        <vk-stack gap="close">
+          <vk-text size="caption" ink="muted">看到的东西</vk-text>
+          <vk-list variant="check" size="caption">
+            <li>地址是 16 进制</li>
+            <li>机器码在第二列</li>
+          </vk-list>
+        </vk-stack>
+      </vk-box>
+    </vk-grid>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="math">
+  <vk-stack gap="section">
+    <vk-label>公式</vk-label>
+    <vk-math display size="subhead"><span class="katex-display"><span class="katex"><span class="katex-mathml"><math xmlns="http://www.w3.org/1998/Math/MathML" display="block"><semantics><mrow><mi>T</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo><mo>=</mo><mn>2</mn><mi>T</mi><mrow><mo fence="true">(</mo><mfrac><mi>n</mi><mn>2</mn></mfrac><mo fence="true">)</mo></mrow><mo>+</mo><mi>O</mi><mo stretchy="false">(</mo><mi>n</mi><mo stretchy="false">)</mo></mrow><annotation encoding="application/x-tex">T(n) = 2T\left(\frac{n}{2}\right) + O(n)</annotation></semantics></math></span><span class="katex-html" aria-hidden="true"><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span><span class="mspace" style="margin-right:0.2778em;"></span><span class="mrel">=</span><span class="mspace" style="margin-right:0.2778em;"></span></span><span class="base"><span class="strut" style="height:1.836em;vertical-align:-0.686em;"></span><span class="mord">2</span><span class="mord mathnormal" style="margin-right:0.13889em;">T</span><span class="mspace" style="margin-right:0.1667em;"></span><span class="minner"><span class="mopen delimcenter" style="top:0em;"><span class="delimsizing size2">(</span></span><span class="mord"><span class="mopen nulldelimiter"></span><span class="mfrac"><span class="vlist-t vlist-t2"><span class="vlist-r"><span class="vlist" style="height:1.1076em;"><span style="top:-2.314em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord">2</span></span></span><span style="top:-3.23em;"><span class="pstrut" style="height:3em;"></span><span class="frac-line" style="border-bottom-width:0.04em;"></span></span><span style="top:-3.677em;"><span class="pstrut" style="height:3em;"></span><span class="mord"><span class="mord mathnormal">n</span></span></span></span><span class="vlist-s">​</span></span><span class="vlist-r"><span class="vlist" style="height:0.686em;"><span></span></span></span></span></span><span class="mclose nulldelimiter"></span></span><span class="mclose delimcenter" style="top:0em;"><span class="delimsizing size2">)</span></span></span><span class="mspace" style="margin-right:0.2222em;"></span><span class="mbin">+</span><span class="mspace" style="margin-right:0.2222em;"></span></span><span class="base"><span class="strut" style="height:1em;vertical-align:-0.25em;"></span><span class="mord mathnormal" style="margin-right:0.02778em;">O</span><span class="mopen">(</span><span class="mord mathnormal">n</span><span class="mclose">)</span></span></span></span></span></vk-math>
+    <vk-text size="caption" ink="muted">每层做 O(n) 的活，一共 log n 层。</vk-text>
+  </vk-stack>
+</vk-page>
+
+
+
+<vk-page id="compare">
+  <vk-stack gap="normal">
+    <vk-label>两张图对照</vk-label>
+    <vk-text size="subhead">同样的源码，<em>两种优化</em>。</vk-text>
+    <vk-compare labels="file:///D:/test/test52/assets/compare/fixtures-before.png,file:///D:/test/test52/assets/compare/fixtures-after.png|改前|改后" variant="side"></vk-compare>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="layers">
+  <vk-stack gap="normal">
+    <vk-label>叠放</vk-label>
+    <vk-text size="subhead">图注压在<em>图的上面</em>，落在实底上。</vk-text>
+    <vk-layer>
+      <vk-img src="file:///D:/test/test52/assets/compare/fixtures-after.png" ratio="14 / 5" fill="cover" radius="md"></vk-img>
+      <vk-stack justify="end" align="start">
+        <vk-box surface="paper" border="strong" pad="normal" radius="md">
+          <vk-text size="caption">README 里的那张图 · 2024</vk-text>
+        </vk-box>
+      </vk-stack>
+    </vk-layer>
+  </vk-stack>
+</vk-page>
+
+<vk-page id="canvas">
+  <vk-stack gap="normal">
+    <vk-label>坐标画布</vk-label>
+    <vk-text size="subhead">只能按<em>坐标</em>摆的时候才用它。</vk-text>
+    <vk-canvas w="1680" h="300">
+      <vk-box id="c1" x="0" y="0" w="520" surface="soft" pad="normal">
+        <vk-text size="caption" ink="muted">x=0 · y=0</vk-text>
+      </vk-box>
+      <vk-box x="560" y="300" w="520" surface="paper" border="hair" pad="normal">
+        <vk-text size="caption">x=560 · y=300</vk-text>
+      </vk-box>
+      <vk-box id="c3" x="1160" y="150" w="520" surface="soft" pad="normal">
+        <vk-text size="caption" ink="muted">x=1160 · y=150</vk-text>
+      </vk-box>
+    </vk-canvas>
+  </vk-stack>
+  <vk-callout mode="arrow" from="#c1@side:right" to="#c3@side:left" shape="curve" label="两步"></vk-callout>
+</vk-page>
+
+<vk-page id="dark" surface="dark">
+  <vk-stack gap="normal">
+    <vk-label>深色页</vk-label>
+    <vk-text size="subhead">深色是<em>选项</em>，浅底件自动适配。</vk-text>
+    <vk-code id="d" lang="c" file="dark.c"><div class="vk-win" data-chrome="min"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span><span class="vk-file">dark.c</span></div><div class="vk-bd"><div class="vk-line" data-vk-line="1"><span class="vk-ln">1</span><span class="vk-src"><span class="t">int</span> a <span class="o">=</span><span class="n"> 1</span><span class="o">;</span></span></div></div></div></vk-code>
+    <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
+  </vk-stack>
+</vk-page>
+
+<script src="file:///D:/test/test52/dist/vk.js"></script>
+</body>
+</html>

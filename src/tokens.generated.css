@@ -48,9 +48,9 @@
   --vk-radius-none: 0px;
   --vk-radius-md: 16px;
   --vk-radius-pill: 999px;
-  --vk-line-w-hair: 3px;
+  --vk-line-w-hair: 4px;
   --vk-line-w-rule: 4px;
-  --vk-line-w-strong: 7px;
+  --vk-line-w-strong: 8px;
 
   --vk-w-regular: 400;
   --vk-w-medium: 500;
@@ -63,7 +63,7 @@
   --vk-ink-1: light-dark(#0b0f14, #f2f6fb);
   --vk-ink-2: light-dark(#333d4b, #cdd7e4);
   --vk-ink-3: light-dark(#5c6674, #9aa7b8);
-  --vk-line-color: light-dark(rgba(11, 15, 20, 0.10), rgba(255, 255, 255, 0.14));
+  --vk-line-color: light-dark(rgba(11, 15, 20, 0.22), rgba(255, 255, 255, 0.26));
   --vk-line-strong: light-dark(rgba(11, 15, 20, 0.32), rgba(255, 255, 255, 0.36));
   --vk-focus: light-dark(#1b3fd6, #7aa2ff);
   --vk-info: light-dark(#3a4454, #8fa6c8);
@@ -80,7 +80,7 @@
   --vk-syn-string: light-dark(#0b6b4f, #8fe3c0);
   --vk-syn-comment: light-dark(#667085, #8b97a8);
   --vk-syn-number: light-dark(#8a4b00, #f0b45c);
-  --vk-syn-type: light-dark(#4a3a8f, #b9a8ff);
+  --vk-syn-keyword: light-dark(#6f2da8, #c9a6ff);
   --vk-dot-red: #ff5f57;
   --vk-dot-yellow: #febc2e;
   --vk-dot-green: #28c840;

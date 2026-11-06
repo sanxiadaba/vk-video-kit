@@ -22,8 +22,9 @@ function fitToBox(host) {
     const have = win.clientWidth;
     const cs = Number.parseFloat(host.style.getPropertyValue('--vk-cs')) || start;
     if (!need || !have) return;
-    if (need <= have - 4) return;
+    if (need <= have - 16) return;
     const next = Math.max(FONT_FLOOR, cs * ((have - 6) / need));
+    if (next >= cs) return;
     if (Math.abs(next - cs) < 0.4) return;
     host.style.setProperty('--vk-cs', next.toFixed(2) + 'px');
   }

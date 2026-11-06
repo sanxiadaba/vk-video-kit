@@ -148,24 +148,6 @@ vk-pair[direction='vertical'] {
 }
 
 /* 中轴：一条结构线，落在两块之间。 */
-vk-pair[data-axis]::before {
-  content: '';
-  position: absolute;
-  left: calc(var(--vk-split, 50) * 1%);
-  top: var(--vk-gap-wide);
-  bottom: var(--vk-gap-wide);
-  width: var(--vk-line-w-rule);
-  translate: -50% 0;
-  background: var(--vk-line-strong);
-}
-vk-pair[direction='vertical'][data-axis]::before {
-  top: calc(var(--vk-split, 50) * 1%);
-  right: var(--vk-gap-wide);
-  left: var(--vk-gap-wide);
-  width: auto;
-  height: var(--vk-line-w-rule);
-  translate: 0 -50%;
-}
 
 /* 对照的乐趣在于「一样宽才好比」：并置里的窗口铺满各自那一栏。 */
 vk-pair vk-code .vk-win,
