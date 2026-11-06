@@ -19,6 +19,7 @@
     "assets:check": "node tools/assets.mjs --check",
     "shots": "npm run assets && node bin/vk.mjs render assets/hello/asm.html --out assets/hello --shot .vk-win",
     "sheet": "node bin/vk.mjs sheet episodes --cols 4",
+    "serve": "node tools/serve.mjs",
     "preview": "node bin/vk.mjs sheet episodes/09-memory.html --cols 3 --width 560 --out assets/preview.png",
     "darks": "node bin/vk.mjs render tests/darks.html"
   },
