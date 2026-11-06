@@ -1,6 +1,6 @@
 # 写一帧
 
-一帧 = 一个 `<vk-page>`。1920×1080，版心 1680×888（左右 120、上下 96）。
+一帧 = 一个 `<vk-page>`。1920×1080，内容区 1680×888（左右 120、上下 96）。
 观众在手机横屏上看，整帧缩到约 **780 宽（0.406×）**。一帧只说一件事。
 
 ```html
@@ -24,7 +24,7 @@ a[1]         // 从 a 起走一个 int
 | 词 | 意思 | 取值 |
 |---|---|---|
 | `tone` | 语义 | `neutral / info / focus / ok / warn / err` |
-| `size` | 字号 | `caption / body / subhead / headline / display / hero`（数据件只到 subhead） |
+| `size` | 字号 | `caption / body / subhead / headline / display / hero`（数据组件只到 subhead） |
 | `gap` `pad` | 间距 | `none / close / normal / wide / section`，或像素数 |
 | `current` | 第几项 | **1 起**；`-1` = 没有当前 |
 | `state` | 注意力 | 只写在项上：`current` / `mark` |
@@ -36,7 +36,7 @@ a[1]         // 从 a 起走一个 int
 ```bash
 vk render pages/01.html --phone   # 构建 + 自检 + 出图（--phone 出 780 宽，按手机看）
 vk check  pages/                  # 只自检
-vk doc    vk-code                 # 一个件的属性表；全部契约看 docs/CONTRACT.md
+vk doc    vk-code                 # 一个组件的属性表；全部契约看 docs/CONTRACT.md
 ```
 
 `vk render` 会报五类硬错（没画布 / 渲染失败 / 资源失败 / 文字被裁 / 锚点指空），其余只打数字。
@@ -52,7 +52,7 @@ vk doc    vk-code                 # 一个件的属性表；全部契约看 docs
 
 ## 下一站
 
-- 每个件的属性、默认值、一帧容量：`docs/CONTRACT.md`（生成物，别手改）
-- 容量、选件、颜色语义、深色页：`docs/RULES.md`
+- 每个组件的属性、默认值、一帧容量：`docs/CONTRACT.md`（生成物，别手改）
+- 容量、选组件、颜色语义、深色页：`docs/RULES.md`
 - 12 个会静默出错的坑：`docs/PITFALLS.md`
 

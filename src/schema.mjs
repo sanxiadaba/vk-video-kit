@@ -64,7 +64,7 @@ const tone = (def = 'neutral') => ({ type: 'enum', values: TONE, default: def, g
 const radius = () => ({ type: 'enum', values: ['none', 'md', 'pill'], default: 'md', group: 'appearance', label: '圆角' });
 const border = () => ({ type: 'enum', values: ['none', 'hair', 'strong'], default: 'none', group: 'appearance', label: '描边' });
 const current = () => ({ type: 'index', default: -1, group: 'state', label: '当前项（1 起；-1 = 没有）' });
-const chrome = (def = 'min') => ({ type: 'enum', values: ['min', 'none'], default: def, group: 'appearance', label: '窗头' });
+const chrome = (def = 'min') => ({ type: 'enum', values: ['min', 'none'], default: def, group: 'appearance', label: '窗口标题栏' });
 const surface = (values, def) => ({ type: 'enum', values, default: def, group: 'appearance', label: '表面' });
 
 const item = (attrs, hint) => ({ kind: 'item', item: 'li', attrs, hint });
@@ -155,7 +155,7 @@ export const TAGS = {
   'vk-box': {
     layer: 'surface',
     name: '面',
-    summary: '一块面：底、描边、圆角、内距，可带标题带与窗头。它只描述这一块，不排别人。',
+    summary: '一块面：底、描边、圆角、内距，可带标题带与窗口标题栏。它只描述这一块，不排别人。',
     attrs: {
       surface: surface(['none', 'paper', 'soft', 'tint', 'dark'], 'none'),
       tone: tone('neutral'),
@@ -163,7 +163,7 @@ export const TAGS = {
       radius: radius(),
       border: border(),
       title: { type: 'text', group: 'appearance', label: '标题（写了才有标题带）' },
-      chrome: { type: 'enum', values: ['none', 'dots'], default: 'none', group: 'appearance', label: '窗头三点' },
+      chrome: { type: 'enum', values: ['none', 'dots'], default: 'none', group: 'appearance', label: '窗口标题栏三点' },
       ring: { type: 'bool', group: 'appearance', label: '强调环（不占布局）' },
     },
     children: { kind: 'slot' },
@@ -240,14 +240,14 @@ export const TAGS = {
   'vk-code': {
     layer: 'content',
     name: '代码',
-    summary: '代码窗。构建期高亮；可截取真实文件的行段，标当前行、聚光、折叠。',
+    summary: '代码窗。构建期高亮；可截取真实文件的行段，标当前行、只亮几行、折叠。',
     attrs: {
       lang: { type: 'text', group: 'content', label: '语言' },
       src: { type: 'text', group: 'content', label: '源文件' },
       lines: { type: 'text', group: 'content', label: '行段，如 "4-6"' },
-      file: { type: 'text', group: 'content', label: '窗头文件名' },
+      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      focus: { type: 'lines', group: 'state', label: '聚光行' },
+      focus: { type: 'lines', group: 'state', label: '只亮这几行' },
       fold: { type: 'lines', group: 'state', label: '折叠行（缺口）' },
       size: sizeText('body'),
       long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行' },
@@ -264,7 +264,7 @@ export const TAGS = {
     summary: '终端 transcript：提示符、命令、输出、报错各自一色。',
     attrs: {
       src: { type: 'text', group: 'content', label: '源文件' },
-      title: { type: 'text', group: 'content', label: '窗头标题' },
+      title: { type: 'text', group: 'content', label: '窗口标题栏标题' },
       prompt: { type: 'text', default: '$', group: 'appearance', label: '提示符' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       size: sizeText('body'),
@@ -281,7 +281,7 @@ export const TAGS = {
     summary: 'diff：原生 diff 文本，加/删/同各自一色，底部一句改了几行。',
     attrs: {
       src: { type: 'text', group: 'content', label: '源文件' },
-      file: { type: 'text', group: 'content', label: '窗头文件名' },
+      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
       lang: { type: 'text', group: 'content', label: '语言（给改动行上语法色）' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       size: sizeText('body'),
@@ -333,7 +333,7 @@ export const TAGS = {
     summary: '文件树：src 指向真实目录，构建期扫描层级；缩进与树线是真的，不是列表。',
     attrs: {
       src: { type: 'text', group: 'content', label: '目录' },
-      title: { type: 'text', group: 'content', label: '窗头标题' },
+      title: { type: 'text', group: 'content', label: '窗口标题栏标题' },
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
       max: { type: 'int', min: 1, max: 40, default: 10, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
@@ -356,7 +356,7 @@ export const TAGS = {
     attrs: {
       src: { type: 'text', group: 'content', label: '源文件（objdump 文本）' },
       lines: { type: 'text', group: 'content', label: '行段' },
-      file: { type: 'text', group: 'content', label: '窗头文件名' },
+      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
       current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
       size: sizeText('body'),
       chrome: chrome('min'),
@@ -519,18 +519,5 @@ export function observedOf(tag) {
   return [...new Set(names)];
 }
 
-/** 每个标签的默认值表（运行期 spec() 读它，不再各写一份）。 */
-export const DEFAULTS = Object.fromEntries(
-  TAG_NAMES.map((tag) => {
-    const out = {};
-    for (const [name, spec] of Object.entries(attrsOf(tag))) if (spec.default !== undefined) out[name] = spec.default;
-    return [tag, out];
-  })
-);
-
-/** 结构化子节点的合法属性：父标签 → 名字列表。 */
-export const CHILD_ATTRS = Object.fromEntries(
-  TAG_NAMES.filter((t) => TAGS[t].children?.kind === 'item').map((t) => [t, Object.keys(TAGS[t].children.attrs || {})])
-);
 
 

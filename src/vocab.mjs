@@ -180,7 +180,6 @@ export const STATE = ['current', 'mark'];
 export const SURFACE = ['none', 'paper', 'soft', 'tint', 'dark'];
 export const INK = ['primary', 'secondary', 'muted'];
 export const SIZE = Object.keys(FONT);
-export const SPACE = Object.keys(GAP);
 
 /** 索引：一律 1 起，-1 表示「没有当前」。锚点也一样（@cell:1 是第一个）。 */
 export const INDEX_RULE = '1 起；-1 = 没有当前';

@@ -186,5 +186,4 @@ export const LANG_LABEL = {
 };
 
 export const langKey = (lang) => LANG_ALIAS[String(lang || 'text').toLowerCase()] || String(lang || 'text').toLowerCase();
-export const langLabel = (lang) => LANG_LABEL[langKey(lang)] || langKey(lang).toUpperCase();
 export const SUPPORTED_LANGS = Object.freeze(Object.keys(LANG_LABEL));

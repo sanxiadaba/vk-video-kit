@@ -36,9 +36,9 @@
 <vk-tree src="code" chrome="none"></vk-tree>        <!-- 去掉窗口，只要树 -->
 ```
 
-## 3. 每个件能改什么
+## 3. 每个组件能改什么
 
-| 件 | 可改 | 默认 | 备注 |
+| 组件 | 可改 | 默认 | 备注 |
 |---|---|---|---|
 | `vk-page` | `align` band/center/top/bottom、`surface`、`style` 变量 | band | band = 标题锚 96、内容在剩余带居中 |
 | `vk-box` | `surface` paper/soft/dark、`border`、`pad`、`radius`、`title`、`tone` | paper | 标题可去掉 |
@@ -58,7 +58,7 @@
 | `vk-timeline` | `size`、`start`、`end`、`current`；条目 `at` | body | 每个 `<li>` 写 `at="1991"` 就按年份比例摆，否则等距 |
 | `vk-compare` | `labels`、`size`、`direction`、`mark` | body | `mark="a:x1,y1,x2,y2"` 只标改前那格（百分比相对图） |
 | `vk-img` | `ratio`、`surface`、`border` | paper | |
-| `vk-canvas` | `w`、`h`、`surface` | 1680×888 | 子件用 `x/y` 或 `at` |
+| `vk-canvas` | `w`、`h`、`surface` | 1680×888 | 子组件用 `x/y` 或 `at` |
 | `vk-callout` | `mode` arrow/ring/note/badge、`tone`、`shape`、`from/to/for`、`gap` | arrow | 线走墨色，语义色只给气泡 |
 | `vk-pair` | `symbol`、`gap`、`split`、`direction` | vs | 有字不画轴 |
 

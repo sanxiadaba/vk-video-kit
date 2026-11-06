@@ -421,9 +421,6 @@ function parseMarks(raw, host) {
   return out;
 }
 
-const markHtml = (m) =>
-  `<span class="vk-compare-mark" style="left:${pct(m.left)}%;top:${pct(m.top)}%;width:${pct(m.w)}%;height:${pct(m.h)}%"></span>`;
-
 // 图不裁、不拉伸：contain。CSS 的 .vk-compare-pane img 只给了 100% 宽高。
 const imgHtml = (src, alt) =>
   `<img src="${esc(src)}" alt="${esc(alt)}" loading="eager" style="object-fit:contain">`;

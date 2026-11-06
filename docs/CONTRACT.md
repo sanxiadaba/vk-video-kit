@@ -111,7 +111,7 @@
 
 ### L2 面与字
 
-**`vk-box`** · 面 —— 一块面：底、描边、圆角、内距，可带标题带与窗头。它只描述这一块，不排别人。
+**`vk-box`** · 面 —— 一块面：底、描边、圆角、内距，可带标题带与窗口标题栏。它只描述这一块，不排别人。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
@@ -125,7 +125,7 @@
 | `radius` | none / md / pill | md |  | 圆角 |
 | `border` | none / hair / strong | none |  | 描边 |
 | `title` | 文本 | — |  | 标题（写了才有标题带） |
-| `chrome` | none / dots | none |  | 窗头三点 |
+| `chrome` | none / dots | none |  | 窗口标题栏三点 |
 | `ring` | 开关 | — |  | 强调环（不占布局） |
 
 **`vk-text`** · 文字 —— 一段文字：字号、字重、墨阶、对齐、行宽。行内可用 <em> 强调、<strong> 加重、<mark> 标一段原文。
@@ -181,7 +181,7 @@
 
 ### L3 内容
 
-**`vk-code`** · 代码 —— 代码窗。构建期高亮；可截取真实文件的行段，标当前行、聚光、折叠。
+**`vk-code`** · 代码 —— 代码窗。构建期高亮；可截取真实文件的行段，标当前行、只亮几行、折叠。
   一帧容量：8 行。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
@@ -193,13 +193,13 @@
 | `lang` | 文本 | — |  | 语言 |
 | `src` | 文本 | — |  | 源文件 |
 | `lines` | 文本 | — |  | 行段，如 "4-6" |
-| `file` | 文本 | — |  | 窗头文件名 |
+| `file` | 文本 | — |  | 窗口标题栏文件名 |
 | `current` | 行段 | — |  | 当前行（1 起） |
-| `focus` | 行段 | — |  | 聚光行 |
+| `focus` | 行段 | — |  | 只亮这几行 |
 | `fold` | 行段 | — |  | 折叠行（缺口） |
 | `size` | caption / body / subhead | body |  | 字号 |
 | `long` | clip / wrap | clip |  | 长行 |
-| `chrome` | min / none | min |  | 窗头 |
+| `chrome` | min / none | min |  | 窗口标题栏 |
 | `mark` | 文本 | — |  | 标出的词（窗口里所有出现处） |
 
 src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。构建期高亮，运行期零依赖。
@@ -214,12 +214,12 @@ src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。�
 | `grow` | 开关 | — |  | 吃掉剩余空间 |
 | `bleed` | x / all | — |  | 出血到画布边 |
 | `src` | 文本 | — |  | 源文件 |
-| `title` | 文本 | — |  | 窗头标题 |
+| `title` | 文本 | — |  | 窗口标题栏标题 |
 | `prompt` | 文本 | $ |  | 提示符 |
 | `current` | 行段 | — |  | 当前行（1 起） |
 | `size` | caption / body / subhead | body |  | 字号 |
 | `surface` | paper / dark | paper |  | 表面 |
-| `chrome` | min / none | min |  | 窗头 |
+| `chrome` | min / none | min |  | 窗口标题栏 |
 
 src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。
 
@@ -233,7 +233,7 @@ src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source
 | `grow` | 开关 | — |  | 吃掉剩余空间 |
 | `bleed` | x / all | — |  | 出血到画布边 |
 | `src` | 文本 | — |  | 源文件 |
-| `file` | 文本 | — |  | 窗头文件名 |
+| `file` | 文本 | — |  | 窗口标题栏文件名 |
 | `lang` | 文本 | — |  | 语言（给改动行上语法色） |
 | `current` | 行段 | — |  | 当前行（1 起） |
 | `size` | caption / body / subhead | body |  | 字号 |
@@ -293,7 +293,7 @@ src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写
 | `grow` | 开关 | — |  | 吃掉剩余空间 |
 | `bleed` | x / all | — |  | 出血到画布边 |
 | `src` | 文本 | — |  | 目录 |
-| `title` | 文本 | — |  | 窗头标题 |
+| `title` | 文本 | — |  | 窗口标题栏标题 |
 | `depth` | 整数 | 3 | 1–6 | 最大深度 |
 | `max` | 整数 | 10 | 1–40 | 最多显示几行（超了会留一行说明） |
 | `current` | 文本 | — |  | 当前节点路径 |
@@ -303,7 +303,7 @@ src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写
 | `icon-code` | 文本 | — |  | 代码文件图标 |
 | `icon-binary` | 文本 | — |  | 二进制文件图标 |
 | `icon-file` | 文本 | — |  | 普通文件图标 |
-| `chrome` | min / none | min |  | 窗头 |
+| `chrome` | min / none | min |  | 窗口标题栏 |
 
 src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。
 
@@ -318,10 +318,10 @@ src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 J
 | `bleed` | x / all | — |  | 出血到画布边 |
 | `src` | 文本 | — |  | 源文件（objdump 文本） |
 | `lines` | 文本 | — |  | 行段 |
-| `file` | 文本 | — |  | 窗头文件名 |
+| `file` | 文本 | — |  | 窗口标题栏文件名 |
 | `current` | 行段 | — |  | 当前行（1 起） |
 | `size` | caption / body / subhead | body |  | 字号 |
-| `chrome` | min / none | min |  | 窗头 |
+| `chrome` | min / none | min |  | 窗口标题栏 |
 | `bytes` | 开关 | — |  | 显示机器码列（默认不显示） |
 
 src 指向 objdump 文本，或内联 <script type="text/plain" data-vk-source>。
