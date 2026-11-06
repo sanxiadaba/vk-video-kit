@@ -8,6 +8,7 @@
  *   vk doc vk-code                    一个件的属性表
  *   vk brief [--json]                 全部件的机器可读契约
  *   vk sheet episodes/ --cols 4        每帧缩略图拼成一张联络图（看节奏）
+ *   vk clean                          删掉 out/ 与缓存（旧版本留下的产物会混在里面）
  *   vk icons arrow                    搜 Lucide 图标名
  *
  * 没有第二个入口：库的构建（CSS / JS / 字体）在这里按需自动完成。
@@ -364,6 +365,15 @@ if (cmd === 'render' || cmd === 'check') {
   }
   const bad = report.some((r) => r.errors?.length || r.frames.some((f) => f.issues.length) || r.ready === false);
   process.exitCode = failed || bad ? 1 : 0;
+} else if (cmd === 'clean') {
+  // out/ 里会攒下旧版本工具留下的目录：它们不是当前产物，容易被当成"库坏了"。
+  const targets = [OUT, path.join(ROOT, '.vk-cache')].filter((d) => fs.existsSync(d));
+  for (const d of targets) {
+    fs.rmSync(d, { recursive: true, force: true });
+    console.log('删掉 ' + path.relative(ROOT, d) + '/');
+  }
+  console.log('干净。重新出图：vk render episodes tests');
+  process.exitCode = 0;
 } else if (cmd === 'stats') {
   // 一集的"体检表"：帧数、有主张的帧、占版心、焦点数、用到的件。
   if (!inputs.length) {

@@ -394,6 +394,7 @@ vk brief --json                  # 全部件的契约（给机器读）
 vk icons arrow                   # 搜图标名
 vk stats episodes/               # 每集体检：帧数 / 占版心 / 缺主张 / 节奏
 vk sheet episodes/ --cols 4      # 把一集缩成联络图，看整体节奏
+vk clean                         # 删掉 out/ 与缓存（旧版本留下的产物会混在里面）
 ```
 
 一集 = 一个 `episodes/*.html` 文件，里面按顺序写 `<vk-page id="1-xxx">`；产物在 `out/<同路径>`；一帧一张 PNG，多帧文件按 `<文件名>-<id>.png`。
