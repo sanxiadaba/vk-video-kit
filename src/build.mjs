@@ -464,12 +464,16 @@ async function buildTree(node, file) {
     }
     let budget = Number(attrOf(node, 'max') || 10) || 10;
     let more = false;
+    let skipped = 0;
     const walk = (items, level, base) => {
       if (level > depth || budget <= 0) return '';
       const rows = [];
-      for (const it of items || []) {
+      const list = items || [];
+      for (let idx = 0; idx < list.length; idx++) {
+        const it = list[idx];
         if (budget <= 0) {
           more = true;
+          skipped += list.length - idx;
           break;
         }
         budget--;
@@ -482,7 +486,7 @@ async function buildTree(node, file) {
     };
     const list = Array.isArray(data) ? data : data.children || [data];
     const body = walk(list, 1, '');
-    return treeHtml(node, [body + (more ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
+    return treeHtml(node, [body + (more ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
   }
 
   const abs = path.resolve(path.dirname(path.resolve(file)), src);
@@ -490,6 +494,7 @@ async function buildTree(node, file) {
   // 目录树也有一帧的容量上限：超了就截断，只在末尾留一行说明（不在每一层各留一行）。
   let budget = Number(attrOf(node, 'max') || 10) || 10;
   let truncated = false;
+  let skipped = 0;
   const walk = (dir, level, base) => {
     if (level > depth) return '';
     const entries = fs
@@ -498,9 +503,11 @@ async function buildTree(node, file) {
       .sort((a, b) => (a.isDirectory() === b.isDirectory() ? a.name.localeCompare(b.name) : a.isDirectory() ? -1 : 1))
       .slice(0, 20);
     const rows = [];
-    for (const e of entries) {
+    for (let idx = 0; idx < entries.length; idx++) {
+      const e = entries[idx];
       if (budget <= 0) {
         truncated = true;
+        skipped += entries.length - idx;
         break;
       }
       budget--;
@@ -510,7 +517,7 @@ async function buildTree(node, file) {
     return rows.join('');
   };
   const body = walk(abs, 1, '');
-  return treeHtml(node, [body + (truncated ? '<div class="vk-node is-more">…还有更多</div>' : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
+  return treeHtml(node, [body + (truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '')], attrOf(node, 'title'), attrOf(node, 'chrome') || 'min');
 }
 
 /* ---------------------------------------------------------------- 图标 */

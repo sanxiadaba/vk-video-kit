@@ -287,18 +287,19 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
     <vk-label>坐标画布</vk-label>
     <vk-text size="subhead">只能按<em>坐标</em>摆的时候才用它。</vk-text>
     <vk-canvas w="1680" h="520">
-      <vk-box id="c1" x="0" y="0" w="520" surface="soft" pad="normal">
-        <vk-text size="caption" ink="muted">x=0 · y=0</vk-text>
+      <vk-box id="c1" x="0" y="0" w="380" surface="soft" pad="normal">
+        <vk-text size="caption" ink="muted">(0, 0)</vk-text>
       </vk-box>
-      <vk-box x="560" y="300" w="520" surface="paper" border="hair" pad="normal">
-        <vk-text size="caption">x=560 · y=300</vk-text>
+      <vk-box id="c2" x="650" y="300" w="380" surface="paper" border="hair" pad="normal">
+        <vk-text size="caption">(560, 300)</vk-text>
       </vk-box>
-      <vk-box id="c3" x="1160" y="150" w="520" surface="soft" pad="normal">
-        <vk-text size="caption" ink="muted">x=1160 · y=150</vk-text>
+      <vk-box id="c3" x="1300" y="150" w="380" surface="soft" pad="normal">
+        <vk-text size="caption" ink="muted">(1160, 150)</vk-text>
       </vk-box>
     </vk-canvas>
   </vk-stack>
-  <vk-callout mode="arrow" from="#c1@side:right" to="#c3@side:left" shape="curve" label="两步"></vk-callout>
+  <vk-callout mode="arrow" from="#c1@side:right" to="#c2@side:left" shape="straight" label="①"></vk-callout>
+  <vk-callout mode="arrow" from="#c2@side:right" to="#c3@side:left" shape="curve" label="②"></vk-callout>
 </vk-page>
 
 <vk-page id="dark" surface="dark">

@@ -159,12 +159,22 @@ vk-pair vk-img img {
 }
 
 /* 轴上的符号：→ / = / vs。缝宽由 runtime 撑到 section，这里只管排版。 */
+vk-pair[data-symbol]::before {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-split, 50) * 1%);
+  top: calc(var(--vk-fs-caption) * 1.5 + var(--vk-gap-close));
+  bottom: 0;
+  width: var(--vk-line-w-hair);
+  translate: -50% 0;
+  background: var(--vk-line-strong);
+}
 vk-pair[data-symbol]::after {
   content: attr(data-symbol);
   position: absolute;
   left: calc(var(--vk-split, 50) * 1%);
-  top: 50%;
-  translate: -50% -50%;
+  top: 0;
+  translate: -50% 0;
   padding: 0 var(--vk-inset-sm);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
