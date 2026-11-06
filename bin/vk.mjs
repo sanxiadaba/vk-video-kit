@@ -163,7 +163,7 @@ async function openPage(browser, url) {
       // 这一帧用了哪些件、它自己在讲什么：看板的分组与说明都从这儿来，不另维护一张表。
       const tags = [...new Set([...p.querySelectorAll('*')].map((el) => el.localName).filter((t) => t.startsWith('vk-')))];
       const label = p.querySelector('vk-label .vk-label-t') || p.querySelector('vk-label');
-      return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height, tags, caption: (label?.textContent || '').trim() };
+      return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height, tags, caption: (label?.textContent || '').trim(), surface: p.getAttribute('surface') || 'paper' };
     })
   );
   return { page, errors, ready, frames, warns };
@@ -326,7 +326,7 @@ if (cmd === 'render' || cmd === 'check') {
         const stage = document.querySelectorAll('.vk-stage')[idx];
         return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
       }, f.index);
-      entries.push({ id: f.id || `frame-${f.index + 1}`, caption: f.caption, tags: f.tags, png: `frames/${path.basename(png)}`, issues: audit.issues, metrics: audit.metrics });
+      entries.push({ id: f.id || `frame-${f.index + 1}`, caption: f.caption, tags: f.tags, surface: f.surface, png: `frames/${path.basename(png)}`, issues: audit.issues, metrics: audit.metrics });
     }
     await session.page.close();
     if (!entries.length) {

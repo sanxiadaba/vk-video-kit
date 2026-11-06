@@ -44,12 +44,13 @@ export function buildShowcase({ entries, source }) {
   const groups = new Map();
   for (const e of entries) {
     const tag = primaryOf(e);
-    const layer = TAGS[tag]?.layer || 'content';
-    const key = LAYER_LABEL[layer] || LAYER_LABEL.content;
+    // 深色页是「选项」，不混在内容里：单独一组，排在最后。
+    const layer = e.surface === 'dark' ? 'option' : TAGS[tag]?.layer || 'content';
+    const key = layer === 'option' ? '选项 · 深色页' : LAYER_LABEL[layer] || LAYER_LABEL.content;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push({ ...e, primary: tag });
   }
-  const order = ['L0 · 画布', 'L1 · 排布', 'L2 · 面与字', 'L3 · 内容', 'L4 · 图', 'L5 · 关系'];
+  const order = ['L0 · 画布', 'L1 · 排布', 'L2 · 面与字', 'L3 · 内容', 'L4 · 图', 'L5 · 关系', '选项 · 深色页'];
   const sections = order.filter((k) => groups.has(k));
 
   const cards = sections
