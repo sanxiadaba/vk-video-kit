@@ -313,13 +313,20 @@ export class VkTimeline extends VkElement {
 
     // 范围写在轴上方一行：它不属于那排事件，不能当 flex 子项抢宽度。
     const range = start || end ? `<div class="vk-tl-range">${esc(start)}${start && end ? ' → ' : ''}${esc(end)}</div>` : '';
-    const events = lis.map((node, i) => this._event(node, i, cur)).join('');
-    // 轴从第一个点画到最后一个点：等分的第 N 列起点就是最后一个点。
+    const ats = lis.map((node) => Number(itemAttr(this, node, 'at')));
+    const s = Number(start);
+    const e = Number(end);
+    const proportional = ats.every(Number.isFinite) && Number.isFinite(s) && Number.isFinite(e) && e > s;
+    if (proportional) this.dataset.proportional = '';
+    else delete this.dataset.proportional;
+    const events = lis
+      .map((node, i) => this._event(node, i, cur, proportional ? ((ats[i] - s) / (e - s)) * 100 : null))
+      .join('');
     this.innerHTML = `${range}<div class="vk-tl">${events}</div>`;
   }
 
   /** 一条事项。等距：这里没有任何按年份的比例计算。 */
-  _event(node, i, cur) {
+  _event(node, i, cur, atPct = null) {
     const date = itemAttr(this, node, 'date');
     const label = itemAttr(this, node, 'label');
     const note = itemAttr(this, node, 'note');
@@ -338,7 +345,7 @@ export class VkTimeline extends VkElement {
       .filter(Boolean)
       .join(' ');
     return (
-      `<div class="vk-tl-item" ${attr}>` +
+      `<div class="vk-tl-item" ${attr}${atPct == null ? '' : ` style="--vk-at:${atPct.toFixed(3)}"`}>` +
       (date ? `<span class="vk-tl-date">${esc(date)}</span>` : '') +
       (title ? `<span class="vk-tl-t">${esc(title)}</span>` : '') +
       (sub ? `<span class="vk-tl-note">${esc(sub)}</span>` : '') +

@@ -450,7 +450,7 @@ export const TAGS = {
   'vk-timeline': {
     layer: 'diagram',
     name: '时间线',
-    summary: '时间线：等距事件（不按年份比例）或多泳道。一条事项一个 <li>。',
+    summary: '时间线：给了 at + start/end 就按比例摆；否则等距。一条事项一个 <li>。',
     attrs: {
       variant: { type: 'enum', values: ['events', 'lanes'], default: 'events', group: 'appearance', label: '形态' },
       start: { type: 'text', group: 'content', label: '起点' },
@@ -460,7 +460,7 @@ export const TAGS = {
       current: current(),
     },
     children: item(
-      { date: { type: 'text', label: '日期' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: STATE_ATTR },
+      { date: { type: 'text', label: '日期' }, at: { type: 'number', label: '位置（年份/数值，配 start/end 按比例摆）' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: STATE_ATTR },
       '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'
     ),
     capacity: { max: 4, unit: '点' },

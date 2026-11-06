@@ -190,11 +190,11 @@ hello.c:3: error: expected ';'
     <vk-label>时间线</vk-label>
     <vk-text size="subhead">编码的故事，<em>五十年</em>。</vk-text>
     <vk-timeline start="1963" end="2010" current="2">
-      <li date="1963" label="ASCII" note="7 位，128 个字符"></li>
-      <li date="1991" label="Unicode" note="给所有语言留位置"></li>
-      <li date="2010" label="Emoji" note="字符表开始装表情"></li>
+      <li date="1963" at="1963" label="ASCII" note="7 位，128 个字符"></li>
+      <li date="1991" at="1991" label="Unicode" note="给所有语言留位置"></li>
+      <li date="2010" at="2010" label="Emoji" note="字符表开始装表情"></li>
     </vk-timeline>
-    <vk-text size="caption" ink="muted">示意：三点等距，不按年份比例。</vk-text>
+    <vk-text size="caption" ink="muted">按年份比例：1963→1991 是 28 年，1991→2010 是 19 年。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -265,7 +265,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
   <vk-stack gap="normal">
     <vk-label>两张图对照</vk-label>
     <vk-text size="subhead">同样的源码，<em>两种优化</em>。</vk-text>
-    <vk-compare labels="../assets/compare/fixtures-before.png,../assets/compare/fixtures-after.png|改前 · 未优化|改后 · -O2" variant="side" mark="a:46,28,60,58"></vk-compare>
+    <vk-compare labels="../assets/compare/fixtures-before.png,../assets/compare/fixtures-after.png|改前 · 未优化|改后 · -O2" variant="side" mark="a:40,41,49,59"></vk-compare>
   </vk-stack>
 </vk-page>
 
@@ -316,6 +316,7 @@ int a = 1;
     <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
   </vk-stack>
 </vk-page>
+
 
 
 

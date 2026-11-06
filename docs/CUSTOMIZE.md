@@ -55,8 +55,8 @@
 | `vk-bits` | `value`、`size`、`index`、`group`、`sign`、`label` | body | `value` 用 `|` 分段（符号|阶码|尾数），`field-labels="符号,阶码,尾数"` 给每段起名，段间自动留 64px |
 | `vk-steps` | `size`、`direction`、`connector`、`current`、`done` | body | 连接件跟 callout 同一把尺子 |
 | `vk-bars` | `size`、`max`、`unit`、`current` | body | 标签列按内容宽 |
-| `vk-timeline` | `size`、`start`、`end`、`current` | body | 轴 8px、点 32px |
-| `vk-compare` | `labels`、`size`、`direction` | body | |
+| `vk-timeline` | `size`、`start`、`end`、`current`；条目 `at` | body | 每个 `<li>` 写 `at="1991"` 就按年份比例摆，否则等距 |
+| `vk-compare` | `labels`、`size`、`direction`、`mark` | body | `mark="a:x1,y1,x2,y2"` 只标改前那格（百分比相对图） |
 | `vk-img` | `ratio`、`surface`、`border` | paper | |
 | `vk-canvas` | `w`、`h`、`surface` | 1680×888 | 子件用 `x/y` 或 `at` |
 | `vk-callout` | `mode` arrow/ring/note/badge、`tone`、`shape`、`from/to/for`、`gap` | arrow | 线走墨色，语义色只给气泡 |

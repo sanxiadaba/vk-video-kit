@@ -1043,6 +1043,45 @@ vk-timeline {
   border-color: var(--vk-focus);
   background: var(--vk-focus);
 }
+/* 按 at 比例摆：轴一条，点按年份落位；首末文字贴边，中间居中。 */
+.vk-tl[data-proportional] {
+  display: block;
+  padding-top: 0;
+  height: 230px;
+}
+.vk-tl[data-proportional]::before {
+  content: '';
+  position: absolute;
+  left: 16px;
+  right: 16px;
+  top: 32px;
+  height: var(--vk-line-w-strong);
+  background: var(--vk-line-strong);
+}
+.vk-tl[data-proportional] .vk-tl-item {
+  position: absolute;
+  top: 0;
+  left: calc(16px + (100% - 32px) * var(--vk-at) / 100);
+  width: 0;
+  padding-top: 0;
+}
+.vk-tl[data-proportional] .vk-tl-item::before {
+  left: 0;
+  top: calc(32px - (var(--vk-inset-lg) + var(--vk-inset-sm)) / 2);
+  transform: translateX(-50%);
+}
+.vk-tl[data-proportional] .vk-tl-item::after { display: none; }
+.vk-tl[data-proportional] .vk-tl-item > span {
+  position: absolute;
+  left: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.vk-tl[data-proportional] .vk-tl-date { top: 56px; }
+.vk-tl[data-proportional] .vk-tl-t { top: 100px; }
+.vk-tl[data-proportional] .vk-tl-note { top: 152px; }
+.vk-tl[data-proportional] .vk-tl-item:first-child > span { transform: none; }
+.vk-tl[data-proportional] .vk-tl-item:last-child > span { transform: translateX(-100%); }
 .vk-tl-item .vk-tl-date {
   font-family: var(--vk-font-mono);
   font-size: var(--vk-cs, var(--vk-fs-body));
