@@ -608,7 +608,11 @@ vk-list[variant='check'] li::before {
   color: var(--vk-tone, var(--vk-ink-3));
   font-weight: var(--vk-w-bold);
 }
-vk-list li[state='current'] { color: var(--vk-focus); }
+vk-list li[state='current'] {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
+}
+vk-list li[state='current']::before { color: var(--vk-focus); }
 
 /* ------------------------------------------------------------------ 文件树 */
 vk-tree .vk-win {

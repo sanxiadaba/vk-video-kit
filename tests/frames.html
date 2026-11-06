@@ -97,10 +97,10 @@ hello.c:3: error: expected ';'
     <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
     <vk-table caption="同一台机器，一次读 64 字节。">
       <table>
-        <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
-        <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td></tr>
-        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td></tr>
-        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
+        <tr><th>层级</th><th>容量</th><th>延迟</th><th>相对</th></tr>
+        <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td><td class="num">×0.003</td></tr>
+        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td><td class="num">×0.01</td></tr>
+        <tr><td>内存</td><td>16 GB</td><td>100ns</td><td class="num">×1</td></tr>
       </table>
     </vk-table>
   </vk-stack>
@@ -112,7 +112,7 @@ hello.c:3: error: expected ';'
     <vk-text size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-text>
     <vk-list variant="ordered" size="body">
       <li>取数组首地址</li>
-      <li>加上下标 × 4</li>
+      <li state="current">加上下标 × 4</li>
       <li>读出那 4 个字节</li>
     </vk-list>
     <vk-text size="caption" ink="muted">每一次都可能是一次内存访问。</vk-text>
@@ -180,7 +180,7 @@ hello.c:3: error: expected ';'
       <li value="5" label="数组"></li>
       <li value="23" label="链表" state="current"></li>
     </vk-bars>
-    <vk-text size="caption" ink="muted">八百万次累加，同一台机器。</vk-text>
+    <vk-text size="caption" ink="muted">同一台机器：5 ms vs 23 ms，约 4.6 倍。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -193,6 +193,7 @@ hello.c:3: error: expected ';'
       <li date="1991" label="Unicode" note="给所有语言留位置"></li>
       <li date="2010" label="Emoji" note="字符表开始装表情"></li>
     </vk-timeline>
+    <vk-text size="caption" ink="muted">示意：三点等距，不按年份比例。</vk-text>
   </vk-stack>
 </vk-page>
 
@@ -314,6 +315,7 @@ int a = 1;
     <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
   </vk-stack>
 </vk-page>
+
 
 
 
