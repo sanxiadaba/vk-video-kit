@@ -1159,12 +1159,25 @@ vk-compare {
 }
 .vk-compare-mark {
   position: absolute;
-  border: var(--vk-line-w-rule) solid var(--vk-err);
-  border-radius: calc(var(--vk-radius-md) / 3);
   pointer-events: none;
+}
+/* 呼吸量用版面 px，不用图像 px：对照图会被缩进格子里，
+   在图像坐标里加 padding，到手机上只剩 1/6。 */
+.vk-compare-mark::before {
+  content: '';
+  position: absolute;
+  inset: calc(var(--vk-gap-close) * -1.875);
+  border: var(--vk-line-w-hair) solid var(--vk-err);
+  border-radius: var(--vk-radius-lg);
 }
 /* 堆叠对照：两张各占一半高度，默认高度会顶出画布。 */
 vk-compare[data-variant='stack'] {
   --vk-compare-h: calc(var(--vk-safe-h) * 0.36);
 }
+
+
+
+
+
+
 

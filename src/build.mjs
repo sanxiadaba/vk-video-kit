@@ -637,7 +637,7 @@ function autoMark(aUrl, bUrl) {
       }
     }
     if (maxX < 0) return '';
-    const pad = 10;
+    const pad = 2;
     const pct = (v, total) => ((Math.max(0, Math.min(total, v)) / total) * 100).toFixed(2);
     return `a:${pct(minX - pad, W)},${pct(minY - pad, H)},${pct(maxX + pad, W)},${pct(maxY + pad, H)}`;
   } catch {
@@ -780,6 +780,8 @@ export async function transformHtml(rawHtml, { file }) {
   }
   return { html: isFull ? body : wrapFragment(body), count: rendered.size, warnings };
 }
+
+
 
 
 
