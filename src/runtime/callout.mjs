@@ -205,12 +205,14 @@ export class VkCallout extends VkElement {
     let tip = { x: p2.x - ux * L.end, y: p2.y - uy * L.end };
     let dir = { x: ux, y: uy };
     let mid = { x: (p1.x + p2.x) / 2, y: (p1.y + p2.y) / 2 };
+    let tangent = { x: ux, y: uy };
 
     if (shape === 'straight') {
       const s = { x: p1.x + ux * L.start, y: p1.y + uy * L.start };
       const end = { x: tip.x - ux * trim, y: tip.y - uy * trim };
       d = `M${at(s)} L${at(end)}`;
       mid = { x: (s.x + tip.x) / 2, y: (s.y + tip.y) / 2 };
+      tangent = { x: tip.x - s.x, y: tip.y - s.y };
     } else if (shape === 'ortho') {
       // 折线：从源件法线方向出去，横竖各走一半，再贴着目标法线方向进。
       const s = { x: p1.x + ux * L.start, y: p1.y + uy * L.start };
@@ -226,6 +228,7 @@ export class VkCallout extends VkElement {
       const dl = Math.hypot(dir.x, dir.y) || 1;
       dir = { x: dir.x / dl, y: dir.y / dl };
       mid = { x: (s.x + tip.x) / 2, y: (s.y + tip.y) / 2 };
+      tangent = { x: tip.x - s.x, y: tip.y - s.y };
     } else {
       // 曲线要「贴着边出、贴着边进」：控制点沿边的法线走，而不是沿弦垂直偏移。
       const normal = (rect, p) => {
@@ -255,6 +258,8 @@ export class VkCallout extends VkElement {
         x: (s.x + 3 * c1.x + 3 * c2.x + tip.x) / 8,
         y: (s.y + 3 * c1.y + 3 * c2.y + tip.y) / 8,
       };
+      // t=0.5 的切线：3/4 · (tip + c2 − c1 − s)
+      tangent = { x: tip.x + c2.x - c1.x - s.x, y: tip.y + c2.y - c1.y - s.y };
     }
 
     const path = document.createElementNS(NS, 'path');
@@ -282,9 +287,22 @@ export class VkCallout extends VkElement {
       const box = document.createElement('div');
       box.className = 'vk-callout-bd vk-callout-label';
       box.textContent = this._text;
-      box.style.left = `${mid.x}px`;
-      box.style.top = `${mid.y}px`;
       this._root.appendChild(box);
+      // 标签整块退到线的一侧：按文字的实际宽高 + 切线法线算距离，
+      // 而不是「垂直上移一个常数」——斜线/曲线上那个常数会被吃掉。
+      const bw = box.offsetWidth || 0;
+      const bh = box.offsetHeight || 0;
+      const tl = Math.hypot(tangent.x, tangent.y) || 1;
+      let nx = -tangent.y / tl;
+      let ny = tangent.x / tl;
+      if (ny > 0) {
+        nx = -nx;
+        ny = -ny;
+      }
+      const support = (Math.abs(nx) * bw + Math.abs(ny) * bh) / 2;
+      const gap = LINK.arrow.labelGap ?? 16;
+      box.style.left = `${mid.x + nx * (support + gap)}px`;
+      box.style.top = `${mid.y + ny * (support + gap)}px`;
     }
   }
 

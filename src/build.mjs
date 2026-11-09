@@ -6,7 +6,8 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { pathToFileURL } from 'node:url';
+import { pathToFileURL, fileURLToPath } from 'node:url';
+import { PNG } from 'pngjs';
 import { parse, parseFragment } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
@@ -167,13 +168,14 @@ async function buildCode(node, file, errors) {
   const file2 = attrOf(node, 'file');
   const range = attrOf(node, 'lines');
   const chrome = attrOf(node, 'chrome') || 'min';
+  const digits = String(start + rows.length - 1).length;
   const head =
     chrome === 'none'
       ? ''
       : `<div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
           file2 ? `<span class="vk-file">${esc(file2)}</span>` : ''
         }${range ? `<span class="vk-range">${esc(range)}</span>` : ''}</div>`;
-  return `<div class="vk-win" data-chrome="${chrome}">${head}<div class="vk-bd">${out.join('')}</div></div>`;
+  return `<div class="vk-win" data-chrome="${chrome}" style="--vk-ln-digits:${digits}">${head}<div class="vk-bd">${out.join('')}</div></div>`;
 }
 
 function cmdHtml(cmd) {
@@ -320,7 +322,9 @@ async function buildDiff(node, file, errors) {
   }
   const add = rows.filter((r) => r.kind === 'add').length;
   const del = rows.filter((r) => r.kind === 'del').length;
-  return `<div class="vk-win"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
+  const maxLn = rows.reduce((m, r) => Math.max(m, r.old || 0, r.new || 0), 0);
+  const digits = String(maxLn).length;
+  return `<div class="vk-win" style="--vk-ln-digits:${digits}"><div class="vk-hd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
     attrOf(node, 'file') ? `<span class="vk-file">${esc(attrOf(node, 'file'))}</span>` : ''
   }</div><div class="vk-bd">${parts.join('')}</div><div class="vk-diff-foot">+${add} / −${del}</div></div>`;
 }
@@ -606,6 +610,41 @@ const LIBS = {
 };
 
 /** 作者写的相对路径 → 绝对 file:// 地址。构建产物不再复制一份 vk/ dist/ assets/。 */
+/** 两张同尺寸 PNG 的像素差包围盒；只框改前那格。 */
+function autoMark(aUrl, bUrl) {
+  const toPath = (s) => (String(s).startsWith('file:') ? fileURLToPath(s) : s);
+  try {
+    const A = PNG.sync.read(fs.readFileSync(toPath(aUrl)));
+    const B = PNG.sync.read(fs.readFileSync(toPath(bUrl)));
+    if (A.width !== B.width || A.height !== B.height) return '';
+    const { width: W, height: H } = A;
+    let minX = W;
+    let minY = H;
+    let maxX = -1;
+    let maxY = -1;
+    for (let y = 0; y < H; y++) {
+      for (let x = 0; x < W; x++) {
+        const i = (y * W + x) * 4;
+        const d =
+          Math.abs(A.data[i] - B.data[i]) +
+          Math.abs(A.data[i + 1] - B.data[i + 1]) +
+          Math.abs(A.data[i + 2] - B.data[i + 2]);
+        if (d <= 36) continue;
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+      }
+    }
+    if (maxX < 0) return '';
+    const pad = 10;
+    const pct = (v, total) => ((Math.max(0, Math.min(total, v)) / total) * 100).toFixed(2);
+    return `a:${pct(minX - pad, W)},${pct(minY - pad, H)},${pct(maxX + pad, W)},${pct(maxY + pad, H)}`;
+  } catch {
+    return '';
+  }
+}
+
 function toAbs(src, file) {
   if (!src || /^[a-z]+:|^\/\//i.test(src)) return src;
   return abs(path.resolve(path.dirname(path.resolve(file)), src.split('#')[0].split('?')[0]));
@@ -701,6 +740,13 @@ export async function transformHtml(rawHtml, { file }) {
         if (a && a.value) {
           const [srcs, ...caps] = a.value.split('|');
           a.value = [srcs.split(',').map((s) => toAbs(s.trim(), file)).join(','), ...caps].join('|');
+          const mark = (node.attrs || []).find((x) => x.name === 'mark');
+          if (mark && mark.value.trim() === 'auto') {
+            const [pa, pb] = a.value.split('|')[0].split(',').map((s) => s.trim());
+            const box = pa && pb ? autoMark(pa, pb) : '';
+            if (box) mark.value = box;
+            else node.attrs.splice(node.attrs.indexOf(mark), 1);
+          }
         }
       }
       const icon = attrOf(node, 'icon');

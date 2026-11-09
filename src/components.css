@@ -316,8 +316,10 @@ vk-asm {
    读者才知道「这里是行号，右边是代码」。 */
 .vk-line .vk-ln {
   flex: 0 0 auto;
-  width: 2.8em;
-  padding: 0 var(--vk-gap-close);
+  box-sizing: border-box;
+  /* 行号槽按最大行号的位数算，不按 em 猜：2 位不空、3 位不挤。 */
+  width: calc((var(--vk-ln-digits, 2) + 0.5) * 1ch + var(--vk-inset-sm) * 2);
+  padding: 0 var(--vk-inset-sm);
   text-align: right;
   /* 手机地板：行号不低于 44px（780 下 17.9px），否则比正文低 20%。 */
   font-size: max(44px, calc(var(--vk-cs, var(--vk-fs-body)) * 0.8));
@@ -425,7 +427,9 @@ vk-code[long='wrap'] .vk-src {
 }
 .vk-diff-row .vk-ln {
   flex: 0 0 auto;
-  width: 2.6em;
+  box-sizing: border-box;
+  width: calc((var(--vk-ln-digits, 2) + 0.5) * 1ch + var(--vk-inset-sm) * 2);
+  padding: 0 var(--vk-inset-sm);
   text-align: right;
   font-size: max(44px, calc(var(--vk-cs, var(--vk-fs-body)) * 0.72));
   line-height: calc(var(--vk-lh-body) / 0.72);

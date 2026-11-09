@@ -469,11 +469,11 @@ export const TAGS = {
   'vk-compare': {
     layer: 'diagram',
     name: '对照',
-    summary: '两张图对照：默认左右并排（每张完整、不裁），也可上下；可标差异框。',
+    summary: '两张图对照：默认左右并排（每张完整、不裁），也可上下；mark="auto" 按像素差自动标出改动。',
     attrs: {
       labels: { type: 'text', group: 'content', label: '两张图与角标："a.png,b.png|改前|改后"' },
       variant: { type: 'enum', values: ['side', 'stack'], default: 'side', group: 'appearance', label: '形态' },
-      mark: { type: 'text', group: 'appearance', label: '差异框：x1,y1,x2,y2（%；多组用 ;；前缀 a:/b: 只标一格）' },
+      mark: { type: 'text', group: 'appearance', label: '差异框：auto 按像素差自动定框；或手写 x1,y1,x2,y2（%）' },
     },
     content: 'none',
   },
