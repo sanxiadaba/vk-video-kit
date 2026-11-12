@@ -180,14 +180,16 @@ vk-flow[data-cols='auto'] {
   grid-template-columns: none;
   justify-content: start;
 }
+/* align 管「同一行里每个子项怎么纵向对齐」——这是作者要的意思。
+   管多行怎么分配是 align-content，作者没有这个词。 */
 vk-flow[align='start'] {
-  align-content: start;
+  align-items: start;
 }
 vk-flow[align='center'] {
-  align-content: center;
+  align-items: center;
 }
 vk-flow[align='end'] {
-  align-content: end;
+  align-items: end;
 }
 vk-flow[align='between'] {
   align-content: space-between;
@@ -467,7 +469,8 @@ vk-text vk-math {
 }
 
 /* ------------------------------------------------------------ 墨与状态
-   三档墨 + 一个焦点色 + 四个语义色。语义色只出现在线、图标、底标上。 */
+   三档墨 + 一个焦点色 + 三个语义色（ok / warn / err）+ 中性的 info。
+   语义色只出现在线、图标、底标上，不写正文。 */
 [ink='secondary'] {
   color: var(--vk-ink-2);
 }
@@ -482,10 +485,6 @@ vk-text vk-math {
 [tone='info'] {
   --vk-tone: var(--vk-info);
   --vk-tint: var(--vk-tint-info);
-}
-[tone='focus'] {
-  --vk-tone: var(--vk-focus);
-  --vk-tint: var(--vk-tint-focus);
 }
 [tone='ok'] {
   --vk-tone: var(--vk-ok);

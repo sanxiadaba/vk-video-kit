@@ -116,6 +116,11 @@ export function auditPage(stage) {
   for (const el of page.querySelectorAll('.vk-lines')) {
     if (el.scrollWidth > el.clientWidth + 4) push('CLIPPED', '代码窗横向被裁：字号已经缩到地板，仍然放不下', '把最长的行改短，或拆成两帧');
   }
+  for (const el of page.querySelectorAll('.vk-lc, .vk-dc, .vk-aops, .vk-arow, .vk-brow')) {
+    if (el.scrollWidth > el.clientWidth + 4 && el.clientWidth > 0) {
+      push('CLIPPED', `这一行被裁掉了 ${el.scrollWidth - el.clientWidth}px：${(el.textContent || '').trim().slice(-32)}`, '改短这一行，或给这一件更多宽度 / 拆帧');
+    }
+  }
 
   /* 4. 墨迹出界 */
   const ink = inkBoxOf(stage);
@@ -148,20 +153,23 @@ export function auditPage(stage) {
 
   /* 焦点 = 空间上独立的「看这里」的处数：当前行 + 圈在同一行上算一处。
      <em> 是正文强调，不是焦点，不能算进来。 */
-  const focusBoxes = [...page.querySelectorAll('[data-state="current"], [state="current"], .is-cur, .vk-co-ring')]
-    .map((el) => el.getBoundingClientRect())
-    .filter((r) => r.width > 1 && r.height > 1)
-    .map((r) => ({ l: r.left - 24, t: r.top - 24, r: r.right + 24, b: r.bottom + 24 }));
-  const parent = focusBoxes.map((_, i) => i);
-  const find = (i) => (parent[i] === i ? i : (parent[i] = find(parent[i])));
-  for (let i = 0; i < focusBoxes.length; i++) {
-    for (let j = i + 1; j < focusBoxes.length; j++) {
-      const a = focusBoxes[i];
-      const b = focusBoxes[j];
-      if (a.l < b.r && b.l < a.r && a.t < b.b && b.t < a.b) parent[find(i)] = find(j);
-    }
+  /* 一个件里多处高亮（字节的十六进制列 + ASCII 列）算一处；
+     圈选如果落在已经是 current 的件上，也算同一处。 */
+  const hostBoxes = [];
+  const hostSeen = new Set();
+  for (const el of page.querySelectorAll('[data-state="current"], [state="current"], .is-cur')) {
+    const host = el.closest('vk-code, vk-cells, vk-bytes, vk-table, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-seq, vk-tree, .vk-gnode') || el;
+    if (hostSeen.has(host)) continue;
+    hostSeen.add(host);
+    hostBoxes.push(host.getBoundingClientRect());
   }
-  metrics.focus = new Set(focusBoxes.map((_, i) => find(i))).size;
+  let focus = hostBoxes.length;
+  for (const ring of page.querySelectorAll('.vk-co-ring')) {
+    const r = ring.getBoundingClientRect();
+    const onCurrent = hostBoxes.some((b) => b.left < r.right + 24 && r.left < b.right + 24 && b.top < r.bottom + 24 && r.top < b.bottom + 24);
+    if (!onCurrent) focus++;
+  }
+  metrics.focus = focus;
 
   /* 手机上小于 16px 的字：现在只报数，不拦。 */
   const small = [];
@@ -189,12 +197,14 @@ export function auditPage(stage) {
   /* 只给建议，不改退出码。 */
   const advice = [];
   if (fill > 0 && fill < 45) advice.push(`正文只占 ${fill}%：放大这一件，或把下一帧的内容提前`);
-  if (fill > 100) advice.push(`正文超出画布 ${fill - 100}%：拆帧`);
+  if (fill > 100) advice.push(`正文区 ${fill}%：这一帧已经塞满，拆帧或减一行`);
   if (metrics.focus > 1) advice.push(`焦点 ${metrics.focus} 处：一帧只留一处 current`);
   if (small.length) advice.push(`${small.length} 处字在手机上 < 16px（${small.slice(0, 3).map((s) => `"${s.text}" ${s.mobile}px`).join('、')}）`);
   if (overlaps.length) advice.push(`${overlaps.length} 处组件重叠`);
   if (contrast.length) advice.push(`${contrast.length} 处对比度 < 4.5`);
   if (codeLines.some((n) => n > 6)) advice.push(`代码 ${Math.max(...codeLines)} 行 > 6：拆帧，或只留关键行`);
+  const bits = page.querySelectorAll('.vk-bit').length;
+  if (bits > 16) advice.push(`这一帧有 ${bits} 位 > 16：拆帧，或只讲其中一段`);
 
   /* 元素清单（frame.json）：只列 vk-* 与标题行，坐标相对页面。 */
   for (const el of page.querySelectorAll('vk-page *')) {

@@ -111,7 +111,9 @@ vk-code[long='wrap'] .vk-lc {
 /* 终端 */
 .vk-term .vk-line {
   display: block;
-  padding: 0 16px;
+  /* 折行时第二行缩进 2ch：一眼看出「这是上一行的续行」。 */
+  padding: 0 16px 0 calc(16px + 2ch);
+  text-indent: -2ch;
 }
 .vk-prompt {
   color: var(--vk-ink-3);
@@ -331,6 +333,15 @@ vk-list[variant='ordered'] > li::before {
   font-variant-numeric: tabular-nums;
   align-self: start;
 }
+vk-list > li[tone='ok']::before {
+  background: var(--vk-ok);
+}
+vk-list > li[tone='warn']::before {
+  background: var(--vk-warn);
+}
+vk-list > li[tone='err']::before {
+  background: var(--vk-err);
+}
 vk-list > li[state='current'] {
   color: var(--vk-focus);
   font-weight: var(--vk-w-medium);
@@ -433,9 +444,13 @@ vk-math .katex {
 }
 vk-math .katex-display {
   margin: 0;
-  text-align: left;
+  text-align: center;
 }
 vk-math .katex-display > .katex {
+  text-align: center;
+}
+vk-math[align='left'] .katex-display,
+vk-math[align='left'] .katex-display > .katex {
   text-align: left;
 }
 
@@ -457,7 +472,7 @@ vk-cells {
   display: grid;
   justify-items: center;
   gap: 6px;
-  padding: 16px 12px;
+  padding: 20px 14px;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
   border-radius: var(--vk-radius-md);
   background: var(--vk-paper);
@@ -467,6 +482,15 @@ vk-cells {
 vk-page[surface='dark'] .vk-cell {
   background: var(--vk-soft);
   color-scheme: dark;
+}
+.vk-cell[data-tone='ok'] {
+  border-color: var(--vk-ok);
+}
+.vk-cell[data-tone='warn'] {
+  border-color: var(--vk-warn);
+}
+.vk-cell[data-tone='err'] {
+  border-color: var(--vk-err);
 }
 .vk-cell[data-state='current'] {
   border-color: var(--vk-focus);
@@ -585,13 +609,13 @@ vk-bits {
 }
 .vk-field-bits {
   display: flex;
-  gap: 4px;
+  gap: 6px;
 }
 .vk-bit {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 4px 6px;
+  padding: 8px 10px;
   border-radius: var(--vk-radius-md);
   background: var(--vk-soft);
   font-family: var(--vk-font-mono);
@@ -607,6 +631,13 @@ vk-bits {
   font-style: normal;
   font-weight: var(--vk-w-bold);
   line-height: 1;
+}
+.vk-bit.is-cur {
+  background: var(--vk-tint-focus);
+  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+}
+.vk-bit.is-cur .vk-bit-v {
+  color: var(--vk-focus);
 }
 .vk-bit.is-sign {
   background: var(--vk-tint-focus);
@@ -642,8 +673,8 @@ vk-steps {
 .vk-step-n {
   display: grid;
   place-items: center;
-  width: 72px;
-  height: 72px;
+  width: 88px;
+  height: 88px;
   border-radius: 50%;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
   background: var(--vk-paper);
@@ -686,7 +717,7 @@ vk-steps {
   position: absolute;
   left: calc(50% / var(--vk-n, 4));
   right: calc(50% / var(--vk-n, 4));
-  top: 36px;
+  top: 44px;
   height: var(--vk-line-w-rule);
   background: var(--vk-line-color);
 }
@@ -700,10 +731,10 @@ vk-steps {
   align-items: center;
 }
 .vk-steps[data-dir='vertical']:not([data-connector='none'])::before {
-  left: 36px;
+  left: 44px;
   right: auto;
-  top: 36px;
-  bottom: 36px;
+  top: 44px;
+  bottom: 44px;
   width: var(--vk-line-w-rule);
   height: auto;
 }
@@ -747,7 +778,7 @@ vk-bars {
   white-space: nowrap;
 }
 .vk-bar-t {
-  height: 36px;
+  height: 44px;
   border-radius: var(--vk-radius-pill);
   background: color-mix(in srgb, var(--vk-ink-1) 8%, transparent);
   overflow: hidden;
@@ -855,6 +886,15 @@ vk-timeline {
   color: var(--vk-ink-3);
   line-height: 1.3;
 }
+.vk-tl-i[data-tone='ok'] .vk-tl-dot {
+  background: var(--vk-ok);
+}
+.vk-tl-i[data-tone='warn'] .vk-tl-dot {
+  background: var(--vk-warn);
+}
+.vk-tl-i[data-tone='err'] .vk-tl-dot {
+  background: var(--vk-err);
+}
 .vk-tl-i[data-state='current'] .vk-tl-dot {
   background: var(--vk-focus);
 }
@@ -883,7 +923,7 @@ vk-graph {
   display: grid;
   justify-items: center;
   gap: 4px;
-  padding: 12px 24px;
+  padding: 16px 28px;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   background: var(--vk-paper);
@@ -989,13 +1029,13 @@ vk-seq {
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
   position: relative;
-  height: 64px;
+  height: 112px;
 }
 .vk-seq-arrow {
   position: absolute;
   left: 25%;
   right: 25%;
-  top: 50%;
+  top: 64px;
   height: var(--vk-line-w-rule);
   margin-top: calc(var(--vk-line-w-rule) / -2);
   background: var(--vk-seq-c);
@@ -1019,7 +1059,9 @@ vk-seq {
 .vk-seq-l {
   position: absolute;
   left: 50%;
-  top: -6px;
+  top: 0;
+  font-size: 1em;
+  line-height: 1.05;
   transform: translateX(-50%);
   padding: 0 16px;
   background: var(--vk-paper);
@@ -1029,7 +1071,8 @@ vk-seq {
 .vk-seq-note {
   position: absolute;
   left: 50%;
-  bottom: -8px;
+  top: 70px;
+  line-height: 1;
   transform: translateX(-50%);
   padding: 0 12px;
   background: var(--vk-paper);

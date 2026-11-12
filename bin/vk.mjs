@@ -324,6 +324,14 @@ if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
         console.log(`  ${name.padEnd(12)} ${values}${def}  ${spec.label || ''}${when}`);
       }
     }
+    if (t.children?.attrs && Object.keys(t.children.attrs).length) {
+      console.log('\n子项 (<li>)');
+      for (const [name, spec] of Object.entries(t.children.attrs)) {
+        const values = spec.values ? spec.values.join(' | ') : spec.type;
+        const def = spec.default !== undefined ? `  默认 ${spec.default}` : '';
+        console.log(`  ${name.padEnd(12)} ${values}${def}  ${spec.label || ''}`);
+      }
+    }
     if (t.example) console.log(`\n示例：\n${t.example}`);
   }
 } else if (cmd === 'brief') {

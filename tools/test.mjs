@@ -91,6 +91,13 @@ for (const [file, code] of Object.entries(CASES)) {
 const badCli = spawnSync(process.execPath, ['bin/vk.mjs', 'bogus'], { cwd: ROOT, encoding: 'utf8' });
 ok(badCli.status === 2, `未知命令 exit 2（实际 ${badCli.status}）`);
 
+/* 内联字节：没有 src 也要能画（草稿阶段不该被文件系统卡住）。 */
+const inlineBytes = await transformHtml(
+  '<vk-page><vk-bytes><script type="text/plain" data-vk-source>68 65 6c 6c 6f</script></vk-bytes></vk-page>',
+  { file: path.join(ROOT, 'tests', 'inline.html') }
+);
+ok(inlineBytes.html.includes('68') && inlineBytes.html.includes('65'), 'vk-bytes 可以内联十六进制');
+
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
 let report = null;

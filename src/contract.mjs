@@ -219,8 +219,7 @@ function checkChildModel(file, node, tag, errors) {
       for (const cell of flatten(tr).filter((n) => n.tagName === 'td')) {
         for (const { name, value } of cell.attrs || []) {
           if (name === 'state' && value !== 'current') errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_ENUM, message: `<td> 的 state="${value}" 不在词表里`, fix: '可用：current' });
-          else if (name === 'tone' && !['ok', 'warn', 'err'].includes(value)) errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_ENUM, message: `<td> 的 tone="${value}" 不在词表里`, fix: '可用：ok / warn / err' });
-          else if (!['tone', 'state', 'colspan', 'rowspan'].includes(name)) errors.push({ file, line: lineOf(cell), tag, code: CODES.UNKNOWN_ATTR, message: `<td> 不认识属性 ${name}="${value}"`, fix: `可用：tone / state` });
+          else if (!['state', 'colspan', 'rowspan'].includes(name)) errors.push({ file, line: lineOf(cell), tag, code: CODES.UNKNOWN_ATTR, message: `<td> 不认识属性 ${name}="${value}"`, fix: `可用：state / colspan / rowspan` });
         }
       }
     }

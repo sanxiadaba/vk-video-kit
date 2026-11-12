@@ -163,13 +163,16 @@ function readSource(node, file, assets, diag) {
 
 /* ---------------------------------------------------------------- 窗口 */
 function frame({ chrome, title, surface, body, range, digits }) {
+  /* 标题栏：有 title 就出（无三点），写 chrome="dots" 才加三点。
+     不再让「写了 title 但没写 chrome」静默丢掉标题。 */
+  const mode = chrome === 'dots' ? 'dots' : title ? 'title' : 'none';
   const hd =
-    chrome === 'dots'
-      ? `<div class="vk-fhd"><span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>${
+    mode !== 'none'
+      ? `<div class="vk-fhd">${mode === 'dots' ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${
           title ? `<span class="vk-ftitle">${esc(title)}</span>` : ''
         }${range ? `<span class="vk-frange">${esc(range)}</span>` : ''}</div>`
       : '';
-  return `<div class="vk-frame" data-chrome="${chrome}" data-surface="${surface || 'auto'}"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
+  return `<div class="vk-frame" data-chrome="${mode}" data-surface="${surface || 'auto'}"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
 }
 
 const fmtRange = (a, b) => (a === b ? String(a) : `${a}–${b}`);
@@ -576,6 +579,7 @@ function buildBits(node) {
   const index = attrOf(node, 'index') || 'down';
   const group = Number(attrOf(node, 'group') || 4);
   const sign = hasAttr(node, 'sign');
+  const cur = attrOf(node, 'current') ? lineSet(attrOf(node, 'current')) : null;
   const all = segments.join('').replace(/\s+/g, '');
   const fieldHtml = segments.map((seg, fi) => {
     const bits = [...seg.replace(/\s+/g, '')];
@@ -586,7 +590,8 @@ function buildBits(node) {
         const label = index === 'none' ? '' : index === 'sparse' ? (weight % 8 === 0 ? String(weight) : '') : index === 'up' ? String(globalIdx) : String(weight);
         const isSign = sign && globalIdx === 0;
         const gap = group > 1 && globalIdx > 0 && globalIdx % group === 0 ? ' data-group' : '';
-        return `<i class="vk-bit${isSign ? ' is-sign' : ''}" data-vk-bit="${globalIdx + 1}"${gap}><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
+        const isCur = cur?.has(globalIdx + 1) ? ' is-cur' : '';
+        return `<i class="vk-bit${isSign ? ' is-sign' : ''}${isCur}" data-vk-bit="${globalIdx + 1}"${gap}><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
       })
       .join('');
     return `<div class="vk-field" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
@@ -633,6 +638,9 @@ function buildHead(node) {
 }
 
 function buildText(node, file, ctx) {
+  /* 行宽：作者写的是「一行几个字」，中文 1 字 ≈ 1em，直接落成 max-width。 */
+  const measure = attrOf(node, 'measure');
+  if (measure && /^\d+$/.test(measure)) setStyle(node, { 'max-width': `${measure}em` });
   const icon = attrOf(node, 'icon');
   if (icon) {
     const svg = ctx.icon(icon);

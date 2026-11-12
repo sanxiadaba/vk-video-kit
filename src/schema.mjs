@@ -240,6 +240,7 @@ export const TAGS = {
     attrs: {
       src: { type: 'text', group: 'content', label: '源文件' },
       inline: { type: 'bool', group: 'appearance', label: '行内（跟在句子里）' },
+      align: { type: 'enum', values: ['left', 'center'], default: 'center', group: 'layout', label: '对齐' },
       size: sizeData('body'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
@@ -297,6 +298,7 @@ export const TAGS = {
     summary: '一行二进制位：索引、分组、符号位。用 | 分段（符号 | 阶码 | 尾数），field-labels 给每段起名。',
     attrs: {
       value: { type: 'text', group: 'content', label: '位串，可含空格；用 | 分段' },
+      current: { type: 'lines', group: 'state', label: '当前位段，如 "4-7"（1 起，从左数）' },
       label: { type: 'text', group: 'appearance', label: '左边一行说明' },
       'field-labels': { type: 'text', group: 'appearance', label: '各段名，逗号分隔（个数要与 | 的段数一致）' },
       index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号：down 按位权；up 从左数；sparse 只标 8 的倍数' },
@@ -307,7 +309,7 @@ export const TAGS = {
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     content: 'text',
-    capacity: { max: 16, unit: '位（32 位请用 index="sparse"）' },
+    capacity: { max: 16, unit: '位' },
   },
 
   /* ---------------------------------------------------------------- 图 */
@@ -378,7 +380,7 @@ export const TAGS = {
     summary: '关系图：节点写成 <li id label>，边可以写在节点上（after="父id"），也可以写成独立子项（from/to，支持环、双向、边标）。row 链表/队列，tree 递归树/堆，layered DAG（git），mesh 环图（BFS/死锁/事件循环）。',
     attrs: {
       layout: { type: 'enum', values: ['row', 'tree', 'layered', 'mesh'], default: 'row', group: 'layout', label: '布局' },
-      direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向（row / layered）' },
+      direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向（只对 row）' },
       edge: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连线' },
       gap: gap('normal'),
       size: sizeData('body'),
@@ -427,7 +429,7 @@ export const TAGS = {
       '<li label="SYN" note="seq=x">（向右）；<li dir="left" label="SYN+ACK">（向左）。不写 label 就用标签里的文字。'
     ),
     example: '<vk-seq a="客户端" b="服务端"><li label="SYN"></li><li dir="left" label="SYN+ACK"></li><li label="ACK"></li></vk-seq>',
-    capacity: { max: 6, unit: '条' },
+    capacity: { max: 4, unit: '条' },
   },
 
   /* ---------------------------------------------------------------- 关系 */

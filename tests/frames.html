@@ -104,7 +104,7 @@ hello.c:3: error: expected ';'
 
 <vk-page id="math">
   <vk-head kicker="复杂度" counter="11" size="subhead">每层做 O(n) 的活，<em>一共 log n 层</em>。</vk-head>
-  <vk-math size="subhead">
+  <vk-math size="subhead" align="center">
     <script type="text/plain" data-vk-source>
 T(n) = 2T\left(\frac{n}{2}\right) + O(n)
     </script>
@@ -136,8 +136,8 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="steps">
-  <vk-head kicker="流程" counter="15" size="subhead">从源码到程序，<em>四步</em>。</vk-head>
-  <vk-steps current="2">
+  <vk-head kicker="流程" counter="15">从源码到程序，<em>四步</em>。</vk-head>
+  <vk-steps current="2" size="subhead">
     <li>预处理</li>
     <li>编译</li>
     <li>汇编</li>
@@ -147,8 +147,8 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="bars">
-  <vk-head kicker="量级" counter="16" size="subhead">同样的活，差了<em>四倍</em>。</vk-head>
-  <vk-bars max="30" unit="ms">
+  <vk-head kicker="量级" counter="16">同样的活，差了<em>四倍</em>。</vk-head>
+  <vk-bars max="30" unit="ms" size="subhead">
     <li value="5" label="数组"></li>
     <li value="23" label="链表" state="current"></li>
   </vk-bars>
@@ -191,8 +191,8 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 <vk-page id="surface-img">
   <vk-head kicker="截图" counter="20" size="subhead">截图放在<em>实底上</em>，字才看得清。</vk-head>
   <vk-flow cols="7 5" gap="wide" align="center">
-    <vk-surface surface="paper" border="hair" pad="normal" radius="md">
-      <vk-img src="../assets/compare/fixtures-after.png" ratio="16 / 9" alt="编译器输出截图"></vk-img>
+    <vk-surface surface="paper" border="hair">
+      <vk-img src="../assets/compare/fixtures-after.png" alt="编译器输出截图"></vk-img>
     </vk-surface>
     <vk-flow gap="close">
       <vk-text size="caption" ink="muted">看到的东西</vk-text>
@@ -206,7 +206,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 
 <vk-page id="seq">
   <vk-head kicker="协议" counter="21" size="subhead">先互相确认，<em>三次</em>。</vk-head>
-  <vk-seq a="客户端" b="服务端" current="1" gap="normal">
+  <vk-seq a="客户端" b="服务端" current="1" gap="close">
     <li label="SYN" note="seq = x"></li>
     <li dir="left" label="SYN + ACK" note="seq = y, ack = x + 1"></li>
     <li label="ACK" note="ack = y + 1"></li>
@@ -230,9 +230,9 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="dark" surface="dark">
-  <vk-head kicker="深色" counter="23" size="subhead">深色是<em>选项</em>，不是风格。</vk-head>
+  <vk-head kicker="深色" counter="23">深色是<em>选项</em>，不是风格。</vk-head>
   <vk-flow cols="7 5" gap="wide" align="center">
-    <vk-code lang="c" title="dark.c" chrome="dots">
+    <vk-code lang="c" title="dark.c" chrome="dots" size="subhead">
       <script type="text/plain" data-vk-source>
 int a = 1;
 int *p = &a;
