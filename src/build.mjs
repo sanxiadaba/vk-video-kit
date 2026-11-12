@@ -17,9 +17,10 @@ import { parse, parseFragment } from 'parse5';
 import { createHighlighter } from 'shiki';
 import katex from 'katex';
 import { validate, parseLines, lineSet } from './contract.mjs';
-import { dedent, expandLeadingTabs, stripAnsi, LANG_ALIAS, SUPPORTED_LANGS, inferLang, langKey } from './shared/code.mjs';
+import { normalizeTree, setStyle, spacePx } from './normalize.mjs';
+import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, inferLang, langKey } from './shared/code.mjs';
 import { parseAsm, splitInsn } from './shared/asm.mjs';
-import { GAP, SYNTAX } from './vocab.mjs';
+import { GAP, SYNTAX, FONT } from './vocab.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const label = (f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join('/') || String(f);
@@ -37,13 +38,8 @@ const flatten = (node, out = []) => {
 const kids = (node) => (node.childNodes || []).filter((c) => c.tagName);
 const textOf = (node) => (node.childNodes || []).map((c) => (c.nodeName === '#text' ? c.value : c.tagName === 'script' ? '' : textOf(c))).join('');
 const raw = (html) => ({ nodeName: '#raw', value: html, childNodes: [], attrs: [] });
-const px = (value, fallback = 0) => {
-  const t = String(value ?? '').trim();
-  if (t === '') return fallback;
-  if (t in GAP) return GAP[t];
-  const n = Number(t.replace(/px$/, ''));
-  return Number.isFinite(n) ? n : fallback;
-};
+/* 间距只有一个解析口：tag 名 / 像素都走 normalize.mjs。 */
+const px = (value, fallback = 0) => spacePx(value, fallback);
 
 /* ---------------------------------------------------------------- 序列化 */
 const VOID = new Set(['img', 'br', 'hr', 'meta', 'link', 'input', 'source', 'area', 'base', 'col', 'embed', 'param', 'track', 'wbr']);
@@ -427,12 +423,14 @@ async function buildTree(node, file, ctx) {
   let skipped = 0;
   let truncated = false;
   const current = attrOf(node, 'current');
+  /* 序号是「这一棵树里第几行」，不是整页第几个：两张树不能互相串锚点。 */
+  let itemNo = 0;
 
   const nodeHtml = (name, isDir, p, level, children = '') => {
     const kind = ICON_KIND(name, isDir);
     const cur = current && (p === current || current === name) ? ' is-cur' : '';
     return (
-      `<div class="vk-node${cur}" data-vk-item="${ctx.item++}" data-depth="${level}" data-kind="${kind}" data-path="${esc(p)}" style="--vk-depth:${level}">` +
+      `<div class="vk-node${cur}" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}" data-path="${esc(p)}" style="--vk-depth:${level}">` +
       `<span class="vk-nrow">${icons[kind] || ''}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
       (children ? `<div class="vk-kids">${children}</div>` : '') +
       `</div>`
@@ -510,19 +508,47 @@ function buildMath(node, file, ctx) {
   }
 }
 
+/** 内联十六进制：`68 65 6c 6c 6f` / `0x68,0x65` / `68656c6c6f` 都认。 */
+function inlineBytes(node) {
+  const script = (node.childNodes || []).find((c) => c.tagName === 'script');
+  const text = script ? (script.childNodes || []).map((c) => c.value || '').join('') : textOf(node);
+  const tokens = String(text).replace(/0x/gi, ' ').split(/[\s,]+/).filter(Boolean);
+  const bytes = [];
+  for (const token of tokens) {
+    if (/^[0-9a-f]{2}$/i.test(token)) bytes.push(parseInt(token, 16));
+    else if (/^[0-9a-f]{1}$/i.test(token)) bytes.push(parseInt(token, 16));
+    else return { error: token };
+  }
+  return bytes.length ? { bytes } : null;
+}
+
 function buildBytes(node, file, ctx) {
   const src = attrOf(node, 'src');
-  if (!src) {
-    ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_MISSING', message: `<vk-bytes> 缺 src`, fix: 'src="文件.bin"' });
+  const inline = src ? null : inlineBytes(node);
+  if (src && inlineBytes(node)) {
+    ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_CONFLICT', message: `<vk-bytes> 同时写了 src 和内联字节：只能二选一`, fix: '删掉 src，或删掉内联内容' });
     return '';
   }
-  const abs = path.resolve(path.dirname(path.resolve(file)), src);
-  if (!fs.existsSync(abs)) {
-    ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_MISSING', message: `<vk-bytes> 的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
+  if (!src && !inline) {
+    ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_MISSING', message: `<vk-bytes> 没有内容`, fix: '写 src="文件.bin"，或内联十六进制如 68 65 6c 6c 6f' });
     return '';
   }
-  ctx.assets.add(abs);
-  const buf = fs.readFileSync(abs);
+  if (inline?.error) {
+    ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_MISSING', message: `<vk-bytes> 的内联字节里有 "${inline.error}"，不是两位十六进制`, fix: '每字节写两位十六进制，如 68 65 6c' });
+    return '';
+  }
+  let buf;
+  if (src) {
+    const abs = path.resolve(path.dirname(path.resolve(file)), src);
+    if (!fs.existsSync(abs)) {
+      ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'SRC_MISSING', message: `<vk-bytes> 的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
+      return '';
+    }
+    ctx.assets.add(abs);
+    buf = fs.readFileSync(abs);
+  } else {
+    buf = Buffer.from(inline.bytes);
+  }
   const start = Number(attrOf(node, 'offset') || 0) || 0;
   const len = Math.max(0, Math.min(Number(attrOf(node, 'length') || 32), buf.length - start));
   const cols = Number(attrOf(node, 'cols') || 8);
@@ -537,7 +563,10 @@ function buildBytes(node, file, ctx) {
     rows.push(`<div class="vk-brow"><span class="vk-baddr">0x${(base + start + i).toString(16).padStart(width, '0')}</span><span class="vk-bhex">${hex}</span><span class="vk-bascii">${ascii}</span></div>`);
   }
   const head = hasAttr(node, 'header') ? `<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>` : '';
-  return frame({ chrome: attrOf(node, 'chrome') || 'none', title: attrOf(node, 'title'), surface: attrOf(node, 'surface') || 'auto', body: `<div class="vk-bytes" style="--vk-cols:${cols}">${head}${rows.join('')}</div>` });
+  const fontPx = FONT[attrOf(node, 'size') || 'body'] || FONT.body;
+  const bcol = Math.round(5.4 * fontPx);
+  const bhexw = Math.round(cols * 3 * 0.6 * fontPx);
+  return frame({ chrome: attrOf(node, 'chrome') || 'none', title: attrOf(node, 'title'), surface: attrOf(node, 'surface') || 'auto', body: `<div class="vk-bytes" style="--vk-cols:${cols};--vk-bcol:${bcol}px;--vk-bhexw:${bhexw}px">${head}${rows.join('')}</div>` });
 }
 
 function buildBits(node) {
@@ -557,7 +586,7 @@ function buildBits(node) {
         const label = index === 'none' ? '' : index === 'sparse' ? (weight % 8 === 0 ? String(weight) : '') : index === 'up' ? String(globalIdx) : String(weight);
         const isSign = sign && globalIdx === 0;
         const gap = group > 1 && globalIdx > 0 && globalIdx % group === 0 ? ' data-group' : '';
-        return `<i class="vk-bit${isSign ? ' is-sign' : ''}" data-vk-item="${globalIdx + 1}"${gap}><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
+        return `<i class="vk-bit${isSign ? ' is-sign' : ''}" data-vk-bit="${globalIdx + 1}"${gap}><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
       })
       .join('');
     return `<div class="vk-field" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
@@ -603,11 +632,11 @@ function buildHead(node) {
   node.childNodes = [raw(`${kick}<div class="vk-title">${title}</div>${ledeHtml}`)];
 }
 
-function buildText(node, ctx) {
+function buildText(node, file, ctx) {
   const icon = attrOf(node, 'icon');
   if (icon) {
     const svg = ctx.icon(icon);
-    if (!svg) ctx.diag.push({ file: '', line: lineOf(node), tag: node.tagName, code: 'ICON', message: `<vk-text> 的 icon="${icon}" 找不到`, fix: '写 Lucide 的 kebab 名；用 vk icons <词> 搜' });
+    if (!svg) ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'ICON', message: `<vk-text> 的 icon="${icon}" 找不到`, fix: '写 Lucide 的 kebab 名；用 vk icons <词> 搜' });
     else node.childNodes = [raw(svg), ...(node.childNodes || [])];
   }
   const counter = attrOf(node, 'counter');
@@ -672,17 +701,47 @@ function buildTimeline(node) {
 
 function buildGraph(node) {
   const items = kids(node).filter((c) => c.tagName === 'li');
-  const nodes = items
+  const isEdge = (li) => hasAttr(li, 'from') || hasAttr(li, 'to');
+  const nodes = items.filter((li) => !isEdge(li));
+  const edges = items.filter(isEdge);
+  const nodeHtml = nodes
     .map((li, i) => {
       const id = attrOf(li, 'id') || `n${i + 1}`;
       const label = attrOf(li, 'label') ?? '';
       const note = attrOf(li, 'note');
       const state = attrOf(li, 'state') || '';
       const after = (attrOf(li, 'after') || '').split(/\s+/).filter(Boolean).join(' ');
-      return `<div class="vk-gnode" data-vk-item="${i + 1}" data-id="${esc(id)}"${attrOf(li, 'id') ? ` id="${esc(attrOf(li, 'id'))}"` : ''} data-after="${esc(after)}" data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}"><span class="vk-gn-l">${esc(label)}</span>${note ? `<span class="vk-gn-n">${esc(note)}</span>` : ''}</div>`;
+      const lane = attrOf(li, 'lane');
+      return `<div class="vk-gnode" data-vk-item="${i + 1}" data-id="${esc(id)}"${attrOf(li, 'id') ? ` id="${esc(attrOf(li, 'id'))}"` : ''} data-after="${esc(after)}"${lane != null ? ` data-lane="${esc(lane)}"` : ''} data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}"><span class="vk-gn-l">${esc(label)}</span>${note ? `<span class="vk-gn-n">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
-  return `<div class="vk-graph" data-layout="${attrOf(node, 'layout') || 'row'}" data-dir="${attrOf(node, 'direction') || 'horizontal'}" data-edge="${attrOf(node, 'edge') || 'arrow'}"><div class="vk-gstage">${nodes}</div><svg class="vk-gedges" aria-hidden="true"></svg></div>`;
+  const edgeHtml = edges
+    .map((li) => `<i class="vk-gedge" data-from="${esc(attrOf(li, 'from') || '')}" data-to="${esc(attrOf(li, 'to') || '')}" data-label="${esc(attrOf(li, 'label') || '')}"></i>`)
+    .join('');
+  return `<div class="vk-graph" data-layout="${attrOf(node, 'layout') || 'row'}" data-dir="${attrOf(node, 'direction') || 'horizontal'}" data-edge="${attrOf(node, 'edge') || 'arrow'}"><div class="vk-gstage">${nodeHtml}${edgeHtml}</div><svg class="vk-gedges" aria-hidden="true"></svg></div>`;
+}
+
+function buildSeq(node) {
+  const cur = Number(attrOf(node, 'current') || 0);
+  const items = kids(node).filter((c) => c.tagName === 'li');
+  const rows = items
+    .map((li, i) => {
+      const state = attrOf(li, 'state') || (cur === i + 1 ? 'current' : '');
+      const dir = attrOf(li, 'dir') || 'right';
+      const label = attrOf(li, 'label') ?? textOf(li);
+      const note = attrOf(li, 'note');
+      return (
+        `<div class="vk-seq-row" data-vk-item="${i + 1}" data-dir="${esc(dir)}" data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}">` +
+        `<span class="vk-seq-l">${esc(String(label).trim())}</span>` +
+        `<span class="vk-seq-arrow" aria-hidden="true"></span>` +
+        (note ? `<span class="vk-seq-note">${esc(note)}</span>` : '') +
+        `</div>`
+      );
+    })
+    .join('');
+  const a = attrOf(node, 'a') || '';
+  const b = attrOf(node, 'b') || '';
+  return `<div class="vk-seq"><div class="vk-seq-head"><span>${esc(a)}</span><span>${esc(b)}</span></div><div class="vk-seq-body">${rows}</div></div>`;
 }
 
 /* ---------------------------------------------------------------- 布局 */
@@ -690,34 +749,25 @@ function buildFlow(node) {
   const cols = attrOf(node, 'cols') || '1';
   const gap = px(attrOf(node, 'gap') ?? 'normal', GAP.normal);
   const pad = px(attrOf(node, 'pad') ?? 'none', 0);
-  const style = [`--vk-gap:${gap}px`];
-  if (cols === 'auto') style.push('--vk-flow:auto');
-  else if (/^\d+$/.test(cols)) style.push(`--vk-cols:${cols}`);
-  else style.push(`--vk-cols-template:${cols.split(/\s+/).map((n) => `${n}fr`).join(' ')}`);
-  if (pad) style.push(`--vk-pad:${pad}px`);
-  node.attrs = [...(node.attrs || []).filter((a) => !['cols', 'gap', 'pad'].includes(a.name)), { name: 'style', value: style.join(';') }];
+  /* 每一层 flow 都把列模板写死：否则子 flow 会继承父级模板，
+     内层 cols="1" 实际排成父级的两栏（surface-img 的列宽就是这么错的）。 */
+  let template;
+  if (cols === 'auto') template = 'none';
+  else if (/^\d+$/.test(cols)) template = `repeat(${cols}, minmax(0, 1fr))`;
+  else template = cols.split(/\s+/).map((n) => (/^\d+$/.test(n) ? `${n}fr` : n)).join(' ');
+
+  setStyle(node, {
+    '--vk-gap': `${gap}px`,
+    '--vk-pad': `${pad}px`,
+    '--vk-cols-template': template,
+  });
   if (cols === 'auto') node.attrs.push({ name: 'data-cols', value: 'auto' });
   // 子项跨栏：写在子项自己的自定义属性上，CSS 只有一条规则。
   for (const child of kids(node)) {
     if (!hasAttr(child, 'span')) continue;
     const n = Number(attrOf(child, 'span'));
     if (!Number.isFinite(n) || n <= 1) continue;
-    child.attrs.push({ name: 'style', value: `--vk-span:${n}` });
-  }
-}
-
-function buildCanvas(node) {
-  if (hasAttr(node, 'w')) node.attrs.push({ name: 'style', value: `width:${attrOf(node, 'w')}px` });
-  if (hasAttr(node, 'h')) node.attrs.push({ name: 'style', value: `height:${attrOf(node, 'h')}px` });
-  for (const child of kids(node)) {
-    const style = [];
-    style.push('position:absolute');
-    if (hasAttr(child, 'x')) style.push(`left:${attrOf(child, 'x')}px`);
-    if (hasAttr(child, 'y')) style.push(`top:${attrOf(child, 'y')}px`);
-    if (hasAttr(child, 'w')) style.push(`width:${attrOf(child, 'w')}px`);
-    if (hasAttr(child, 'h')) style.push(`height:${attrOf(child, 'h')}px`);
-    if (hasAttr(child, 'z')) style.push(`z-index:${attrOf(child, 'z')}`);
-    child.attrs = [...(child.attrs || []).filter((a) => !['x', 'y', 'w', 'h', 'z'].includes(a.name)), { name: 'style', value: style.join(';') }];
+    setStyle(child, { '--vk-span': n });
   }
 }
 
@@ -749,7 +799,7 @@ function buildImg(node, file) {
   const ratio = attrOf(node, 'ratio');
   let href = src;
   if (!/^[a-z]+:|^\/\//i.test(src)) href = pathToFileURL(path.resolve(path.dirname(path.resolve(file)), src)).href;
-  if (ratio) node.attrs.push({ name: 'style', value: `aspect-ratio:${ratio}` });
+  if (ratio) setStyle(node, { 'aspect-ratio': ratio });
   node.childNodes = [raw(`<img class="vk-img-el" src="${esc(href)}" alt="${esc(alt)}" style="object-position:${esc(position)}">`)];
 }
 
@@ -814,7 +864,9 @@ export async function transformHtml(rawHtml, { file }) {
   const doc = isFull ? parse(rawHtml, { sourceCodeLocationInfo: true }) : parseFragment(rawHtml, { sourceCodeLocationInfo: true });
   if (isFull) rewriteLinks(doc, file);
 
+  // 先按作者原文校验，再落地默认值：默认值不参与「有没有写」的判断。
   const diag = validate(doc, label(file));
+  normalizeTree(doc);
   const assets = new Set();
   const warnings = [];
   const ctx = {
@@ -852,9 +904,6 @@ export async function transformHtml(rawHtml, { file }) {
     const tag = node.tagName;
     if (!tag?.startsWith('vk-')) continue;
     try {
-      if (hasAttr(node, 'gap') && ['vk-list', 'vk-cells', 'vk-steps', 'vk-bars', 'vk-timeline'].includes(tag)) {
-        node.attrs.push({ name: 'style', value: `--vk-gap:${px(attrOf(node, 'gap'), GAP.close)}px` });
-      }
       if (tag === 'vk-code') node.childNodes = [raw(await buildSource(node, file, ctx))];
       else if (tag === 'vk-table') buildTable(node, file, ctx);
       else if (tag === 'vk-list') buildList(node);
@@ -864,14 +913,14 @@ export async function transformHtml(rawHtml, { file }) {
       else if (tag === 'vk-bits') node.childNodes = [raw(buildBits(node))];
       else if (tag === 'vk-cells') node.childNodes = [raw(buildCells(node))];
       else if (tag === 'vk-head') buildHead(node);
-      else if (tag === 'vk-text') buildText(node, ctx);
+      else if (tag === 'vk-text') buildText(node, file, ctx);
       else if (tag === 'vk-steps') node.childNodes = [raw(buildSteps(node))];
       else if (tag === 'vk-bars') node.childNodes = [raw(buildBars(node))];
       else if (tag === 'vk-timeline') node.childNodes = [raw(buildTimeline(node))];
       else if (tag === 'vk-graph') node.childNodes = [raw(buildGraph(node))];
+      else if (tag === 'vk-seq') node.childNodes = [raw(buildSeq(node))];
       else if (tag === 'vk-surface') buildSurface(node);
       else if (tag === 'vk-flow') buildFlow(node);
-      else if (tag === 'vk-canvas') buildCanvas(node);
       else if (tag === 'vk-img') buildImg(node, file);
       else if (tag === 'vk-page') buildPage(node);
     } catch (e) {

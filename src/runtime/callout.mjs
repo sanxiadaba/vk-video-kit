@@ -28,6 +28,12 @@ function nearestSide(a, b) {
   return dy >= 0 ? ['bottom', 'top'] : ['top', 'bottom'];
 }
 
+const overlapArea = (a, b) => {
+  const w = Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left);
+  const h = Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top);
+  return w > 0 && h > 0 ? w * h : 0;
+};
+
 function pointOn(rect, side) {
   switch (side) {
     case 'top':
@@ -57,17 +63,12 @@ export class VkCallout extends VkElement {
       this._note.className = 'vk-co-note';
       this._note.hidden = true;
       this.appendChild(this._note);
-      this._badge = document.createElement('div');
-      this._badge.className = 'vk-co-badge';
-      this._badge.hidden = true;
-      this.appendChild(this._badge);
     }
-    // 作者写的文字是 note / badge 的内容：搬一次，不重复搬。
+    // 作者写的文字是 note 的内容：搬一次，不重复搬。
     if (!this._noteTook) {
-      const text = [...this.childNodes].filter((n) => n.nodeType === 3 || (n.nodeType === 1 && !n.classList?.contains('vk-co-svg') && !n.classList?.contains('vk-co-label') && !n.classList?.contains('vk-co-note') && !n.classList?.contains('vk-co-badge')));
+      const text = [...this.childNodes].filter((n) => n.nodeType === 3 || (n.nodeType === 1 && !n.classList?.contains('vk-co-svg') && !n.classList?.contains('vk-co-label') && !n.classList?.contains('vk-co-note')));
       for (const n of text) this._note.appendChild(n);
       this._noteTook = true;
-      this._badge.innerHTML = this._note.innerHTML;
     }
   }
 
@@ -81,7 +82,6 @@ export class VkCallout extends VkElement {
     this._svg.replaceChildren();
     this._label.hidden = true;
     this._note.hidden = true;
-    this._badge.hidden = true;
     this.removeAttribute('data-vk-anchor-missing');
 
     const mode = this.getAttribute('mode') || 'arrow';
@@ -107,16 +107,6 @@ export class VkCallout extends VkElement {
       return;
     }
 
-    if (mode === 'badge') {
-      const t = resolveAnchor(page, this.getAttribute('for'), this);
-      if (!t) return missing();
-      const r = rel(t.rect);
-      this._badge.hidden = false;
-      this._badge.style.left = `${clamp(r.left - 26, 0, origin.width - 72)}px`;
-      this._badge.style.top = `${clamp(r.top - 26, 0, origin.height - 72)}px`;
-      return;
-    }
-
     if (mode === 'note') {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
@@ -125,18 +115,49 @@ export class VkCallout extends VkElement {
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
+
+      /* 气泡不许盖字。候选位置分两圈：贴着目标那一行，和贴着它所属的件。
+         先按「压到多少字的面积」排，面积相同再按离目标远近排。 */
+      const owner = t.el.closest('vk-code, vk-surface, vk-tree, vk-table, vk-cells, vk-bits, vk-bytes, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-img, vk-text') || t.el;
+      const ob = rel(owner.getBoundingClientRect());
+      const obstacles = [ob];
+      for (const el of page.querySelectorAll('vk-code .vk-line, vk-code .vk-dhunk, vk-text, .vk-title, .vk-lede, vk-table tr, vk-list li, .vk-step, .vk-bar, .vk-cell, .vk-bit, .vk-gnode, .vk-tl-i, .vk-node, .vk-brow')) {
+        if (el.closest('vk-callout')) continue;
+        const q = el.getBoundingClientRect();
+        if (q.width > 2 && q.height > 2) obstacles.push(rel(q));
+      }
+
+      const place = (base, side) => {
+        let x = base.left + base.width / 2 - bw / 2;
+        let y = base.top + base.height / 2 - bh / 2;
+        if (side === 'right') x = base.left + base.width + gap;
+        else if (side === 'left') x = base.left - bw - gap;
+        else if (side === 'bottom') y = base.top + base.height + gap;
+        else if (side === 'top') y = base.top - bh - gap;
+        return { x, y };
+      };
+
       const want = this.getAttribute('side') || 'auto';
-      const room = { right: origin.width - (r.left + r.width), left: r.left, bottom: origin.height - (r.top + r.height), top: r.top };
-      let side = want;
-      if (side === 'auto') side = ['right', 'left', 'bottom', 'top'].sort((a, b) => room[b] - room[a])[0];
-      let x = r.left + r.width / 2 - bw / 2;
-      let y = r.top + r.height / 2 - bh / 2;
-      if (side === 'right') x = r.left + r.width + gap;
-      if (side === 'left') x = r.left - bw - gap;
-      if (side === 'bottom') y = r.top + r.height + gap;
-      if (side === 'top') y = r.top - bh - gap;
-      x = clamp(x, 8, origin.width - bw - 8);
-      y = clamp(y, 8, origin.height - bh - 8);
+      const sides = want === 'auto' ? ['right', 'left', 'bottom', 'top'] : [want];
+      const wanted = sides.map((side) => ({ ...place(r, side), side }));
+      const cands = [...wanted];
+      for (const side of sides) cands.push({ ...place(ob, side), side: `block-${side}` });
+
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height / 2;
+      let best = null;
+      for (const c of cands) {
+        const box = { left: c.x, top: c.y, width: bw, height: bh };
+        let overlap = 0;
+        for (const o of obstacles) overlap += overlapArea(box, o);
+        const outX = Math.max(0, 8 - c.x) + Math.max(0, c.x + bw - (origin.width - 8));
+        const outY = Math.max(0, 8 - c.y) + Math.max(0, c.y + bh - (origin.height - 8));
+        const dist = Math.hypot(c.x + bw / 2 - cx, c.y + bh / 2 - cy);
+        const key = [overlap + (outX + outY) * bh * 10, dist];
+        if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
+      }
+      const x = clamp(best.x, 8, origin.width - bw - 8);
+      const y = clamp(best.y, 8, origin.height - bh - 8);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       // 引线：从气泡最近的一点指向目标。
@@ -146,6 +167,38 @@ export class VkCallout extends VkElement {
       const to = { ...pointOn(r, b) };
       this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: from.x, y1: from.y, x2: to.x, y2: to.y }));
       this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: to.x, cy: to.y, r: 6 }));
+      return;
+    }
+
+    if (mode === 'measure') {
+      const from = resolveAnchor(page, this.getAttribute('from'), this);
+      const to = resolveAnchor(page, this.getAttribute('to'), this);
+      if (!from || !to) return missing();
+      const fr = rel(from.rect);
+      const tr = rel(to.rect);
+      const [fs, ts] = from.side && to.side ? [from.side, to.side] : nearestSide(fr, tr);
+      const a = pointOn(fr, fs);
+      const b = pointOn(tr, ts);
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      const nx = -uy;
+      const ny = ux;
+      const tick = 26;
+      this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${a.x} ${a.y} L ${b.x} ${b.y}` }));
+      this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${a.x - nx * tick} ${a.y - ny * tick} L ${a.x + nx * tick} ${a.y + ny * tick}` }));
+      this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${b.x - nx * tick} ${b.y - ny * tick} L ${b.x + nx * tick} ${b.y + ny * tick}` }));
+      const label = this.getAttribute('label');
+      if (label) {
+        this._label.hidden = false;
+        this._label.textContent = label;
+        const lw = this._label.offsetWidth;
+        const lh = this._label.offsetHeight;
+        this._label.style.left = `${clamp((a.x + b.x) / 2 - lw / 2, 8, origin.width - lw - 8)}px`;
+        this._label.style.top = `${clamp((a.y + b.y) / 2 - lh / 2, 8, origin.height - lh - 8)}px`;
+      }
       return;
     }
 

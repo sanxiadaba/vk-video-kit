@@ -10,10 +10,12 @@
  * 规矩：这里不出现任何组件知识。要加一条校验，先在 schema 里加字段。
  */
 
-import { TAGS, TAG_NAMES, attrsOf, CANVAS_ATTRS, LAYERS, ANCHOR_PARTS } from './schema.mjs';
-import { GAP, FONT, FLOOR, INDEX_RULE, CANVAS, LINE_W, SYNTAX, PAINT } from './vocab.mjs';
+import fs from 'node:fs';
+import { TAGS, TAG_NAMES, attrsOf, LAYERS, ANCHOR_PARTS, SKELETON } from './schema.mjs';
+import { GAP, FONT, LINE, MEASURE, FLOOR, INDEX_RULE, CANVAS, LINE_W, SYNTAX, PAINT } from './vocab.mjs';
 
-export const VERSION = '19.0.0';
+/* 版本只有一个来源：package.json。 */
+export const VERSION = JSON.parse(fs.readFileSync(new URL('../package.json', import.meta.url), 'utf8')).version;
 
 /* ------------------------------------------------------------------ 错误码 */
 export const CODES = {
@@ -38,6 +40,23 @@ export const CODES = {
   GRAPH_REF: 'GRAPH_REF',
   ANCHOR_MISSING: 'ANCHOR_MISSING',
   BLEED_ALL: 'BLEED_ALL',
+  /* 构建期：内容来源与解析 */
+  SRC_MISSING: 'SRC_MISSING',
+  SRC_CONFLICT: 'SRC_CONFLICT',
+  LINES_INVALID: 'LINES_INVALID',
+  LINES_OUT_OF_RANGE: 'LINES_OUT_OF_RANGE',
+  TREE_JSON: 'TREE_JSON',
+  TREE_NODE: 'TREE_NODE',
+  MATH: 'MATH',
+  ICON: 'ICON',
+  BUILD: 'BUILD',
+  /* 运行期：只看「坏没坏」 */
+  FRAME: 'FRAME',
+  RUNTIME: 'RUNTIME',
+  RENDER: 'RENDER',
+  ASSET: 'ASSET',
+  ANCHOR: 'ANCHOR',
+  CLIPPED: 'CLIPPED',
 };
 
 /* ------------------------------------------------------------------ 工具 */
@@ -102,7 +121,8 @@ export const lineSet = (value, limit = 4000) => {
   return set;
 };
 
-const COLS_OK = /^(auto|[1-9]\d*(\s+[1-9]\d*)*)$/;
+/* 列：1–12、比例 "7 5"、auto，或混排 "auto 1"（先按内容、剩下的按比例分）。 */
+const COLS_OK = /^((auto|[1-9]\d*)(\s+(auto|[1-9]\d*))*)$/;
 
 export function checkValue(file, node, tag, name, spec, value, errors) {
   const where = `<${tag}>`;
@@ -136,13 +156,13 @@ export function checkValue(file, node, tag, name, spec, value, errors) {
   if (spec.type === 'selector' && value !== '') {
     if (!value.startsWith('#') || value.includes('@')) {
       const at = value.indexOf('@');
-      if (!value.startsWith('#') || at < 2) bad(CODES.VALUE_SELECTOR, '写法不对', '写 CSS 选择器，或 #id@line:5 / #id@item:3 / #id@side:left');
+      if (!value.startsWith('#') || at < 2) bad(CODES.VALUE_SELECTOR, '写法不对', '写 CSS 选择器，或 #id@line:5 / #id@item:3 / #id@bit:5 / #id@side:left');
       else {
         const [part, ...args] = value.slice(at + 1).split(':');
         if (!ANCHOR_PARTS.includes(part)) bad(CODES.VALUE_SELECTOR, `里的 @${part} 不认识`, `可用：${ANCHOR_PARTS.join(' / ')}`);
         else if (part === 'side' && !['top', 'right', 'bottom', 'left'].includes((args[0] || '').trim()))
           bad(CODES.VALUE_SELECTOR, '里的 side 不认识', '可用：top / right / bottom / left');
-        else if ((part === 'line' || part === 'item') && !/^\d+$/.test((args[0] || '').trim()))
+        else if ((part === 'line' || part === 'item' || part === 'bit') && !/^\d+$/.test((args[0] || '').trim()))
           bad(CODES.VALUE_SELECTOR, `里的 ${part}:… 要一个 1 起的整数`, '如 #c@line:3 / #buf@item:2');
         else if (value.slice(0, at).length < 2) bad(CODES.VALUE_SELECTOR, '缺少 id', '#id@part:arg');
       }
@@ -151,8 +171,6 @@ export function checkValue(file, node, tag, name, spec, value, errors) {
 }
 
 /* ------------------------------------------------------------------ 子节点 */
-const CURRENTS = new Set(['vk-cells', 'vk-list', 'vk-steps', 'vk-bars', 'vk-timeline', 'vk-graph']);
-
 function checkChildModel(file, node, tag, errors) {
   const model = TAGS[tag].children;
   if (!model) return;
@@ -178,7 +196,10 @@ function checkChildModel(file, node, tag, errors) {
     const cur = attrOf(node, 'current');
     if (cur != null && /^\d+$/.test(cur)) {
       const n = Number(cur);
-      const count = kids.filter((c) => c.tagName === 'li').length;
+      const count =
+        tag === 'vk-graph'
+          ? kids.filter((c) => c.tagName === 'li' && !hasAttr(c, 'from') && !hasAttr(c, 'to')).length
+          : kids.filter((c) => c.tagName === 'li').length;
       if (n < 1 || n > count) errors.push({ file, line: lineOf(node), tag, code: CODES.CURRENT_RANGE, message: `<${tag}> 的 current="${cur}" 越界（这一件有 ${count} 项）`, fix: `改成 1–${count}；不写就是没有当前` });
     }
   }
@@ -198,7 +219,7 @@ function checkChildModel(file, node, tag, errors) {
       for (const cell of flatten(tr).filter((n) => n.tagName === 'td')) {
         for (const { name, value } of cell.attrs || []) {
           if (name === 'state' && value !== 'current') errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_ENUM, message: `<td> 的 state="${value}" 不在词表里`, fix: '可用：current' });
-          else if (name === 'tone' && !['ok', 'warn', 'err', 'focus'].includes(value)) errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_ENUM, message: `<td> 的 tone="${value}" 不在词表里`, fix: '可用：ok / warn / err / focus' });
+          else if (name === 'tone' && !['ok', 'warn', 'err'].includes(value)) errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_ENUM, message: `<td> 的 tone="${value}" 不在词表里`, fix: '可用：ok / warn / err' });
           else if (!['tone', 'state', 'colspan', 'rowspan'].includes(name)) errors.push({ file, line: lineOf(cell), tag, code: CODES.UNKNOWN_ATTR, message: `<td> 不认识属性 ${name}="${value}"`, fix: `可用：tone / state` });
         }
       }
@@ -240,9 +261,9 @@ export function validate(tree, file = '<page>') {
         continue;
       }
       if (GLOBAL_ATTRS.has(name) || name.startsWith('data-') || name.startsWith('aria-')) continue;
-      const def = spec[name] || (parent === 'vk-canvas' ? CANVAS_ATTRS[name] : null);
+      const def = spec[name];
       if (!def) {
-        const pool = [...Object.keys(spec), ...(parent === 'vk-canvas' ? Object.keys(CANVAS_ATTRS) : [])];
+        const pool = Object.keys(spec);
         const hint = suggest(name, pool);
         errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_ATTR, message: `<${tag}> 不认识属性 ${name}="${value}"`, fix: hint ? `是想写 ${hint}？` : `可用：${pool.join(', ')}` });
         continue;
@@ -263,7 +284,7 @@ export function validate(tree, file = '<page>') {
       if (!hasAttr(node, name)) errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_REQUIRED, message: `<${tag}> 缺 ${name}`, fix: name === 'for' ? '写 for="#目标id"，或 for="#目标id@line:3"' : '写 #目标id，两端都要有 id' });
     }
 
-    /* 位置规则：span / bleed 只属于 flow 的子项；x/y 只属于 canvas 的子项。 */
+    /* 位置规则：span / bleed 只属于 flow 的子项。 */
     if (hasAttr(node, 'span') && parent !== 'vk-flow')
       errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 span / bleed 只属于 <vk-flow> 或 <vk-page> 的直接子项`, fix: `父级是 <${parent || '无'}>；包一层 <vk-flow>` });
     if (hasAttr(node, 'bleed') && attrOf(node, 'bleed') === 'all' && tag !== 'vk-img')
@@ -273,9 +294,6 @@ export function validate(tree, file = '<page>') {
       if (/^\d+$/.test(cols) && Number(attrOf(node, 'span') || 1) > Number(cols))
         errors.push({ file, line: lineOf(node), tag, code: CODES.SPAN_TOO_WIDE, message: `<${tag}> 的 span="${attrOf(node, 'span')}" 超过父级 cols="${cols}"`, fix: '改 span 或改 cols' });
     }
-    if (['x', 'y', 'w', 'h', 'z'].some((n) => hasAttr(node, n)) && parent !== 'vk-canvas' && tag !== 'vk-canvas')
-      errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 x / y / w / h / z 只在 <vk-canvas> 的子项上成立`, fix: `父级是 <${parent || '无'}>` });
-
     const id = attrOf(node, 'id');
     if (id) {
       const scope = tag === 'vk-page' ? 'page' : 'el';
@@ -299,7 +317,10 @@ export function validate(tree, file = '<page>') {
       }
     }
     if (tag === 'vk-graph') {
-      const nodes = kidsOf(node).filter((c) => c.tagName === 'li');
+      const lis = kidsOf(node).filter((c) => c.tagName === 'li');
+      const hasFromTo = (li) => hasAttr(li, 'from') || hasAttr(li, 'to');
+      const nodes = lis.filter((li) => !hasFromTo(li));
+      const edges = lis.filter(hasFromTo);
       const nodeIds = new Set(nodes.map((li) => attrOf(li, 'id')).filter(Boolean));
       for (const li of nodes) {
         const after = attrOf(li, 'after');
@@ -307,6 +328,13 @@ export function validate(tree, file = '<page>') {
         for (const ref of after.split(/\s+/).filter(Boolean)) {
           if (ref === attrOf(li, 'id')) errors.push({ file, line: lineOf(li), tag, code: CODES.GRAPH_REF, message: `<vk-graph> 的节点 \`${ref}\` 指向自己`, fix: '删掉这个 after' });
           else if (!nodeIds.has(ref)) errors.push({ file, line: lineOf(li), tag, code: CODES.GRAPH_REF, message: `<vk-graph> 的 after="${ref}" 找不到节点`, fix: `这一张图里的节点 id：${[...nodeIds].join(', ') || '无'}` });
+        }
+      }
+      for (const li of edges) {
+        for (const key of ['from', 'to']) {
+          const ref = attrOf(li, key);
+          if (!ref) errors.push({ file, line: lineOf(li), tag, code: CODES.ATTR_REQUIRED, message: `<vk-graph> 的边缺 ${key}`, fix: '边要写成 <li from="起点id" to="终点id">' });
+          else if (!nodeIds.has(ref)) errors.push({ file, line: lineOf(li), tag, code: CODES.GRAPH_REF, message: `<vk-graph> 的边 ${key}="${ref}" 找不到节点`, fix: `这一张图里的节点 id：${[...nodeIds].join(', ') || '无'}` });
         }
       }
     }
@@ -353,6 +381,7 @@ export function contract() {
     type: Object.fromEntries(Object.entries(FONT).map(([k, v]) => [k, v])),
     colors: { focus: PAINT.focus, inks: [PAINT.ink1, PAINT.ink2, PAINT.ink3], syntax: SYNTAX },
     layers: LAYERS,
+    skeleton: SKELETON,
     tags: Object.fromEntries(
       TAG_NAMES.map((tag) => {
         const t = TAGS[tag];
@@ -362,6 +391,7 @@ export function contract() {
             name: t.name,
             layer: t.layer,
             summary: t.summary,
+            example: t.example || null,
             capacity: t.capacity || null,
             content: t.content || (t.children?.kind === 'source' ? 'source' : t.children?.kind === 'item' ? 'item' : t.children?.kind === 'table' ? 'table' : 'slot'),
             children: t.children || null,
@@ -383,8 +413,6 @@ export function markdown() {
 
   out.push('## 字号', '');
   out.push('| 档 | px | 手机 | 行高 | 行宽（字） |', '|---|---|---|---|---|');
-  const LINE = { caption: 1.45, body: 1.43, subhead: 1.43, headline: 1.33, display: 1.2, hero: 1.07 };
-  const MEASURE = { caption: 24, body: 25, subhead: 18, headline: 12, display: 8, hero: 4 };
   for (const [k, v] of Object.entries(FONT)) out.push(`| ${k} | ${v} | ${(v * 0.406).toFixed(1)} | ${LINE[k]} | ${MEASURE[k]} |`);
 
   out.push('', '## 间距', '');
@@ -396,7 +424,7 @@ export function markdown() {
     const t = TAGS[tag];
     if (!t.capacity) continue;
     const by = t.capacity.by ? Object.entries(t.capacity.by).map(([k, v]) => `${k} ${v}`).join(' / ') : '';
-    out.push(`| \`${tag}\` | ${by ? `${by} ` : ''}${t.capacity.unit} |`);
+    out.push(`| \`${tag}\` | ${t.capacity.max} ${t.capacity.unit}${by ? `（${by}）` : ''} |`);
   }
 
   out.push('', '## 标签', '');
@@ -415,6 +443,13 @@ export function markdown() {
         for (const r of rows) out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
       }
       if (t.children?.hint) out.push('', t.children.hint);
+      if (t.children?.attrs && Object.keys(t.children.attrs).length) {
+        out.push('', '子项属性：');
+        const crows = Object.entries(t.children.attrs).map(([n, s]) => fmtAttr(n, s));
+        out.push('', '| 子项属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
+        for (const r of crows) out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
+      }
+      if (t.example) out.push('', '```html', t.example, '```');
       out.push('');
     }
   }

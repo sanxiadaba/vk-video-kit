@@ -73,17 +73,4 @@ vk-callout {
   box-shadow: 0 12px 32px rgba(11, 15, 20, 0.12);
 }
 
-.vk-co-badge {
-  position: absolute;
-  display: grid;
-  place-items: center;
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: var(--vk-focus);
-  color: var(--vk-on-focus);
-  font-size: var(--vk-fs-caption);
-  font-weight: var(--vk-w-bold);
-  font-variant-numeric: tabular-nums;
-}
 

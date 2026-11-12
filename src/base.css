@@ -74,6 +74,14 @@ vk-page[align='bottom'] .vk-stage {
 vk-page[align='band'] .vk-stage {
   justify-content: flex-start;
 }
+/* 兜底：没经过构建期归一化的页面（直接打开源 HTML）也按 band 排。 */
+vk-page:not([align]) .vk-stage {
+  justify-content: flex-start;
+}
+vk-page:not([align]) .vk-body {
+  flex: 1 1 auto;
+  align-content: center;
+}
 
 /* 内容带：band 时吃掉剩余高度并把内容居中；其余模式按内容高。 */
 .vk-body {
@@ -204,14 +212,6 @@ vk-flow > * {
   min-width: 0;
 }
 
-/* ------------------------------------------------------------------ 坐标 */
-vk-canvas {
-  position: relative;
-  display: block;
-  min-width: 0;
-  width: 100%;
-}
-
 /* ------------------------------------------------------------------ 面
    任何声明了表面的容器都写 color-scheme：纸、软底、淡底是 light，深面是 dark。 */
 vk-surface {
@@ -225,10 +225,6 @@ vk-surface[surface='paper'] {
 }
 vk-surface[surface='soft'] {
   background: var(--vk-soft);
-  color-scheme: light;
-}
-vk-surface[surface='tint'] {
-  background: var(--vk-tint-focus);
   color-scheme: light;
 }
 vk-surface[surface='dark'] {
@@ -330,7 +326,8 @@ vk-surface[pad='wide'] .vk-fbd {
   background: var(--vk-dot-green);
 }
 .vk-fbd {
-  padding: var(--vk-inset-lg);
+  /* 内距只有一个来源：构建期把 pad 档名/像素写成 --vk-pad。 */
+  padding: var(--vk-pad, var(--vk-inset-lg));
 }
 .vk-frame[data-chrome='none'][data-surface='auto'] .vk-fbd {
   padding: 0;
@@ -425,31 +422,6 @@ vk-text[variant='kicker'] {
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-3);
   letter-spacing: 0.02em;
-}
-vk-text[variant='chip'],
-vk-text[variant='badge'] {
-  display: inline-flex;
-  align-items: center;
-  gap: 12px;
-  padding: 4px 20px;
-  border-radius: var(--vk-radius-pill);
-  font-size: var(--vk-fs-caption);
-  line-height: 1.35;
-  font-weight: var(--vk-w-medium);
-  white-space: nowrap;
-  width: fit-content;
-}
-vk-text[variant='chip'] {
-  background: var(--vk-tint, var(--vk-soft));
-  color: var(--vk-tone, var(--vk-ink-2));
-}
-vk-text[variant='badge'] {
-  background: var(--vk-tone, var(--vk-ink-1));
-  color: var(--vk-on-focus);
-  font-weight: var(--vk-w-bold);
-}
-vk-text[tone='focus'] {
-  color: var(--vk-focus);
 }
 vk-text[measure='none'] {
   max-width: none;

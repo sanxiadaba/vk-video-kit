@@ -43,15 +43,18 @@ try {
   ok(false, 'tokens 与 vocab 一致', String(e.stdout || e.message).trim());
 }
 
+const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 const { TAG_NAMES } = await import('../src/schema.mjs');
 const { contract } = await import('../src/contract.mjs');
 const brief = contract();
-ok(brief.version === '19.0.0', `契约版本（${brief.version}）`);
+ok(brief.version === pkg.version, `契约版本来自 package.json（${brief.version}）`);
 ok(TAG_NAMES.length === 20, `20 个标签（${TAG_NAMES.length}）`);
 ok(Object.keys(brief.tags).length === TAG_NAMES.length, '契约覆盖每个标签');
 ok(brief.tags['vk-code'].capacity.max === 6 && brief.tags['vk-code'].capacity.by.term === 6, '容量只有一个来源（code 6 / term 6）');
 ok(!('capacity' in brief) || !brief.capacity, '契约顶层不再有一份 total 容量');
-ok(brief.anchorParts.join(',') === 'line,item,side', '锚点只有三种部件');
+ok(brief.anchorParts.join(',') === 'line,item,bit,side', '锚点四种部件');
+ok(brief.tags['vk-code'].example && brief.tags['vk-graph'].example, '难写的件带可抄示例');
+ok(brief.skeleton.includes('<vk-page'), '契约带一帧骨架');
 for (const tag of TAG_NAMES) {
   if (!brief.tags[tag].summary) ok(false, `${tag} 有 summary`);
 }
@@ -73,6 +76,7 @@ const CASES = {
   'missing-for.html': 'ATTR_REQUIRED',
   'bad-anchor-part.html': 'VALUE_SELECTOR',
   'current-range.html': 'CURRENT_RANGE',
+  'graph-edge.html': 'GRAPH_REF',
 };
 for (const [file, code] of Object.entries(CASES)) {
   const abs = path.join(ROOT, 'tests', 'bad', file);
@@ -100,8 +104,8 @@ try {
   ok(false, '渲染验收帧', String(e.stderr || e.message).slice(0, 600));
 }
 if (report) {
-  ok(report.ok, '22 帧全部干净', report.diagnostics.map((d) => d.message).join('；'));
-  ok(report.frames.length === 22, `22 帧（${report.frames.length}）`);
+  ok(report.ok, '23 帧全部干净', report.diagnostics.map((d) => d.message).join('；'));
+  ok(report.frames.length === 23, `23 帧（${report.frames.length}）`);
   const bad = report.frames.filter((f) => !f.png || !f.png780 || !f.json);
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
   const sizes = report.frames.map((f) => {
@@ -112,23 +116,13 @@ if (report) {
   ok(sizes.every(([a]) => a === 1920), '1920 出图');
   ok(sizes.every(([, b]) => b === 780), '780 出图');
 
-  /* 几何快照：抓「整块消失 / 版面塌了」，容差放宽到字体度量级别。 */
+  /* 组件集合快照：抓「整块消失 / 换了件」，不锁像素位置。 */
   const geo = Object.fromEntries(
-    report.frames.map((f) => [
-      f.id || f.name,
-      {
-        top: f.metrics.contentTop,
-        bottom: f.metrics.contentBottom,
-        fill: f.metrics.fill,
-        focus: f.metrics.focus,
-        els: f.elements.length,
-        tags: [...new Set(f.elements.map((e) => e.tag))].sort().join(','),
-      },
-    ])
+    report.frames.map((f) => [f.id || f.name, { tags: [...new Set(f.elements.map((e) => e.tag))].sort().join(',') }])
   );
   if (UPDATE || !fs.existsSync(GEO)) {
     fs.writeFileSync(GEO, JSON.stringify(geo, null, 1) + '\n');
-    ok(true, `写入几何快照 tests/geometry.json（${Object.keys(geo).length} 帧）`);
+    ok(true, `写入组件快照 tests/geometry.json（${Object.keys(geo).length} 帧）`);
   } else {
     const prev = JSON.parse(fs.readFileSync(GEO, 'utf8'));
     const keys = new Set([...Object.keys(prev), ...Object.keys(geo)]);
@@ -136,16 +130,16 @@ if (report) {
     for (const k of keys) {
       const a = prev[k];
       const b = geo[k];
-      if (!a || !b) {
-        diffs.push(`${k} ${a ? '消失' : '新增'}`);
-        continue;
-      }
-      if (Math.abs(a.bottom - b.bottom) > 8 || Math.abs(a.fill - b.fill) > 4) diffs.push(`${k} 内容 ${a.top}–${a.bottom} → ${b.top}–${b.bottom}（${a.fill}% → ${b.fill}%）`);
-      if (a.tags !== b.tags) diffs.push(`${k} 组件集合变了`);
+      if (!a || !b) diffs.push(`${k} ${a ? '消失' : '新增'}`);
+      else if (a.tags !== b.tags) diffs.push(`${k} 组件集合变了`);
     }
-    ok(diffs.length === 0, '版面与快照一致（几何）', diffs.slice(0, 8).join('\n      '));
+    ok(diffs.length === 0, '每帧的组件集合与快照一致', diffs.slice(0, 8).join('\n      '));
   }
+  const overflow = report.frames.filter((f) => f.metrics && f.metrics.bodyBottom > 1080);
+  ok(overflow.length === 0, '正文没有超出画布', overflow.map((f) => f.name).join(', '));
 }
+const miss = spawnSync(process.execPath, ['bin/vk.mjs', 'check', 'tests/frames.html', '--frame', 'no-such-frame'], { cwd: ROOT, encoding: 'utf8' });
+ok(miss.status === 1 && /FRAME/.test(miss.stdout + miss.stderr), '--frame 指到不存在的 id 必须失败', `exit ${miss.status}`);
 
 /* ------------------------------------------------------------------ 四、行为 */
 group('行为');

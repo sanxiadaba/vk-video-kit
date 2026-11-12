@@ -11,7 +11,7 @@
   --vk-safe-h: 888px;
   --vk-floor: 44px;
 
-  --vk-fs-caption: 44px;
+  --vk-fs-caption: 48px;
   --vk-lh-caption: 1.45;
   --vk-measure-caption: 24em;
   --vk-track-caption: 0em;
@@ -84,9 +84,6 @@
   --vk-syn-keyword: light-dark(#8a3a5e, #d79ab8);
   --vk-syn-operator: light-dark(#566173, #94a3b8);
   --vk-syn-fn: light-dark(#101826, #eaf0f8);
-  --vk-block-full: 1680px;
-  --vk-block-two-thirds: 1120px;
-  --vk-block-half: 824px;
   --vk-dot-red: #ff5f57;
   --vk-dot-yellow: #febc2e;
   --vk-dot-green: #28c840;

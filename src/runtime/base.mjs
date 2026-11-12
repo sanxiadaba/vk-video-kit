@@ -89,7 +89,7 @@ function safeQuery(root, sel, owner) {
   }
 }
 
-/** #id / #id@line:3 / #id@item:2 / #id@side:left，或任意 CSS 选择器。 */
+/** #id / #id@line:3 / #id@item:2 / #id@bit:5 / #id@side:left，或任意 CSS 选择器。 */
 export function resolveAnchor(root, expr, owner) {
   const rawExpr = String(expr ?? '').trim();
   if (!rawExpr) return null;
@@ -104,8 +104,12 @@ export function resolveAnchor(root, expr, owner) {
       return el ? { el, rect: inkRect(el.querySelector('.vk-lc') || el), side: null } : null;
     }
     if (part === 'item') {
-      const el = host.querySelector(`[data-vk-item="${cssEscape(arg)}"]`) || host;
-      return { el, rect: inkRect(el), side: null };
+      const el = host.querySelector(`[data-vk-item="${cssEscape(arg)}"]`);
+      return el ? { el, rect: inkRect(el), side: null } : null;
+    }
+    if (part === 'bit') {
+      const el = host.querySelector(`[data-vk-bit="${cssEscape(arg)}"]`);
+      return el ? { el, rect: inkRect(el), side: null } : null;
     }
     if (part === 'side') {
       const r = host.getBoundingClientRect();
@@ -268,7 +272,4 @@ VK.ready = async () => {
   return true;
 };
 
-export const sizeCss = (size) => {
-  const text = String(size ?? '').trim();
-  return /^\d+(\.\d+)?$/.test(text) ? `${text}px` : `var(--vk-fs-${text})`;
-};
+

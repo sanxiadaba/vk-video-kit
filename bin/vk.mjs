@@ -30,7 +30,7 @@ const val = (n) => {
   return i >= 0 ? args[i + 1] : null;
 };
 const VALUE_FLAGS = new Set(['--out', '--frame']);
-const KNOWN = new Set([...VALUE_FLAGS, '--json', '--md', '--help', '-h', '--version', '-v']);
+const KNOWN = new Set([...VALUE_FLAGS, '--json', '--md', '--advise', '--help', '-h', '--version', '-v']);
 const bad = args.slice(1).find((a) => a.startsWith('-') && !KNOWN.has(a));
 if (bad) {
   console.error(`[vk] 不认识的参数 ${bad}；可用：${[...KNOWN].join(' ')}`);
@@ -190,7 +190,7 @@ async function renderFiles(files, { shots }) {
       );
       const picked = onlyFrame ? frames.filter((f) => f.id === onlyFrame) : frames;
       if (!frames.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: '这一页没有 <vk-page>：什么都没画出来', fix: '把内容包进 <vk-page>…</vk-page>' });
-      if (onlyFrame && !frames.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: `没有 id="${onlyFrame}" 的帧`, fix: '不带 --frame 先跑一次，看这一页有哪些 id' });
+      else if (onlyFrame && !picked.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: `这一页没有 id="${onlyFrame}" 的帧`, fix: `这一页的 id：${frames.map((x) => x.id || '(无 id)').join(' / ')}` });
       for (const err of errors) report.diagnostics.push({ file: rel(f), line: 1, code: 'RUNTIME', message: `运行期错误：${err}`, fix: '这是页面脚本/组件抛的，不是版式问题' });
 
       const base = path.basename(f, '.html');
@@ -220,6 +220,9 @@ async function renderFiles(files, { shots }) {
           elements: audit.elements,
           overlaps: audit.overlaps,
           contrast: audit.contrast,
+          small: audit.small || [],
+          counts: audit.counts || {},
+          advice: audit.advice || [],
           warns: [...new Set(warns)],
         };
         fs.mkdirSync(shots ? dir : path.join(dir), { recursive: true });
@@ -236,19 +239,20 @@ async function renderFiles(files, { shots }) {
   return report;
 }
 
-function printReport(report) {
-  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
+function printReport(report, advise = false) {
+  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
     if (f.issues.length) {
       console.log(`✗ ${f.file}${tag}`);
-      for (const x of f.issues) console.log(`   · ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
+      for (const x of f.issues) console.log(`   · [${x.code}] ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
     } else {
       console.log(`✓ ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
     }
     if (f.metrics) {
-      console.log(`   内容 y ${f.metrics.contentTop}–${f.metrics.contentBottom}（占版心 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}${f.overlaps.length ? ` · 重叠 ${f.overlaps.length}` : ''}`);
+      console.log(`   正文 y ${f.metrics.bodyTop}–${f.metrics.bodyBottom}（占正文区 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}${f.overlaps.length ? ` · 重叠 ${f.overlaps.length}` : ''}`);
     }
+    if (advise && f.advice?.length) for (const a of f.advice) console.log(`   · ${a}`);
     for (const w of f.warns) console.log(`   提示：${w}`);
   }
   const n = report.diagnostics.length + report.frames.reduce((k, f) => k + f.issues.length, 0);
@@ -289,7 +293,7 @@ if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
   ensureLibrary();
   const report = await renderFiles(files, { shots: cmd === 'render' });
   if (json) console.log(JSON.stringify(report, null, 2));
-  else printReport(report);
+  else printReport(report, flag('--advise'));
   process.exitCode = report.ok ? 0 : 1;
 } else if (cmd === 'doc') {
   const tag = inputs[0];
@@ -303,7 +307,11 @@ if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
   } else {
     console.log(`${tag} · ${t.name}  (${t.layer})`);
     console.log(t.summary);
-    if (t.capacity) console.log(`一帧容量：${t.capacity.max} ${t.capacity.unit}`);
+    if (t.capacity) {
+      const by = t.capacity.by ? `（${Object.entries(t.capacity.by).map(([k, v]) => `${k} ${v}`).join(' / ')}）` : '';
+      console.log(`一帧容量：${t.capacity.max} ${t.capacity.unit}${by}`);
+    }
+    if (t.children?.hint) console.log(`内容：${t.children.hint}`);
     const LABEL = { type: '字', appearance: '外观', layout: '布局', state: '状态', content: '内容', target: '目标', other: '其它' };
     const groups = {};
     for (const [name, spec] of Object.entries(attrsOf(tag))) (groups[spec.group || 'other'] ||= []).push([name, spec]);
@@ -316,6 +324,7 @@ if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
         console.log(`  ${name.padEnd(12)} ${values}${def}  ${spec.label || ''}${when}`);
       }
     }
+    if (t.example) console.log(`\n示例：\n${t.example}`);
   }
 } else if (cmd === 'brief') {
   if (flag('--md')) console.log(markdown());
@@ -323,6 +332,7 @@ if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
   else {
     const c = contract();
     console.log(`vk ${c.version} · 画布 ${c.canvas.w}×${c.canvas.h} · 版心 ${c.canvas.w - c.canvas.safeX * 2}×${c.canvas.h - c.canvas.safeY * 2} · 地板 ${c.floor}px · 索引 ${c.indexRule}`);
+    console.log('\n骨架：\n' + c.skeleton);
     for (const tag of TAG_NAMES) {
       const t = c.tags[tag];
       console.log(`\n${tag} · ${t.name} —— ${t.summary}`);

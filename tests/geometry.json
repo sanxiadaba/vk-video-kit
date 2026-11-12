@@ -1,178 +1,71 @@
 {
  "cover": {
-  "top": 187,
-  "bottom": 885,
-  "fill": 79,
-  "focus": 1,
-  "els": 3,
   "tags": "div,vk-head,vk-text"
  },
  "stat": {
-  "top": 231,
-  "bottom": 840,
-  "fill": 69,
-  "focus": 1,
-  "els": 4,
   "tags": "div,vk-head,vk-text"
  },
  "code-ring": {
-  "top": 93,
-  "bottom": 944,
-  "fill": 96,
-  "focus": 3,
-  "els": 6,
   "tags": "div,vk-callout,vk-code,vk-flow,vk-head,vk-text"
  },
  "code-fold": {
-  "top": 93,
-  "bottom": 923,
-  "fill": 93,
-  "focus": 1,
-  "els": 3,
   "tags": "div,vk-code,vk-head"
  },
  "term": {
-  "top": 93,
-  "bottom": 944,
-  "fill": 96,
-  "focus": 2,
-  "els": 6,
   "tags": "div,vk-callout,vk-code,vk-flow,vk-head,vk-text"
  },
  "diff": {
-  "top": 93,
-  "bottom": 786,
-  "fill": 78,
-  "focus": 1,
-  "els": 3,
   "tags": "div,vk-code,vk-head"
  },
  "asm": {
-  "top": 93,
-  "bottom": 860,
-  "fill": 86,
-  "focus": 2,
-  "els": 3,
   "tags": "div,vk-code,vk-head"
  },
  "table": {
-  "top": 93,
-  "bottom": 854,
-  "fill": 86,
-  "focus": 1,
-  "els": 3,
   "tags": "div,vk-head,vk-table"
  },
  "list": {
-  "top": 93,
-  "bottom": 751,
-  "fill": 74,
-  "focus": 1,
-  "els": 4,
   "tags": "div,vk-head,vk-list,vk-text"
  },
  "tree": {
-  "top": 93,
-  "bottom": 932,
-  "fill": 95,
-  "focus": 2,
-  "els": 3,
   "tags": "div,vk-head,vk-tree"
  },
  "math": {
-  "top": 93,
-  "bottom": 617,
-  "fill": 59,
-  "focus": 1,
-  "els": 4,
   "tags": "div,vk-head,vk-math,vk-text"
  },
  "cells": {
-  "top": 93,
-  "bottom": 748,
-  "fill": 74,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-cells,vk-head,vk-text"
  },
  "bytes": {
-  "top": 93,
-  "bottom": 854,
-  "fill": 86,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-bytes,vk-head,vk-text"
  },
  "bits": {
-  "top": 93,
-  "bottom": 724,
-  "fill": 71,
-  "focus": 1,
-  "els": 4,
   "tags": "div,vk-bits,vk-head,vk-text"
  },
  "steps": {
-  "top": 93,
-  "bottom": 611,
-  "fill": 58,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-head,vk-steps,vk-text"
  },
  "bars": {
-  "top": 93,
-  "bottom": 639,
-  "fill": 61,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-bars,vk-head,vk-text"
  },
  "timeline": {
-  "top": 93,
-  "bottom": 767,
-  "fill": 76,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-head,vk-text,vk-timeline"
  },
  "graph-row": {
-  "top": 93,
-  "bottom": 631,
-  "fill": 61,
-  "focus": 2,
-  "els": 4,
   "tags": "div,vk-graph,vk-head,vk-text"
  },
  "graph-tree": {
-  "top": 93,
-  "bottom": 930,
-  "fill": 94,
-  "focus": 1,
-  "els": 3,
   "tags": "div,vk-graph,vk-head"
  },
  "surface-img": {
-  "top": 93,
-  "bottom": 883,
-  "fill": 89,
-  "focus": 1,
-  "els": 8,
   "tags": "div,vk-flow,vk-head,vk-img,vk-list,vk-surface,vk-text"
  },
- "canvas-arrow": {
-  "top": 93,
-  "bottom": 667,
-  "fill": 65,
-  "focus": 1,
-  "els": 10,
-  "tags": "div,vk-callout,vk-head,vk-surface,vk-text"
+ "seq": {
+  "tags": "div,vk-head,vk-seq,vk-text"
+ },
+ "graph-mesh": {
+  "tags": "div,vk-graph,vk-head,vk-text"
  },
  "dark": {
-  "top": 93,
-  "bottom": 692,
-  "fill": 67,
-  "focus": 1,
-  "els": 5,
   "tags": "div,vk-code,vk-flow,vk-head,vk-text"
  }
 }

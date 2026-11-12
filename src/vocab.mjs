@@ -26,15 +26,14 @@ export const FLOOR = 44;
 /** 线宽。手机 0.406× 之后 4px 才 1.6px；strong 是「正在看这里」，要压得住。 */
 export const LINE_W = { hair: 4, rule: 8, strong: 12 };
 
-/* 一帧只有三档宽度：满版 / 三分之二 / 半版（半版两列 + gap = 满版）。 */
-export const BLOCK = { full: 1680, 'two-thirds': 1120, half: 824 };
 
 /* ---------------------------------------------------------------- 字号
    手机 0.406× 之后：44 → 17.9、56 → 22.7、84 → 34.1、132 → 53.6。
    caption 单独一档（44）是有意的：注脚、行号、单位、表头都得比正文小，
    但不能再小到 19.5px 以下。 */
 export const FONT = {
-  caption: 44,
+  /* 元信息档：手机 0.406× 之后 19.5px。行号、地址、位序号、表头都读得到。 */
+  caption: 48,
   body: 56,
   subhead: 84,
   headline: 132,
@@ -149,9 +148,11 @@ export const FONT_FAMILY = {
 };
 
 /* ------------------------------------------------------------------ 枚举 */
-export const TONE = ['neutral', 'info', 'focus', 'ok', 'warn', 'err'];
-export const STATE = ['current', 'mark'];
-export const SURFACE = ['none', 'paper', 'soft', 'tint', 'dark'];
+/* 语义色只留「对 / 注意 / 错」三种 + 中性的 info（连接线、图标底标）。
+   focus 不是语气：它只由 current / 圈选产生，所以不在 tone 里。 */
+export const TONE = ['neutral', 'info', 'ok', 'warn', 'err'];
+export const STATE = ['current'];
+export const SURFACE = ['none', 'paper', 'soft', 'dark'];
 export const INK = ['primary', 'secondary', 'muted'];
 export const SIZE = Object.keys(FONT);
 

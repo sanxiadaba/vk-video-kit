@@ -6,7 +6,7 @@
    ========================================================================== */
 
 /* ---------------------------------------------------------------- 字号档 */
-:where(vk-code, vk-table, vk-list, vk-tree, vk-math, vk-cells, vk-bytes, vk-bits, vk-steps, vk-bars, vk-timeline, vk-graph) {
+:where(vk-code, vk-table, vk-list, vk-tree, vk-math, vk-cells, vk-bytes, vk-bits, vk-steps, vk-bars, vk-timeline, vk-graph, vk-seq) {
   font-size: var(--vk-fs-body);
   line-height: var(--vk-lh-body);
 }
@@ -42,10 +42,11 @@ vk-code {
   border-radius: 0;
 }
 .vk-ln {
-  color: var(--vk-ink-3);
+  color: var(--vk-ink-2);
   text-align: right;
-  font-size: 0.74em;
-  line-height: 2.03;
+  /* 行号也是要读的字：手机 19.5px。行高按 0.86×1.74 ≈ 1.5 保持行盒不变。 */
+  font-size: 0.86em;
+  line-height: 1.74;
   font-variant-numeric: tabular-nums;
   user-select: none;
 }
@@ -66,18 +67,24 @@ vk-code[long='wrap'] .vk-lc {
 }
 .vk-line.is-fold {
   color: var(--vk-ink-3);
-  font-size: 0.74em;
+  font-size: 0.8em;
   letter-spacing: 0.04em;
 }
 .vk-line.is-fold .vk-lc {
   font-family: var(--vk-font-sans);
   white-space: normal;
 }
+.vk-line.is-fold .vk-ln {
+  font-size: 1em;
+  line-height: inherit;
+}
+/* 标「原文」：淡底 + 蓝下划线。只有淡底时，落在已经上淡底的当前行里会消失。 */
 .vk-mark {
   background: var(--vk-tint-focus);
   color: inherit;
-  border-radius: var(--vk-radius-md);
+  border-radius: 0;
   padding: 0 0.08em;
+  box-shadow: inset 0 -8px 0 color-mix(in srgb, var(--vk-focus) 28%, transparent);
 }
 
 /* 语法四色 + 一个灰 + 一个墨。颜色本身来自 tokens，类名只做映射。 */
@@ -134,7 +141,7 @@ vk-code[long='wrap'] .vk-lc {
 /* 改动 */
 .vk-dhunk {
   font-family: var(--vk-font-sans);
-  font-size: 0.74em;
+  font-size: 0.8em;
   letter-spacing: 0.02em;
   color: var(--vk-ink-3);
   padding: 8px 16px;
@@ -364,7 +371,7 @@ vk-tree {
   left: calc(var(--vk-depth, 1) * 44px - 22px);
   top: -2px;
   bottom: -2px;
-  width: var(--vk-line-w-hair);
+  width: var(--vk-line-w-rule);
   background: var(--vk-line-color);
 }
 .vk-nrow {
@@ -409,7 +416,7 @@ vk-tree {
   left: calc(var(--vk-depth, 1) * 44px - 22px);
   top: 0.75em;
   width: 14px;
-  height: var(--vk-line-w-hair);
+  height: var(--vk-line-w-rule);
   background: var(--vk-line-color);
 }
 
@@ -465,9 +472,6 @@ vk-page[surface='dark'] .vk-cell {
   border-color: var(--vk-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-.vk-cell[data-state='mark'] {
-  border-color: var(--vk-info);
-}
 .vk-cell-v {
   font-family: var(--vk-font-mono);
   font-size: 1.35em;
@@ -513,7 +517,8 @@ vk-bytes {
 .vk-brow,
 .vk-bhead {
   display: grid;
-  grid-template-columns: 5.4em calc(var(--vk-cols, 8) * 3ch) 1fr;
+  /* 列宽由构建期按正文字号算成 px：表头是 caption，用 em/ch 会缩成另一套列。 */
+  grid-template-columns: var(--vk-bcol, 5.4em) var(--vk-bhexw, calc(var(--vk-cols, 8) * 3ch)) 1fr;
   gap: 16px;
   align-items: baseline;
   padding: 0 12px;
@@ -682,7 +687,7 @@ vk-steps {
   left: calc(50% / var(--vk-n, 4));
   right: calc(50% / var(--vk-n, 4));
   top: 36px;
-  height: var(--vk-line-w-hair);
+  height: var(--vk-line-w-rule);
   background: var(--vk-line-color);
 }
 .vk-steps[data-dir='vertical'] {
@@ -699,7 +704,7 @@ vk-steps {
   right: auto;
   top: 36px;
   bottom: 36px;
-  width: var(--vk-line-w-hair);
+  width: var(--vk-line-w-rule);
   height: auto;
 }
 @container (max-width: 760px) {
@@ -717,7 +722,7 @@ vk-steps {
     right: auto;
     top: 36px;
     bottom: 36px;
-    width: var(--vk-line-w-hair);
+    width: var(--vk-line-w-rule);
     height: auto;
   }
 }
@@ -761,7 +766,7 @@ vk-bars {
 }
 .vk-unit {
   font-family: var(--vk-font-sans);
-  font-size: 0.62em;
+  font-size: 0.72em;
   color: var(--vk-ink-3);
   margin-left: 6px;
 }
@@ -798,7 +803,7 @@ vk-timeline {
   left: 0;
   right: 0;
   top: 132px;
-  height: var(--vk-line-w-hair);
+  height: var(--vk-line-w-rule);
   background: var(--vk-line-strong);
 }
 .vk-tl-i {
@@ -907,6 +912,19 @@ vk-page[surface='dark'] .vk-gnode {
 .vk-gnode[data-tone='err'] {
   border-color: var(--vk-err);
 }
+/* 显式边只是数据：真正画线的是运行期 SVG。 */
+.vk-gedge {
+  display: none;
+}
+.vk-edge-label {
+  font-family: var(--vk-font-sans);
+  font-size: 40px;
+  fill: var(--vk-ink-2);
+  paint-order: stroke;
+  stroke: var(--vk-paper);
+  stroke-width: 14px;
+  stroke-linejoin: round;
+}
 .vk-gedges {
   position: absolute;
   left: 0;
@@ -917,7 +935,7 @@ vk-page[surface='dark'] .vk-gnode {
 .vk-edge {
   fill: none;
   stroke: var(--vk-line-strong);
-  stroke-width: var(--vk-line-w-hair);
+  stroke-width: var(--vk-line-w-rule);
 }
 .vk-edge[data-current] {
   stroke: var(--vk-focus);
@@ -928,6 +946,112 @@ vk-page[surface='dark'] .vk-gnode {
 }
 .vk-arrowhead[data-current] {
   fill: var(--vk-focus);
+}
+
+/* ================================================================ 时序
+   两条生命线固定在第 1/4 与第 3/4 列；一行一条消息，箭头画在行中线上。
+   没有运行期：位置由 CSS 定，消息顺序就是阅读顺序。 */
+vk-seq {
+  display: block;
+  min-width: 0;
+}
+.vk-seq-head {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  text-align: center;
+  font-weight: var(--vk-w-bold);
+  color: var(--vk-ink-1);
+  padding-bottom: 16px;
+}
+.vk-seq-body {
+  position: relative;
+  display: grid;
+  gap: var(--vk-gap, var(--vk-gap-close));
+  padding: 24px 0;
+}
+.vk-seq-body::before,
+.vk-seq-body::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-rule);
+  background: var(--vk-line-color);
+}
+.vk-seq-body::before {
+  left: 25%;
+  margin-left: calc(var(--vk-line-w-rule) / -2);
+}
+.vk-seq-body::after {
+  right: 25%;
+  margin-right: calc(var(--vk-line-w-rule) / -2);
+}
+.vk-seq-row {
+  --vk-seq-c: var(--vk-info);
+  position: relative;
+  height: 64px;
+}
+.vk-seq-arrow {
+  position: absolute;
+  left: 25%;
+  right: 25%;
+  top: 50%;
+  height: var(--vk-line-w-rule);
+  margin-top: calc(var(--vk-line-w-rule) / -2);
+  background: var(--vk-seq-c);
+}
+.vk-seq-arrow::after {
+  content: '';
+  position: absolute;
+  right: -18px;
+  top: 50%;
+  transform: translateY(-50%);
+  border-left: 22px solid var(--vk-seq-c);
+  border-top: 13px solid transparent;
+  border-bottom: 13px solid transparent;
+}
+.vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
+  right: auto;
+  left: -18px;
+  border-left: 0;
+  border-right: 22px solid var(--vk-seq-c);
+}
+.vk-seq-l {
+  position: absolute;
+  left: 50%;
+  top: -6px;
+  transform: translateX(-50%);
+  padding: 0 16px;
+  background: var(--vk-paper);
+  white-space: nowrap;
+  font-weight: var(--vk-w-medium);
+}
+.vk-seq-note {
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  transform: translateX(-50%);
+  padding: 0 12px;
+  background: var(--vk-paper);
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-3);
+  white-space: nowrap;
+}
+.vk-seq-row[data-tone='ok'] {
+  --vk-seq-c: var(--vk-ok);
+}
+.vk-seq-row[data-tone='warn'] {
+  --vk-seq-c: var(--vk-warn);
+}
+.vk-seq-row[data-tone='err'] {
+  --vk-seq-c: var(--vk-err);
+}
+.vk-seq-row[data-state='current'] {
+  --vk-seq-c: var(--vk-focus);
+}
+.vk-seq-row[data-state='current'] .vk-seq-l {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-bold);
 }
 
 /* ================================================================ 图片 */
