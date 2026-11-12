@@ -162,7 +162,7 @@ function readSource(node, file, assets, diag) {
 }
 
 /* ---------------------------------------------------------------- 窗口 */
-function frame({ title, body, range, digits, dots = true }) {
+function frame({ title, body, range, digits, dots = true, kind = 'code' }) {
   /* 有 title 就有标题栏；代码/终端是窗口（三点），树/字节是数据（无三点）。
      窗口的视觉由库决定，作者只提供「这是哪个文件」。 */
   const hd = title
@@ -170,7 +170,7 @@ function frame({ title, body, range, digits, dots = true }) {
         range ? `<span class="vk-frange">${esc(range)}</span>` : ''
       }</div>`
     : '';
-  return `<div class="vk-frame"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
+  return `<div class="vk-frame" data-kind="${kind}"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
 }
 
 const fmtRange = (a, b) => (a === b ? String(a) : `${a}–${b}`);
@@ -333,8 +333,9 @@ async function buildSource(node, file, ctx) {
         return;
       }
       const { mnemonic, operands } = splitInsn(r.text);
+      const addrText = r.addr ? (/^0x/i.test(r.addr) ? r.addr : `0x${r.addr}`) : '';
       out.push(
-        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"${r.addr ? ` data-vk-addr="${esc(r.addr)}"` : ''}><span class="vk-aaddr">${esc(r.addr)}</span>${
+        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"${addrText ? ` data-vk-addr="${esc(addrText)}"` : ''}><span class="vk-aaddr">${esc(addrText)}</span>${
           showBytes ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
         }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)
           .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)
@@ -347,7 +348,7 @@ async function buildSource(node, file, ctx) {
 
   const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
   const dim = as === 'code' && cur?.size && (attrOf(node, 'dim') || 'auto') !== 'none' ? ' data-dim="1"' : '';
-  return frame({ title, body: `<div class="vk-lines${cls}"${dim}>${body}</div>`, range, digits });
+  return frame({ title, body: `<div class="vk-lines${cls}"${dim}>${body}</div>`, range, digits, kind: as });
 }
 
 function cmdHtml(cmd) {
@@ -428,6 +429,7 @@ async function buildTree(node, file, ctx) {
   const current = attrOf(node, 'current');
   /* 序号是「这一棵树里第几行」，不是整页第几个：两张树不能互相串锚点。 */
   let itemNo = 0;
+  let rootName = '';
 
   const iconFor = (name, isDir) => {
     const kind = ICON_KIND(name, isDir);
@@ -479,6 +481,7 @@ async function buildTree(node, file, ctx) {
       return '';
     }
     ctx.assets.add(abs);
+    rootName = path.basename(abs);
     const scan = (dir, level) => {
       if (level > depth) return [];
       return fs
@@ -500,7 +503,11 @@ async function buildTree(node, file, ctx) {
       return '';
     }
   }
-  const body = walk(list, 1, '') + (truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '');
+  /* 有 src 时补一个根行：树才有「主干 → 目录 → 文件」的层级，而不是三棵并排的树。 */
+  const more = truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '';
+  const body = rootName
+    ? nodeHtml(rootName, true, '', 1, walk(list, 2, ''), false) + more
+    : walk(list, 1, '') + more;
   return frame({ title: attrOf(node, 'title'), body: `<div class="vk-tree">${body}</div>`, dots: false });
 }
 

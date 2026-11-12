@@ -81,6 +81,8 @@ pair('focus', 'focus');
 for (const t of ['info', 'ok', 'warn', 'err']) pair(t, t);
 for (const t of ['Info', 'Focus', 'Ok', 'Warn', 'Err']) pair(`tint-${t.toLowerCase()}`, `tint${t}`);
 pair('on-focus', 'onFocus');
+pair('emph', 'emph');
+pair('mark', 'mark');
 
 rows.push('');
 for (const [k, v] of Object.entries(SYNTAX)) push(`syn-${k}`, `light-dark(${v[0]}, ${v[1]})`);

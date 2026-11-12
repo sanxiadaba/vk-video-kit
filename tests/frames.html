@@ -51,10 +51,10 @@ int bsearch(const int *a, int n, int key) {
   <vk-flow cols="7 5" gap="wide" valign="center">
     <vk-code as="term" id="py" title="python3" current="2">
       <script type="text/plain" data-vk-source>
-$ python3 -c "print(0.1 + 0.2)"
+$ python3 -c "print(.1+.2)"
 0.30000000000000004
 $ gcc hello.c -o hello
-hello.c:3: error: expected ';'
+hello.c:3: expected ';'
       </script>
     </vk-code>
     <vk-text size="body" ink="secondary">浮点数不是精确的：0.1 和 0.2 都存不下。</vk-text>
@@ -84,7 +84,7 @@ hello.c:3: error: expected ';'
 </vk-page>
 
 <vk-page id="list">
-  <vk-head kicker="步骤" counter="09" size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-head>
+  <vk-head kicker="寻址" counter="09" size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-head>
   <vk-list variant="ordered" current="2">
     <li>取数组首地址</li>
     <li>加上下标 × 4</li>
@@ -96,7 +96,7 @@ hello.c:3: error: expected ';'
 <vk-page id="tree">
   <vk-head kicker="目录" counter="10" size="subhead">编译产物比源码<em>大得多</em>。</vk-head>
 <vk-flow cols="7 5" gap="wide" valign="center">
-    <vk-tree title="code/" depth="3" max="5" current="bsearch/bsearch.c" src="../code"></vk-tree>
+    <vk-tree title="目录" depth="3" max="4" current="bsearch/bsearch.c" src="../code"></vk-tree>
     <vk-text size="body" ink="secondary">可执行文件里除了指令，还有对齐、符号表和启动代码；所以它比源码大得多。</vk-text>
   </vk-flow>
 </vk-page>
@@ -135,7 +135,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="steps">
-  <vk-head kicker="流程" counter="15">从源码到程序，<em>四步</em>。</vk-head>
+  <vk-head kicker="流程" counter="15" size="subhead">从源码到程序，<em>四步</em>。</vk-head>
   <vk-steps current="2">
     <li icon="file-code">预处理</li>
     <li icon="cpu">编译</li>
@@ -146,7 +146,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="bars">
-  <vk-head kicker="量级" counter="16">同样的活，差了<em>四倍</em>。</vk-head>
+  <vk-head kicker="量级" counter="16" size="subhead">同样的活，差了<em>四倍</em>。</vk-head>
   <vk-bars max="30" unit="ms" current="2">
     <li value="6" label="解析"></li>
     <li value="14" label="编译" tone="warn"></li>
@@ -180,9 +180,9 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
     <li id="a" label="f(4)"></li>
     <li id="b" label="f(2)" after="a"></li>
     <li id="c" label="f(2)" after="a"></li>
-    <li id="d" label="f(1)" after="b" tone="ok"></li>
-    <li id="e" label="f(1)" after="b" tone="ok"></li>
-    <li id="f" label="f(1)" after="c" tone="ok"></li>
+    <li id="d" label="f(1)" after="b"></li>
+    <li id="e" label="f(1)" after="b"></li>
+    <li id="f" label="f(1)" after="c"></li>
   </vk-graph>
 </vk-page>
 
@@ -226,7 +226,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 </vk-page>
 
 <vk-page id="dark" surface="dark">
-  <vk-head kicker="深色" counter="23" size="headline">深色是<em>选项</em>，不是风格。</vk-head>
+  <vk-head kicker="深色" counter="23" size="subhead">深色是<em>选项</em>，不是风格。</vk-head>
   <vk-flow cols="7 5" gap="wide" valign="center">
     <vk-code lang="c" title="dark.c" size="subhead">
       <script type="text/plain" data-vk-source>

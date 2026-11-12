@@ -97,7 +97,7 @@ export const ICON = { sm: 20, md: 24, lg: 28 };
    focus 是全库唯一的强调色；语义色只出现在线、图标、底标上，不写正文。 */
 export const PAINT = {
   paper: ['#ffffff', '#0b0f14'],
-  raised: ['#ffffff', '#121821'],
+  raised: ['#ffffff', '#161e2a'],
   soft: ['#f6f7f8', '#171e28'],
   ink1: ['#111418', '#f4f6f9'],
   ink2: ['#3f4652', '#c3ccd9'],
@@ -114,6 +114,8 @@ export const PAINT = {
   tintOk: ['#ecfdf5', '#10251f'],
   tintWarn: ['#fffbeb', '#2a2113'],
   tintErr: ['#fef2f2', '#2a1515'],
+  emph: ['rgba(17, 20, 24, 0.07)', 'rgba(255, 255, 255, 0.10)'],
+  mark: ['#ffe58a', '#4a3a12'],
   // 填色块（当前步骤章、标出的字节、指针胶囊）上的字：浅色模式白字，深色模式黑字。
   onFocus: ['#ffffff', '#0b0f14'],
 };

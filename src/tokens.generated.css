@@ -75,7 +75,7 @@
   --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
 
   --vk-paper: light-dark(#ffffff, #0b0f14);
-  --vk-raised: light-dark(#ffffff, #121821);
+  --vk-raised: light-dark(#ffffff, #161e2a);
   --vk-soft: light-dark(#f6f7f8, #171e28);
   --vk-ink-1: light-dark(#111418, #f4f6f9);
   --vk-ink-2: light-dark(#3f4652, #c3ccd9);
@@ -93,6 +93,8 @@
   --vk-tint-warn: light-dark(#fffbeb, #2a2113);
   --vk-tint-err: light-dark(#fef2f2, #2a1515);
   --vk-on-focus: light-dark(#ffffff, #0b0f14);
+  --vk-emph: light-dark(rgba(17, 20, 24, 0.07), rgba(255, 255, 255, 0.10));
+  --vk-mark: light-dark(#ffe58a, #4a3a12);
 
   --vk-syn-string: light-dark(#0f766e, #5eead4);
   --vk-syn-comment: light-dark(#6b7280, #94a3b8);
