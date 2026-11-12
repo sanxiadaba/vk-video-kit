@@ -97,8 +97,10 @@ export function auditPage(stage) {
       push('ASSET', `图片没加载：${img.getAttribute('src') || '(没有 src)'}`, host?.getAttribute('alt') ? `alt="${host.getAttribute('alt')}"` : '检查路径是否相对页面文件');
     }
   }
+  /* 只报「这一页真的用到、但没加载成功」的字体。没被用到的字体 check() 也会是 false。 */
+  const usedFamily = [...page.querySelectorAll('*')].map((el) => getComputedStyle(el).fontFamily).join(' ');
   for (const f of window.vk?._fonts || []) {
-    if (!f.ok) push('ASSET', `字体没加载：${f.family}`, '跑一次 vk render 会重建字体；检查 assets/fonts 是否完整');
+    if (!f.ok && usedFamily.includes(f.family)) push('ASSET', `字体没加载：${f.family}`, '跑一次 vk render 会重建字体；检查 assets/fonts 是否完整');
   }
 
   /* 5. 锚点 */
