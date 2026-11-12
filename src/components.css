@@ -442,6 +442,16 @@ vk-math[inline] {
 vk-math .katex {
   font-size: 1em;
 }
+/* 公式可以比数据件大一档：一帧只放一个公式时，headline 才撑得住画面。 */
+vk-math[size='headline'] .katex {
+  font-size: var(--vk-fs-headline);
+}
+vk-math[size='display'] .katex {
+  font-size: var(--vk-fs-display);
+}
+vk-math[size='hero'] .katex {
+  font-size: var(--vk-fs-hero);
+}
 vk-math .katex-display {
   margin: 0;
   text-align: center;
@@ -1007,7 +1017,7 @@ vk-seq {
   position: relative;
   display: grid;
   gap: var(--vk-gap, var(--vk-gap-close));
-  padding: 24px 0;
+  padding: 16px 0;
 }
 .vk-seq-body::before,
 .vk-seq-body::after {

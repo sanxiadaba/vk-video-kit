@@ -98,6 +98,10 @@ const inlineBytes = await transformHtml(
 );
 ok(inlineBytes.html.includes('68') && inlineBytes.html.includes('65'), 'vk-bytes 可以内联十六进制');
 
+/* 默认值必须落进 DOM：CSS 不再自带第二份默认值（band 曾经就死在这里）。 */
+const defaults = await transformHtml('<vk-page><vk-head>标题</vk-head><vk-text>正文</vk-text></vk-page>', { file: path.join(ROOT, 'tests', 'defaults.html') });
+ok(/align="band"/.test(defaults.html) && /size="headline"/.test(defaults.html), '默认值落地到 DOM');
+
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
 let report = null;

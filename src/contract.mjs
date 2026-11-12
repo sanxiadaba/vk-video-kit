@@ -285,7 +285,7 @@ export function validate(tree, file = '<page>') {
 
     /* 位置规则：span / bleed 只属于 flow 的子项。 */
     if (hasAttr(node, 'span') && parent !== 'vk-flow')
-      errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 span / bleed 只属于 <vk-flow> 或 <vk-page> 的直接子项`, fix: `父级是 <${parent || '无'}>；包一层 <vk-flow>` });
+      errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 span / bleed 只属于 <vk-flow> 的直接子项`, fix: `父级是 <${parent || '无'}>；要分栏/跨栏，包一层 <vk-flow>` });
     if (hasAttr(node, 'bleed') && attrOf(node, 'bleed') === 'all' && tag !== 'vk-img')
       errors.push({ file, line: lineOf(node), tag, code: CODES.BLEED_ALL, message: `<${tag}> 不能用 bleed="all"`, fix: '整帧铺满只给 <vk-img>；其他件用 bleed="x"' });
     if (hasAttr(node, 'span') && parent === 'vk-flow') {
@@ -293,6 +293,14 @@ export function validate(tree, file = '<page>') {
       if (/^\d+$/.test(cols) && Number(attrOf(node, 'span') || 1) > Number(cols))
         errors.push({ file, line: lineOf(node), tag, code: CODES.SPAN_TOO_WIDE, message: `<${tag}> 的 span="${attrOf(node, 'span')}" 超过父级 cols="${cols}"`, fix: '改 span 或改 cols' });
     }
+    if (tag === 'vk-head') {
+      if (parent !== 'vk-page') errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<vk-head> 只能直接放在 <vk-page> 下`, fix: '把它移到 page 的第一层；标题带不参与分栏' });
+      else {
+        const heads = kidsOf(node.parentNode).filter((c) => c.tagName === 'vk-head');
+        if (heads.length > 1 && heads[0] !== node) errors.push({ file, line: lineOf(node), tag, code: CODES.ID_DUPLICATE, message: '一帧只能有一个 <vk-head>', fix: '把第二个标题并进第一个，或拆帧' });
+      }
+    }
+
     const id = attrOf(node, 'id');
     if (id) {
       const scope = tag === 'vk-page' ? 'page' : 'el';

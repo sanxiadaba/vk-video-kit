@@ -647,8 +647,6 @@ function buildText(node, file, ctx) {
     if (!svg) ctx.diag.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'ICON', message: `<vk-text> 的 icon="${icon}" 找不到`, fix: '写 Lucide 的 kebab 名；用 vk icons <词> 搜' });
     else node.childNodes = [raw(svg), ...(node.childNodes || [])];
   }
-  const counter = attrOf(node, 'counter');
-  if (counter) node.childNodes = [...(node.childNodes || []), raw(`<span class="vk-counter">${esc(counter)}</span>`)];
 }
 
 /* ---------------------------------------------------------------- 图 */

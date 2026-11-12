@@ -104,7 +104,7 @@ hello.c:3: error: expected ';'
 
 <vk-page id="math">
   <vk-head kicker="复杂度" counter="11" size="subhead">每层做 O(n) 的活，<em>一共 log n 层</em>。</vk-head>
-  <vk-math size="subhead" align="center">
+  <vk-math size="headline" align="center">
     <script type="text/plain" data-vk-source>
 T(n) = 2T\left(\frac{n}{2}\right) + O(n)
     </script>
@@ -131,7 +131,7 @@ T(n) = 2T\left(\frac{n}{2}\right) + O(n)
 
 <vk-page id="bits">
   <vk-head kicker="位" counter="14" size="subhead">一个 float16，<em>三段</em>。</vk-head>
-  <vk-bits value="0|01111|0000000000" index="down" sign label="float16" field-labels="符号,阶码,尾数"></vk-bits>
+  <vk-bits value="0|01111|0000000000" index="down" sign label="float16" field-labels="符号,阶码,尾数" size="subhead"></vk-bits>
   <vk-text size="body" ink="secondary">符号位的 0 表示正数。</vk-text>
 </vk-page>
 

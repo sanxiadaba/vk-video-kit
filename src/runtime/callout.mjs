@@ -111,7 +111,9 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      const gap = Number(this.getAttribute('gap') || 32) || 32;
+      /* 间距读构建期归一化的 --vk-gap；读不到再退回属性/32。 */
+      const gapVar = parseFloat(getComputedStyle(this).getPropertyValue('--vk-gap'));
+      const gap = Number.isFinite(gapVar) && gapVar > 0 ? gapVar : Number(this.getAttribute('gap') || 32) || 32;
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
