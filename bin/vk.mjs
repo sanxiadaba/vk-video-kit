@@ -1,30 +1,26 @@
 #!/usr/bin/env node
 /**
- * vk —— 一条命令。
+ * vk —— 单帧画面库的 CLI。
  *
- *   vk render <file|dir> [--frame id] [--phone] [--out DIR] [--json]
- *   vk check  <file|dir> [--frame id] [--json]     只自检，不出图
- *   vk doc <tag>                                   一个件的属性表
- *   vk brief [--json|--md]                          全部契约
- *   vk icons <query>                               搜 Lucide 图标名
- *   vk clean [--all]                               删 out/ 与缓存（--all 连 vk/ dist/）
- *
- * 库的构建（CSS / JS / 字体）在这里按需自动完成：没有第二个入口。
+ *   vk render <file|dir> [--frame id] [--out DIR] [--json]
+ *       构建 + 自检 + 出图：每帧三件（1920 PNG、780 PNG、frame.json）
+ *   vk check <file|dir> [--frame id] [--out DIR] [--json]
+ *       只构建 + 自检 + frame.json，不出 PNG
+ *   vk doc <tag> [--json]      一个件的属性表
+ *   vk brief [--json|--md]     全部契约
+ *   vk icons <query>           搜 Lucide 图标名
+ *   vk clean                   删 out/ 与 .vk-cache/
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync, spawn } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
+import { pathToFileURL } from 'node:url';
 import { TAGS, TAG_NAMES, attrsOf } from '../src/schema.mjs';
-import { contract, markdown } from '../src/contract.mjs';
-import { buildShowcase } from '../tools/showcase.mjs';
+import { contract, markdown, VERSION } from '../src/contract.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'out');
 const PAGES = path.join(ROOT, '.vk-cache', 'pages');
-const FRAMES = path.join(ROOT, '.vk-cache', 'frames');
-let LIB_STAMP = '';
-const frameKey = (file, id, width) =>
-  crypto.createHash('sha1').update(LIB_STAMP + ':' + fs.readFileSync(file, 'utf8') + ':' + id + ':' + width).digest('hex');
 
 const args = process.argv.slice(2);
 const cmd = args[0];
@@ -33,81 +29,25 @@ const val = (n) => {
   const i = args.indexOf(n);
   return i >= 0 ? args[i + 1] : null;
 };
-const VALUE_FLAGS = new Set(['--out', '--width', '--shot', '--frame']);
-const KNOWN_FLAGS = new Set([...VALUE_FLAGS, '--phone', '--json', '--md', '--all', '--no-open', '--version']);
-const badFlag = args.slice(1).find((a) => a.startsWith('-') && !KNOWN_FLAGS.has(a));
-if (badFlag) {
-  console.error(`[vk] 不认识的参数 ${badFlag}；可用：${[...KNOWN_FLAGS].join(' ')}`);
+const VALUE_FLAGS = new Set(['--out', '--frame']);
+const KNOWN = new Set([...VALUE_FLAGS, '--json', '--md', '--help', '-h', '--version', '-v']);
+const bad = args.slice(1).find((a) => a.startsWith('-') && !KNOWN.has(a));
+if (bad) {
+  console.error(`[vk] 不认识的参数 ${bad}；可用：${[...KNOWN].join(' ')}`);
   process.exit(2);
 }
-const inputs = args.slice(1).filter((a, i) => !a.startsWith('-') && !VALUE_FLAGS.has(args.slice(1)[i - 1]));
-
+const inputs = args.slice(1).filter((a, i, arr) => !a.startsWith('-') && !VALUE_FLAGS.has(arr[i - 1]));
 const json = flag('--json');
-const phone = flag('--phone');
-const width = Number(val('--width') || 0) || (phone ? 780 : 1920);
 const onlyFrame = val('--frame');
-const pngDir = () => path.resolve(ROOT, val('--out') || OUT);
+const outDir = () => path.resolve(process.cwd(), val('--out') || OUT);
 
-/* ---------------------------------------------------------------- 库构建 */
-const crypto = await import('node:crypto');
-
-/** 目录内容指纹：改了内容才算变，恢复成旧时间戳也不骗人。 */
-const digestOf = (dir, exts) => {
-  const h = crypto.createHash('sha1');
-  const walk = (p) => {
-    for (const e of fs.readdirSync(p, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
-      const abs = path.join(p, e.name);
-      if (e.isDirectory()) {
-        if (e.name === 'node_modules' || e.name.startsWith('.')) continue;
-        walk(abs);
-      } else if (!exts.length || exts.some((x) => abs.endsWith(x))) {
-        h.update(path.relative(ROOT, abs));
-        h.update(fs.readFileSync(abs));
-      }
-    }
-  };
-  if (!fs.existsSync(dir)) return '';
-  walk(dir);
-  return h.digest('hex');
-};
-
-const run = (bin, argv) => execFileSync(bin, argv, { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] });
+/* ---------------------------------------------------------------- 库 */
+const run = (file) => execFileSync(process.execPath, [path.join(ROOT, 'tools', file)], { cwd: ROOT, stdio: ['ignore', 'pipe', 'inherit'] });
 
 function ensureLibrary() {
-  const cacheFile = path.join(ROOT, '.vk-cache', 'lib.json');
-  let cache = {};
-  try {
-    cache = JSON.parse(fs.readFileSync(cacheFile, 'utf8'));
-  } catch {
-    cache = {};
-  }
-  const save = () => {
-    fs.mkdirSync(path.dirname(cacheFile), { recursive: true });
-    fs.writeFileSync(cacheFile, JSON.stringify(cache));
-  };
-  const stamp = [
-    digestOf(path.join(ROOT, 'src'), ['.mjs', '.css']),
-    digestOf(path.join(ROOT, 'tools'), ['.mjs']),
-    digestOf(path.join(ROOT, 'assets'), ['.png', '.jpg', '.jpeg', '.webp']),
-    digestOf(path.join(ROOT, 'code'), ['.c', '.h', '.dis', '.s', '.diff', '.txt', '.json', '.py', '.md']),
-    fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'),
-  ].join(':');
-  const digest = crypto.createHash('sha1').update(stamp).digest('hex');
-  LIB_STAMP = digest;
-
-  if (!fs.existsSync(path.join(ROOT, 'vk/fonts.css'))) run('node', ['tools/fonts.mjs']);
-  if (!fs.existsSync(path.join(ROOT, 'vk/katex.css'))) run('node', ['tools/katex.mjs']);
-  const tokens = digestOf(path.join(ROOT, 'src'), ['.mjs']);
-  if (!fs.existsSync(path.join(ROOT, 'src/tokens.generated.css')) || cache.tokens !== tokens) {
-    run('node', ['tools/css.mjs']);
-    cache.tokens = tokens;
-    save();
-  }
-  if (!fs.existsSync(path.join(ROOT, 'vk/vk.css')) || !fs.existsSync(path.join(ROOT, 'dist/vk.js')) || cache.lib !== digest) {
-    run('node', ['tools/build.mjs']);
-    cache.lib = digest;
-    save();
-  }
+  run('gen.mjs');
+  run('vendor.mjs');
+  run('bundle.mjs');
 }
 
 /* ---------------------------------------------------------------- 构建页 */
@@ -116,23 +56,15 @@ async function buildPage(file) {
   const html = fs.readFileSync(file, 'utf8');
   const abs = path.resolve(file);
   const rel = path.relative(ROOT, abs);
-  // 仓库外的页也能渲：放到 _outside/ 下，不往 .vk-cache 外面写。
   const out = path.join(PAGES, rel.startsWith('..') ? path.join('_outside', path.basename(abs)) : rel);
-  const stamp = crypto.createHash('sha1').update(LIB_STAMP + ':' + html).digest('hex');
-  const stampFile = out + '.stamp';
-  if (fs.existsSync(out) && fs.existsSync(stampFile) && fs.readFileSync(stampFile, 'utf8') === stamp) {
-    return { file, ok: true, out, count: 0, cached: true };
-  }
-  let res;
   try {
-    res = await transformHtml(html, { file: abs });
+    const res = await transformHtml(html, { file: abs });
+    fs.mkdirSync(path.dirname(out), { recursive: true });
+    fs.writeFileSync(out, res.html);
+    return { file, ok: true, out, assets: res.assets };
   } catch (e) {
-    return { file, ok: false, errors: e.errors || [{ file: rel, line: 1, message: e.message }] };
+    return { file, ok: false, diagnostics: e.diagnostics || [{ file: rel, line: 1, message: e.message }] };
   }
-  fs.mkdirSync(path.dirname(out), { recursive: true });
-  fs.writeFileSync(out, res.html);
-  fs.writeFileSync(stampFile, stamp);
-  return { file, ok: true, out, count: res.count };
 }
 
 function collect(p) {
@@ -140,7 +72,7 @@ function collect(p) {
   if (st.isFile()) return [p];
   const out = [];
   const walk = (d) => {
-    for (const e of fs.readdirSync(d, { withFileTypes: true })) {
+    for (const e of fs.readdirSync(d, { withFileTypes: true }).sort((a, b) => a.name.localeCompare(b.name))) {
       if (e.name.startsWith('.')) continue;
       const abs = path.join(d, e.name);
       if (e.isDirectory()) walk(abs);
@@ -154,11 +86,23 @@ function collect(p) {
 /* ---------------------------------------------------------------- 浏览器 */
 async function launch() {
   const { chromium } = await import('playwright');
-  const opts = { args: ['--font-render-hinting=none', '--allow-file-access-from-files'] };
-  // 依次试：自带 Chromium → 系统 Chrome（CI 的 ubuntu 镜像自带）→ Edge（Windows）。
+  // 固定的栅格化参数：关 GPU、关 LCD 次像素、固定色彩配置。
+  // 这不是性能优化，是让同一帧两次出图像素一致（视频也会压掉次像素彩边）。
+  const opts = {
+    args: [
+      '--allow-file-access-from-files',
+      '--font-render-hinting=none',
+      '--disable-gpu',
+      '--disable-lcd-text',
+      '--disable-partial-raster',
+      '--force-color-profile=srgb',
+      '--run-all-compositor-stages-before-draw',
+    ],
+  };
   for (const channel of [undefined, 'chrome', 'msedge']) {
     try {
-      return await chromium.launch(channel ? { ...opts, channel } : opts);
+      const browser = await chromium.launch(channel ? { ...opts, channel } : opts);
+      return { browser, channel: channel || 'bundled' };
     } catch {
       /* 下一个 */
     }
@@ -166,68 +110,174 @@ async function launch() {
   throw new Error('找不到可用浏览器：跑 npx playwright install chromium，或装 Chrome/Edge');
 }
 
-async function openPage(browser, url) {
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
-  const errors = [];
-  const warns = [];
-  page.on('console', (m) => {
-    if (m.type() === 'error') errors.push(m.text());
-    else if (m.type() === 'warning') warns.push(m.text().replace(/\s*JSHandle@node\s*$/, ''));
-  });
-  page.on('pageerror', (e) => errors.push(e.message));
-  page.on('requestfailed', (r) => errors.push(`资源加载失败：${r.url().split('/').pop()}（${r.failure()?.errorText || ''}）`));
-  await page.goto(url, { waitUntil: 'load' });
-  const ready = await page.evaluate(() => window.vk?.ready?.());
-  const frames = await page.evaluate(() =>
-    [...document.querySelectorAll('vk-page')].map((p, i) => {
-      const r = p.getBoundingClientRect();
-      // 这一帧用了哪些件、它自己在讲什么：看板的分组与说明都从这儿来，不另维护一张表。
-      const tags = [...new Set([...p.querySelectorAll('*')].map((el) => el.localName).filter((t) => t.startsWith('vk-')))];
-      const label = p.querySelector('vk-label .vk-label-t') || p.querySelector('vk-label');
-      return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height, tags, caption: (label?.textContent || '').trim(), surface: p.getAttribute('surface') || 'paper' };
-    })
-  );
-  return { page, errors, ready, frames, warns };
-}
-
 /** 把一张 PNG 等比缩到 targetW（盒式滤波）：按手机尺度看整帧。 */
 async function downscale(file, targetW) {
   const { PNG } = await import('pngjs');
   const src = PNG.sync.read(fs.readFileSync(file));
+  if (src.width <= targetW) return;
   const targetH = Math.round((src.height * targetW) / src.width);
   const out = new PNG({ width: targetW, height: targetH });
   const sx = src.width / targetW;
   const sy = src.height / targetH;
   for (let y = 0; y < targetH; y++) {
     for (let x = 0; x < targetW; x++) {
-      let r = 0, g = 0, b = 0, a = 0, n = 0;
-      const x0 = Math.floor(x * sx), x1 = Math.min(src.width, Math.ceil((x + 1) * sx));
-      const y0 = Math.floor(y * sy), y1 = Math.min(src.height, Math.ceil((y + 1) * sy));
+      let r = 0;
+      let g = 0;
+      let b = 0;
+      let a = 0;
+      let n = 0;
+      const x0 = Math.floor(x * sx);
+      const x1 = Math.min(src.width, Math.ceil((x + 1) * sx));
+      const y0 = Math.floor(y * sy);
+      const y1 = Math.min(src.height, Math.ceil((y + 1) * sy));
       for (let yy = y0; yy < y1; yy++) {
         for (let xx = x0; xx < x1; xx++) {
           const i = (yy * src.width + xx) << 2;
-          r += src.data[i]; g += src.data[i + 1]; b += src.data[i + 2]; a += src.data[i + 3]; n++;
+          r += src.data[i];
+          g += src.data[i + 1];
+          b += src.data[i + 2];
+          a += src.data[i + 3];
+          n++;
         }
       }
       const o = (y * targetW + x) << 2;
-      out.data[o] = r / n; out.data[o + 1] = g / n; out.data[o + 2] = b / n; out.data[o + 3] = a / n;
+      out.data[o] = r / n;
+      out.data[o + 1] = g / n;
+      out.data[o + 2] = b / n;
+      out.data[o + 3] = a / n;
     }
   }
   fs.writeFileSync(file, PNG.sync.write(out));
 }
 
-const rel = (p) => path.relative(ROOT, p).split(path.sep).join('/');
+const rel = (p) => path.relative(process.cwd(), p).split(path.sep).join('/');
+
+/* ---------------------------------------------------------------- 渲染 */
+async function renderFiles(files, { shots }) {
+  const report = { version: VERSION, ok: true, engine: null, diagnostics: [], frames: [] };
+  const builtList = [];
+  for (const f of files) {
+    const built = await buildPage(f);
+    if (!built.ok) report.diagnostics.push(...built.diagnostics);
+    else builtList.push(built);
+  }
+  if (!builtList.length) {
+    report.ok = false;
+    return report;
+  }
+  const browserInfo = await launch();
+  report.engine = browserInfo.channel;
+  const browser = browserInfo.browser;
+  try {
+    for (const built of builtList) {
+      const f = built.file;
+      const page = await browser.newPage({ viewport: { width: 1920, height: 1080 }, deviceScaleFactor: 1 });
+      const errors = [];
+      const warns = [];
+      page.on('pageerror', (e) => errors.push(e.message));
+      page.on('console', (m) => {
+        if (m.type() === 'error') errors.push(m.text());
+        else if (m.type() === 'warning') warns.push(m.text().replace(/\s*JSHandle@node\s*$/, ''));
+      });
+      await page.goto(pathToFileURL(built.out).href, { waitUntil: 'load' });
+      await page.evaluate(() => window.vk?.ready?.());
+
+      const frames = await page.evaluate(() =>
+        [...document.querySelectorAll('vk-page')].map((p, i) => {
+          const r = p.getBoundingClientRect();
+          return { id: p.id || '', index: i, x: r.left, y: r.top, w: r.width, h: r.height };
+        })
+      );
+      const picked = onlyFrame ? frames.filter((f) => f.id === onlyFrame) : frames;
+      if (!frames.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: '这一页没有 <vk-page>：什么都没画出来', fix: '把内容包进 <vk-page>…</vk-page>' });
+      if (onlyFrame && !frames.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: `没有 id="${onlyFrame}" 的帧`, fix: '不带 --frame 先跑一次，看这一页有哪些 id' });
+      for (const err of errors) report.diagnostics.push({ file: rel(f), line: 1, code: 'RUNTIME', message: `运行期错误：${err}`, fix: '这是页面脚本/组件抛的，不是版式问题' });
+
+      const base = path.basename(f, '.html');
+      const dir = outDir();
+      for (const fr of picked) {
+        const name = frames.length > 1 ? `${base}-${fr.id || String(fr.index + 1).padStart(2, '0')}` : base;
+        const audit = await page.evaluate((idx) => {
+          const stage = document.querySelectorAll('.vk-stage')[idx];
+          if (!window.vk?.auditPage) return { issues: [{ code: 'frame', message: '页面里没有 vk 运行时', fix: '整页 HTML 要引 dist/vk.js' }], metrics: null, elements: [], overlaps: [], contrast: [] };
+          return window.vk.auditPage(stage);
+        }, fr.index);
+        let png = null;
+        let png780 = null;
+        if (shots) {
+          fs.mkdirSync(dir, { recursive: true });
+          png = path.join(dir, `${name}.png`);
+          png780 = path.join(dir, `${name}.780.png`);
+          await page.screenshot({ path: png, fullPage: true, clip: { x: fr.x, y: fr.y, width: fr.w, height: fr.h } });
+          fs.copyFileSync(png, png780);
+          await downscale(png780, 780);
+        }
+        const data = {
+          id: fr.id,
+          ok: audit.issues.length === 0,
+          metrics: audit.metrics,
+          issues: audit.issues,
+          elements: audit.elements,
+          overlaps: audit.overlaps,
+          contrast: audit.contrast,
+          warns: [...new Set(warns)],
+        };
+        fs.mkdirSync(shots ? dir : path.join(dir), { recursive: true });
+        const jsonPath = path.join(dir, `${name}.json`);
+        fs.writeFileSync(jsonPath, JSON.stringify({ file: rel(f), ...data }, null, 1) + '\n');
+        report.frames.push({ file: rel(f), name, png: png ? rel(png) : null, png780: png780 ? rel(png780) : null, json: rel(jsonPath), ...data });
+      }
+      await page.close();
+    }
+  } finally {
+    await browser.close();
+  }
+  report.ok = report.diagnostics.length === 0 && report.frames.every((f) => f.ok);
+  return report;
+}
+
+function printReport(report) {
+  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
+  for (const f of report.frames) {
+    const tag = f.id ? ` #${f.id}` : '';
+    if (f.issues.length) {
+      console.log(`✗ ${f.file}${tag}`);
+      for (const x of f.issues) console.log(`   · ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
+    } else {
+      console.log(`✓ ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
+    }
+    if (f.metrics) {
+      console.log(`   内容 y ${f.metrics.contentTop}–${f.metrics.contentBottom}（占版心 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}${f.overlaps.length ? ` · 重叠 ${f.overlaps.length}` : ''}`);
+    }
+    for (const w of f.warns) console.log(`   提示：${w}`);
+  }
+  const n = report.diagnostics.length + report.frames.reduce((k, f) => k + f.issues.length, 0);
+  console.log(n ? `\n${n} 条问题` : `\n干净：${report.frames.length} 帧`);
+}
 
 /* ---------------------------------------------------------------- 命令 */
+const USAGE = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，手机上约 780 宽）
 
-if (cmd === 'render' || cmd === 'check') {
+  vk render <file|dir> [--frame id] [--out DIR] [--json]
+      构建 + 自检 + 出三件：<name>.png / <name>.780.png / <name>.json
+  vk check  <file|dir> [--frame id] [--out DIR] [--json]
+      只构建 + 自检 + 写 json（不出图）
+  vk doc    <tag> [--json]     一个件的属性表
+  vk brief  [--json|--md]      全部契约
+  vk icons  <query>            搜 Lucide 图标名
+  vk clean                     删 out/ 与 .vk-cache/
+  vk --version | --help
+`;
+
+if (cmd === '--help' || cmd === '-h' || cmd === undefined) {
+  console.log(USAGE);
+} else if (cmd === '--version' || cmd === '-v') {
+  console.log(VERSION);
+} else if (cmd === 'render' || cmd === 'check') {
   if (!inputs.length) {
-    console.error(`用法：vk ${cmd} <file|dir> [--frame id] [--phone] [--width N] [--json]`);
+    console.error(`用法：vk ${cmd} <file|dir> [--frame id] [--out DIR] [--json]`);
     process.exit(2);
   }
-  ensureLibrary();
-
-  // 相对路径按「你站的地方」算，不按库根：在 tests/ 里跑 `vk check frames.html` 也得成立。
   const files = inputs.flatMap((i) => {
     const abs = path.resolve(process.cwd(), i);
     return fs.existsSync(abs) ? collect(abs) : [];
@@ -236,203 +286,11 @@ if (cmd === 'render' || cmd === 'check') {
     console.error(`[vk] 找不到 ${inputs.join(' ')}`);
     process.exit(2);
   }
-
-  const built = [];
-  for (const f of files) built.push(await buildPage(f));
-
-  const browser = await launch();
-  const report = [];
-  try {
-    for (const b of built) {
-      if (!b.ok) {
-        report.push({ file: rel(b.file), ok: false, errors: b.errors, frames: [] });
-        continue;
-      }
-      const url = 'file:///' + b.out.split(path.sep).join('/');
-      const session = await openPage(browser, url);
-      const frames = onlyFrame ? session.frames.filter((f) => f.id === onlyFrame) : session.frames;
-      const perFrame = [];
-      for (let i = 0; i < frames.length; i++) {
-        const f = frames[i];
-        const key = frameKey(b.file, f.id || f.index, width);
-        const cachePng = path.join(FRAMES, key + '.png');
-        const cacheJson = path.join(FRAMES, key + '.json');
-        if (cmd === 'render' && fs.existsSync(cachePng) && fs.existsSync(cacheJson)) {
-          const base = path.basename(b.file, '.html');
-          const suffix = (session.frames.length > 1 ? `-${f.id || String(f.index + 1).padStart(2, '0')}` : '') + (width !== 1920 ? `.${width}` : '');
-          const png = path.join(pngDir(), `${base}${suffix}.png`);
-          fs.mkdirSync(path.dirname(png), { recursive: true });
-          fs.copyFileSync(cachePng, png);
-          const cached = JSON.parse(fs.readFileSync(cacheJson, 'utf8'));
-          perFrame.push({ id: f.id, index: f.index, issues: cached.issues, metrics: cached.metrics, png: rel(png) });
-          continue;
-        }
-        const audit = await session.page.evaluate((idx) => {
-          if (!window.vk?.auditPage) {
-            return { issues: [{ code: 'frame', message: '页面里没有 vk 运行时（window.vk 不存在）', fix: '片段页不用管；整页 HTML 要引 dist/vk.js' }], metrics: null };
-          }
-          const stage = document.querySelectorAll('.vk-stage')[idx];
-          return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
-        }, f.index);
-        let png = null;
-        if (cmd === 'render') {
-          const base = path.basename(b.file, '.html');
-          const suffix = (session.frames.length > 1 ? `-${f.id || String(f.index + 1).padStart(2, '0')}` : '') + (width !== 1920 ? `.${width}` : '');
-          png = path.join(pngDir(), `${base}${suffix}.png`);
-          fs.mkdirSync(path.dirname(png), { recursive: true });
-          await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
-          if (width !== 1920) await downscale(png, width);
-          fs.mkdirSync(FRAMES, { recursive: true });
-          fs.copyFileSync(png, cachePng);
-          fs.writeFileSync(cacheJson, JSON.stringify(audit));
-        }
-        perFrame.push({ id: f.id, index: f.index, issues: audit.issues, metrics: audit.metrics, png: png ? rel(png) : null });
-      }
-      const errors = [];
-      if (!session.frames.length) errors.push({ file: rel(b.file), line: 1, message: '这一页没有 <vk-page>：什么都没画出来', fix: '把内容包进 <vk-page>…</vk-page>' });
-      if (onlyFrame && !frames.length) errors.push({ file: rel(b.file), line: 1, message: `没有 id="${onlyFrame}" 的帧`, fix: 'vk check 会列出这一页所有帧的 id' });
-      if (session.ready === false) errors.push({ file: rel(b.file), line: 1, message: '页面在超时前没有就绪（字体/图片没加载完？）', fix: '看下面的运行期错误' });
-      for (const e of session.errors) errors.push({ file: rel(b.file), line: 1, message: `运行期错误：${e}`, fix: '这是页面脚本/组件抛的，不是版式问题' });
-      report.push({ file: rel(b.file), ok: true, out: rel(b.out), errors, frames: perFrame, warns: [...new Set(session.warns)] });
-      await session.page.close();
-    }
-  } finally {
-    await browser.close();
-  }
-
-  if (json) {
-    console.log(JSON.stringify(report, null, 2));
-  } else {
-    for (const r of report) {
-      if (!r.frames.length) {
-        console.log(`✗ ${r.file}`);
-        for (const e of r.errors) console.log(`   ${e.file}:${e.line} ${e.message}${e.fix ? ` → ${e.fix}` : ''}`);
-        continue;
-      }
-      for (const f of r.frames) {
-        const tag = r.frames.length > 1 || f.id ? ` #${f.id || f.index + 1}` : '';
-        if (f.issues.length) {
-          console.log(`✗ ${r.file}${tag}`);
-          for (const x of f.issues) console.log(`   · ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
-        } else {
-          console.log(`✓ ${r.file}${tag}${f.png ? `  → ${f.png}` : ''}`);
-        }
-        if (f.metrics) console.log(`   内容 y ${f.metrics.contentTop}–${f.metrics.contentBottom}（占版心 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}`);
-      }
-      for (const e of r.errors) console.log(`   ✗ ${e.message}${e.fix ? ` → ${e.fix}` : ''}`);
-      for (const w of r.warns || []) console.log(`   提示：${w}`);
-    }
-    const nIssues = report.reduce((n, r) => n + r.errors.length + r.frames.reduce((k, f) => k + f.issues.length, 0), 0);
-    const nFrames = report.reduce((n, r) => n + r.frames.length, 0);
-    console.log(nIssues ? `\n${nIssues} 条问题` : `\n干净：${nFrames} 帧`);
-  }
-
-  const bad = report.some((r) => !r.frames.length || r.errors.length || r.frames.some((f) => f.issues.length));
-  process.exitCode = bad ? 1 : 0;
-} else if (cmd === 'showcase') {
-  /* 一条命令：渲染 → 排成看板 → 打开。目的只有一个：让你立刻看到这个库长什么样。 */
   ensureLibrary();
-  const target = inputs[0] || 'tests/frames.html';
-  const fromCwd = path.resolve(process.cwd(), target);
-  const abs = fs.existsSync(fromCwd) ? fromCwd : path.resolve(ROOT, target);
-  if (!fs.existsSync(abs)) {
-    console.error(`[vk] 找不到 ${target}`);
-    process.exit(2);
-  }
-  const outDir = path.join(ROOT, 'out', 'showcase');
-  fs.rmSync(outDir, { recursive: true, force: true });
-
-  const b = await buildPage(abs);
-  if (!b.ok) {
-    console.error(`✗ ${rel(abs)}`);
-    for (const e of b.errors) console.error(`   ${e.file}:${e.line} ${e.message}${e.fix ? ` → ${e.fix}` : ''}`);
-    process.exit(1);
-  }
-
-  const browser = await launch();
-  const entries = [];
-  try {
-    const session = await openPage(browser, 'file:///' + b.out.split(path.sep).join('/'));
-    const base = path.basename(b.file, '.html');
-    for (const f of session.frames) {
-      const png = path.join(outDir, 'frames', `${base}-${f.id || f.index + 1}.png`);
-      fs.mkdirSync(path.dirname(png), { recursive: true });
-      const key = frameKey(b.file, f.id || f.index, 1920);
-      const cachePng = path.join(FRAMES, key + '.png');
-      const cacheJson = path.join(FRAMES, key + '.json');
-      let audit;
-      if (fs.existsSync(cachePng) && fs.existsSync(cacheJson)) {
-        fs.copyFileSync(cachePng, png);
-        audit = JSON.parse(fs.readFileSync(cacheJson, 'utf8'));
-      } else {
-        await session.page.screenshot({ path: png, fullPage: true, clip: { x: f.x, y: f.y, width: f.w, height: f.h } });
-        audit = await session.page.evaluate((idx) => {
-          if (!window.vk?.auditPage) return { issues: [{ message: '页面里没有 vk 运行时' }], metrics: null };
-          const stage = document.querySelectorAll('.vk-stage')[idx];
-          return { issues: window.vk.auditPage(stage).issues, metrics: window.vk.metrics(stage) };
-        }, f.index);
-        fs.mkdirSync(FRAMES, { recursive: true });
-        fs.copyFileSync(png, cachePng);
-        fs.writeFileSync(cacheJson, JSON.stringify(audit));
-      }
-      entries.push({ id: f.id || `frame-${f.index + 1}`, caption: f.caption, tags: f.tags, surface: f.surface, png: `frames/${path.basename(png)}`, issues: audit.issues, metrics: audit.metrics });
-    }
-    await session.page.close();
-    if (!entries.length) {
-      console.error(`[vk] ${rel(abs)} 里没有 <vk-page>`);
-      process.exit(1);
-    }
-
-    const index = path.join(outDir, 'index.html');
-    const sheetHtml = path.join(outDir, 'sheet.html');
-    // 页面按手机尺度排（每帧约 880 宽）；整页图用紧凑四列，只当总览。
-    fs.writeFileSync(index, buildShowcase({ entries, source: rel(abs), cols: 2 }), 'utf8');
-    fs.writeFileSync(sheetHtml, buildShowcase({ entries, source: rel(abs), cols: 4 }), 'utf8');
-
-    // 整页图：给“一眼扫完”和 AI 读图用。同一次浏览器会话，不重开；图没变就复用。
-    const sheetPath = path.join(outDir, 'sheet.png');
-    const sheetKey = crypto
-      .createHash('sha1')
-      .update(LIB_STAMP + ':' + entries.map((e) => `${e.id}:${e.png}:${e.caption || ''}`).join('|'))
-      .digest('hex');
-    const sheetCache = path.join(ROOT, '.vk-cache', 'sheets', sheetKey + '.png');
-    if (fs.existsSync(sheetCache)) {
-      fs.copyFileSync(sheetCache, sheetPath);
-    } else {
-      const sheet = await browser.newPage({ viewport: { width: 1920, height: 1200 }, deviceScaleFactor: 1 });
-      await sheet.goto('file:///' + sheetHtml.split(path.sep).join('/'), { waitUntil: 'load' });
-      await sheet.evaluate(() => Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve()))));
-      await sheet.screenshot({ path: sheetPath, fullPage: true });
-      await sheet.close();
-      fs.mkdirSync(path.dirname(sheetCache), { recursive: true });
-      fs.copyFileSync(sheetPath, sheetCache);
-    }
-
-    const dirty = entries.filter((e) => e.issues.length);
-    console.log(`看板：${rel(index)}（${entries.length} 帧${dirty.length ? `，${dirty.length} 帧有问题` : ''}）`);
-    console.log(`整页：${rel(path.join(outDir, 'sheet.png'))}`);
-    if (!flag('--no-open')) {
-      try {
-        const spawnOpts = { detached: true, stdio: 'ignore' };
-        if (process.platform === 'win32') spawn('cmd', ['/c', 'start', '', index], spawnOpts).unref();
-        else if (process.platform === 'darwin') spawn('open', [index], spawnOpts).unref();
-        else spawn('xdg-open', [index], spawnOpts).unref();
-      } catch {
-        /* 打不开就算了，路径已经打印出来了 */
-      }
-    }
-  } finally {
-    await browser.close();
-  }
-} else if (cmd === 'clean') {
-  const all = flag('--all');
-  const targets = [OUT, path.join(ROOT, '.vk-cache'), ...(all ? [path.join(ROOT, 'vk'), path.join(ROOT, 'dist'), path.join(ROOT, 'src/tokens.generated.css')] : [])];
-  for (const d of targets) {
-    if (!fs.existsSync(d)) continue;
-    fs.rmSync(d, { recursive: true, force: true });
-    console.log('删掉 ' + rel(d));
-  }
-  console.log(all ? '干净（下次会重建库）。' : '干净（库还在）。');
+  const report = await renderFiles(files, { shots: cmd === 'render' });
+  if (json) console.log(JSON.stringify(report, null, 2));
+  else printReport(report);
+  process.exitCode = report.ok ? 0 : 1;
 } else if (cmd === 'doc') {
   const tag = inputs[0];
   if (!TAGS[tag]) {
@@ -442,62 +300,50 @@ if (cmd === 'render' || cmd === 'check') {
   const t = TAGS[tag];
   if (json) {
     console.log(JSON.stringify(contract().tags[tag], null, 2));
-    process.exit(0);
-  }
-  console.log(`${tag} · ${t.name}  (${t.layer})`);
-  console.log(t.summary);
-  if (t.capacity) console.log(`一帧容量：${t.capacity.max} ${t.capacity.unit}`);
-  const LABEL = { type: '字', appearance: '外观', layout: '布局', state: '状态', content: '内容', target: '目标', other: '其它' };
-  const groups = {};
-  for (const [name, spec] of Object.entries(attrsOf(tag))) (groups[spec.group || 'other'] ||= []).push([name, spec]);
-  for (const [g, list] of Object.entries(groups)) {
-    console.log(`\n${LABEL[g] || g}`);
-    for (const [name, spec] of list) {
-      const vals = spec.values ? spec.values.join(' | ') : spec.type;
-      const def = spec.default !== undefined ? `  默认 ${spec.default}` : '';
-      const when = spec.when ? `  （只对 ${spec.when.attr}=${spec.when.values.join('/')}）` : '';
-      console.log(`  ${name.padEnd(12)} ${vals}${def}  ${spec.label || ''}${when}`);
+  } else {
+    console.log(`${tag} · ${t.name}  (${t.layer})`);
+    console.log(t.summary);
+    if (t.capacity) console.log(`一帧容量：${t.capacity.max} ${t.capacity.unit}`);
+    const LABEL = { type: '字', appearance: '外观', layout: '布局', state: '状态', content: '内容', target: '目标', other: '其它' };
+    const groups = {};
+    for (const [name, spec] of Object.entries(attrsOf(tag))) (groups[spec.group || 'other'] ||= []).push([name, spec]);
+    for (const [g, list] of Object.entries(groups)) {
+      console.log(`\n${LABEL[g] || g}`);
+      for (const [name, spec] of list) {
+        const values = spec.values ? spec.values.join(' | ') : spec.type;
+        const def = spec.default !== undefined ? `  默认 ${spec.default}` : '';
+        const when = spec.when ? `  （只对 ${spec.when.attr}=${spec.when.values.join('/')}）` : '';
+        console.log(`  ${name.padEnd(12)} ${values}${def}  ${spec.label || ''}${when}`);
+      }
     }
   }
-  if (t.children?.hint) console.log(`\n子节点：${t.children.hint}`);
 } else if (cmd === 'brief') {
-  if (flag('--md')) {
-    console.log(markdown());
-    process.exit(0);
-  }
-  if (json) {
-    console.log(JSON.stringify(contract(), null, 2));
-    process.exit(0);
-  }
-  const c = contract();
-  console.log(`画布 1920×1080，版心 1680×888；最小字号 ${c.fontFloor}px；索引 1 起。`);
-  for (const tag of TAG_NAMES) {
-    const t = c.tags[tag];
-    console.log(`\n${tag} · ${t.name} —— ${t.summary}`);
-    const parts = Object.entries(t.attrs).map(([n, s]) => `${n}=${s.values ? s.values.join('|') : s.type}${s.default !== undefined ? `(${s.default})` : ''}`);
-    console.log('  ' + parts.join('  '));
-    if (t.children?.hint) console.log(`  内容：${t.children.hint}`);
+  if (flag('--md')) console.log(markdown());
+  else if (json) console.log(JSON.stringify(contract(), null, 2));
+  else {
+    const c = contract();
+    console.log(`vk ${c.version} · 画布 ${c.canvas.w}×${c.canvas.h} · 版心 ${c.canvas.w - c.canvas.safeX * 2}×${c.canvas.h - c.canvas.safeY * 2} · 地板 ${c.floor}px · 索引 ${c.indexRule}`);
+    for (const tag of TAG_NAMES) {
+      const t = c.tags[tag];
+      console.log(`\n${tag} · ${t.name} —— ${t.summary}`);
+      console.log('  ' + Object.entries(t.attrs).map(([n, s]) => `${n}=${s.values ? s.values.join('|') : s.type}${s.default !== undefined ? `(${s.default})` : ''}`).join('  '));
+      if (t.children?.hint) console.log(`  内容：${t.children.hint}`);
+    }
   }
 } else if (cmd === 'icons') {
   const q = (inputs[0] || '').toLowerCase();
   const lucide = await import('lucide');
-  const names = Object.keys(lucide.icons || {}).map((n) =>
-    n.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase()
-  );
+  const names = Object.keys(lucide.icons || {}).map((n) => n.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase());
   const hit = names.filter((k) => k.includes(q)).slice(0, 60);
   console.log(hit.length ? hit.join('\n') : `没有匹配 "${q}" 的图标`);
-} else if (flag('--version') || cmd === '--version') {
-  console.log(JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version);
+} else if (cmd === 'clean') {
+  for (const d of [OUT, path.join(ROOT, '.vk-cache')]) {
+    if (!fs.existsSync(d)) continue;
+    fs.rmSync(d, { recursive: true, force: true });
+    console.log('删掉 ' + rel(d));
+  }
 } else {
-  console.log(`vk —— 单帧画面库（一帧一张 1920×1080，手机上约 780 宽）
-
-  vk render <file|dir> [--frame id] [--phone] [--out DIR] [--json]
-  vk check  <file|dir> [--frame id] [--json]
-  vk showcase [file|dir] [--no-open]   渲染并把所有帧排成一页看板，自动打开
-  vk doc    <tag> [--json]
-  vk brief  [--json|--md]
-  vk icons  <query>
-  vk clean  [--all]
-`);
+  console.error(`[vk] 不认识的命令 ${cmd}\n`);
+  console.log(USAGE);
+  process.exit(2);
 }
-

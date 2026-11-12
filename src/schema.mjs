@@ -1,21 +1,15 @@
 /**
- * v18 · 公开契约
+ * v19 · 公开契约
  * ----------------------------------------------------------------------------
- * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写」。
+ * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写、一帧放几行」。
  * 它是唯一来源：构建期校验、vk doc / vk brief、CONTRACT.md、运行期默认值都读它。
  *
  * 规矩：
  *   · 属性名与取值只能来自 vocab.mjs；这里不发明数值。
- *   · 每件只做一件事。两件能画同一个东西 = 作者会选错 = 合并。
+ *   · 每件只做一件事；两件能画同一个东西 = 作者会选错 = 合并。
  *   · 一个概念一个词：tone（语义）/ size（字号）/ gap·pad（间距）/
- *     current（第几项，1 起，-1 = 没有）/ state（当前·标注）。
- *   · 索引一律 1 起，锚点也一样。
- *   · 没有时间维度：没有 at / cue / enter / duration。
- *
- * 属性上的 where 不是注释，是构建期真的会执行的规则：
- *   grid-child   只能写在 vk-grid 的直接子项上
- *   canvas-child 只能写在 vk-canvas 的直接子项上
- *   flow         不能写在行内件上（vk-inline / vk-label 的文字流里）
+ *     current（第几项，1 起）/ state（当前·标注）/ span（跨几栏）。
+ *   · 没有时间维度：没有 at / cue / enter / duration（时间线里的 at 是坐标，不是时间轴播放）。
  */
 
 import { TONE, STATE, SURFACE, INK, SIZE } from './vocab.mjs';
@@ -29,49 +23,40 @@ export const LAYERS = [
   { id: 'relation', label: 'L5 关系' },
 ];
 
-/* ------------------------------------------------------------------ 共享 */
-
-/* 每个块级件都有的四件事。 */
-export const COMMON = {
-  span: { type: 'int', min: 1, max: 12, default: 1, where: 'grid-child', group: 'layout', label: '占几份' },
-  'row-span': { type: 'int', min: 1, max: 12, default: 1, where: 'grid-child', group: 'layout', label: '跨几行' },
-  grow: { type: 'bool', where: 'flow', group: 'layout', label: '吃掉剩余空间' },
-  bleed: { type: 'enum', values: ['x', 'all'], where: 'flow', group: 'layout', label: '出血到画布边' },
+/* ------------------------------------------------------------------ 共享
+   块级件都是 flow 的子项：span 跨栏、bleed 出血。两件事各只有一个词。 */
+export const FLOW_CHILD = {
+  span: { type: 'int', min: 1, max: 12, default: 1, group: 'layout', label: '跨几栏' },
+  bleed: { type: 'enum', values: ['x', 'all'], group: 'layout', label: '出血到画布边' },
 };
 
-/* 项级状态：只出现在 <li> / 行 / 格上，容器自己不认。 */
-export const STATE_ATTR = { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' };
-
-/* 画布子项：只有 vk-canvas 的直接子节点认。 */
+/** 画布子项：只有 vk-canvas 的直接子节点认。 */
 export const CANVAS_ATTRS = {
-  x: { type: 'num', min: -4000, max: 4000, default: 0, where: 'canvas-child', group: 'layout', label: 'X' },
-  y: { type: 'num', min: -4000, max: 4000, default: 0, where: 'canvas-child', group: 'layout', label: 'Y' },
-  w: { type: 'num', min: 48, max: 1920, where: 'canvas-child', group: 'layout', label: '宽' },
-  h: { type: 'num', min: 48, max: 1080, where: 'canvas-child', group: 'layout', label: '高' },
-  z: { type: 'int', min: 0, max: 99, default: 0, where: 'canvas-child', group: 'layout', label: '层级' },
+  x: { type: 'num', min: -4000, max: 4000, default: 0, group: 'layout', label: 'X' },
+  y: { type: 'num', min: -4000, max: 4000, default: 0, group: 'layout', label: 'Y' },
+  w: { type: 'num', min: 48, max: 1920, group: 'layout', label: '宽（不写按内容）' },
+  h: { type: 'num', min: 48, max: 1080, group: 'layout', label: '高（不写按内容）' },
+  z: { type: 'int', min: 0, max: 99, default: 0, group: 'layout', label: '层级' },
 };
 
 /* ------------------------------------------------------------------ 取值 */
-const size = (def = 'body') => ({ type: 'enum', values: SIZE, default: def, group: 'type', label: '字号' });
-// 数据件（代码 / 表格 / 树 / 字节…）的字号只到 subhead：
-// 给它们 200、280 这种档位没有意义，只会让词表里多出一堆没人写、也没人验的取值。
-const sizeText = (def = 'body') => ({ type: 'enum', values: ['caption', 'body', 'subhead'], default: def, group: 'type', label: '字号' });
-// 正文字只认中性色和焦点色：语义色（ok / warn / err）只在线、图标、底标上。
-const toneText = (def = 'neutral') => ({ type: 'enum', values: ['neutral', 'focus'], default: def, group: 'tone', label: '语调' });
+const size = (values = SIZE, def = 'body') => ({ type: 'enum', values, default: def, group: 'type', label: '字号' });
+const sizeData = (def = 'body') => size(['caption', 'body', 'subhead'], def);
 const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '间距（档名或像素）' });
-const pad = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
-const tone = (def = 'neutral') => ({ type: 'enum', values: TONE, default: def, group: 'appearance', label: '语调' });
-const radius = () => ({ type: 'enum', values: ['none', 'md', 'pill'], default: 'md', group: 'appearance', label: '圆角' });
+const pad = (def = 'none') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
+const tone = (values = TONE, def = 'neutral') => ({ type: 'enum', values, default: def, group: 'appearance', label: '语调' });
+const radius = () => ({ type: 'enum', values: ['none', 'md', 'lg', 'pill'], default: 'md', group: 'appearance', label: '圆角' });
 const border = () => ({ type: 'enum', values: ['none', 'hair', 'strong'], default: 'none', group: 'appearance', label: '描边' });
-const current = () => ({ type: 'index', default: -1, group: 'state', label: '当前项（1 起；-1 = 没有）' });
-const chrome = (def = 'min') => ({ type: 'enum', values: ['min', 'none'], default: def, group: 'appearance', label: '窗口标题栏' });
-const surface = (values, def) => ({ type: 'enum', values, default: def, group: 'appearance', label: '表面' });
+const chrome = (def = 'none') => ({ type: 'enum', values: ['none', 'dots'], default: def, group: 'appearance', label: '窗口标题栏（三点 + 标题）' });
+const current = () => ({ type: 'index', default: undefined, group: 'state', label: '第几项（1 起；不写 = 没有当前）' });
+const surface = () => ({ type: 'enum', values: ['paper', 'dark'], default: 'paper', group: 'appearance', label: '表面' });
 
 const item = (attrs, hint) => ({ kind: 'item', item: 'li', attrs, hint });
 const source = (hint) => ({ kind: 'source', hint });
 
 /* 数据行的子项属性：tone 表语义、state 表当前/标注。 */
-const ITEM_TONE = () => tone('neutral');
+const ITEM_STATE = { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' };
+const ITEM_TONE = { type: 'enum', values: TONE, default: 'neutral', group: 'appearance', label: '语调' };
 
 /* ------------------------------------------------------------------ 标签 */
 export const TAGS = {
@@ -79,41 +64,45 @@ export const TAGS = {
   'vk-page': {
     layer: 'page',
     name: '画布',
-    summary: '一帧 1920×1080 的坐标系。align 决定内容在版心（1680×888）里的纵向位置。',
+    summary: '一帧 1920×1080 的坐标系。子项就是流：直接写 head 与内容，不用再包一层。align 决定内容在版心里的纵向位置。',
     attrs: {
       id: { type: 'text', group: 'content', label: '帧名（出图文件名）' },
       align: { type: 'enum', values: ['band', 'center', 'top', 'bottom'], default: 'band', group: 'layout', label: '纵向对齐' },
-      surface: { type: 'enum', values: ['paper', 'dark'], default: 'paper', group: 'appearance', label: '底色' },
+      surface: surface(),
+      gap: gap('normal'),
     },
-    children: { kind: 'slot' },
+    children: { kind: 'slot', hint: '直接写 <vk-head> 与内容；下一层要分栏时写 <vk-flow>。' },
+  },
+
+  'vk-head': {
+    layer: 'page',
+    name: '标题带',
+    summary: '一帧的起手：眉标 + 标题 +（可选）一句导语。它把标题带的位置与间距固定下来，帧与帧的标题不会跳。',
+    attrs: {
+      kicker: { type: 'text', group: 'content', label: '眉标（集数 / 分类）' },
+      counter: { type: 'text', group: 'appearance', label: '序号，如 "3 / 8"（等宽，跟在眉标后）' },
+      lede: { type: 'text', group: 'content', label: '导语（标题下一句）' },
+      size: { type: 'enum', values: ['subhead', 'headline', 'display'], default: 'headline', group: 'type', label: '标题字号' },
+      align: { type: 'enum', values: ['left', 'center'], default: 'left', group: 'layout', label: '对齐' },
+    },
+    content: 'text',
+    children: { kind: 'none', hint: '标签里的文字就是标题，可以写 <em> / <mark> / <code>。' },
   },
 
   /* ---------------------------------------------------------------- 排布 */
-  'vk-stack': {
+  'vk-flow': {
     layer: 'layout',
-    name: '竖排',
-    summary: '把子项按一条轴排开，只给间距、对齐和份数。不画任何东西。',
+    name: '流',
+    summary: '唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 让子项叠放。不画任何东西。',
     attrs: {
+      cols: { type: 'cols', default: '1', group: 'layout', label: '列：数字 1–12、比例 "1 2 1"、或 auto（按内容宽）' },
       gap: gap('normal'),
-      direction: { type: 'enum', values: ['column', 'row'], default: 'column', group: 'layout', label: '方向' },
       pad: pad('none'),
-      align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '交叉轴' },
-      justify: { type: 'enum', values: ['start', 'center', 'end', 'between'], default: 'start', group: 'layout', label: '主轴' },
-      weights: { type: 'list', group: 'layout', label: '按份数分剩余高度，如 "1 2 1"' },
-    },
-    children: { kind: 'slot' },
-  },
-
-  'vk-grid': {
-    layer: 'layout',
-    name: '网格',
-    summary: '12 栏网格。子项用 span / row-span 占份；列宽由份数算出，不能手写像素。',
-    attrs: {
-      cols: { type: 'int', min: 1, max: 12, default: 2, group: 'layout', label: '列数' },
-      ratio: { type: 'list', group: 'layout', label: '按比例分列，如 "1 8 23"（写了就不看 cols）' },
-      pad: pad('none'),
-      gap: gap('normal'),
-      align: { type: 'enum', values: ['start', 'center', 'end', 'stretch'], default: 'stretch', group: 'layout', label: '纵向对齐' },
+      align: { type: 'enum', values: ['start', 'center', 'end', 'between', 'stretch'], default: 'stretch', group: 'layout', label: '纵向' },
+      justify: { type: 'enum', values: ['start', 'center', 'end', 'between'], default: 'start', group: 'layout', label: '横向' },
+      overlay: { type: 'bool', group: 'layout', label: '叠放：子项落在同一格里' },
+      span: FLOW_CHILD.span,
+      bleed: FLOW_CHILD.bleed,
     },
     children: { kind: 'slot' },
   },
@@ -121,50 +110,30 @@ export const TAGS = {
   'vk-canvas': {
     layer: 'layout',
     name: '坐标画布',
-    summary: '坐标空间：子项用 x / y 明确摆放。只有这里认 x / y / w / h / z。',
+    summary: '绝对坐标：子项用 x / y 明确摆放。只在流排不出来时用；正常画面请用 flow。',
     attrs: {
       w: { type: 'num', min: 48, max: 1920, group: 'layout', label: '宽（不写按内容）' },
       h: { type: 'num', min: 48, max: 1080, group: 'layout', label: '高（不写按内容）' },
-      pad: pad('none'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: { kind: 'slot' },
-  },
-
-  'vk-layer': {
-    layer: 'layout',
-    name: '叠层',
-    summary: '叠放：第一个子项铺满当底，其余按顺序叠上去。它只负责叠，不画面。',
-    attrs: { pad: pad('none') },
-    children: { kind: 'slot' },
-  },
-
-  'vk-pair': {
-    layer: 'layout',
-    name: '并置',
-    summary: '两块并置对照：左右（或上下）两块，中间一条轴，轴上可放 → / = / vs。',
-    attrs: {
-      split: { type: 'num', min: 20, max: 80, default: 50, group: 'layout', label: '左块占比（%）' },
-      direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向' },
-      symbol: { type: 'enum', values: ['none', '→', '=', 'vs'], default: 'none', group: 'appearance', label: '轴上符号' },
-      gap: gap('wide'),
-    },
-    children: { kind: 'slot', exactly: 2 },
+    children: { kind: 'slot', hint: '子项用 x / y / w / h / z 定位，坐标相对这张画布。' },
   },
 
   /* ------------------------------------------------------------ 面与字 */
-  'vk-box': {
+  'vk-surface': {
     layer: 'surface',
     name: '面',
-    summary: '一块面：底、描边、圆角、内距，可带标题带与窗口标题栏。它只描述这一块，不排别人。',
+    summary: '一块面：底、描边、圆角、内距，可带标题栏。它是全库唯一的「窗口」，代码/终端/树共用同一套皮。',
     attrs: {
-      surface: surface(['none', 'paper', 'soft', 'tint', 'dark'], 'none'),
-      tone: tone('neutral'),
+      surface: { type: 'enum', values: ['none', 'paper', 'soft', 'tint', 'dark'], default: 'none', group: 'appearance', label: '表面' },
       pad: pad('normal'),
       radius: radius(),
       border: border(),
       title: { type: 'text', group: 'appearance', label: '标题（写了才有标题带）' },
-      chrome: { type: 'enum', values: ['none', 'dots'], default: 'none', group: 'appearance', label: '窗口标题栏三点' },
-      ring: { type: 'bool', group: 'appearance', label: '强调环（不占布局）' },
+      chrome: chrome('none'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: { kind: 'slot' },
   },
@@ -172,51 +141,20 @@ export const TAGS = {
   'vk-text': {
     layer: 'surface',
     name: '文字',
-    summary: '一段文字：字号、字重、墨阶、对齐、行宽。行内可用 <em> 强调、<strong> 加重、<mark> 标一段原文。',
+    summary: '一段文字：字号、字重、墨阶、对齐、行宽。行内可用 <em> 强调、<strong> 加重、<mark> 标原文、<code> 行内代码、<kbd> 键位。',
     attrs: {
-      size: size('body'),
+      size: size(),
       weight: { type: 'enum', values: ['regular', 'medium', 'bold'], default: 'regular', group: 'type', label: '字重' },
       ink: { type: 'enum', values: INK, default: 'primary', group: 'appearance', label: '墨阶' },
-      tone: toneText(),
+      tone: tone(['neutral', 'focus'], 'neutral'),
       align: { type: 'enum', values: ['left', 'center', 'right'], default: 'left', group: 'layout', label: '对齐' },
       measure: { type: 'measure', group: 'layout', label: '行宽（字数；none = 铺满）' },
-      icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
       mono: { type: 'bool', group: 'appearance', label: '等宽' },
-    },
-    content: 'text',
-  },
-
-  'vk-icon': {
-    layer: 'text',
-    name: '图标',
-    summary: '单独放一个 Lucide 图标：行内、盒里、标题旁都可以。',
-    attrs: {
-      name: { type: 'text', group: 'content', label: '图标名（Lucide kebab）' },
-      size: sizeText('body'),
-      tone: { type: 'enum', values: ['none', 'focus', 'ok', 'warn', 'err', 'info'], default: 'none', group: 'appearance', label: '颜色' },
-    },
-    children: { kind: 'none' },
-  },
-
-  'vk-label': {
-    layer: 'surface',
-    name: '标签',
-    summary: '一行小字：分类、编号、状态。kicker 纯字 / chip 浅底 / badge 实色。',
-    attrs: {
-      variant: { type: 'enum', values: ['kicker', 'chip', 'badge'], default: 'kicker', group: 'appearance', label: '形态' },
-      tone: tone('neutral'),
-      icon: { type: 'text', group: 'appearance', label: '图标（Lucide 名）' },
-      counter: { type: 'text', group: 'appearance', label: '序号，如 "3 / 5" 或 "03"' },
-    },
-    content: 'text',
-  },
-
-  'vk-inline': {
-    layer: 'surface',
-    name: '行内',
-    summary: '句子里的行内元素：代码、公式、上下标、键位。字号跟着所在文本走。',
-    attrs: {
-      variant: { type: 'enum', values: ['code', 'math', 'sup', 'sub', 'keys'], default: 'code', group: 'appearance', label: '形态' },
+      icon: { type: 'text', group: 'appearance', label: '行首图标（Lucide 名）' },
+      variant: { type: 'enum', values: ['body', 'kicker', 'chip', 'badge'], default: 'body', group: 'appearance', label: '形态' },
+      counter: { type: 'text', group: 'appearance', label: '序号，如 "3 / 8"（kicker 用）' },
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     content: 'text',
   },
@@ -224,163 +162,130 @@ export const TAGS = {
   'vk-img': {
     layer: 'surface',
     name: '图片',
-    summary: '一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说。',
+    summary: '一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说；bleed="all" 可整帧铺满当底。',
     attrs: {
       src: { type: 'text', group: 'content', label: '图片地址' },
-      alt: { type: 'text', group: 'content', label: '替代文字' },
+      alt: { type: 'text', group: 'content', label: '替代文字（图坏了会显示）' },
       ratio: { type: 'text', group: 'appearance', label: '比例，如 "16 / 9"' },
       fill: { type: 'enum', values: ['cover', 'contain'], default: 'contain', group: 'appearance', label: '填充（cover 会裁掉超出的部分）' },
       radius: radius(),
       position: { type: 'text', default: '50% 50%', group: 'appearance', label: '焦点' },
+      span: FLOW_CHILD.span,
+      bleed: FLOW_CHILD.bleed,
     },
-    content: 'none',
+    children: { kind: 'none' },
   },
 
   /* ---------------------------------------------------------------- 内容 */
   'vk-code': {
     layer: 'content',
-    name: '代码',
-    summary: '代码窗。构建期高亮；可截取真实文件的行段，标当前行、只亮几行、折叠。',
+    name: '源码窗',
+    summary: '唯一的「源码窗」：as 选内容类型（源码 / 终端 / 改动 / 汇编）。构建期高亮或解析，运行期零依赖。',
     attrs: {
-      lang: { type: 'text', group: 'content', label: '语言' },
+      as: { type: 'enum', values: ['code', 'term', 'diff', 'asm'], default: 'code', group: 'content', label: '内容类型' },
+      lang: { type: 'text', group: 'content', label: '语言（as="code" / "diff" 用）' },
       src: { type: 'text', group: 'content', label: '源文件' },
-      lines: { type: 'text', group: 'content', label: '行段，如 "4-6"' },
-      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
-      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      focus: { type: 'lines', group: 'state', label: '只亮这几行' },
-      fold: { type: 'lines', group: 'state', label: '折叠行（缺口）' },
-      size: sizeText('body'),
-      long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行' },
-      chrome: chrome('min'),
+      lines: { type: 'text', group: 'content', label: '行段，如 "4-6"（按源文件算）' },
+      title: { type: 'text', group: 'content', label: '标题栏文字（文件名 / 命令行）' },
+      current: { type: 'lines', group: 'state', label: '当前行（窗口内第几行，1 起）' },
+      fold: { type: 'lines', group: 'state', label: '折叠行（窗口内第几行）' },
       mark: { type: 'text', group: 'state', label: '标出的词（窗口里所有出现处）' },
+      size: sizeData('body'),
+      long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行' },
+      chrome: chrome('none'),
+      surface: { type: 'enum', values: ['auto', 'paper', 'dark'], default: 'auto', group: 'appearance', label: '表面（auto = 跟随页面）' },
+      prompt: { type: 'text', default: '$', group: 'appearance', label: '终端提示符（as="term"）' },
+      bytes: { type: 'bool', group: 'appearance', label: '显示机器码列（as="asm"）' },
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。构建期高亮，运行期零依赖。'),
-    capacity: { attr: 'lines', max: 8, unit: '行' },
-  },
-
-  'vk-term': {
-    layer: 'content',
-    name: '终端',
-    summary: '终端 transcript：提示符、命令、输出、报错各自一色。',
-    attrs: {
-      src: { type: 'text', group: 'content', label: '源文件' },
-      title: { type: 'text', group: 'content', label: '窗口标题栏标题' },
-      prompt: { type: 'text', default: '$', group: 'appearance', label: '提示符' },
-      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: sizeText('body'),
-      surface: surface(['paper', 'dark'], 'paper'),
-      chrome: chrome('min'),
-    },
-    children: source('src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。'),
-    capacity: { max: 10, unit: '行' },
-  },
-
-  'vk-diff': {
-    layer: 'content',
-    name: '改动',
-    summary: 'diff：原生 diff 文本，加/删/同各自一色，底部一句改了几行。',
-    attrs: {
-      src: { type: 'text', group: 'content', label: '源文件' },
-      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
-      lang: { type: 'text', group: 'content', label: '语言（给改动行上语法色）' },
-      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: sizeText('body'),
-    },
-    children: source('src 指向真实 diff 文本，或内联 <script type="text/plain" data-vk-source>。'),
-    capacity: { max: 8, unit: '行' },
+    children: source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。'),
+    capacity: { max: 6, unit: '行', by: { term: 6, diff: 5, asm: 5 } },
   },
 
   'vk-table': {
     layer: 'content',
     name: '表格',
-    summary: '表格：原生 <table>，数字列自动右对齐、等宽数字。行可写 tone / state。',
+    summary: '原生 <table>：数字列自动右对齐、等宽数字；行与单元格都可写 tone / state。',
     attrs: {
-      mono: { type: 'bool', group: 'appearance', label: '等宽' },
-      size: sizeText('body'),
+      size: sizeData('body'),
       caption: { type: 'text', group: 'content', label: '表题（表上方一行小字）' },
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: { kind: 'table', hint: '写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err" state="current"。' },
-    capacity: { max: 5, unit: '数据行' },
+    children: { kind: 'table', hint: '写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err" state="current"，单元格可写 state="current"。' },
+    capacity: { max: 4, unit: '数据行' },
   },
 
   'vk-list': {
     layer: 'content',
     name: '列表',
-    summary: '列表：要点 / 清单 / 有序。条目写成 <li>。',
+    summary: '列表：要点 / 清单 / 有序。条目写成 <li>；顺序本身就是信息时用 ordered。',
     attrs: {
       variant: { type: 'enum', values: ['bullet', 'check', 'ordered'], default: 'bullet', group: 'appearance', label: '形态' },
       gap: gap('close'),
-      size: sizeText('body'),
+      size: sizeData('body'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ tone: ITEM_TONE(), state: STATE_ATTR }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
-  },
-
-  'vk-math': {
-    layer: 'content',
-    name: '公式',
-    summary: '公式：src 指向真实 .tex，构建期用 KaTeX 排版，运行期零依赖。',
-    attrs: {
-      src: { type: 'text', group: 'content', label: '源文件' },
-      display: { type: 'bool', group: 'appearance', label: '独立成行' },
-      size: sizeText('body'),
-    },
-    children: source('src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写 TeX。'),
+    children: item({ tone: ITEM_TONE, state: ITEM_STATE }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
+    capacity: { max: 6, unit: '项' },
   },
 
   'vk-tree': {
     layer: 'content',
     name: '文件树',
-    summary: '文件树：src 指向真实目录，构建期扫描层级；缩进与树线是真的，不是列表。',
+    summary: '层级树：src 指向真实目录，构建期扫描；缩进与树线是真的。也可用内联 JSON 描述任意层级。',
     attrs: {
       src: { type: 'text', group: 'content', label: '目录' },
-      title: { type: 'text', group: 'content', label: '窗口标题栏标题' },
+      title: { type: 'text', group: 'content', label: '标题栏文字' },
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
-      max: { type: 'int', min: 1, max: 40, default: 10, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
+      max: { type: 'int', min: 1, max: 40, default: 6, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
-      size: sizeText('body'),
+      size: sizeData('body'),
       icons: { type: 'enum', values: ['auto', 'none'], default: 'auto', group: 'appearance', label: '图标' },
       'icon-dir': { type: 'text', group: 'appearance', label: '目录图标（Lucide 名）' },
-      'icon-code': { type: 'text', group: 'appearance', label: '代码文件图标' },
-      'icon-binary': { type: 'text', group: 'appearance', label: '二进制文件图标' },
-      'icon-file': { type: 'text', group: 'appearance', label: '普通文件图标' },
-      chrome: chrome('min'),
+      'icon-file': { type: 'text', group: 'appearance', label: '文件图标' },
+      chrome: chrome('none'),
+      surface: { type: 'enum', values: ['auto', 'paper', 'dark'], default: 'auto', group: 'appearance', label: '表面' },
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
-    capacity: { max: 5, unit: '行' },
+    capacity: { max: 6, unit: '行' },
   },
 
-  'vk-asm': {
+  'vk-math': {
     layer: 'content',
-    name: '汇编',
-    summary: '汇编清单：地址 / 机器码 / 指令 / 操作数四列。行与地址都能被锚定。',
+    name: '公式',
+    summary: '公式：src 指向 .tex 或内联写 TeX，构建期用 KaTeX 排版，运行期零依赖。inline 写在句子里。',
     attrs: {
-      src: { type: 'text', group: 'content', label: '源文件（objdump 文本）' },
-      lines: { type: 'text', group: 'content', label: '行段' },
-      file: { type: 'text', group: 'content', label: '窗口标题栏文件名' },
-      current: { type: 'lines', group: 'state', label: '当前行（1 起）' },
-      size: sizeText('body'),
-      chrome: chrome('min'),
-      bytes: { type: 'bool', group: 'appearance', label: '显示机器码列（默认不显示）' },
+      src: { type: 'text', group: 'content', label: '源文件' },
+      inline: { type: 'bool', group: 'appearance', label: '行内（跟在句子里）' },
+      size: sizeData('body'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: source('src 指向 objdump 文本，或内联 <script type="text/plain" data-vk-source>。'),
-    capacity: { max: 8, unit: '行' },
+    children: source('src 指向 .tex 文件；或把 TeX 直接写在标签里；或用 <script type="text/plain" data-vk-source>。'),
   },
 
   'vk-cells': {
     layer: 'content',
     name: '内存格',
-    summary: '一格一个 <li>：标签、值、地址。地址由 addr + 序号 × stride 算出，不手写。',
+    summary: '一格一个 <li>：值、标签、指针。地址由 addr + 序号 × stride 算出，不手写。',
     attrs: {
       addr: { type: 'text', group: 'content', label: '起始地址，如 "0x1000"' },
       stride: { type: 'int', min: 1, default: 1, group: 'content', label: '每格占几字节（int 数组写 4）' },
       cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
       current: current(),
-      markers: { type: 'text', group: 'state', label: '额外的指针，如 "lo:1,hi:8,mid:3"（最多 3 个）' },
-      size: sizeText('body'),
+      size: sizeData('body'),
+      gap: gap('close'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: item(
-      { value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, tone: ITEM_TONE(), state: STATE_ATTR },
-      '<li value="61" label="s[0]">；地址自动按 addr + 序号 × stride 算。'
+      { value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, ptr: { type: 'text', label: '指针名，如 "lo"（空格分隔多个）' }, tone: ITEM_TONE, state: ITEM_STATE },
+      '<li value="61" label="s[0]" ptr="lo">；地址自动按 addr + 序号 × stride 算。'
     ),
     capacity: { max: 2, unit: '行（cols 列一行）' },
   },
@@ -388,30 +293,37 @@ export const TAGS = {
   'vk-bytes': {
     layer: 'content',
     name: '字节',
-    summary: '字节窗：src 指向真实二进制；十六进制 + ASCII + 地址，current 标出一段。',
+    summary: '字节窗：src 指向真实二进制；地址 + 十六进制 + ASCII 三列，current 标出一段。',
     attrs: {
       src: { type: 'text', group: 'content', label: '二进制文件' },
       addr: { type: 'text', default: '0x0', group: 'content', label: '起始地址' },
       offset: { type: 'int', min: 0, default: 0, group: 'content', label: '起始字节' },
       length: { type: 'int', min: 1, max: 4096, default: 32, group: 'content', label: '字节数' },
-      cols: { type: 'enum', values: ['4', '8'], default: '8', group: 'layout', label: '每行几列' },
+      cols: { type: 'enum', values: ['4', '8', '16'], default: '8', group: 'layout', label: '每行几列' },
       current: { type: 'text', group: 'state', label: '当前字节段，如 "4-7"（1 起）' },
+      header: { type: 'bool', group: 'appearance', label: '列头（地址 / 十六进制 / ASCII）' },
+      size: sizeData('body'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: source('src 指向真实二进制文件。数值是读出来的，不是手写的。'),
+    capacity: { max: 4, unit: '行（cols=8 时）' },
   },
 
   'vk-bits': {
     layer: 'content',
     name: '位',
-    summary: '一行二进制位：索引、分组、符号位。用来讲位域与浮点布局。',
+    summary: '一行二进制位：索引、分组、符号位。用 | 分段（符号 | 阶码 | 尾数），field-labels 给每段起名。',
     attrs: {
-      value: { type: 'text', group: 'content', label: '位串，可含空格；用 | 分段（符号 | 指数 | 尾数）' },
+      value: { type: 'text', group: 'content', label: '位串，可含空格；用 | 分段' },
       label: { type: 'text', group: 'appearance', label: '左边一行说明' },
-      'field-labels': { type: 'text', group: 'appearance', label: '各段名，逗号分隔（配合 value 的 |）' },
-      index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号：down 按位权 7,6,5…；up 从左往右数 0,1,2…；sparse 只标 8 的倍数' },
+      'field-labels': { type: 'text', group: 'appearance', label: '各段名，逗号分隔（个数要与 | 的段数一致）' },
+      index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号：down 按位权；up 从左数；sparse 只标 8 的倍数' },
       group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
       sign: { type: 'bool', group: 'appearance', label: '标出符号位' },
-      size: sizeText('body'),
+      size: sizeData('body'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     content: 'text',
     capacity: { max: 16, unit: '位（32 位请用 index="sparse"）' },
@@ -421,80 +333,99 @@ export const TAGS = {
   'vk-steps': {
     layer: 'diagram',
     name: '步骤',
-    summary: '步骤条：编号 + 连线 + 当前步。条目写成 <li>；容器窄时自动竖排，不压字。',
+    summary: '步骤条：编号 + 连线 + 当前步。容器窄时自动竖排，不压字。',
     attrs: {
       current: current(),
       direction: { type: 'enum', values: ['auto', 'horizontal', 'vertical'], default: 'auto', group: 'layout', label: '方向' },
       connector: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连接线' },
-      size: sizeText('body'),
+      size: sizeData('body'),
+      gap: gap('normal'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ tone: ITEM_TONE() }, '每一步写成 <li>；可写 tone 标语义。'),
+    children: item({ tone: ITEM_TONE, state: ITEM_STATE, note: { type: 'text', label: '小字说明' } }, '每一步写成 <li>；可写 tone 标语义。'),
     capacity: { max: 5, unit: '步（横排）' },
   },
 
   'vk-bars': {
     layer: 'diagram',
     name: '条',
-    summary: '一组横向条：标签、值、单位。用来讲大小对比。',
+    summary: '一组横向条：标签、值、单位。用来讲大小对比；值只写数字。',
     attrs: {
       max: { type: 'num', min: 1, group: 'appearance', label: '最大值（不写按最大一条）' },
       unit: { type: 'text', group: 'appearance', label: '单位' },
-      tone: tone('neutral'),
       scale: { type: 'enum', values: ['linear', 'log'], default: 'linear', group: 'appearance', label: '刻度' },
-      size: sizeText('body'),
+      size: sizeData('body'),
+      gap: gap('close'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ label: { type: 'text', label: '标签' }, value: { type: 'num', label: '数值' }, tone: ITEM_TONE(), state: STATE_ATTR }, '<li value="120" label="hello.o">；值写数字，不写单位。'),
+    children: item({ label: { type: 'text', label: '标签' }, value: { type: 'num', label: '数值' }, tone: ITEM_TONE, state: ITEM_STATE }, '<li value="120" label="hello.o">；值写数字，不写单位。'),
     capacity: { max: 6, unit: '条' },
   },
 
   'vk-timeline': {
     layer: 'diagram',
     name: '时间线',
-    summary: '时间线：给了 at + start/end 就按比例摆；否则等距。一条事项一个 <li>。',
+    summary: '时间线：给了 at + start/end 就按比例摆，否则等距。一条事项一个 <li>。',
     attrs: {
-      variant: { type: 'enum', values: ['events', 'lanes'], default: 'events', group: 'appearance', label: '形态' },
-      start: { type: 'text', group: 'content', label: '起点' },
-      end: { type: 'text', group: 'content', label: '终点' },
-      lanes: { type: 'text', group: 'content', label: '泳道名（逗号分隔）' },
-      size: sizeText('body'),
+      start: { type: 'num', group: 'content', label: '起点（数字，如 1963）' },
+      end: { type: 'num', group: 'content', label: '终点' },
       current: current(),
+      size: sizeData('body'),
+      gap: gap('normal'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: item(
-      { date: { type: 'text', label: '日期' }, at: { type: 'number', label: '位置（年份/数值，配 start/end 按比例摆）' }, label: { type: 'text', label: '标题' }, note: { type: 'text', label: '小字说明' }, lane: { type: 'text', label: '泳道' }, tone: ITEM_TONE(), state: STATE_ATTR },
-      '<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。'
+      {
+        at: { type: 'number', label: '位置（数字；配 start/end 按比例摆）' },
+        date: { type: 'text', label: '日期标签（不写就用 at）' },
+        label: { type: 'text', label: '标题' },
+        note: { type: 'text', label: '小字说明' },
+        tone: ITEM_TONE,
+        state: ITEM_STATE,
+      },
+      '<li at="1972" label="C 诞生" note="小字说明">。'
     ),
     capacity: { max: 4, unit: '点' },
   },
 
-  'vk-compare': {
+  'vk-graph': {
     layer: 'diagram',
-    name: '对照',
-    summary: '两张图对照：默认左右并排（每张完整、不裁），也可上下；mark="auto" 按像素差自动标出改动。',
+    name: '关系图',
+    summary: '关系图：节点写成 <li id label>，边写在节点上（after="父节点id"）。row 画链表/队列，tree 画递归树/堆，layered 画 DAG（git、时序、依赖）。',
     attrs: {
-      labels: { type: 'text', group: 'content', label: '两张图与角标："a.png,b.png|改前|改后"' },
-      variant: { type: 'enum', values: ['side', 'stack'], default: 'side', group: 'appearance', label: '形态' },
-      mark: { type: 'text', group: 'appearance', label: '差异框：auto 按像素差自动定框；或手写 x1,y1,x2,y2（%）' },
+      layout: { type: 'enum', values: ['row', 'tree', 'layered'], default: 'row', group: 'layout', label: '布局' },
+      direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向（row / layered）' },
+      edge: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连线' },
+      gap: gap('normal'),
+      size: sizeData('body'),
+      span: FLOW_CHILD.span,
+      bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    content: 'none',
+    children: item(
+      { id: { type: 'text', label: '节点 id（边用它引用）' }, label: { type: 'text', label: '节点文字' }, note: { type: 'text', label: '节点下的小字' }, after: { type: 'text', label: '父节点 id（空格分隔多个）' }, tone: ITEM_TONE, state: ITEM_STATE },
+      '<li id="a" label="head"> → <li id="b" label="next" after="a">；不写 after 的节点是根。'
+    ),
+    capacity: { max: 6, unit: '节点（一行）' },
   },
 
   /* ---------------------------------------------------------------- 关系 */
   'vk-callout': {
     layer: 'relation',
     name: '标注',
-    summary:
-      '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标（按字的范围取框，不按整行盒子），note 是带引线的注释气泡，badge 是编号点。它不改布局。',
+    summary: '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，badge 是编号点。它不改布局。',
     attrs: {
       mode: { type: 'enum', values: ['arrow', 'ring', 'note', 'badge'], default: 'arrow', group: 'appearance', label: '形态' },
-      // 下面几个属性只在某几种形态下有用：写错形态时它是个哑属性，构建期直接拦。
-      for: { type: 'selector', group: 'target', label: '目标', when: { attr: 'mode', values: ['ring', 'note', 'badge'] } },
-      from: { type: 'selector', group: 'target', label: '起点', when: { attr: 'mode', values: ['arrow'] } },
-      to: { type: 'selector', group: 'target', label: '终点', when: { attr: 'mode', values: ['arrow'] } },
-      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '优先贴哪一侧（放不下会自动顺延）', when: { attr: 'mode', values: ['note'] } },
-      gap: { ...gap('normal'), when: { attr: 'mode', values: ['note'] } },
+      for: { type: 'selector', group: 'target', label: '目标', when: { attr: 'mode', values: ['ring', 'note', 'badge'] }, required: true },
+      from: { type: 'selector', group: 'target', label: '起点', when: { attr: 'mode', values: ['arrow'] }, required: true },
+      to: { type: 'selector', group: 'target', label: '终点', when: { attr: 'mode', values: ['arrow'] }, required: true },
+      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '优先贴哪一侧', when: { attr: 'mode', values: ['note'] } },
+      gap: { type: 'space', default: 'normal', group: 'layout', label: '离目标的距离', when: { attr: 'mode', values: ['note'] } },
       shape: { type: 'enum', values: ['straight', 'ortho', 'curve'], default: 'curve', group: 'appearance', label: '连线形状', when: { attr: 'mode', values: ['arrow'] } },
       label: { type: 'text', group: 'target', label: '连线上的字', when: { attr: 'mode', values: ['arrow'] } },
-      tone: tone('info'),
+      tone: tone(TONE, 'info'),
     },
     content: 'text',
   },
@@ -502,22 +433,21 @@ export const TAGS = {
 
 export const TAG_NAMES = Object.keys(TAGS);
 
-/** 一个标签自己的属性表：共享属性 + 它自己声明的。行内件不参与块级排布。 */
+/** 一个标签自己的属性表：flow 子项属性 + 它自己声明的。 */
 export function attrsOf(tag) {
-  if (tag === 'vk-page' || tag === 'vk-inline') return { ...TAGS[tag].attrs };
-  return { ...COMMON, ...TAGS[tag].attrs };
+  const t = TAGS[tag];
+  if (!t) return {};
+  if (tag === 'vk-page' || tag === 'vk-head' || tag === 'vk-callout' || tag === 'vk-canvas') return { ...t.attrs };
+  return { ...FLOW_CHILD, ...t.attrs };
 }
 
-/**
- * 运行期要观察的属性名。
- * x / y / w / h / z 只在 vk-canvas 的子节点上成立（构建期按父级判定）：
- * 但运行期一律观察，属性出现在别处时由构建期报错，不靠静默忽略。
- */
+/** 运行期要观察的属性名。 */
 export function observedOf(tag) {
   const names = Object.keys(attrsOf(tag));
-  if (tag !== 'vk-page') names.push(...Object.keys(CANVAS_ATTRS));
+  if (tag !== 'vk-canvas') names.push(...Object.keys(CANVAS_ATTRS));
   return [...new Set(names)];
 }
 
-
+/** 锚点只认三种部件：窗口里的第 N 行、第 N 个单元、某个元素的某一边。 */
+export const ANCHOR_PARTS = ['line', 'item', 'side'];
 

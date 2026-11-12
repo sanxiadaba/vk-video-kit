@@ -1,28 +1,21 @@
-<!-- 验收帧：每一帧是一个能上片的画面，同时当视觉回归的基准。
-     不是模板库——它们不承担「照着抄」的职责，只证明每个件在手机尺度上成立。 -->
+<!-- 验收帧：每一帧都是一个能上片的画面。
+     它们不是模板，也不教文案；只证明 20 个件在手机尺度上成立。 -->
 
 <vk-page id="cover" align="center">
-  <vk-stack gap="normal">
-    <vk-label counter="第 3 集">指针与内存</vk-label>
-    <vk-text size="headline">地址不是编号，<br>是<em>偏移量</em>。</vk-text>
-    <vk-text size="body" ink="secondary">从 <vk-inline variant="code">a[0]</vk-inline> 到 <vk-inline variant="code">a[3]</vk-inline>，中间隔了三个 int。</vk-text>
-  </vk-stack>
+  <vk-head kicker="第 3 集 · 指针" counter="01" size="display" align="center">地址不是编号，<br>是<em>偏移量</em>。</vk-head>
+  <vk-text size="body" ink="secondary" align="center">从 <code>a[0]</code> 到 <code>a[3]</code>，中间隔了三个 int。</vk-text>
 </vk-page>
 
-<vk-page id="inline">
-  <vk-stack gap="normal">
-    <vk-label>行内元素</vk-label>
-    <vk-text size="subhead">一个 <vk-inline variant="code">int</vk-inline> 占 4 字节，所以下标要乘 4。</vk-text>
-    <vk-text size="body">公式可以写在句子里：<vk-inline variant="math">a[i] = *(a + i)</vk-inline>，键位写 <vk-inline variant="keys">Ctrl + C</vk-inline>。</vk-text>
-    <vk-text size="body">整段重点用 <em>下划线</em>，一段原文用 <mark>荧光底</mark>。</vk-text>
-  </vk-stack>
+<vk-page id="stat" align="center">
+  <vk-head kicker="量级" counter="02" size="subhead" align="center">一次内存访问，<em>慢一百倍</em>。</vk-head>
+  <vk-text align="center" size="display">100<span class="vk-unit">ns</span></vk-text>
+  <vk-text size="body" ink="secondary" align="center">L1 缓存 1ns，内存 100ns，硬盘 10ms。</vk-text>
 </vk-page>
 
 <vk-page id="code-ring">
-  <vk-stack gap="normal">
-    <vk-label counter="2 / 16">代码 + 圈一行</vk-label>
-    <vk-text size="subhead">这一行在<em>改内存</em>。</vk-text>
-    <vk-code id="hello" lang="c" file="hello.c">
+  <vk-head kicker="代码" counter="03" size="subhead">这一行在<em>改内存</em>。</vk-head>
+  <vk-flow cols="7 5" gap="wide" align="center">
+    <vk-code id="hello" lang="c" title="hello.c" chrome="dots" current="3">
       <script type="text/plain" data-vk-source>
 int main(void) {
   char s[] = "hello";
@@ -32,17 +25,15 @@ int main(void) {
 }
       </script>
     </vk-code>
-
-  </vk-stack>
+    <vk-text size="body" ink="secondary">这一行把 <code>s[0]</code> 从 <code>h</code> 改成 <code>H</code>。</vk-text>
+  </vk-flow>
   <vk-callout mode="ring" for="#hello@line:3"></vk-callout>
 </vk-page>
 
 <vk-page id="code-fold">
-  <vk-stack gap="normal">
-    <vk-label>折叠与标词</vk-label>
-    <vk-text size="subhead">中间七行<em>不重要</em>。</vk-text>
-    <vk-code id="fold" lang="c" file="bsearch.c" fold="2-7" mark="return">
-      <script type="text/plain" data-vk-source>
+  <vk-head kicker="代码" counter="04" size="subhead">中间六行<em>不重要</em>。</vk-head>
+  <vk-code lang="c" title="bsearch.c" chrome="dots" fold="2-7" mark="return">
+    <script type="text/plain" data-vk-source>
 int bsearch(const int *a, int n, int key) {
   int lo = 0, hi = n - 1;
   int mid;
@@ -54,274 +45,195 @@ int bsearch(const int *a, int n, int key) {
   }
   return -1;
 }
-      </script>
-    </vk-code>
-  </vk-stack>
+    </script>
+  </vk-code>
 </vk-page>
 
 <vk-page id="term">
-  <vk-stack gap="normal">
-    <vk-label>终端</vk-label>
-    <vk-text size="subhead">跑一遍，<em>输出自己说话</em>。</vk-text>
-    <vk-term id="py" title="python3">
+  <vk-head kicker="终端" counter="05" size="subhead">跑一遍，<em>输出自己说话</em>。</vk-head>
+  <vk-flow cols="7 5" gap="wide">
+    <vk-code as="term" id="py" title="python3" chrome="dots" current="2">
       <script type="text/plain" data-vk-source>
 $ python3 -c "print(0.1 + 0.2)"
 0.30000000000000004
 $ gcc hello.c -o hello
 hello.c:3: error: expected ';'
       </script>
-    </vk-term>
-  </vk-stack>
-  <vk-callout mode="note" for="#py@line:2" side="right" tone="info">浮点数不是精确的</vk-callout>
+    </vk-code>
+    <vk-text size="body" ink="secondary">浮点数不是精确的：0.1 和 0.2 都存不下。</vk-text>
+  </vk-flow>
+  <vk-callout mode="note" for="#py@line:2" side="right" tone="info">它们加起来，也不是 0.3</vk-callout>
 </vk-page>
 
 <vk-page id="diff">
-  <vk-stack gap="normal">
-    <vk-label>改动</vk-label>
-    <vk-text size="subhead">把 <vk-inline variant="code">1</vk-inline> 改成 <vk-inline variant="code">2</vk-inline>，快了一倍。</vk-text>
-    <vk-diff file="sum.c" lang="c" src="../code/snippets/loop.diff"></vk-diff>
-  </vk-stack>
+  <vk-head kicker="改动" counter="06" size="subhead">把 <code>1</code> 改成 <code>2</code>，<em>快了一倍</em>。</vk-head>
+  <vk-code as="diff" lang="c" title="sum.c" chrome="dots" src="../code/snippets/loop.diff"></vk-code>
 </vk-page>
 
 <vk-page id="asm">
-  <vk-stack gap="normal">
-    <vk-label>汇编</vk-label>
-    <vk-text size="subhead">C 里一行，<em>这儿四条指令</em>。</vk-text>
-    <vk-asm file="add-o2.dis" src="../code/opt/add-o2.dis" lines="1-6" current="3"></vk-asm>
-  </vk-stack>
+  <vk-head kicker="汇编" counter="07" size="subhead">C 里一行，<em>这儿四条指令</em>。</vk-head>
+  <vk-code as="asm" src="../code/opt/add-o2.dis" title="add-o2.dis" chrome="dots" lines="1-6" current="3"></vk-code>
 </vk-page>
 
 <vk-page id="table">
-  <vk-stack gap="normal">
-    <vk-label>表格</vk-label>
-    <vk-text size="subhead">越往下，<em>越慢也越大</em>。</vk-text>
-    <vk-table caption="同一台机器，一次读 64 字节。">
-      <table>
-        <tr><th>层级</th><th>容量</th><th>延迟</th><th>相对</th></tr>
-        <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td><td class="num">×0.003</td></tr>
-        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td><td class="num">×0.01</td></tr>
-        <tr><td>内存</td><td>16 GB</td><td>100ns</td><td class="num">×1</td></tr>
-      </table>
-    </vk-table>
-  </vk-stack>
+  <vk-head kicker="数据" counter="08" size="subhead">越往下，<em>越慢也越大</em>。</vk-head>
+  <vk-table caption="同一台机器，一次读 64 字节。">
+    <table>
+      <tr><th>层级</th><th>容量</th><th>延迟</th><th>相对</th></tr>
+      <tr><td>寄存器</td><td>几十个</td><td>0.3ns</td><td>×0.003</td></tr>
+      <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td><td>×0.01</td></tr>
+      <tr state="current"><td>内存</td><td>16 GB</td><td>100ns</td><td>×1</td></tr>
+    </table>
+  </vk-table>
 </vk-page>
 
 <vk-page id="list">
-  <vk-stack gap="normal">
-    <vk-label>有序步骤</vk-label>
-    <vk-text size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-text>
-    <vk-list variant="ordered" size="body">
-      <li>取数组首地址</li>
-      <li state="current">加上下标 × 4</li>
-      <li>读出那 4 个字节</li>
-    </vk-list>
-    <vk-text size="caption" ink="muted">每一次都可能是一次内存访问。</vk-text>
-  </vk-stack>
+  <vk-head kicker="步骤" counter="09" size="subhead">取一个值，要经过<em>三次寻址</em>。</vk-head>
+  <vk-list variant="ordered">
+    <li>取数组首地址</li>
+    <li state="current">加上下标 × 4</li>
+    <li>读出那 4 个字节</li>
+  </vk-list>
+  <vk-text size="caption" ink="muted">每一次都可能是一次内存访问。</vk-text>
 </vk-page>
 
 <vk-page id="tree">
-  <vk-stack gap="normal">
-    <vk-label>文件树</vk-label>
-    <vk-text size="subhead">编译产物比源码<em>大得多</em>。</vk-text>
-    <vk-tree src="../code" depth="2" max="5" title="code/" current="opt" icons="auto" icon-dir="folder" icon-code="file" icon-binary="file" icon-file="file"></vk-tree>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="cells">
-  <vk-stack gap="wide">
-    <vk-label>内存格</vk-label>
-    <vk-text size="subhead">一格一个 int，地址<em>每次加 4</em>。</vk-text>
-    <vk-cells addr="0x1000" stride="4" cols="4" current="2" markers="lo:1,mid:3" size="subhead">
-      <li value="1" label="a[0]"></li>
-      <li value="2" label="a[1]"></li>
-      <li value="3" label="a[2]"></li>
-      <li value="4" label="a[3]"></li>
-    </vk-cells>
-    <vk-text size="caption" ink="muted">地址每次 +4，正好一个 int。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="bytes">
-  <vk-stack gap="normal">
-    <vk-label>字节窗</vk-label>
-    <vk-text size="subhead">一个字符串，<em>就是一连串字节</em>。</vk-text>
-    <vk-bytes src="../code/hello.bin" length="16" cols="8" current="1-5"></vk-bytes>
-    <vk-text size="caption" ink="muted">右边是同一批字节的 ASCII。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="bits">
-  <vk-stack gap="wide">
-    <vk-label>位域</vk-label>
-    <vk-text size="subhead">一个 float，<em>三段</em>。</vk-text>
-    <vk-bits value="0|01111111|011" index="down" sign label="float" field-labels="符号,阶码,尾数" size="subhead"></vk-bits>
-    <vk-text size="body" ink="muted">符号位的 0 表示正数。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="steps">
-  <vk-stack gap="wide">
-    <vk-label>步骤</vk-label>
-    <vk-text size="subhead">从源码到程序，<em>四步</em>。</vk-text>
-    <vk-steps current="2">
-      <li>预处理</li>
-      <li>编译</li>
-      <li>汇编</li>
-      <li>链接</li>
-    </vk-steps>
-    <vk-text size="body" ink="muted">每一步都能单独重跑。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="bars">
-  <vk-stack gap="normal">
-    <vk-label>量级</vk-label>
-    <vk-text size="subhead">同样的活，差了<em>四倍</em>。</vk-text>
-    <vk-bars max="30" unit="毫秒" size="body">
-      <li value="5" label="数组"></li>
-      <li value="23" label="链表" state="current"></li>
-    </vk-bars>
-    <vk-text size="caption" ink="muted">同一台机器：5 ms vs 23 ms，约 4.6 倍。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="timeline">
-  <vk-stack gap="wide">
-    <vk-label>时间线</vk-label>
-    <vk-text size="subhead">编码的故事，<em>五十年</em>。</vk-text>
-    <vk-timeline start="1963" end="2010" current="2">
-      <li date="1963" at="1963" label="ASCII" note="7 位，128 个字符"></li>
-      <li date="1991" at="1991" label="Unicode" note="给所有语言留位置"></li>
-      <li date="2010" at="2010" label="Emoji" note="字符表开始装表情"></li>
-    </vk-timeline>
-    <vk-text size="caption" ink="muted">按年份比例：1963→1991 是 28 年，1991→2010 是 19 年。</vk-text>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="pair">
-  <vk-stack gap="normal">
-    <vk-label>前后对照</vk-label>
-    <vk-text size="subhead">同一个循环，<em>一个顺、一个跳</em>。</vk-text>
-    <vk-pair symbol="vs">
-      <vk-stack gap="close">
-        <vk-label>顺序访问 · a[i]</vk-label>
-        <vk-code lang="c" file="a.c">
-          <script type="text/plain" data-vk-source>
-for (i=0; i<n; i++)
-    sum += a[i];
-          </script>
-        </vk-code>
-      </vk-stack>
-      <vk-stack gap="close">
-        <vk-label>跳着访问 · a[idx[i]]</vk-label>
-        <vk-code lang="c" file="b.c">
-          <script type="text/plain" data-vk-source>
-for (i=0; i<n; i++)
-    sum += a[idx[i]];
-          </script>
-        </vk-code>
-      </vk-stack>
-    </vk-pair>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="box-img">
-  <vk-stack gap="normal">
-    <vk-label>面与图</vk-label>
-    <vk-text size="subhead">截图放在<em>实底上</em>，字才看得清。</vk-text>
-    <vk-grid cols="12" gap="normal" align="start">
-      <vk-box span="7" surface="paper" border="hair" pad="normal">
-        <vk-img src="../assets/compare/fixtures-after.png" ratio="16 / 9"></vk-img>
-      </vk-box>
-      <vk-box span="5" surface="soft" pad="normal">
-        <vk-stack gap="close">
-          <vk-icon name="eye" size="caption" tone="none"></vk-icon>
-          <vk-text size="caption" ink="muted">看到的东西</vk-text>
-          <vk-list variant="check" size="caption">
-            <li>地址是 16 进制</li>
-            <li>机器码在第二列</li>
-          </vk-list>
-        </vk-stack>
-      </vk-box>
-    </vk-grid>
-  </vk-stack>
+  <vk-head kicker="目录" counter="10" size="subhead">编译产物比源码<em>大得多</em>。</vk-head>
+  <vk-tree src="../code" depth="2" max="6" title="code/" current="opt" icons="auto"></vk-tree>
 </vk-page>
 
 <vk-page id="math">
-  <vk-stack gap="section">
-    <vk-label>公式</vk-label>
-    <vk-math display size="subhead">
-      <script type="text/plain" data-vk-source>
+  <vk-head kicker="复杂度" counter="11" size="subhead">每层做 O(n) 的活，<em>一共 log n 层</em>。</vk-head>
+  <vk-math size="subhead">
+    <script type="text/plain" data-vk-source>
 T(n) = 2T\left(\frac{n}{2}\right) + O(n)
-      </script>
-    </vk-math>
-    <vk-text size="caption" ink="muted">每层做 O(n) 的活，一共 log n 层。</vk-text>
-  </vk-stack>
+    </script>
+  </vk-math>
+  <vk-text size="body" ink="secondary">所以总复杂度是 O(n log n)。</vk-text>
 </vk-page>
 
-
-
-<vk-page id="compare">
-  <vk-stack gap="normal">
-    <vk-label>两张图对照</vk-label>
-    <vk-text size="subhead">同样的源码，<em>两种优化</em>。</vk-text>
-    <vk-compare labels="../assets/compare/fixtures-before.png,../assets/compare/fixtures-after.png|改前 · 未优化|改后 · -O2" variant="side" mark="auto"></vk-compare>
-  </vk-stack>
+<vk-page id="cells">
+  <vk-head kicker="内存" counter="12" size="subhead">一格一个 int，地址<em>每次加 4</em>。</vk-head>
+  <vk-cells addr="0x1000" stride="4" cols="4" current="2">
+    <li value="1" label="a[0]"></li>
+    <li value="2" label="a[1]" ptr="mid"></li>
+    <li value="3" label="a[2]"></li>
+    <li value="4" label="a[3]"></li>
+  </vk-cells>
+  <vk-text size="caption" ink="muted">地址每次 +4，正好一个 int。</vk-text>
 </vk-page>
 
-<vk-page id="layers">
-  <vk-stack gap="normal">
-    <vk-label>叠放</vk-label>
-    <vk-text size="subhead">图注压在<em>图的上面</em>，落在实底上。</vk-text>
-    <vk-layer>
-      <vk-img src="../assets/compare/fixtures-after.png" ratio="14 / 5" fill="cover" radius="md"></vk-img>
-      <vk-stack justify="end" align="start">
-        <vk-box surface="paper" border="strong" pad="normal" radius="md">
-          <vk-text size="caption">README 里的那张图 · 2024</vk-text>
-        </vk-box>
-      </vk-stack>
-    </vk-layer>
-  </vk-stack>
+<vk-page id="bytes">
+  <vk-head kicker="字节" counter="13" size="subhead">一个字符串，<em>就是一连串字节</em>。</vk-head>
+  <vk-bytes src="../code/hello.bin" length="32" cols="8" header current="1-5"></vk-bytes>
+  <vk-text size="caption" ink="muted">右边是同一批字节的 ASCII。</vk-text>
 </vk-page>
 
-<vk-page id="canvas">
-  <vk-stack gap="normal">
-    <vk-label>坐标画布</vk-label>
-    <vk-text size="subhead">只能按<em>坐标</em>摆的时候才用它。</vk-text>
-    <vk-canvas w="1680" h="520">
-      <vk-box id="c1" x="0" y="0" w="380" surface="soft" pad="normal">
-        <vk-text size="caption" ink="muted">(0, 0)</vk-text>
-      </vk-box>
-      <vk-box id="c2" x="650" y="300" w="380" surface="paper" border="hair" pad="normal">
-        <vk-text size="caption">(560, 300)</vk-text>
-      </vk-box>
-      <vk-box id="c3" x="1300" y="150" w="380" surface="soft" pad="normal">
-        <vk-text size="caption" ink="muted">(1160, 150)</vk-text>
-      </vk-box>
-    </vk-canvas>
-  </vk-stack>
-  <vk-callout mode="arrow" from="#c1@side:right" to="#c2@side:left" shape="straight" label="①"></vk-callout>
-  <vk-callout mode="arrow" from="#c2@side:right" to="#c3@side:left" shape="curve" label="②"></vk-callout>
+<vk-page id="bits">
+  <vk-head kicker="位" counter="14" size="subhead">一个 float16，<em>三段</em>。</vk-head>
+  <vk-bits value="0|01111|0000000000" index="down" sign label="float16" field-labels="符号,阶码,尾数"></vk-bits>
+  <vk-text size="body" ink="secondary">符号位的 0 表示正数。</vk-text>
+</vk-page>
+
+<vk-page id="steps">
+  <vk-head kicker="流程" counter="15" size="subhead">从源码到程序，<em>四步</em>。</vk-head>
+  <vk-steps current="2">
+    <li>预处理</li>
+    <li>编译</li>
+    <li>汇编</li>
+    <li>链接</li>
+  </vk-steps>
+  <vk-text size="caption" ink="muted">每一步都能单独重跑。</vk-text>
+</vk-page>
+
+<vk-page id="bars">
+  <vk-head kicker="量级" counter="16" size="subhead">同样的活，差了<em>四倍</em>。</vk-head>
+  <vk-bars max="30" unit="ms">
+    <li value="5" label="数组"></li>
+    <li value="23" label="链表" state="current"></li>
+  </vk-bars>
+  <vk-text size="caption" ink="muted">同一台机器：5 ms vs 23 ms，约 4.6 倍。</vk-text>
+</vk-page>
+
+<vk-page id="timeline">
+  <vk-head kicker="历史" counter="17" size="subhead">编码的故事，<em>五十年</em>。</vk-head>
+  <vk-timeline start="1963" end="2010" current="2">
+    <li at="1963" label="ASCII" note="128 个字符"></li>
+    <li at="1991" label="Unicode" note="留给所有语言"></li>
+    <li at="2010" label="Emoji" note="开始装表情"></li>
+  </vk-timeline>
+  <vk-text size="caption" ink="muted">按年份比例摆，不是等距。</vk-text>
+</vk-page>
+
+<vk-page id="graph-row">
+  <vk-head kicker="链表" counter="18" size="subhead">每个节点，只记得<em>下一个在哪</em>。</vk-head>
+  <vk-graph layout="row" edge="arrow" size="subhead" gap="wide">
+    <li id="n1" label="head"></li>
+    <li id="n2" label="7" after="n1"></li>
+    <li id="n3" label="13" after="n2" state="current"></li>
+    <li id="n4" label="null" after="n3"></li>
+  </vk-graph>
+  <vk-text size="body" ink="secondary">插入 13，只要改两个指针。</vk-text>
+</vk-page>
+
+<vk-page id="graph-tree">
+  <vk-head kicker="递归" counter="19" size="subhead">一个 n，拆成<em>两个 n/2</em>。</vk-head>
+  <vk-graph layout="tree" edge="arrow" size="subhead" gap="wide">
+    <li id="r" label="f(4)"></li>
+    <li id="a" label="f(2)" after="r"></li>
+    <li id="b" label="f(2)" after="r"></li>
+    <li id="a1" label="f(1)" after="a" tone="ok"></li>
+    <li id="a2" label="f(1)" after="a" tone="ok"></li>
+    <li id="b1" label="f(1)" after="b" tone="ok"></li>
+  </vk-graph>
+</vk-page>
+
+<vk-page id="surface-img">
+  <vk-head kicker="截图" counter="20" size="subhead">截图放在<em>实底上</em>，字才看得清。</vk-head>
+  <vk-flow cols="7 5" gap="wide" align="center">
+    <vk-surface surface="paper" border="hair" pad="normal" radius="md">
+      <vk-img src="../assets/compare/fixtures-after.png" ratio="16 / 9" alt="编译器输出截图"></vk-img>
+    </vk-surface>
+    <vk-flow gap="close">
+      <vk-text size="caption" ink="muted">看到的东西</vk-text>
+      <vk-list variant="check" size="caption">
+        <li>地址是 16 进制</li>
+        <li>机器码在第二列</li>
+      </vk-list>
+    </vk-flow>
+  </vk-flow>
+</vk-page>
+
+<vk-page id="canvas-arrow">
+  <vk-head kicker="坐标" counter="21" size="subhead">只能按<em>坐标</em>摆的时候，才用它。</vk-head>
+  <vk-canvas w="1680" h="420">
+    <vk-surface id="c1" x="0" y="40" w="380" surface="soft" pad="normal">
+      <vk-text size="caption" ink="muted">(0, 40)</vk-text>
+    </vk-surface>
+    <vk-surface id="c2" x="650" y="220" w="380" surface="paper" border="hair" pad="normal">
+      <vk-text size="caption">(650, 220)</vk-text>
+    </vk-surface>
+    <vk-surface id="c3" x="1300" y="70" w="380" surface="soft" pad="normal">
+      <vk-text size="caption" ink="muted">(1300, 70)</vk-text>
+    </vk-surface>
+  </vk-canvas>
+  <vk-callout mode="arrow" from="#c1@side:right" to="#c2@side:left" shape="straight"></vk-callout>
+  <vk-callout mode="arrow" from="#c2@side:right" to="#c3@side:left" shape="curve"></vk-callout>
 </vk-page>
 
 <vk-page id="dark" surface="dark">
-  <vk-stack gap="normal">
-    <vk-label>深色页</vk-label>
-    <vk-text size="subhead">深色是<em>选项</em>，浅底件自动适配。</vk-text>
-    <vk-code id="d" lang="c" file="dark.c">
+  <vk-head kicker="深色" counter="22" size="subhead">深色是<em>选项</em>，不是风格。</vk-head>
+  <vk-flow cols="7 5" gap="wide" align="center">
+    <vk-code lang="c" title="dark.c" chrome="dots">
       <script type="text/plain" data-vk-source>
 int a = 1;
+int *p = &a;
+*p = 2;
       </script>
     </vk-code>
-    <vk-text size="caption" ink="muted">代码窗仍是浅底深字，周围是深色。</vk-text>
-  </vk-stack>
+    <vk-text size="body" ink="secondary">代码窗跟着页面一起变深，语法色自动换成暗面那一套。</vk-text>
+  </vk-flow>
 </vk-page>
-
-
-
-
-
-
 
 
 

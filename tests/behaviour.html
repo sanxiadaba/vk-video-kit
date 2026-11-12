@@ -1,68 +1,44 @@
-<!-- 行为验收：这些帧只用来量「组件有没有按承诺自适应」，不是画面范本。 -->
+<!-- 行为页：不参与出图评审，只给测试脚本量「运行期到底做了没有」。 -->
 
-<vk-page id="shrink">
-  <vk-stack gap="normal">
-    <vk-label>自动缩字号</vk-label>
-    <vk-code id="shrink" lang="c" file="long.c">
+<vk-page id="behave">
+  <vk-head kicker="行为" size="subhead">运行期只做四件事。</vk-head>
+  <vk-flow cols="5 7" gap="wide">
+    <vk-code id="shrink" lang="c" title="long.c" chrome="dots" long="clip">
       <script type="text/plain" data-vk-source>
-int sum = compute(alpha, beta, gamma, delta, epsilon);
+int very_long_variable_name = another_long_name + yet_another_name_here;
       </script>
     </vk-code>
-  </vk-stack>
+    <vk-flow gap="close">
+      <vk-text id="inline" size="body">行内 <code>a[i]</code> 与键位 <kbd>Ctrl</kbd></vk-text>
+      <vk-text id="icon" icon="eye">图标行</vk-text>
+    </vk-flow>
+  </vk-flow>
 </vk-page>
 
-<vk-page id="numtable">
-  <vk-stack gap="normal">
-    <vk-label>数字列右对齐</vk-label>
-    <vk-table id="numtable" size="caption">
-      <table>
-        <tr><th>层级</th><th>容量</th><th>延迟</th></tr>
-        <tr><td>L1 缓存</td><td>32 KB</td><td>1ns</td></tr>
-        <tr><td>内存</td><td>16 GB</td><td>100ns</td></tr>
-        <tr><td>SSD</td><td>1 TB</td><td>100µs</td></tr>
-      </table>
-    </vk-table>
-  </vk-stack>
+<vk-page id="behave-table">
+  <vk-table id="numtable">
+    <table>
+      <tr><th>名字</th><th>大小</th></tr>
+      <tr><td>数组</td><td>32 KB</td></tr>
+      <tr><td>链表</td><td>16 GB</td></tr>
+      <tr state="current"><td>内存</td><td>100 ns</td></tr>
+    </table>
+  </vk-table>
 </vk-page>
 
-<vk-page id="markers">
-  <vk-stack gap="wide">
-    <vk-label>三个指针</vk-label>
-    <vk-cells id="marks" cols="8" current="4" markers="lo:1,mid:4" size="caption">
-      <li value="2"></li><li value="3"></li><li value="5"></li><li value="7"></li>
-      <li value="11"></li><li value="13"></li><li value="17"></li><li value="19"></li>
-    </vk-cells>
-  </vk-stack>
+<vk-page id="behave-graph">
+  <vk-graph layout="row" edge="arrow">
+    <li id="a" label="a"></li>
+    <li id="b" label="b" after="a"></li>
+    <li id="c" label="c" after="b"></li>
+  </vk-graph>
+  <vk-callout id="ring" mode="ring" for="#a"></vk-callout>
 </vk-page>
 
-<vk-page id="bytes">
-  <vk-stack gap="normal">
-    <vk-label>字节窗</vk-label>
-    <vk-bytes id="buf" src="../code/hello.bin" length="16" current="1-2"></vk-bytes>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="bigtree">
-  <vk-stack gap="normal">
-    <vk-label>文件树截断</vk-label>
-    <vk-tree id="bigtree" max="4" size="caption">
-      <script type="text/plain" data-vk-tree>
-[{"name":"src","children":[{"name":"a.c"},{"name":"b.c"},{"name":"c.c"}]},{"name":"lib","children":[{"name":"x.c"},{"name":"y.c"}]},{"name":"Makefile"},{"name":"README.md"}]
-      </script>
-    </vk-tree>
-  </vk-stack>
-</vk-page>
-
-<vk-page id="darkpaper" surface="dark">
-  <vk-stack gap="normal">
-    <vk-label>深色页里的纸面窗</vk-label>
-    <vk-code id="darkpaper" lang="c" file="ok.c">
-      <script type="text/plain" data-vk-source>
+<vk-page id="behave-dark" surface="dark">
+  <vk-code id="paperwin" lang="c" surface="paper" title="paper.c" chrome="dots">
+    <script type="text/plain" data-vk-source>
 int a = 1;
-      </script>
-    </vk-code>
-  </vk-stack>
+    </script>
+  </vk-code>
 </vk-page>
-
-
-

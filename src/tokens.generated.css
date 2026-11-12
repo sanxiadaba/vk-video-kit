@@ -1,4 +1,4 @@
-/* vk · 由 tools/css.mjs 从 src/vocab.mjs 生成 —— 不要手改。
+/* vk · 由 tools/gen.mjs 从 src/vocab.mjs 生成 —— 不要手改。
    颜色是 light-dark(纸面, 暗面)：谁声明表面，谁写一行 color-scheme。 */
 
 :root {
@@ -9,10 +9,11 @@
   --vk-margin-y: 96px;
   --vk-safe-w: 1680px;
   --vk-safe-h: 888px;
+  --vk-floor: 44px;
 
-  --vk-fs-caption: 56px;
-  --vk-lh-caption: 1.43;
-  --vk-measure-caption: 32em;
+  --vk-fs-caption: 44px;
+  --vk-lh-caption: 1.45;
+  --vk-measure-caption: 24em;
   --vk-track-caption: 0em;
   --vk-fs-body: 56px;
   --vk-lh-body: 1.43;
@@ -40,17 +41,17 @@
   --vk-gap-normal: 32px;
   --vk-gap-wide: 64px;
   --vk-gap-section: 128px;
-  --vk-inset-xs: 4px;
   --vk-inset-sm: 8px;
-  --vk-inset-md: 12px;
+  --vk-inset-md: 16px;
   --vk-inset-lg: 24px;
   --vk-inset-xl: 40px;
   --vk-radius-none: 0px;
   --vk-radius-md: 16px;
+  --vk-radius-lg: 24px;
   --vk-radius-pill: 999px;
   --vk-line-w-hair: 4px;
   --vk-line-w-rule: 8px;
-  --vk-line-w-strong: 10px;
+  --vk-line-w-strong: 12px;
 
   --vk-w-regular: 400;
   --vk-w-medium: 500;
@@ -59,29 +60,30 @@
   --vk-font-mono: "JetBrains Mono", "Noto Sans SC", "PingFang SC", monospace;
 
   --vk-paper: light-dark(#ffffff, #10151c);
-  --vk-soft: light-dark(#f4f6f9, #171e28);
+  --vk-soft: light-dark(#f2f5f8, #1a2230);
   --vk-ink-1: light-dark(#0b0f14, #f2f6fb);
   --vk-ink-2: light-dark(#333d4b, #cdd7e4);
   --vk-ink-3: light-dark(#5c6674, #9aa7b8);
-  --vk-line-color: light-dark(rgba(11, 15, 20, 0.45), rgba(255, 255, 255, 0.50));
-  --vk-line-strong: light-dark(rgba(11, 15, 20, 0.55), rgba(255, 255, 255, 0.60));
+  --vk-line-color: light-dark(rgba(11, 15, 20, 0.55), rgba(255, 255, 255, 0.55));
+  --vk-line-strong: light-dark(rgba(11, 15, 20, 0.62), rgba(255, 255, 255, 0.65));
   --vk-focus: light-dark(#1b3fd6, #7aa2ff);
   --vk-info: light-dark(#3a4454, #8fa6c8);
   --vk-ok: light-dark(#0a6b57, #6fdcb2);
   --vk-warn: light-dark(#8a4b00, #f0b45c);
   --vk-err: light-dark(#b3261e, #ff9a90);
-  --vk-tint-info: light-dark(#eef0f3, #1a2029);
-  --vk-tint-focus: light-dark(#eaeefb, #1b2540);
-  --vk-tint-ok: light-dark(#e9f2f0, #12241f);
-  --vk-tint-warn: light-dark(#f4efe8, #2a2115);
-  --vk-tint-err: light-dark(#f8ebeb, #2b1717);
+  --vk-tint-info: light-dark(#e9edf2, #1c2634);
+  --vk-tint-focus: light-dark(#dfe4f9, #243a68);
+  --vk-tint-ok: light-dark(#e3efe9, #12281f);
+  --vk-tint-warn: light-dark(#f6eddc, #2c2113);
+  --vk-tint-err: light-dark(#f8e5e3, #2d1715);
   --vk-on-focus: light-dark(#ffffff, #0b0f14);
 
-  --vk-syn-string: light-dark(#0b7a63, #7fd9b6);
-  --vk-syn-comment: light-dark(#6a7686, #94a3b8);
+  --vk-syn-string: light-dark(#0a6f5a, #7fd9b6);
+  --vk-syn-comment: light-dark(#5f6b7a, #94a3b8);
   --vk-syn-number: light-dark(#8f5200, #edb96b);
   --vk-syn-keyword: light-dark(#8a3a5e, #d79ab8);
   --vk-syn-operator: light-dark(#566173, #94a3b8);
+  --vk-syn-fn: light-dark(#101826, #eaf0f8);
   --vk-block-full: 1680px;
   --vk-block-two-thirds: 1120px;
   --vk-block-half: 824px;

@@ -1,15 +1,13 @@
 /**
- * 从 vocab.mjs 生成 CSS 变量。
+ * vk gen：从 vocab 生成 CSS 变量，从 schema 生成契约文档。
  *
- * 为什么用生成而不是手写：字号、行高、行宽、间距、颜色都只有一个真相。
- * 颜色在这里生成为 light-dark(纸面, 暗面) 对：一个面只写 color-scheme，
- * 整棵子树的墨、线、语义色、淡底自动切 —— 不再有第二套主题，也不再有
- * 「深色页上把浅底件钉回纸面」的补丁。
+ *   node tools/gen.mjs            生成 src/tokens.generated.css 与 out/CONTRACT.md
+ *   node tools/gen.mjs --check    只校验（测试用），不一致就退出 1
  *
- *   node tools/css.mjs           生成 src/tokens.generated.css
- *   node tools/css.mjs --check   只校验（测试用），不一致就退出 1
+ * 契约文档是生成物，写到 out/，不入库：机器读 vk brief --json，人读 out/CONTRACT.md。
  */
 import fs from 'node:fs';
+import path from 'node:path';
 import {
   CANVAS,
   FONT,
@@ -26,7 +24,9 @@ import {
   BLOCK,
   DOTS,
   FONT_FAMILY,
+  FLOOR,
 } from '../src/vocab.mjs';
+import { markdown } from '../src/contract.mjs';
 
 const rows = [];
 const push = (name, value) => rows.push(`  --vk-${name}: ${value};`);
@@ -41,6 +41,7 @@ push('margin-x', `${CANVAS.safeX}px`);
 push('margin-y', `${CANVAS.safeY}px`);
 push('safe-w', `${CANVAS.w - CANVAS.safeX * 2}px`);
 push('safe-h', `${CANVAS.h - CANVAS.safeY * 2}px`);
+push('floor', `${FLOOR}px`);
 
 rows.push('');
 for (const [tier, px] of Object.entries(FONT)) {
@@ -81,7 +82,7 @@ for (const [k, v] of Object.entries(SYNTAX)) push(`syn-${k}`, `light-dark(${v[0]
 for (const [k, v] of Object.entries(BLOCK)) push(`block-${k}`, `${v}px`);
 for (const [k, v] of Object.entries(DOTS)) push(`dot-${k}`, v);
 
-const css = `/* vk · 由 tools/css.mjs 从 src/vocab.mjs 生成 —— 不要手改。
+const tokensCss = `/* vk · 由 tools/gen.mjs 从 src/vocab.mjs 生成 —— 不要手改。
    颜色是 light-dark(纸面, 暗面)：谁声明表面，谁写一行 color-scheme。 */
 
 :root {
@@ -90,16 +91,20 @@ ${rows.join('\n')}
 }
 `;
 
-const OUT = 'src/tokens.generated.css';
+const TOKENS = path.join(import.meta.dirname, '..', 'src', 'tokens.generated.css');
+const OUT = path.join(import.meta.dirname, '..', 'out', 'CONTRACT.md');
 
 if (process.argv.includes('--check')) {
-  const now = fs.existsSync(OUT) ? fs.readFileSync(OUT, 'utf8') : '';
-  if (now !== css) {
-    console.error('✗ src/tokens.generated.css 与 vocab.mjs 不一致：跑 node tools/css.mjs');
+  const now = fs.existsSync(TOKENS) ? fs.readFileSync(TOKENS, 'utf8') : '';
+  if (now !== tokensCss) {
+    console.error('✗ src/tokens.generated.css 与 vocab.mjs 不一致：跑 node tools/gen.mjs');
     process.exit(1);
   }
   console.log('✓ tokens 与 vocab 一致');
 } else {
-  fs.writeFileSync(OUT, css);
-  console.log(`✓ ${OUT}（${rows.length} 个变量）`);
+  fs.writeFileSync(TOKENS, tokensCss);
+  fs.mkdirSync(path.dirname(OUT), { recursive: true });
+  fs.writeFileSync(OUT, markdown() + '\n');
+  console.log(`✓ ${path.relative(process.cwd(), TOKENS)}（${rows.length} 个变量）`);
+  console.log(`✓ ${path.relative(process.cwd(), OUT)}`);
 }

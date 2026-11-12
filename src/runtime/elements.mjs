@@ -1,154 +1,51 @@
-import { VkElement, define, attrText, attrEnum, attrSpace, esc, warn, takeSlot, fillSlot } from './base.mjs';
+/**
+ * v19 · 需要测量的两个件：源码窗（缩字号）与图片（失败态）。
+ * 其余组件的几何在构建期已经定完，运行期不碰。
+ */
+import { VkElement, define } from './base.mjs';
+import { FLOOR } from '../vocab.mjs';
 
-/* ------------------------------------------------------------------ 文字 */
-/** 文字是纯 CSS 的：size / ink / tone / align 都由属性选择器完成。 */
-export class VkIcon extends VkElement {
-  render() {
-    // 图标本身由构建期注入；这里只负责「画完了」的登记。
-  }
-}
+/** 源码窗：窗太窄时把字号往下缩，缩到 44 为止；再放不下就交给自检报「被裁」。 */
+export class VkCode extends VkElement {
+  static __observed = ['size', 'long'];
 
-export class VkText extends VkElement {
-  render() {
-    const m = (this.getAttribute('measure') || '').trim();
-    if (!m) {
-      this.style.removeProperty('max-width');
+  paint() {
+    if (this.getAttribute('long') === 'wrap') {
+      this.style.removeProperty('font-size');
       return;
     }
-    if (m === 'none') {
-      this.style.maxWidth = 'none';
-      return;
+    const lines = this.querySelector('.vk-lines');
+    if (!lines) return;
+    this.style.removeProperty('font-size');
+    const base = parseFloat(getComputedStyle(lines).fontSize) || 56;
+    if (base <= FLOOR) return;
+    let px = base;
+    const overflows = () => [...this.querySelectorAll('.vk-lc')].some((el) => el.scrollWidth > el.clientWidth + 1);
+    if (!overflows()) return;
+    while (px > FLOOR) {
+      px = Math.max(FLOOR, px - 2);
+      this.style.fontSize = `${px}px`;
+      if (!overflows()) return;
     }
-    const n = Number(m);
-    if (Number.isInteger(n) && n >= 4 && n <= 60) this.style.maxWidth = n + 'em';
-    else warn(this, `measure="${m}" 只能是 none 或 4–60 的整数（一行几个字）`);
+    this.style.fontSize = `${FLOOR}px`;
   }
 }
 
-/* ------------------------------------------------------------------ 标签 */
-export class VkLabel extends VkElement {
-  render() {
-    if (!this._t) {
-      const kids = takeSlot(this);
-      const t = document.createElement('span');
-      t.className = 'vk-label-t';
-      fillSlot(t, kids);
-      this._t = t;
-      this.prepend(t);
-    }
-    const counter = attrText(this, 'counter');
-    if (counter) {
-      if (!this._n) {
-        this._n = document.createElement('span');
-        this._n.className = 'vk-label-n';
-        this.prepend(this._n);
-      }
-      this._n.textContent = counter;
-    } else this._n?.remove();
-  }
-}
-
-/* ------------------------------------------------------------------ 行内 */
-export class VkInline extends VkElement {
-  render() {
-    const variant = this.getAttribute('variant') || 'code';
-    if (variant === 'keys' && !this._keys) {
-      const raw = (this.textContent || '').replace(/\s+/g, ' ').trim();
-      if (!raw) return;
-      this._keys = true;
-      const keys = raw
-        .split(/\s*\+\s*/)
-        .filter(Boolean)
-        .map((k) => `<kbd class="vk-key">${esc(k)}</kbd>`)
-        .join('<span class="vk-key-plus" aria-hidden="true">+</span>');
-      this.innerHTML = `<span class="vk-keys">${keys}</span>`;
-    }
-  }
-}
-
-/* ------------------------------------------------------------------ 图片 */
+/** 图片：加载失败时把 alt 显示出来，而不是留一块灰。 */
 export class VkImg extends VkElement {
-  render() {
-    const src = attrText(this, 'src');
-    const alt = attrText(this, 'alt');
-    const ratio = attrText(this, 'ratio');
-    // 默认完整显示（contain）：截图里的字被裁掉是静默的数据丢失，要裁得作者自己写 cover。
-    const burst = this.getAttribute('bleed') === 'all';
-    const fill = attrEnum(this, 'fill', burst ? 'cover' : 'contain');
-    const pos = attrText(this, 'position', '50% 50%');
-    if (!src) {
-      warn(this, '缺 src');
-      this.dataset.error = '';
-      this.innerHTML = `<span class="vk-img-ph">${esc(alt || '图')}</span>`;
-      return;
-    }
-    if (!this._img || this._src !== src) {
-      this._src = src;
-      this.innerHTML = `<img src="${esc(src)}" alt="${esc(alt)}" loading="eager" style="object-fit:${fill};object-position:${esc(pos)}" />`;
-      this._img = this.querySelector('img');
-      this._img.addEventListener('error', () => (this.dataset.error = ''), { once: true });
-      this._img.addEventListener('load', () => delete this.dataset.error, { once: true });
-      if (this._img.complete && this._img.naturalWidth === 0) this.dataset.error = '';
-    }
-    // fill / position 改了就同步：只重建当 src 变过，属性后改也得跟得上。
-    if (this._img) {
-      this._img.style.objectFit = fill;
-      this._img.style.objectPosition = pos;
-    }
-    if (ratio) this.style.aspectRatio = ratio;
-    else this.style.removeProperty('aspect-ratio');
+  static __observed = ['src'];
+
+  paint() {
+    const img = this.querySelector('img');
+    if (!img) return;
+    this.removeAttribute('data-broken');
+    const broken = () => {
+      this.setAttribute('data-broken', this.getAttribute('alt') || '图片没加载');
+    };
+    img.addEventListener('error', broken, { once: true });
+    if (img.complete && img.naturalWidth === 0) broken();
   }
 }
 
-/* ------------------------------------------------------------------ 面 */
-export class VkBox extends VkElement {
-  render() {
-    this.style.setProperty('--vk-box-pad', attrSpace(this, 'pad', 'normal'));
-    if (!this._bd) {
-      const kids = takeSlot(this);
-      const bd = document.createElement('div');
-      bd.className = 'vk-box-bd';
-      this.replaceChildren(bd);
-      fillSlot(bd, kids);
-      this._bd = bd;
-    }
-    const title = attrText(this, 'title');
-    const chrome = this.getAttribute('chrome') === 'dots';
-    if (!title && !chrome) {
-      this._hd?.remove();
-      this._hd = null;
-      return;
-    }
-    if (!this._hd) {
-      this._hd = document.createElement('header');
-      this._hd.className = 'vk-box-hd';
-      this.insertBefore(this._hd, this._bd);
-    }
-    const sig = `${chrome}|${title}`;
-    if (this._hdSig === sig) return;
-    this._hdSig = sig;
-    this._hd.innerHTML = `${chrome ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${
-      title ? `<span class="vk-box-t">${esc(title)}</span>` : ''
-    }`;
-  }
-}
-
-/* ------------------------------------------------------------------ 公式 */
-export class VkMath extends VkElement {
-  render() {
-    const tier = this.getAttribute('size') || 'body';
-    this.style.setProperty('--vk-cs', `var(--vk-fs-${tier})`);
-    if (!this.querySelector('.katex')) this.stale('缺少预编译的公式');
-  }
-}
-
-export function defineElements() {
-  define('vk-math', VkMath);
-define('vk-icon', VkIcon);
-  define('vk-text', VkText);
-  define('vk-label', VkLabel);
-  define('vk-inline', VkInline);
-  define('vk-img', VkImg);
-  define('vk-box', VkBox);
-}
-
+define('vk-code', VkCode);
+define('vk-img', VkImg);

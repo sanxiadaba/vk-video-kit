@@ -1,19 +1,18 @@
 {
   "name": "vk-video-kit",
-  "version": "18.0.0",
+  "version": "19.0.0",
   "private": true,
-  "description": "1920×1080 单帧画面库：27 个件，构建期预处理，只出图。",
+  "description": "1920×1080 单帧画面库：20 个件，构建期预处理，只出图。",
   "type": "module",
-  "main": "dist/vk.esm.js",
-  "module": "dist/vk.esm.js",
   "bin": {
     "vk": "bin/vk.mjs"
   },
   "scripts": {
-    "build": "node tools/css.mjs && node tools/contract.mjs && node tools/fonts.mjs && node tools/katex.mjs && node tools/build.mjs",
-    "test": "node tools/test.mjs",
-    "assets": "node tools/assets.mjs",
-    "assets:check": "node tools/assets.mjs --check"
+    "gen": "node tools/gen.mjs",
+    "vendor": "node tools/vendor.mjs",
+    "bundle": "node tools/bundle.mjs",
+    "build": "node tools/gen.mjs && node tools/vendor.mjs && node tools/bundle.mjs",
+    "test": "node tools/test.mjs"
   },
   "devDependencies": {
     "@fontsource/inter": "^5.3.0",

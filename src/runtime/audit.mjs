@@ -1,218 +1,204 @@
-/* ============================================================================
-   v18 · 自检
-   ----------------------------------------------------------------------------
-   只判五类「无法辩解」的事，每类一条，报根因不报后代：
+/**
+ * v19 · 自检与度量
+ * ----------------------------------------------------------------------------
+ * 硬错只有五类（无论怎么画都错）：
+ *   1. 没有 <vk-page>，或画布不是 1920×1080
+ *   2. 组件自己渲染失败
+ *   3. 资源加载失败（图片、字体）
+ *   4. 文字被裁 / 内容出界
+ *   5. 锚点指空
+ *
+ * 其余（容量、留白、重叠、焦点数、对比度、字号）只报数，不拦。
+ * 这不是门禁，是让作者看见。
+ */
 
-     frame    这一页没有 <vk-page>，或者画布不是 1920×1080
-     render   件自己抛了错（脚本异常 / 缺预编译数据）
-     asset    资源加载失败（图片、字体、脚本）
-     clipped  文字被裁掉了（横向或纵向，含祖先的 overflow）
-     anchor   标注指向空气（for / from / to 解析不到）
+const PAGE_W = 1920;
+const PAGE_H = 1080;
 
-   版式判断（出安全区、重叠、留白、焦点数、对比度、密度）不进自检：
-   它们要么靠默认值和组件自适应保证，要么是作者的选择。
-   这些只作为 metrics 打印出来，不阻止出图。
-
-   每个 issue 的形状固定：{ code, message, fix, rect? }。给机器读也给 AI 读。
-   ========================================================================== */
-
-const CANVAS_W = 1920;
-const CANVAS_H = 1080;
-const TOL = 2;
-
-const name = (el) => {
-  const id = el.id ? `#${el.id}` : '';
-  const cls = typeof el.className === 'string' && el.className.trim() ? `.${el.className.trim().split(/\s+/)[0]}` : '';
-  return `<${el.localName}${id}${cls}>`;
+const rgb = (s) => {
+  const m = String(s).match(/rgba?\(([^)]+)\)/);
+  if (!m) return null;
+  const [r, g, b, a = 1] = m[1].split(',').map((x) => parseFloat(x));
+  return { r, g, b, a };
 };
 
-const isOverlay = (el) => !!el.closest('vk-callout');
-const isDeco = (el) => !!el.closest('[data-vk-deco], .katex, svg');
-
-/** 元素自己的文字（不含子元素里的）。 */
-const ownText = (el) => {
-  for (const n of el.childNodes) if (n.nodeType === 3 && n.textContent.trim()) return true;
-  return false;
+const lum = ({ r, g, b }) => {
+  const f = (v) => {
+    const s = v / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * f(r) + 0.7152 * f(g) + 0.0722 * f(b);
 };
 
-/** 元素里所有文字的墨迹矩形（不是盒子）。 */
-function inkRect(el) {
+const ratio = (a, b) => {
+  const la = lum(a);
+  const lb = lum(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+};
+
+function bgOf(el) {
+  let n = el;
+  while (n && n.nodeType === 1) {
+    const c = rgb(getComputedStyle(n).backgroundColor);
+    if (c && c.a > 0.5) return c;
+    n = n.parentElement;
+  }
+  return { r: 255, g: 255, b: 255, a: 1 };
+}
+
+/** 真正有字/有图的那一块：用文本 Range 与图片矩形量，不用容器盒子（容器会被 grid 拉高）。 */
+function inkBoxOf(stage) {
+  let top = Infinity;
+  let bottom = -Infinity;
+  let left = Infinity;
+  let right = -Infinity;
+  const add = (r) => {
+    if (r.width < 1 && r.height < 1) return;
+    top = Math.min(top, r.top);
+    bottom = Math.max(bottom, r.bottom);
+    left = Math.min(left, r.left);
+    right = Math.max(right, r.right);
+  };
+  const walker = document.createTreeWalker(stage, NodeFilter.SHOW_TEXT);
   const range = document.createRange();
-  let box = null;
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     if (!n.textContent.trim()) continue;
+    if (n.parentElement?.closest('.vk-sr')) continue;
     range.selectNodeContents(n);
-    for (const r of range.getClientRects()) {
-      if (r.width < 0.5 || r.height < 0.5) continue;
-      box = box
-        ? { left: Math.min(box.left, r.left), top: Math.min(box.top, r.top), right: Math.max(box.right, r.right), bottom: Math.max(box.bottom, r.bottom) }
-        : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-    }
+    for (const r of range.getClientRects()) add(r);
   }
-  return box;
+  for (const el of stage.querySelectorAll('img, svg.vk-gedges, .vk-co-ring, .vk-co-line, .vk-tl-dot, .vk-bit, .vk-cell, .vk-tl-i')) add(el.getBoundingClientRect());
+  return Number.isFinite(top) ? { top, bottom, left, right } : null;
 }
 
-const CLIP = new Set(['hidden', 'clip', 'auto', 'scroll']);
-
-export function auditPage(stageEl) {
-  const stage = stageEl || document.querySelector('.vk-stage');
-  if (!stage) return { issues: [{ code: 'frame', message: '这一页没有 <vk-page>', fix: '把内容包进 <vk-page>…</vk-page>' }] };
-
+export function auditPage(stage) {
   const issues = [];
-  const page = stage.closest('vk-page');
-  const sr = stage.getBoundingClientRect();
-  const scale = stage.offsetWidth ? sr.width / stage.offsetWidth : 1;
+  const elements = [];
+  const overlaps = [];
+  const contrast = [];
+  const push = (code, message, fix) => issues.push({ code, message, fix });
 
-  /* frame：画布尺寸。 */
-  if (page) {
-    const pr = page.getBoundingClientRect();
-    const w = Math.round(pr.width / scale);
-    const h = Math.round(pr.height / scale);
-    if (w !== CANVAS_W || h !== CANVAS_H) {
-      issues.push({ code: 'frame', message: `画布是 ${w}×${h}，不是 ${CANVAS_W}×${CANVAS_H}`, fix: '别给 vk-page 写宽高：一帧就是 1920×1080' });
-    }
+  const page = stage?.closest?.('vk-page');
+  if (!page) {
+    return { issues: [{ code: 'frame', message: '这一页没有 <vk-page>', fix: '把内容包进 <vk-page>…</vk-page>' }], metrics: null, elements, overlaps, contrast };
+  }
+  const pr = page.getBoundingClientRect();
+  if (Math.round(pr.width) !== PAGE_W || Math.round(pr.height) !== PAGE_H) {
+    push('frame', `画布是 ${Math.round(pr.width)}×${Math.round(pr.height)}，不是 1920×1080`, '检查页面样式是否覆盖了 vk-page 的宽高');
   }
 
-  /* clipped（一）：整块超出画布。图片、表格这类没有文字的元素也查。 */
-  {
-    let worst = null;
-    let over = 0;
-    for (const el of stage.querySelectorAll('*')) {
-      if (isOverlay(el) || isDeco(el) || el.closest('[bleed]')) continue;
-      const cs = getComputedStyle(el);
-      if (cs.display === 'none' || cs.visibility === 'hidden') continue;
-      const r = el.getBoundingClientRect();
-      if (r.width < 2 || r.height < 2) continue;
-      const d = Math.max(0, sr.top - r.top, r.bottom - sr.bottom, sr.left - r.left, r.right - sr.right);
-      if (d > over + 1) {
-        over = d;
-        worst = el;
+  /* 2. 渲染失败 */
+  for (const el of page.querySelectorAll('[data-vk-error]')) push('render', `<${el.localName}> 渲染失败`, '看控制台里的 [vk] 错误；这是组件抛的，不是版式问题');
+
+  /* 3. 资源 */
+  for (const img of page.querySelectorAll('vk-img img')) {
+    if (img.complete && img.naturalWidth === 0) {
+      const host = img.closest('vk-img');
+      push('asset', `图片没加载：${img.getAttribute('src') || '(没有 src)'}`, host?.getAttribute('alt') ? `alt="${host.getAttribute('alt')}"` : '检查路径是否相对页面文件');
+    }
+  }
+  for (const f of window.vk?._fonts || []) {
+    if (!f.ok) push('asset', `字体没加载：${f.family}`, '跑一次 vk render 会重建字体；检查 assets/fonts 是否完整');
+  }
+
+  /* 5. 锚点 */
+  for (const el of page.querySelectorAll('vk-callout[data-vk-anchor-missing]')) {
+    const target = el.getAttribute('for') || el.getAttribute('to') || el.getAttribute('from') || '';
+    push('anchor', `标注指不到东西：${target}`, '锚点只认 #id / #id@line:3 / #id@item:2 / #id@side:left；@line 是窗口里第几行，1 起');
+  }
+
+  /* 4. 文字超出容器（横向） */
+  for (const el of page.querySelectorAll('.vk-lc, .vk-dc, .vk-title, .vk-lede, .vk-tl-label, .vk-tl-note, .vk-bar-l, vk-table td, vk-table th, .vk-step-t, .vk-cell-v')) {
+    if (el.scrollWidth > el.clientWidth + 4 && el.clientWidth > 0) {
+      push('clipped', `<${el.localName} class="${String(el.className).split(' ')[0]}"> 的文字超出容器（宽 ${el.scrollWidth} > ${el.clientWidth}）`, '缩短这一行、拆帧，或让代码窗换行（long="wrap"）');
+    }
+  }
+  for (const el of page.querySelectorAll('.vk-lines')) {
+    if (el.scrollWidth > el.clientWidth + 4) push('clipped', '代码窗横向被裁：字号已经缩到地板，仍然放不下', '把最长的行改短，或拆成两帧');
+  }
+
+  /* 4. 墨迹出界 */
+  const ink = inkBoxOf(stage);
+  if (ink) {
+    const bottom = ink.bottom - pr.top;
+    const top = ink.top - pr.top;
+    if (bottom > PAGE_H + 2) push('clipped', `内容超出画布底部 ${Math.round(bottom - PAGE_H)}px`, '拆帧，或改用更少的内容');
+    if (top < -2) push('clipped', `内容超出画布顶部 ${Math.round(-top)}px`, '检查是否用了绝对定位');
+  }
+
+  const safeH = 888;
+  const metrics = ink
+    ? {
+        contentTop: Math.max(0, Math.round(ink.top - pr.top)),
+        contentBottom: Math.round(ink.bottom - pr.top),
+        contentLeft: Math.max(0, Math.round(ink.left - pr.left)),
+        contentRight: Math.round(ink.right - pr.left),
+        fill: Math.round(((ink.bottom - ink.top) / safeH) * 100),
+        focus: 0,
+      }
+    : { contentTop: 0, contentBottom: 0, contentLeft: 0, contentRight: 0, fill: 0, focus: 0 };
+
+  /* 焦点：按「看这里」的所在组件计数，同一个组件里多处高亮算一处。 */
+  const focusHosts = new Set();
+  for (const el of page.querySelectorAll('[data-state="current"], .is-cur, em, [tone="focus"], .vk-co-ring')) {
+    const host = el.closest('vk-code, vk-cells, vk-bytes, vk-table, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-tree, vk-head, vk-text, .vk-tl-i, .vk-gnode') || el;
+    focusHosts.add(host);
+  }
+  metrics.focus = focusHosts.size;
+
+  /* 元素清单（frame.json）：只列 vk-* 与标题行，坐标相对页面。 */
+  for (const el of page.querySelectorAll('vk-page *')) {
+    if (el.closest('svg')) continue;
+    const r = el.getBoundingClientRect();
+    if (r.width < 1 || r.height < 1) continue;
+    if (!el.localName.startsWith('vk-') && !el.classList.contains('vk-title')) continue;
+    elements.push({
+      tag: el.localName,
+      id: el.id || '',
+      x: Math.round(r.left - pr.left),
+      y: Math.round(r.top - pr.top),
+      w: Math.round(r.width),
+      h: Math.round(r.height),
+      fs: Math.round(parseFloat(getComputedStyle(el).fontSize) || 0),
+    });
+  }
+
+  /* 重叠：同一层相邻块之间有明显相交才报。 */
+  const groups = [page.querySelector('.vk-body'), ...page.querySelectorAll('vk-flow')].filter(Boolean);
+  for (const g of groups) {
+    const kids = [...g.children].filter((c) => c.localName.startsWith('vk-') && !c.closest('vk-callout'));
+    for (let i = 0; i < kids.length; i++) {
+      for (let j = i + 1; j < kids.length; j++) {
+        const a = kids[i].getBoundingClientRect();
+        const b = kids[j].getBoundingClientRect();
+        const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+        const h = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+        if (w <= 2 || h <= 2) continue;
+        const area = w * h;
+        const min = Math.min(a.width * a.height, b.width * b.height);
+        if (min > 0 && area / min > 0.06) overlaps.push({ a: kids[i].localName, b: kids[j].localName, area: Math.round(area) });
       }
     }
-    if (worst && over > 4) {
-      issues.push({
-        code: 'clipped',
-        message: `${name(worst)} 超出画布 ${Math.round(over / (scale || 1))}px`,
-        fix: '删内容、降一级 gap、把图改小，或者拆一帧',
-      });
-    }
   }
 
-  /* clipped（二）：文字被任何一个祖先的 overflow 裁掉。 */
-  const seen = new Set();
-  for (const el of stage.querySelectorAll('*')) {
-    if (seen.has(el) || isOverlay(el) || isDeco(el)) continue;
-    if (!ownText(el)) continue;
+  /* 对比度：文字元素的实际颜色 vs 最近的实底。 */
+  for (const el of page.querySelectorAll('vk-text, .vk-title, .vk-lede, vk-code, vk-table, vk-tree, vk-cells, vk-bars, vk-timeline, vk-steps, vk-list, .vk-co-note')) {
     const cs = getComputedStyle(el);
-    if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) < 0.05) continue;
-    const ink = inkRect(el);
-    if (!ink) continue;
-
-    let box = ink;
-    let node = el;
-    // 一直查到 vk-page（它自己 overflow:hidden）：内容超出画布 = 被 page 裁掉。
-    while (node && node !== stage.parentElement) {
-      const s = getComputedStyle(node);
-      if (CLIP.has(s.overflowX) || CLIP.has(s.overflowY)) {
-        const r = node.getBoundingClientRect();
-        const overX = Math.max(0, box.left < r.left - TOL ? r.left - box.left : 0, box.right > r.right + TOL ? box.right - r.right : 0);
-        const overY = Math.max(0, box.top < r.top - TOL ? r.top - box.top : 0, box.bottom > r.bottom + TOL ? box.bottom - r.bottom : 0);
-        if (overX > TOL || overY > TOL) {
-          for (const d of el.querySelectorAll('*')) seen.add(d);
-          const px = Math.round(Math.max(overX, overY) / (scale || 1));
-          const axis = overX > TOL ? '右' : '下';
-          issues.push({
-            code: 'clipped',
-            message: `${name(el)} 的文字被裁掉 ${px}px（${axis}）`,
-            fix:
-              el.closest('vk-code, vk-term, vk-diff, vk-asm, vk-bytes')
-                ? '删掉 size 让它自己缩，或改 long="wrap"，或把行弄短'
-                : '缩短内容、换更宽的容器，或拆一帧',
-          });
-          break;
-        }
-      }
-      node = node.parentElement;
-    }
+    const fg = rgb(cs.color);
+    if (!fg) continue;
+    const r = ratio(fg, bgOf(el));
+    if (r < 4.5) contrast.push({ text: (el.textContent || '').trim().slice(0, 24), ratio: Number(r.toFixed(2)), size: Math.round(parseFloat(cs.fontSize) || 0) });
   }
 
-  /* render / stale：件自己说它没画出来。 */
-  for (const el of stage.querySelectorAll('[data-vk-error]')) {
-    issues.push({ code: 'render', message: `${name(el)} 渲染失败`, fix: '看控制台第一条报错' });
-  }
-  for (const el of stage.querySelectorAll('[data-vk-stale]')) {
-    issues.push({ code: 'render', message: `${name(el)} 缺预编译数据`, fix: '重新跑 vk render（构建期没算出来）' });
-  }
-
-  /* asset：图片加载失败。 */
-  for (const el of stage.querySelectorAll('vk-img[data-error], img[data-error]')) {
-    const src = el.getAttribute('src') || el.querySelector('img')?.getAttribute('src') || '';
-    issues.push({ code: 'asset', message: `${name(el)} 的图片没加载出来`, fix: src ? `检查 ${src.split('/').pop()} 的路径` : '写 src' });
-  }
-
-  /* anchor：标注指向空气。按 mode 只查这个形态真正会用的属性。 */
-  for (const c of stage.querySelectorAll('vk-callout')) {
-    const mode = c.getAttribute('mode') || 'arrow';
-    const attrs = mode === 'arrow' ? ['from', 'to'] : ['for'];
-    for (const attr of attrs) {
-      const expr = c.getAttribute(attr);
-      if (!expr) continue;
-      const hit = window.vk?.resolveAnchor?.(stage, expr, c);
-      if (!hit) {
-        issues.push({ code: 'anchor', message: `<vk-callout> 的 ${attr}="${expr}" 指不到东西`, fix: '写 #id / .class / vk-标签，或 #id@line:5（行号按源文件算）' });
-      }
-    }
-  }
-
-  return { issues };
+  return { issues, metrics, elements, overlaps, contrast };
 }
 
-/** 只看数字：给「这一帧什么形状」一个可比较的量，不参与判定。 */
-export function metrics(stageEl) {
-  const stage = stageEl || document.querySelector('.vk-stage');
-  if (!stage) return null;
-  const sr = stage.getBoundingClientRect();
-  const scale = stage.offsetWidth ? sr.width / stage.offsetWidth : 1;
-  const rects = [...stage.querySelectorAll('*')]
-    .filter((el) => !el.closest('svg') && !isDeco(el) && !isOverlay(el) && !el.closest('[bleed="all"]'))
-    // 透明排布容器不是「内容」：它们撑满版心，会把 bbox 拉成整页。
-    .filter((el) => !el.matches('vk-stack, vk-grid, vk-layer, vk-canvas'))
-    .map((el) => el.getBoundingClientRect())
-    .filter((r) => r.width > 1 && r.height > 1);
-  const top = rects.length ? Math.min(...rects.map((r) => r.top)) : sr.top;
-  const bottom = rects.length ? Math.max(...rects.map((r) => r.bottom)) : sr.top;
-  const left = rects.length ? Math.min(...rects.map((r) => r.left)) : sr.left;
-  const right = rects.length ? Math.max(...rects.map((r) => r.right)) : sr.left;
-  // 焦点按「件」计数：一段字节的高亮、一整段代码的聚光都只算一处。
-  const COMPONENT = 'vk-code, vk-term, vk-diff, vk-asm, vk-cells, vk-tree, vk-bytes, vk-bits, vk-steps, vk-timeline, vk-bars, vk-table, vk-text';
-  const focus = new Set(
-    [...stage.querySelectorAll('[state="current"], [data-current], .is-current')].map(
-      (el) => el.closest(COMPONENT) || el
-    )
-  ).size;
-  return {
-    contentTop: Math.round((top - sr.top) / scale),
-    contentBottom: Math.round((bottom - sr.top) / scale),
-    contentLeft: Math.round((left - sr.left) / scale),
-    contentRight: Math.round((right - sr.left) / scale),
-    fill: Math.round(((bottom - top) / (888 * scale)) * 100),
-    focus,
-  };
+export function auditDocument() {
+  return [...document.querySelectorAll('.vk-stage')].map((stage) => auditPage(stage));
 }
 
-export function auditPages(root = document) {
-  const stages = [...root.querySelectorAll('.vk-stage')];
-  const pages = stages.map((stage) => auditPage(stage));
-  return { pages, issues: pages.flatMap((p, i) => p.issues.map((x) => ({ ...x, page: i }))) };
+if (typeof window !== 'undefined') {
+  window.vk ||= {};
+  window.vk.auditPage = auditPage;
+  window.vk.auditDocument = auditDocument;
 }
-
-export function installAudit(VK) {
-  VK.auditPage = auditPage;
-  VK.auditPages = auditPages;
-  VK.metrics = metrics;
-  VK.resolveTarget = resolveTarget;
-  VK.resolveAnchor = resolveAnchor;
-}
-
-import { resolveTarget, resolveAnchor } from './base.mjs';

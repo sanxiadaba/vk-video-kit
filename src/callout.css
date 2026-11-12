@@ -1,112 +1,89 @@
 /* ============================================================================
-   v18 · 关系层
+   v19 · 画在别人身上的一层
    ----------------------------------------------------------------------------
-   arrow / ring / note / badge：绝对定位覆在整帧上，不属于任何件。
-   墨色跟着「它落在哪块面上」走：线活在页面上（跟页面），圈压在件上（跟件）。
-   深色页由 color-scheme 自动换，没有第二套。
+   不改布局：绝对定位覆盖整帧，只画线、圈、气泡、编号点。
+   颜色走 tone（--vk-tone），圈选固定用焦点色：圈 = 正在看这里。
    ========================================================================== */
 
 vk-callout {
-  display: contents;
-}
-
-/* 注释是一层覆盖：绝对定位铺满整帧，压在内容之上。 */
-.vk-callout {
   position: absolute;
   inset: 0;
-  z-index: 3;
+  z-index: 30;
   pointer-events: none;
+  display: block;
 }
-.vk-callout-svg {
+
+.vk-co-svg {
   position: absolute;
   inset: 0;
   overflow: visible;
-  pointer-events: none;
 }
-/* 连接件 —— 颜色与端点在这里，宽度在 callout.mjs 的 LINK 里（几何要用同一份数）。
 
-   一套语言，四种角色，靠形状和端点分开，不靠颜色堆：
-     当前行条  焦点蓝 · 8px · 平头 · 贴行内缘        （components.css，状态）
-     箭头      墨 · 12px · 实心三角头 · 贴着边出     （关系有方向）
-     圈        墨 · 10px · 行级胶囊 / 块级圆角框      （关系无方向，圈住一行）
-     引线      墨 · 10px · 端点圆点（与边框相切）     （注释指向，不说方向）
-   蓝只给「正在看这里」；语义色只给气泡边框和编号点，不画到线上。 */
-.vk-arrow {
+/* 圈：按字的墨迹取框，不按整行盒子。 */
+.vk-co-ring {
+  fill: var(--vk-tint-focus);
+  fill-opacity: 0.55;
+  stroke: var(--vk-focus);
+  stroke-width: 12;
+  stroke-linejoin: round;
+}
+
+.vk-co-line,
+.vk-co-lead {
   fill: none;
-  stroke: var(--vk-ink-1);
+  stroke: var(--vk-tone, var(--vk-info));
+  stroke-width: 8;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
-.vk-arrow-head {
-  fill: var(--vk-ink-1);
+.vk-co-lead {
+  stroke-width: 4;
 }
-/* 圈压在件上，它的 color-scheme 由 JS 按「落点那块面」写：深色页里的代码窗是浅底，
-   圈必须是深墨，跟着页面走会变成一道看不见的浅线。 */
-.vk-ring.is-block {
-  fill: none;
-  stroke: var(--vk-ink-1);
+
+.vk-co-head {
+  fill: var(--vk-tone, var(--vk-info));
 }
-.vk-note-leader {
-  stroke: var(--vk-ink-2);
+
+.vk-co-dot {
+  fill: var(--vk-tone, var(--vk-info));
 }
-.vk-note-dot {
-  fill: var(--vk-ink-1);
-}
-.vk-callout-bd {
+
+.vk-co-label {
   position: absolute;
-  pointer-events: none;
-}
-
-.vk-callout-note {
-  max-width: calc(var(--vk-safe-w) * 0.5);
-  padding: var(--vk-inset-lg) var(--vk-gap-normal);
-  border: var(--vk-line-w-rule) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-md);
-  background: var(--vk-paper);
-  color: var(--vk-ink-1);
-  font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-body);
-  line-height: var(--vk-lh-caption);
-  text-wrap: pretty;
-}
-
-.vk-callout-note[data-tone='focus'] {
-  border-color: var(--vk-focus);
-}
-.vk-callout-note[data-tone='ok'] {
-  border-color: var(--vk-ok);
-}
-.vk-callout-note[data-tone='warn'] {
-  border-color: var(--vk-warn);
-}
-.vk-callout-note[data-tone='err'] {
-  border-color: var(--vk-err);
-}
-
-.vk-callout-label {
-  translate: -50% -50%;
-  padding: 0 var(--vk-inset-sm);
+  padding: 4px 14px;
   border-radius: var(--vk-radius-pill);
   background: var(--vk-paper);
   color: var(--vk-ink-2);
-  font-size: var(--vk-fs-body);
-  line-height: var(--vk-lh-body);
-  font-weight: var(--vk-w-medium);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.3;
   white-space: nowrap;
+  box-shadow: 0 0 0 var(--vk-line-w-hair) var(--vk-line-color);
 }
 
-.vk-callout-badge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: calc(var(--vk-inset-xl) + var(--vk-gap-close));
-  height: calc(var(--vk-inset-xl) + var(--vk-gap-close));
-  translate: -50% -50%;
-  border-radius: var(--vk-radius-pill);
-  background: var(--vk-tone, var(--vk-info));
+.vk-co-note {
+  position: absolute;
+  max-width: 720px;
+  padding: 16px 24px;
+  border-radius: var(--vk-radius-lg);
+  background: var(--vk-paper);
+  color: var(--vk-ink-1);
+  border: var(--vk-line-w-hair) solid var(--vk-tone, var(--vk-info));
+  font-size: var(--vk-fs-caption);
+  line-height: 1.45;
+  box-shadow: 0 12px 32px rgba(11, 15, 20, 0.12);
+}
+
+.vk-co-badge {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: var(--vk-focus);
   color: var(--vk-on-focus);
-  font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
-  line-height: 1;
+  font-size: var(--vk-fs-caption);
+  font-weight: var(--vk-w-bold);
+  font-variant-numeric: tabular-nums;
 }
 

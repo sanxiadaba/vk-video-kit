@@ -42,45 +42,6 @@ export function dedent(text) {
   return lines.map((l) => (l.trim() ? l.slice(min) : '')).join('\n');
 }
 
-/**
- * 索引语法的唯一解析器：`1` / `1-8` / `1,3-5` → [{from,to}]。
- * 保留书写顺序；非法片段直接忽略。基准不在这里决定：
- * 源码行 1 起、锚点 1 起，由调用方各自解释。
- */
-const INDEX_PART = /^(\d+)(?:\s*-\s*(\d+))?$/;
-export function indexRanges(value) {
-  const out = [];
-  for (const part of String(value || '').split(',')) {
-    const m = part.trim().match(INDEX_PART);
-    if (!m) continue;
-    const from = parseInt(m[1], 10);
-    const to = m[2] ? parseInt(m[2], 10) : from;
-    out.push({ from, to });
-  }
-  return out;
-}
-
-/**
- * "4,6-8" → Set{4,6,7,8}
- *
- * 分配一亿个 Set 项，把页面卡死。超过 MAX_LINE 的范围直接截断。
- */
-export const MAX_LINE = 10000;
-export function lineSet(value) {
-  const set = new Set();
-  for (const { from, to } of indexRanges(value)) {
-    if (from > MAX_LINE) continue;
-    const end = Math.min(Math.max(from, to), MAX_LINE);
-    for (let i = from; i <= end; i++) set.add(i);
-  }
-  return set;
-}
-
-/**
- * 数据下标列表："3" / "2-4" / "1,5" → Set{2,3,4}（0 起、含端点）。
- * 与 lineSet 同一套语法，只是基准不同。
- */
-
 /* -------------------------------------------------------------- language */
 
 export const LANG_ALIAS = {
