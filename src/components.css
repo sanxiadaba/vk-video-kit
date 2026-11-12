@@ -1,73 +1,75 @@
 /* ============================================================================
-   v19 · 组件
+   v21 · 组件
    ----------------------------------------------------------------------------
-   内容件只在「自己的那块」里画：代码行、表格、树、格子、步骤、条、时间线、关系图。
-   窗口皮在 base.css（.vk-frame），这里不再各写一套。
+   组件只做五组原语的组合：字 / 距 / 面 / 线 / 态。
+   这里不出现裸字号、裸间距、裸圆角；拿不准就回 vocab.mjs 加 token。
    ========================================================================== */
-
-/* ---------------------------------------------------------------- 字号档 */
-:where(vk-code, vk-table, vk-list, vk-tree, vk-math, vk-cells, vk-bytes, vk-bits, vk-steps, vk-bars, vk-timeline, vk-graph, vk-seq) {
-  font-size: var(--vk-fs-body);
-  line-height: var(--vk-lh-body);
-}
-:where(vk-code, vk-table, vk-list, vk-tree, vk-math, vk-cells, vk-bytes, vk-bits, vk-steps, vk-bars, vk-timeline, vk-graph)[size='caption'] {
-  font-size: var(--vk-fs-caption);
-  line-height: var(--vk-lh-caption);
-}
-:where(vk-code, vk-table, vk-list, vk-tree, vk-math, vk-cells, vk-bytes, vk-bits, vk-steps, vk-bars, vk-timeline, vk-graph)[size='subhead'] {
-  font-size: var(--vk-fs-subhead);
-  line-height: var(--vk-lh-subhead);
-}
 
 /* ================================================================ 源码窗 */
 vk-code {
   display: block;
   width: fit-content;
   max-width: 100%;
-  font-family: var(--vk-font-mono);
   min-width: 0;
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
+}
+vk-code[size='caption'] {
+  font-size: var(--vk-fs-caption);
+}
+vk-code[size='subhead'] {
+  font-size: var(--vk-fs-subhead);
 }
 .vk-lines {
   display: grid;
   gap: 0;
   font-size: 1em;
-  line-height: 1.5;
+  line-height: 1.6;
+  padding: var(--vk-space-4) 0;
 }
 .vk-line {
   display: grid;
-  grid-template-columns: calc(var(--vk-ln-digits, 2) * 0.62em + 16px) minmax(0, 1fr);
-  gap: 16px;
-  padding: 0 16px;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--vk-space-5);
+  align-items: baseline;
+  padding: 0 var(--vk-space-5) 0 var(--vk-space-4);
   position: relative;
-  border-radius: 0;
 }
 .vk-ln {
-  color: var(--vk-ink-2);
+  color: var(--vk-ink-3);
   text-align: right;
-  /* 行号也是要读的字：手机 19.5px。行高按 0.86×1.74 ≈ 1.5 保持行盒不变。 */
-  font-size: 0.86em;
-  line-height: 1.74;
+  font-size: var(--vk-fs-caption);
+  line-height: 1.6;
   font-variant-numeric: tabular-nums;
   user-select: none;
 }
 .vk-lc {
+  font-size: 1em;
+  line-height: 1.6;
   white-space: pre;
+  text-align: start;
   min-width: 0;
 }
-vk-code[long='wrap'] .vk-lc {
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+/* 聚光：有 current 时其余行压到 45%；当前行满对比 + 8px 左条。 */
+.vk-lines[data-dim] .vk-line:not(.is-cur) {
+  opacity: 0.7;
 }
-.vk-line.is-cur {
-  background: var(--vk-tint-focus);
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+.vk-line.is-cur::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-rule);
+  background: var(--vk-focus);
 }
 .vk-line.is-cur .vk-ln {
   color: var(--vk-focus);
+  font-weight: var(--vk-w-medium);
 }
 .vk-line.is-fold {
   color: var(--vk-ink-3);
-  font-size: 0.8em;
+  font-size: var(--vk-fs-caption);
   letter-spacing: 0.04em;
 }
 .vk-line.is-fold .vk-lc {
@@ -75,16 +77,8 @@ vk-code[long='wrap'] .vk-lc {
   white-space: normal;
 }
 .vk-line.is-fold .vk-ln {
-  font-size: 1em;
-  line-height: inherit;
-}
-/* 标「原文」：淡底 + 蓝下划线。只有淡底时，落在已经上淡底的当前行里会消失。 */
-.vk-mark {
-  background: var(--vk-tint-focus);
-  color: inherit;
-  border-radius: 0;
-  padding: 0 0.08em;
-  box-shadow: inset 0 -8px 0 color-mix(in srgb, var(--vk-focus) 28%, transparent);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.6;
 }
 
 /* 语法四色 + 一个灰 + 一个墨。颜色本身来自 tokens，类名只做映射。 */
@@ -102,7 +96,7 @@ vk-code[long='wrap'] .vk-lc {
 }
 .f {
   color: var(--vk-syn-fn);
-  font-weight: var(--vk-w-medium);
+  font-weight: var(--vk-w-bold);
 }
 .o {
   color: var(--vk-syn-operator);
@@ -111,13 +105,17 @@ vk-code[long='wrap'] .vk-lc {
 /* 终端 */
 .vk-term .vk-line {
   display: block;
-  /* 折行时第二行缩进 2ch：一眼看出「这是上一行的续行」。 */
-  padding: 0 16px 0 calc(16px + 2ch);
+  padding: 0 var(--vk-space-5) 0 calc(var(--vk-space-5) + 2ch);
   text-indent: -2ch;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+.vk-term .vk-line.is-cur::before {
+  left: 0;
 }
 .vk-prompt {
   color: var(--vk-ink-3);
-  margin-right: 12px;
+  margin-right: var(--vk-space-3);
   user-select: none;
 }
 .vk-cmd {
@@ -143,22 +141,23 @@ vk-code[long='wrap'] .vk-lc {
 /* 改动 */
 .vk-dhunk {
   font-family: var(--vk-font-sans);
-  font-size: 0.8em;
+  font-size: var(--vk-fs-caption);
   letter-spacing: 0.02em;
+  line-height: 1.4;
   color: var(--vk-ink-3);
-  padding: 8px 16px;
-  border-top: var(--vk-line-w-hair) solid var(--vk-line-color);
+  padding: var(--vk-space-2) var(--vk-space-5);
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
-  margin: 8px 0;
+  margin: 0;
 }
 .vk-dhunk:first-child {
   margin-top: 0;
+  border-top: 0;
 }
 .vk-drow {
   display: grid;
-  grid-template-columns: calc(var(--vk-ln-digits, 2) * 0.62em + 8px) 1.2em minmax(0, 1fr);
-  gap: 8px;
-  padding: 0 16px;
+  grid-template-columns: 72px 1.2em minmax(0, 1fr);
+  gap: var(--vk-space-4);
+  padding: 0 var(--vk-space-5);
   white-space: pre;
 }
 .vk-drow.add {
@@ -185,22 +184,29 @@ vk-code[long='wrap'] .vk-lc {
   white-space: pre;
 }
 
-/* 汇编：地址、机器码、助记符、操作数四列，但行里不一定四段都有 → 用 flex。 */
+/* 汇编：地址、机器码、助记符、操作数四列，用 flex 让缺列的行也对齐。 */
 .vk-arow {
   display: flex;
   align-items: baseline;
-  gap: 16px;
-  padding: 0 16px;
+  gap: var(--vk-space-4);
+  padding: 0 var(--vk-space-5);
   white-space: pre;
-}
-.vk-arow .vk-ainsn {
-  color: var(--vk-syn-keyword);
-  font-weight: var(--vk-w-medium);
-  flex: 0 0 4.4em;
 }
 .vk-aaddr {
   color: var(--vk-ink-3);
-  flex: 0 0 4.2em;
+  font-size: var(--vk-fs-caption);
+  flex: 0 0 88px;
+  text-align: right;
+}
+.vk-abytes {
+  color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
+  flex: 0 0 auto;
+}
+.vk-arow .vk-ainsn {
+  color: var(--vk-syn-keyword);
+  font-weight: var(--vk-w-bold);
+  flex: 0 0 4.4em;
 }
 .vk-aops {
   flex: 1 1 auto;
@@ -214,14 +220,9 @@ vk-code[long='wrap'] .vk-lc {
   font-style: normal;
   color: var(--vk-syn-number);
 }
-.vk-abytes {
-  color: var(--vk-ink-3);
-  font-size: 0.8em;
-  flex: 0 0 auto;
-}
 .vk-arow.is-cur {
   background: var(--vk-tint-focus);
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
 }
 .vk-alabel .vk-ainsn {
   color: var(--vk-ink-2);
@@ -232,29 +233,39 @@ vk-table {
   display: block;
   min-width: 0;
 }
+vk-table[data-cols='3'],
+vk-table[data-cols='4'],
+vk-table[data-cols='5'] {
+  width: 100%;
+}
 .vk-cap {
   font-size: var(--vk-fs-caption);
-  line-height: 1.45;
+  line-height: 1.5;
   color: var(--vk-ink-3);
-  margin-bottom: 16px;
+  margin-bottom: var(--vk-space-4);
 }
 vk-table table {
   border-collapse: collapse;
-  width: auto;
+  width: 100%;
   min-width: min(100%, 560px);
   max-width: 100%;
 }
 vk-table th,
 vk-table td {
-  padding: 12px 24px;
+  padding: var(--vk-space-5) var(--vk-space-5);
   text-align: left;
   vertical-align: baseline;
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
 }
 vk-table th {
-  color: var(--vk-ink-2);
+  color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-medium);
-  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-color);
+  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
+}
+vk-table td {
+  font-size: var(--vk-fs-body);
+  color: var(--vk-ink-1);
 }
 vk-table td.num,
 vk-table th.num {
@@ -266,7 +277,7 @@ vk-table tr[state='current'] td {
   background: var(--vk-tint-focus);
 }
 vk-table tr[state='current'] td:first-child {
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
 }
 vk-table td[state='current'] {
   background: var(--vk-tint-focus);
@@ -285,26 +296,29 @@ vk-table tr[tone='err'] td:first-child {
 /* ================================================================ 列表 */
 vk-list {
   display: grid;
-  gap: var(--vk-gap, var(--vk-gap-close));
+  gap: var(--vk-space-5);
   min-width: 0;
 }
 vk-list > li {
   display: grid;
   grid-template-columns: 1.1em minmax(0, 1fr);
-  gap: 16px;
+  gap: var(--vk-space-4);
   align-items: baseline;
   list-style: none;
   counter-increment: vk-li;
+  padding-left: var(--vk-space-4);
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
+  position: relative;
 }
 vk-list > li::before {
   content: '';
-  width: 0.42em;
-  height: 0.42em;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
   background: var(--vk-ink-2);
   justify-self: center;
-  align-self: center;
-  transform: translateY(-0.1em);
+  transform: translateY(-0.18em);
 }
 vk-list[variant='check'] > li::before {
   content: '✓';
@@ -313,6 +327,7 @@ vk-list[variant='check'] > li::before {
   background: none;
   border-radius: 0;
   color: var(--vk-ok);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   align-self: start;
 }
@@ -329,9 +344,27 @@ vk-list[variant='ordered'] > li::before {
   background: none;
   border-radius: 0;
   color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
   font-family: var(--vk-font-mono);
   font-variant-numeric: tabular-nums;
   align-self: start;
+}
+vk-list > li[data-state='current'] {
+  background: var(--vk-tint-focus);
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+  font-weight: var(--vk-w-medium);
+  color: var(--vk-ink-1);
+}
+vk-list > li[data-state='current']::before {
+  background: var(--vk-focus);
+}
+vk-list[variant='check'] > li[data-state='current']::before {
+  color: var(--vk-focus);
+  background: none;
+}
+vk-list[variant='ordered'] > li[data-state='current']::before {
+  background: none;
+  color: var(--vk-focus);
 }
 vk-list > li[tone='ok']::before {
   background: var(--vk-ok);
@@ -342,36 +375,23 @@ vk-list > li[tone='warn']::before {
 vk-list > li[tone='err']::before {
   background: var(--vk-err);
 }
-vk-list > li[state='current'] {
-  color: var(--vk-focus);
-  font-weight: var(--vk-w-medium);
-}
-vk-list > li[state='current']::before {
-  background: var(--vk-focus);
-}
-vk-list[variant='check'] > li[state='current']::before {
-  color: var(--vk-focus);
-  background: none;
-}
-vk-list[variant='ordered'] > li[state='current']::before {
-  background: none;
-  color: var(--vk-focus);
-}
 
-/* ================================================================ 树 */
+/* ================================================================ 树
+   连续导轨：每个节点画自己那段竖线（top -2 / bottom -2 接上），
+   last 的竖线只到行中线，再横一段进图标。 */
 vk-tree {
   display: block;
   min-width: 0;
 }
 .vk-tree {
   display: grid;
-  gap: 4px;
+  padding: var(--vk-space-2) 0;
+  font-size: var(--vk-fs-body);
 }
 .vk-node {
-  display: grid;
   position: relative;
 }
-/* 层级导线：每个节点自己画一段，行与行接起来就是一条连续的竖线。 */
+/* 从父行中心垂到本行中心；非最后一个继续垂到下一个兄弟。 */
 .vk-node[data-depth='2']::before,
 .vk-node[data-depth='3']::before,
 .vk-node[data-depth='4']::before,
@@ -379,30 +399,54 @@ vk-tree {
 .vk-node[data-depth='6']::before {
   content: '';
   position: absolute;
-  left: calc(var(--vk-depth, 1) * 44px - 22px);
-  top: -2px;
+  left: calc(var(--vk-depth, 1) * 40px + 4px);
+  top: calc(-0.75em - 8px);
   bottom: -2px;
   width: var(--vk-line-w-rule);
-  background: var(--vk-line-color);
+  background: var(--vk-ink-3);
+}
+.vk-node[data-last='1']::before {
+  bottom: auto;
+  height: calc(1.5em + 16px);
+}
+.vk-node::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-depth, 1) * 40px + 4px);
+  top: calc(0.75em + 8px);
+  width: 20px;
+  height: var(--vk-line-w-rule);
+  background: var(--vk-ink-3);
+}
+.vk-node[data-depth='1']::after {
+  display: none;
 }
 .vk-nrow {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 2px 0 2px calc(var(--vk-depth, 1) * 44px);
+  gap: var(--vk-space-3);
+  padding: var(--vk-space-2) var(--vk-space-5) var(--vk-space-2) calc(var(--vk-depth, 1) * 40px + var(--vk-space-5));
   position: relative;
   white-space: nowrap;
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
+  min-height: 1.5em;
 }
 .vk-nrow .vk-ic {
+  width: 40px;
+  height: 40px;
+  color: var(--vk-ink-2);
+}
+.vk-node[data-kind='binary'] > .vk-nrow .vk-ic,
+.vk-node[data-kind='file'] > .vk-nrow .vk-ic {
   color: var(--vk-ink-3);
 }
 .vk-node[data-kind='dir'] > .vk-nrow .vk-tname {
   font-weight: var(--vk-w-bold);
 }
-.vk-node[data-kind='dir'] > .vk-nrow .vk-ic {
-  color: var(--vk-ink-2);
-}
 .vk-node.is-cur > .vk-nrow {
+  background: var(--vk-tint-focus);
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
   color: var(--vk-focus);
   font-weight: var(--vk-w-medium);
 }
@@ -411,46 +455,28 @@ vk-tree {
 }
 .vk-node.is-more {
   color: var(--vk-ink-3);
-  font-size: 0.8em;
-  padding-left: 12px;
+  font-size: var(--vk-fs-caption);
+  padding: var(--vk-space-2) var(--vk-space-5);
 }
 .vk-kids {
   display: grid;
-  gap: 4px;
-}
-.vk-kids > .vk-node {
-  position: relative;
-}
-.vk-kids > .vk-node::after {
-  content: '';
-  position: absolute;
-  left: calc(var(--vk-depth, 1) * 44px - 22px);
-  top: 0.75em;
-  width: 14px;
-  height: var(--vk-line-w-rule);
-  background: var(--vk-line-color);
 }
 
 /* ================================================================ 公式 */
 vk-math {
   display: block;
   min-width: 0;
+  color: var(--vk-ink-1);
+}
+vk-math:not([inline]) {
+  font-size: var(--vk-fs-headline);
 }
 vk-math[inline] {
   display: inline-block;
+  font-size: 1em;
 }
 vk-math .katex {
   font-size: 1em;
-}
-/* 公式可以比数据件大一档：一帧只放一个公式时，headline 才撑得住画面。 */
-vk-math[size='headline'] .katex {
-  font-size: var(--vk-fs-headline);
-}
-vk-math[size='display'] .katex {
-  font-size: var(--vk-fs-display);
-}
-vk-math[size='hero'] .katex {
-  font-size: var(--vk-fs-hero);
 }
 vk-math .katex-display {
   margin: 0;
@@ -472,26 +498,59 @@ vk-cells {
 .vk-cells {
   display: grid;
   grid-template-columns: repeat(var(--vk-cols, 4), minmax(0, 1fr));
-  gap: var(--vk-gap, var(--vk-gap-close));
+  gap: var(--vk-space-4);
 }
 .vk-cells:has(.vk-cell-p) {
-  padding-top: 60px;
+  padding-top: var(--vk-space-7);
 }
 .vk-cell {
   position: relative;
   display: grid;
   justify-items: center;
-  gap: 6px;
-  padding: 20px 14px;
-  border: var(--vk-line-w-hair) solid var(--vk-line-color);
-  border-radius: var(--vk-radius-md);
-  background: var(--vk-paper);
-  color-scheme: light;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-5) var(--vk-space-4);
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: var(--vk-radius-sm);
+  background: var(--vk-raised);
   min-width: 0;
 }
-vk-page[surface='dark'] .vk-cell {
-  background: var(--vk-soft);
-  color-scheme: dark;
+.vk-cell-v {
+  font-family: var(--vk-font-mono);
+  font-size: 72px;
+  font-weight: var(--vk-w-bold);
+  line-height: 1.1;
+  color: var(--vk-ink-1);
+}
+.vk-cell-l,
+.vk-cell-a {
+  font-size: var(--vk-fs-caption);
+  line-height: 1.4;
+  color: var(--vk-ink-3);
+  font-family: var(--vk-font-mono);
+}
+.vk-cell-p {
+  position: absolute;
+  top: calc(var(--vk-space-7) * -1);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 4px 12px;
+  border-radius: var(--vk-radius-pill);
+  background: var(--vk-focus);
+  color: var(--vk-on-focus);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.2;
+  font-family: var(--vk-font-mono);
+  white-space: nowrap;
+}
+.vk-cell-p::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: var(--vk-line-w-hair);
+  height: var(--vk-space-3);
+  background: var(--vk-focus);
+  transform: translateX(-50%);
 }
 .vk-cell[data-tone='ok'] {
   border-color: var(--vk-ok);
@@ -506,36 +565,8 @@ vk-page[surface='dark'] .vk-cell {
   border-color: var(--vk-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-.vk-cell-v {
-  font-family: var(--vk-font-mono);
-  font-size: 1.35em;
-  font-weight: var(--vk-w-bold);
-  line-height: 1.1;
-  color: var(--vk-ink-1);
-}
-.vk-cell-l,
-.vk-cell-a {
-  font-size: var(--vk-fs-caption);
-  line-height: 1.2;
-  color: var(--vk-ink-3);
-  font-family: var(--vk-font-mono);
-}
-.vk-cell-p {
-  position: absolute;
-  top: -59px;
-  left: 50%;
-  transform: translateX(-50%);
-  padding: 2px 12px;
-  border-radius: var(--vk-radius-pill);
-  background: var(--vk-focus);
-  color: var(--vk-on-focus);
-  font-size: var(--vk-fs-caption);
-  line-height: 1.25;
-  font-family: var(--vk-font-mono);
-  white-space: nowrap;
-}
-.vk-cell[data-state='current'] .vk-cell-p {
-  background: var(--vk-focus);
+.vk-cell[data-state='current'] .vk-cell-v {
+  color: var(--vk-focus);
 }
 
 /* ================================================================ 字节 */
@@ -551,22 +582,26 @@ vk-bytes {
 .vk-brow,
 .vk-bhead {
   display: grid;
-  /* 列宽由构建期按正文字号算成 px：表头是 caption，用 em/ch 会缩成另一套列。 */
   grid-template-columns: var(--vk-bcol, 5.4em) var(--vk-bhexw, calc(var(--vk-cols, 8) * 3ch)) 1fr;
-  gap: 16px;
+  gap: var(--vk-space-4);
   align-items: baseline;
-  padding: 0 12px;
+  padding: 0 var(--vk-space-5);
   white-space: nowrap;
+}
+.vk-brow {
+  font-size: var(--vk-fs-body);
+  line-height: 1.6;
 }
 .vk-bhead {
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
-  padding-bottom: 6px;
-  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
-  margin-bottom: 6px;
+  padding-bottom: var(--vk-space-2);
+  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
+  margin-bottom: var(--vk-space-2);
 }
 .vk-baddr {
   color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
 }
 .vk-bhex {
   display: flex;
@@ -578,7 +613,7 @@ vk-bytes {
 }
 .vk-bhex i.is-cur {
   background: var(--vk-tint-focus);
-  box-shadow: inset 0 calc(var(--vk-line-w-hair) * -1) 0 var(--vk-focus);
+  box-shadow: inset 0 calc(var(--vk-line-w-rule) * -1) 0 var(--vk-focus);
   color: var(--vk-focus);
 }
 .vk-bascii {
@@ -590,27 +625,32 @@ vk-bytes {
   color: var(--vk-focus);
 }
 
-/* ================================================================ 位 */
+/* ================================================================ 位
+   一段一个边框；位是段里的等宽格子。段与段之间 32px，位与位 4px。 */
 vk-bits {
   display: flex;
-  align-items: center;
-  gap: 24px;
+  align-items: flex-end;
+  gap: var(--vk-space-6);
   min-width: 0;
 }
 .vk-bits-label {
   color: var(--vk-ink-3);
+  font-size: var(--vk-fs-caption);
   font-family: var(--vk-font-mono);
   flex: 0 0 auto;
 }
 .vk-bits-body {
   display: flex;
   align-items: flex-end;
-  gap: 48px;
+  gap: var(--vk-space-6);
 }
 .vk-field {
   display: grid;
-  gap: 8px;
+  gap: var(--vk-space-2);
   justify-items: center;
+  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-radius: var(--vk-radius-sm);
+  padding: var(--vk-space-2) var(--vk-space-3) var(--vk-space-3);
 }
 .vk-field-l {
   font-size: var(--vk-fs-caption);
@@ -619,16 +659,15 @@ vk-bits {
 }
 .vk-field-bits {
   display: flex;
-  gap: 6px;
+  gap: var(--vk-space-1);
 }
 .vk-bit {
   display: grid;
   justify-items: center;
   gap: 2px;
-  padding: 8px 10px;
-  border-radius: var(--vk-radius-md);
-  background: var(--vk-soft);
+  padding: 2px 6px;
   font-family: var(--vk-font-mono);
+  position: relative;
 }
 .vk-bit .vk-bit-i {
   font-size: var(--vk-fs-caption);
@@ -639,27 +678,33 @@ vk-bits {
 }
 .vk-bit .vk-bit-v {
   font-style: normal;
+  font-size: 64px;
   font-weight: var(--vk-w-bold);
   line-height: 1;
+  color: var(--vk-ink-1);
 }
-.vk-bit.is-cur {
-  background: var(--vk-tint-focus);
-  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+.vk-bit[data-group] {
+  margin-left: var(--vk-space-3);
+}
+.vk-bit.is-sign {
+  background: var(--vk-tint-info);
+  border-radius: 4px;
+}
+.vk-bit.is-sign .vk-bit-v {
+  color: var(--vk-ink-2);
+}
+.vk-field.is-cur {
+  border-color: var(--vk-focus);
+}
+.vk-field.is-cur .vk-field-l {
+  color: var(--vk-focus);
 }
 .vk-bit.is-cur .vk-bit-v {
   color: var(--vk-focus);
 }
-.vk-bit.is-sign {
-  background: var(--vk-tint-focus);
-}
-.vk-bit.is-sign .vk-bit-v {
-  color: var(--vk-focus);
-}
-.vk-bit[data-group] {
-  margin-left: 16px;
-}
 
-/* ================================================================ 步骤 */
+/* ================================================================ 步骤
+   圈 96 固定，数字 40 固定；标签才吃外层的字。 */
 vk-steps {
   display: block;
   container-type: inline-size;
@@ -668,7 +713,7 @@ vk-steps {
 .vk-steps {
   display: grid;
   grid-template-columns: repeat(var(--vk-n, 4), minmax(0, 1fr));
-  gap: var(--vk-gap, var(--vk-gap-normal));
+  gap: var(--vk-space-6);
   position: relative;
 }
 .vk-step {
@@ -676,26 +721,55 @@ vk-steps {
   grid-template-columns: minmax(0, 1fr);
   justify-items: center;
   text-align: center;
-  gap: 12px;
+  gap: var(--vk-space-4);
   position: relative;
   min-width: 0;
+}
+.vk-step::after {
+  content: '';
+  position: absolute;
+  top: 48px;
+  left: calc(50% + 60px);
+  width: calc(100% - 120px);
+  height: var(--vk-line-w-rule);
+  background: var(--vk-ink-3);
+  z-index: 0;
+}
+.vk-step:last-child::after {
+  display: none;
 }
 .vk-step-n {
   display: grid;
   place-items: center;
-  width: 88px;
-  height: 88px;
+  width: 96px;
+  height: 96px;
   border-radius: 50%;
-  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   background: var(--vk-paper);
   font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-2);
   position: relative;
   z-index: 1;
 }
 .vk-step-t {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--vk-space-3);
   min-width: 0;
+  font-size: var(--vk-fs-body);
+  line-height: 1.4;
+}
+.vk-step-t .vk-ic {
+  width: 56px;
+  height: 56px;
+  padding: 8px;
+  color: var(--vk-ink-2);
+  background: var(--vk-soft);
+  border: var(--vk-line-w-hair) solid var(--vk-line-color);
+  border-radius: var(--vk-radius-sm);
 }
 .vk-step-note {
   font-size: var(--vk-fs-caption);
@@ -709,6 +783,18 @@ vk-steps {
 .vk-step[data-state='current'] .vk-step-t {
   font-weight: var(--vk-w-bold);
 }
+.vk-step[data-state='current'] .vk-step-t .vk-ic {
+  color: var(--vk-focus);
+}
+.vk-step[data-tone='ok'] .vk-step-t .vk-ic {
+  color: var(--vk-ok);
+}
+.vk-step[data-tone='warn'] .vk-step-t .vk-ic {
+  color: var(--vk-warn);
+}
+.vk-step[data-tone='err'] .vk-step-t .vk-ic {
+  color: var(--vk-err);
+}
 .vk-step[data-tone='ok'] .vk-step-n {
   border-color: var(--vk-ok);
   color: var(--vk-ok);
@@ -721,16 +807,6 @@ vk-steps {
   border-color: var(--vk-err);
   color: var(--vk-err);
 }
-/* 连接线：横排从第一个号码中心连到最后一个号码中心；竖排沿号码左侧。 */
-.vk-steps:not([data-connector='none'])::before {
-  content: '';
-  position: absolute;
-  left: calc(50% / var(--vk-n, 4));
-  right: calc(50% / var(--vk-n, 4));
-  top: 44px;
-  height: var(--vk-line-w-rule);
-  background: var(--vk-line-color);
-}
 .vk-steps[data-dir='vertical'] {
   grid-template-columns: minmax(0, 1fr);
 }
@@ -740,11 +816,10 @@ vk-steps {
   text-align: left;
   align-items: center;
 }
-.vk-steps[data-dir='vertical']:not([data-connector='none'])::before {
-  left: 44px;
-  right: auto;
-  top: 44px;
-  bottom: 44px;
+.vk-steps[data-dir='vertical'] .vk-step::after {
+  top: 96px;
+  left: 48px;
+  bottom: calc(var(--vk-space-6) * -1);
   width: var(--vk-line-w-rule);
   height: auto;
 }
@@ -758,11 +833,10 @@ vk-steps {
     text-align: left;
     align-items: center;
   }
-  .vk-steps:not([data-connector='none'])::before {
-    left: 36px;
-    right: auto;
-    top: 36px;
-    bottom: 36px;
+  .vk-step::after {
+    top: 96px;
+    left: 48px;
+    bottom: calc(var(--vk-space-6) * -1);
     width: var(--vk-line-w-rule);
     height: auto;
   }
@@ -775,22 +849,24 @@ vk-bars {
 }
 .vk-bars {
   display: grid;
-  gap: var(--vk-gap, var(--vk-gap-close));
+  gap: var(--vk-space-5);
 }
 .vk-bar {
   display: grid;
-  grid-template-columns: minmax(4em, max-content) minmax(0, 1fr) max-content;
-  gap: 24px;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) max-content;
+  gap: var(--vk-space-5);
   align-items: center;
 }
 .vk-bar-l {
   color: var(--vk-ink-2);
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
   white-space: nowrap;
 }
 .vk-bar-t {
-  height: 44px;
+  height: 48px;
   border-radius: var(--vk-radius-pill);
-  background: color-mix(in srgb, var(--vk-ink-1) 8%, transparent);
+  background: var(--vk-line-color);
   overflow: hidden;
 }
 .vk-bar-t i {
@@ -801,15 +877,16 @@ vk-bars {
 }
 .vk-bar-v {
   font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
   font-weight: var(--vk-w-bold);
   white-space: nowrap;
   color: var(--vk-ink-1);
 }
 .vk-unit {
   font-family: var(--vk-font-sans);
-  font-size: 0.72em;
+  font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
-  margin-left: 6px;
+  margin-left: var(--vk-space-1);
 }
 .vk-bar[data-state='current'] .vk-bar-t i {
   background: var(--vk-focus);
@@ -828,82 +905,96 @@ vk-bars {
   background: var(--vk-err);
 }
 
-/* ================================================================ 时间线 */
+/* ================================================================ 时间线
+   轴分段（build 写 .vk-tl-seg），节点处留缝；不再用纸色光晕。 */
 vk-timeline {
   display: block;
   min-width: 0;
 }
 .vk-tl {
   position: relative;
-  height: 320px;
-  margin: 0;
+  height: 300px;
 }
-.vk-tl::before {
-  content: '';
+.vk-tl-seg {
   position: absolute;
-  left: 0;
-  right: 0;
-  top: 132px;
+  top: 124px;
   height: var(--vk-line-w-rule);
-  background: var(--vk-line-strong);
+  background: var(--vk-ink-3);
 }
 .vk-tl-i {
   position: absolute;
   left: var(--vk-at);
   top: 0;
   transform: translateX(-50%);
-  display: grid;
-  justify-items: center;
-  gap: 8px;
-  width: 340px;
+  width: 320px;
   text-align: center;
   text-wrap: balance;
 }
 .vk-tl-i[data-edge='start'] {
   transform: none;
-  justify-items: start;
   text-align: left;
 }
 .vk-tl-i[data-edge='end'] {
   transform: translateX(-100%);
-  justify-items: end;
   text-align: right;
 }
+.vk-tl-i::before {
+  display: none;
+}
+.vk-tl-i[data-edge='start']::before {
+  left: 10px;
+}
+.vk-tl-i[data-edge='end']::before {
+  left: auto;
+  right: 10px;
+}
 .vk-tl-date {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 56px;
   font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-2);
-  height: 96px;
-  align-content: end;
-  display: grid;
+  line-height: 1.2;
 }
 .vk-tl-dot {
+  position: absolute;
+  left: 50%;
+  top: 116px;
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: var(--vk-ink-2);
-  position: relative;
+  background: var(--vk-ink-1);
+  transform: translateX(-50%);
   z-index: 1;
-  box-shadow: 0 0 0 8px var(--vk-paper);
+}
+.vk-tl-i[data-edge='start'] .vk-tl-dot {
+  left: 10px;
+}
+.vk-tl-i[data-edge='end'] .vk-tl-dot {
+  left: auto;
+  right: 10px;
 }
 .vk-tl-label {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 156px;
+  font-size: var(--vk-fs-body);
+  line-height: 1.4;
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-1);
-  line-height: 1.3;
 }
 .vk-tl-note {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 212px;
   font-size: var(--vk-fs-caption);
+  line-height: 1.4;
   color: var(--vk-ink-3);
-  line-height: 1.3;
-}
-.vk-tl-i[data-tone='ok'] .vk-tl-dot {
-  background: var(--vk-ok);
-}
-.vk-tl-i[data-tone='warn'] .vk-tl-dot {
-  background: var(--vk-warn);
-}
-.vk-tl-i[data-tone='err'] .vk-tl-dot {
-  background: var(--vk-err);
 }
 .vk-tl-i[data-state='current'] .vk-tl-dot {
   background: var(--vk-focus);
@@ -914,6 +1005,15 @@ vk-timeline {
 .vk-tl-i[data-state='current'] .vk-tl-label {
   font-weight: var(--vk-w-bold);
 }
+.vk-tl-i[data-tone='ok'] .vk-tl-dot {
+  background: var(--vk-ok);
+}
+.vk-tl-i[data-tone='warn'] .vk-tl-dot {
+  background: var(--vk-warn);
+}
+.vk-tl-i[data-tone='err'] .vk-tl-dot {
+  background: var(--vk-err);
+}
 
 /* ================================================================ 关系图 */
 vk-graph {
@@ -922,7 +1022,7 @@ vk-graph {
 }
 .vk-graph {
   position: relative;
-  min-height: 160px;
+  min-height: 180px;
 }
 .vk-gstage {
   position: absolute;
@@ -932,18 +1032,16 @@ vk-graph {
   position: absolute;
   display: grid;
   justify-items: center;
-  gap: 4px;
-  padding: 16px 28px;
+  gap: var(--vk-space-1);
+  padding: var(--vk-space-4) var(--vk-space-5);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
-  background: var(--vk-paper);
-  color-scheme: light;
+  background: var(--vk-raised);
   white-space: nowrap;
   font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-subhead);
+  line-height: 1.25;
   transform: translate(-50%, -50%);
-}
-vk-page[surface='dark'] .vk-gnode {
-  color-scheme: dark;
 }
 .vk-gn-n {
   font-size: var(--vk-fs-caption);
@@ -962,18 +1060,8 @@ vk-page[surface='dark'] .vk-gnode {
 .vk-gnode[data-tone='err'] {
   border-color: var(--vk-err);
 }
-/* 显式边只是数据：真正画线的是运行期 SVG。 */
 .vk-gedge {
   display: none;
-}
-.vk-edge-label {
-  font-family: var(--vk-font-sans);
-  font-size: 40px;
-  fill: var(--vk-ink-2);
-  paint-order: stroke;
-  stroke: var(--vk-paper);
-  stroke-width: 14px;
-  stroke-linejoin: round;
 }
 .vk-gedges {
   position: absolute;
@@ -984,40 +1072,61 @@ vk-page[surface='dark'] .vk-gnode {
 }
 .vk-edge {
   fill: none;
-  stroke: var(--vk-line-strong);
-  stroke-width: var(--vk-line-w-rule);
+  stroke: var(--vk-ink-2);
+  stroke-width: 6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 .vk-edge[data-current] {
   stroke: var(--vk-focus);
-  stroke-width: var(--vk-line-w-rule);
+  stroke-width: 6;
 }
-.vk-arrowhead {
-  fill: var(--vk-line-strong);
+.vk-edge-head {
+  fill: var(--vk-ink-2);
 }
-.vk-arrowhead[data-current] {
+.vk-edge-head[data-current] {
   fill: var(--vk-focus);
 }
+.vk-edge-label {
+  font-family: var(--vk-font-sans);
+  font-size: var(--vk-fs-caption);
+  fill: var(--vk-ink-2);
+  paint-order: stroke;
+  stroke: var(--vk-paper);
+  stroke-width: 12px;
+  stroke-linejoin: round;
+}
 
-/* ================================================================ 时序
-   两条生命线固定在第 1/4 与第 3/4 列；一行一条消息，箭头画在行中线上。
-   没有运行期：位置由 CSS 定，消息顺序就是阅读顺序。 */
+/* ================================================================ 时序 */
 vk-seq {
   display: block;
   min-width: 0;
 }
 .vk-seq-head {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  text-align: center;
+  position: relative;
+  height: 1.5em;
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-1);
-  padding-bottom: 16px;
+  font-size: var(--vk-fs-body);
+  margin-bottom: var(--vk-space-5);
+}
+.vk-seq-head span {
+  position: absolute;
+  top: 0;
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+.vk-seq-head span:first-child {
+  left: 20%;
+}
+.vk-seq-head span:last-child {
+  left: 80%;
 }
 .vk-seq-body {
   position: relative;
   display: grid;
-  gap: var(--vk-gap, var(--vk-gap-close));
-  padding: 16px 0;
+  gap: var(--vk-space-5);
+  padding: var(--vk-space-4) 0;
 }
 .vk-seq-body::before,
 .vk-seq-body::after {
@@ -1025,68 +1134,67 @@ vk-seq {
   position: absolute;
   top: 0;
   bottom: 0;
-  width: var(--vk-line-w-rule);
-  background: var(--vk-line-color);
+  width: var(--vk-line-w-hair);
+  background: var(--vk-ink-3);
 }
 .vk-seq-body::before {
-  left: 25%;
-  margin-left: calc(var(--vk-line-w-rule) / -2);
+  left: 20%;
+  margin-left: calc(var(--vk-line-w-hair) / -2);
 }
 .vk-seq-body::after {
-  right: 25%;
-  margin-right: calc(var(--vk-line-w-rule) / -2);
+  right: 20%;
+  margin-right: calc(var(--vk-line-w-hair) / -2);
 }
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
   position: relative;
-  height: 112px;
+  height: 96px;
 }
 .vk-seq-arrow {
   position: absolute;
-  left: 25%;
-  right: 25%;
-  top: 64px;
-  height: var(--vk-line-w-rule);
-  margin-top: calc(var(--vk-line-w-rule) / -2);
+  left: calc(20% + 28px);
+  right: calc(20% + 28px);
+  top: 62px;
+  height: 6px;
   background: var(--vk-seq-c);
 }
 .vk-seq-arrow::after {
   content: '';
   position: absolute;
-  right: -18px;
+  right: -24px;
   top: 50%;
   transform: translateY(-50%);
-  border-left: 22px solid var(--vk-seq-c);
-  border-top: 13px solid transparent;
-  border-bottom: 13px solid transparent;
+  border-left: 24px solid var(--vk-seq-c);
+  border-top: 12px solid transparent;
+  border-bottom: 12px solid transparent;
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
   right: auto;
-  left: -18px;
+  left: -24px;
   border-left: 0;
-  border-right: 22px solid var(--vk-seq-c);
+  border-right: 24px solid var(--vk-seq-c);
 }
 .vk-seq-l {
   position: absolute;
   left: 50%;
   top: 0;
-  font-size: 1em;
-  line-height: 1.05;
   transform: translateX(-50%);
-  padding: 0 16px;
+  padding: 0 var(--vk-space-4);
   background: var(--vk-paper);
   white-space: nowrap;
+  font-size: var(--vk-fs-body);
+  line-height: 1.2;
   font-weight: var(--vk-w-medium);
 }
 .vk-seq-note {
   position: absolute;
   left: 50%;
-  top: 70px;
-  line-height: 1;
+  top: 72px;
   transform: translateX(-50%);
-  padding: 0 12px;
+  padding: 0 var(--vk-space-3);
   background: var(--vk-paper);
   font-size: var(--vk-fs-caption);
+  line-height: 1;
   color: var(--vk-ink-3);
   white-space: nowrap;
 }
@@ -1107,50 +1215,23 @@ vk-seq {
   font-weight: var(--vk-w-bold);
 }
 
-/* ================================================================ 图片 */
-vk-img {
-  display: block;
-  position: relative;
-  overflow: hidden;
-  min-width: 0;
-  border-radius: var(--vk-radius-md);
-  background: var(--vk-soft);
+/* ================================================================ 状态优先
+   一帧只有一个焦点：current 永远压过 tone。 */
+.vk-step[data-state='current'] .vk-step-n {
+  background: var(--vk-focus);
+  border-color: var(--vk-focus);
+  color: var(--vk-on-focus);
 }
-vk-img[ratio] {
-  width: 100%;
+.vk-step[data-state='current'] .vk-step-t .vk-ic {
+  color: var(--vk-focus);
 }
-.vk-img-el {
-  display: block;
-  width: 100%;
-  height: 100%;
-  max-width: none;
+.vk-bar[data-state='current'] .vk-bar-t i {
+  background: var(--vk-focus);
 }
-vk-img[fill='contain'] .vk-img-el {
-  object-fit: contain;
+.vk-gnode[data-state='current'] {
+  border-color: var(--vk-focus);
+  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-vk-img[fill='cover'] .vk-img-el {
-  object-fit: cover;
+vk-table tr[state='current'] td:first-child {
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
 }
-vk-img[radius='none'] {
-  border-radius: 0;
-}
-vk-img[radius='lg'] {
-  border-radius: var(--vk-radius-lg);
-}
-vk-img[radius='pill'] {
-  border-radius: var(--vk-radius-pill);
-}
-vk-img[data-broken]::after {
-  content: attr(data-broken);
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--vk-ink-3);
-  font-size: var(--vk-fs-caption);
-  background: var(--vk-soft);
-}
-
-
-
-

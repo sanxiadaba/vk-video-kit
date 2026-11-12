@@ -1,5 +1,5 @@
 /**
- * v19 · 公开契约
+ * v21 · 公开契约
  * ----------------------------------------------------------------------------
  * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写、一帧放几行」。
  * 它是唯一来源：构建期校验、vk doc / vk brief、CONTRACT.md、运行期默认值都读它。
@@ -33,20 +33,15 @@ export const FLOW_CHILD = {
 /* ------------------------------------------------------------------ 取值 */
 const size = (values = SIZE, def = 'body') => ({ type: 'enum', values, default: def, group: 'type', label: '字号' });
 const sizeData = (def = 'body') => size(['caption', 'body', 'subhead'], def);
-const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '间距（档名或像素）' });
-const pad = (def = 'none') => ({ type: 'space', default: def, group: 'layout', label: '内距（档名或像素）' });
+const gap = (def = 'normal') => ({ type: 'space', default: def, group: 'layout', label: '分栏间距（档名或像素）' });
 const tone = (values = TONE, def = 'neutral') => ({ type: 'enum', values, default: def, group: 'appearance', label: '语调' });
-const radius = () => ({ type: 'enum', values: ['none', 'md', 'lg', 'pill'], default: 'md', group: 'appearance', label: '圆角' });
-const border = () => ({ type: 'enum', values: ['none', 'hair', 'strong'], default: 'none', group: 'appearance', label: '描边' });
-const chrome = (def = 'none') => ({ type: 'enum', values: ['none', 'dots'], default: def, group: 'appearance', label: '窗口标题栏（三点 + 标题）' });
 const current = () => ({ type: 'index', default: undefined, group: 'state', label: '第几项（1 起；不写 = 没有当前）' });
 const surface = () => ({ type: 'enum', values: ['paper', 'dark'], default: 'paper', group: 'appearance', label: '表面' });
 
 const item = (attrs, hint) => ({ kind: 'item', item: 'li', attrs, hint });
 const source = (hint) => ({ kind: 'source', hint });
 
-/* 数据行的子项属性：tone 表语义、state 表当前/标注。 */
-const ITEM_STATE = { type: 'enum', values: STATE, group: 'state', label: '当前 / 标注' };
+/* 数据行的子项属性：tone 表语义；当前由容器的 current 决定。 */
 const ITEM_TONE = { type: 'enum', values: TONE, default: 'neutral', group: 'appearance', label: '语调' };
 
 /* ------------------------------------------------------------------ 标签 */
@@ -55,12 +50,11 @@ export const TAGS = {
   'vk-page': {
     layer: 'page',
     name: '画布',
-    summary: '一帧 1920×1080 的坐标系。子项就是流：直接写 head 与内容，不用再包一层。align 决定内容在版心里的纵向位置。',
+    summary: '一帧 1920×1080 的坐标系。子项就是流：直接写 head 与内容，不用再包一层。valign 决定整块在版心里的纵向位置。',
     attrs: {
       id: { type: 'text', group: 'content', label: '帧名（出图文件名）' },
-      align: { type: 'enum', values: ['band', 'center', 'top', 'bottom'], default: 'band', group: 'layout', label: '纵向对齐' },
+      valign: { type: 'enum', values: ['band', 'center', 'top', 'bottom'], default: 'band', group: 'layout', label: '整块纵向位置' },
       surface: surface(),
-      gap: gap('normal'),
     },
     children: { kind: 'slot', hint: '直接写 <vk-head> 与内容；下一层要分栏时写 <vk-flow>。' },
   },
@@ -84,13 +78,11 @@ export const TAGS = {
   'vk-flow': {
     layer: 'layout',
     name: '流',
-    summary: '唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 让子项叠放。不画任何东西。',
+    summary: '唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 让子项叠放；valign 管子项纵向对齐。不画任何东西。',
     attrs: {
       cols: { type: 'cols', default: '1', group: 'layout', label: '列：数字 1–12、比例 "1 2 1"、或 auto（按内容宽）' },
       gap: gap('normal'),
-      pad: pad('none'),
-      align: { type: 'enum', values: ['start', 'center', 'end', 'between', 'stretch'], default: 'stretch', group: 'layout', label: '纵向' },
-      justify: { type: 'enum', values: ['start', 'center', 'end', 'between'], default: 'start', group: 'layout', label: '横向' },
+      valign: { type: 'enum', values: ['start', 'center', 'end', 'between', 'stretch'], default: 'stretch', group: 'layout', label: '子项纵向对齐' },
       overlay: { type: 'bool', group: 'layout', label: '叠放：子项落在同一格里' },
       span: FLOW_CHILD.span,
       bleed: FLOW_CHILD.bleed,
@@ -102,14 +94,10 @@ export const TAGS = {
   'vk-surface': {
     layer: 'surface',
     name: '面',
-    summary: '一块面：底、描边、圆角、内距，可带标题栏。它是全库唯一的「窗口」，代码/终端/树共用同一套皮。',
+    summary: '一块面：纸 / 软底 / 暗面三种角色，边框、圆角、内距由库决定；可带标题栏。代码/终端/树共用窗口皮。',
     attrs: {
       surface: { type: 'enum', values: ['none', 'paper', 'soft', 'dark'], default: 'none', group: 'appearance', label: '表面' },
-      pad: pad('normal'),
-      radius: radius(),
-      border: border(),
       title: { type: 'text', group: 'appearance', label: '标题（写了才有标题带）' },
-      chrome: chrome('none'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -144,7 +132,6 @@ export const TAGS = {
       alt: { type: 'text', group: 'content', label: '替代文字（图坏了会显示）' },
       ratio: { type: 'text', group: 'appearance', label: '比例，如 "16 / 9"' },
       fill: { type: 'enum', values: ['cover', 'contain'], default: 'contain', group: 'appearance', label: '填充（cover 会裁掉超出的部分）' },
-      radius: radius(),
       position: { type: 'text', default: '50% 50%', group: 'appearance', label: '焦点' },
       span: FLOW_CHILD.span,
       bleed: FLOW_CHILD.bleed,
@@ -167,9 +154,7 @@ export const TAGS = {
       fold: { type: 'lines', group: 'state', label: '折叠行（窗口内第几行）', when: { attr: 'as', values: ['code'] } },
       mark: { type: 'text', group: 'state', label: '标出的词（窗口里所有出现处）', when: { attr: 'as', values: ['code'] } },
       size: sizeData('body'),
-      long: { type: 'enum', values: ['clip', 'wrap'], default: 'clip', group: 'appearance', label: '长行', when: { attr: 'as', values: ['code'] } },
-      chrome: chrome('none'),
-      surface: { type: 'enum', values: ['auto', 'paper', 'dark'], default: 'auto', group: 'appearance', label: '表面（auto = 跟随页面）' },
+      dim: { type: 'enum', values: ['auto', 'none'], default: 'auto', group: 'appearance', label: '有 current 时是否压暗其余行', when: { attr: 'as', values: ['code'] } },
       prompt: { type: 'text', default: '$', group: 'appearance', label: '终端提示符（as="term"）', when: { attr: 'as', values: ['term'] } },
       bytes: { type: 'bool', group: 'appearance', label: '显示机器码列（as="asm"）', when: { attr: 'as', values: ['asm'] } },
       span: FLOW_CHILD.span,
@@ -185,7 +170,6 @@ export const TAGS = {
     name: '表格',
     summary: '原生 <table>：数字列自动右对齐、等宽数字；行与单元格都可写 tone / state。',
     attrs: {
-      size: sizeData('body'),
       caption: { type: 'text', group: 'content', label: '表题（表上方一行小字）' },
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
@@ -201,12 +185,11 @@ export const TAGS = {
     summary: '列表：要点 / 清单 / 有序。条目写成 <li>；顺序本身就是信息时用 ordered。',
     attrs: {
       variant: { type: 'enum', values: ['bullet', 'check', 'ordered'], default: 'bullet', group: 'appearance', label: '形态' },
-      gap: gap('close'),
-      size: sizeData('body'),
+      current: current(),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ tone: ITEM_TONE, state: ITEM_STATE }, '每一项写成 <li>；可写 tone 标语义、state="current" 标当前。'),
+    children: item({ tone: ITEM_TONE }, '每一项写成 <li>；可写 tone 标语义。当前项用容器上的 current="N"。'),
     capacity: { max: 6, unit: '项' },
   },
 
@@ -220,12 +203,6 @@ export const TAGS = {
       depth: { type: 'int', min: 1, max: 6, default: 3, group: 'layout', label: '最大深度' },
       max: { type: 'int', min: 1, max: 40, default: 6, group: 'appearance', label: '最多显示几行（超了会留一行说明）' },
       current: { type: 'text', group: 'state', label: '当前节点路径' },
-      size: sizeData('body'),
-      icons: { type: 'enum', values: ['auto', 'none'], default: 'auto', group: 'appearance', label: '图标' },
-      'icon-dir': { type: 'text', group: 'appearance', label: '目录图标（Lucide 名）' },
-      'icon-file': { type: 'text', group: 'appearance', label: '文件图标' },
-      chrome: chrome('none'),
-      surface: { type: 'enum', values: ['auto', 'paper', 'dark'], default: 'auto', group: 'appearance', label: '表面' },
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -241,7 +218,6 @@ export const TAGS = {
       src: { type: 'text', group: 'content', label: '源文件' },
       inline: { type: 'bool', group: 'appearance', label: '行内（跟在句子里）' },
       align: { type: 'enum', values: ['left', 'center'], default: 'center', group: 'layout', label: '对齐' },
-      size: size(),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -257,13 +233,11 @@ export const TAGS = {
       stride: { type: 'int', min: 1, default: 1, group: 'content', label: '每格占几字节（int 数组写 4）' },
       cols: { type: 'int', min: 1, max: 8, default: 4, group: 'layout', label: '每行几格' },
       current: current(),
-      size: sizeData('body'),
-      gap: gap('close'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
     children: item(
-      { value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, ptr: { type: 'text', label: '指针名，如 "lo"（空格分隔多个）' }, tone: ITEM_TONE, state: ITEM_STATE },
+      { value: { type: 'text', label: '值' }, label: { type: 'text', label: '标签' }, ptr: { type: 'text', label: '指针名，如 "lo"（空格分隔多个）' }, tone: ITEM_TONE },
       '<li value="61" label="s[0]" ptr="lo">；地址自动按 addr + 序号 × stride 算。'
     ),
     capacity: { max: 2, unit: '行（cols 列一行）' },
@@ -280,11 +254,7 @@ export const TAGS = {
       length: { type: 'int', min: 1, max: 4096, default: 32, group: 'content', label: '字节数' },
       cols: { type: 'enum', values: ['4', '8', '16'], default: '8', group: 'layout', label: '每行几列' },
       current: { type: 'text', group: 'state', label: '当前字节段，如 "4-7"（1 起）' },
-      header: { type: 'bool', group: 'appearance', label: '列头（地址 / 十六进制 / ASCII）' },
       title: { type: 'text', group: 'content', label: '标题栏文字' },
-      chrome: chrome('none'),
-      surface: { type: 'enum', values: ['auto', 'paper', 'dark'], default: 'auto', group: 'appearance', label: '表面' },
-      size: sizeData('body'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -304,7 +274,6 @@ export const TAGS = {
       index: { type: 'enum', values: ['down', 'up', 'none', 'sparse'], default: 'down', group: 'appearance', label: '位序号：down 按位权；up 从左数；sparse 只标 8 的倍数' },
       group: { type: 'enum', values: ['1', '4', '8'], default: '4', group: 'appearance', label: '分组' },
       sign: { type: 'bool', group: 'appearance', label: '标出符号位' },
-      size: sizeData('body'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -320,13 +289,10 @@ export const TAGS = {
     attrs: {
       current: current(),
       direction: { type: 'enum', values: ['auto', 'horizontal', 'vertical'], default: 'auto', group: 'layout', label: '方向' },
-      connector: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连接线' },
-      size: sizeData('body'),
-      gap: gap('normal'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ tone: ITEM_TONE, state: ITEM_STATE, note: { type: 'text', label: '小字说明' } }, '每一步写成 <li>；可写 tone 标语义。'),
+    children: item({ tone: ITEM_TONE, note: { type: 'text', label: '小字说明' }, icon: { type: 'text', label: '步骤图标（Lucide 名）' } }, '每一步写成 <li>；可写 tone 标语义、icon 加图标。当前步用容器上的 current="N"。'),
     capacity: { max: 5, unit: '步（横排）' },
   },
 
@@ -338,12 +304,11 @@ export const TAGS = {
       max: { type: 'num', min: 1, group: 'appearance', label: '最大值（不写按最大一条）' },
       unit: { type: 'text', group: 'appearance', label: '单位' },
       scale: { type: 'enum', values: ['linear', 'log'], default: 'linear', group: 'appearance', label: '刻度' },
-      size: sizeData('body'),
-      gap: gap('close'),
+      current: current(),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
-    children: item({ label: { type: 'text', label: '标签' }, value: { type: 'num', label: '数值' }, tone: ITEM_TONE, state: ITEM_STATE }, '<li value="120" label="hello.o">；值写数字，不写单位。'),
+    children: item({ label: { type: 'text', label: '标签' }, value: { type: 'num', label: '数值' }, tone: ITEM_TONE }, '<li value="120" label="hello.o">；值写数字，不写单位。当前条用容器上的 current="N"。'),
     capacity: { max: 6, unit: '条' },
   },
 
@@ -355,7 +320,6 @@ export const TAGS = {
       start: { type: 'num', group: 'content', label: '起点（数字，如 1963）' },
       end: { type: 'num', group: 'content', label: '终点' },
       current: current(),
-      size: sizeData('body'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -366,9 +330,8 @@ export const TAGS = {
         label: { type: 'text', label: '标题' },
         note: { type: 'text', label: '小字说明' },
         tone: ITEM_TONE,
-        state: ITEM_STATE,
       },
-      '<li at="1972" label="C 诞生" note="小字说明">。'
+      '<li at="1972" label="C 诞生" note="小字说明">。当前点用容器上的 current="N"。'
     ),
     capacity: { max: 4, unit: '点' },
   },
@@ -380,9 +343,7 @@ export const TAGS = {
     attrs: {
       layout: { type: 'enum', values: ['row', 'tree', 'layered', 'mesh'], default: 'row', group: 'layout', label: '布局' },
       direction: { type: 'enum', values: ['horizontal', 'vertical'], default: 'horizontal', group: 'layout', label: '方向（只对 row）' },
-      edge: { type: 'enum', values: ['arrow', 'line', 'none'], default: 'arrow', group: 'appearance', label: '连线' },
-      gap: gap('normal'),
-      size: sizeData('body'),
+      current: current(),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -396,7 +357,6 @@ export const TAGS = {
         from: { type: 'text', label: '显式边的起点 id' },
         to: { type: 'text', label: '显式边的终点 id' },
         tone: ITEM_TONE,
-        state: ITEM_STATE,
       },
       '<li id="a" label="head"> → <li id="b" label="next" after="a">；不写 after 的节点是根。显式边写成 <li from="a" to="b" label="next">，可以有环、双向、边标。'
     ),
@@ -412,8 +372,6 @@ export const TAGS = {
       a: { type: 'text', group: 'content', label: '左侧名称', required: true },
       b: { type: 'text', group: 'content', label: '右侧名称', required: true },
       current: current(),
-      gap: gap('close'),
-      size: sizeData('body'),
       span: FLOW_CHILD.span,
       bleed: { ...FLOW_CHILD.bleed, values: ['x'] },
     },
@@ -423,7 +381,6 @@ export const TAGS = {
         note: { type: 'text', label: '消息下的小字' },
         dir: { type: 'enum', values: ['right', 'left'], default: 'right', label: '方向' },
         tone: ITEM_TONE,
-        state: ITEM_STATE,
       },
       '<li label="SYN" note="seq=x">（向右）；<li dir="left" label="SYN+ACK">（向左）。不写 label 就用标签里的文字。'
     ),
@@ -441,9 +398,6 @@ export const TAGS = {
       for: { type: 'selector', group: 'target', label: '目标', when: { attr: 'mode', values: ['ring', 'note'] }, required: true },
       from: { type: 'selector', group: 'target', label: '起点', when: { attr: 'mode', values: ['arrow', 'measure'] }, required: true },
       to: { type: 'selector', group: 'target', label: '终点', when: { attr: 'mode', values: ['arrow', 'measure'] }, required: true },
-      side: { type: 'enum', values: ['auto', 'top', 'right', 'bottom', 'left'], default: 'auto', group: 'layout', label: '优先贴哪一侧', when: { attr: 'mode', values: ['note'] } },
-      gap: { type: 'space', default: 'normal', group: 'layout', label: '离目标的距离', when: { attr: 'mode', values: ['note'] } },
-      shape: { type: 'enum', values: ['straight', 'ortho', 'curve'], default: 'curve', group: 'appearance', label: '连线形状', when: { attr: 'mode', values: ['arrow'] } },
       label: { type: 'text', group: 'target', label: '连线上的字', when: { attr: 'mode', values: ['arrow', 'measure'] } },
       tone: tone(TONE, 'info'),
     },

@@ -1,5 +1,5 @@
 /**
- * v19 · 测试
+ * v21 · 测试
  * ----------------------------------------------------------------------------
  * 只测「会静默坏掉」的东西。五组：
  *
@@ -100,7 +100,7 @@ ok(inlineBytes.html.includes('68') && inlineBytes.html.includes('65'), 'vk-bytes
 
 /* 默认值必须落进 DOM：CSS 不再自带第二份默认值（band 曾经就死在这里）。 */
 const defaults = await transformHtml('<vk-page><vk-head>标题</vk-head><vk-text>正文</vk-text></vk-page>', { file: path.join(ROOT, 'tests', 'defaults.html') });
-ok(/align="band"/.test(defaults.html) && /size="headline"/.test(defaults.html), '默认值落地到 DOM');
+ok(/valign="band"/.test(defaults.html) && /size="headline"/.test(defaults.html), '默认值落地到 DOM');
 
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
@@ -175,28 +175,28 @@ const behave = await page.evaluate(() => {
   const row = q('#shrink .vk-line');
   const t = q('#numtable table');
   const graph = q('vk-graph');
-  const paper = q('#paperwin');
+  const darkWindow = q('#darkwin .vk-frame');
   return {
     shrink: row ? parseFloat(getComputedStyle(row).fontSize) : 0,
     numAlign: t ? getComputedStyle(t.querySelector('td.num') || t).textAlign : '',
     textAlign: t ? getComputedStyle([...t.querySelectorAll('td')].find((td) => !td.classList.contains('num')) || t).textAlign : '',
     edges: graph ? graph.querySelectorAll('.vk-edge').length : 0,
     ring: !!q('#ring .vk-co-ring'),
-    paperColor: paper ? getComputedStyle(paper.querySelector('.vk-lines')).color : '',
+    darkBg: darkWindow ? getComputedStyle(darkWindow).backgroundColor : '',
     inlineMono: /Mono/i.test(getComputedStyle(q('#inline code')).fontFamily),
     icon: !!q('#icon .vk-ic svg'),
     currentRow: getComputedStyle(q('#numtable tr[state="current"] td')).backgroundColor,
   };
 });
-ok(behave.shrink >= 44 && behave.shrink < 56, `长行会缩字号（${behave.shrink}px）`);
+ok(behave.shrink >= 40 && behave.shrink < 56, `长行会缩字号（${behave.shrink}px）`);
 ok(behave.numAlign === 'right', `数字列右对齐（${behave.numAlign}）`);
 ok(behave.textAlign !== 'right', `文字列不右对齐（${behave.textAlign}）`);
 ok(behave.edges === 2, `两个节点三条边 → 2 条连线（${behave.edges}）`);
 ok(behave.ring, '圈选画出来了');
-ok(/rgb\(11, 15, 20\)/.test(behave.paperColor), `深色页里的纸面窗仍是深字（${behave.paperColor}）`);
+ok(!/rgb\(255, 255, 255\)/.test(behave.darkBg), `深色页的代码窗自动变深（${behave.darkBg}）`);
 ok(behave.inlineMono, '行内代码是等宽字体');
 ok(behave.icon, '文字的行首图标插进去了');
-ok(/rgba?\(223, 228, 249|rgb\(223, 228, 249\)/.test(behave.currentRow), `当前行有淡底（${behave.currentRow}）`);
+ok(/rgb\(238, 242, 255\)/.test(behave.currentRow), `当前行有淡底（${behave.currentRow}）`);
 await browser.close();
 
 /* ------------------------------------------------------------------ 五、确定 */

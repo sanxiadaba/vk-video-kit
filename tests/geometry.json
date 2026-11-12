@@ -12,7 +12,7 @@
   "tags": "div,vk-code,vk-head"
  },
  "term": {
-  "tags": "div,vk-callout,vk-code,vk-flow,vk-head,vk-text"
+  "tags": "div,vk-code,vk-flow,vk-head,vk-text"
  },
  "diff": {
   "tags": "div,vk-code,vk-head"
@@ -27,7 +27,7 @@
   "tags": "div,vk-head,vk-list,vk-text"
  },
  "tree": {
-  "tags": "div,vk-head,vk-tree"
+  "tags": "div,vk-flow,vk-head,vk-text,vk-tree"
  },
  "math": {
   "tags": "div,vk-head,vk-math,vk-text"
@@ -45,10 +45,10 @@
   "tags": "div,vk-head,vk-steps,vk-text"
  },
  "bars": {
-  "tags": "div,vk-bars,vk-head,vk-text"
+  "tags": "div,vk-bars,vk-head"
  },
  "timeline": {
-  "tags": "div,vk-head,vk-text,vk-timeline"
+  "tags": "div,vk-head,vk-timeline"
  },
  "graph-row": {
   "tags": "div,vk-graph,vk-head,vk-text"
@@ -60,10 +60,10 @@
   "tags": "div,vk-flow,vk-head,vk-img,vk-list,vk-surface,vk-text"
  },
  "seq": {
-  "tags": "div,vk-head,vk-seq,vk-text"
+  "tags": "div,vk-head,vk-seq"
  },
  "graph-mesh": {
-  "tags": "div,vk-graph,vk-head,vk-text"
+  "tags": "div,vk-graph,vk-head"
  },
  "dark": {
   "tags": "div,vk-code,vk-flow,vk-head,vk-text"

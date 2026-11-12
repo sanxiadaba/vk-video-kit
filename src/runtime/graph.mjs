@@ -25,7 +25,28 @@ const mk = (tag, attrs = {}) => {
   return el;
 };
 
-const GAP = () => 48;
+const GAP = () => 96;
+
+/** 圆角折线：每个拐点用 12px 二次曲线收一下。 */
+function roundedPath(points, r = 12) {
+  if (points.length < 2) return '';
+  let d = `M ${points[0].x} ${points[0].y}`;
+  for (let i = 1; i < points.length - 1; i++) {
+    const p = points[i];
+    const prev = points[i - 1];
+    const next = points[i + 1];
+    const v1 = { x: p.x - prev.x, y: p.y - prev.y };
+    const v2 = { x: next.x - p.x, y: next.y - p.y };
+    const l1 = Math.hypot(v1.x, v1.y) || 1;
+    const l2 = Math.hypot(v2.x, v2.y) || 1;
+    const rr = Math.min(r, l1 / 2, l2 / 2);
+    const a = { x: p.x - (v1.x / l1) * rr, y: p.y - (v1.y / l1) * rr };
+    const b = { x: p.x + (v2.x / l2) * rr, y: p.y + (v2.y / l2) * rr };
+    d += ` L ${a.x} ${a.y} Q ${p.x} ${p.y} ${b.x} ${b.y}`;
+  }
+  const last = points[points.length - 1];
+  return d + ` L ${last.x} ${last.y}`;
+}
 
 /** 从矩形中心沿 (dx,dy) 打到边框上的点。 */
 function hit(cx, cy, w, h, dx, dy) {
@@ -211,9 +232,7 @@ export class VkGraph extends VkElement {
     svg.setAttribute('viewBox', `0 0 ${viewW} ${H}`);
     svg.setAttribute('width', viewW);
     svg.setAttribute('height', H);
-    const mode = this.getAttribute('edge') || 'arrow';
-    if (mode === 'none') return;
-
+    const mode = 'arrow';
     const group = mk('g');
     for (const l of links) {
       const a = pos[l.i];
@@ -224,59 +243,55 @@ export class VkGraph extends VkElement {
       const bCy = b.y + b.h / 2;
       const current = nodes[l.j].dataset.state === 'current' || nodes[l.i].dataset.state === 'current';
 
-      let p1;
-      let p2;
-      let d;
-      let prev;
+      let points;
       if (layout === 'tree') {
-        p1 = { x: aCx, y: a.y + a.h };
-        p2 = { x: bCx, y: b.y };
+        const p1 = { x: aCx, y: a.y + a.h };
+        const p2 = { x: bCx, y: b.y };
         const my = p1.y + (p2.y - p1.y) / 2;
-        d = `M ${p1.x} ${p1.y} L ${p1.x} ${my} L ${p2.x} ${my} L ${p2.x} ${p2.y}`;
-        prev = { x: p2.x, y: my };
+        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
       } else if (layout === 'layered') {
-        p1 = { x: a.x + a.w, y: aCy };
-        p2 = { x: b.x, y: bCy };
+        const p1 = { x: a.x + a.w, y: aCy };
+        const p2 = { x: b.x, y: bCy };
         const mx = p1.x + (p2.x - p1.x) / 2;
-        d = `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
-        prev = { x: mx, y: p2.y };
+        points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
       } else if (layout === 'mesh') {
         const dx = bCx - aCx;
         const dy = bCy - aCy;
-        p1 = hit(aCx, aCy, a.w, a.h, dx, dy);
-        p2 = hit(bCx, bCy, b.w, b.h, -dx, -dy);
-        d = `M ${p1.x} ${p1.y} L ${p2.x} ${p2.y}`;
-        prev = p1;
+        points = [hit(aCx, aCy, a.w, a.h, dx, dy), hit(bCx, bCy, b.w, b.h, -dx, -dy)];
       } else if (dir === 'vertical') {
-        p1 = { x: aCx, y: a.y + a.h };
-        p2 = { x: bCx, y: b.y };
+        const p1 = { x: aCx, y: a.y + a.h };
+        const p2 = { x: bCx, y: b.y };
         const my = p1.y + (p2.y - p1.y) / 2;
-        d = `M ${p1.x} ${p1.y} L ${p1.x} ${my} L ${p2.x} ${my} L ${p2.x} ${p2.y}`;
-        prev = { x: p2.x, y: my };
+        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
       } else {
-        p1 = { x: a.x + a.w, y: aCy };
-        p2 = { x: b.x, y: bCy };
+        const p1 = { x: a.x + a.w, y: aCy };
+        const p2 = { x: b.x, y: bCy };
         const mx = p1.x + (p2.x - p1.x) / 2;
-        d = `M ${p1.x} ${p1.y} L ${mx} ${p1.y} L ${mx} ${p2.y} L ${p2.x} ${p2.y}`;
-        prev = { x: mx, y: p2.y };
+        points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
       }
 
-      group.appendChild(mk('path', { class: 'vk-edge', d, 'data-current': current ? '1' : null }));
-      if (mode === 'arrow') {
-        const ang = Math.atan2(p2.y - prev.y, p2.x - prev.x);
-        const L = 28;
-        const Wd = 14;
-        const b1 = { x: p2.x - L * Math.cos(ang), y: p2.y - L * Math.sin(ang) };
-        const b2 = { x: b1.x - Wd * Math.sin(ang), y: b1.y + Wd * Math.cos(ang) };
-        const b3 = { x: b1.x + Wd * Math.sin(ang), y: b1.y - Wd * Math.cos(ang) };
-        group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${p2.x},${p2.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
-      }
+      const tipBase = points[points.length - 2];
+      const p2 = points[points.length - 1];
+      const dx = p2.x - tipBase.x;
+      const dy = p2.y - tipBase.y;
+      const len = Math.hypot(dx, dy) || 1;
+      const ux = dx / len;
+      const uy = dy / len;
+      const tip = { x: p2.x - ux * 4, y: p2.y - uy * 4 };
+      const base = { x: tip.x - ux * 24, y: tip.y - uy * 24 };
+      points[points.length - 1] = base;
+
+      group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null }));
+      const b2 = { x: base.x - 12 * uy, y: base.y + 12 * ux };
+      const b3 = { x: base.x + 12 * uy, y: base.y - 12 * ux };
+      group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
+
       if (l.label) {
-        /* 边标放在 62% 处并朝法线偏移：环图的四条边不会把字堆在圆心。 */
-        const lx = p1.x + (p2.x - p1.x) * 0.62;
-        const ly = p1.y + (p2.y - p1.y) * 0.62;
-        const nx = -(p2.y - p1.y);
-        const ny = p2.x - p1.x;
+        const from = points[0];
+        const lx = from.x + (p2.x - from.x) * 0.62;
+        const ly = from.y + (p2.y - from.y) * 0.62;
+        const nx = -(p2.y - from.y);
+        const ny = p2.x - from.x;
         const nl = Math.hypot(nx, ny) || 1;
         const t = mk('text', { class: 'vk-edge-label', x: lx + (nx / nl) * 20, y: ly + (ny / nl) * 20, 'text-anchor': 'middle' });
         t.textContent = l.label;

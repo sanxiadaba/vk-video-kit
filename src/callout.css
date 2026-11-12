@@ -1,8 +1,8 @@
 /* ============================================================================
-   v19 · 画在别人身上的一层
+   v21 · 画在别人身上的一层
    ----------------------------------------------------------------------------
-   不改布局：绝对定位覆盖整帧，只画线、圈、气泡、编号点。
-   颜色走 tone（--vk-tone），圈选固定用焦点色：圈 = 正在看这里。
+   不改布局：绝对定位覆盖整帧，只画线、圈、气泡、量度。
+   几何只有一套：6px 线、20×10 实心头、4px 间隙、8px 圆角。
    ========================================================================== */
 
 vk-callout {
@@ -19,12 +19,11 @@ vk-callout {
   overflow: visible;
 }
 
-/* 圈：按字的墨迹取框，不按整行盒子。 */
+/* 圈：按字的墨迹取框，不按整行盒子。细轮廓、无填充。 */
 .vk-co-ring {
-  fill: var(--vk-tint-focus);
-  fill-opacity: 0.55;
+  fill: none;
   stroke: var(--vk-focus);
-  stroke-width: 12;
+  stroke-width: 4;
   stroke-linejoin: round;
 }
 
@@ -32,7 +31,7 @@ vk-callout {
 .vk-co-lead {
   fill: none;
   stroke: var(--vk-tone, var(--vk-info));
-  stroke-width: 8;
+  stroke-width: 6;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -50,8 +49,8 @@ vk-callout {
 
 .vk-co-label {
   position: absolute;
-  padding: 4px 14px;
-  border-radius: var(--vk-radius-pill);
+  padding: 4px 12px;
+  border-radius: var(--vk-radius-sm);
   background: var(--vk-paper);
   color: var(--vk-ink-2);
   font-size: var(--vk-fs-caption);
@@ -63,14 +62,12 @@ vk-callout {
 .vk-co-note {
   position: absolute;
   max-width: 720px;
-  padding: 16px 24px;
-  border-radius: var(--vk-radius-lg);
+  padding: var(--vk-space-4) var(--vk-space-5);
+  border-radius: var(--vk-radius-md);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
   border: var(--vk-line-w-hair) solid var(--vk-tone, var(--vk-info));
   font-size: var(--vk-fs-caption);
-  line-height: 1.45;
-  box-shadow: 0 12px 32px rgba(11, 15, 20, 0.12);
+  line-height: 1.5;
+  box-shadow: var(--vk-shadow-window);
 }
-
-

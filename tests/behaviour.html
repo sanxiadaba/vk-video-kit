@@ -3,7 +3,7 @@
 <vk-page id="behave">
   <vk-head kicker="行为" size="subhead">运行期只做四件事。</vk-head>
   <vk-flow cols="5 7" gap="wide">
-    <vk-code id="shrink" lang="c" title="long.c" chrome="dots" long="clip">
+    <vk-code id="shrink" lang="c" title="long.c">
       <script type="text/plain" data-vk-source>
 int very_long_variable_name = another_long_name + yet_another_name_here;
       </script>
@@ -27,7 +27,7 @@ int very_long_variable_name = another_long_name + yet_another_name_here;
 </vk-page>
 
 <vk-page id="behave-graph">
-  <vk-graph layout="row" edge="arrow">
+  <vk-graph layout="row">
     <li id="a" label="a"></li>
     <li id="b" label="b" after="a"></li>
     <li id="c" label="c" after="b"></li>
@@ -36,7 +36,7 @@ int very_long_variable_name = another_long_name + yet_another_name_here;
 </vk-page>
 
 <vk-page id="behave-dark" surface="dark">
-  <vk-code id="paperwin" lang="c" surface="paper" title="paper.c" chrome="dots">
+  <vk-code id="darkwin" lang="c" title="dark.c">
     <script type="text/plain" data-vk-source>
 int a = 1;
     </script>

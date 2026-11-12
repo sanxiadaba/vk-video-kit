@@ -1,5 +1,5 @@
 /**
- * v19 · 自检与度量
+ * v21 · 自检与度量
  * ----------------------------------------------------------------------------
  * 硬错只有五类（无论怎么画都错）：
  *   1. 没有 <vk-page>，或画布不是 1920×1080
@@ -160,7 +160,7 @@ export function auditPage(stage) {
   const hostBoxes = [];
   const hostSeen = new Set();
   for (const el of page.querySelectorAll('[data-state="current"], [state="current"], .is-cur')) {
-    const host = el.closest('vk-code, vk-cells, vk-bytes, vk-table, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-seq, vk-tree, .vk-gnode') || el;
+    const host = el.closest('vk-code, vk-cells, vk-bytes, vk-bits, vk-table, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-seq, vk-tree, .vk-gnode') || el;
     if (hostSeen.has(host)) continue;
     hostSeen.add(host);
     hostBoxes.push(host.getBoundingClientRect());

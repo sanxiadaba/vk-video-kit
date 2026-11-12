@@ -1,5 +1,5 @@
 /**
- * v19 · 标注
+ * v21 · 标注
  * ----------------------------------------------------------------------------
  * 画在别人身上的一层，不改布局。四种形态：
  *   arrow  从一处指向另一处（直线 / 折线 / 曲线）
@@ -94,14 +94,14 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      const pad = 10;
+      const pad = 8;
       const box = mk('rect', {
         class: 'vk-co-ring',
         x: r.left - pad,
         y: r.top - pad,
         width: r.width + pad * 2,
         height: r.height + pad * 2,
-        rx: 18,
+        rx: 8,
       });
       this._svg.appendChild(box);
       return;
@@ -112,8 +112,7 @@ export class VkCallout extends VkElement {
       if (!t) return missing();
       const r = rel(t.rect);
       /* 间距读构建期归一化的 --vk-gap；读不到再退回属性/32。 */
-      const gapVar = parseFloat(getComputedStyle(this).getPropertyValue('--vk-gap'));
-      const gap = Number.isFinite(gapVar) && gapVar > 0 ? gapVar : Number(this.getAttribute('gap') || 32) || 32;
+      const gap = 24;
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
@@ -188,7 +187,7 @@ export class VkCallout extends VkElement {
       const uy = dy / len;
       const nx = -uy;
       const ny = ux;
-      const tick = 26;
+      const tick = 16;
       this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${a.x} ${a.y} L ${b.x} ${b.y}` }));
       this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${a.x - nx * tick} ${a.y - ny * tick} L ${a.x + nx * tick} ${a.y + ny * tick}` }));
       this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${b.x - nx * tick} ${b.y - ny * tick} L ${b.x + nx * tick} ${b.y + ny * tick}` }));
@@ -214,50 +213,57 @@ export class VkCallout extends VkElement {
     const a = pointOn(fr, fs);
     const b = pointOn(tr, ts);
     const shape = this.getAttribute('shape') || 'curve';
-    const trim = 10;
-    const d = (() => {
-      if (shape === 'straight') return `M ${a.x} ${a.y} L ${b.x} ${b.y}`;
-      if (shape === 'ortho') {
-        const horiz = fs === 'left' || fs === 'right';
-        const mid = horiz ? { x: (a.x + b.x) / 2, y: a.y } : { x: a.x, y: (a.y + b.y) / 2 };
-        const mid2 = horiz ? { x: mid.x, y: b.y } : { x: b.x, y: mid.y };
-        return `M ${a.x} ${a.y} L ${mid.x} ${mid.y} L ${mid2.x} ${mid2.y} L ${b.x} ${b.y}`;
-      }
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2;
-      const dx = b.x - a.x;
-      const dy = b.y - a.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const bow = Math.min(160, len * 0.18);
-      const cx = mx - (dy / len) * bow;
-      const cy = my + (dx / len) * bow;
-      return `M ${a.x} ${a.y} Q ${cx} ${cy} ${b.x} ${b.y}`;
-    })();
-    this._svg.appendChild(mk('path', { class: 'vk-co-line', d, 'marker-end': '' }));
-    // 箭头：按最后一段方向画一个实心三角。
-    const prev = shape === 'ortho' ? { x: b.x + (b.x - a.x) * 0.001, y: b.y } : a;
-    const ang = Math.atan2(b.y - prev.y, b.x - prev.x);
-    const L = 22;
-    const W = 11;
-    const p1 = { x: b.x - L * Math.cos(ang), y: b.y - L * Math.sin(ang) };
-    const p2 = { x: p1.x - W * Math.sin(ang), y: p1.y + W * Math.cos(ang) };
-    const p3 = { x: p1.x + W * Math.sin(ang), y: p1.y - W * Math.cos(ang) };
-    this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: `${b.x},${b.y} ${p2.x},${p2.y} ${p3.x},${p3.y}` }));
-    // 端点小圆，让起点有落点
-    this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: a.x, cy: a.y, r: 6 }));
+    const dx = b.x - a.x;
+    const dy = b.y - a.y;
+    const len = Math.hypot(dx, dy) || 1;
+    const ux = dx / len;
+    const uy = dy / len;
+    const headL = 24;
+    const headW = 12;
+    const tip = { x: b.x - ux * 4, y: b.y - uy * 4 };
+    const end = { x: tip.x - ux * headL, y: tip.y - uy * headL };
+
+    let d;
+    let prev = a;
+    if (shape === 'ortho') {
+      const horiz = fs === 'left' || fs === 'right';
+      const mid = horiz ? { x: (a.x + end.x) / 2, y: a.y } : { x: a.x, y: (a.y + end.y) / 2 };
+      const mid2 = horiz ? { x: mid.x, y: end.y } : { x: end.x, y: mid.y };
+      d = `M ${a.x} ${a.y} L ${mid.x} ${mid.y} Q ${mid2.x} ${mid2.y} ${end.x} ${end.y}`;
+      prev = mid2;
+    } else if (shape === 'straight') {
+      d = `M ${a.x} ${a.y} L ${end.x} ${end.y}`;
+      prev = a;
+    } else {
+      const mx = (a.x + end.x) / 2;
+      const my = (a.y + end.y) / 2;
+      const bow = Math.min(96, len * 0.16);
+      const cx = mx - (uy * bow);
+      const cy = my + (ux * bow);
+      d = `M ${a.x} ${a.y} Q ${cx} ${cy} ${end.x} ${end.y}`;
+      prev = { x: cx, y: cy };
+    }
+    this._svg.appendChild(mk('path', { class: 'vk-co-line', d }));
+
+    const ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
+    const bx = tip.x - headL * Math.cos(ang);
+    const by = tip.y - headL * Math.sin(ang);
+    const p2 = { x: bx - headW * Math.sin(ang), y: by + headW * Math.cos(ang) };
+    const p3 = { x: bx + headW * Math.sin(ang), y: by - headW * Math.cos(ang) };
+    this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: `${tip.x},${tip.y} ${p2.x},${p2.y} ${p3.x},${p3.y}` }));
+    this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: a.x, cy: a.y, r: 4 }));
 
     const label = this.getAttribute('label');
     if (label) {
       this._label.hidden = false;
       this._label.textContent = label;
-      const mx = (a.x + b.x) / 2;
-      const my = (a.y + b.y) / 2;
+      const mx = (a.x + tip.x) / 2;
+      const my = (a.y + tip.y) / 2;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
       this._label.style.left = `${clamp(mx - lw / 2, 8, origin.width - lw - 8)}px`;
-      this._label.style.top = `${clamp(my - lh / 2, 8, origin.height - lh - 8)}px`;
+      this._label.style.top = `${clamp(my - lh / 2 - 28, 8, origin.height - lh - 8)}px`;
     }
-    void trim;
   }
 }
 

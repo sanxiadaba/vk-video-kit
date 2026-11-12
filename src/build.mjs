@@ -1,5 +1,5 @@
 /**
- * v19 · 构建期
+ * v21 · 构建期
  * ----------------------------------------------------------------------------
  * 读作者页 → 校验 → 把「要算的东西」算好 → 输出一张自包含的页。
  *
@@ -162,17 +162,15 @@ function readSource(node, file, assets, diag) {
 }
 
 /* ---------------------------------------------------------------- 窗口 */
-function frame({ chrome, title, surface, body, range, digits }) {
-  /* 标题栏：有 title 就出（无三点），写 chrome="dots" 才加三点。
-     不再让「写了 title 但没写 chrome」静默丢掉标题。 */
-  const mode = chrome === 'dots' ? 'dots' : title ? 'title' : 'none';
-  const hd =
-    mode !== 'none'
-      ? `<div class="vk-fhd">${mode === 'dots' ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${
-          title ? `<span class="vk-ftitle">${esc(title)}</span>` : ''
-        }${range ? `<span class="vk-frange">${esc(range)}</span>` : ''}</div>`
-      : '';
-  return `<div class="vk-frame" data-chrome="${mode}" data-surface="${surface || 'auto'}"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
+function frame({ title, body, range, digits, dots = true }) {
+  /* 有 title 就有标题栏；代码/终端是窗口（三点），树/字节是数据（无三点）。
+     窗口的视觉由库决定，作者只提供「这是哪个文件」。 */
+  const hd = title
+    ? `<div class="vk-fhd">${dots ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}<span class="vk-ftitle">${esc(title)}</span>${
+        range ? `<span class="vk-frange">${esc(range)}</span>` : ''
+      }</div>`
+    : '';
+  return `<div class="vk-frame"${digits ? ` style="--vk-ln-digits:${digits}"` : ''}>${hd}<div class="vk-fbd">${body}</div></div>`;
 }
 
 const fmtRange = (a, b) => (a === b ? String(a) : `${a}–${b}`);
@@ -212,8 +210,6 @@ async function buildSource(node, file, ctx) {
   const cur = lineSet(attrOf(node, 'current'));
   const mark = attrOf(node, 'mark') || '';
   const title = attrOf(node, 'title') || '';
-  const chrome = attrOf(node, 'chrome') || 'none';
-  const surface = attrOf(node, 'surface') || 'auto';
 
   let body = '';
   let digits = String(start + srcRows.length - 1).length;
@@ -350,7 +346,8 @@ async function buildSource(node, file, ctx) {
   }
 
   const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
-  return frame({ chrome, title, surface, body: `<div class="vk-lines${cls}">${body}</div>`, range, digits });
+  const dim = as === 'code' && cur?.size && (attrOf(node, 'dim') || 'auto') !== 'none' ? ' data-dim="1"' : '';
+  return frame({ title, body: `<div class="vk-lines${cls}"${dim}>${body}</div>`, range, digits });
 }
 
 function cmdHtml(cmd) {
@@ -381,6 +378,7 @@ function buildTable(node, file, ctx) {
   if (!table) return '';
   const rows = flatten(table).filter((n) => n.tagName === 'tr');
   const cols = Math.max(0, ...rows.map((r) => flatten(r).filter((c) => c.tagName === 'th' || c.tagName === 'td').length));
+  node.attrs = [...(node.attrs || []).filter((a) => a.name !== 'data-cols'), { name: 'data-cols', value: String(cols) }];
   const numeric = new Set();
   for (let c = 0; c < cols; c++) {
     const cells = rows.map((r) => flatten(r).filter((n) => n.tagName === 'th' || n.tagName === 'td')[c]).filter(Boolean);
@@ -402,10 +400,15 @@ function buildTable(node, file, ctx) {
 }
 
 function buildList(node) {
+  const cur = Number(attrOf(node, 'current') || 0);
   kids(node)
     .filter((c) => c.tagName === 'li')
     .forEach((li, i) => {
-      li.attrs = [...(li.attrs || []), { name: 'data-vk-item', value: String(i + 1) }];
+      li.attrs = [
+        ...(li.attrs || []).filter((a) => a.name !== 'data-state'),
+        { name: 'data-vk-item', value: String(i + 1) },
+        ...(cur === i + 1 ? [{ name: 'data-state', value: 'current' }] : []),
+      ];
     });
   return '';
 }
@@ -418,9 +421,6 @@ const ICON_KIND = (name, isDir) => {
 };
 
 async function buildTree(node, file, ctx) {
-  const off = attrOf(node, 'icons') === 'none';
-  const pick = (key, fallback) => (off ? '' : ctx.icon(attrOf(node, key) || fallback) || '');
-  const icons = { dir: pick('icon-dir', 'folder'), code: pick('icon-file', 'file'), binary: pick('icon-file', 'file'), file: pick('icon-file', 'file') };
   const depth = Number(attrOf(node, 'depth') || 3);
   let budget = Number(attrOf(node, 'max') || 6);
   let skipped = 0;
@@ -429,12 +429,19 @@ async function buildTree(node, file, ctx) {
   /* 序号是「这一棵树里第几行」，不是整页第几个：两张树不能互相串锚点。 */
   let itemNo = 0;
 
-  const nodeHtml = (name, isDir, p, level, children = '') => {
+  const iconFor = (name, isDir) => {
+    const kind = ICON_KIND(name, isDir);
+    const name2 = isDir ? 'folder' : kind === 'code' ? 'file-code' : 'file-text';
+    const svg = ctx.icon(name2);
+    return svg ? `<span class="vk-ic" aria-hidden="true">${svg}</span>` : '';
+  };
+
+  const nodeHtml = (name, isDir, p, level, children = '', isLast = false) => {
     const kind = ICON_KIND(name, isDir);
     const cur = current && (p === current || current === name) ? ' is-cur' : '';
     return (
-      `<div class="vk-node${cur}" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}" data-path="${esc(p)}" style="--vk-depth:${level}">` +
-      `<span class="vk-nrow">${icons[kind] || ''}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
+      `<div class="vk-node${cur}" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}" data-path="${esc(p)}"${isLast ? ' data-last="1"' : ''} style="--vk-depth:${level}">` +
+      `<span class="vk-nrow">${iconFor(name, isDir)}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
       (children ? `<div class="vk-kids">${children}</div>` : '') +
       `</div>`
     );
@@ -458,7 +465,7 @@ async function buildTree(node, file, ctx) {
       }
       const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
       const p = base ? `${base}/${name}` : name;
-      out.push(nodeHtml(name, isDir, p, level, it.children ? walk(it.children, level + 1, p) : ''));
+      out.push(nodeHtml(name, isDir, p, level, it.children ? walk(it.children, level + 1, p) : '', i === items.length - 1));
     }
     return out.join('');
   };
@@ -494,7 +501,7 @@ async function buildTree(node, file, ctx) {
     }
   }
   const body = walk(list, 1, '') + (truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '');
-  return frame({ chrome: attrOf(node, 'chrome') || 'none', title: attrOf(node, 'title'), surface: attrOf(node, 'surface') || 'auto', body: `<div class="vk-tree">${body}</div>` });
+  return frame({ title: attrOf(node, 'title'), body: `<div class="vk-tree">${body}</div>`, dots: false });
 }
 
 function buildMath(node, file, ctx) {
@@ -565,11 +572,11 @@ function buildBytes(node, file, ctx) {
     const ascii = bytes.map((b, j) => `<i data-vk-item="${i + j + 1}"${cur?.has(i + j + 1) ? ' class="is-cur"' : ''}>${esc(b >= 32 && b < 127 ? String.fromCharCode(b) : '·')}</i>`).join('');
     rows.push(`<div class="vk-brow"><span class="vk-baddr">0x${(base + start + i).toString(16).padStart(width, '0')}</span><span class="vk-bhex">${hex}</span><span class="vk-bascii">${ascii}</span></div>`);
   }
-  const head = hasAttr(node, 'header') ? `<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>` : '';
-  const fontPx = FONT[attrOf(node, 'size') || 'body'] || FONT.body;
+  const head = `<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>`;
+  const fontPx = FONT.body;
   const bcol = Math.round(5.4 * fontPx);
   const bhexw = Math.round(cols * 3 * 0.6 * fontPx);
-  return frame({ chrome: attrOf(node, 'chrome') || 'none', title: attrOf(node, 'title'), surface: attrOf(node, 'surface') || 'auto', body: `<div class="vk-bytes" style="--vk-cols:${cols};--vk-bcol:${bcol}px;--vk-bhexw:${bhexw}px">${head}${rows.join('')}</div>` });
+  return frame({ title: attrOf(node, 'title'), body: `<div class="vk-bytes" style="--vk-cols:${cols};--vk-bcol:${bcol}px;--vk-bhexw:${bhexw}px">${head}${rows.join('')}</div>`, dots: false });
 }
 
 function buildBits(node) {
@@ -594,7 +601,8 @@ function buildBits(node) {
         return `<i class="vk-bit${isSign ? ' is-sign' : ''}${isCur}" data-vk-bit="${globalIdx + 1}"${gap}><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
       })
       .join('');
-    return `<div class="vk-field" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
+    const fieldCur = cur && segments[fi].replace(/\s+/g, '').split('').some((_, bi) => cur.has([...segments.slice(0, fi).join('')].length + bi + 1));
+    return `<div class="vk-field${fieldCur ? ' is-cur' : ''}" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
   });
   const left = attrOf(node, 'label') ? `<span class="vk-bits-label">${esc(attrOf(node, 'label'))}</span>` : '';
   return `<div class="vk-bits" data-index="${index}">${left}<div class="vk-bits-body">${fieldHtml.join('')}</div></div>`;
@@ -650,20 +658,22 @@ function buildText(node, file, ctx) {
 }
 
 /* ---------------------------------------------------------------- 图 */
-function buildSteps(node) {
+function buildSteps(node, ctx) {
   const items = kids(node).filter((c) => c.tagName === 'li');
   const cur = Number(attrOf(node, 'current') || 0);
   const dir = attrOf(node, 'direction') || 'auto';
-  const connector = attrOf(node, 'connector') || 'arrow';
   const html = items
     .map((li, i) => {
       const state = attrOf(li, 'state') || (cur === i + 1 ? 'current' : '');
       const tone = attrOf(li, 'tone') || 'neutral';
       const note = attrOf(li, 'note');
-      return `<div class="vk-step" data-vk-item="${i + 1}" data-state="${esc(state)}" data-tone="${esc(tone)}"><span class="vk-step-n">${i + 1}</span><span class="vk-step-t">${serialize({ ...li, tagName: 'span', attrs: [], sourceCodeLocation: null }).replace(/^<span>|<\/span>$/g, '')}</span>${note ? `<span class="vk-step-note">${esc(note)}</span>` : ''}</div>`;
+      const icon = attrOf(li, 'icon');
+      const svg = icon ? ctx.icon(icon) : '';
+      const label = serialize({ ...li, tagName: 'span', attrs: [], sourceCodeLocation: null }).replace(/^<span>|<\/span>$/g, '');
+      return `<div class="vk-step" data-vk-item="${i + 1}" data-state="${esc(state)}" data-tone="${esc(tone)}"><span class="vk-step-n">${i + 1}</span><span class="vk-step-t">${svg ? `<span class="vk-ic" aria-hidden="true">${svg}</span>` : ''}<span class="vk-step-l">${label}</span></span>${note ? `<span class="vk-step-note">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
-  return `<div class="vk-steps" data-dir="${dir}" data-connector="${connector}" style="--vk-n:${items.length || 1}">${html}</div>`;
+  return `<div class="vk-steps" data-dir="${dir}" style="--vk-n:${items.length || 1}">${html}</div>`;
 }
 
 function buildBars(node) {
@@ -691,10 +701,26 @@ function buildTimeline(node) {
   const start = Number(attrOf(node, 'start'));
   const end = Number(attrOf(node, 'end'));
   const proportional = Number.isFinite(start) && Number.isFinite(end) && end > start && items.every((li) => Number.isFinite(Number(attrOf(li, 'at'))));
+  const lefts = items.map((li, i) => (proportional ? ((Number(attrOf(li, 'at')) - start) / (end - start)) * 100 : ((i + 0.5) / items.length) * 100));
+
+  /* 轴线在节点处断开：每两个点之间画一段，节点附近留 1% 的缝。
+     不再用纸色光晕去「擦」线，光晕会显得点压住了线。 */
+  const cut = 1.7;
+  const segs = [];
+  let prev = 0;
+  lefts.forEach((p, i) => {
+    const from = i === 0 ? 0 : prev + cut;
+    const to = p - cut;
+    if (to > from) segs.push(`<span class="vk-tl-seg" style="left:${from.toFixed(2)}%;width:${(to - from).toFixed(2)}%"></span>`);
+    prev = p;
+  });
+  const tail = lefts.length ? lefts[lefts.length - 1] + cut : 0;
+  if (tail < 100) segs.push(`<span class="vk-tl-seg" style="left:${tail.toFixed(2)}%;width:${(100 - tail).toFixed(2)}%"></span>`);
+
   const html = items
     .map((li, i) => {
       const at = Number(attrOf(li, 'at'));
-      const left = proportional ? ((at - start) / (end - start)) * 100 : ((i + 0.5) / items.length) * 100;
+      const left = lefts[i];
       const edge = left <= 10 ? 'start' : left >= 90 ? 'end' : 'mid';
       const state = attrOf(li, 'state') || (cur === i + 1 ? 'current' : '');
       const date = attrOf(li, 'date') || (Number.isFinite(at) ? String(at) : '');
@@ -702,7 +728,7 @@ function buildTimeline(node) {
       return `<div class="vk-tl-i" data-vk-item="${i + 1}" data-edge="${edge}" data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-at:${left.toFixed(2)}%"><span class="vk-tl-date">${esc(date)}</span><span class="vk-tl-dot"></span><span class="vk-tl-label">${esc(attrOf(li, 'label') || '')}</span>${note ? `<span class="vk-tl-note">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
-  return `<div class="vk-tl${proportional ? ' is-prop' : ''}">${html}</div>`;
+  return `<div class="vk-tl${proportional ? ' is-prop' : ''}">${segs.join('')}${html}</div>`;
 }
 
 function buildGraph(node) {
@@ -710,12 +736,13 @@ function buildGraph(node) {
   const isEdge = (li) => hasAttr(li, 'from') || hasAttr(li, 'to');
   const nodes = items.filter((li) => !isEdge(li));
   const edges = items.filter(isEdge);
+  const cur = Number(attrOf(node, 'current') || 0);
   const nodeHtml = nodes
     .map((li, i) => {
       const id = attrOf(li, 'id') || `n${i + 1}`;
       const label = attrOf(li, 'label') ?? '';
       const note = attrOf(li, 'note');
-      const state = attrOf(li, 'state') || '';
+      const state = cur === i + 1 ? 'current' : '';
       const after = (attrOf(li, 'after') || '').split(/\s+/).filter(Boolean).join(' ');
       const lane = attrOf(li, 'lane');
       return `<div class="vk-gnode" data-vk-item="${i + 1}" data-id="${esc(id)}"${attrOf(li, 'id') ? ` id="${esc(attrOf(li, 'id'))}"` : ''} data-after="${esc(after)}"${lane != null ? ` data-lane="${esc(lane)}"` : ''} data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}"><span class="vk-gn-l">${esc(label)}</span>${note ? `<span class="vk-gn-n">${esc(note)}</span>` : ''}</div>`;
@@ -754,7 +781,6 @@ function buildSeq(node) {
 function buildFlow(node) {
   const cols = attrOf(node, 'cols') || '1';
   const gap = px(attrOf(node, 'gap') ?? 'normal', GAP.normal);
-  const pad = px(attrOf(node, 'pad') ?? 'none', 0);
   /* 每一层 flow 都把列模板写死：否则子 flow 会继承父级模板，
      内层 cols="1" 实际排成父级的两栏（surface-img 的列宽就是这么错的）。 */
   let template;
@@ -764,7 +790,6 @@ function buildFlow(node) {
 
   setStyle(node, {
     '--vk-gap': `${gap}px`,
-    '--vk-pad': `${pad}px`,
     '--vk-cols-template': template,
   });
   if (cols === 'auto') node.attrs.push({ name: 'data-cols', value: 'auto' });
@@ -779,12 +804,8 @@ function buildFlow(node) {
 
 function buildSurface(node) {
   const title = attrOf(node, 'title');
-  const chrome = attrOf(node, 'chrome') || 'none';
   const body = (node.childNodes || []).map(serialize).join('');
-  const hd =
-    chrome === 'dots' || title
-      ? `<div class="vk-fhd">${chrome === 'dots' ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}${title ? `<span class="vk-ftitle">${esc(title)}</span>` : ''}</div>`
-      : '';
+  const hd = title ? `<div class="vk-fhd vk-fhd-plain"><span class="vk-ftitle">${esc(title)}</span></div>` : '';
   node.childNodes = [raw(`${hd}<div class="vk-fbd">${body}</div>`)];
 }
 
@@ -792,8 +813,7 @@ function buildPage(node) {
   const list = node.childNodes || [];
   const head = list.find((c) => c.tagName === 'vk-head');
   const rest = list.filter((c) => c !== head);
-  const gap = px(attrOf(node, 'gap') ?? 'normal', GAP.normal);
-  const stage = `<div class="vk-stage">${head ? serialize(head) : ''}<div class="vk-body" style="--vk-gap:${gap}px">${rest.map(serialize).join('')}</div></div>`;
+  const stage = `<div class="vk-stage">${head ? serialize(head) : ''}<div class="vk-body">${rest.map(serialize).join('')}</div></div>`;
   node.childNodes = [raw(stage)];
 }
 
@@ -889,16 +909,10 @@ export async function transformHtml(rawHtml, { file }) {
   /* 先把所有用到的图标一次性解析好（await 不能出现在 render 回调里）。 */
   const iconNames = new Set();
   for (const node of flatten(doc)) {
-    if (!node.tagName?.startsWith('vk-')) continue;
     const n = attrOf(node, 'icon');
     if (n) iconNames.add(n);
-    for (const key of ['icon-dir', 'icon-file']) {
-      const v = attrOf(node, key);
-      if (v) iconNames.add(v);
-    }
   }
-  iconNames.add('folder');
-  iconNames.add('file');
+  for (const name of ['folder', 'file-code', 'file-text']) iconNames.add(name);
   for (const name of iconNames) {
     const svg = await iconSvg(name);
     if (svg) iconCache.set(String(name).trim().toLowerCase().replace(/[_\s]+/g, '-'), svg);
@@ -920,7 +934,7 @@ export async function transformHtml(rawHtml, { file }) {
       else if (tag === 'vk-cells') node.childNodes = [raw(buildCells(node))];
       else if (tag === 'vk-head') buildHead(node);
       else if (tag === 'vk-text') buildText(node, file, ctx);
-      else if (tag === 'vk-steps') node.childNodes = [raw(buildSteps(node))];
+      else if (tag === 'vk-steps') node.childNodes = [raw(buildSteps(node, ctx))];
       else if (tag === 'vk-bars') node.childNodes = [raw(buildBars(node))];
       else if (tag === 'vk-timeline') node.childNodes = [raw(buildTimeline(node))];
       else if (tag === 'vk-graph') node.childNodes = [raw(buildGraph(node))];

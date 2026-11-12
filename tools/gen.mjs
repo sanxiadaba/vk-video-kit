@@ -16,8 +16,10 @@ import {
   TRACKING,
   WEIGHT,
   GAP,
+  SPACE,
   INSET,
   RADIUS,
+  ICON,
   LINE_W,
   PAINT,
   SYNTAX,
@@ -36,6 +38,7 @@ const pair = (name, key) => {
 
 push('canvas-w', `${CANVAS.w}px`);
 push('canvas-h', `${CANVAS.h}px`);
+push('shadow-window', '0 1px 2px light-dark(rgba(17, 20, 24, 0.04), rgba(0, 0, 0, 0.4)), 0 12px 32px light-dark(rgba(17, 20, 24, 0.06), rgba(0, 0, 0, 0.5))');
 push('margin-x', `${CANVAS.safeX}px`);
 push('margin-y', `${CANVAS.safeY}px`);
 push('safe-w', `${CANVAS.w - CANVAS.safeX * 2}px`);
@@ -51,9 +54,11 @@ for (const [tier, px] of Object.entries(FONT)) {
 }
 
 rows.push('');
+for (const [name, px] of Object.entries(SPACE)) push(`space-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(GAP)) push(`gap-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(INSET)) push(`inset-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(RADIUS)) push(`radius-${name}`, px >= 999 ? '999px' : `${px}px`);
+for (const [name, px] of Object.entries(ICON)) push(`icon-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(LINE_W)) push(`line-w-${name}`, `${px}px`);
 
 rows.push('');
@@ -65,6 +70,7 @@ push('font-mono', FONT_FAMILY.mono);
 
 rows.push('');
 pair('paper', 'paper');
+pair('raised', 'raised');
 pair('soft', 'soft');
 pair('ink-1', 'ink1');
 pair('ink-2', 'ink2');

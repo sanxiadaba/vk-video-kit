@@ -1,26 +1,22 @@
 /**
- * v19 · 需要测量的两个件：源码窗（缩字号）与图片（失败态）。
+ * v21 · 需要测量的两个件：源码窗（缩字号）与图片（失败态）。
  * 其余组件的几何在构建期已经定完，运行期不碰。
  */
 import { VkElement, define } from './base.mjs';
 import { FLOOR } from '../vocab.mjs';
 
-/** 源码窗：窗太窄时把字号往下缩，缩到 44 为止；再放不下就交给自检报「被裁」。 */
+/** 源码窗：窗太窄时把字号往下缩，缩到 40 为止；再放不下就交给自检报「被裁」。 */
 export class VkCode extends VkElement {
-  static __observed = ['size', 'long'];
+  static __observed = ['size'];
 
   paint() {
-    if (this.getAttribute('long') === 'wrap') {
-      this.style.removeProperty('font-size');
-      return;
-    }
     const lines = this.querySelector('.vk-lines');
     if (!lines) return;
     this.style.removeProperty('font-size');
     const base = parseFloat(getComputedStyle(lines).fontSize) || 56;
     if (base <= FLOOR) return;
     let px = base;
-    const overflows = () => [...this.querySelectorAll('.vk-lc')].some((el) => el.scrollWidth > el.clientWidth + 1);
+    const overflows = () => [...this.querySelectorAll('.vk-lc, .vk-dc, .vk-aops')].some((el) => el.scrollWidth > el.clientWidth + 1);
     if (!overflows()) return;
     while (px > FLOOR) {
       px = Math.max(FLOOR, px - 2);
