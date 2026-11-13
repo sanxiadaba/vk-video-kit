@@ -305,8 +305,8 @@ export class VkCallout extends VkElement {
           y = Math.max(fr.bottom, tr.bottom) + standoff;
           below = true;
         }
-        a = { x: cx(fr), y };
-        b = { x: cx(tr), y };
+        a = { x: fr.left, y };
+        b = { x: tr.left, y };
         extA = { x: a.x, y: below ? fr.bottom : fr.top };
         extB = { x: b.x, y: below ? tr.bottom : tr.top };
       } else {
@@ -316,8 +316,8 @@ export class VkCallout extends VkElement {
           x = Math.min(fr.left, tr.left) - standoff;
           left = true;
         }
-        a = { x, y: cy(fr) };
-        b = { x, y: cy(tr) };
+        a = { x, y: fr.top };
+        b = { x, y: tr.top };
         extA = { x: left ? fr.left : fr.right, y: a.y };
         extB = { x: left ? tr.left : tr.right, y: b.y };
       }

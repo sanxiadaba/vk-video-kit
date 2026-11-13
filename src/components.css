@@ -1190,7 +1190,7 @@ vk-seq {
 }
 .vk-seq-arrow {
   position: absolute;
-  top: 44px;
+  top: 52px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
 }
@@ -1227,14 +1227,14 @@ vk-seq {
   padding: 0 var(--vk-space-4);
   background: var(--vk-paper);
   white-space: nowrap;
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   line-height: 1.2;
   font-weight: var(--vk-w-medium);
 }
 .vk-seq-note {
   position: absolute;
   left: var(--vk-mid);
-  top: 72px;
+  top: 64px;
   transform: translateX(-50%);
   padding: 0 var(--vk-space-3);
   background: var(--vk-paper);
