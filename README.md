@@ -53,7 +53,8 @@ node bin/vk.mjs render my-frame.html
 
 ## 写一帧
 
-一帧就是一个 `<vk-page>`。先读 [`docs/GUIDE.md`](docs/GUIDE.md) 的写作判断；
+一帧就是一个 `<vk-page>`。先读 [`docs/GUIDE.md`](docs/GUIDE.md) 的写作判断、
+[`docs/DESIGN.md`](docs/DESIGN.md) 的视觉契约；
 机器可读契约用 `vk brief --json`，单件用 `vk doc <tag>`，最短骨架在 `brief` 的 `skeleton` 里。
 本库不提供模板/版式库，也不放演示剧集。
 
