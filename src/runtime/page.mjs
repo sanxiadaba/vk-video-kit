@@ -10,7 +10,8 @@
  */
 import { VkElement, define, FIT } from './base.mjs';
 
-const FIT_SCALE = 0.9;
+const FIT_SHALLOW = 0.9;
+const FIT_DEEP = 0.8;
 
 export class VkPage extends VkElement {
   static __observed = ['place'];
@@ -43,10 +44,11 @@ export class VkPage extends VkElement {
     const contentH = bottom - top;
     if (contentH <= body.clientHeight + 2) return;
 
+    const scale = contentH / body.clientHeight > 1.12 ? FIT_DEEP : FIT_SHALLOW;
     body.style.alignContent = 'start';
     body.style.transformOrigin = 'top left';
-    body.style.transform = `scale(${FIT_SCALE})`;
-    body.setAttribute('data-vk-fit', String(FIT_SCALE));
+    body.style.transform = `scale(${scale})`;
+    body.setAttribute('data-vk-fit', String(scale));
   }
 }
 

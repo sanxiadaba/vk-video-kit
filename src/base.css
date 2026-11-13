@@ -99,6 +99,8 @@ vk-head {
   min-width: 0;
   min-height: 293px;
   text-align: start;
+  position: relative;
+  z-index: 2;
 }
 vk-head[size='headline'] {
   min-height: 352px;
