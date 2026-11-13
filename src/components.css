@@ -1,5 +1,5 @@
 /* ============================================================================
-   v23 · 组件
+   v24 · 组件
    ----------------------------------------------------------------------------
    组件只做五组原语的组合：字 / 距 / 面 / 线 / 态。
    这里不出现裸字号、裸间距、裸圆角；拿不准就回 vocab.mjs 加 token。
@@ -8,15 +8,17 @@
 /* ================================================================ 源码窗 */
 vk-code {
   display: block;
-  width: fit-content;
+  width: 100%;
   max-width: 100%;
   min-width: 0;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-body);
+  font-variant-ligatures: none;
 }
-vk-code:has(.vk-diff),
-vk-code:has(.vk-term) {
-  width: 100%;
+.vk-lines,
+.vk-lc,
+.vk-dc {
+  font-variant-ligatures: none;
 }
 vk-code[size='caption'] {
   font-size: var(--vk-fs-caption);
@@ -273,7 +275,7 @@ vk-table td {
 }
 vk-table th:first-child,
 vk-table td:first-child {
-  padding-left: 0;
+  padding-left: var(--vk-space-6);
 }
 vk-table th:not(:first-child),
 vk-table td:not(:first-child) {
@@ -493,7 +495,7 @@ vk-cells {
   gap: var(--vk-space-4);
 }
 .vk-cells:has(.vk-cell-p) {
-  padding-top: var(--vk-space-8);
+  padding-top: var(--vk-space-9);
 }
 .vk-cell {
   position: relative;
@@ -513,7 +515,7 @@ vk-cells {
 }
 .vk-cell-v {
   font-family: var(--vk-font-mono);
-  font-size: 84px;
+  font-size: var(--vk-fs-subhead);
   font-weight: var(--vk-w-bold);
   line-height: 1.1;
   color: var(--vk-ink-1);
@@ -525,7 +527,7 @@ vk-cells {
   text-decoration: line-through;
 }
 .vk-cell-arrow {
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   color: var(--vk-ink-3);
 }
 .vk-cell-l {
@@ -542,14 +544,14 @@ vk-cells {
 }
 .vk-cell-p {
   position: absolute;
-  top: calc(var(--vk-space-8) * -1);
+  top: calc(var(--vk-space-9) * -1);
   left: 50%;
   transform: translateX(-50%);
-  padding: 4px 12px;
+  padding: var(--vk-space-2) var(--vk-space-4);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-focus);
   color: var(--vk-on-focus);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1.2;
   font-family: var(--vk-font-mono);
   white-space: nowrap;
@@ -560,7 +562,7 @@ vk-cells {
   left: 50%;
   top: 100%;
   width: var(--vk-line-w-hair);
-  height: var(--vk-space-2);
+  height: var(--vk-space-4);
   background: var(--vk-focus);
   transform: translateX(-50%);
 }
@@ -575,7 +577,6 @@ vk-cells {
 }
 .vk-cell[current] {
   border-color: var(--vk-focus);
-  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
 
 /* ================================================================ 字节 */
@@ -677,6 +678,7 @@ vk-bits {
   width: 72px;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
+  font-style: normal;
   position: relative;
 }
 .vk-bit .vk-bit-i {
@@ -1033,16 +1035,17 @@ vk-graph {
 }
 .vk-gstage {
   position: absolute;
-  inset: 0;
+  left: 0;
+  top: 0;
 }
 .vk-gnode {
-  min-width: 120px;
-  max-width: 360px;
+  min-width: 160px;
+  max-width: 320px;
   position: absolute;
   display: grid;
   justify-items: center;
   gap: var(--vk-space-1);
-  padding: var(--vk-space-3) var(--vk-space-5);
+  padding: var(--vk-space-4) var(--vk-space-5);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   background: var(--vk-raised);
@@ -1050,7 +1053,7 @@ vk-graph {
   text-align: center;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-subhead);
-  line-height: 1.25;
+  line-height: 1.2;
   transform: translate(-50%, -50%);
 }
 .vk-gn-n {
@@ -1120,7 +1123,7 @@ vk-graph {
   fill: var(--vk-ink-2);
   paint-order: stroke;
   stroke: var(--vk-paper);
-  stroke-width: 24px;
+  stroke-width: 12px;
   stroke-linejoin: round;
 }
 
@@ -1164,31 +1167,41 @@ vk-seq {
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
   position: relative;
-  height: 88px;
+  min-height: 93px;
+}
+.vk-seq-row:has(.vk-seq-note) {
+  min-height: 120px;
 }
 .vk-seq-arrow {
   position: absolute;
-  left: var(--vk-left);
-  width: var(--vk-w);
-  top: 58px;
+  top: 44px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
+}
+.vk-seq-row[data-dir='right'] .vk-seq-arrow {
+  left: calc(var(--vk-x1) + 10px);
+  right: calc(100% - var(--vk-x2) + 28px);
+}
+.vk-seq-row[data-dir='left'] .vk-seq-arrow {
+  left: calc(var(--vk-x2) + 28px);
+  right: calc(100% - var(--vk-x1) + 10px);
 }
 .vk-seq-arrow::after {
   content: '';
   position: absolute;
-  right: -24px;
   top: 50%;
+  width: 28px;
+  height: 28px;
   transform: translateY(-50%);
-  border-left: 24px solid var(--vk-seq-c);
-  border-top: 12px solid transparent;
-  border-bottom: 12px solid transparent;
+  background: var(--vk-seq-c);
+}
+.vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
+  right: -28px;
+  clip-path: polygon(0 50%, 100% 0, 100% 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
-  right: auto;
-  left: -24px;
-  border-left: 0;
-  border-right: 24px solid var(--vk-seq-c);
+  left: -28px;
+  clip-path: polygon(100% 50%, 0 0, 0 100%);
 }
 .vk-seq-l {
   position: absolute;
@@ -1205,12 +1218,12 @@ vk-seq {
 .vk-seq-note {
   position: absolute;
   left: var(--vk-mid);
-  top: 68px;
+  top: 72px;
   transform: translateX(-50%);
   padding: 0 var(--vk-space-3);
   background: var(--vk-paper);
   font-size: var(--vk-fs-caption);
-  line-height: 1;
+  line-height: 1.2;
   color: var(--vk-ink-3);
   white-space: nowrap;
 }

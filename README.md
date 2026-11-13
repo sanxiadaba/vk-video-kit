@@ -9,7 +9,7 @@
 - **构建期预处理**：语法高亮、公式、字节、目录树、汇编、图标、地址；运行期只做需要测量的四件事
 - **只出图**：每帧三件产物，1920 PNG + 780 PNG + frame.json
 
-观众在手机横屏看：1920 的帧缩到约 **780 宽（0.406×）**。版心是不对称的 **1656×864**（左 120 / 右 144 / 上 96 / 下 120）——右侧和底部给手机播放器 UI 留位。正文 56px（手机 22.7px），元信息 40px（手机 16.2px），结构线 8px（手机 3.2px）。
+观众在手机横屏看：1920 的帧缩到约 **780 宽（0.406×）**。版心是对称的 **1680×888**（左右 120 / 上下 96）。正文 56px（手机 22.7px），元信息 40px（手机 16.2px），结构线 8px（手机 3.2px）。
 
 ## 安装
 
@@ -32,21 +32,20 @@ node bin/vk.mjs render my-frame.html
 |---|---|
 | `my-frame.png` | 1920 成片 |
 | `my-frame.780.png` | 手机尺度预览（视频里就长这样） |
-| `my-frame.json` | 每帧的度量、问题、建议、组件清单 |
+| `my-frame.json` | 这一帧的问题（只报画不出来/确实坏了的） |
 
 `vk render` 会先构建 `dist/`（tokens / 字体 / 样式 / 运行期 / 自检），再构建页面、自检、出图。
 `vk check` 只构建 + 自检 + 写 json（不出图）。
 
-**默认不是门禁**：内容或版式有问题也照样出图，问题写进 JSON、在图上标成红框/占位，exit 0。
-`--strict` 才按问题 exit 1，给测试/CI 用。
+**默认不是门禁**：内容或版式有问题也照样出图，问题写进 JSON、在图上标成红框/占位；只有一张图都没出来才 exit 1。
 
 ## 命令
 
 | 命令 | 作用 |
 |---|---|
 | `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js） |
-| `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--advise] [--no-preview] [--strict]` | 构建 + 自检 + 出图 |
-| `vk check <file\|dir> [--frame id] [--out DIR] [--json] [--advise] [--strict]` | 只构建 + 自检 + json |
+| `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview]` | 构建 + 自检 + 出图 |
+| `vk check <file\|dir> [--frame id] [--out DIR] [--json]` | 只构建 + 自检 + json |
 | `vk doc <tag> [--json]` | 一个件的属性、范围、默认值、必填、示例 |
 | `vk brief [--json\|--md]` | 全部契约（唯一权威） |
 | `vk icons <query>` | 搜 Lucide 图标名 |
@@ -58,23 +57,22 @@ node bin/vk.mjs render my-frame.html
 机器可读契约用 `vk brief --json`，单件用 `vk doc <tag>`，最短骨架在 `brief` 的 `skeleton` 里。
 本库不提供模板/版式库，也不放演示剧集。
 
-## 自检判五类
+## 自检只判五类
 
 没画布 / 渲染失败 / 资源失败 / 文字被裁或出界 / 锚点指空。
-其余（留白、重叠、焦点数、小字、安全区、容量）只报数，`--advise` 给建议：那是默认值和作者的判断，不是门禁。
+容量、留白、焦点数、字号、安全区、重叠、对比度都不报；那是作者和视觉设计的事。
 
 ## 测试
 
 ```bash
 npm test               # 契约 + 负例 + 渲染 + 行为 + 确定性 + CLI，约一分钟
-npm test -- --update   # 改了组件集合之后重写 tests/components.json
 ```
 
 ## 结构
 
 ```
 src/vocab.mjs        值：字号 / 字距 / 行距 / 间距 / 颜色（light-dark 成对）/ 线宽 / 图标
-src/schema.mjs       契约：20 个组件的属性、取值、默认值、子节点、容量、示例、写作规则
+src/schema.mjs       契约：20 个组件的属性、取值、默认值、子节点、示例、写作规则
 src/normalize.mjs    归一化：默认值落地、间距换像素、style 合并
 src/contract.mjs     校验 + 契约生成（schema 驱动的唯一路径）
 src/build/           构建：四类源码窗、内容件、图、排布

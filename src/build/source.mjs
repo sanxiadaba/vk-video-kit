@@ -163,7 +163,6 @@ export async function buildSource(node, ctx) {
   let body = '';
   let digits = String(start + srcRows.length - 1).length;
   let rangeLabel = rangeText || '';
-  let visible = 0;
 
   if (as === 'code') {
     const tokens = await highlightLines(srcRows.join('\n'), attrOf(node, 'lang') || 'text');
@@ -186,7 +185,6 @@ export async function buildSource(node, ctx) {
     if (folded) out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-lc">省略 ${folded} 行</span></div>`);
     body = out.join('');
     digits = String(start + srcRows.length - 1).length;
-    visible = srcRows.length - (fold ? [...fold].filter((n) => n >= 1 && n <= srcRows.length).length : 0);
   } else if (as === 'term') {
     const prompt = attrOf(node, 'prompt') || '$';
     const out = [];
@@ -204,7 +202,6 @@ export async function buildSource(node, ctx) {
     }
     body = out.join('');
     digits = String(win).length;
-    visible = win;
   } else if (as === 'diff') {
     const rows = [];
     let oldNo = 1;
@@ -266,7 +263,6 @@ export async function buildSource(node, ctx) {
     body = out.join('');
     digits = String(maxLn).length;
     rangeLabel = `+${add} / −${del}`;
-    visible = win;
   } else {
     /* asm */
     const showHex = hasAttr(node, 'hex');
@@ -294,14 +290,10 @@ export async function buildSource(node, ctx) {
     });
     body = out.join('');
     digits = String(win).length;
-    visible = win;
-    if (visible > 5) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CAPACITY', message: `<${node.tagName}> 有 ${visible} 行，一帧最多 5 行`, fix: '拆帧，或只留关键行' });
     const addrW = Math.max(88, Math.round(addrLen * 0.62 * 40 + 16));
     return frame({ title, body: `<div class="vk-lines vk-asm" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
   }
 
-  const cap = as === 'diff' || as === 'asm' ? 5 : 6;
-  if (visible > cap) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CAPACITY', message: `<${node.tagName}> 有 ${visible} 行，一帧最多 ${cap} 行`, fix: '拆帧，或只留关键行' });
 
   const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
   const dim = as === 'code' && cur?.size ? ' data-dim="1"' : '';

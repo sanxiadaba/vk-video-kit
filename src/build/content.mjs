@@ -240,7 +240,6 @@ export function buildBytes(node, ctx) {
     rows.push(`<div class="vk-brow"><span class="vk-baddr">0x${(base + start + i).toString(16).padStart(width, '0')}</span><span class="vk-bhex">${hex}</span><span class="vk-bascii">${ascii}</span></div>`);
   }
   const head = '<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>';
-  if (rows.length > 4) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CAPACITY', message: `<vk-bytes> 有 ${rows.length} 行，一帧最多 4 行`, fix: '减少 length，或加大 cols' });
   const fontPx = FONT.body;
   const bcol = Math.round(5.4 * fontPx);
   const bhexw = Math.round(cols * 3 * 0.6 * fontPx);
@@ -265,7 +264,6 @@ export function buildBits(node, ctx) {
   const cur = curText ? lineSet(curText) : null;
   if (curText && !cur) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `<vk-bits> 的 current="${curText}" 不是行段`, fix: '写法："4-7" / "3"' });
   const all = segments.join('').replace(/\s+/g, '');
-  if (all.length > 16) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CAPACITY', message: `<vk-bits> 有 ${all.length} 位，一帧最多 16 位`, fix: '拆帧，或只讲其中一段' });
 
   const fieldHtml = segments.map((seg, fi) => {
     const bits = [...seg.replace(/\s+/g, '')];

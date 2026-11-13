@@ -1,6 +1,6 @@
 {
   "name": "vk-video-kit",
-  "version": "23.0.0",
+  "version": "24.0.0",
   "private": true,
   "description": "1920×1080 单帧画面库：20 个件，构建期预处理，只出图。",
   "type": "module",

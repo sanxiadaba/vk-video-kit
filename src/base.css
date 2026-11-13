@@ -1,5 +1,5 @@
 /* ============================================================================
-   v23 · 底座
+   v24 · 底座
    ----------------------------------------------------------------------------
    画布、标题、流、卡片、字、墨。这一层只有「一帧怎样算立住」，不画具体件。
    所有值来自 tokens（由 vocab.mjs 生成）；这里不出现裸字号/裸间距。
@@ -29,7 +29,7 @@ body {
 }
 
 body {
-  width: var(--vk-canvas-w);
+  width: 100%;
 }
 
 /* ------------------------------------------------------------------ 画布 */
@@ -58,7 +58,7 @@ vk-page[theme='dark'] {
   gap: var(--vk-space-8);
   width: 100%;
   height: 100%;
-  padding: var(--vk-margin-top) var(--vk-margin-right) var(--vk-margin-bottom) var(--vk-margin-left);
+  padding: var(--vk-margin-y) var(--vk-margin-x);
 }
 
 /* 内容带：band 标题带锁顶、正文在剩余区居中；top 贴顶；center 整块居中；bottom 贴底。 */
@@ -70,7 +70,7 @@ vk-page[theme='dark'] {
   min-height: 0;
 }
 vk-page[place='band'] .vk-body {
-  align-content: center;
+  align-content: start;
 }
 vk-page[place='top'] .vk-body {
   align-content: start;
@@ -97,7 +97,14 @@ vk-head {
   align-content: start;
   flex: 0 0 auto;
   min-width: 0;
+  min-height: 293px;
   text-align: start;
+}
+vk-head[size='headline'] {
+  min-height: 352px;
+}
+vk-head[size='display'] {
+  min-height: 420px;
 }
 vk-head[align='center'] {
   justify-items: center;
@@ -204,8 +211,8 @@ vk-flow > * {
   min-width: 0;
 }
 [bleed='x'] {
-  margin-left: calc(var(--vk-margin-left) * -1);
-  margin-right: calc(var(--vk-margin-right) * -1);
+  margin-left: calc(var(--vk-margin-x) * -1);
+  margin-right: calc(var(--vk-margin-x) * -1);
 }
 vk-img[bleed='all'] {
   position: absolute;
@@ -256,7 +263,6 @@ vk-card[surface='dark'] {
   background: var(--vk-raised);
   color: var(--vk-ink-1);
   overflow: hidden;
-  box-shadow: var(--vk-shadow-window);
 }
 .vk-frame[data-kind='term'] .vk-fhd {
   background: var(--vk-soft);
@@ -280,26 +286,15 @@ vk-card[surface='dark'] {
   color: var(--vk-ink-2);
   white-space: nowrap;
 }
+.vk-fmark {
+  flex: 0 0 auto;
+  width: 8px;
+  height: 8px;
+  background: var(--vk-ink-2);
+}
 .vk-frange {
   margin-left: auto;
   color: var(--vk-ink-3);
-}
-.vk-dots {
-  display: inline-flex;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-.vk-dots i {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: var(--vk-dot-red);
-}
-.vk-dots i:nth-child(2) {
-  background: var(--vk-dot-yellow);
-}
-.vk-dots i:nth-child(3) {
-  background: var(--vk-dot-green);
 }
 .vk-fbd {
   padding: 0;
@@ -440,7 +435,7 @@ vk-head mark,
 
 /* 行内：代码、键位、小字、公式。作者不用学新词。 */
 vk-text small {
-  font-size: 0.55em;
+  font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
   font-weight: var(--vk-w-medium);
   margin-left: 0.06em;

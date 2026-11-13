@@ -1,5 +1,5 @@
 /**
- * v23 · 契约
+ * v24 · 契约
  * ----------------------------------------------------------------------------
  * 构建期校验与文档生成只有这一条路径，全部由 schema.mjs 驱动：
  *
@@ -43,7 +43,6 @@ export const CODES = {
   GRAPH_REF: 'GRAPH_REF',
   ANCHOR_MISSING: 'ANCHOR_MISSING',
   BLEED_ALL: 'BLEED_ALL',
-  CAPACITY: 'CAPACITY',
   /* 构建期：内容来源与解析 */
   SRC_MISSING: 'SRC_MISSING',
   SRC_CONFLICT: 'SRC_CONFLICT',
@@ -63,7 +62,6 @@ export const CODES = {
   ASSET: 'ASSET',
   ANCHOR: 'ANCHOR',
   CLIPPED: 'CLIPPED',
-  SAFE: 'SAFE',
 };
 
 /* ------------------------------------------------------------------ 工具 */
@@ -229,17 +227,6 @@ function checkChildModel(file, node, tag, errors) {
         }
       }
     }
-    const cap = TAGS[tag].capacity;
-    if (cap) {
-      if (tag === 'vk-cells') {
-        const cols = Number(attrOf(node, 'cols') || 4);
-        const rows = Math.ceil(lis.length / Math.max(1, cols));
-        if (rows > cap.max) errors.push({ file, line: lineOf(node), tag, code: CODES.CAPACITY, message: `<${tag}> 有 ${rows} 行，一帧最多 ${cap.max} 行`, fix: '拆帧，或减少格数/加大 cols' });
-      } else {
-        const count = tag === 'vk-graph' ? lis.filter((li) => !hasAttr(li, 'from') && !hasAttr(li, 'to')).length : lis.length;
-        if (count > cap.max) errors.push({ file, line: lineOf(node), tag, code: CODES.CAPACITY, message: `<${tag}> 有 ${count} ${cap.unit}，一帧最多 ${cap.max}`, fix: '拆帧，或删到容量内' });
-      }
-    }
   }
 
   if (model.kind === 'table') {
@@ -251,8 +238,7 @@ function checkChildModel(file, node, tag, errors) {
     if (children.some((c) => c.tagName !== 'table')) errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_KIND, message: `<${tag}> 里只能放一个 <table>`, fix: '表题用 caption 属性' });
     if (directText(node)) errors.push({ file, line: lineOf(node), tag, code: CODES.STRAY_TEXT, message: `<${tag}> 里有一段裸文字`, fix: '文字放进表格单元格' });
     const rows = flatten(table).filter((n) => n.tagName === 'tr');
-    for (const tr of rows) {
-      for (const { name, value } of tr.attrs || []) {
+    for (const tr of rows) {      for (const { name, value } of tr.attrs || []) {
         if (name === 'tone' && !['ok', 'warn', 'err'].includes(value)) errors.push({ file, line: lineOf(tr), tag, code: CODES.VALUE_ENUM, message: `<tr> 的 tone="${value}" 不在词表里`, fix: '可用：ok / warn / err' });
         else if (name === 'current') {
           if (value !== '' && value !== 'true') errors.push({ file, line: lineOf(tr), tag, code: CODES.VALUE_BOOL, message: `<tr> 的 current 是开关，只写属性名`, fix: '删掉 ="…"' });
@@ -275,10 +261,6 @@ function checkChildModel(file, node, tag, errors) {
         }
       }
     }
-    const cap = TAGS['vk-table'].capacity;
-    const dataRows = rows.filter((r) => kids(r).some((c) => c.tagName === 'td')).length;
-    const max = attrOf(node, 'caption') ? cap.by.caption : cap.max;
-    if (dataRows > max) errors.push({ file, line: lineOf(node), tag, code: CODES.CAPACITY, message: `<vk-table> 有 ${dataRows} 行数据，${attrOf(node, 'caption') ? '带表题时' : '一帧'}最多 ${max} 行`, fix: '删一行，或拆帧' });
   }
 
   if (model.kind === 'source') {
@@ -460,7 +442,7 @@ export const fmtAttr = (name, spec) => {
 export function contract() {
   return {
     version: VERSION,
-    canvas: { w: CANVAS.w, h: CANVAS.h, safe: CANVAS.safe, content: CONTENT },
+    canvas: { w: CANVAS.w, h: CANVAS.h, marginX: CANVAS.marginX, marginY: CANVAS.marginY, content: CONTENT },
     floor: FLOOR,
     indexRule: INDEX_RULE,
     theme: THEME,
@@ -488,7 +470,6 @@ export function contract() {
             layer: t.layer,
             summary: t.summary,
             example: t.example || null,
-            capacity: t.capacity || null,
             content: t.content || (t.children?.kind === 'source' ? 'source' : t.children?.kind === 'items' ? 'item' : t.children?.kind === 'table' ? 'table' : t.children?.kind === 'inline' ? 'text' : 'slot'),
             children: t.children || null,
             attrs: attrsOf(tag),
@@ -504,7 +485,7 @@ export function markdown() {
   const c = contract();
   const out = [];
   out.push(`# vk 契约 ${c.version}`, '');
-  out.push(`画布 ${c.canvas.w}×${c.canvas.h}，版心 ${c.canvas.content.w}×${c.canvas.content.h}（左 ${c.canvas.safe.left} / 右 ${c.canvas.safe.right} / 上 ${c.canvas.safe.top} / 下 ${c.canvas.safe.bottom}）。观众在手机横屏看，实际约 780 宽（0.406×）。`);
+  out.push(`画布 ${c.canvas.w}×${c.canvas.h}，版心 ${c.canvas.content.w}×${c.canvas.content.h}（左右 ${c.canvas.marginX} / 上下 ${c.canvas.marginY}）。观众在手机横屏看，实际约 780 宽（0.406×）。`);
   out.push(`自动缩小的地板 **${c.floor}px**（手机 16.2px）。索引一律 ${c.indexRule}。`, '');
 
   out.push('## 规则', '');
@@ -519,25 +500,12 @@ export function markdown() {
   out.push('', '## flow 子项', '');
   out.push(`任何块级件放进 <vk-flow> 后还可以写：${Object.keys(c.flowChild).map((k) => `\`${k}\``).join(' / ')}。`);
 
-  out.push('', '## 一帧的容量', '');
-  out.push('| 组件 | 一帧最多 |', '|---|---|');
-  for (const tag of TAG_NAMES) {
-    const t = TAGS[tag];
-    if (!t.capacity) continue;
-    const by = t.capacity.by ? Object.entries(t.capacity.by).map(([k, v]) => `${k} ${v}`).join(' / ') : '';
-    out.push(`| \`${tag}\` | ${t.capacity.max} ${t.capacity.unit}${by ? `（${by}）` : ''} |`);
-  }
-
   out.push('', '## 标签', '');
   for (const layer of LAYERS) {
     out.push(`### ${layer.label}`, '');
     for (const [tag, t] of Object.entries(c.tags)) {
       if (t.layer !== layer.id) continue;
       out.push(`**\`${tag}\`** · ${t.name} —— ${t.summary}`);
-      if (t.capacity) {
-        const by = t.capacity.by ? `（${Object.entries(t.capacity.by).map(([k, v]) => `${k} ${v}`).join(' / ')}）` : '';
-        out.push(`  一帧容量：${t.capacity.max} ${t.capacity.unit}${by}。`);
-      }
       const rows = Object.entries(t.attrs).map(([n, s]) => fmtAttr(n, s));
       if (rows.length) {
         out.push('', '| 属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
@@ -565,10 +533,6 @@ export function docText(tag) {
   const t = TAGS[tag];
   if (!t) return '';
   const out = [`${tag} · ${t.name}  (${t.layer})`, t.summary];
-  if (t.capacity) {
-    const by = t.capacity.by ? `（${Object.entries(t.capacity.by).map(([k, v]) => `${k} ${v}`).join(' / ')}）` : '';
-    out.push(`一帧容量：${t.capacity.max} ${t.capacity.unit}${by}`);
-  }
   if (t.children?.hint) out.push(`内容：${t.children.hint}`);
   if (FLOW_CHILD_TAGS.includes(tag)) out.push('flow 子项可用：span / bleed');
   const groups = {};

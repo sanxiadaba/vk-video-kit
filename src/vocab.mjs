@@ -1,5 +1,5 @@
 /**
- * v23 · 词汇表
+ * v24 · 词汇表
  * ----------------------------------------------------------------------------
  * 全库只有这一份「值」。作者写语义（内容 / current / tone / size / theme），
  * 库写视觉（字 / 距 / 面 / 线 / 态）。组件只是这些原语的组合。
@@ -13,12 +13,13 @@
 export const CANVAS = {
   w: 1920,
   h: 1080,
-  /** 版心：不对称。右侧与底部是手机播放器 UI 的重灾区。 */
-  safe: { left: 120, right: 144, top: 96, bottom: 120 },
+  /** 版心：内容不越过的边界。 */
+  marginX: 120,
+  marginY: 96,
 };
 export const CONTENT = {
-  w: CANVAS.w - CANVAS.safe.left - CANVAS.safe.right,
-  h: CANVAS.h - CANVAS.safe.top - CANVAS.safe.bottom,
+  w: CANVAS.w - CANVAS.marginX * 2,
+  h: CANVAS.h - CANVAS.marginY * 2,
 };
 
 /** 自动缩小的下限（手机 16.2px）。自检、组件下限、文档都读这一个。 */
@@ -71,7 +72,7 @@ export const WEIGHT = { regular: 400, medium: 500, bold: 600 };
 
 /* ------------------------------------------------------------------ 间距
    8 档，4px 基准。组件只用这些值，不再写 10/14/28/44 这种裸数。 */
-export const SPACE = { '1': 4, '2': 8, '3': 12, '4': 16, '5': 24, '6': 32, '7': 48, '8': 64 };
+export const SPACE = { '1': 4, '2': 8, '3': 12, '4': 16, '5': 24, '6': 32, '7': 48, '8': 64, '9': 96 };
 
 /* 作者能写的分栏间距：五档 + 像素值（gap="48"）。 */
 export const GAP = { none: 0, close: 16, normal: 32, wide: 64, section: 96 };
@@ -124,7 +125,7 @@ export const SYNTAX = {
 };
 
 /* 窗口三点：观众一眼认出「这是窗口」。两个面共用同一组色。 */
-export const DOTS = { red: '#ff5f57', yellow: '#febc2e', green: '#28c840' };
+
 
 /* ------------------------------------------------------------------ 字体 */
 export const FONT_FAMILY = {

@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /**
- * vk —— 单帧画面库 CLI（v23）
+ * vk —— 单帧画面库 CLI（v24）
  *
  *   vk build                        重建 dist/（tokens / fonts / vk.css / vk.js / audit.js）
- *   vk render <file|dir> [--frame id] [--out DIR] [--json] [--advise] [--no-preview] [--strict]
- *   vk check  <file|dir> [--frame id] [--out DIR] [--json] [--advise] [--strict]
+ *   vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview]
+ *   vk check  <file|dir> [--frame id] [--out DIR] [--json]
  *   vk doc    <tag> [--json]        一个件的属性表
  *   vk brief  [--json|--md]         全部契约
  *   vk icons  <query>               搜 Lucide 图标名
@@ -34,8 +34,8 @@ const val = (n) => {
 const VALUE_FLAGS = new Set(['--out', '--frame']);
 
 const FLAGS = {
-  render: new Set(['--frame', '--out', '--json', '--advise', '--no-preview', '--strict', '--help', '-h']),
-  check: new Set(['--frame', '--out', '--json', '--advise', '--strict', '--help', '-h']),
+  render: new Set(['--frame', '--out', '--json', '--no-preview', '--help', '-h']),
+  check: new Set(['--frame', '--out', '--json', '--help', '-h']),
   doc: new Set(['--json', '--help', '-h']),
   brief: new Set(['--json', '--md', '--help', '-h']),
   icons: new Set(['--help', '-h']),
@@ -46,9 +46,9 @@ const FLAGS = {
 const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，手机上约 780 宽）
 
   vk build                         重建 dist/
-  vk render <file|dir> [--frame id] [--out DIR] [--json] [--advise] [--no-preview] [--strict]
+  vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview]
       构建 + 自检 + 出三件：<name>.png / <name>.780.png / <name>.json
-  vk check  <file|dir> [--frame id] [--out DIR] [--json] [--advise] [--strict]
+  vk check  <file|dir> [--frame id] [--out DIR] [--json]
       只构建 + 自检 + 写 json（不出图）
   vk doc    <tag> [--json]         一个件的属性表
   vk brief  [--json|--md]          全部契约
@@ -56,7 +56,7 @@ const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，
   vk clean  [--all]                删 .vk-tmp；--all 连 out/ 一起删
   vk --version | --help
 
-默认不是门禁：内容/版式有问题也出图，exit 0；--strict 才按问题 exit 1。`;
+默认只管出图：内容/版式有问题也出图，exit 0；只有一张图都没出来才 exit 1。`;
 
 const die = (msg, code = 2) => {
   console.error(msg);
@@ -271,7 +271,7 @@ async function renderFiles(files, { shots }) {
         const name = frames.length > 1 ? `${base}-${fr.id || String(fr.index + 1).padStart(2, '0')}` : base;
         const audit = await page.evaluate((idx) => {
           const stage = document.querySelectorAll('.vk-stage')[idx];
-          if (!window.vkAudit) return { issues: [{ code: 'FRAME', message: '页面里没有自检运行时', fix: '重新 vk build' }], metrics: null, advice: [], counts: {} };
+          if (!window.vkAudit) return { issues: [{ code: 'FRAME', message: '页面里没有自检运行时', fix: '重新 vk build' }] };
           return window.vkAudit.page(stage);
         }, fr.index);
 
@@ -292,14 +292,7 @@ async function renderFiles(files, { shots }) {
         const data = {
           id: fr.id,
           ok: audit.issues.length === 0,
-          metrics: audit.metrics,
           issues: audit.issues,
-          advice: audit.advice || [],
-          counts: audit.counts || {},
-          small: audit.small || [],
-          overlaps: audit.overlaps || [],
-          codeLines: audit.codeLines || 0,
-          bits: audit.bits || 0,
           warns: [...new Set(warns)],
         };
         const jsonPath = path.join(dir, `${name}.json`);
@@ -317,7 +310,7 @@ async function renderFiles(files, { shots }) {
   return report;
 }
 
-function printReport(report, advise = false) {
+function printReport(report) {
   for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
@@ -327,16 +320,10 @@ function printReport(report, advise = false) {
     } else {
       console.log(`✓ ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
     }
-    if (f.metrics) {
-      const s = f.metrics.safe;
-      const safe = s ? (s.ok ? '安全区 OK' : `安全区外：${[s.left > 8 ? `左 ${s.left}` : '', s.right > 8 ? `右 ${s.right}` : '', s.top > 8 ? `上 ${s.top}` : '', s.bottom > 8 ? `下 ${s.bottom}` : ''].filter(Boolean).join(' / ')}`) : '';
-      console.log(`   正文 y ${f.metrics.bodyTop}–${f.metrics.bodyBottom}（占正文区 ${f.metrics.fill}%）· 焦点 ${f.metrics.focus}${s ? ` · ${safe}` : ''}`);
-    }
-    if (advise && f.advice?.length) for (const a of f.advice) console.log(`   · ${a.message}`);
     for (const w of f.warns) console.log(`   提示：${w}`);
   }
   const n = report.diagnostics.length + report.frames.reduce((k, f) => k + f.issues.length, 0);
-  console.log(n ? `\n已出图：${report.frames.length} 帧，${n} 条问题（默认不拦；--strict 才 exit 1）` : `\n干净：${report.frames.length} 帧`);
+  console.log(n ? `\n已出图：${report.frames.length} 帧，${n} 条问题（不拦出图）` : `\n干净：${report.frames.length} 帧`);
 }
 
 /* ---------------------------------------------------------------- 命令 */
@@ -364,8 +351,8 @@ if (cmd === 'render' || cmd === 'check') {
   }
   const report = await renderFiles(files, { shots: cmd === 'render' });
   if (has('--json')) console.log(JSON.stringify(report, null, 2));
-  else printReport(report, has('--advise'));
-  process.exitCode = report.frames.length === 0 ? 1 : has('--strict') && !report.clean ? 1 : 0;
+  else printReport(report);
+  process.exitCode = report.frames.length === 0 ? 1 : 0;
 } else if (cmd === 'doc') {
   const tag = inputs[0];
   if (!tag) die('用法：vk doc <tag> [--json]');

@@ -7,10 +7,9 @@ import { GAP } from '../vocab.mjs';
 
 export const ROOT = path.resolve(import.meta.dirname, '..', '..');
 
-export function frame({ title, body, range, digits, dots = true, kind = 'code' }) {
-  /* 有 title 就有标题栏；代码/终端是窗口（三点），树/字节是数据（无三点）。 */
+export function frame({ title, body, range, digits, kind = 'code' }) {
   const hd = title
-    ? `<div class="vk-fhd">${dots ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}<span class="vk-ftitle">${esc(title)}</span>${
+    ? `<div class="vk-fhd"><span class="vk-fmark" aria-hidden="true"></span><span class="vk-ftitle">${esc(title)}</span>${
         range ? `<span class="vk-frange">${esc(range)}</span>` : ''
       }</div>`
     : '';

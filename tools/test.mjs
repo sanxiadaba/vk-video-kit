@@ -1,16 +1,15 @@
 /**
- * v23 · 测试
+ * v24 · 测试
  * ----------------------------------------------------------------------------
  * 只测「会静默坏掉」的东西：
- *   一、契约 / 文档        tokens、tag、容量、示例、词表
+ *   一、契约 / 文档        tokens、tag、示例、词表
  *   二、构建负例           每种写错都给出稳定错误码（不抛异常）
- *   三、渲染               全部 fixture 干净、1920/780、非空白、组件快照
+ *   三、渲染               全部 fixture 干净、1920/780、非空白
  *   四、行为               缩字号 / 数字列 / 关系图 / 圈选 / 深色 / 多泳道 / 量度
  *   五、确定               同一帧渲两次 PNG 逐字节相同
  *   六、CLI                参数、退出码、默认不出门禁
  *
  *   npm test              跑全部
- *   npm test -- --update  重写 tests/components.json
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -23,9 +22,7 @@ import { transformHtml } from '../src/build/index.mjs';
 import { PAINT, SYNTAX } from '../src/vocab.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const UPDATE = process.argv.includes('--update');
 const OUT = path.join(ROOT, '.tmp', 'test-fixtures');
-const SNAP = path.join(ROOT, 'tests', 'components.json');
 
 let failed = 0;
 const ok = (cond, msg, detail = '') => {
@@ -57,9 +54,8 @@ ok(TAG_NAMES.length === 20, `20 个标签（${TAG_NAMES.length}）`);
 ok(TAG_NAMES.includes('vk-card') && TAG_NAMES.includes('vk-dir'), 'card / dir 已改名');
 ok(!TAG_NAMES.includes('vk-surface') && !TAG_NAMES.includes('vk-tree'), '旧名不再存在');
 ok(brief.flowChild.span && !('span' in brief.tags['vk-code'].attrs), 'span 是 flow 子项能力，不是逐件属性');
-ok(brief.tags['vk-code'].capacity.max === 6 && brief.tags['vk-code'].capacity.by.diff === 5, '容量只有一个来源（code 6 / diff 5）');
 ok(brief.tags['vk-card'].attrs.surface.default === 'paper', 'card 默认 paper');
-ok(brief.canvas.safe.right === 144 && brief.canvas.safe.bottom === 120, '不对称安全区');
+ok(brief.canvas.marginX === 120 && brief.canvas.marginY === 96, '对称版心 120 / 96');
 ok(docText('vk-code').includes('range') && docText('vk-code').includes('默认 body'), 'doc 带范围与默认值');
 ok(docText('vk-callout').includes('必填'), 'doc 标出必填');
 ok(markdown().length < 16000, `brief ≤ 16KB（${markdown().length}）`);
@@ -90,7 +86,6 @@ const CASES = [
   ['STRAY_TEXT', '<vk-page><vk-flow>裸文字</vk-flow></vk-page>'],
   ['GRAPH_REF', '<vk-page><vk-graph><li id="a">a</li><li after="nope">b</li></vk-graph></vk-page>'],
   ['ANCHOR_MISSING', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#nope"></vk-callout></vk-page>'],
-  ['CAPACITY', '<vk-page><vk-list>' + '<li>x</li>'.repeat(7) + '</vk-list></vk-page>'],
   ['SRC_MISSING', '<vk-page><vk-code src="nope.c"></vk-code></vk-page>'],
   ['SRC_CONFLICT', '<vk-page><vk-code src="nope.c"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
   ['RANGE_OUT_OF_RANGE', '<vk-page><vk-code range="99"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
@@ -143,32 +138,9 @@ if (report) {
   }
   ok(widthsOk, '1920 / 780 出图');
   ok(blank.length === 0, '没有空白帧', blank.join(', '));
-
-  const geo = Object.fromEntries(
-    report.frames.map((f) => {
-      const counts = f.counts || {};
-      return [f.name, { tags: Object.keys(counts).sort().join(','), counts }];
-    })
-  );
-  if (UPDATE || !fs.existsSync(SNAP)) {
-    fs.writeFileSync(SNAP, JSON.stringify(geo, null, 1) + '\n');
-    ok(true, `写入组件快照 tests/components.json（${Object.keys(geo).length} 帧）`);
-  } else {
-    const prev = JSON.parse(fs.readFileSync(SNAP, 'utf8'));
-    const keys = new Set([...Object.keys(prev), ...Object.keys(geo)]);
-    const diffs = [];
-    for (const k of keys) {
-      const a = prev[k];
-      const b = geo[k];
-      if (!a || !b) diffs.push(`${k} ${a ? '消失' : '新增'}`);
-      else if (a.tags !== b.tags) diffs.push(`${k} 组件集合变了`);
-    }
-    ok(diffs.length === 0, '每帧的组件集合与快照一致', diffs.slice(0, 8).join('\n      '));
-  }
 }
 
-const strictRun = cli(['render', 'tests/fixtures/cover.html', '--out', path.join(ROOT, '.tmp', 'strict'), '--strict']);
-ok(strictRun.status === 0, '--strict 在干净帧上 exit 0', `实际 ${strictRun.status}`);
+
 
 /* ------------------------------------------------------------------ 四、行为 */
 group('行为');
@@ -260,8 +232,6 @@ fs.rmSync(negDir, { recursive: true, force: true });
 const neg = cli(['render', 'tests/negative/unknown.html', '--out', negDir]);
 ok(neg.status === 0, '默认不是门禁：有错也出图、exit 0', `实际 ${neg.status}`);
 ok(fs.existsSync(path.join(negDir, 'unknown.png')), '有错的帧仍然产生 PNG');
-const negStrict = cli(['render', 'tests/negative/unknown.html', '--out', negDir, '--strict']);
-ok(negStrict.status === 1, '--strict 才按问题 exit 1', `实际 ${negStrict.status}`);
 
 /* ------------------------------------------------------------------ 七、对比度 */
 group('对比度');

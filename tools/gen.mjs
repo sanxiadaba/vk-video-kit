@@ -21,7 +21,6 @@ import {
   LINE_W,
   PAINT,
   SYNTAX,
-  DOTS,
   FONT_FAMILY,
   FLOOR,
 } from '../src/vocab.mjs';
@@ -39,14 +38,12 @@ const pair = (name, key) => {
 
 push('canvas-w', `${CANVAS.w}px`);
 push('canvas-h', `${CANVAS.h}px`);
-push('margin-left', `${CANVAS.safe.left}px`);
-push('margin-right', `${CANVAS.safe.right}px`);
-push('margin-top', `${CANVAS.safe.top}px`);
-push('margin-bottom', `${CANVAS.safe.bottom}px`);
-push('safe-w', `${CONTENT.w}px`);
-push('safe-h', `${CONTENT.h}px`);
+push('margin-x', `${CANVAS.marginX}px`);
+push('margin-y', `${CANVAS.marginY}px`);
+push('content-w', `${CONTENT.w}px`);
+push('content-h', `${CONTENT.h}px`);
 push('floor', `${FLOOR}px`);
-push('shadow-window', '0 1px 2px light-dark(rgba(17, 20, 24, 0.04), rgba(0, 0, 0, 0.4)), 0 12px 32px light-dark(rgba(17, 20, 24, 0.06), rgba(0, 0, 0, 0.5))');
+
 
 rows.push('');
 for (const [tier, px] of Object.entries(FONT)) {
@@ -87,7 +84,7 @@ pair('mark', 'mark');
 
 rows.push('');
 for (const [k, v] of Object.entries(SYNTAX)) push(`syn-${k}`, `light-dark(${v[0]}, ${v[1]})`);
-for (const [k, v] of Object.entries(DOTS)) push(`dot-${k}`, v);
+
 
 const css = `/* vk · 由 tools/gen.mjs 从 src/vocab.mjs 生成 —— 不要手改。
    颜色是 light-dark(纸面, 暗面)：谁声明表面，谁写一行 color-scheme。 */

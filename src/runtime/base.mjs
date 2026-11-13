@@ -1,5 +1,5 @@
 /**
- * v23 · 运行期底座
+ * v24 · 运行期底座
  * ----------------------------------------------------------------------------
  * 构建期已经把所有能算的几何算完了。运行期只做四件事：
  *   1. 等字体与图片真正就绪，并等到布局不再变化
@@ -106,7 +106,7 @@ const inRange = (n, args) => {
 const pick = (host, attr, args) => {
   const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));
   if (!els.length) return null;
-  return { el: els[0], rect: union(els.map((el) => inkRect(el.querySelector('.vk-lc') || el))), side: null };
+  return { el: els[0], rect: union(els.map((el) => el.getBoundingClientRect())), side: null };
 };
 
 export function resolveAnchor(root, expr, owner) {

@@ -49,18 +49,17 @@ export function buildTimeline(node, ctx) {
     return Math.max(4, Math.min(96, p));
   });
 
-  /* 轴线在节点处断开：每两个点之间画一段，节点附近留 1% 的缝。 */
+  /* 轴线只在数据域内：从第一个节点到最后一个节点，不画 0–100% 的假历史。 */
   const cut = 2.6;
   const segs = [];
-  let prev = 0;
-  lefts.forEach((p, i) => {
-    const from = i === 0 ? 0 : prev + cut;
+  let prev = lefts.length ? lefts[0] : 0;
+  for (let i = 1; i < lefts.length; i++) {
+    const p = lefts[i];
+    const from = prev + cut;
     const to = p - cut;
     if (to > from) segs.push(`<span class="vk-tl-seg" style="left:${from.toFixed(2)}%;width:${(to - from).toFixed(2)}%"></span>`);
     prev = p;
-  });
-  const tail = lefts.length ? lefts[lefts.length - 1] + cut : 0;
-  if (tail < 100) segs.push(`<span class="vk-tl-seg" style="left:${tail.toFixed(2)}%;width:${(100 - tail).toFixed(2)}%"></span>`);
+  }
 
   const html = items
     .map((li, i) => {
@@ -119,9 +118,8 @@ export function buildSeq(node, ctx) {
     while (names.length < 2) names.push(names.length ? 'B' : 'A');
   }
   const n = names.length;
-  const x = (i) => (n === 1 ? 50 : 12 + (76 * i) / (n - 1));
+  const x = (i) => (n === 1 ? 50 : 7.14 + (85.72 * i) / (n - 1));
   const items = kids(node).filter((c) => c.tagName === 'li');
-  if (items.length > 5) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CAPACITY', message: `<vk-seq> 有 ${items.length} 条消息，一帧最多 5 条`, fix: '拆帧，或删到 5 条内' });
 
   const rows = items.map((li, i) => {
     const from = seqLane(attrOf(li, 'from'), names);
@@ -140,10 +138,9 @@ export function buildSeq(node, ctx) {
     if (a === b) b = a === 0 ? 1 : a - 1;
     const x1 = x(a);
     const x2 = x(b);
-    const left = Math.min(x1, x2);
-    const width = Math.abs(x2 - x1);
+    const rightward = x2 >= x1;
     const note = attrOf(li, 'note');
-    return `<div class="vk-seq-row" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-dir="${x2 >= x1 ? 'right' : 'left'}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-left:${left.toFixed(2)}%;--vk-w:${width.toFixed(2)}%;--vk-mid:${((x1 + x2) / 2).toFixed(2)}%"><span class="vk-seq-l">${labelOf(li)}</span><span class="vk-seq-arrow"></span>${note ? `<span class="vk-seq-note">${esc(note)}</span>` : ''}</div>`;
+    return `<div class="vk-seq-row" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-dir="${rightward ? 'right' : 'left'}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-x1:${x1.toFixed(2)}%;--vk-x2:${x2.toFixed(2)}%;--vk-mid:${((x1 + x2) / 2).toFixed(2)}%"><span class="vk-seq-l">${labelOf(li)}</span><span class="vk-seq-arrow"></span>${note ? `<span class="vk-seq-note">${esc(note)}</span>` : ''}</div>`;
   });
 
   const head = names.map((name, i) => `<span style="--vk-x:${x(i).toFixed(2)}%">${esc(name)}</span>`).join('');

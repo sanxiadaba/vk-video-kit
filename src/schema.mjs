@@ -1,5 +1,5 @@
 /**
- * v23 · 公开契约
+ * v24 · 公开契约
  * ----------------------------------------------------------------------------
  * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写、一帧放几行」。
  * 它是唯一来源：构建期校验、vk doc / vk brief、运行期默认值都读它。
@@ -166,7 +166,6 @@ export const TAGS = {
     },
     example: '<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>\nint a[3] = {1, 2, 3};\na[1]\n</script></vk-code>',
     children: source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。'),
-    capacity: { max: 6, unit: '行', by: { term: 6, diff: 5, asm: 5 } },
   },
 
   'vk-table': {
@@ -178,7 +177,6 @@ export const TAGS = {
     },
     example: '<vk-table caption="读一次要多久"><table><tr><th>层</th><th>延迟</th></tr><tr><td>内存</td><td>100ns</td></tr><tr><td>L1</td><td>1ns</td></tr></table></vk-table>',
     children: table('写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err"，行/格可写 current。'),
-    capacity: { max: 4, unit: '数据行', by: { caption: 3 } },
   },
 
   'vk-list': {
@@ -190,7 +188,6 @@ export const TAGS = {
     },
     children: items({ tone: ITEM_TONE, current: currentItem() }, '每一项写成 <li>；当前项写 current。'),
     example: '<vk-list><li>取首地址</li><li current>加下标 × 4</li></vk-list>',
-    capacity: { max: 6, unit: '项' },
   },
 
   'vk-dir': {
@@ -206,7 +203,6 @@ export const TAGS = {
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
     example: '<vk-dir><script type="text/plain" data-vk-tree>["src","README.md"]</script></vk-dir>',
-    capacity: { max: 6, unit: '行' },
   },
 
   'vk-math': {
@@ -242,7 +238,6 @@ export const TAGS = {
       },
       '<li value="61" label="s[0]" ptr="lo">；地址自动按 addr + 序号 × stride 算。'
     ),
-    capacity: { max: 2, unit: '行（cols 列一行）' },
     example: '<vk-cells addr="0x1000" stride="4"><li value="1" label="a[0]"></li><li value="2" label="a[1]" current></li></vk-cells>',
   },
 
@@ -261,7 +256,6 @@ export const TAGS = {
     },
     children: source('src 指向真实二进制文件；也可以内联十六进制（68 65 6c 6c 6f）。'),
     example: '<vk-bytes><script type="text/plain" data-vk-source>68 65 6c 6c 6f</script></vk-bytes>',
-    capacity: { max: 4, unit: '行（cols=8 时）' },
   },
 
   'vk-bits': {
@@ -278,7 +272,6 @@ export const TAGS = {
     },
     children: none('位串写在 value 属性里。'),
     example: '<vk-bits value="0|01111|0000000000" field-labels="符号,阶码,尾数" current="2-6"></vk-bits>',
-    capacity: { max: 16, unit: '位' },
   },
 
   /* ---------------------------------------------------------------- 图 */
@@ -291,7 +284,6 @@ export const TAGS = {
     },
     children: items({ tone: ITEM_TONE, note: text('content', '小字说明'), icon: text('content', '步骤图标（Lucide 名）'), current: currentItem() }, '每一步写成 <li>；当前步写 current。'),
     example: '<vk-steps><li icon="file-code">预处理</li><li icon="cpu" current>编译</li><li icon="link">链接</li></vk-steps>',
-    capacity: { max: 5, unit: '步（横排）' },
   },
 
   'vk-bars': {
@@ -305,7 +297,6 @@ export const TAGS = {
     },
     children: items({ value: { type: 'num', min: 0, group: 'content', label: '数值' }, tone: ITEM_TONE, current: currentItem() }, '<li value="120">hello.o</li>；值写数字，不写单位。当前条写 current。'),
     example: '<vk-bars unit="ms"><li value="6">解析</li><li value="24" current>链接</li></vk-bars>',
-    capacity: { max: 6, unit: '条' },
   },
 
   'vk-timeline': {
@@ -328,7 +319,6 @@ export const TAGS = {
       '<li at="1972">C 诞生</li>；当前点写 current。'
     ),
     example: '<vk-timeline start="1963" end="2010"><li at="1963">ASCII</li><li at="2010" icon="smile" current>Emoji</li></vk-timeline>',
-    capacity: { max: 4, unit: '点' },
   },
 
   'vk-graph': {
@@ -353,7 +343,6 @@ export const TAGS = {
       '<li id="a">head</li> → <li id="b" after="a">next</li>；不写 after 的节点是根。显式边写成 <li from="a" to="b">next</li>。'
     ),
     example: '<vk-graph layout="row"><li id="a">head</li><li id="b" after="a">next</li></vk-graph>',
-    capacity: { max: 7, unit: '节点（一行）' },
   },
 
   'vk-seq': {
@@ -377,7 +366,6 @@ export const TAGS = {
       '<li>SYN</li>；<li direction="left">SYN+ACK</li>；三条以上用 from/to="客户端" / "服务端"。'
     ),
     example: '<vk-seq a="客户端" b="服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>',
-    capacity: { max: 5, unit: '条' },
   },
 
   /* ---------------------------------------------------------------- 关系 */
@@ -429,7 +417,7 @@ a[1]
 export const RULES = [
   '可见文字写成元素内容；kicker / counter / lede / note / date / value 才是属性。',
   'current 写在项上（布尔）；code / bytes / bits 用行段，dir 用路径。',
-  '一帧最多一处焦点；用 lede 写“为什么看这里”。',
+  '用 lede 写“为什么看这里”，正文里的重点用 mark。',
   'src 载体：code 用 data-vk-source，math 写 TeX，bytes 写十六进制，dir 用 data-vk-tree。',
   '主题：page theme="light|dark"；card surface="paper|soft|dark"。',
   'span / bleed 只写在 <vk-flow> 的直接子项上；bleed="all" 只给 <vk-img>。',

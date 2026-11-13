@@ -1,5 +1,5 @@
 /**
- * v23 · 关系图
+ * v24 · 关系图
  * ----------------------------------------------------------------------------
  * 节点是构建期写好的 .vk-gnode；边有两种写法：
  *   1. 简写：节点上 after="父id"（单亲、向后）
@@ -23,10 +23,7 @@ const mk = (tag, attrs = {}) => {
   return el;
 };
 
-const GAP = () => 64;
-
-/** 圆角折线：每个拐点用 12px 二次曲线收一下。 */
-function roundedPath(points, r = 12) {
+/** 圆角折线：每个拐点用 12px 二次曲线收一下。 */function roundedPath(points, r = 12) {
   if (points.length < 2) return '';
   let d = `M ${points[0].x} ${points[0].y}`;
   for (let i = 1; i < points.length - 1; i++) {
@@ -71,8 +68,6 @@ export class VkGraph extends VkElement {
     if (!nodes.length) return;
     const layout = this.getAttribute('layout') || 'row';
     const dir = this.getAttribute('direction') || 'horizontal';
-    const gapPx = parseFloat(getComputedStyle(this).getPropertyValue('--vk-gap'));
-    const gap = Number.isFinite(gapPx) && gapPx > 0 ? gapPx : GAP();
 
     const sizes = nodes.map((n) => ({ w: n.offsetWidth, h: n.offsetHeight }));
     const byId = new Map(nodes.map((n, i) => [n.dataset.id, i]));
@@ -83,7 +78,7 @@ export class VkGraph extends VkElement {
       for (const ref of (n.dataset.after || '').split(/\s+/).filter(Boolean)) {
         const i = byId.get(ref);
         if (i == null) warn(this, `after="${ref}" 找不到节点`);
-        else links.push({ i, j, label: '', current: false, tone: '' });
+        else links.push({ i, j, label: '', current: false, tone: '', merge: false });
       }
     });
     for (const def of this.querySelectorAll('.vk-gedge')) {
@@ -93,14 +88,14 @@ export class VkGraph extends VkElement {
         warn(this, `边 ${def.dataset.from} → ${def.dataset.to} 找不到节点`);
         continue;
       }
-      links.push({ i, j, label: def.textContent.trim(), current: def.hasAttribute('current'), tone: def.getAttribute('data-tone') || '' });
+      links.push({ i, j, label: def.textContent.trim(), current: def.hasAttribute('current'), tone: def.getAttribute('data-tone') || '', merge: true });
     }
 
-    /* 层级：从没有父的节点开始 BFS；环上的节点落在 0 层。 */
+    /* 层级：after 决定层；显式 from/to 是合并/跨层边，不把目标推到下一层。 */
     const depth = new Array(nodes.length).fill(null);
     const queue = [];
     nodes.forEach((n, i) => {
-      if (!links.some((l) => l.j === i)) {
+      if (!links.some((l) => l.j === i && !l.merge)) {
         depth[i] = 0;
         queue.push(i);
       }
@@ -109,7 +104,7 @@ export class VkGraph extends VkElement {
     while (queue.length && guard++ < nodes.length * 6) {
       const i = queue.shift();
       for (const l of links) {
-        if (l.i !== i) continue;
+        if (l.i !== i || l.merge) continue;
         const d = depth[i] + 1;
         if (depth[l.j] == null || d > depth[l.j]) {
           depth[l.j] = d;
@@ -122,37 +117,62 @@ export class VkGraph extends VkElement {
     });
 
     const pos = new Array(nodes.length);
-    const maxW = Math.max(...sizes.map((s) => s.w));
-    const maxH = Math.max(...sizes.map((s) => s.h));
+    const maxW = Math.max(...sizes.map((s) => s.w), 1);
+    const maxH = Math.max(...sizes.map((s) => s.h), 1);
+    const pad = 8;
+    const availW = Math.max(320, this.clientWidth || 1200);
+    let viewW = Math.min(availW, 1400);
+    let H = maxH + pad * 2;
 
     if (layout === 'row') {
-      let x = 0;
-      nodes.forEach((_, i) => {
-        if (dir === 'vertical') {
-          pos[i] = { x: 0, y: x, w: sizes[i].w, h: sizes[i].h };
-          x += sizes[i].h + gap;
-        } else {
-          pos[i] = { x, y: 0, w: sizes[i].w, h: sizes[i].h };
-          x += sizes[i].w + gap;
-        }
-      });
+      if (dir === 'vertical') {
+        const gapY = nodes.length > 1 ? Math.max(48, Math.min(120, (560 - nodes.length * maxH) / (nodes.length - 1))) : 0;
+        nodes.forEach((_, i) => {
+          pos[i] = { x: 0, y: i * (maxH + gapY) + (maxH - sizes[i].h) / 2, w: sizes[i].w, h: sizes[i].h };
+        });
+        viewW = maxW + pad * 2;
+        H = nodes.length * maxH + (nodes.length - 1) * gapY + pad * 2;
+      } else {
+        const gapX = nodes.length > 1 ? Math.max(48, Math.min(160, (viewW - nodes.length * maxW) / (nodes.length - 1))) : 0;
+        nodes.forEach((_, i) => {
+          pos[i] = { x: i * (maxW + gapX) + (maxW - sizes[i].w) / 2, y: 0, w: sizes[i].w, h: sizes[i].h };
+        });
+        H = maxH + pad * 2;
+        viewW = Math.max(viewW, nodes.length * maxW + (nodes.length - 1) * gapX + pad * 2);
+      }
     } else if (layout === 'mesh') {
+      viewW = Math.min(availW, 1100);
+      H = 520;
       const n = nodes.length;
-      const Rx = Math.max(420, Math.min(620, ((maxW + gap) * n) / (2 * Math.PI) * 1.4));
-      const Ry = Math.max(180, Rx * 0.42);
-      const cx = Rx + maxW / 2;
-      const cy = Ry + maxH / 2;
+      const Rx = Math.max(160, (viewW - maxW - pad * 2) / 2);
+      const Ry = Math.max(120, (H - maxH - pad * 2) / 2);
+      const ccx = viewW / 2;
+      const ccy = H / 2;
       nodes.forEach((_, i) => {
         const a = -Math.PI / 2 + (i * 2 * Math.PI) / n;
+        pos[i] = { x: ccx + Rx * Math.cos(a) - sizes[i].w / 2, y: ccy + Ry * Math.sin(a) - sizes[i].h / 2, w: sizes[i].w, h: sizes[i].h };
+      });
+    } else if (layout === 'layered') {
+      viewW = Math.min(availW, 1200);
+      H = 480;
+      const maxDepth = Math.max(...depth, 0);
+      const lanes = nodes.map((n) => Number(n.dataset.lane) || 0);
+      const maxLane = Math.max(...lanes, 0);
+      const colGap = maxDepth > 0 ? (viewW - maxW - pad * 2) / maxDepth : 0;
+      const laneGap = maxLane > 0 ? (H - maxH - pad * 2) / maxLane : 0;
+      nodes.forEach((_, i) => {
+        const d = depth[i] || 0;
+        const lane = lanes[i];
         pos[i] = {
-          x: cx + Rx * Math.cos(a) - sizes[i].w / 2,
-          y: cy + Ry * Math.sin(a) - sizes[i].h / 2,
+          x: pad + d * colGap + (maxW - sizes[i].w) / 2,
+          y: pad + lane * laneGap + (maxH - sizes[i].h) / 2,
           w: sizes[i].w,
           h: sizes[i].h,
         };
       });
     } else {
-      /* tree / layered：同一层按 DOM 顺序排；layered 可用 lane 固定纵坐标。 */
+      /* tree：先按层排，再按可用宽度整体缩放；父节点在子节点中点。 */
+      viewW = Math.min(availW, 1200);
       const layers = new Map();
       nodes.forEach((_, i) => {
         if (!layers.has(depth[i])) layers.set(depth[i], []);
@@ -174,40 +194,43 @@ export class VkGraph extends VkElement {
       });
       const slot = new Map(order.map((i, k) => [i, k]));
       const maxDepth = Math.max(...layers.keys(), 0);
-
-      for (const [d, list] of layers) {
-        for (const i of list) {
-          const laneAttr = Number(nodes[i].dataset.lane);
-          const lane = Number.isFinite(laneAttr) ? laneAttr : slot.get(i) ?? 0;
-          if (layout === 'tree') {
-            pos[i] = { x: lane * (maxW + gap), y: d * (maxH + gap * 0.8), w: sizes[i].w, h: sizes[i].h };
-          } else {
-            pos[i] = { x: d * (maxW + gap), y: lane * (maxH + gap * 0.55), w: sizes[i].w, h: sizes[i].h };
-          }
+      const gapX = 72;
+      const gapY = 72;
+      nodes.forEach((_, i) => {
+        const d = depth[i] || 0;
+        const lane = slot.get(i) ?? 0;
+        pos[i] = { x: lane * (maxW + gapX), y: d * (maxH + gapY), w: sizes[i].w, h: sizes[i].h };
+      });
+      for (let d = maxDepth; d >= 0; d--) {
+        for (const i of layers.get(d) || []) {
+          const kids = links.filter((l) => l.i === i).map((l) => l.j);
+          if (!kids.length) continue;
+          const ccx = kids.reduce((s, k) => s + pos[k].x + pos[k].w / 2, 0) / kids.length;
+          pos[i].x = Math.max(0, ccx - pos[i].w / 2);
         }
       }
-      if (layout === 'tree') {
-        for (let d = maxDepth; d >= 0; d--) {
-          for (const i of layers.get(d) || []) {
-            const kids = links.filter((l) => l.i === i).map((l) => l.j);
-            if (!kids.length) continue;
-            const cx = kids.reduce((s, k) => s + pos[k].x + pos[k].w / 2, 0) / kids.length;
-            pos[i].x = Math.max(0, cx - pos[i].w / 2);
-          }
-        }
-      }
+      const minX = Math.min(...pos.map((p) => p.x));
+      const maxX = Math.max(...pos.map((p) => p.x + p.w));
+      const scale = 1;
+      void minX;
+      void maxX;
+      void scale;
+      pos.forEach((p) => {
+        p.y += pad;
+      });
+      H = Math.max(...pos.map((p) => p.y + p.h)) + pad;
     }
 
-    /* 平移到左上角，留 8px 边距；内容比版心窄时居中。 */
+    /* 平移到左上角，留 pad；比目标窄时居中。 */
     const minX = Math.min(...pos.map((p) => p.x));
     const minY = Math.min(...pos.map((p) => p.y));
     pos.forEach((p) => {
-      p.x -= minX - 8;
-      p.y -= minY - 8;
+      p.x -= minX - pad;
+      p.y -= minY - pad;
     });
-    const W = Math.max(...pos.map((p) => p.x + p.w)) + 8;
-    const H = Math.max(...pos.map((p) => p.y + p.h)) + 8;
-    const viewW = Math.max(W, this.clientWidth || W);
+    const W = Math.max(...pos.map((p) => p.x + p.w)) + pad;
+    H = Math.max(H, Math.max(...pos.map((p) => p.y + p.h)) + pad);
+    viewW = Math.max(viewW, W);
     const offX = Math.round((viewW - W) / 2);
     pos.forEach((p) => {
       p.x += offX;
@@ -219,6 +242,8 @@ export class VkGraph extends VkElement {
     });
     this._stage.style.width = `${viewW}px`;
     this._stage.style.height = `${H}px`;
+    this.style.width = `${viewW}px`;
+    this.style.marginInline = 'auto';
     this.style.height = `${H}px`;
 
     const svg = this._svg;
@@ -245,10 +270,17 @@ export class VkGraph extends VkElement {
         const my = p1.y + (p2.y - p1.y) / 2;
         points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, { x: p2.x, y: p2.y - 4 }];
       } else if (layout === 'layered') {
-        const p1 = { x: a.x + a.w, y: aCy };
-        const p2 = { x: b.x, y: bCy };
-        const mx = p1.x + (p2.x - p1.x) / 2;
-        points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
+        if (Math.abs(a.x - b.x) < 2) {
+          const upward = aCy > bCy;
+          const p1 = upward ? { x: aCx, y: a.y } : { x: aCx, y: a.y + a.h };
+          const p2 = upward ? { x: bCx, y: b.y + b.h } : { x: bCx, y: b.y };
+          points = [p1, p2];
+        } else {
+          const p1 = { x: a.x + a.w, y: aCy };
+          const p2 = { x: b.x, y: bCy };
+          const mx = p1.x + (p2.x - p1.x) / 2;
+          points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
+        }
       } else if (layout === 'mesh') {
         const dx = bCx - aCx;
         const dy = bCy - aCy;
