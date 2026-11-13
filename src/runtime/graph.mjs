@@ -243,9 +243,13 @@ export class VkGraph extends VkElement {
     });
     this._stage.style.width = `${viewW}px`;
     this._stage.style.height = `${H}px`;
-    if (this._graph) this._graph.style.height = `${H}px`;
-    this.style.width = `${viewW}px`;
-    this.style.marginInline = 'auto';
+    if (this._graph) {
+      this._graph.style.width = `${viewW}px`;
+      this._graph.style.marginInline = 'auto';
+      this._graph.style.height = `${H}px`;
+    }
+    this.style.width = '100%';
+    this.style.marginInline = '0';
     this.style.height = 'auto';
 
     const svg = this._svg;
