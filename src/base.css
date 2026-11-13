@@ -212,12 +212,15 @@ vk-flow[overlay] > * {
   z-index: 1;
 }
 vk-flow[overlay] > vk-card {
-  width: 100%;
-  justify-self: stretch;
+  width: calc(100% - var(--vk-space-7));
+  justify-self: center;
   align-self: end;
 }
 vk-flow[overlay] > vk-card .vk-fbd {
-  padding: var(--vk-space-3) var(--vk-space-5);
+  padding: var(--vk-space-2) var(--vk-space-5);
+}
+vk-flow[overlay] > vk-card vk-text {
+  font-size: var(--vk-fs-caption);
 }
 vk-flow > * {
   grid-column: span var(--vk-span, 1);
