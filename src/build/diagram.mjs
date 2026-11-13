@@ -152,7 +152,7 @@ export function buildSeq(node, ctx) {
     const x2 = x(b);
     const rightward = x2 >= x1;
     const note = attrOf(li, 'note');
-    return `<div class="vk-seq-row" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-dir="${rightward ? 'right' : 'left'}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-x1:${x1.toFixed(2)}%;--vk-x2:${x2.toFixed(2)}%;--vk-mid:${((x1 + x2) / 2).toFixed(2)}%"><span class="vk-seq-l">${labelOf(li)}</span><span class="vk-seq-arrow"></span>${note ? `<span class="vk-seq-note">${esc(note)}</span>` : ''}</div>`;
+    return `<div class="vk-seq-row" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-dir="${rightward ? 'right' : 'left'}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-x1:${x1.toFixed(2)}%;--vk-x2:${x2.toFixed(2)}%;--vk-mid:${((x1 + x2) / 2).toFixed(2)}%"><span class="vk-seq-l">${labelOf(li)}${note ? `<span class="vk-seq-note">${esc(note)}</span>` : ''}</span><span class="vk-seq-arrow"></span></div>`;
   });
 
   const head = names.map((name, i) => `<span style="--vk-x:${x(i).toFixed(2)}%">${esc(name)}</span>`).join('');

@@ -1213,9 +1213,6 @@ vk-seq {
   position: relative;
   min-height: 93px;
 }
-.vk-seq-row:has(.vk-seq-note) {
-  min-height: 120px;
-}
 .vk-seq-arrow {
   position: absolute;
   top: 52px;
@@ -1260,15 +1257,9 @@ vk-seq {
   font-weight: var(--vk-w-medium);
 }
 .vk-seq-note {
-  position: absolute;
-  left: var(--vk-mid);
-  top: 64px;
-  transform: translateX(-50%);
-  padding: 0 var(--vk-space-3);
-  background: var(--vk-paper);
-  font-size: var(--vk-fs-caption);
-  line-height: 1.2;
+  margin-left: var(--vk-space-3);
   color: var(--vk-ink-3);
+  font-weight: var(--vk-w-regular);
   white-space: nowrap;
 }
 .vk-seq-row[data-tone='ok'] {
