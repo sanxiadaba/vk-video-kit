@@ -1139,7 +1139,7 @@ vk-seq {
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-1);
   font-size: var(--vk-fs-body);
-  margin-bottom: var(--vk-space-5);
+  margin-bottom: var(--vk-space-4);
 }
 .vk-seq-head span {
   position: absolute;

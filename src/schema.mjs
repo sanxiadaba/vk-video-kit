@@ -80,7 +80,7 @@ export const TAGS = {
       kicker: text('content', '眉标（集数 / 分类）'),
       counter: text('appearance', '序号，如 "3 / 8"（等宽，跟在眉标后）'),
       lede: text('content', '导语：这一帧的「为什么」'),
-      size: enumv(['subhead', 'headline', 'display'], 'subhead', 'type', '标题字号'),
+      size: enumv(['subhead', 'headline', 'display'], 'headline', 'type', '标题字号'),
       align: enumv(['left', 'center'], 'left', 'layout', '对齐'),
     },
     content: 'text',

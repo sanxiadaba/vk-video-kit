@@ -70,7 +70,7 @@ vk-page[theme='dark'] {
   min-height: 0;
 }
 vk-page[place='band'] .vk-body {
-  align-content: start;
+  align-content: center;
 }
 vk-page[place='top'] .vk-body {
   align-content: start;
@@ -298,6 +298,9 @@ vk-card[surface='dark'] {
 }
 .vk-fbd {
   padding: 0;
+}
+vk-code .vk-fbd {
+  padding: var(--vk-space-2);
 }
 vk-card .vk-fbd {
   padding: var(--vk-space-6);
