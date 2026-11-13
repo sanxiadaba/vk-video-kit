@@ -72,6 +72,13 @@
    "vk-text": 1
   }
  },
+ "code-6": {
+  "tags": "vk-code,vk-head",
+  "counts": {
+   "vk-head": 1,
+   "vk-code": 1
+  }
+ },
  "code-asm": {
   "tags": "vk-code,vk-head",
   "counts": {
@@ -212,6 +219,13 @@
   }
  },
  "seq3": {
+  "tags": "vk-head,vk-seq",
+  "counts": {
+   "vk-head": 1,
+   "vk-seq": 1
+  }
+ },
+ "seq5": {
   "tags": "vk-head,vk-seq",
   "counts": {
    "vk-head": 1,

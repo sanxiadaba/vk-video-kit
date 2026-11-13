@@ -126,7 +126,7 @@ try {
 ok(renderRun.status === 0 && report, '全部 fixture 出图', String(renderRun.stderr || '').slice(0, 400));
 if (report) {
   ok(report.clean, '全部 fixture 干净', report.diagnostics.map((d) => d.message).join('；'));
-  ok(report.frames.length === 32, `32 帧（${report.frames.length}）`);
+  ok(report.frames.length === 34, `34 帧（${report.frames.length}）`);
   ok(report.engine?.version, `记录引擎（${report.engine?.channel} ${report.engine?.version}）`);
   const bad = report.frames.filter((f) => !f.png || !f.png780 || !f.json);
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
