@@ -189,7 +189,7 @@ if (!browser) {
       cellsCurrent: cells ? cells.querySelectorAll('.vk-cell[current]').length : 0,
       measure: !!q('#behave-cells .vk-co-line'),
       inlineMono: /Mono/i.test(getComputedStyle(q('#inline code')).fontFamily),
-      currentRow: getComputedStyle(q('#numtable tr[current] td')).backgroundColor,
+      currentRow: getComputedStyle(q('#numtable tr[current] td:first-child')).boxShadow,
     };
   });
   ok(behave.shrink >= 40 && behave.shrink < 56, `长行会缩字号（${behave.shrink}px）`);
@@ -204,7 +204,7 @@ if (!browser) {
   ok(behave.cellsCurrent === 1, '内存格 current 落在格子上');
   ok(behave.measure, '量度线画出来了');
   ok(behave.inlineMono, '行内代码是等宽字体');
-  ok(/rgb\(226, 233, 255\)/.test(behave.currentRow), `当前行有淡底（${behave.currentRow}）`);
+  ok(/29, 78, 216/.test(behave.currentRow), `当前行有钴蓝左规（${behave.currentRow}）`);
   await browser.close();
 }
 

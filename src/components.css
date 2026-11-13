@@ -58,7 +58,7 @@ vk-code[size='caption'] {
   opacity: 0.72;
 }
 .vk-line.is-cur {
-  background: var(--vk-tint-focus);
+  background: none;
 }
 .vk-line.is-cur::before {
   content: '';
@@ -120,7 +120,7 @@ vk-code[size='caption'] {
   white-space: pre;
 }
 .vk-term .vk-line.is-cur {
-  background: var(--vk-tint-focus);
+  background: none;
 }
 .vk-prompt {
   color: var(--vk-ink-3);
@@ -231,7 +231,7 @@ vk-code[size='caption'] {
   color: var(--vk-syn-number);
 }
 .vk-arow.is-cur {
-  background: var(--vk-tint-focus);
+  background: none;
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
 }
 .vk-alabel .vk-ainsn {
@@ -298,7 +298,7 @@ vk-table tr[tone='err'] td {
   background: var(--vk-tint-err);
 }
 vk-table tr[current] td {
-  background: var(--vk-tint-focus);
+  background: none;
 }
 vk-table tr[current] td:first-child {
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
@@ -366,7 +366,7 @@ vk-list[variant='ordered'] > li::before {
   align-self: start;
 }
 vk-list > li[current] {
-  background: var(--vk-tint-focus);
+  background: none;
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-1);
