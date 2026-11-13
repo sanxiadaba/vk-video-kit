@@ -1068,6 +1068,10 @@ vk-graph {
   line-height: 1.2;
   transform: translate(-50%, -50%);
 }
+.vk-graph[data-layout='row'] .vk-gnode {
+  min-height: 200px;
+  align-content: center;
+}
 .vk-gn-n {
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
