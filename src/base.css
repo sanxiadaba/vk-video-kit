@@ -87,8 +87,8 @@ vk-page[valign='bottom'] .vk-stage {
   min-height: 0;
 }
 vk-page[valign='band'] .vk-body {
-  flex: 1 1 auto;
-  align-content: center;
+  flex: 0 0 auto;
+  align-content: start;
 }
 vk-page[valign='top'] .vk-body {
   flex: 0 0 auto;
@@ -150,6 +150,9 @@ vk-head[size='subhead'] .vk-title {
   line-height: var(--vk-lh-subhead);
   max-width: var(--vk-measure-subhead);
 }
+vk-head[size='display'][align='center'] .vk-title {
+  padding-left: 0.3em;
+}
 vk-head[size='display'] .vk-title {
   font-size: var(--vk-fs-display);
   line-height: var(--vk-lh-display);
@@ -176,6 +179,10 @@ vk-flow {
   align-items: stretch;
   min-width: 0;
   text-align: start;
+}
+vk-flow > vk-code,
+vk-flow > vk-tree {
+  width: 100%;
 }
 vk-flow[valign='start'] {
   align-items: start;
@@ -446,9 +453,11 @@ vk-title em,
 .vk-lede em {
   font-style: normal;
   font-weight: var(--vk-w-bold);
-  background: linear-gradient(transparent 94%, var(--vk-emph) 94%);
-  box-decoration-break: clone;
+  background: var(--vk-mark);
+  color: var(--vk-ink-1);
+  border-radius: 2px;
   padding: 0 0.04em;
+  box-decoration-break: clone;
 }
 vk-text strong,
 vk-head strong {
@@ -466,6 +475,12 @@ vk-head mark,
 }
 
 /* 行内：代码、键位、上下标、公式。原生标签，作者不用学新词。 */
+vk-text small {
+  font-size: 0.55em;
+  color: var(--vk-ink-3);
+  font-weight: var(--vk-w-medium);
+  margin-left: 0.06em;
+}
 vk-text code,
 vk-head code,
 .vk-lc code {

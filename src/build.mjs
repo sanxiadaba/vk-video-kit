@@ -434,8 +434,7 @@ async function buildTree(node, file, ctx) {
   const iconFor = (name, isDir) => {
     const kind = ICON_KIND(name, isDir);
     const name2 = isDir ? 'folder' : kind === 'code' ? 'file-code' : 'file-text';
-    const svg = ctx.icon(name2);
-    return svg ? `<span class="vk-ic" aria-hidden="true">${svg}</span>` : '';
+    return ctx.icon(name2) || '';
   };
 
   const nodeHtml = (name, isDir, p, level, children = '', isLast = false) => {
@@ -677,7 +676,7 @@ function buildSteps(node, ctx) {
       const icon = attrOf(li, 'icon');
       const svg = icon ? ctx.icon(icon) : '';
       const label = serialize({ ...li, tagName: 'span', attrs: [], sourceCodeLocation: null }).replace(/^<span>|<\/span>$/g, '');
-      return `<div class="vk-step" data-vk-item="${i + 1}" data-state="${esc(state)}" data-tone="${esc(tone)}"><span class="vk-step-n">${i + 1}</span><span class="vk-step-t">${svg ? `<span class="vk-ic" aria-hidden="true">${svg}</span>` : ''}<span class="vk-step-l">${label}</span></span>${note ? `<span class="vk-step-note">${esc(note)}</span>` : ''}</div>`;
+      return `<div class="vk-step" data-vk-item="${i + 1}" data-state="${esc(state)}" data-tone="${esc(tone)}"><span class="vk-step-n">${i + 1}</span><span class="vk-step-t">${svg || ''}<span class="vk-step-l">${label}</span></span>${note ? `<span class="vk-step-note">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
   return `<div class="vk-steps" data-dir="${dir}" style="--vk-n:${items.length || 1}">${html}</div>`;
@@ -708,7 +707,7 @@ function buildTimeline(node) {
   const start = Number(attrOf(node, 'start'));
   const end = Number(attrOf(node, 'end'));
   const proportional = Number.isFinite(start) && Number.isFinite(end) && end > start && items.every((li) => Number.isFinite(Number(attrOf(li, 'at'))));
-  const lefts = items.map((li, i) => (proportional ? ((Number(attrOf(li, 'at')) - start) / (end - start)) * 100 : ((i + 0.5) / items.length) * 100));
+  const lefts = items.map((li, i) => 12 + 76 * (proportional ? ((Number(attrOf(li, 'at')) - start) / (end - start)) : ((i + 0.5) / items.length)));
 
   /* 轴线在节点处断开：每两个点之间画一段，节点附近留 1% 的缝。
      不再用纸色光晕去「擦」线，光晕会显得点压住了线。 */
@@ -728,7 +727,7 @@ function buildTimeline(node) {
     .map((li, i) => {
       const at = Number(attrOf(li, 'at'));
       const left = lefts[i];
-      const edge = left <= 10 ? 'start' : left >= 90 ? 'end' : 'mid';
+      const edge = 'mid';
       const state = attrOf(li, 'state') || (cur === i + 1 ? 'current' : '');
       const date = attrOf(li, 'date') || (Number.isFinite(at) ? String(at) : '');
       const note = attrOf(li, 'note');

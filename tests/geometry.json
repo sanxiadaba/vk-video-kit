@@ -18,13 +18,13 @@
   "tags": "div,vk-code,vk-head"
  },
  "asm": {
-  "tags": "div,vk-code,vk-head"
+  "tags": "div,vk-code,vk-flow,vk-head,vk-text"
  },
  "table": {
   "tags": "div,vk-head,vk-table"
  },
  "list": {
-  "tags": "div,vk-head,vk-list,vk-text"
+  "tags": "div,vk-flow,vk-head,vk-list,vk-text"
  },
  "tree": {
   "tags": "div,vk-flow,vk-head,vk-text,vk-tree"

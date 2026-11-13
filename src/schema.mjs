@@ -67,7 +67,7 @@ export const TAGS = {
       kicker: { type: 'text', group: 'content', label: '眉标（集数 / 分类）' },
       counter: { type: 'text', group: 'appearance', label: '序号，如 "3 / 8"（等宽，跟在眉标后）' },
       lede: { type: 'text', group: 'content', label: '导语（标题下一句）' },
-      size: { type: 'enum', values: ['subhead', 'headline', 'display'], default: 'headline', group: 'type', label: '标题字号' },
+      size: { type: 'enum', values: ['subhead', 'headline', 'display'], default: 'subhead', group: 'type', label: '标题字号' },
       align: { type: 'enum', values: ['left', 'center'], default: 'left', group: 'layout', label: '对齐' },
     },
     content: 'text',

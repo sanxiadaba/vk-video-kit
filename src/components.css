@@ -9,7 +9,6 @@
 vk-code {
   display: block;
   width: fit-content;
-  min-width: min(100%, 943px);
   max-width: 100%;
   min-width: 0;
   font-family: var(--vk-font-mono);
@@ -33,10 +32,10 @@ vk-code[size='subhead'] {
 }
 .vk-line {
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: var(--vk-space-5);
+  grid-template-columns: 56px minmax(0, 1fr);
+  gap: var(--vk-space-4);
   align-items: baseline;
-  padding: 0 var(--vk-space-5) 0 var(--vk-space-4);
+  padding: 0 var(--vk-space-5) 0 var(--vk-space-2);
   position: relative;
 }
 .vk-ln {
@@ -57,7 +56,7 @@ vk-code[size='subhead'] {
 /* 聚光：有 current 时其余行的代码压到 50%；当前行满对比 + 8px 左条。
    行号不压暗，780 下仍然要读得出第几行。 */
 .vk-lines[data-dim] .vk-line:not(.is-cur) .vk-lc {
-  opacity: 0.5;
+  opacity: 0.92;
 }
 .vk-line.is-cur {
   background: var(--vk-tint-focus);
@@ -65,7 +64,7 @@ vk-code[size='subhead'] {
 .vk-line.is-cur::before {
   content: '';
   position: absolute;
-  left: 4px;
+  left: 0;
   top: 0;
   bottom: 0;
   width: var(--vk-line-w-rule);
@@ -76,8 +75,9 @@ vk-code[size='subhead'] {
   font-weight: var(--vk-w-medium);
 }
 .vk-line.is-fold {
-  color: var(--vk-ink-3);
-  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-1);
+  background: var(--vk-soft);
+  font-size: var(--vk-fs-body);
   letter-spacing: 0.04em;
 }
 .vk-line.is-fold .vk-lc {
@@ -115,8 +115,7 @@ vk-code[size='subhead'] {
   display: block;
   padding: 0 var(--vk-space-5) 0 calc(var(--vk-space-5) + 2ch);
   text-indent: -2ch;
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
+  white-space: pre;
 }
 .vk-term .vk-line.is-cur {
   background: var(--vk-tint-focus);
@@ -168,6 +167,7 @@ vk-code[size='subhead'] {
   display: grid;
   grid-template-columns: 72px 1.2em minmax(0, 1fr);
   gap: var(--vk-space-4);
+  align-items: baseline;
   padding: 0 var(--vk-space-5);
   white-space: pre;
 }
@@ -291,6 +291,10 @@ vk-table td {
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-1);
 }
+vk-table th:first-child,
+vk-table td:first-child {
+  padding-left: 0;
+}
 vk-table td.num,
 vk-table th.num {
   text-align: right;
@@ -363,6 +367,7 @@ vk-list[variant='ordered'] > li {
 }
 vk-list[variant='ordered'] > li::before {
   content: counter(vk-li);
+  transform: none;
   width: auto;
   height: auto;
   background: none;
@@ -428,6 +433,7 @@ vk-tree {
   bottom: -2px;
   width: var(--vk-line-w-rule);
   background: var(--vk-ink-3);
+  z-index: 2;
 }
 .vk-node[data-last='1']::before {
   bottom: auto;
@@ -441,6 +447,7 @@ vk-tree {
   width: 20px;
   height: var(--vk-line-w-rule);
   background: var(--vk-ink-3);
+  z-index: 2;
 }
 .vk-node[data-depth='1']::after {
   display: none;
@@ -471,7 +478,6 @@ vk-tree {
 .vk-node.is-cur > .vk-nrow {
   background: var(--vk-tint-focus);
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
-  color: var(--vk-focus);
   font-weight: var(--vk-w-medium);
 }
 .vk-node.is-cur > .vk-nrow .vk-ic {
@@ -540,7 +546,7 @@ vk-cells {
 }
 .vk-cell-v {
   font-family: var(--vk-font-mono);
-  font-size: 72px;
+  font-size: 84px;
   font-weight: var(--vk-w-bold);
   line-height: 1.1;
   color: var(--vk-ink-1);
@@ -594,9 +600,7 @@ vk-cells {
   border-color: var(--vk-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-.vk-cell[data-state='current'] .vk-cell-v {
-  color: var(--vk-focus);
-}
+
 
 /* ================================================================ 字节 */
 vk-bytes {
@@ -642,7 +646,6 @@ vk-bytes {
 }
 .vk-bhex i.is-cur {
   background: var(--vk-tint-focus);
-  color: var(--vk-focus);
 }
 .vk-bascii {
   display: grid;
@@ -651,7 +654,6 @@ vk-bytes {
 }
 .vk-bascii i.is-cur {
   background: var(--vk-tint-focus);
-  color: var(--vk-focus);
 }
 
 /* ================================================================ 位
@@ -696,7 +698,7 @@ vk-bits {
   display: grid;
   justify-items: center;
   gap: 2px;
-  width: 56px;
+  width: 72px;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
   position: relative;
@@ -710,7 +712,7 @@ vk-bits {
 }
 .vk-bit .vk-bit-v {
   font-style: normal;
-  font-size: 64px;
+  font-size: 56px;
   font-weight: var(--vk-w-bold);
   line-height: 1;
   color: var(--vk-ink-1);
@@ -729,12 +731,8 @@ vk-bits {
   border-color: var(--vk-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-.vk-field.is-cur .vk-field-l {
-  color: var(--vk-focus);
-}
-.vk-bit.is-cur .vk-bit-v {
-  color: var(--vk-focus);
-}
+
+
 
 /* ================================================================ 步骤
    圈 96 固定，数字 40 固定；标签才吃外层的字。 */
@@ -761,9 +759,9 @@ vk-steps {
 .vk-step::after {
   content: '';
   position: absolute;
-  top: 48px;
+  top: calc(48px - var(--vk-line-w-rule) / 2);
   left: calc(50% + 60px);
-  width: calc(100% - 120px);
+  width: calc(100% + var(--vk-space-6) - 120px);
   height: var(--vk-line-w-rule);
   background: var(--vk-ink-3);
   z-index: 0;
@@ -798,11 +796,11 @@ vk-steps {
 .vk-step-t .vk-ic {
   width: 56px;
   height: 56px;
-  padding: 8px;
+  padding: 0;
   color: var(--vk-ink-2);
-  background: var(--vk-soft);
-  border: var(--vk-line-w-hair) solid var(--vk-line-color);
-  border-radius: var(--vk-radius-sm);
+  background: none;
+  border: 0;
+  border-radius: 0;
 }
 .vk-step-note {
   font-size: var(--vk-fs-caption);
@@ -886,7 +884,7 @@ vk-bars {
 }
 .vk-bar {
   display: grid;
-  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 5em;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 120px;
   gap: var(--vk-space-5);
   align-items: center;
 }
@@ -1033,9 +1031,7 @@ vk-timeline {
 .vk-tl-i[data-state='current'] .vk-tl-dot {
   background: var(--vk-focus);
 }
-.vk-tl-i[data-state='current'] .vk-tl-date {
-  color: var(--vk-focus);
-}
+
 .vk-tl-i[data-state='current'] .vk-tl-label {
   font-weight: var(--vk-w-bold);
 }
@@ -1128,7 +1124,7 @@ vk-graph {
   fill: var(--vk-ink-2);
   paint-order: stroke;
   stroke: var(--vk-paper);
-  stroke-width: 20px;
+  stroke-width: 24px;
   stroke-linejoin: round;
 }
 
@@ -1160,7 +1156,7 @@ vk-seq {
 .vk-seq-body {
   position: relative;
   display: grid;
-  gap: var(--vk-space-5);
+  gap: var(--vk-space-6);
   padding: var(--vk-space-4) 0;
 }
 .vk-seq-body::before,
@@ -1247,7 +1243,6 @@ vk-seq {
   --vk-seq-c: var(--vk-focus);
 }
 .vk-seq-row[data-state='current'] .vk-seq-l {
-  color: var(--vk-focus);
   font-weight: var(--vk-w-bold);
 }
 

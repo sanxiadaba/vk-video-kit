@@ -278,12 +278,12 @@ export class VkGraph extends VkElement {
       const ux = dx / len;
       const uy = dy / len;
       const tip = { x: p2.x - ux * 4, y: p2.y - uy * 4 };
-      const base = { x: tip.x - ux * 24, y: tip.y - uy * 24 };
+      const base = { x: tip.x - ux * 28, y: tip.y - uy * 28 };
       points[points.length - 1] = base;
 
       group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null }));
-      const b2 = { x: base.x - 12 * uy, y: base.y + 12 * ux };
-      const b3 = { x: base.x + 12 * uy, y: base.y - 12 * ux };
+      const b2 = { x: base.x - 14 * uy, y: base.y + 14 * ux };
+      const b3 = { x: base.x + 14 * uy, y: base.y - 14 * ux };
       group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
 
       if (l.label) {

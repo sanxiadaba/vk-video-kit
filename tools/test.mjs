@@ -100,7 +100,7 @@ ok(inlineBytes.html.includes('68') && inlineBytes.html.includes('65'), 'vk-bytes
 
 /* 默认值必须落进 DOM：CSS 不再自带第二份默认值（band 曾经就死在这里）。 */
 const defaults = await transformHtml('<vk-page><vk-head>标题</vk-head><vk-text>正文</vk-text></vk-page>', { file: path.join(ROOT, 'tests', 'defaults.html') });
-ok(/valign="band"/.test(defaults.html) && /size="headline"/.test(defaults.html), '默认值落地到 DOM');
+ok(/valign="band"/.test(defaults.html) && /size="subhead"/.test(defaults.html), '默认值落地到 DOM');
 
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
