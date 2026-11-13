@@ -1,11 +1,16 @@
 /**
- * v21 · 需要测量的两个件：源码窗（缩字号）与图片（失败态）。
+ * v24 · 需要测量的两个件：源码窗（按宽/高缩放）与图片（失败态）。
  * 其余组件的几何在构建期已经定完，运行期不碰。
  */
 import { VkElement, define } from './base.mjs';
 import { FLOOR } from '../vocab.mjs';
 
-/** 源码窗：窗太窄时把字号往下缩，缩到 40 为止；再放不下就交给自检报「被裁」。 */
+/**
+ * 源码窗：
+ * 1. 先向上长到 84：短代码不要永远缩在 56，窗内右半边空着。
+ * 2. 长行再往下缩到 40；地板仍放不下，交给自检报「被裁」。
+ * 3. 长高受页面底边约束，绝不为放大而把整页顶出去。
+ */
 export class VkCode extends VkElement {
   static __observed = ['size'];
 
@@ -14,16 +19,30 @@ export class VkCode extends VkElement {
     if (!lines) return;
     this.style.removeProperty('font-size');
     const base = parseFloat(getComputedStyle(lines).fontSize) || 56;
-    if (base <= FLOOR) return;
-    let px = base;
+    const page = this.closest('vk-page');
     const overflows = () => [...this.querySelectorAll('.vk-lc, .vk-dc, .vk-aops')].some((el) => el.scrollWidth > el.clientWidth + 1);
-    if (!overflows()) return;
-    while (px > FLOOR) {
+    const outOfPage = () => !!page && this.getBoundingClientRect().bottom > page.getBoundingClientRect().bottom - 8;
+
+    let px = base;
+    const longest = Math.max(0, ...[...this.querySelectorAll('.vk-lc, .vk-dc')].map((el) => el.textContent.length));
+    const slack = [...this.querySelectorAll('.vk-lc, .vk-dc')].every((el) => el.scrollWidth < el.clientWidth * 0.72);
+    if (longest <= 28 && slack) {
+      while (px < 84) {
+        const next = Math.min(84, px + 2);
+        this.style.fontSize = `${next}px`;
+        if (overflows() || outOfPage()) {
+          this.style.fontSize = `${px}px`;
+          break;
+        }
+        px = next;
+      }
+    }
+
+    while (px > FLOOR && overflows()) {
       px = Math.max(FLOOR, px - 2);
       this.style.fontSize = `${px}px`;
-      if (!overflows()) return;
     }
-    this.style.fontSize = `${FLOOR}px`;
+    if (px === FLOOR) this.style.fontSize = `${FLOOR}px`;
   }
 }
 
