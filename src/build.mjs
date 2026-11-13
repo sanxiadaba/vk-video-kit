@@ -701,7 +701,7 @@ function buildBars(node) {
   return `<div class="vk-bars">${html}</div>`;
 }
 
-function buildTimeline(node) {
+function buildTimeline(node, ctx) {
   const items = kids(node).filter((c) => c.tagName === 'li');
   const cur = Number(attrOf(node, 'current') || 0);
   const start = Number(attrOf(node, 'start'));
@@ -711,7 +711,7 @@ function buildTimeline(node) {
 
   /* 轴线在节点处断开：每两个点之间画一段，节点附近留 1% 的缝。
      不再用纸色光晕去「擦」线，光晕会显得点压住了线。 */
-  const cut = 1.7;
+  const cut = 2.6;
   const segs = [];
   let prev = 0;
   lefts.forEach((p, i) => {
@@ -731,7 +731,9 @@ function buildTimeline(node) {
       const state = attrOf(li, 'state') || (cur === i + 1 ? 'current' : '');
       const date = attrOf(li, 'date') || (Number.isFinite(at) ? String(at) : '');
       const note = attrOf(li, 'note');
-      return `<div class="vk-tl-i" data-vk-item="${i + 1}" data-edge="${edge}" data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-at:${left.toFixed(2)}%"><span class="vk-tl-date">${esc(date)}</span><span class="vk-tl-dot"></span><span class="vk-tl-label">${esc(attrOf(li, 'label') || '')}</span>${note ? `<span class="vk-tl-note">${esc(note)}</span>` : ''}</div>`;
+      const icon = attrOf(li, 'icon');
+      const nodeMark = icon ? `<span class="vk-tl-node">${ctx.icon(icon)}</span>` : '<span class="vk-tl-dot"></span>';
+      return `<div class="vk-tl-i" data-vk-item="${i + 1}" data-edge="${edge}" data-state="${esc(state)}" data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-at:${left.toFixed(2)}%"><span class="vk-tl-date">${esc(date)}</span>${nodeMark}<span class="vk-tl-label">${esc(attrOf(li, 'label') || '')}</span>${note ? `<span class="vk-tl-note">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
   return `<div class="vk-tl${proportional ? ' is-prop' : ''}">${segs.join('')}${html}</div>`;
@@ -942,7 +944,7 @@ export async function transformHtml(rawHtml, { file }) {
       else if (tag === 'vk-text') buildText(node, file, ctx);
       else if (tag === 'vk-steps') node.childNodes = [raw(buildSteps(node, ctx))];
       else if (tag === 'vk-bars') node.childNodes = [raw(buildBars(node))];
-      else if (tag === 'vk-timeline') node.childNodes = [raw(buildTimeline(node))];
+      else if (tag === 'vk-timeline') node.childNodes = [raw(buildTimeline(node, ctx))];
       else if (tag === 'vk-graph') node.childNodes = [raw(buildGraph(node))];
       else if (tag === 'vk-seq') node.childNodes = [raw(buildSeq(node))];
       else if (tag === 'vk-surface') buildSurface(node);

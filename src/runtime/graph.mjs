@@ -183,7 +183,7 @@ export class VkGraph extends VkElement {
           const laneAttr = Number(nodes[i].dataset.lane);
           const lane = Number.isFinite(laneAttr) ? laneAttr : slot.get(i) ?? 0;
           if (layout === 'tree') {
-            pos[i] = { x: lane * (maxW + gap), y: d * (maxH + gap * 0.7), w: sizes[i].w, h: sizes[i].h };
+            pos[i] = { x: lane * (maxW + gap), y: d * (maxH + gap * 1.35), w: sizes[i].w, h: sizes[i].h };
           } else {
             pos[i] = { x: d * (maxW + gap), y: lane * (maxH + gap * 0.55), w: sizes[i].w, h: sizes[i].h };
           }
@@ -248,7 +248,7 @@ export class VkGraph extends VkElement {
         const p1 = { x: aCx, y: a.y + a.h };
         const p2 = { x: bCx, y: b.y };
         const my = p1.y + (p2.y - p1.y) / 2;
-        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
+        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, { x: p2.x, y: p2.y - 4 }];
       } else if (layout === 'layered') {
         const p1 = { x: a.x + a.w, y: aCy };
         const p2 = { x: b.x, y: bCy };
@@ -261,7 +261,7 @@ export class VkGraph extends VkElement {
       } else if (dir === 'vertical') {
         const p1 = { x: aCx, y: a.y + a.h };
         const p2 = { x: bCx, y: b.y };
-        const my = p1.y + (p2.y - p1.y) / 2;
+        const my = p1.y + 36;
         points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
       } else {
         const p1 = { x: a.x + a.w, y: aCy };
@@ -279,12 +279,12 @@ export class VkGraph extends VkElement {
       const uy = dy / len;
       const tip = { x: p2.x - ux * 4, y: p2.y - uy * 4 };
       const base = { x: tip.x - ux * 28, y: tip.y - uy * 28 };
-      points[points.length - 1] = base;
+      points[points.length - 1] = layout === 'tree' ? tip : base;
 
       group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null }));
       const b2 = { x: base.x - 14 * uy, y: base.y + 14 * ux };
       const b3 = { x: base.x + 14 * uy, y: base.y - 14 * ux };
-      group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
+      if (layout !== 'tree') group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
 
       if (l.label) {
         const from = points[0];

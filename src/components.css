@@ -945,7 +945,7 @@ vk-timeline {
 }
 .vk-tl {
   position: relative;
-  height: 300px;
+  height: 340px;
 }
 .vk-tl-seg {
   position: absolute;
@@ -984,12 +984,31 @@ vk-timeline {
   position: absolute;
   left: 0;
   right: 0;
-  top: 56px;
+  top: 32px;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-2);
   line-height: 1.2;
+}
+.vk-tl-node {
+  position: absolute;
+  left: 50%;
+  top: 92px;
+  width: 72px;
+  height: 72px;
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: 50%;
+  background: var(--vk-paper);
+  display: grid;
+  place-items: center;
+  transform: translateX(-50%);
+  z-index: 2;
+}
+.vk-tl-node .vk-ic {
+  width: 36px;
+  height: 36px;
+  color: var(--vk-ink-2);
 }
 .vk-tl-dot {
   position: absolute;
@@ -1013,7 +1032,7 @@ vk-timeline {
   position: absolute;
   left: 0;
   right: 0;
-  top: 156px;
+  top: 176px;
   font-size: var(--vk-fs-body);
   line-height: 1.4;
   font-weight: var(--vk-w-medium);
@@ -1023,13 +1042,19 @@ vk-timeline {
   position: absolute;
   left: 0;
   right: 0;
-  top: 212px;
+  top: 264px;
   font-size: var(--vk-fs-caption);
   line-height: 1.4;
   color: var(--vk-ink-3);
 }
 .vk-tl-i[data-state='current'] .vk-tl-dot {
   background: var(--vk-focus);
+}
+.vk-tl-i[data-state='current'] .vk-tl-node {
+  border-color: var(--vk-focus);
+}
+.vk-tl-i[data-state='current'] .vk-tl-node .vk-ic {
+  color: var(--vk-focus);
 }
 
 .vk-tl-i[data-state='current'] .vk-tl-label {
@@ -1265,4 +1290,24 @@ vk-seq {
 }
 vk-table tr[state='current'] td:first-child {
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+}
+/* ================================================================ 树枝
+   每个子行画一条从父行中心到本行图标的 L：竖段在父级缩进，
+   横段正好落到图标左缘，转角 8px。旧的两段式短横不再使用。 */
+.vk-node[data-depth]::before,
+.vk-node[data-depth]::after {
+  content: none;
+}
+.vk-node:not([data-depth='1']) > .vk-nrow::before {
+  content: '';
+  position: absolute;
+  left: calc((var(--vk-depth, 2) - 1) * 40px + 4px);
+  top: calc(-0.75em - 8px);
+  width: 60px;
+  height: calc(1.5em + 16px);
+  border-left: 6px solid var(--vk-ink-3);
+  border-bottom: 6px solid var(--vk-ink-3);
+  border-bottom-left-radius: 8px;
+  z-index: 2;
+  pointer-events: none;
 }

@@ -68,7 +68,7 @@ a[1]
 - 横向排用 `vk-flow cols="auto"`；分栏用 `vk-flow cols="7 5"`；不要为「两块并排」再找第二个件。
 - `vk-list` 是文字要点，`vk-table` 是二维对齐，`vk-tree` 是缩进层级：读者做的是三件事。
 - 链表 / 递归树 / git 分叉 / 死锁环用 `vk-graph`；通信往返（TCP、HTTP）用 `vk-seq`；文件目录用 `vk-tree`。
-- `vk-graph` 的边可以写在节点上（`after`），也可以写成独立子项（`from` / `to`，支持环、双向、边标）；`layered` 用 `lane="0/1"` 固定泳道，`mesh` 摆环图。\n- 步骤要图标就写 `<li icon="cpu">`：图标是 56px 的线性 chip，当前步跟随焦点色。
+- `vk-graph` 的边可以写在节点上（`after`），也可以写成独立子项（`from` / `to`，支持环、双向、边标）；`layered` 用 `lane="0/1"` 固定泳道，`mesh` 摆环图。\n- 步骤要图标就写 `<li icon="cpu">`；时间线要图标就写 `<li at="1963" icon="type">`，节点会变成 72px 圆形图标，当前点只换描边和图标色。
 
 ## 五、容量
 

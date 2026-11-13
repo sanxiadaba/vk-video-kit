@@ -329,6 +329,7 @@ export const TAGS = {
         date: { type: 'text', label: '日期标签（不写就用 at）' },
         label: { type: 'text', label: '标题' },
         note: { type: 'text', label: '小字说明' },
+        icon: { type: 'text', label: '节点图标（Lucide 名）' },
         tone: ITEM_TONE,
       },
       '<li at="1972" label="C 诞生" note="小字说明">。当前点用容器上的 current="N"。'
