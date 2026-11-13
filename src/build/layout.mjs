@@ -29,7 +29,11 @@ export function buildFlow(node) {
   const tags = (node.childNodes || []).filter((c) => c.tagName);
   const texts = tags.filter((c) => c.tagName === 'vk-text');
   const others = tags.filter((c) => c.tagName !== 'vk-text');
-  const shortNote = texts.length === 1 && others.length === 1 && textOf(texts[0]).trim().length <= 15;
+  const shortNote =
+    texts.length === 1 &&
+    others.length === 1 &&
+    ['vk-card', 'vk-img'].includes(others[0].tagName) &&
+    textOf(texts[0]).trim().length <= 15;
   if (shortNote) {
     template = 'minmax(0, 1fr)';
     node.attrs.push({ name: 'data-vk-stack', value: '1' });

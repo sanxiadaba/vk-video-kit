@@ -252,7 +252,9 @@ export class VkCallout extends VkElement {
         return { x, y };
       };
 
-      const sides = ['right', 'left', 'bottom', 'top'];
+      const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
+      const body = page.querySelector('.vk-body');
+      const safeBottom = body ? body.getBoundingClientRect().bottom - origin.top - 8 : origin.height - 8;
       const cands = [...sides.map((side) => ({ ...place(r, side), side })), ...sides.map((side) => ({ ...place(ob, side), side: `block-${side}` }))];
       const tx = cx(r);
       const ty = cy(r);
@@ -266,13 +268,13 @@ export class VkCallout extends VkElement {
           if (w > 0 && h > 0) overlap += w * h;
         }
         const outX = Math.max(0, 8 - c.x) + Math.max(0, c.x + bw - (origin.width - 8));
-        const outY = Math.max(0, 8 - c.y) + Math.max(0, c.y + bh - (origin.height - 8));
+        const outY = Math.max(0, 8 - c.y) + Math.max(0, c.y + bh - safeBottom);
         const dist = Math.hypot(c.x + bw / 2 - tx, c.y + bh / 2 - ty);
         const key = [overlap + (outX + outY) * bh * 10, dist];
         if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
       }
       const x = clamp(best.x, 8, origin.width - bw - 8);
-      const y = clamp(best.y, 8, origin.height - bh - 8);
+      const y = clamp(best.y, 8, safeBottom - bh);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };

@@ -210,9 +210,12 @@ vk-flow[overlay] > * {
   z-index: 1;
 }
 vk-flow[overlay] > vk-card {
-  width: 60%;
-  justify-self: center;
+  width: 100%;
+  justify-self: stretch;
   align-self: end;
+}
+vk-flow[overlay] > vk-card .vk-fbd {
+  padding: var(--vk-space-3) var(--vk-space-5);
 }
 vk-flow > * {
   grid-column: span var(--vk-span, 1);
