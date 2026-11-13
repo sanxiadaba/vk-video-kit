@@ -210,7 +210,12 @@ export class VkCallout extends VkElement {
     const missing = () => this.setAttribute('data-vk-anchor-missing', '1');
     const boxOf = (anchor, coarse) => {
       const comp = coarse ? anchor.el.closest(COMPONENT) : null;
-      return rel((comp || anchor.el).getBoundingClientRect());
+      const base = rel((comp || anchor.el).getBoundingClientRect());
+      if (comp && anchor.el.matches('.vk-line, .vk-arow, .vk-drow')) {
+        const line = rel(anchor.el.getBoundingClientRect());
+        return { ...base, top: line.top, bottom: line.bottom };
+      }
+      return base;
     };
 
     if (mode === 'ring') {
@@ -351,7 +356,14 @@ export class VkCallout extends VkElement {
     if (!from || !to) return missing();
     const fr = boxOf(from, true);
     const tr = boxOf(to, true);
-    const [fs, ts] = from.side && to.side ? [from.side, to.side] : autoSides(fr, tr);
+    const lineFrom = from.el.matches('.vk-line');
+    const [fs, ts] = from.side && to.side
+      ? [from.side, to.side]
+      : lineFrom
+        ? to.rect.left >= from.rect.right
+          ? ['right', 'left']
+          : ['left', 'right']
+        : autoSides(fr, tr);
     const { points, tip, u } = pointsFor(fr, tr, fs, ts);
     this._svg.appendChild(mk('path', { class: 'vk-co-line', d: roundedPath(points) }));
     this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(tip, u) }));

@@ -174,6 +174,9 @@ vk-code[size='caption'] {
   background: var(--vk-tint-ok);
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-ok);
 }
+.vk-drow.is-cur {
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
 .vk-drow.del {
   background: var(--vk-tint-err);
   box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-err);
@@ -716,15 +719,15 @@ vk-bits {
   color: var(--vk-ink-2);
 }
 .vk-bit.is-cur .vk-bit-v {
-  color: var(--vk-focus);
+  color: inherit;
 }
 .vk-bit.is-cur {
   background: var(--vk-tint-focus);
   border-radius: var(--vk-radius-sm);
 }
 .vk-field.is-cur {
-  border-color: var(--vk-focus);
-  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+  border-color: var(--vk-line-color);
+  box-shadow: none;
 }
 
 /* ================================================================ 步骤

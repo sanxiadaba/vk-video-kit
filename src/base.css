@@ -49,7 +49,7 @@ vk-page[theme='dark'] {
   color-scheme: dark;
 }
 
-/* 版心：不对称。右侧与底部是手机播放器 UI 的重灾区。 */
+/* 版心：对称 120 / 96。播放器 UI 是外层视频的事。 */
 .vk-stage {
   position: relative;
   z-index: 1;
@@ -208,6 +208,7 @@ vk-flow[overlay] > vk-card {
   width: calc(100% - var(--vk-space-7));
   justify-self: center;
   align-self: end;
+  margin-bottom: var(--vk-space-3);
 }
 vk-flow[overlay] > vk-card .vk-fbd {
   padding: var(--vk-space-2) var(--vk-space-5);
