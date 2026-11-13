@@ -1,7 +1,7 @@
 /** 构建期：窗口皮、页面、flow、卡片、图片、整页包装。 */
 import path from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { attrOf, hasAttr, serialize, raw, esc } from '../shared/dom.mjs';
+import { attrOf, hasAttr, serialize, raw, esc, textOf } from '../shared/dom.mjs';
 import { setStyle } from '../normalize.mjs';
 import { GAP } from '../vocab.mjs';
 
@@ -24,6 +24,16 @@ export function buildFlow(node) {
   if (cols === 'auto') template = 'none';
   else if (/^\d+$/.test(cols)) template = `repeat(${cols}, minmax(0, 1fr))`;
   else template = cols.split(/\s+/).map((n) => (/^\d+$/.test(n) ? `${n}fr` : n)).join(' ');
+
+  /* 两栏里一侧是一句短批注：自动堆叠，不让侧栏留孤字。 */
+  const tags = (node.childNodes || []).filter((c) => c.tagName);
+  const texts = tags.filter((c) => c.tagName === 'vk-text');
+  const others = tags.filter((c) => c.tagName !== 'vk-text');
+  const shortNote = texts.length === 1 && others.length === 1 && textOf(texts[0]).trim().length <= 15;
+  if (shortNote) {
+    template = 'minmax(0, 1fr)';
+    node.attrs.push({ name: 'data-vk-stack', value: '1' });
+  }
 
   setStyle(node, { '--vk-gap': `${gap}px`, '--vk-cols-template': template });
   if (cols === 'auto') node.attrs.push({ name: 'data-cols', value: 'auto' });

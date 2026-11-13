@@ -198,6 +198,12 @@ vk-flow[data-cols='auto'] {
   grid-template-columns: none;
   justify-content: start;
 }
+vk-flow[data-vk-stack] {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+vk-flow[data-vk-stack] > vk-text {
+  max-width: var(--vk-measure-body);
+}
 vk-flow[overlay] > * {
   grid-area: 1 / 1;
   position: relative;
