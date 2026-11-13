@@ -118,8 +118,8 @@ export const PAINT = {
 export const SYNTAX = {
   string: ['#0f766e', '#5eead4'],
   comment: ['#5b6472', '#9aa7b8'],
-  number: ['#b45309', '#fbbf24'],
-  keyword: ['#a21caf', '#e879f9'],
+  number: ['#92400e', '#fbbf24'],
+  keyword: ['#86198f', '#d8b4fe'],
   operator: ['#4b5563', '#9aa7b8'],
   fn: ['#111418', '#f8fafc'],
 };
