@@ -313,7 +313,7 @@ vk-table tr[current] td {
   background: none;
 }
 vk-table tr[current] td:first-child {
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
 vk-table td[current] {
   background: var(--vk-tint-focus);
@@ -379,7 +379,7 @@ vk-list[variant='ordered'] > li::before {
 }
 vk-list > li[current] {
   background: none;
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-1);
 }
@@ -455,8 +455,8 @@ vk-dir {
   font-weight: var(--vk-w-bold);
 }
 .vk-node[current] > .vk-nrow {
-  background: var(--vk-tint-focus);
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+  background: none;
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
 }
 .vk-node[current] > .vk-nrow .vk-ic {
