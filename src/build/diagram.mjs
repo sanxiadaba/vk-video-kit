@@ -98,7 +98,19 @@ export function buildGraph(node) {
     .map((li) => `<i class="vk-gedge" data-from="${esc(attrOf(li, 'from') || '')}" data-to="${esc(attrOf(li, 'to') || '')}"${hasAttr(li, 'current') ? ' current' : ''} data-tone="${esc(attrOf(li, 'tone') || 'neutral')}">${labelOf(li)}</i>`)
     .join('');
 
-  return `<div class="vk-graph" data-layout="${attrOf(node, 'layout') || 'row'}" data-dir="${attrOf(node, 'direction') || 'horizontal'}"><div class="vk-gstage">${nodeHtml}${edgeHtml}</div><svg class="vk-gedges" aria-hidden="true"></svg></div>`;
+  /* 边有两条以上不同标签时，自动出一行图例：颜色不再需要猜。 */
+  const seen = new Map();
+  for (const li of edges) {
+    const label = labelOf(li);
+    const tone = attrOf(li, 'tone') || 'neutral';
+    if (label && !seen.has(label)) seen.set(label, tone);
+  }
+  const legendHtml =
+    seen.size >= 2
+      ? `<div class="vk-glegend">${[...seen].map(([label, tone]) => `<span data-tone="${esc(tone)}"><i></i>${esc(label)}</span>`).join('')}</div>`
+      : '';
+
+  return `<div class="vk-graph" data-layout="${attrOf(node, 'layout') || 'row'}" data-dir="${attrOf(node, 'direction') || 'horizontal'}"><div class="vk-gstage">${nodeHtml}${edgeHtml}</div><svg class="vk-gedges" aria-hidden="true"></svg></div>${legendHtml}`;
 }
 
 /* ------------------------------------------------------------------ 时序 */

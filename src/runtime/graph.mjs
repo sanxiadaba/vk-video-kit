@@ -59,6 +59,7 @@ export class VkGraph extends VkElement {
     if (!this._stage) {
       this._stage = this.querySelector('.vk-gstage');
       this._svg = this.querySelector('.vk-gedges');
+      this._graph = this.querySelector('.vk-graph');
     }
   }
 
@@ -242,9 +243,10 @@ export class VkGraph extends VkElement {
     });
     this._stage.style.width = `${viewW}px`;
     this._stage.style.height = `${H}px`;
+    if (this._graph) this._graph.style.height = `${H}px`;
     this.style.width = `${viewW}px`;
     this.style.marginInline = 'auto';
-    this.style.height = `${H}px`;
+    this.style.height = 'auto';
 
     const svg = this._svg;
     if (!svg) return;

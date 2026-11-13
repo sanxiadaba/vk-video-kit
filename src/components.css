@@ -1045,6 +1045,34 @@ vk-graph {
   position: relative;
   min-height: 180px;
 }
+.vk-glegend {
+  display: flex;
+  align-items: center;
+  gap: var(--vk-space-6);
+  padding-top: var(--vk-space-3);
+  font-size: var(--vk-fs-caption);
+  color: var(--vk-ink-2);
+}
+.vk-glegend span {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--vk-space-2);
+}
+.vk-glegend i {
+  width: var(--vk-space-3);
+  height: var(--vk-space-3);
+  border-radius: 50%;
+  background: var(--vk-ink-3);
+}
+.vk-glegend [data-tone='ok'] i {
+  background: var(--vk-ok);
+}
+.vk-glegend [data-tone='warn'] i {
+  background: var(--vk-warn);
+}
+.vk-glegend [data-tone='err'] i {
+  background: var(--vk-err);
+}
 .vk-gstage {
   position: absolute;
   left: 0;
