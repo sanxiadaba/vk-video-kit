@@ -688,6 +688,7 @@ vk-bits {
   justify-items: center;
   gap: 2px;
   width: 80px;
+  flex: 0 0 80px;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
   font-style: normal;
