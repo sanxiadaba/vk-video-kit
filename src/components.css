@@ -273,6 +273,18 @@ vk-table td {
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-1);
 }
+vk-table table:has(th:nth-child(3):last-child) {
+  table-layout: fixed;
+}
+vk-table table:has(th:nth-child(3):last-child) th:nth-child(1) {
+  width: 45%;
+}
+vk-table table:has(th:nth-child(3):last-child) th:nth-child(2) {
+  width: 30%;
+}
+vk-table table:has(th:nth-child(3):last-child) th:nth-child(3) {
+  width: 25%;
+}
 vk-table th:first-child,
 vk-table td:first-child {
   padding-left: var(--vk-space-6);
