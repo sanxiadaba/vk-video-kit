@@ -1,0 +1,11 @@
+<vk-page id="asm">
+  <vk-head kicker="汇编" counter="05" lede="C 里一行加法，落到三条指令。">add = a + b，机器做了三件事。</vk-head>
+  <vk-code as="asm" title="add.dis" current="2" hex>
+    <script type="text/plain" data-vk-source>
+0000000000000000 <add>:
+   0: 48 89 f8              mov    %rdi,%rax
+   3: 48 01 f0              add    %rsi,%rax
+   6: c3                    ret
+    </script>
+  </vk-code>
+</vk-page>

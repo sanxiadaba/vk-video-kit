@@ -1,8 +1,7 @@
 /* ============================================================================
-   v21 · 画在别人身上的一层
+   v23 · 标注
    ----------------------------------------------------------------------------
    不改布局：绝对定位覆盖整帧，只画线、圈、气泡、量度。
-   几何只有一套：6px 线、20×10 实心头、4px 间隙、8px 圆角。
    ========================================================================== */
 
 vk-callout {
@@ -23,7 +22,7 @@ vk-callout {
 .vk-co-ring {
   fill: none;
   stroke: var(--vk-focus);
-  stroke-width: 4;
+  stroke-width: var(--vk-line-w-connector);
   stroke-linejoin: round;
 }
 
@@ -31,12 +30,12 @@ vk-callout {
 .vk-co-lead {
   fill: none;
   stroke: var(--vk-tone, var(--vk-info));
-  stroke-width: 6;
+  stroke-width: var(--vk-line-w-connector);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .vk-co-lead {
-  stroke-width: 4;
+  stroke-width: var(--vk-line-w-hair);
 }
 
 .vk-co-head {

@@ -1,15 +1,15 @@
 /**
- * v21 · 标注
+ * v23 · 标注
  * ----------------------------------------------------------------------------
  * 画在别人身上的一层，不改布局。四种形态：
- *   arrow  从一处指向另一处（直线 / 折线 / 曲线）
- *   ring   圈住目标的字（按墨迹取框，不按整行盒子）
+ *   arrow  从一处指向另一处
+ *   ring   圈住目标的字（按墨迹取框）
  *   note   带引线的注释气泡，文字就是标签里的内容
- *   badge  编号点
+ *   measure 量两点之间
  *
- * 锚点只认：#id、#id@line:3（窗口里第 3 行）、#id@item:2、#id@side:left。
+ * 锚点只认：#id、#id@line:3、#id@line:3-4、#id@item:2、#id@bit:5、#id@side:left。
  */
-import { VkElement, define, resolveAnchor, inkRect, warn } from './base.mjs';
+import { VkElement, define, resolveAnchor } from './base.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -20,7 +20,7 @@ const mk = (tag, attrs = {}) => {
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
-/* 两个矩形之间最近的一对边中点。 */
+/* 两个矩形之间最近的一对边。 */
 function nearestSide(a, b) {
   const dx = b.left + b.width / 2 - (a.left + a.width / 2);
   const dy = b.top + b.height / 2 - (a.top + a.height / 2);
@@ -48,7 +48,7 @@ function pointOn(rect, side) {
 }
 
 export class VkCallout extends VkElement {
-  static __observed = ['mode', 'for', 'from', 'to', 'side', 'gap', 'shape', 'label', 'tone'];
+  static __observed = ['mode', 'for', 'from', 'to', 'label', 'tone'];
 
   paint() {
     if (!this._svg) {
@@ -64,7 +64,6 @@ export class VkCallout extends VkElement {
       this._note.hidden = true;
       this.appendChild(this._note);
     }
-    // 作者写的文字是 note 的内容：搬一次，不重复搬。
     if (!this._noteTook) {
       const text = [...this.childNodes].filter((n) => n.nodeType === 3 || (n.nodeType === 1 && !n.classList?.contains('vk-co-svg') && !n.classList?.contains('vk-co-label') && !n.classList?.contains('vk-co-note')));
       for (const n of text) this._note.appendChild(n);
@@ -86,24 +85,14 @@ export class VkCallout extends VkElement {
 
     const mode = this.getAttribute('mode') || 'arrow';
     const rel = (r) => ({ left: r.left - origin.left, top: r.top - origin.top, width: r.width, height: r.height });
-    const missing = () => {
-      this.setAttribute('data-vk-anchor-missing', '1');
-    };
+    const missing = () => this.setAttribute('data-vk-anchor-missing', '1');
 
     if (mode === 'ring') {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
       const pad = 8;
-      const box = mk('rect', {
-        class: 'vk-co-ring',
-        x: r.left - pad,
-        y: r.top - pad,
-        width: r.width + pad * 2,
-        height: r.height + pad * 2,
-        rx: 8,
-      });
-      this._svg.appendChild(box);
+      this._svg.appendChild(mk('rect', { class: 'vk-co-ring', x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2, rx: 8 }));
       return;
     }
 
@@ -111,15 +100,13 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      /* 间距读构建期归一化的 --vk-gap；读不到再退回属性/32。 */
       const gap = 24;
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
 
-      /* 气泡不许盖字。候选位置分两圈：贴着目标那一行，和贴着它所属的件。
-         先按「压到多少字的面积」排，面积相同再按离目标远近排。 */
-      const owner = t.el.closest('vk-code, vk-surface, vk-tree, vk-table, vk-cells, vk-bits, vk-bytes, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-img, vk-text') || t.el;
+      /* 气泡不许盖字：先按「压到多少字的面积」排，面积相同再按离目标远近排。 */
+      const owner = t.el.closest('vk-code, vk-card, vk-dir, vk-table, vk-cells, vk-bits, vk-bytes, vk-list, vk-steps, vk-bars, vk-timeline, vk-graph, vk-img, vk-text') || t.el;
       const ob = rel(owner.getBoundingClientRect());
       const obstacles = [ob];
       for (const el of page.querySelectorAll('vk-code .vk-line, vk-code .vk-dhunk, vk-text, .vk-title, .vk-lede, vk-table tr, vk-list li, .vk-step, .vk-bar, .vk-cell, .vk-bit, .vk-gnode, .vk-tl-i, .vk-node, .vk-brow')) {
@@ -138,12 +125,8 @@ export class VkCallout extends VkElement {
         return { x, y };
       };
 
-      const want = this.getAttribute('side') || 'auto';
-      const sides = want === 'auto' ? ['right', 'left', 'bottom', 'top'] : [want];
-      const wanted = sides.map((side) => ({ ...place(r, side), side }));
-      const cands = [...wanted];
-      for (const side of sides) cands.push({ ...place(ob, side), side: `block-${side}` });
-
+      const sides = ['right', 'left', 'bottom', 'top'];
+      const cands = [...sides.map((side) => ({ ...place(r, side), side })), ...sides.map((side) => ({ ...place(ob, side), side: `block-${side}` }))];
       const cx = r.left + r.width / 2;
       const cy = r.top + r.height / 2;
       let best = null;
@@ -158,14 +141,34 @@ export class VkCallout extends VkElement {
         if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
       }
       const x = clamp(best.x, 8, origin.width - bw - 8);
-      const y = clamp(best.y, 8, origin.height - bh - 8);
+      let y = clamp(best.y, 8, origin.height - bh - 8);
+      /* 气泡不能进手机播放器 UI 的右/下安全区。 */
+      const stage = page.querySelector('.vk-stage');
+      if (stage) {
+        const sr = stage.getBoundingClientRect();
+        const sc = getComputedStyle(stage);
+        const sl = sr.left - origin.left + parseFloat(sc.paddingLeft || 0);
+        const st = sr.top - origin.top + parseFloat(sc.paddingTop || 0);
+        const sr2 = sr.right - origin.left - parseFloat(sc.paddingRight || 0);
+        const sb = sr.bottom - origin.top - parseFloat(sc.paddingBottom || 0);
+        const cx2 = clamp(x, sl, Math.max(sl, sr2 - bw));
+        y = clamp(y, st, Math.max(st, sb - bh));
+        this._note.style.left = `${cx2}px`;
+        this._note.style.top = `${y}px`;
+        const bubble = { left: cx2, top: y, width: bw, height: bh };
+        const [a, b] = nearestSide(bubble, r);
+        const from = pointOn(bubble, a);
+        const to = pointOn(r, b);
+        this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: from.x, y1: from.y, x2: to.x, y2: to.y }));
+        this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: to.x, cy: to.y, r: 6 }));
+        return;
+      }
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
-      // 引线：从气泡最近的一点指向目标。
       const bubble = { left: x, top: y, width: bw, height: bh };
       const [a, b] = nearestSide(bubble, r);
-      const from = { ...pointOn(bubble, a) };
-      const to = { ...pointOn(r, b) };
+      const from = pointOn(bubble, a);
+      const to = pointOn(r, b);
       this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: from.x, y1: from.y, x2: to.x, y2: to.y }));
       this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: to.x, cy: to.y, r: 6 }));
       return;
@@ -197,8 +200,11 @@ export class VkCallout extends VkElement {
         this._label.textContent = label;
         const lw = this._label.offsetWidth;
         const lh = this._label.offsetHeight;
-        this._label.style.left = `${clamp((a.x + b.x) / 2 - lw / 2, 8, origin.width - lw - 8)}px`;
-        this._label.style.top = `${clamp((a.y + b.y) / 2 - lh / 2, 8, origin.height - lh - 8)}px`;
+        const horizontal = Math.abs(b.x - a.x) >= Math.abs(b.y - a.y);
+        const lx = horizontal ? (a.x + b.x) / 2 : (a.x + b.x) / 2 + 20;
+        const ly = horizontal ? (a.y + b.y) / 2 - lh - 8 : (a.y + b.y) / 2 - lh / 2;
+        this._label.style.left = `${clamp(lx - lw / 2, 8, origin.width - lw - 8)}px`;
+        this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
       }
       return;
     }
@@ -212,7 +218,6 @@ export class VkCallout extends VkElement {
     const [fs, ts] = from.side && to.side ? [from.side, to.side] : nearestSide(fr, tr);
     const a = pointOn(fr, fs);
     const b = pointOn(tr, ts);
-    const shape = this.getAttribute('shape') || 'curve';
     const dx = b.x - a.x;
     const dy = b.y - a.y;
     const len = Math.hypot(dx, dy) || 1;
@@ -223,29 +228,15 @@ export class VkCallout extends VkElement {
     const tip = { x: b.x - ux * 4, y: b.y - uy * 4 };
     const end = { x: tip.x - ux * headL, y: tip.y - uy * headL };
 
-    let d;
-    let prev = a;
-    if (shape === 'ortho') {
-      const horiz = fs === 'left' || fs === 'right';
-      const mid = horiz ? { x: (a.x + end.x) / 2, y: a.y } : { x: a.x, y: (a.y + end.y) / 2 };
-      const mid2 = horiz ? { x: mid.x, y: end.y } : { x: end.x, y: mid.y };
-      d = `M ${a.x} ${a.y} L ${mid.x} ${mid.y} Q ${mid2.x} ${mid2.y} ${end.x} ${end.y}`;
-      prev = mid2;
-    } else if (shape === 'straight') {
-      d = `M ${a.x} ${a.y} L ${end.x} ${end.y}`;
-      prev = a;
-    } else {
-      const mx = (a.x + end.x) / 2;
-      const my = (a.y + end.y) / 2;
-      const bow = Math.min(96, len * 0.16);
-      const cx = mx - (uy * bow);
-      const cy = my + (ux * bow);
-      d = `M ${a.x} ${a.y} Q ${cx} ${cy} ${end.x} ${end.y}`;
-      prev = { x: cx, y: cy };
-    }
+    const mx = (a.x + end.x) / 2;
+    const my = (a.y + end.y) / 2;
+    const bow = Math.min(96, len * 0.16);
+    const cx = mx - uy * bow;
+    const cy = my + ux * bow;
+    const d = `M ${a.x} ${a.y} Q ${cx} ${cy} ${end.x} ${end.y}`;
     this._svg.appendChild(mk('path', { class: 'vk-co-line', d }));
 
-    const ang = Math.atan2(tip.y - prev.y, tip.x - prev.x);
+    const ang = Math.atan2(tip.y - cy, tip.x - cx);
     const bx = tip.x - headL * Math.cos(ang);
     const by = tip.y - headL * Math.sin(ang);
     const p2 = { x: bx - headW * Math.sin(ang), y: by + headW * Math.cos(ang) };
@@ -257,8 +248,6 @@ export class VkCallout extends VkElement {
     if (label) {
       this._label.hidden = false;
       this._label.textContent = label;
-      const mx = (a.x + tip.x) / 2;
-      const my = (a.y + tip.y) / 2;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
       this._label.style.left = `${clamp(mx - lw / 2, 8, origin.width - lw - 8)}px`;

@@ -3,13 +3,12 @@ node_modules/
 
 # 构建产物
 dist/
-vk/
 out/
-assets/fonts/
+.vk-tmp/
 
 # 本地缓存 / 临时
-.vk-cache/
 .tmp/
+.tmp*/
 *.log
 *.bak
 
@@ -18,10 +17,6 @@ assets/fonts/
 Thumbs.db
 desktop.ini
 
-# 编译产物
-code/**/*.exe
-
 # 评审临时产物
-.tmp*/
 .live/
 .view-*.png

@@ -1,0 +1,14 @@
+<vk-page id="code">
+  <vk-head kicker="源码" counter="02" lede="只改第 2 行：把 7 写进第二个 int。">这一行在改内存。</vk-head>
+  <vk-flow cols="7 5" gap="wide" valign="center">
+    <vk-code id="c" lang="c" title="a.c" current="2">
+      <script type="text/plain" data-vk-source>
+int a[3] = {1, 2, 3};
+a[1] = 7;
+printf("%d\n", a[1]);
+      </script>
+    </vk-code>
+    <vk-text ink="secondary">从 a 起走一个 int，正好 4 个字节。</vk-text>
+  </vk-flow>
+  <vk-callout mode="ring" for="#c@line:2"></vk-callout>
+</vk-page>

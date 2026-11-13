@@ -1,17 +1,15 @@
 /**
- * v20 · 关系图
+ * v23 · 关系图
  * ----------------------------------------------------------------------------
  * 节点是构建期写好的 .vk-gnode；边有两种写法：
  *   1. 简写：节点上 after="父id"（单亲、向后）
- *   2. 显式：<li from="a" to="b" label="…">（可环、可双向、可带边标）
+ *   2. 显式：<li from="a" to="b">边标</li>（可环、可双向、可带边标）
  *
  * 四种布局：
  *   row      一条链 / 队列
  *   tree     父在上、子在下（递归树、堆）
  *   layered  x = 深度，y = lane（git 的两条时间线靠 lane 固定）
  *   mesh     环形摆放（BFS/DFS、死锁、事件循环）
- *
- * 为什么在运行期算：节点宽度要等字体真正加载后才能量准。
  */
 import { VkElement, define, warn } from './base.mjs';
 
@@ -25,7 +23,7 @@ const mk = (tag, attrs = {}) => {
   return el;
 };
 
-const GAP = () => 96;
+const GAP = () => 64;
 
 /** 圆角折线：每个拐点用 12px 二次曲线收一下。 */
 function roundedPath(points, r = 12) {
@@ -58,7 +56,7 @@ function hit(cx, cy, w, h, dx, dy) {
 }
 
 export class VkGraph extends VkElement {
-  static __observed = ['layout', 'direction', 'edge', 'gap'];
+  static __observed = ['layout', 'direction'];
 
   paint() {
     if (!this._stage) {
@@ -85,7 +83,7 @@ export class VkGraph extends VkElement {
       for (const ref of (n.dataset.after || '').split(/\s+/).filter(Boolean)) {
         const i = byId.get(ref);
         if (i == null) warn(this, `after="${ref}" 找不到节点`);
-        else links.push({ i, j, label: '' });
+        else links.push({ i, j, label: '', current: false, tone: '' });
       }
     });
     for (const def of this.querySelectorAll('.vk-gedge')) {
@@ -95,7 +93,7 @@ export class VkGraph extends VkElement {
         warn(this, `边 ${def.dataset.from} → ${def.dataset.to} 找不到节点`);
         continue;
       }
-      links.push({ i, j, label: def.dataset.label || '' });
+      links.push({ i, j, label: def.textContent.trim(), current: def.hasAttribute('current'), tone: def.getAttribute('data-tone') || '' });
     }
 
     /* 层级：从没有父的节点开始 BFS；环上的节点落在 0 层。 */
@@ -139,7 +137,6 @@ export class VkGraph extends VkElement {
         }
       });
     } else if (layout === 'mesh') {
-      /* 椭圆环：画面是 16:9，横向拉宽比正圆更撑得开，也不会顶出版心。 */
       const n = nodes.length;
       const Rx = Math.max(420, Math.min(620, ((maxW + gap) * n) / (2 * Math.PI) * 1.4));
       const Ry = Math.max(180, Rx * 0.42);
@@ -183,7 +180,7 @@ export class VkGraph extends VkElement {
           const laneAttr = Number(nodes[i].dataset.lane);
           const lane = Number.isFinite(laneAttr) ? laneAttr : slot.get(i) ?? 0;
           if (layout === 'tree') {
-            pos[i] = { x: lane * (maxW + gap), y: d * (maxH + gap * 1.35), w: sizes[i].w, h: sizes[i].h };
+            pos[i] = { x: lane * (maxW + gap), y: d * (maxH + gap * 0.8), w: sizes[i].w, h: sizes[i].h };
           } else {
             pos[i] = { x: d * (maxW + gap), y: lane * (maxH + gap * 0.55), w: sizes[i].w, h: sizes[i].h };
           }
@@ -201,7 +198,7 @@ export class VkGraph extends VkElement {
       }
     }
 
-    /* 平移到左上角，留 8px 边距。 */
+    /* 平移到左上角，留 8px 边距；内容比版心窄时居中。 */
     const minX = Math.min(...pos.map((p) => p.x));
     const minY = Math.min(...pos.map((p) => p.y));
     pos.forEach((p) => {
@@ -210,7 +207,6 @@ export class VkGraph extends VkElement {
     });
     const W = Math.max(...pos.map((p) => p.x + p.w)) + 8;
     const H = Math.max(...pos.map((p) => p.y + p.h)) + 8;
-    /* 图在版心里居中：内容比版心窄时不要贴在左边。 */
     const viewW = Math.max(W, this.clientWidth || W);
     const offX = Math.round((viewW - W) / 2);
     pos.forEach((p) => {
@@ -225,14 +221,12 @@ export class VkGraph extends VkElement {
     this._stage.style.height = `${H}px`;
     this.style.height = `${H}px`;
 
-    /* 连线 */
     const svg = this._svg;
     if (!svg) return;
     svg.replaceChildren();
     svg.setAttribute('viewBox', `0 0 ${viewW} ${H}`);
     svg.setAttribute('width', viewW);
     svg.setAttribute('height', H);
-    const mode = 'arrow';
     const group = mk('g');
     for (const l of links) {
       const a = pos[l.i];
@@ -241,7 +235,8 @@ export class VkGraph extends VkElement {
       const aCy = a.y + a.h / 2;
       const bCx = b.x + b.w / 2;
       const bCy = b.y + b.h / 2;
-      const current = nodes[l.j].dataset.state === 'current' || nodes[l.i].dataset.state === 'current';
+      const current = l.current || nodes[l.j].hasAttribute('current') || nodes[l.i].hasAttribute('current');
+      const tone = l.tone || '';
 
       let points;
       if (layout === 'tree') {
@@ -281,10 +276,10 @@ export class VkGraph extends VkElement {
       const base = { x: tip.x - ux * 28, y: tip.y - uy * 28 };
       points[points.length - 1] = layout === 'tree' ? tip : base;
 
-      group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null }));
+      group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
       const b2 = { x: base.x - 14 * uy, y: base.y + 14 * ux };
       const b3 = { x: base.x + 14 * uy, y: base.y - 14 * ux };
-      if (layout !== 'tree') group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null }));
+      if (layout !== 'tree') group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null, 'data-tone': tone || null }));
 
       if (l.label) {
         const from = points[0];
@@ -293,7 +288,7 @@ export class VkGraph extends VkElement {
         const nx = -(p2.y - from.y);
         const ny = p2.x - from.x;
         const nl = Math.hypot(nx, ny) || 1;
-        const t = mk('text', { class: 'vk-edge-label', x: lx + (nx / nl) * 20, y: ly + (ny / nl) * 20, 'text-anchor': 'middle' });
+        const t = mk('text', { class: 'vk-edge-label', x: lx + (nx / nl) * 20, y: ly + (ny / nl) * 20, 'text-anchor': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });
         t.textContent = l.label;
         group.appendChild(t);
       }

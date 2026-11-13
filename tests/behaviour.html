@@ -1,17 +1,12 @@
-<!-- 行为页：不参与出图评审，只给测试脚本量「运行期到底做了没有」。 -->
-
-<vk-page id="behave">
-  <vk-head kicker="行为" size="subhead">运行期只做四件事。</vk-head>
-  <vk-flow cols="5 7" gap="wide">
-    <vk-code id="shrink" lang="c" title="long.c">
+<vk-page id="behave-code">
+  <vk-head kicker="行为" counter="01">运行期只做需要测量的四件事。</vk-head>
+  <vk-flow cols="7 5" gap="wide" valign="center">
+    <vk-code id="shrink" lang="c" title="long.c" current="1">
       <script type="text/plain" data-vk-source>
 int very_long_variable_name = another_long_name + yet_another_name_here;
       </script>
     </vk-code>
-    <vk-flow gap="close">
-      <vk-text id="inline" size="body">行内 <code>a[i]</code> 与键位 <kbd>Ctrl</kbd></vk-text>
-      <vk-text id="icon" icon="eye">图标行</vk-text>
-    </vk-flow>
+    <vk-text id="inline">行内 <code>a[i]</code> 与键位 <kbd>Ctrl</kbd></vk-text>
   </vk-flow>
 </vk-page>
 
@@ -21,24 +16,42 @@ int very_long_variable_name = another_long_name + yet_another_name_here;
       <tr><th>名字</th><th>大小</th></tr>
       <tr><td>数组</td><td>32 KB</td></tr>
       <tr><td>链表</td><td>16 GB</td></tr>
-      <tr state="current"><td>内存</td><td>100 ns</td></tr>
+      <tr current><td>内存</td><td>100 ns</td></tr>
     </table>
   </vk-table>
+  <vk-callout mode="ring" for="#numtable@item:3"></vk-callout>
 </vk-page>
 
 <vk-page id="behave-graph">
   <vk-graph layout="row">
-    <li id="a" label="a"></li>
-    <li id="b" label="b" after="a"></li>
-    <li id="c" label="c" after="b"></li>
+    <li id="a">a</li>
+    <li id="b" after="a">b</li>
+    <li id="c" after="b">c</li>
   </vk-graph>
-  <vk-callout id="ring" mode="ring" for="#a"></vk-callout>
+  <vk-callout mode="ring" for="#a"></vk-callout>
 </vk-page>
 
-<vk-page id="behave-dark" surface="dark">
+<vk-page id="behave-dark" theme="dark">
   <vk-code id="darkwin" lang="c" title="dark.c">
     <script type="text/plain" data-vk-source>
 int a = 1;
     </script>
   </vk-code>
+</vk-page>
+
+<vk-page id="behave-seq">
+  <vk-seq participants="A,B,C">
+    <li from="A" to="B">1</li>
+    <li from="C" to="A" current>2</li>
+  </vk-seq>
+</vk-page>
+
+<vk-page id="behave-cells">
+  <vk-cells id="cells" addr="0x1000" stride="4" cols="4">
+    <li value="1" label="a[0]" current></li>
+    <li value="2" label="a[1]"></li>
+    <li value="3" label="a[2]"></li>
+    <li value="4" label="a[3]"></li>
+  </vk-cells>
+  <vk-callout mode="measure" from="#cells@item:1" to="#cells@item:2" label="+4"></vk-callout>
 </vk-page>

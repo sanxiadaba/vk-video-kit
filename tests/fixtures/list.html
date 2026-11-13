@@ -1,0 +1,8 @@
+<vk-page id="list">
+  <vk-head kicker="寻址" counter="07" lede="多一次寻址，就多一次内存访问。">取一个值，要经过三次寻址。</vk-head>
+  <vk-list variant="ordered">
+    <li>取数组首地址</li>
+    <li current>加上下标 × 4</li>
+    <li>读出那 4 个字节</li>
+  </vk-list>
+</vk-page>

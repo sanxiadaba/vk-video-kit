@@ -1,0 +1,11 @@
+<vk-page id="dir">
+  <vk-head kicker="目录" counter="08" lede="缩进和树线表达层级。">一个目录，三层文件。</vk-head>
+  <vk-flow cols="7 5" gap="wide" valign="center">
+    <vk-dir title="目录" depth="3" limit="6" current="src/main.c">
+      <script type="text/plain" data-vk-tree>
+{"children":[{"name":"src","children":[{"name":"main.c"},{"name":"util.c"}]},{"name":"README.md"}]}
+      </script>
+    </vk-dir>
+    <vk-text ink="secondary">根目录 → 子目录 → 文件。</vk-text>
+  </vk-flow>
+</vk-page>

@@ -1,0 +1,9 @@
+<vk-page id="math">
+  <vk-head kicker="复杂度" counter="09" align="center" lede="每层做 O(n) 的活，一共 log n 层。">所以总复杂度是 O(n log n)。</vk-head>
+  <vk-math align="center">
+    <script type="text/plain" data-vk-source>
+T(n) = 2T\left(\frac{n}{2}\right) + O(n)
+    </script>
+  </vk-math>
+  <vk-text align="center" ink="secondary">分治把问题折半，合并要扫一遍。</vk-text>
+</vk-page>

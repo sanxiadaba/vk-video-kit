@@ -1,0 +1,10 @@
+<vk-page id="callout-measure">
+  <vk-head kicker="标注" counter="27" lede="两个格子之间，正好 4 个字节。">量两个格子之间。</vk-head>
+  <vk-cells id="cells" addr="0x1000" stride="4" cols="4">
+    <li value="1" label="a[0]" current></li>
+    <li value="2" label="a[1]"></li>
+    <li value="3" label="a[2]"></li>
+    <li value="4" label="a[3]"></li>
+  </vk-cells>
+  <vk-callout mode="measure" from="#cells@item:1" to="#cells@item:2" label="+4"></vk-callout>
+</vk-page>

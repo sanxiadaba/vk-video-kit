@@ -1,0 +1,11 @@
+<vk-page id="graph-layered">
+  <vk-head kicker="版本" counter="18" lede="分叉之后，再合并。">git 的一条时间线。</vk-head>
+  <vk-graph layout="layered">
+    <li id="a" lane="0">A</li>
+    <li id="b" lane="0" after="a">B</li>
+    <li id="c" lane="1" after="a">C</li>
+    <li id="d" lane="0" after="b">D</li>
+    <li id="e" lane="1" after="c">E</li>
+    <li from="b" to="e">merge</li>
+  </vk-graph>
+</vk-page>

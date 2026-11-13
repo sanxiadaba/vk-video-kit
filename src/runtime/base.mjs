@@ -1,8 +1,8 @@
 /**
- * v21 · 运行期底座
+ * v23 · 运行期底座
  * ----------------------------------------------------------------------------
  * 构建期已经把所有能算的几何算完了。运行期只做四件事：
- *   1. 等字体与图片真正就绪，并等到布局不再变化（不是猜 32ms）
+ *   1. 等字体与图片真正就绪，并等到布局不再变化
  *   2. 代码窗按窗宽缩字号，缩到底线为止
  *   3. 关系图的节点测量与连线
  *   4. 标注的锚点解析与画线
@@ -56,28 +56,34 @@ export function warn(el, message) {
 /* ---------------------------------------------------------------- 几何 */
 export const rectOf = (el) => el.getBoundingClientRect();
 
+const union = (rects) => {
+  let out = null;
+  for (const r of rects) {
+    if (!r || (r.width < 0.5 && r.height < 0.5)) continue;
+    out = out
+      ? { left: Math.min(out.left, r.left), top: Math.min(out.top, r.top), right: Math.max(out.right, r.right), bottom: Math.max(out.bottom, r.bottom) }
+      : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  }
+  if (!out) return null;
+  return { ...out, width: out.right - out.left, height: out.bottom - out.top };
+};
+
 /** 墨迹矩形：元素里「真正有字」的那一块。圈一行代码时，行盒很宽，字只有一小段。 */
 export function inkRect(el) {
   const base = el.getBoundingClientRect();
-  let out = null;
+  const rects = [];
   const range = document.createRange();
   const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
     if (!n.textContent.trim()) continue;
     range.selectNodeContents(n);
-    for (const r of range.getClientRects()) {
-      if (r.width < 0.5 || r.height < 0.5) continue;
-      out = out
-        ? { left: Math.min(out.left, r.left), top: Math.min(out.top, r.top), right: Math.max(out.right, r.right), bottom: Math.max(out.bottom, r.bottom) }
-        : { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
-    }
+    for (const r of range.getClientRects()) if (r.width >= 0.5 && r.height >= 0.5) rects.push(r);
   }
-  if (!out) return base;
-  return { left: out.left, top: out.top, right: out.right, bottom: out.bottom, width: out.right - out.left, height: out.bottom - out.top };
+  return union(rects) || base;
 }
 
 /* ---------------------------------------------------------------- 锚点
-   只认三种部件：窗口里的第 N 行、第 N 个单元、某个元素的某一边。 */
+   只认：#id、#id@line:3、#id@line:3-4、#id@item:2、#id@bit:5、#id@side:left。 */
 const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
 
 function safeQuery(root, sel, owner) {
@@ -89,39 +95,42 @@ function safeQuery(root, sel, owner) {
   }
 }
 
-/** #id / #id@line:3 / #id@item:2 / #id@bit:5 / #id@side:left，或任意 CSS 选择器。 */
+const inRange = (n, args) => {
+  const m = String(args).match(/^(\d+)(?:\s*-\s*(\d+))?$/);
+  if (!m) return false;
+  const a = Number(m[1]);
+  const b = m[2] === undefined ? a : Number(m[2]);
+  return n >= a && n <= b;
+};
+
+const pick = (host, attr, args) => {
+  const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));
+  if (!els.length) return null;
+  return { el: els[0], rect: union(els.map((el) => inkRect(el.querySelector('.vk-lc') || el))), side: null };
+};
+
 export function resolveAnchor(root, expr, owner) {
   const rawExpr = String(expr ?? '').trim();
   if (!rawExpr) return null;
   if (rawExpr.startsWith('#') && rawExpr.includes('@')) {
-    const [head, ...rest] = rawExpr.split('@');
-    const host = safeQuery(root, head, owner);
+    const at = rawExpr.indexOf('@');
+    const host = safeQuery(root, rawExpr.slice(0, at), owner);
     if (!host) return null;
-    const [part, ...args] = rest.join('@').split(':');
+    const [part, ...args] = rawExpr.slice(at + 1).split(':');
     const arg = (args[0] || '').trim();
-    if (part === 'line') {
-      const el = host.querySelector(`[data-vk-line="${cssEscape(arg)}"]`);
-      return el ? { el, rect: inkRect(el.querySelector('.vk-lc') || el), side: null } : null;
-    }
-    if (part === 'item') {
-      const el = host.querySelector(`[data-vk-item="${cssEscape(arg)}"]`);
-      return el ? { el, rect: inkRect(el), side: null } : null;
-    }
-    if (part === 'bit') {
-      const el = host.querySelector(`[data-vk-bit="${cssEscape(arg)}"]`);
-      return el ? { el, rect: inkRect(el), side: null } : null;
-    }
+    if (part === 'line') return pick(host, 'data-vk-line', arg);
+    if (part === 'item') return pick(host, 'data-vk-item', arg);
+    if (part === 'bit') return pick(host, 'data-vk-bit', arg);
     if (part === 'side') {
       const r = host.getBoundingClientRect();
-      const side = arg;
-      if (!['top', 'right', 'bottom', 'left'].includes(side)) return null;
+      if (!['top', 'right', 'bottom', 'left'].includes(arg)) return null;
       const rect = {
-        left: side === 'left' ? r.left : side === 'right' ? r.right : r.left + r.width / 2,
-        top: side === 'top' ? r.top : side === 'bottom' ? r.bottom : r.top + r.height / 2,
+        left: arg === 'left' ? r.left : arg === 'right' ? r.right : r.left + r.width / 2,
+        top: arg === 'top' ? r.top : arg === 'bottom' ? r.bottom : r.top + r.height / 2,
         width: 0,
         height: 0,
       };
-      return { el: host, rect, side, box: r };
+      return { el: host, rect, side: arg, box: r };
     }
     return null;
   }
@@ -252,10 +261,9 @@ VK.ready = async () => {
   if (document.readyState === 'loading') {
     await new Promise((r) => document.addEventListener('DOMContentLoaded', r, { once: true }));
   }
-  // 字体：加载失败也要显形（audit 会读这个标记）。
   await document.fonts?.ready;
   const families = ['Inter', 'JetBrains Mono', 'Noto Sans SC'];
-  VK._fonts = families.map((f) => ({ family: f, ok: document.fonts?.check?.(`400 16px "${f}"`) ?? true }));
+  VK._fonts = families.map((f) => ({ family: f, ok: [400, 500, 600].some((w) => document.fonts?.check?.(`${w} 16px "${f}"`)) ?? true }));
   await Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
 
   let prev = '';
@@ -271,5 +279,3 @@ VK.ready = async () => {
   document.documentElement.setAttribute('data-vk-ready', '');
   return true;
 };
-
-
