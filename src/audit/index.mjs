@@ -105,7 +105,8 @@ export function auditPage(stage) {
 
   const body = page.querySelector('.vk-body');
   const bodyRect = body?.getBoundingClientRect();
-  const bodyInk = body ? inkBox(body) : null;
+  /* fill 只看文字：整帧背景图和卡片底不该把「内容占了多少」算满。 */
+  const bodyInk = body ? textBox(body) : null;
   const fill = bodyInk && bodyRect?.height ? Math.round(((bodyInk.bottom - bodyInk.top) / bodyRect.height) * 100) : 0;
 
   /* 安全区：只用文字算，避免整帧图片误报。 */
@@ -164,9 +165,11 @@ export function auditPage(stage) {
   /* 重叠：同一层相邻块之间有明显相交才报。 */
   const groups = [page.querySelector('.vk-body'), ...page.querySelectorAll('vk-flow')].filter(Boolean);
   for (const g of groups) {
+    if (g.hasAttribute('overlay')) continue;
     const kids = [...g.children].filter((c) => c.localName.startsWith('vk-') && !c.closest('vk-callout'));
     for (let i = 0; i < kids.length; i++) {
       for (let j = i + 1; j < kids.length; j++) {
+        if (kids[i].getAttribute('bleed') === 'all' || kids[j].getAttribute('bleed') === 'all') continue;
         const a = kids[i].getBoundingClientRect();
         const b = kids[j].getBoundingClientRect();
         const w = Math.min(a.right, b.right) - Math.max(a.left, b.left);
@@ -190,7 +193,8 @@ export function auditPage(stage) {
   const seqRows = page.querySelectorAll('.vk-seq-row').length;
   const tableRows = [...page.querySelectorAll('vk-table')].map((t) => t.querySelectorAll('tr[current], tr').length);
 
-  if (fill > 0 && fill < 45) say('FILL_LOW', `正文只占 ${fill}%：放大这一件，或把下一帧的内容提前`);
+  const intentionalFullBleed = !!page.querySelector('vk-img[bleed="all"], vk-flow[overlay]');
+  if (!intentionalFullBleed && fill > 0 && fill < 45) say('FILL_LOW', `正文只占 ${fill}%：放大这一件，或把下一帧的内容提前`);
   if (fill > 100) say('FILL_HIGH', `正文区 ${fill}%：这一帧已经塞满，拆帧或减一行`);
   if (focus > 1) say('FOCUS', `焦点 ${focus} 处：一帧只留一处 current`);
   if (small.length) say('SMALL', `${small.length} 处字在手机上 < 16px（${small.slice(0, 3).map((s) => `"${s.text}" ${s.mobile}px`).join('、')}）`);
