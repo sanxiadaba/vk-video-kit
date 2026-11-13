@@ -140,6 +140,7 @@ export function resolveAnchor(root, expr, owner) {
 
 /* ---------------------------------------------------------------- 布局循环 */
 export const PLACE = (VK._place ||= new Set());
+export const FIT = (VK._fit ||= new Set());
 export const EDGES = (VK._edges ||= new Set());
 
 export function layout() {
@@ -151,6 +152,17 @@ export function layout() {
     }
     try {
       el.place?.();
+    } catch (e) {
+      el.fail?.(e);
+    }
+  }
+  for (const el of FIT) {
+    if (!el.isConnected) {
+      FIT.delete(el);
+      continue;
+    }
+    try {
+      el.fit?.();
     } catch (e) {
       el.fail?.(e);
     }

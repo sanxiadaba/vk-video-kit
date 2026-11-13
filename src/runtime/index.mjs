@@ -5,6 +5,7 @@
  * 自检不在这里：它单独打进 dist/audit.js，避免每张交付页都背一份测量代码。
  */
 import './base.mjs';
+import './page.mjs';
 import './elements.mjs';
 import './callout.mjs';
 import './graph.mjs';
