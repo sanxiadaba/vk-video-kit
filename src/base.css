@@ -209,6 +209,11 @@ vk-flow[overlay] > * {
   position: relative;
   z-index: 1;
 }
+vk-flow[overlay] > vk-card {
+  width: 60%;
+  justify-self: center;
+  align-self: end;
+}
 vk-flow > * {
   grid-column: span var(--vk-span, 1);
   min-width: 0;
