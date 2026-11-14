@@ -561,16 +561,18 @@ vk-cells {
 }
 .vk-cell-p {
   position: absolute;
-  top: calc(var(--vk-space-9) * -1 + 24px);
+  top: -112px;
   left: 50%;
   transform: translateX(-50%);
   padding: var(--vk-space-1) var(--vk-space-3);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-focus);
   color: var(--vk-on-focus);
-  font-size: 40px;
+  font-size: 80px;
   line-height: 1.2;
+  font-weight: var(--vk-w-bold);
   font-family: var(--vk-font-mono);
+  text-transform: uppercase;
   white-space: nowrap;
 }
 .vk-cell-p::after {
