@@ -261,6 +261,20 @@ export class VkCallout extends VkElement {
       const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
       const body = page.querySelector('.vk-body');
       const safeBottom = body ? body.getBoundingClientRect().bottom - origin.top - 8 : origin.height - 8;
+
+      /* 行锚点的 note 一律贴在同一条线的右侧，短实线直连；不参与碰撞投票。 */
+      if (t.el.matches('.vk-line')) {
+        const nx = ob.right + gap;
+        const ny = cy(r) - bh / 2;
+        if (nx + bw <= origin.width - 8 && ny >= 8 && ny + bh <= safeBottom) {
+          this._note.style.left = `${nx}px`;
+          this._note.style.top = `${ny}px`;
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: r.right, y1: cy(r), x2: nx, y2: cy(r) }));
+          this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: r.right, cy: cy(r), r: 6 }));
+          return;
+        }
+      }
+
       const cands = [...sides.map((side) => ({ ...place(r, side), side })), ...sides.map((side) => ({ ...place(ob, side), side: `block-${side}` }))];
       const tx = cx(r);
       const ty = cy(r);

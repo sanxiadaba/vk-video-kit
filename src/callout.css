@@ -36,7 +36,6 @@ vk-callout {
 }
 .vk-co-lead {
   stroke-width: var(--vk-line-w-hair);
-  stroke-dasharray: 10 10;
 }
 
 .vk-co-head {
