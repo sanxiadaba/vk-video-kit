@@ -22,7 +22,7 @@ vk-callout {
 .vk-co-ring {
   fill: none;
   stroke: var(--vk-ink-1);
-  stroke-width: var(--vk-line-w-hair);
+  stroke-width: var(--vk-line-w-connector);
   stroke-linejoin: round;
 }
 
@@ -36,6 +36,7 @@ vk-callout {
 }
 .vk-co-lead {
   stroke-width: var(--vk-line-w-hair);
+  stroke-dasharray: 10 10;
 }
 
 .vk-co-head {
@@ -48,11 +49,13 @@ vk-callout {
 
 .vk-co-label {
   position: absolute;
-  padding: 0 var(--vk-space-3);
+  padding: var(--vk-space-2) var(--vk-space-4);
+  border-radius: var(--vk-radius-sm);
+  border: var(--vk-line-w-hair) solid var(--vk-ink-1);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -60,9 +63,11 @@ vk-callout {
 .vk-co-note {
   position: absolute;
   max-width: 720px;
-  padding: var(--vk-space-2) var(--vk-space-3);
+  padding: var(--vk-space-3) var(--vk-space-4);
+  border-radius: var(--vk-radius-sm);
+  border: var(--vk-line-w-hair) solid var(--vk-ink-1);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1.35;
 }

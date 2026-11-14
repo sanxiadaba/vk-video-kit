@@ -19,10 +19,10 @@ const mk = (tag, attrs = {}) => {
 };
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-const GAP = 8;
-const TIP_GAP = 2;
-const HEAD = 18;
-const HEAD_W = 10;
+const GAP = 10;
+const TIP_GAP = 4;
+const HEAD = 32;
+const HEAD_W = 16;
 const CORNER = 16;
 const TICK = 20;
 

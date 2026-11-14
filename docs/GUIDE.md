@@ -145,7 +145,7 @@ a[1]
   `#id@bit:5`（第 5 位，可写 `4-7`）、`#id@side:left`。
 - 表格的数据行也是 `@item`；`vk-cells` / `vk-bits` 的 `is-cur` 段也能圈。
 - 写错 / 指空会进 JSON、在图上标红；不会静默。
-- 圈选是 4px 黑色结构轮廓、无填充；焦点蓝只给 `current`；note 是 caption 小气泡，clamp 到正文安全区；measure 从左/上边距量 pitch，标签在量线上方。
+- 圈选是 6px 黑色结构轮廓、无填充；焦点蓝只给 `current`；note 是 56px 票，clamp 到正文安全区；measure 从格子中心量 pitch，标签是 56px 的 `4 字节` 票。
 - `side` / `shape` / `gap` 不是作者属性：位置和线形由库选。
 
 ## 十、手机尺度

@@ -267,7 +267,7 @@ vk-table td {
 }
 vk-table th {
   color: var(--vk-ink-3);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   font-weight: var(--vk-w-medium);
   letter-spacing: 0.02em;
   border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
@@ -538,7 +538,7 @@ vk-cells {
   color: var(--vk-ink-1);
 }
 .vk-cell-was {
-  font-family: var(--vk-font-mono);
+  font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-3);
   text-decoration: line-through;
@@ -554,7 +554,7 @@ vk-cells {
   font-family: var(--vk-font-mono);
 }
 .vk-cell-a {
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1.4;
   color: var(--vk-ink-3);
   font-family: var(--vk-font-mono);
@@ -700,7 +700,7 @@ vk-bits {
   position: relative;
 }
 .vk-bit .vk-bit-i {
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   font-weight: var(--vk-w-regular);
   color: var(--vk-ink-3);
   line-height: 1;
@@ -1056,7 +1056,7 @@ vk-graph {
   align-items: center;
   gap: var(--vk-space-6);
   padding-top: var(--vk-space-3);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   color: var(--vk-ink-2);
 }
 .vk-glegend span {
@@ -1169,7 +1169,7 @@ vk-graph {
 }
 .vk-edge-label {
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   fill: var(--vk-ink-2);
   paint-order: stroke;
   stroke: var(--vk-paper);
@@ -1217,11 +1217,11 @@ vk-seq {
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
   position: relative;
-  min-height: 100px;
+  min-height: 108px;
 }
 .vk-seq-arrow {
   position: absolute;
-  top: 62px;
+  top: 70px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
 }
@@ -1237,17 +1237,17 @@ vk-seq {
   content: '';
   position: absolute;
   top: 50%;
-  width: 20px;
-  height: 20px;
+  width: 30px;
+  height: 30px;
   transform: translateY(-50%);
   background: var(--vk-seq-c);
 }
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
-  right: -10px;
+  right: -15px;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
-  left: -10px;
+  left: -15px;
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 .vk-seq-l {
@@ -1258,7 +1258,7 @@ vk-seq {
   padding: 0 var(--vk-space-4);
   background: var(--vk-paper);
   white-space: nowrap;
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
   line-height: 1.2;
   font-weight: var(--vk-w-medium);
 }
