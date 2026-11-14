@@ -1,0 +1,74 @@
+name: pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'src/**'
+      - 'tests/**'
+      - 'tools/**'
+      - 'bin/**'
+      - 'assets/**'
+      - 'code/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.github/workflows/pages.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # 只下浏览器，不跑 --with-deps：apt 在这个 runner 上经常卡十几分钟。
+      - uses: actions/cache@v4
+        id: pw
+        with:
+          path: ~/.cache/ms-playwright
+          key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+      - if: steps.pw.outputs.cache-hit != 'true'
+        run: npx playwright install chromium
+
+      # 中文字体也缓存；第一次装，之后直接命中。
+      - uses: actions/cache@v4
+        id: fonts
+        with:
+          path: /usr/share/fonts/opentype/noto
+          key: noto-cjk-v1
+      - if: steps.fonts.outputs.cache-hit != 'true'
+        run: timeout 240 sudo apt-get install -y --no-install-recommends fonts-noto-cjk
+
+      - run: npm test
+        env:
+          VK_SKIP_VISUAL: '1'
+      - run: node bin/vk.mjs showcase --no-open
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: out/showcase
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v5

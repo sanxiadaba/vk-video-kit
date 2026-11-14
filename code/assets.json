@@ -1,0 +1,40 @@
+{
+  "adt/array.c": {
+    "src": "adt/array.c",
+    "srcHash": "a98d407e309dd5d1",
+    "outputs": {},
+    "needs": []
+  },
+  "bsearch/bsearch.c": {
+    "src": "bsearch/bsearch.c",
+    "srcHash": "c517ce41489b21df",
+    "outputs": {},
+    "needs": []
+  },
+  "hello.c": {
+    "src": "hello.c",
+    "srcHash": "46bdd2718770c86f",
+    "outputs": {},
+    "needs": []
+  },
+  "opt/sum.c": {
+    "src": "opt/sum.c",
+    "srcHash": "1820c2c120341d29",
+    "outputs": {
+      "opt/o0.s": "25672d8e4d210130",
+      "opt/o2.s": "d3c7f9e501a312c5",
+      "opt/o0.dis": "9938bdc4151118ab",
+      "opt/add-o0.dis": "a700e51b95aa8bf1",
+      "opt/o2.dis": "d0aef1376db96795",
+      "opt/add-o2.dis": "1745b77ee63603b0"
+    },
+    "needs": [
+      "opt/o0.s",
+      "opt/o2.s",
+      "opt/o0.dis",
+      "opt/add-o0.dis",
+      "opt/o2.dis",
+      "opt/add-o2.dis"
+    ]
+  }
+}

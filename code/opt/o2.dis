@@ -1,0 +1,26 @@
+
+opt/o2.o:     file format pe-i386
+
+
+Disassembly of section .text:
+
+00000000 <_add>:
+   0:	8b 44 24 08          	mov    0x8(%esp),%eax
+   4:	03 44 24 04          	add    0x4(%esp),%eax
+   8:	c3                   	ret    
+   9:	8d b4 26 00 00 00 00 	lea    0x0(%esi,%eiz,1),%esi
+
+00000010 <_sum_to>:
+  10:	8b 4c 24 04          	mov    0x4(%esp),%ecx
+  14:	85 c9                	test   %ecx,%ecx
+  16:	7e 15                	jle    2d <_sum_to+0x1d>
+  18:	83 c1 01             	add    $0x1,%ecx
+  1b:	ba 01 00 00 00       	mov    $0x1,%edx
+  20:	31 c0                	xor    %eax,%eax
+  22:	01 d0                	add    %edx,%eax
+  24:	83 c2 01             	add    $0x1,%edx
+  27:	39 ca                	cmp    %ecx,%edx
+  29:	75 f7                	jne    22 <_sum_to+0x12>
+  2b:	f3 c3                	repz ret 
+  2d:	31 c0                	xor    %eax,%eax
+  2f:	c3                   	ret    
