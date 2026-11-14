@@ -561,7 +561,7 @@ vk-cells {
 }
 .vk-cell-p {
   position: absolute;
-  top: calc(var(--vk-space-9) * -1);
+  top: calc(var(--vk-space-9) * -1 - 24px);
   left: 50%;
   transform: translateX(-50%);
   padding: var(--vk-space-2) var(--vk-space-4);
@@ -579,7 +579,7 @@ vk-cells {
   left: 50%;
   top: 100%;
   width: var(--vk-line-w-hair);
-  height: var(--vk-space-4);
+  height: 20px;
   background: var(--vk-focus);
   transform: translateX(-50%);
 }
