@@ -357,9 +357,11 @@ vk-list[variant='check'] > li::before {
   background: none;
   border-radius: 0;
   color: var(--vk-ok);
-  font-size: var(--vk-fs-caption);
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
   font-weight: var(--vk-w-bold);
-  align-self: start;
+  align-self: baseline;
+  transform: translateY(0.08em);
 }
 vk-list[variant='ordered'] {
   counter-reset: vk-li;
@@ -1215,38 +1217,38 @@ vk-seq {
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
   position: relative;
-  min-height: 93px;
+  min-height: 100px;
 }
 .vk-seq-arrow {
   position: absolute;
-  top: 52px;
+  top: 62px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
 }
 .vk-seq-row[data-dir='right'] .vk-seq-arrow {
   left: calc(var(--vk-x1) + 10px);
-  right: calc(100% - var(--vk-x2) + 28px);
+  right: calc(100% - var(--vk-x2) + 10px);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow {
-  left: calc(var(--vk-x2) + 28px);
+  left: calc(var(--vk-x2) + 10px);
   right: calc(100% - var(--vk-x1) + 10px);
 }
 .vk-seq-arrow::after {
   content: '';
   position: absolute;
   top: 50%;
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   transform: translateY(-50%);
   background: var(--vk-seq-c);
 }
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
-  right: -28px;
-  clip-path: polygon(0 50%, 100% 0, 100% 100%);
+  right: -10px;
+  clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
-  left: -28px;
-  clip-path: polygon(100% 50%, 0 0, 0 100%);
+  left: -10px;
+  clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 .vk-seq-l {
   position: absolute;

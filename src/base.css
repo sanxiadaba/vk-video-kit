@@ -134,7 +134,6 @@ vk-head[align='center'] {
   letter-spacing: var(--vk-track-headline);
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-headline);
-  text-wrap: balance;
   color: var(--vk-ink-1);
 }
 vk-head[size='subhead'] .vk-title {
@@ -292,22 +291,35 @@ vk-card[surface='dark'] {
   font-size: var(--vk-fs-caption);
   line-height: 1;
 }
-.vk-ftitle,
+.vk-dots {
+  display: inline-flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+.vk-dots i {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ff5f57;
+}
+.vk-dots i:nth-child(2) {
+  background: #febc2e;
+}
+.vk-dots i:nth-child(3) {
+  background: #28c840;
+}
+.vk-ftitle {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+}
 .vk-frange {
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
-  color: var(--vk-ink-2);
-  white-space: nowrap;
-}
-.vk-fmark {
-  flex: 0 0 auto;
-  width: 8px;
-  height: 8px;
-  background: var(--vk-ink-2);
-}
-.vk-frange {
-  margin-left: auto;
   color: var(--vk-ink-3);
+  white-space: nowrap;
+  margin-left: auto;
 }
 .vk-fbd {
   padding: 0;

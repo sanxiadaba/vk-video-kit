@@ -20,8 +20,10 @@ export class VkCode extends VkElement {
     this.style.removeProperty('font-size');
     const base = parseFloat(getComputedStyle(lines).fontSize) || 56;
     const page = this.closest('vk-page');
+    const body = this.closest('.vk-body');
+    const limit = body || page;
     const overflows = () => [...this.querySelectorAll('.vk-lc, .vk-dc, .vk-aops')].some((el) => el.scrollWidth > el.clientWidth + 1);
-    const outOfPage = () => !!page && this.getBoundingClientRect().bottom > page.getBoundingClientRect().bottom - 8;
+    const outOfPage = () => !!limit && this.getBoundingClientRect().bottom > limit.getBoundingClientRect().bottom - 8;
 
     let px = base;
     const longest = Math.max(0, ...[...this.querySelectorAll('.vk-lc, .vk-dc')].map((el) => el.textContent.length));

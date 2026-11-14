@@ -5,7 +5,7 @@
  * 库写视觉（字 / 距 / 面 / 线 / 态）。组件只是这些原语的组合。
  *
  * 观看条件不是审美偏好：画面 1920×1080，手机横屏实际约 780 宽（0.406×）。
- * 所以 4px 线 = 手机 1.6px；40px 字 = 手机 16.2px；
+ * 所以 4px 线 = 手机 1.6px；48px 字 = 手机 19.5px；
  * 版心左右 120 / 上下 96（对称），不替任何播放器 UI 预留。
  */
 
@@ -31,7 +31,7 @@ export const LINE_W = { hair: 4, connector: 6, rule: 8, strong: 12 };
 /* ---------------------------------------------------------------- 字号
    手机 0.406× 之后：40 → 16.2、56 → 22.7、84 → 34.1、132 → 53.6。 */
 export const FONT = {
-  caption: 40,
+  caption: 48,
   body: 56,
   subhead: 84,
   headline: 132,
@@ -53,7 +53,7 @@ export const MEASURE = {
   caption: 26,
   body: 25,
   subhead: 18,
-  headline: 12,
+  headline: 13,
   display: 8,
   hero: 4,
 };

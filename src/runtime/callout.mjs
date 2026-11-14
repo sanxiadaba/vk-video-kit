@@ -19,10 +19,10 @@ const mk = (tag, attrs = {}) => {
 };
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-const GAP = 12;
-const TIP_GAP = 4;
-const HEAD = 28;
-const HEAD_W = 14;
+const GAP = 8;
+const TIP_GAP = 2;
+const HEAD = 18;
+const HEAD_W = 10;
 const CORNER = 16;
 const TICK = 20;
 
@@ -119,6 +119,7 @@ function pointsFor(a, b, fs, ts) {
 
   if (horiz) {
     if (Math.abs(start.y - base.y) < 2) points = [start, base];
+    else if (Math.abs(start.y - base.y) <= 48) points = [start, base];
     else {
       const mid = (start.x + base.x) / 2;
       points = [start, { x: mid, y: start.y }, { x: mid, y: base.y }, base];
@@ -278,7 +279,7 @@ export class VkCallout extends VkElement {
         const key = [overlap + (outX + outY) * bh * 10, dist];
         if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
       }
-      const x = clamp(best.x, 8, origin.width - bw - 8);
+      const x = clamp(Math.max(best.x, t.el.matches('.vk-line') && best.x > ob.left ? ob.right + gap : best.x), 8, origin.width - bw - 8);
       const y = clamp(best.y, 8, safeBottom - bh);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
@@ -310,8 +311,8 @@ export class VkCallout extends VkElement {
           y = Math.max(fr.bottom, tr.bottom) + standoff;
           below = true;
         }
-        a = { x: fr.left, y };
-        b = { x: tr.left, y };
+        a = { x: (fr.left + fr.right) / 2, y };
+        b = { x: (tr.left + tr.right) / 2, y };
         extA = { x: a.x, y: below ? fr.bottom : fr.top };
         extB = { x: b.x, y: below ? tr.bottom : tr.top };
       } else {
@@ -321,8 +322,8 @@ export class VkCallout extends VkElement {
           x = Math.min(fr.left, tr.left) - standoff;
           left = true;
         }
-        a = { x, y: fr.top };
-        b = { x, y: tr.top };
+        a = { x, y: (fr.top + fr.bottom) / 2 };
+        b = { x, y: (tr.top + tr.bottom) / 2 };
         extA = { x: left ? fr.left : fr.right, y: a.y };
         extB = { x: left ? tr.left : tr.right, y: b.y };
       }
@@ -354,15 +355,23 @@ export class VkCallout extends VkElement {
     const from = resolveAnchor(page, this.getAttribute('from'), this);
     const to = resolveAnchor(page, this.getAttribute('to'), this);
     if (!from || !to) return missing();
-    const fr = boxOf(from, true);
+    const lineAnchor = from.el.matches('.vk-line') ? rel(from.el.getBoundingClientRect()) : null;
+    const fr = lineAnchor
+      ? (() => {
+          const cb = rel((from.el.closest(COMPONENT) || from.el).getBoundingClientRect());
+          return { ...cb, top: lineAnchor.top, bottom: lineAnchor.bottom };
+        })()
+      : boxOf(from, true);
     const tr = boxOf(to, true);
-    const lineFrom = from.el.matches('.vk-line');
+    const lineFrom = !!lineAnchor;
     const [fs, ts] = from.side && to.side
       ? [from.side, to.side]
       : lineFrom
-        ? to.rect.left >= from.rect.right
-          ? ['right', 'left']
-          : ['left', 'right']
+        ? to.rect.top > from.rect.bottom
+          ? ['bottom', 'top']
+          : to.rect.left >= from.rect.right
+            ? ['right', 'left']
+            : ['left', 'right']
         : autoSides(fr, tr);
     const { points, tip, u } = pointsFor(fr, tr, fs, ts);
     this._svg.appendChild(mk('path', { class: 'vk-co-line', d: roundedPath(points) }));

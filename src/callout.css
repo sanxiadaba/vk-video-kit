@@ -48,24 +48,21 @@ vk-callout {
 
 .vk-co-label {
   position: absolute;
-  padding: 4px 12px;
-  border-radius: var(--vk-radius-sm);
+  padding: 0 var(--vk-space-3);
   background: var(--vk-paper);
-  color: var(--vk-ink-2);
+  color: var(--vk-ink-1);
+  font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
-  line-height: 1.3;
+  line-height: 1.2;
   white-space: nowrap;
-  border: var(--vk-line-w-hair) solid var(--vk-line-color);
 }
 
 .vk-co-note {
   position: absolute;
-  max-width: 640px;
-  padding: var(--vk-space-3) var(--vk-space-4);
-  border-radius: var(--vk-radius-md);
+  max-width: 720px;
+  padding: var(--vk-space-2) var(--vk-space-3);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
-  border: var(--vk-line-w-hair) solid var(--vk-tone, var(--vk-info));
   font-size: var(--vk-fs-caption);
   line-height: 1.35;
 }
