@@ -271,6 +271,28 @@ const neg = cli(['render', 'tests/negative/unknown.html', '--out', negDir]);
 ok(neg.status === 0, '默认不是门禁：有错也出图、exit 0', `实际 ${neg.status}`);
 ok(fs.existsSync(path.join(negDir, 'unknown.png')), '有错的帧仍然产生 PNG');
 
+/* 核心承诺：放不下时库不缩字，但必须把事实写进 JSON（不拦出图）。 */
+const overFile = path.join(TMP, 'overflow.html');
+fs.mkdirSync(TMP, { recursive: true });
+fs.writeFileSync(
+  overFile,
+  `<vk-page id="over"><vk-head>放不下的时候。</vk-head><vk-code lang="c" title="big.c">${'<script type="text/plain" data-vk-source>'}${Array.from({ length: 12 }, (_, i) => `int v${i} = ${i};`).join('\n')}</script></vk-code></vk-page>`
+);
+const overDir = path.join(TMP, 'overflow');
+fs.rmSync(overDir, { recursive: true, force: true });
+const overRun = cli(['render', overFile, '--out', overDir, '--json']);
+let overReport = null;
+try {
+  overReport = JSON.parse(overRun.stdout.slice(overRun.stdout.indexOf('{')));
+} catch {
+  /* 下面报 */
+}
+ok(overRun.status === 0, '超容量也 exit 0（不拦出图）');
+ok(overReport?.frames?.[0]?.health?.overflow > 0, `体检单报出超出（${overReport?.frames?.[0]?.health?.overflow}px）`);
+ok(fs.existsSync(path.join(overDir, 'overflow.png')), '超容量的帧仍然产生 PNG');
+ok(overReport?.frames?.[0]?.issues?.length === 0, '超容量不算硬错（它是事实，不是坏）');
+fs.rmSync(overFile, { force: true });
+
 /* ------------------------------------------------------------------ 七、对比度 */
 group('对比度');
 const lum = (hex) => {
