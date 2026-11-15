@@ -233,41 +233,28 @@ if (!browser) {
   const word = await wordPage.evaluate(() => {
     const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
     const line = document.querySelectorAll('.vk-line')[2];
-    if (!note || !line) return null;
+    const ring = document.querySelector('.vk-co-ring');
+    if (!note || !line || !ring) return null;
     const n = note.getBoundingClientRect();
     const l = line.getBoundingClientRect();
     const m = line.querySelector('.vk-mark').getBoundingClientRect();
-    const card = document.querySelector('vk-code').getBoundingClientRect();
-    const lead = document.querySelector('.vk-co-lead').getBoundingClientRect();
+    const rg = ring.getBoundingClientRect();
+    const head = document.querySelector('.vk-co-head').getBoundingClientRect();
+    const lead = document.querySelector('.vk-co-line').getBoundingClientRect();
     return {
-      adjacent: n.left > m.right + 40 && Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) < 70,
-      outside: n.left > card.right,
+      ringCovers: rg.left <= m.left + 2 && rg.right >= m.right - 2,
+      ringIsWord: rg.width < l.width * 0.5,
+      adjacent: Math.abs((n.top + n.bottom) / 2 - rg.bottom) < 14,
+      headAtText: Math.abs(head.right - n.left) <= 4,
       lead: Math.round(lead.width),
       marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
     };
   });
-  ok(word && word.adjacent, '注记贴着被注的那一行');
-  ok(word && word.outside, '注记在代码卡右侧的独立栏');
-  ok(word && word.lead >= 60, `注记横线够长（${word && word.lead}）`);
+  ok(word && word.ringCovers && word.ringIsWord, '圈住的是词，不是整行');
+  ok(word && word.adjacent, '文字贴着圈的下沿');
+  ok(word && word.headAtText, '箭头尖落在文字左缘');
+  ok(word && word.lead >= 60, `箭头够长（${word && word.lead}）`);
   ok(word && word.marks >= 1, `mark 的词都带锚点（${word && word.marks}）`);
-
-  /* 词：下括号必须扣在词上（横向覆盖词的左右），杆从括号引出。 */
-  const aim = await wordPage.evaluate(() => {
-    const bracket = document.querySelector('.vk-co-bracket');
-    const mark = document.querySelectorAll('.vk-mark')[0];
-    const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
-    if (!bracket || !mark || !note) return null;
-    const b = bracket.getBoundingClientRect();
-    const m = mark.getBoundingClientRect();
-    const n = note.getBoundingClientRect();
-    return {
-      covers: b.left <= m.left + 2 && b.right >= m.right - 2,
-      below: Math.round(b.top - m.bottom),
-      gap: Math.round(n.left - m.right),
-    };
-  });
-  ok(aim && aim.covers, '下括号扣住整个词');
-  ok(aim && aim.gap >= 80, `标签离词 ≥ 80（${aim && aim.gap}）`);
   await wordPage.close();
 
   /* 图：节点之间必须留够连接件的净空，箭头不许落进节点里。 */

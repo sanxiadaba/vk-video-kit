@@ -243,13 +243,12 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      const gap = ANN.standoff;
       const isWord = t.el.matches('.vk-mark');
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
 
-      /* 安全区是正文版心，不是画布：左右各 120，上下不越过标题带。 */
+      /* 安全区是正文版心，不是画布。 */
       const body = page.querySelector('.vk-body');
       const bodyRect = body ? rel(body.getBoundingClientRect()) : { left: 24, top: 24, right: origin.width - 24, bottom: origin.height - 24 };
       const head = page.querySelector('[data-vk="head"]');
@@ -257,89 +256,34 @@ export class VkCallout extends VkElement {
       const safeBottom = Math.min(bodyRect.bottom, origin.height - 24);
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
-      const obstacles = head ? [rel(head.getBoundingClientRect())] : [];
-      for (const el of page.querySelectorAll('vk-code .vk-line, vk-code .vk-dhunk, vk-text, .vk-title, .vk-lede, vk-table tr, vk-list li, .vk-step, .vk-bar, .vk-cell, .vk-bit, .vk-gnode, .vk-tl-i, .vk-node, .vk-brow')) {
-        if (el.closest('vk-callout')) continue;
-        /* 行只按字算障碍：行盒占满整栏，拿行盒会把「空白右侧」误判成压字。 */
-        const q = el.matches('.vk-line, .vk-text-line') ? inkRect(el) : el.getBoundingClientRect();
-        if (q.width > 2 && q.height > 2) obstacles.push(rel(q));
-      }
-
-      const place = (base, side) => {
-        let x = cx(base) - bw / 2;
-        let y = cy(base) - bh / 2;
-        if (side === 'right') x = base.right + gap;
-        else if (side === 'left') x = base.left - bw - gap;
-        else if (side === 'bottom') y = base.bottom + gap;
-        else if (side === 'top') y = base.top - bh - gap;
-        return { x, y };
-      };
-
-      /* 气泡放在件的外面：右侧 → 左侧 → 下方 → 上方 → 件内空白（最后）。
-         引线从落点直连气泡，气泡绝不画进卡片里。 */
       const lineEl = t.el.closest('.vk-line');
-      const lr = lineEl ? rel(lineEl.getBoundingClientRect()) : null;
-      const targetY = lineEl ? cy(lr) - bh / 2 : cy(r) - bh / 2;
 
-      const fits = (x, y) => x >= bodyRect.left && x + bw <= bodyRect.right && y >= safeTop && y + bh <= safeBottom;
-      const hits = (x, y) =>
-        obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
-      const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
+      /* 1) 圈：贴目标墨迹，外扩 8，圆角 24。词圈词、行圈行。 */
+      const ring = { left: r.left - ANN.ring, top: r.top - ANN.ring, right: r.right + ANN.ring, bottom: r.bottom + ANN.ring };
+      this._svg.appendChild(
+        mk('rect', { class: 'vk-co-ring', x: ring.left, y: ring.top, width: ring.right - ring.left, height: ring.bottom - ring.top, rx: ANN.ringR })
+      );
 
-      /* 右栏注记卡：卡片在代码卡外侧，与所注行同高；一条 88 的横线 + 卡片左缘的小三角指向那一行。 */
-      if (lineEl) {
-        const y = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
-        const gap = 88;
-        let nx = ob.right + gap;
-        let side = 1;
-        if (nx + bw > bodyRect.right) {
-          nx = ob.left - gap - bw;
-          side = -1;
-        }
-        if (nx >= bodyRect.left && nx + bw <= bodyRect.right) {
-          this._note.style.left = `${nx}px`;
-          this._note.style.top = `${y}px`;
-          const lineY = cy(lr);
-          const tipX = side === 1 ? nx - 16 : nx + bw + 16;
-          const baseX = side === 1 ? nx : nx + bw;
-          this._svg.appendChild(mk('path', { class: 'vk-co-tip', d: `M ${baseX} ${lineY - 16} L ${tipX} ${lineY} L ${baseX} ${lineY + 16}` }));
-          const startX = side === 1 ? ob.right : ob.left;
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: lineY, x2: tipX, y2: lineY }));
-          if (isWord) {
-            /* 词：下括号标住词；卡片指向这一行，括号指向这个词。 */
-            const by = r.bottom + ANN.bracketGap + 2;
-            const x1 = r.left - 8;
-            const x2 = r.right + 8;
-            const tick = ANN.tick;
-            this._svg.appendChild(
-              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
-            );
-          }
-          return;
-        }
+      /* 2) 文字：行尾 +88，垂直中心落在圈的下沿；放不下才翻到卡片左侧。 */
+      const textEnd = lineEl ? textRight(lineEl) - origin.left : r.right;
+      let nx = textEnd + ANN.standoff;
+      let side = 1;
+      if (nx + bw > bodyRect.right) {
+        nx = ob.left - ANN.standoff - bw;
+        side = -1;
       }
+      const arrowY = ring.bottom;
+      const ny = clamp(arrowY - bh / 2, safeTop, safeBottom - bh);
+      this._note.style.left = `${nx}px`;
+      this._note.style.top = `${ny}px`;
 
-      const insideX = lineEl ? textRight(lineEl) - origin.left + 60 : r.right + 60;
-      /* 其它件（没有行高可依）：右 → 左 → 下 → 上；件内空白只作最后兜底。 */
-      const cands = [
-        { x: ob.right + ANN.standoff, y: targetY },
-        { x: ob.left - ANN.standoff - bw, y: targetY },
-        { x: cx(r) - bw / 2, y: ob.bottom + 32 },
-        { x: cx(r) - bw / 2, y: ob.top - 32 - bh },
-        { x: insideX, y: targetY, inside: true },
-      ];
-      const ok = (c) => fits(c.x, c.y) && !hits(c.x, c.y) && (!c.inside || c.x + bw <= ob.right - 16);
-      const pool = cands.filter((c) => fits(c.x, c.y));
-      const box = pool.find(ok) || (pool.length ? pool.slice().sort((a, b) => area(a.x, a.y) - area(b.x, b.y))[0] : cands[0]);
-      const x = clamp(box.x, bodyRect.left, bodyRect.right - bw);
-      const y = clamp(box.y, safeTop, safeBottom - bh);
-      this._note.style.left = `${x}px`;
-      this._note.style.top = `${y}px`;
-      const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };
-      const anchorP = nearest(r, { x: cx(bubble), y: cy(bubble) });
-      const p = nearest(bubble, anchorP);
-      this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: anchorP.x, y1: anchorP.y, x2: p.x, y2: p.y }));
-      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: anchorP.x, cy: anchorP.y, r: ANN.dot / 2 }));
+      /* 3) 箭头：从圈的下沿水平走到文字，尖落在文字的左/右缘。 */
+      const tip = side === 1 ? { x: nx, y: arrowY } : { x: nx + bw, y: arrowY };
+      const u = side === 1 ? { x: 1, y: 0 } : { x: -1, y: 0 };
+      const base = { x: tip.x - u.x * ARROW.length, y: tip.y - u.y * ARROW.length };
+      const startX = side === 1 ? ring.right : ring.left;
+      this._svg.appendChild(mk('line', { class: 'vk-co-line', x1: startX, y1: arrowY, x2: base.x, y2: base.y }));
+      this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(tip, u.x, u.y) }));
       return;
     }
 

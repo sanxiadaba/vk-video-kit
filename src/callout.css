@@ -68,24 +68,13 @@
   white-space: nowrap;
 }
 
-/* 右栏注记卡：浅底、6px 边、圆角，和小三角一起构成“气泡”。 */
+/* 注记的文字：纯文字、纸色底做遮罩，不加框。 */
 .vk-co-note {
   position: absolute;
-  width: 440px;
-  box-sizing: border-box;
-  padding: var(--vk-space-5) var(--vk-space-6);
-  border: var(--vk-line-w-hair) solid var(--vk-ink-2);
-  border-radius: var(--vk-radius-md);
-  background: var(--vk-soft);
+  max-width: 460px;
+  padding: 4px 8px;
+  background: var(--vk-paper);
   color: var(--vk-ink-1);
   font-size: var(--vk-fs-body);
-  line-height: 1.3;
-}
-
-/* 气泡口：只描两条边，底边由卡片自身的边框接上。 */
-.vk-co-tip {
-  fill: var(--vk-soft);
-  stroke: var(--vk-ink-2);
-  stroke-width: var(--vk-line-w-hair);
-  stroke-linejoin: round;
+  line-height: 1.25;
 }
