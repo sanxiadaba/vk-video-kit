@@ -431,7 +431,7 @@ export class VkCallout extends VkElement {
         const b0 = rightward ? c.tip.x - ARROW.length - 16 : Math.min(c.start.x, ob ? ob.left - 16 : c.start.x);
         lx = b0 - a0 > lw ? a0 : rightward ? c.tip.x - lw - ARROW.length - 24 : c.tip.x + ARROW.length + 24;
         /* 指文字：抬到那块字的上沿之上，别和第一行贴成一行；指盒子：杆上方 24。 */
-        ly = c.tip.y - lh - 40;
+        ly = c.tip.y - lh - 16;
         if (ly < 8) ly = c.tip.y + 24;
       }
       this._label.style.left = `${clamp(lx, 24, origin.width - lw - 24)}px`;
@@ -441,6 +441,8 @@ export class VkCallout extends VkElement {
 }
 
 define('vk-callout', VkCallout);
+
+
 
 
 
