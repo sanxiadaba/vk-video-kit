@@ -472,13 +472,12 @@
   place-items: center;
   padding: 0 var(--vk-space-3);
   border-radius: calc(var(--vk-ann-badge) / 2);
-  background: var(--vk-focus);
-  color: var(--vk-on-focus);
+  background: var(--vk-ink-2);
+  color: var(--vk-paper);
   font-size: var(--vk-fs-body);
   line-height: 1;
   font-weight: var(--vk-w-bold);
   font-family: var(--vk-font-mono);
-  text-transform: uppercase;
   white-space: nowrap;
 }
 /* 针脚：从徽标底走到格子上边，止于边，不进格；末端一个空心点压在格子边上。 */
@@ -489,19 +488,19 @@
   top: 100%;
   width: var(--vk-conn-shaft);
   height: var(--vk-ann-pin);
-  background: var(--vk-focus);
+  background: var(--vk-ink-2);
   transform: translateX(-50%);
 }
 .vk-cell-p::before {
   content: '';
   position: absolute;
   left: 50%;
-  top: calc(100% + var(--vk-ann-pin));
+  top: calc(100% + var(--vk-ann-pin) - var(--vk-ann-dot));
   width: var(--vk-ann-dot);
   height: var(--vk-ann-dot);
-  margin: calc(var(--vk-ann-dot) / -2) 0 0 calc(var(--vk-ann-dot) / -2);
+  margin: 0 0 0 calc(var(--vk-ann-dot) / -2);
   border-radius: 50%;
-  border: calc(var(--vk-line-w-rule) / 2) solid var(--vk-focus);
+  border: calc(var(--vk-line-w-rule) / 2) solid var(--vk-ink-2);
   background: var(--vk-paper);
   box-sizing: border-box;
 }
@@ -926,7 +925,7 @@
 }
 /* 竖链：内容宽度的盒子，居中对齐，箭头走盒子中线。 */
 .vk-graph[data-layout='row'][data-dir='vertical'] .vk-gnode {
-  min-width: 320px;
+  min-width: 480px;
   max-width: 100%;
   padding: var(--vk-space-1) var(--vk-space-5);
   grid-auto-flow: column;
@@ -965,13 +964,13 @@
   stroke-width: var(--vk-line-w-connector);
 }
 .vk-edge[data-current] {
-  stroke: var(--vk-focus);
+  stroke: var(--vk-ink-2);
 }
 .vk-edge-head {
   fill: var(--vk-ink-2);
 }
 .vk-edge-head[data-current] {
-  fill: var(--vk-focus);
+  fill: var(--vk-ink-2);
 }
 .vk-edge-label {
   font-family: var(--vk-font-sans);

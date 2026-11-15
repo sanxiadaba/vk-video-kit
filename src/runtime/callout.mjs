@@ -286,13 +286,13 @@ export class VkCallout extends VkElement {
         obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
       const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
       const insideX = lineEl ? textRight(lineEl) - origin.left + 60 : r.right + 60;
+      /* 注记只许在件外：右 → 左 → 下 → 上；件内空白只作最后兜底。 */
       const cands = [
-        /* 件内空白优先：无框文字，离目标 60，读起来像代码旁的一句注。 */
-        { x: insideX, y: targetY, inside: true },
         { x: ob.right + 40, y: targetY },
         { x: ob.left - 40 - bw, y: targetY },
         { x: cx(r) - bw / 2, y: ob.bottom + 32 },
         { x: cx(r) - bw / 2, y: ob.top - 32 - bh },
+        { x: insideX, y: targetY, inside: true },
       ];
       const ok = (c) => fits(c.x, c.y) && !hits(c.x, c.y) && (!c.inside || c.x + bw <= ob.right - 16);
       const pool = cands.filter((c) => fits(c.x, c.y));
@@ -315,13 +315,13 @@ export class VkCallout extends VkElement {
         const p = nearest(bubble, { x: x2, y: by });
         this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: x2, y1: by, x2: p.x, y2: p.y }));
       } else {
-        /* 落点从「目标上离气泡最近的点」求，别固定用右缘。 */
+        /* 落点从「目标上离气泡最近的点」求；整行目标已有圈，就不再画点。 */
         const anchorP = nearest(r, { x: cx(bubble), y: cy(bubble) });
-        const px = lineEl ? textRight(lineEl) - origin.left : anchorP.x;
+        const px = lineEl ? textRight(lineEl) - origin.left + ANN.ring : anchorP.x;
         const py = lineEl ? cy(lr) : anchorP.y;
         const p = nearest(bubble, { x: px, y: py });
         this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: px, y1: py, x2: p.x, y2: p.y }));
-        this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
+        if (!lineEl) this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
       }
       return;
     }

@@ -231,14 +231,15 @@ if (!browser) {
 
   const wordPage = await load('callout-word.html');
   const word = await wordPage.evaluate(() => {
-    const ring = document.querySelector('.vk-co-ring');
-    const line = document.querySelector('.vk-line');
-    if (!ring || !line) return null;
-    const r = ring.getBoundingClientRect();
-    const l = line.getBoundingClientRect();
-    return { rw: r.width, lw: l.width, marks: document.querySelectorAll('.vk-mark[data-vk-item]').length };
+    const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
+    const card = document.querySelector('vk-code');
+    if (!note || !card) return null;
+    const n = note.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    const inside = n.left > c.left && n.right < c.right && n.top > c.top && n.bottom < c.bottom;
+    return { inside, marks: document.querySelectorAll('.vk-mark[data-vk-item]').length };
   });
-  ok(word && word.rw < word.lw * 0.5, `@item 圈的是词不是整行（${word && Math.round(word.rw)} / ${word && Math.round(word.lw)}）`);
+  ok(word && !word.inside, '注记在卡片外，不冒充代码');
   ok(word && word.marks >= 3, `mark 的词都带锚点（${word && word.marks}）`);
 
   /* 词：下括号必须扣在词上（横向覆盖词的左右），杆从括号引出。 */
