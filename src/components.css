@@ -920,7 +920,7 @@
   transform: translate(-50%, -50%);
 }
 .vk-graph[data-layout='row'][data-dir='horizontal'] .vk-gnode {
-  min-height: 160px;
+  min-height: 240px;
   align-content: center;
 }
 /* 竖链：内容宽度的盒子，居中对齐，箭头走盒子中线。 */
