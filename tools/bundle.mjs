@@ -22,7 +22,7 @@ const LAYERS = [
   ['vendor', ['dist/katex.css']],
   ['tokens', ['dist/tokens.css']],
   ['base', ['src/base.css']],
-  ['components', ['src/components.css']],
+  ['components', ['src/components.css', 'src/state.css']],
   ['callout', ['src/callout.css']],
 ];
 

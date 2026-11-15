@@ -82,7 +82,8 @@ src/build/           构建：入口 / 源码窗 / 条目图 / 关系图 / 块 /
 src/runtime/         运行期：底座 / 关系图 / 标注（只做测量）
 src/audit/           自检：单独打进 dist/audit.js，不进交付页
 src/base.css         画布 / 标题 / 流 / 卡片 / 字 / 窗口
-src/components.css   机制件
+src/components.css   机制件（几何与排布）
+src/state.css        状态层：current / tone / mark，全库只有这几种渲染
 src/callout.css      标注层
 bin/vk.mjs           命令行
 tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 产物清单）

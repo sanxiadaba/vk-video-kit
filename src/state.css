@@ -1,0 +1,252 @@
+/* v25 · 状态层：current / tone / mark，全库只有这几种渲染。 */
+/* 聚光：有 current 时其余行压到 72%；当前行满对比 + 12px 左条。 */
+.vk-lines[data-dim] .vk-line:not(.is-cur) .vk-lc {
+  opacity: 0.72;
+}
+
+.vk-line.is-cur {
+  background: none;
+}
+
+.vk-line.is-cur::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-strong);
+  background: var(--vk-focus);
+}
+
+.vk-line.is-cur .vk-lc {
+  font-weight: var(--vk-w-medium);
+}
+
+.vk-line.is-cur .vk-ln {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-medium);
+}
+
+.vk-term .vk-line.is-cur {
+  background: none;
+}
+
+.vk-drow.is-cur {
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+
+.vk-arow.is-cur {
+  background: none;
+  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
+}
+
+[data-vk='board'][data-as='table'] tr[tone='ok'] td {
+  background: var(--vk-tint-ok);
+}
+
+[data-vk='board'][data-as='table'] tr[tone='warn'] td {
+  background: var(--vk-tint-warn);
+}
+
+[data-vk='board'][data-as='table'] tr[tone='err'] td {
+  background: var(--vk-tint-err);
+}
+
+[data-vk='board'][data-as='table'] tr[current] td {
+  background: none;
+}
+
+[data-vk='board'][data-as='table'] tr[current] td:first-child {
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+}
+
+[data-vk='board'][data-as='table'] td[current] {
+  background: var(--vk-tint-focus);
+  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+}
+
+[data-vk='board'][data-as='list'] > li[current] {
+  background: none;
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+  font-weight: var(--vk-w-medium);
+  color: var(--vk-ink-1);
+}
+
+[data-vk='board'][data-as='list'] > li[current]::before {
+  background: var(--vk-focus);
+}
+
+[data-vk='board'][data-as='list'][variant='check'] > li[current]::before {
+  color: var(--vk-focus);
+  background: none;
+}
+
+[data-vk='board'][data-as='list'][variant='ordered'] > li[current]::before {
+  background: none;
+  color: var(--vk-focus);
+}
+
+[data-vk='board'][data-as='list'] > li[tone='ok']::before {
+  background: var(--vk-ok);
+}
+
+[data-vk='board'][data-as='list'] > li[tone='warn']::before {
+  background: var(--vk-warn);
+}
+
+[data-vk='board'][data-as='list'] > li[tone='err']::before {
+  background: var(--vk-err);
+}
+
+.vk-node[current] > .vk-nrow {
+  background: none;
+  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+  font-weight: var(--vk-w-medium);
+}
+
+.vk-node[current] > .vk-nrow .vk-ic {
+  color: var(--vk-focus);
+}
+
+.vk-cell[data-tone]:not([data-tone='neutral']) {
+  border-color: var(--vk-tone);
+}
+
+.vk-cell[current] {
+  border-color: var(--vk-focus);
+}
+
+.vk-bhex i.is-cur {
+  background: var(--vk-tint-focus);
+}
+
+.vk-bascii i.is-cur {
+  background: var(--vk-tint-focus);
+}
+
+.vk-bit.is-cur .vk-bit-v {
+  color: inherit;
+}
+
+.vk-bit.is-cur {
+  background: var(--vk-tint-focus);
+  border-radius: var(--vk-radius-sm);
+}
+
+.vk-field.is-cur {
+  border-color: var(--vk-line-color);
+  box-shadow: none;
+}
+
+.vk-step[current] .vk-step-n {
+  background: var(--vk-focus);
+  border-color: var(--vk-focus);
+  color: var(--vk-on-focus);
+}
+
+.vk-step[current] .vk-step-t {
+  font-weight: var(--vk-w-bold);
+}
+
+.vk-step[current] .vk-step-t .vk-ic {
+  color: var(--vk-focus);
+}
+
+.vk-step[data-tone]:not([data-tone='neutral']) .vk-step-t .vk-ic {
+  color: var(--vk-tone);
+}
+
+.vk-step[data-tone]:not([data-tone='neutral']) .vk-step-n {
+  border-color: var(--vk-tone);
+  color: var(--vk-tone);
+}
+
+.vk-bar[current] .vk-bar-t i {
+  background: var(--vk-focus);
+}
+
+.vk-bar[current] .vk-bar-l {
+  color: var(--vk-ink-1);
+  font-weight: var(--vk-w-medium);
+}
+
+.vk-bar[data-tone]:not([data-tone='neutral']) .vk-bar-t i {
+  background: var(--vk-tone);
+}
+
+.vk-tl-i[current] .vk-tl-dot {
+  background: var(--vk-focus);
+}
+
+.vk-tl-i[current] .vk-tl-node {
+  border-color: var(--vk-focus);
+}
+
+.vk-tl-i[current] .vk-tl-node .vk-ic {
+  color: var(--vk-focus);
+}
+
+.vk-tl-i[current] .vk-tl-label {
+  font-weight: var(--vk-w-bold);
+}
+
+.vk-tl-i[data-tone]:not([data-tone='neutral']) .vk-tl-dot {
+  background: var(--vk-tone);
+}
+
+.vk-glegend [data-tone]:not([data-tone='neutral']) i {
+  background: var(--vk-tone);
+}
+
+.vk-gnode[current] {
+  border-color: var(--vk-focus);
+  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
+}
+
+.vk-gnode[data-tone]:not([data-tone='neutral']) {
+  border-color: var(--vk-tone);
+}
+
+.vk-edge[data-tone='ok'] {
+  stroke: var(--vk-ok);
+}
+
+.vk-edge[data-tone='warn'] {
+  stroke: var(--vk-warn);
+}
+
+.vk-edge[data-tone='err'] {
+  stroke: var(--vk-err);
+}
+
+.vk-edge-head[data-tone='ok'] {
+  fill: var(--vk-ok);
+}
+
+.vk-edge-head[data-tone='warn'] {
+  fill: var(--vk-warn);
+}
+
+.vk-edge-head[data-tone='err'] {
+  fill: var(--vk-err);
+}
+
+.vk-seq-row[data-tone='ok'] {
+  --vk-seq-c: var(--vk-ok);
+}
+
+.vk-seq-row[data-tone='warn'] {
+  --vk-seq-c: var(--vk-warn);
+}
+
+.vk-seq-row[data-tone='err'] {
+  --vk-seq-c: var(--vk-err);
+}
+
+.vk-seq-row[current] {
+  --vk-seq-c: var(--vk-focus);
+}
+
+.vk-seq-row[current] .vk-seq-l {
+  font-weight: var(--vk-w-bold);
+}
