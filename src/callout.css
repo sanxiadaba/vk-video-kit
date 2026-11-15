@@ -72,7 +72,7 @@
   max-width: 720px;
   padding: var(--vk-space-1) var(--vk-space-4);
   border-radius: var(--vk-radius-sm);
-  border: var(--vk-line-w-hair) solid var(--vk-ink-1);
+  border: var(--vk-ann-lead) solid var(--vk-ink-1);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
   font-size: var(--vk-fs-caption);

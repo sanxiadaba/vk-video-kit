@@ -10,7 +10,7 @@
  * 锚点：#id / #id@line:3 / #id@line:3-4 / #id@item:2 / #id@bit:5 / #id@side:left。
  */
 import { VkElement, define, resolveAnchor, inkRect, textRight } from './base.mjs';
-import { CONN, ANN } from '../shared/connector.mjs';
+import { CONN, ANN, headPolygon } from '../shared/connector.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -124,40 +124,31 @@ function measureSides(a, b) {
   return autoSides(a, b);
 }
 
-function pointsFor(a, b, fs, ts) {
+/* 连接件：两端沿各自边的法线出发，中间用三次贝塞尔顺过去；箭头前面留一段直线，
+   保证箭头永远垂直于目标边。错位小的时候曲线几乎就是直线，不会再出现台阶。 */
+function connectorPath(a, b, fs, ts) {
   const start = sourcePoint(a, fs);
   const tip = targetTip(b, ts);
   const u = targetUnit(ts);
   const base = { x: tip.x - u.x * HEAD, y: tip.y - u.y * HEAD };
-  const hFrom = fs === 'left' || fs === 'right';
-  const hTo = ts === 'left' || ts === 'right';
-  const pts = [start];
-  /* 只走横竖：两轴都不重合时最多两次拐弯，绝不画斜线。 */
-  if (hFrom && hTo) {
-    if (Math.abs(start.y - base.y) >= 2) {
-      const mid = (start.x + base.x) / 2;
-      pts.push({ x: mid, y: start.y }, { x: mid, y: base.y });
-    }
-  } else if (hFrom && !hTo) {
-    if (Math.abs(start.y - base.y) >= 2) pts.push({ x: base.x, y: start.y });
-  } else if (!hFrom && hTo) {
-    if (Math.abs(start.x - base.x) >= 2) pts.push({ x: start.x, y: base.y });
-  } else if (Math.abs(start.x - base.x) >= 2) {
-    const mid = (start.y + base.y) / 2;
-    pts.push({ x: start.x, y: mid }, { x: base.x, y: mid });
-  }
-  pts.push(base);
-  const points = pts.filter((p, i) => i === 0 || Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) > 0.5);
-  return { points, tip, base, u };
+  const su = sourceUnit(fs);
+  const dist = Math.hypot(base.x - start.x, base.y - start.y);
+  const k = Math.min(160, Math.max(40, dist * 0.55));
+  const c1 = { x: start.x + su.x * k, y: start.y + su.y * k };
+  const c2 = { x: base.x - u.x * k, y: base.y - u.y * k };
+  const d = `M ${start.x} ${start.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${base.x} ${base.y} L ${tip.x} ${tip.y}`;
+  const mid = {
+    x: (start.x + 3 * c1.x + 3 * c2.x + base.x) / 8,
+    y: (start.y + 3 * c1.y + 3 * c2.y + base.y) / 8,
+  };
+  return { d, start, base, tip, u, mid, dist };
 }
 
-function headPolygon(tip, u) {
-  const n = { x: -u.y, y: u.x };
-  const bx = tip.x - u.x * HEAD;
-  const by = tip.y - u.y * HEAD;
-  const p2 = { x: bx - n.x * HEAD_W, y: by - n.y * HEAD_W };
-  const p3 = { x: bx + n.x * HEAD_W, y: by + n.y * HEAD_W };
-  return `${tip.x},${tip.y} ${p2.x},${p2.y} ${p3.x},${p3.y}`;
+function sourceUnit(side) {
+  if (side === 'right') return { x: 1, y: 0 };
+  if (side === 'left') return { x: -1, y: 0 };
+  if (side === 'top') return { x: 0, y: -1 };
+  return { x: 0, y: 1 };
 }
 
 function longestSegment(points) {
@@ -275,7 +266,9 @@ export class VkCallout extends VkElement {
         /* 整行标注：标签挂在环外（行盒右侧）；词标注：标签贴在这一行文字右侧。 */
         const isLineTarget = t.el.matches('.vk-line');
         const baseRight = isLineTarget ? runRight + ANN.ring : runRight;
-        const nx = baseRight + ANN.standoff;
+        let nx = baseRight + ANN.standoff;
+        /* 不许骑在组件边框上：放不进窗口就整体挪到窗口外，再不行交给通用落位。 */
+        if (nx + bw > ob.right - 12) nx = ob.right + 24;
         const ny = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
         if (nx + bw <= origin.width - 8) {
           this._note.style.left = `${nx}px`;
@@ -293,7 +286,12 @@ export class VkCallout extends VkElement {
               })
             );
             const bendX = Math.min(nx - 24, runRight + 24);
-            this._svg.appendChild(mk('path', { class: 'vk-co-lead', d: `M ${x2} ${by} L ${bendX} ${by} L ${bendX} ${cy(lr)} L ${nx} ${cy(lr)}` }));
+            this._svg.appendChild(
+              mk('path', {
+                class: 'vk-co-lead',
+                d: `M ${x2} ${by} C ${x2 + 48} ${by} ${nx - 48} ${cy(lr)} ${nx} ${cy(lr)}`,
+              })
+            );
           } else {
             const px = baseRight;
             const py = cy(lr);
@@ -405,9 +403,9 @@ export class VkCallout extends VkElement {
     const fr = rel(from.rect);
     const tr = rel(to.rect);
     const [fs, ts] = from.side && to.side ? [from.side, to.side] : autoSides(fr, tr);
-    const { points, tip, u } = pointsFor(fr, tr, fs, ts);
-    this._svg.appendChild(mk('path', { class: 'vk-co-line', d: roundedPath(points) }));
-    this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(tip, u) }));
+    const c = connectorPath(fr, tr, fs, ts);
+    this._svg.appendChild(mk('path', { class: 'vk-co-line', d: c.d }));
+    this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(c.tip, c.u.x, c.u.y) }));
 
     const label = this.getAttribute('label');
     if (label) {
@@ -415,24 +413,17 @@ export class VkCallout extends VkElement {
       this._label.textContent = label;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
-      const xs = points.map((p) => p.x);
-      const ys = points.map((p) => p.y);
-      const minX = Math.min(...xs);
-      const maxX = Math.max(...xs);
-      const minY = Math.min(...ys);
-      const maxY = Math.max(...ys);
-      const seg = longestSegment(points);
+      const minY = Math.min(c.start.y, c.base.y, c.tip.y);
+      const maxY = Math.max(c.start.y, c.base.y, c.tip.y);
       let lx;
       let ly;
-      if (seg && seg.len >= lw + 24 && Math.abs(seg.b.y - seg.a.y) < 2) {
-        /* 线够长：字直接压在横线上，线从字后面穿过。 */
-        lx = (seg.a.x + seg.b.x) / 2 - lw / 2;
-        ly = seg.a.y - lh / 2;
-      } else if (seg && seg.len >= lh + 24 && Math.abs(seg.b.x - seg.a.x) < 2) {
-        lx = seg.a.x - lw / 2;
-        ly = (seg.a.y + seg.b.y) / 2 - lh / 2;
+      if (c.dist >= lw * 1.6) {
+        /* 线够长：字写在曲线上（中点），纸色底把线打断。 */
+        lx = c.mid.x - lw / 2;
+        ly = c.mid.y - lh - 6;
+        if (ly < 8) ly = c.mid.y + 6;
       } else {
-        lx = (minX + maxX) / 2 - lw / 2;
+        lx = c.mid.x - lw / 2;
         ly = minY - lh - 10;
         if (ly < 8) ly = maxY + 10;
       }

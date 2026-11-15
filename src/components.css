@@ -487,7 +487,7 @@
   position: absolute;
   left: 50%;
   top: 100%;
-  width: var(--vk-line-w-rule);
+  width: var(--vk-conn-shaft);
   height: var(--vk-ann-pin);
   background: var(--vk-ink-1);
   transform: translateX(-50%);
@@ -1027,7 +1027,7 @@
   position: absolute;
   top: 50%;
   width: var(--vk-conn-head);
-  height: var(--vk-conn-head);
+  height: var(--vk-conn-head-w);
   transform: translateY(-50%);
   background: var(--vk-seq-c);
 }
