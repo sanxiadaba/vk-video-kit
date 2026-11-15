@@ -84,7 +84,10 @@ export function normalizeTree(root) {
     }
 
     if (Object.keys(decls).length) setStyle(node, decls);
-    node.attrs.push({ name: 'data-vk', value: as || tag.slice(3) });
+    /* 身份：data-vk 是机制（page / code / board…），data-as 是变体（cells / diff…）。
+       机制决定宿主样式，变体只决定这一块的画法。 */
+    node.attrs.push({ name: 'data-vk', value: tag.slice(3) });
+    if (as) node.attrs.push({ name: 'data-as', value: as });
   }
   return root;
 }

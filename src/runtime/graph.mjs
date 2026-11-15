@@ -339,17 +339,27 @@ export class VkGraph extends VkElement {
 
       if (l.label) {
         const from = points[0];
-        const vertical = Math.abs(p2.x - from.x) < Math.abs(p2.y - from.y);
+        const dx = p2.x - from.x;
+        const dy = p2.y - from.y;
+        const vertical = Math.abs(dx) < Math.abs(dy);
         let lx;
         let ly;
         let anchor;
         if (vertical) {
-          lx = Math.max(from.x, p2.x) + 36;
+          lx = Math.max(from.x, p2.x) + 28;
           ly = (from.y + p2.y) / 2;
           anchor = 'start';
         } else {
-          lx = (from.x + p2.x) / 2;
-          ly = (from.y + p2.y) / 2 - 18;
+          /* 斜线也按法线外推，并强制推到上方：线不被字打断，字不压箭头。 */
+          const len = Math.hypot(dx, dy) || 1;
+          let nx = -dy / len;
+          let ny = dx / len;
+          if (ny > 0) {
+            nx = -nx;
+            ny = -ny;
+          }
+          lx = (from.x + p2.x) / 2 + nx * 52;
+          ly = (from.y + p2.y) / 2 + ny * 52;
           anchor = 'middle';
         }
         const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });

@@ -119,6 +119,7 @@ a[1]
 |---|---|---|---|---|
 | `surface` | paper / soft / dark | paper |  | 材质：paper 白纸 / soft 软底 / dark 暗面 |
 | `title` | 文本 | — |  | 标题（写了才有标题带） |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语义：给整块面换一档语义色（对照 / 对错示范） |
 
 卡片里放块级内容；纯分组用 <vk-flow>，卡片是「一块面」。
 

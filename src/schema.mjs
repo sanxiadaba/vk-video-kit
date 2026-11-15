@@ -114,6 +114,7 @@ export const TAGS = {
     attrs: {
       surface: enumv(CARD_SURFACE, 'paper', 'appearance', '材质：paper 白纸 / soft 软底 / dark 暗面'),
       title: text('appearance', '标题（写了才有标题带）'),
+      tone: enumv(TONE, 'neutral', 'appearance', '语义：给整块面换一档语义色（对照 / 对错示范）'),
     },
     children: blocks('卡片里放块级内容；纯分组用 <vk-flow>，卡片是「一块面」。'),
     example: '<vk-card surface="paper" title="输出"><vk-text>一行说明。</vk-text></vk-card>',

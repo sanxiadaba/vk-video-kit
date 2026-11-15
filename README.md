@@ -37,6 +37,7 @@ node bin/vk.mjs render my-frame.html
 | `my-frame.json` | 这一帧的体检单：问题 + 真实数字 |
 
 `vk render` 会先确保 `dist/` 与源一致，再构建页面、自检、出图。
+加 `--sheet` 会额外拼一张 `sheet.png`：所有帧按 780 宽排成两列，带每帧的占用与焦点，扫一眼就知道整集齐不齐。
 
 **不是门禁**：内容放不下也照样出图，终端与 JSON 里写清事实（`正文带 546 · 内容 648 · 超出 102px`）；只有一张图都没出来才 exit 1。
 
@@ -45,7 +46,7 @@ node bin/vk.mjs render my-frame.html
 | 命令 | 作用 |
 |---|---|
 | `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js），写产物清单 |
-| `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview]` | 构建 + 自检 + 出图 |
+| `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]` | 构建 + 自检 + 出图；`--sheet` 再拼一张联系表 |
 | `vk check <file\|dir> [--frame id] [--out DIR] [--json]` | 只构建 + 自检 + json（不出图） |
 | `vk doc <tag> [--json]` | 一个件的全部变体、属性、默认值、示例 |
 | `vk brief [--json\|--md]` | 全部契约（唯一权威）；`--md` 就是 `docs/CONTRACT.md` |

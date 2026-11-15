@@ -402,10 +402,40 @@ export class VkCallout extends VkElement {
       const horizontal = Math.abs(seg.b.x - seg.a.x) >= Math.abs(seg.b.y - seg.a.y);
       const mx = (seg.a.x + seg.b.x) / 2;
       const my = (seg.a.y + seg.b.y) / 2;
-      const lx = horizontal ? mx - lw / 2 : mx + 16;
-      const ly = horizontal ? my - lh - 12 : my - lh / 2;
-      this._label.style.left = `${clamp(lx, 8, origin.width - lw - 8)}px`;
-      this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
+      const boxes = [...page.querySelectorAll(COMPONENT)].map((el) => rel(el.getBoundingClientRect()));
+      const score = (x, y) => {
+        let out = Math.max(0, 8 - x) + Math.max(0, x + lw - (origin.width - 8)) + Math.max(0, 8 - y) + Math.max(0, y + lh - (origin.height - 8));
+        for (const b of boxes) {
+          const w = Math.min(x + lw, b.right) - Math.max(x, b.left);
+          const h = Math.min(y + lh, b.bottom) - Math.max(y, b.top);
+          if (w > 0 && h > 0) out += (w * h) / 400;
+        }
+        return out;
+      };
+      const cands = horizontal
+        ? [
+            [mx - lw / 2, my - lh - 12],
+            [mx - lw / 2, my + 12],
+            [tip.x + 12, my - lh - 12],
+            [tip.x - lw - 12, my - lh - 12],
+            [tip.x + 12, my + 12],
+            [tip.x - lw - 12, my + 12],
+          ]
+        : [
+            [mx + 12, my - lh / 2],
+            [mx - lw - 12, my - lh / 2],
+            [mx + 12, tip.y - lh - 12],
+            [mx + 12, tip.y + 12],
+          ];
+      let best = null;
+      for (const [x, y] of cands) {
+        const cx2 = clamp(x, 8, origin.width - lw - 8);
+        const cy2 = clamp(y, 8, origin.height - lh - 8);
+        const k = score(cx2, cy2);
+        if (!best || k < best.k) best = { x: cx2, y: cy2, k };
+      }
+      this._label.style.left = `${best.x}px`;
+      this._label.style.top = `${best.y}px`;
     }
   }
 }

@@ -22,7 +22,7 @@
 .vk-co-ring {
   fill: none;
   stroke: var(--vk-ink-1);
-  stroke-width: var(--vk-line-w-connector);
+  stroke-width: var(--vk-line-w-hair);
   stroke-linejoin: round;
 }
 

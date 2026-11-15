@@ -1,0 +1,11 @@
+<vk-page id="compare">
+  <vk-head kicker="对照" counter="35" size="subhead">同一个判断，两种写法。</vk-head>
+  <vk-flow cols="1 1" gap="wide" valign="stretch">
+    <vk-card tone="err" title="错">
+      <vk-text>字符串用 <code>==</code> 比较，比的是两个地址。</vk-text>
+    </vk-card>
+    <vk-card tone="ok" title="对">
+      <vk-text>用 <code>strcmp</code> 逐字节比内容。</vk-text>
+    </vk-card>
+  </vk-flow>
+</vk-page>

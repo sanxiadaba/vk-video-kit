@@ -57,6 +57,19 @@ a[1]
 | 排布 | `vk-flow` | — |
 | 指着某处说一句、量两点之间 | `vk-callout` | `mode="arrow" / "ring" / "note" / "measure"` |
 
+### 对照帧：一块说错，一块说对
+
+不需要新组件。两张 `vk-card` 并排，`tone` 给语义，标题写「错 / 对」：
+
+```html
+<vk-flow cols="1 1" gap="wide">
+  <vk-card tone="err" title="错"><vk-text>字符串用 <code>==</code> 比较，比的是地址。</vk-text></vk-card>
+  <vk-card tone="ok" title="对"><vk-text>用 <code>strcmp</code> 逐字节比内容。</vk-text></vk-card>
+</vk-flow>
+```
+
+`tone` 只换描边和一层极淡的底，不改字色——对照靠「红/绿边 + 位置」，不靠把字染红。
+
 四条容易选错的：
 
 - 横向排用 `vk-flow cols="auto"`；分栏用 `vk-flow cols="7 5"`；不要为「两块并排」找第二个件。
@@ -183,6 +196,9 @@ a[1]
 ```
 
 容量、留白、焦点数不评分、不建议；这行数字是给你和 AI 看的。
+
+出完一集，加 `--sheet` 让 `vk render` 顺手拼一张联系表：所有帧按 780 宽排成两列，每格下面写着占用和焦点。
+这是给人扫的验收工具，不是模板，不进产物。
 
 ## 十二、什么时候拆帧
 

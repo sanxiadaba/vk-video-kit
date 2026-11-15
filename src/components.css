@@ -242,7 +242,7 @@
 }
 
 /* ================================================================ 表格 */
-[data-vk='table'] {
+[data-vk='board'][data-as='table'] {
   display: block;
   width: 100%;
   min-width: 0;
@@ -253,84 +253,84 @@
   color: var(--vk-ink-3);
   margin-bottom: var(--vk-space-4);
 }
-[data-vk='table'] table {
+[data-vk='board'][data-as='table'] table {
   border-collapse: collapse;
   width: 100%;
   max-width: 100%;
 }
-[data-vk='table'] th,
-[data-vk='table'] td {
+[data-vk='board'][data-as='table'] th,
+[data-vk='board'][data-as='table'] td {
   padding: var(--vk-space-2) var(--vk-space-5);
   line-height: 1.25;
   text-align: left;
   vertical-align: baseline;
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
 }
-[data-vk='table'] th {
+[data-vk='board'][data-as='table'] th {
   color: var(--vk-ink-3);
   font-size: var(--vk-fs-body);
   font-weight: var(--vk-w-medium);
   letter-spacing: 0.02em;
   border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
 }
-[data-vk='table'] td {
+[data-vk='board'][data-as='table'] td {
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-1);
 }
-[data-vk='table'] table:has(th:nth-child(3):last-child) {
+[data-vk='board'][data-as='table'] table:has(th:nth-child(3):last-child) {
   table-layout: fixed;
 }
-[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(1) {
+[data-vk='board'][data-as='table'] table:has(th:nth-child(3):last-child) th:nth-child(1) {
   width: 32%;
 }
-[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(2) {
+[data-vk='board'][data-as='table'] table:has(th:nth-child(3):last-child) th:nth-child(2) {
   width: 38%;
 }
-[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(3) {
+[data-vk='board'][data-as='table'] table:has(th:nth-child(3):last-child) th:nth-child(3) {
   width: 30%;
 }
-[data-vk='table'] th:first-child,
-[data-vk='table'] td:first-child {
+[data-vk='board'][data-as='table'] th:first-child,
+[data-vk='board'][data-as='table'] td:first-child {
   padding-left: var(--vk-space-6);
 }
-[data-vk='table'] th:not(:first-child),
-[data-vk='table'] td:not(:first-child) {
+[data-vk='board'][data-as='table'] th:not(:first-child),
+[data-vk='board'][data-as='table'] td:not(:first-child) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-[data-vk='table'] td.num,
-[data-vk='table'] th.num {
+[data-vk='board'][data-as='table'] td.num,
+[data-vk='board'][data-as='table'] th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--vk-font-mono);
 }
-[data-vk='table'] tr[tone='ok'] td {
+[data-vk='board'][data-as='table'] tr[tone='ok'] td {
   background: var(--vk-tint-ok);
 }
-[data-vk='table'] tr[tone='warn'] td {
+[data-vk='board'][data-as='table'] tr[tone='warn'] td {
   background: var(--vk-tint-warn);
 }
-[data-vk='table'] tr[tone='err'] td {
+[data-vk='board'][data-as='table'] tr[tone='err'] td {
   background: var(--vk-tint-err);
 }
-[data-vk='table'] tr[current] td {
+[data-vk='board'][data-as='table'] tr[current] td {
   background: none;
 }
-[data-vk='table'] tr[current] td:first-child {
+[data-vk='board'][data-as='table'] tr[current] td:first-child {
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
-[data-vk='table'] td[current] {
+[data-vk='board'][data-as='table'] td[current] {
   background: var(--vk-tint-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
 
 /* ================================================================ 列表 */
-[data-vk='list'] {
+[data-vk='board'][data-as='list'] {
   display: grid;
   gap: var(--vk-space-5);
   min-width: 0;
 }
-[data-vk='list'] > li {
+[data-vk='board'][data-as='list'] > li {
   display: grid;
   grid-template-columns: 1.1em minmax(0, 1fr);
   gap: var(--vk-space-4);
@@ -342,7 +342,7 @@
   line-height: 1.5;
   position: relative;
 }
-[data-vk='list'] > li::before {
+[data-vk='board'][data-as='list'] > li::before {
   content: '';
   width: 8px;
   height: 8px;
@@ -351,7 +351,7 @@
   justify-self: center;
   transform: translateY(-0.18em);
 }
-[data-vk='list'][variant='check'] > li::before {
+[data-vk='board'][data-as='list'][variant='check'] > li::before {
   content: '✓';
   width: auto;
   height: auto;
@@ -364,13 +364,13 @@
   align-self: baseline;
   transform: translateY(0.08em);
 }
-[data-vk='list'][variant='ordered'] {
+[data-vk='board'][data-as='list'][variant='ordered'] {
   counter-reset: vk-li;
 }
-[data-vk='list'][variant='ordered'] > li {
+[data-vk='board'][data-as='list'][variant='ordered'] > li {
   grid-template-columns: 1.6em minmax(0, 1fr);
 }
-[data-vk='list'][variant='ordered'] > li::before {
+[data-vk='board'][data-as='list'][variant='ordered'] > li::before {
   content: counter(vk-li);
   transform: none;
   width: auto;
@@ -383,30 +383,30 @@
   font-variant-numeric: tabular-nums;
   align-self: start;
 }
-[data-vk='list'] > li[current] {
+[data-vk='board'][data-as='list'] > li[current] {
   background: none;
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-1);
 }
-[data-vk='list'] > li[current]::before {
+[data-vk='board'][data-as='list'] > li[current]::before {
   background: var(--vk-focus);
 }
-[data-vk='list'][variant='check'] > li[current]::before {
+[data-vk='board'][data-as='list'][variant='check'] > li[current]::before {
   color: var(--vk-focus);
   background: none;
 }
-[data-vk='list'][variant='ordered'] > li[current]::before {
+[data-vk='board'][data-as='list'][variant='ordered'] > li[current]::before {
   background: none;
   color: var(--vk-focus);
 }
-[data-vk='list'] > li[tone='ok']::before {
+[data-vk='board'][data-as='list'] > li[tone='ok']::before {
   background: var(--vk-ok);
 }
-[data-vk='list'] > li[tone='warn']::before {
+[data-vk='board'][data-as='list'] > li[tone='warn']::before {
   background: var(--vk-warn);
 }
-[data-vk='list'] > li[tone='err']::before {
+[data-vk='board'][data-as='list'] > li[tone='err']::before {
   background: var(--vk-err);
 }
 
@@ -503,7 +503,7 @@
 }
 
 /* ================================================================ 内存格 */
-[data-vk='cells'] {
+[data-vk='board'][data-as='cells'] {
   display: block;
   min-width: 0;
 }
@@ -586,21 +586,15 @@
   background: var(--vk-ink-1);
   transform: translateX(-50%);
 }
-.vk-cell[data-tone='ok'] {
-  border-color: var(--vk-ok);
-}
-.vk-cell[data-tone='warn'] {
-  border-color: var(--vk-warn);
-}
-.vk-cell[data-tone='err'] {
-  border-color: var(--vk-err);
+.vk-cell[data-tone]:not([data-tone='neutral']) {
+  border-color: var(--vk-tone);
 }
 .vk-cell[current] {
   border-color: var(--vk-focus);
 }
 
 /* ================================================================ 字节 */
-[data-vk='bytes'] {
+[data-vk='code'][data-as='bytes'] {
   display: block;
   min-width: 0;
 }
@@ -655,7 +649,7 @@
 
 /* ================================================================ 位
    一段一个边框；位是段里的等宽格子。 */
-[data-vk='bits'] {
+[data-vk='code'][data-as='bits'] {
   display: block;
   min-width: 0;
 }
@@ -742,7 +736,7 @@
 
 /* ================================================================ 步骤
    圈 96 固定，数字 40 固定；标签才吃外层的字。 */
-[data-vk='steps'] {
+[data-vk='board'][data-as='steps'] {
   display: block;
   container-type: inline-size;
   min-width: 0;
@@ -823,26 +817,12 @@
 .vk-step[current] .vk-step-t .vk-ic {
   color: var(--vk-focus);
 }
-.vk-step[data-tone='ok'] .vk-step-t .vk-ic {
-  color: var(--vk-ok);
+.vk-step[data-tone]:not([data-tone='neutral']) .vk-step-t .vk-ic {
+  color: var(--vk-tone);
 }
-.vk-step[data-tone='warn'] .vk-step-t .vk-ic {
-  color: var(--vk-warn);
-}
-.vk-step[data-tone='err'] .vk-step-t .vk-ic {
-  color: var(--vk-err);
-}
-.vk-step[data-tone='ok'] .vk-step-n {
-  border-color: var(--vk-ok);
-  color: var(--vk-ok);
-}
-.vk-step[data-tone='warn'] .vk-step-n {
-  border-color: var(--vk-warn);
-  color: var(--vk-warn);
-}
-.vk-step[data-tone='err'] .vk-step-n {
-  border-color: var(--vk-err);
-  color: var(--vk-err);
+.vk-step[data-tone]:not([data-tone='neutral']) .vk-step-n {
+  border-color: var(--vk-tone);
+  color: var(--vk-tone);
 }
 .vk-steps[data-dir='vertical'] {
   grid-template-columns: minmax(0, 1fr);
@@ -880,7 +860,7 @@
 }
 
 /* ================================================================ 条 */
-[data-vk='bars'] {
+[data-vk='board'][data-as='bars'] {
   display: block;
   min-width: 0;
 }
@@ -933,19 +913,12 @@
   color: var(--vk-ink-1);
   font-weight: var(--vk-w-medium);
 }
-.vk-bar[data-tone='ok'] .vk-bar-t i {
-  background: var(--vk-ok);
+.vk-bar[data-tone]:not([data-tone='neutral']) .vk-bar-t i {
+  background: var(--vk-tone);
 }
-.vk-bar[data-tone='warn'] .vk-bar-t i {
-  background: var(--vk-warn);
-}
-.vk-bar[data-tone='err'] .vk-bar-t i {
-  background: var(--vk-err);
-}
-
 /* ================================================================ 时间线
    轴分段（build 写 .vk-tl-seg），节点处留缝。 */
-[data-vk='timeline'] {
+[data-vk='board'][data-as='timeline'] {
   display: block;
   min-width: 0;
 }
@@ -1040,16 +1013,9 @@
 .vk-tl-i[current] .vk-tl-label {
   font-weight: var(--vk-w-bold);
 }
-.vk-tl-i[data-tone='ok'] .vk-tl-dot {
-  background: var(--vk-ok);
+.vk-tl-i[data-tone]:not([data-tone='neutral']) .vk-tl-dot {
+  background: var(--vk-tone);
 }
-.vk-tl-i[data-tone='warn'] .vk-tl-dot {
-  background: var(--vk-warn);
-}
-.vk-tl-i[data-tone='err'] .vk-tl-dot {
-  background: var(--vk-err);
-}
-
 /* ================================================================ 关系图 */
 [data-vk='graph'] {
   display: block;
@@ -1078,14 +1044,8 @@
   border-radius: 50%;
   background: var(--vk-ink-3);
 }
-.vk-glegend [data-tone='ok'] i {
-  background: var(--vk-ok);
-}
-.vk-glegend [data-tone='warn'] i {
-  background: var(--vk-warn);
-}
-.vk-glegend [data-tone='err'] i {
-  background: var(--vk-err);
+.vk-glegend [data-tone]:not([data-tone='neutral']) i {
+  background: var(--vk-tone);
 }
 .vk-gstage {
   position: absolute;
@@ -1122,14 +1082,8 @@
   border-color: var(--vk-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
-.vk-gnode[data-tone='ok'] {
-  border-color: var(--vk-ok);
-}
-.vk-gnode[data-tone='warn'] {
-  border-color: var(--vk-warn);
-}
-.vk-gnode[data-tone='err'] {
-  border-color: var(--vk-err);
+.vk-gnode[data-tone]:not([data-tone='neutral']) {
+  border-color: var(--vk-tone);
 }
 .vk-gedge {
   display: none;

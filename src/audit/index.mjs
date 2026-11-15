@@ -78,7 +78,7 @@ export function auditPage(stage) {
     const leaves = el.querySelectorAll('td, th, .vk-lc, .vk-dc, .vk-step-l, .vk-tl-label, .vk-bar-v, .vk-cell-v, .vk-seq-l, .vk-gn-l, .vk-field-l, .vk-bit-v, .vk-tname, .vk-ftitle, .vk-lede');
     const sizes = [...(leaves.length ? leaves : [el])].map((n) => parseFloat(getComputedStyle(n).fontSize) || 0);
     return {
-      vk: el.getAttribute('data-vk') || el.localName,
+      vk: el.getAttribute('data-as') || el.getAttribute('data-vk') || el.localName,
       h: Math.round(el.getBoundingClientRect().height),
       font: Math.round(Math.max(...sizes, 0)),
     };

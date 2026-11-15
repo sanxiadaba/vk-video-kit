@@ -64,6 +64,15 @@ const md = markdown();
 const contractFile = path.join(ROOT, 'docs', 'CONTRACT.md');
 ok(fs.existsSync(contractFile) && fs.readFileSync(contractFile, 'utf8').trim() === md.trim(), 'docs/CONTRACT.md 与 vk brief --md 逐字一致');
 ok(!/<\/?(vk-stack|vk-grid|vk-compare|vk-cells|vk-steps|vk-bars|vk-timeline|vk-table|vk-list|vk-bytes|vk-bits|vk-term)>/.test(md), '生成物里没有旧标签');
+
+/* CSS 里用到的 token 必须有定义（或由构建/运行期写入）。 */
+const cssAll = ['dist/vk.css'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
+const tokensCss = fs.readFileSync(path.join(ROOT, 'dist', 'tokens.css'), 'utf8');
+const defined = new Set([...tokensCss.matchAll(/(--vk-[\w-]+)\s*:/g)].map((m) => m[1]));
+const runtimeVars = new Set(['--vk-gap', '--vk-cols', '--vk-cols-template', '--vk-span', '--vk-tone', '--vk-tint', '--vk-ln-digits', '--vk-aaddr-w', '--vk-depth', '--vk-bcol', '--vk-bhexw', '--vk-n', '--vk-at', '--vk-x', '--vk-seq-c', '--vk-x1', '--vk-x2', '--vk-mid']);
+const usedVars = new Set([...cssAll.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]));
+const missingVars = [...usedVars].filter((v) => !defined.has(v) && !runtimeVars.has(v));
+ok(missingVars.length === 0, 'CSS 用到的 token 都有定义', missingVars.join(', '));
 ok(!markdown().includes('FLOOR') && !markdown().includes('0.72'), '生成物里没有已删的缩放下限');
 
 /* ------------------------------------------------------------------ 二、负例 */
@@ -153,6 +162,12 @@ if (report) {
   ok(blank.length === 0, '没有空白帧', blank.join(', '));
 }
 
+/* 出图页的 DOM 里不许出现旧标签（构建层已经换过一遍，防止回潮）。 */
+const builtPages = path.join(ROOT, '.vk-tmp', 'pages', 'tests', 'fixtures');
+const builtHtml = fs.existsSync(builtPages) ? fs.readdirSync(builtPages).filter((f) => f.endsWith('.html')).map((f) => fs.readFileSync(path.join(builtPages, f), 'utf8')).join('\n') : '';
+ok(builtHtml.length > 0, '出图页已生成');
+ok(!/<vk-(cells|steps|bars|timeline|table|list|bytes|bits|term|tree|stack|grid|compare|surface|box|label)\b/.test(builtHtml), '出图页里没有旧标签');
+
 /* ------------------------------------------------------------------ 四、行为 */
 group('行为');
 const { chromium } = await import('playwright');
@@ -205,6 +220,15 @@ if (!browser) {
   const dark = await darkPage.evaluate(() => getComputedStyle(document.querySelector('.vk-frame')).backgroundColor);
   ok(!/rgb\(255, 255, 255\)/.test(dark), `深色页的代码窗自动变深（${dark}）`);
   await darkPage.close();
+
+  const cmpPage = await load('compare.html');
+  const cmp = await cmpPage.evaluate(() => {
+    const cards = [...document.querySelectorAll('vk-card[tone]')];
+    return cards.map((c) => ({ tone: c.getAttribute('tone'), border: getComputedStyle(c).borderColor, bg: getComputedStyle(c).backgroundColor }));
+  });
+  ok(cmp.length === 2 && cmp[0].border !== cmp[1].border, `语义卡两种色（${cmp.map((c) => c.tone + ' ' + c.border).join(' / ')}）`);
+  ok(cmp.every((c) => c.bg !== 'rgba(0, 0, 0, 0)'), '语义卡有淡底');
+  await cmpPage.close();
   await browser.close();
 }
 

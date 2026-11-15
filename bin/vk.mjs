@@ -35,7 +35,7 @@ const val = (n) => {
 const VALUE_FLAGS = new Set(['--out', '--frame']);
 
 const FLAGS = {
-  render: new Set(['--frame', '--out', '--json', '--no-preview', '--help', '-h']),
+  render: new Set(['--frame', '--out', '--json', '--no-preview', '--sheet', '--help', '-h']),
   check: new Set(['--frame', '--out', '--json', '--help', '-h']),
   doc: new Set(['--json', '--help', '-h']),
   brief: new Set(['--json', '--md', '--help', '-h']),
@@ -47,8 +47,8 @@ const FLAGS = {
 const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，手机上约 780 宽）
 
   vk build                         重建 dist/
-  vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview]
-      构建 + 自检 + 出三件：<name>.png / <name>.780.png / <name>.json
+  vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]
+      构建 + 自检 + 出三件：<name>.png / <name>.780.png / <name>.json；--sheet 再拼一张联系表
   vk check  <file|dir> [--frame id] [--out DIR] [--json]
       只构建 + 自检 + 写 json（不出图）
   vk doc    <tag> [--json]         一个件的属性表
@@ -276,6 +276,7 @@ async function renderFiles(files, { shots }) {
       }
       await page.close();
     }
+    if (shots && has('--sheet')) await makeSheet(browser, report.frames, outDir());
   } finally {
     await browser.close();
   }
@@ -284,8 +285,40 @@ async function renderFiles(files, { shots }) {
   return report;
 }
 
-function printReport(report) {
-  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
+/* 联系表：把所有 780 预览拼成一张，给人一眼扫完整集（不是模板，是验收工具）。 */
+async function makeSheet(browser, frames, dir) {
+  const withShot = frames.filter((f) => f.png780);
+  if (!withShot.length) return;
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+  const cells = withShot
+    .map((f) => {
+      const url = pathToFileURL(path.resolve(process.cwd(), f.png780)).href;
+      const h = f.health;
+      const fact = h ? `${h.content}/${h.band}${h.overflow ? ` 超出 ${h.overflow}` : ''} · 焦点 ${h.focus}` : '';
+      return `<figure><img src="${url}" alt=""><figcaption><b>${esc(f.name)}</b> ${esc(fact)}</figcaption></figure>`;
+    })
+    .join('');
+  const html = `<!doctype html><meta charset="utf-8"><style>
+    body{margin:0;padding:20px;background:#eef1f5;font:15px/1.5 "Inter","Segoe UI",system-ui,sans-serif;color:#20242a}
+    main{display:grid;grid-template-columns:repeat(2,780px);gap:20px;width:1580px}
+    figure{margin:0;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px #cfd6df}
+    img{display:block;width:780px;height:auto}
+    figcaption{padding:8px 12px;color:#5b6472;border-top:1px solid #e3e8ee}
+    figcaption b{color:#20242a;font-weight:600}
+  </style><main>${cells}</main>`;
+  const page = await browser.newPage({ viewport: { width: 1620, height: 900 } });
+  const tmp = path.join(dir, '.sheet.html');
+  fs.writeFileSync(tmp, html);
+  await page.goto(pathToFileURL(tmp).href, { waitUntil: 'load' });
+  await page.evaluate(() => Promise.all([...document.images].map((i) => (i.decode ? i.decode().catch(() => {}) : Promise.resolve()))));
+  const out = path.join(dir, 'sheet.png');
+  await page.screenshot({ path: out, fullPage: true });
+  await page.close();
+  fs.rmSync(tmp, { force: true });
+  console.log(`联系表：${rel(out)}`);
+}
+
+function printReport(report) {  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
     const h = f.health;

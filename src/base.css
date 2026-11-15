@@ -265,6 +265,11 @@ body {
   background: var(--vk-paper);
   color-scheme: dark;
 }
+/* 语义面：对照 / 对错示范。只换描边与一层极淡的底，不改字色。 */
+[data-vk='card'][tone]:not([tone='neutral']) {
+  border-color: var(--vk-tone);
+  background: color-mix(in srgb, var(--vk-tone) 5%, var(--vk-paper));
+}
 
 /* 窗口：代码 / 终端 / 改动 / 汇编 / 目录 / 字节共用这一套皮。 */
 .vk-frame {
@@ -413,24 +418,30 @@ body {
   color: var(--vk-ink-3);
 }
 
-/* 语义色只做变量，具体件自己决定画在哪 */
-[tone='neutral'] {
+/* 语义色只做变量，具体件自己决定画在哪。
+   作者写 tone="ok"，构建期同时落 data-tone，两种写法都认，渲染只有 var(--vk-tone)。 */
+[tone='neutral'],
+[data-tone='neutral'] {
   --vk-tone: var(--vk-ink-1);
   --vk-tint: var(--vk-soft);
 }
-[tone='info'] {
+[tone='info'],
+[data-tone='info'] {
   --vk-tone: var(--vk-info);
   --vk-tint: var(--vk-tint-info);
 }
-[tone='ok'] {
+[tone='ok'],
+[data-tone='ok'] {
   --vk-tone: var(--vk-ok);
   --vk-tint: var(--vk-tint-ok);
 }
-[tone='warn'] {
+[tone='warn'],
+[data-tone='warn'] {
   --vk-tone: var(--vk-warn);
   --vk-tint: var(--vk-tint-warn);
 }
-[tone='err'] {
+[tone='err'],
+[data-tone='err'] {
   --vk-tone: var(--vk-err);
   --vk-tint: var(--vk-tint-err);
 }
@@ -474,6 +485,7 @@ body {
 .vk-lc code {
   font-family: var(--vk-font-mono);
   font-size: 0.9em;
+  font-variant-ligatures: none;
   padding: 0 0.16em;
   border-radius: var(--vk-radius-sm);
   background: var(--vk-soft);
@@ -572,8 +584,8 @@ body {
 /* -------------------------------------------------------------- 机制件的宿主
    自定义元素默认是 inline；这里一次性给所有块级宿主 display:block。 */
 [data-vk='board'],
-[data-vk='bytes'],
-[data-vk='bits'],
+[data-vk='code'][data-as='bytes'],
+[data-vk='code'][data-as='bits'],
 [data-vk='graph'],
 [data-vk='dir'],
 [data-vk='seq'],
