@@ -73,6 +73,13 @@ const runtimeVars = new Set(['--vk-gap', '--vk-cols', '--vk-cols-template', '--v
 const usedVars = new Set([...cssAll.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]));
 const missingVars = [...usedVars].filter((v) => !defined.has(v) && !runtimeVars.has(v));
 ok(missingVars.length === 0, 'CSS 用到的 token 都有定义', missingVars.join(', '));
+
+/* 层的边界：组件层只写几何，状态层只消费 --vk-tone。 */
+const componentsCss = fs.readFileSync(path.join(ROOT, 'src', 'components.css'), 'utf8');
+const stateCss = fs.readFileSync(path.join(ROOT, 'src', 'state.css'), 'utf8');
+ok(!/\[current\]|\.is-cur|\[data-tone|\[tone=/.test(componentsCss), '状态不写在 components.css');
+ok(!/--vk-(ok|warn|err|info)\b/.test(stateCss), 'state.css 只消费 --vk-tone，不点名语义色');
+ok(/var\(--vk-focus\)/.test(stateCss), 'current 只用焦点色');
 ok(!markdown().includes('FLOOR') && !markdown().includes('0.72'), '生成物里没有已删的缩放下限');
 
 /* ------------------------------------------------------------------ 二、负例 */

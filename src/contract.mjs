@@ -308,12 +308,15 @@ export function validate(tree, file = '<page>') {
       continue;
     }
 
-    /* 先定变体：as 错了一切属性表都不对。 */
+    /* 先定变体：as 错了一切属性表都不对。as 写错时只报这一条，不再级联出别的错。 */
     const hasVariants = !!TAGS[tag].variants;
     if (hasVariants) {
       const raw = attrOf(node, 'as');
       if (raw != null && !TAGS[tag].variants[raw]) {
-        errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_VARIANT, message: `<${tag}> 没有 as="${raw}"`, fix: `可用：${Object.keys(TAGS[tag].variants).join(' / ')}` });
+        const pool = Object.keys(TAGS[tag].variants);
+        const hint = suggest(raw, pool);
+        errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_VARIANT, message: `<${tag}> 没有 as="${raw}"`, fix: hint ? `是想写 ${hint}？` : `可用：${pool.join(' / ')}` });
+        continue;
       }
     }
     const as = asOf(node);
