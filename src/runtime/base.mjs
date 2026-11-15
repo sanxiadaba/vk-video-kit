@@ -119,8 +119,15 @@ const inRange = (n, args) => {
 const pick = (host, attr, args) => {
   const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));
   if (!els.length) return null;
-  /* 行与词都按墨迹取框：锚点是「那几个字」，不是整栏行盒。 */
-  const rectOf = (el) => (el.matches('.vk-line, .vk-mark') ? inkRect(el) : el.getBoundingClientRect());
+  /* 行按「代码文字」取墨迹：行号不算目标，圈也不该把行号圈进去。 */
+  const rectOf = (el) => {
+    if (el.matches('.vk-mark')) return inkRect(el);
+    if (el.matches('.vk-line')) {
+      const lc = el.querySelector('.vk-lc');
+      return lc ? inkRect(lc) : inkRect(el);
+    }
+    return el.getBoundingClientRect();
+  };
   return { el: els[0], rect: union(els.map(rectOf)), side: null, box: els[0].getBoundingClientRect() };
 };
 

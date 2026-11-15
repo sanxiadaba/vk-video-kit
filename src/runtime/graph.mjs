@@ -134,7 +134,7 @@ export class VkGraph extends VkElement {
       if (dir === 'vertical') {
         /* 竖链的行距由可用高度算出来：宁可溢出报错，也不把节点压在一起。 */
         const availH = bodyH ? bodyH - 4 : 0;
-        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(CONN.arrowGap, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : CONN.minGap) : 0;
+        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(CONN.arrowGap, Math.min(128, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : CONN.minGap) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: 0, y: i * (maxH + gapY) + (maxH - sizes[i].h) / 2, w: sizes[i].w, h: sizes[i].h };
         });
@@ -303,8 +303,8 @@ export class VkGraph extends VkElement {
         const dy = bCy - aCy;
         points = [hit(aCx, aCy, a.w, a.h, dx, dy), hit(bCx, bCy, b.w, b.h, -dx, -dy)];
       } else if (dir === 'vertical') {
-        /* 竖链的线走左侧栏，和文字起点对齐；箭头落在下一行的上沿。 */
-        points = [{ x: a.x + 48, y: a.y + a.h }, { x: b.x + 48, y: b.y }];
+        /* 竖链的箭头走盒子中线，从上一个盒子的下沿到下一个盒子的上沿。 */
+        points = [{ x: aCx, y: a.y + a.h }, { x: bCx, y: b.y }];
       } else {
         points = [{ x: a.x + a.w, y: aCy }, { x: b.x, y: bCy }];
       }
@@ -328,9 +328,18 @@ export class VkGraph extends VkElement {
 
       if (l.label) {
         const from = points[0];
-        /* 标签写在线上：纸色 halo 把线打断，不再飘到半空。 */
-        const lx = (from.x + end.x) / 2;
-        const ly = (from.y + end.y) / 2;
+        /* 标签放在线的外侧 32px，绝不压线。 */
+        const dx = end.x - from.x;
+        const dy = end.y - from.y;
+        const len = Math.hypot(dx, dy) || 1;
+        let nx = -dy / len;
+        let ny = dx / len;
+        if (ny > 0) {
+          nx = -nx;
+          ny = -ny;
+        }
+        const lx = (from.x + end.x) / 2 + nx * 32;
+        const ly = (from.y + end.y) / 2 + ny * 32;
         const anchor = 'middle';
         const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });
         t.textContent = l.label;

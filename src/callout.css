@@ -2,6 +2,7 @@
    v25 · 标注
    ----------------------------------------------------------------------------
    不改布局：绝对定位覆盖整帧，只画线、圈、气泡、量度。
+   标注线一律 ink-2（纯黑只留给文字）；圈/括号/引线/箭头同档 8px。
    ========================================================================== */
 
 [data-vk='callout'] {
@@ -18,10 +19,10 @@
   overflow: visible;
 }
 
-/* 圈：按元素盒贴边，黑色结构线；焦点蓝只留给 current。 */
+/* 圈：贴代码文字，ink-2，不再比卡片重三档。 */
 .vk-co-ring {
   fill: none;
-  stroke: var(--vk-ink-1);
+  stroke: var(--vk-ink-2);
   stroke-width: var(--vk-ann-ring);
   stroke-linejoin: round;
 }
@@ -29,7 +30,7 @@
 /* 词的落点：下括号 */
 .vk-co-bracket {
   fill: none;
-  stroke: var(--vk-ink-1);
+  stroke: var(--vk-ink-2);
   stroke-width: var(--vk-ann-bracket);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -38,7 +39,7 @@
 .vk-co-line,
 .vk-co-lead {
   fill: none;
-  stroke: var(--vk-ink-1);
+  stroke: var(--vk-ink-2);
   stroke-width: var(--vk-conn-shaft);
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -48,14 +49,14 @@
 }
 
 .vk-co-head {
-  fill: var(--vk-ink-1);
+  fill: var(--vk-ink-2);
 }
 
 .vk-co-dot {
-  fill: var(--vk-ink-1);
+  fill: var(--vk-ink-2);
 }
 
-/* 连接件上的短标签：不是卡片，是写在线上的一行字，纸色 halo 把线打断。 */
+/* 连接件上的短标签：不是卡片，是压在线上的一行字，纸色底把线打断。 */
 .vk-co-label {
   position: absolute;
   padding: 0 10px;
@@ -67,14 +68,12 @@
   white-space: nowrap;
 }
 
+/* 一句注释：无框，只在纸面上写一行字；引线负责连接。 */
 .vk-co-note {
   position: absolute;
   max-width: 720px;
-  padding: var(--vk-space-1) var(--vk-space-4);
-  border-radius: var(--vk-radius-sm);
-  border: var(--vk-ann-lead) solid var(--vk-ink-1);
-  background: var(--vk-paper);
+  padding: 4px 10px;
   color: var(--vk-ink-1);
   font-size: var(--vk-fs-caption);
-  line-height: 1.25;
+  line-height: 1.35;
 }

@@ -481,7 +481,7 @@
   text-transform: uppercase;
   white-space: nowrap;
 }
-/* 针脚：从徽标底走到格子上边，止于边，不进格。 */
+/* 针脚：从徽标底走到格子上边，止于边，不进格；末端一个空心点压在格子边上。 */
 .vk-cell-p::after {
   content: '';
   position: absolute;
@@ -489,8 +489,21 @@
   top: 100%;
   width: var(--vk-conn-shaft);
   height: var(--vk-ann-pin);
-  background: var(--vk-ink-1);
+  background: var(--vk-focus);
   transform: translateX(-50%);
+}
+.vk-cell-p::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: calc(100% + var(--vk-ann-pin));
+  width: var(--vk-ann-dot);
+  height: var(--vk-ann-dot);
+  margin: calc(var(--vk-ann-dot) / -2) 0 0 calc(var(--vk-ann-dot) / -2);
+  border-radius: 50%;
+  border: calc(var(--vk-line-w-rule) / 2) solid var(--vk-focus);
+  background: var(--vk-paper);
+  box-sizing: border-box;
 }
 
 /* ================================================================ 字节 */
@@ -911,9 +924,9 @@
   min-height: 160px;
   align-content: center;
 }
-/* 竖链不是「窄盒子摞起来」：一条一条的宽行，标签和注并排，箭头在行间通过。 */
+/* 竖链：内容宽度的盒子，居中对齐，箭头走盒子中线。 */
 .vk-graph[data-layout='row'][data-dir='vertical'] .vk-gnode {
-  min-width: 640px;
+  min-width: 320px;
   max-width: 100%;
   padding: var(--vk-space-1) var(--vk-space-5);
   grid-auto-flow: column;
@@ -1014,13 +1027,10 @@
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
 }
-.vk-seq-row[data-dir='right'] .vk-seq-arrow {
-  left: calc(var(--vk-x1) + 10px);
-  right: calc(100% - var(--vk-x2) + 10px);
-}
+.vk-seq-row[data-dir='right'] .vk-seq-arrow,
 .vk-seq-row[data-dir='left'] .vk-seq-arrow {
-  left: calc(var(--vk-x2) + 10px);
-  right: calc(100% - var(--vk-x1) + 10px);
+  left: min(var(--vk-x1), var(--vk-x2));
+  right: calc(100% - max(var(--vk-x1), var(--vk-x2)));
 }
 .vk-seq-arrow::after {
   content: '';
@@ -1031,12 +1041,13 @@
   transform: translateY(-50%);
   background: var(--vk-seq-c);
 }
+/* 尖端正好落在泳道线上：右向的头贴右端，左向的头贴左端。 */
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
-  right: calc(var(--vk-conn-head) / -2);
+  right: 0;
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
-  left: calc(var(--vk-conn-head) / -2);
+  left: 0;
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 .vk-seq-l {

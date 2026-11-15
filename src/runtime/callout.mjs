@@ -124,24 +124,42 @@ function measureSides(a, b) {
   return autoSides(a, b);
 }
 
-/* 连接件：两端沿各自边的法线出发，中间用三次贝塞尔顺过去；箭头前面留一段直线，
-   保证箭头永远垂直于目标边。错位小的时候曲线几乎就是直线，不会再出现台阶。 */
+/* 连接件：尖端落在目标边的「与起点同高」处，箭头垂直于边；线是直的。
+   只有错位大过 72 时才折一次（90°），不再画 S 曲线。 */
 function connectorPath(a, b, fs, ts) {
   const start = sourcePoint(a, fs);
-  const tip = targetTip(b, ts);
   const u = targetUnit(ts);
+  const horiz = ts === 'left' || ts === 'right';
+  let tip;
+  if (horiz) {
+    const y = clamp(start.y, b.top + 10, b.bottom - 10);
+    tip = { x: ts === 'left' ? b.left - CONN.tip : b.right + CONN.tip, y };
+  } else {
+    const x = clamp(start.x, b.left + 10, b.right - 10);
+    tip = { x, y: ts === 'top' ? b.top - CONN.tip : b.bottom + CONN.tip };
+  }
   const base = { x: tip.x - u.x * HEAD, y: tip.y - u.y * HEAD };
-  const su = sourceUnit(fs);
-  const dist = Math.hypot(base.x - start.x, base.y - start.y);
-  const k = Math.min(160, Math.max(40, dist * 0.55));
-  const c1 = { x: start.x + su.x * k, y: start.y + su.y * k };
-  const c2 = { x: base.x - u.x * k, y: base.y - u.y * k };
-  const d = `M ${start.x} ${start.y} C ${c1.x} ${c1.y} ${c2.x} ${c2.y} ${base.x} ${base.y} L ${tip.x} ${tip.y}`;
-  const mid = {
-    x: (start.x + 3 * c1.x + 3 * c2.x + base.x) / 8,
-    y: (start.y + 3 * c1.y + 3 * c2.y + base.y) / 8,
-  };
-  return { d, start, base, tip, u, mid, dist };
+  const perp = horiz ? Math.abs(base.y - start.y) : Math.abs(base.x - start.x);
+  const along = horiz ? Math.abs(base.x - start.x) : Math.abs(base.y - start.y);
+  let d;
+  if (perp < 2 || perp < along * 0.35) {
+    d = `M ${start.x} ${start.y} L ${base.x} ${base.y}`;
+  } else if (perp <= 72) {
+    const dx = Math.sign(base.x - start.x) * perp;
+    const dy = Math.sign(base.y - start.y) * perp;
+    d = `M ${start.x} ${start.y} L ${start.x + dx} ${start.y + dy} L ${base.x} ${base.y}`;
+  } else {
+    const mid = horiz ? (start.x + base.x) / 2 : (start.y + base.y) / 2;
+    d = horiz
+      ? `M ${start.x} ${start.y} L ${mid} ${start.y} L ${mid} ${base.y} L ${base.x} ${base.y}`
+      : `M ${start.x} ${start.y} L ${start.x} ${mid} L ${base.x} ${mid} L ${base.x} ${base.y}`;
+  }
+  return { d, start, base, tip, u, mid: { x: (start.x + base.x) / 2, y: (start.y + base.y) / 2 }, dist: Math.hypot(base.x - start.x, base.y - start.y) };
+}
+
+/* 点 p 到矩形 b 的最近点。 */
+function nearest(b, p) {
+  return { x: clamp(p.x, b.left, b.right), y: clamp(p.y, b.top, b.bottom) };
 }
 
 function sourceUnit(side) {
@@ -216,7 +234,7 @@ export class VkCallout extends VkElement {
       if (!t) return missing();
       const r = rel(t.rect);
       /* 锚点已经是墨迹框：圈统一外扩 12，不再按行盒贴边。 */
-      const pad = 12;
+      const pad = 8;
       this._svg.appendChild(mk('rect', { class: 'vk-co-ring', x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2, rx: 24 }));
       return;
     }
@@ -239,10 +257,11 @@ export class VkCallout extends VkElement {
       const safeTop = head ? head.getBoundingClientRect().bottom - origin.top + 8 : 8;
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
-      const obstacles = [ob, ...(head ? [rel(head.getBoundingClientRect())] : [])];
+      const obstacles = head ? [rel(head.getBoundingClientRect())] : [];
       for (const el of page.querySelectorAll('vk-code .vk-line, vk-code .vk-dhunk, vk-text, .vk-title, .vk-lede, vk-table tr, vk-list li, .vk-step, .vk-bar, .vk-cell, .vk-bit, .vk-gnode, .vk-tl-i, .vk-node, .vk-brow')) {
         if (el.closest('vk-callout')) continue;
-        const q = el.getBoundingClientRect();
+        /* 行只按字算障碍：行盒占满整栏，拿行盒会把「空白右侧」误判成压字。 */
+        const q = el.matches('.vk-line, .vk-text-line') ? inkRect(el) : el.getBoundingClientRect();
         if (q.width > 2 && q.height > 2) obstacles.push(rel(q));
       }
 
@@ -256,81 +275,50 @@ export class VkCallout extends VkElement {
         return { x, y };
       };
 
-      const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
-
-      /* 代码行里的标注：标签放在这一行文字的右侧（同一条线），杆走行内下方/中线。 */
+      /* 气泡放在件的外面：右侧 → 左侧 → 下方 → 上方 → 件内空白（最后）。
+         引线从落点直连气泡，气泡绝不画进卡片里。 */
       const lineEl = t.el.closest('.vk-line');
-      if (lineEl) {
-        const lr = rel(lineEl.getBoundingClientRect());
-        const runRight = textRight(lineEl) - origin.left;
-        /* 整行标注：标签挂在环外（行盒右侧）；词标注：标签贴在这一行文字右侧。 */
-        const isLineTarget = t.el.matches('.vk-line');
-        const baseRight = isLineTarget ? runRight + ANN.ring : runRight;
-        let nx = baseRight + ANN.standoff;
-        /* 不许骑在组件边框上：放不进窗口就整体挪到窗口外，再不行交给通用落位。 */
-        if (nx + bw > ob.right - 12) nx = ob.right + 24;
-        const ny = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
-        if (nx + bw <= origin.width - 8) {
-          this._note.style.left = `${nx}px`;
-          this._note.style.top = `${ny}px`;
-          if (isWord) {
-            /* 词：下括号（横线 + 两端向下的小竖线）；杆先沿字下方走到这一行文字之外，再上到标签。 */
-            const by = r.bottom + ANN.bracketGap + 2;
-            const x1 = r.left - 8;
-            const x2 = r.right + 8;
-            const tick = ANN.tick;
-            this._svg.appendChild(
-              mk('path', {
-                class: 'vk-co-bracket',
-                d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}`,
-              })
-            );
-            const bendX = Math.min(nx - 24, runRight + 24);
-            this._svg.appendChild(
-              mk('path', {
-                class: 'vk-co-lead',
-                d: `M ${x2} ${by} C ${x2 + 48} ${by} ${nx - 48} ${cy(lr)} ${nx} ${cy(lr)}`,
-              })
-            );
-          } else {
-            const px = baseRight;
-            const py = cy(lr);
-            this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: nx, y1: py, x2: px, y2: py }));
-            this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
-          }
-          return;
-        }
-      }
+      const lr = lineEl ? rel(lineEl.getBoundingClientRect()) : null;
+      const targetY = lineEl ? cy(lr) - bh / 2 : cy(r) - bh / 2;
 
-      const cands = [...sides.map((side) => ({ ...place(r, side), side })), ...sides.map((side) => ({ ...place(ob, side), side: `block-${side}` }))];
-      const tx = cx(r);
-      const ty = cy(r);
-      let best = null;
-      for (const c of cands) {
-        const box = { left: c.x, top: c.y, width: bw, height: bh };
-        let overlap = 0;
-        obstacles.forEach((o, oi) => {
-          const w = Math.min(box.left + box.width, o.right) - Math.max(box.left, o.left);
-          const h = Math.min(box.top + box.height, o.bottom) - Math.max(box.top, o.top);
-          /* 压自己的容器是最难看的：权重 ×10，优先挪到容器外。 */
-          if (w > 0 && h > 0) overlap += w * h * (oi === 0 ? 10 : 1);
-        });
-        const outX = Math.max(0, 8 - c.x) + Math.max(0, c.x + bw - (origin.width - 8));
-        const outY = Math.max(0, safeTop - c.y) + Math.max(0, c.y + bh - safeBottom);
-        const dist = Math.hypot(c.x + bw / 2 - tx, c.y + bh / 2 - ty);
-        const key = [overlap + (outX + outY) * bh * 10, dist];
-        if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
-      }
-      const x = clamp(Math.max(best.x, t.el.matches('.vk-line') && best.x > ob.left ? ob.right + gap : best.x), 8, origin.width - bw - 8);
-      const y = clamp(best.y, safeTop, safeBottom - bh);
+      const fits = (x, y) => x >= 24 && x + bw <= origin.width - 24 && y >= safeTop && y + bh <= safeBottom;
+      const hits = (x, y) =>
+        obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
+      const insideX = lineEl ? textRight(lineEl) - origin.left + 60 : r.right + 60;
+      const cands = [
+        /* 件内空白优先：无框文字，离目标 60，读起来像代码旁的一句注。 */
+        { x: insideX, y: targetY, inside: true },
+        { x: ob.right + 40, y: targetY },
+        { x: ob.left - 40 - bw, y: targetY },
+        { x: cx(r) - bw / 2, y: ob.bottom + 32 },
+        { x: cx(r) - bw / 2, y: ob.top - 32 - bh },
+      ];
+      const ok = (c) => fits(c.x, c.y) && !hits(c.x, c.y) && (!c.inside || c.x + bw <= ob.right - 16);
+      const box = cands.find(ok) || cands.find((c) => fits(c.x, c.y)) || cands[0];
+      const x = clamp(box.x, 16, origin.width - bw - 16);
+      const y = clamp(box.y, safeTop, safeBottom - bh);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };
-      const [as] = autoSides(bubble, r);
-      const a = sourcePoint(bubble, as);
-      const b = edgeTip(r, a);
-      this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
-      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: b.x, cy: b.y, r: ANN.dot / 2 }));
+
+      if (isWord) {
+        /* 词：下括号 + 一条直引线到气泡最近点。 */
+        const by = r.bottom + ANN.bracketGap + 2;
+        const x1 = r.left - 8;
+        const x2 = r.right + 8;
+        const tick = ANN.tick;
+        this._svg.appendChild(
+          mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
+        );
+        const p = nearest(bubble, { x: x2, y: by });
+        this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: x2, y1: by, x2: p.x, y2: p.y }));
+      } else {
+        const px = lineEl ? textRight(lineEl) - origin.left : r.right;
+        const py = lineEl ? cy(lr) : cy(r);
+        const p = nearest(bubble, { x: px, y: py });
+        this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: px, y1: py, x2: p.x, y2: p.y }));
+        this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
+      }
       return;
     }
 

@@ -287,8 +287,30 @@ if (!browser) {
     const h = document.querySelector('.vk-edge-head').getBoundingClientRect();
     return { w: Math.round(h.width), h: Math.round(h.height) };
   });
-  ok(head.w >= 30 && head.h >= 24, `箭头头部够大（${head.w}×${head.h}）`);
+  ok(head.w >= 40 && head.h >= 24, `箭头够宽够长（${head.w}×${head.h}）`);
   await grPage.close();
+
+  /* 泳道箭头：尖端必须落在泳道线上，偏一点都不行。 */
+  const sqPage = await load('seq4.html');
+  const tips = await sqPage.evaluate(() => {
+    const page = document.querySelector('vk-page').getBoundingClientRect();
+    const lanes = [...document.querySelectorAll('.vk-seq-lane')].map((e) => {
+      const q = e.getBoundingClientRect();
+      return q.left + q.width / 2 - page.left;
+    });
+    return [...document.querySelectorAll('.vk-seq-row')].map((row) => {
+      const dir = row.getAttribute('data-dir');
+      const a = row.querySelector('.vk-seq-arrow');
+      const ar = a.getBoundingClientRect();
+      const cs = getComputedStyle(a, '::after');
+      /* 尖端：右向在箭头盒的右端，左向在左端。 */
+      const tip = dir === 'right' ? ar.right : ar.left;
+      const lane = dir === 'right' ? Math.max(...lanes) : Math.min(...lanes);
+      return Math.round(tip - page.left - lane);
+    });
+  });
+  ok(tips.every((d) => Math.abs(d) <= 1), `泳道箭头尖端对齐竖线（偏差 ${tips.join(' / ')}）`);
+  await sqPage.close();
 
   /* P 指针：徽标够大，针脚止于格子上边，不进格。 */
   const cPage = await load('cells.html');
