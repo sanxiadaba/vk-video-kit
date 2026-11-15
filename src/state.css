@@ -86,16 +86,8 @@
   color: var(--vk-focus);
 }
 
-[data-vk='board'][data-as='list'] > li[tone='ok']::before {
-  background: var(--vk-ok);
-}
-
-[data-vk='board'][data-as='list'] > li[tone='warn']::before {
-  background: var(--vk-warn);
-}
-
-[data-vk='board'][data-as='list'] > li[tone='err']::before {
-  background: var(--vk-err);
+[data-vk='board'][data-as='list'] > li[tone]:not([tone='neutral'])::before {
+  background: var(--vk-tone);
 }
 
 .vk-node[current] > .vk-nrow {
@@ -207,40 +199,16 @@
   border-color: var(--vk-tone);
 }
 
-.vk-edge[data-tone='ok'] {
-  stroke: var(--vk-ok);
+.vk-edge[data-tone]:not([data-tone='neutral']) {
+  stroke: var(--vk-tone);
 }
 
-.vk-edge[data-tone='warn'] {
-  stroke: var(--vk-warn);
+.vk-edge-head[data-tone]:not([data-tone='neutral']) {
+  fill: var(--vk-tone);
 }
 
-.vk-edge[data-tone='err'] {
-  stroke: var(--vk-err);
-}
-
-.vk-edge-head[data-tone='ok'] {
-  fill: var(--vk-ok);
-}
-
-.vk-edge-head[data-tone='warn'] {
-  fill: var(--vk-warn);
-}
-
-.vk-edge-head[data-tone='err'] {
-  fill: var(--vk-err);
-}
-
-.vk-seq-row[data-tone='ok'] {
-  --vk-seq-c: var(--vk-ok);
-}
-
-.vk-seq-row[data-tone='warn'] {
-  --vk-seq-c: var(--vk-warn);
-}
-
-.vk-seq-row[data-tone='err'] {
-  --vk-seq-c: var(--vk-err);
+.vk-seq-row[data-tone]:not([data-tone='neutral']) {
+  --vk-seq-c: var(--vk-tone);
 }
 
 .vk-seq-row[current] {
