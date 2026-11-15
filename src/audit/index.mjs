@@ -85,7 +85,8 @@ export function auditPage(stage) {
   });
 
   return {
-    ok: issues.length === 0 && overflow === 0,
+    ok: issues.length === 0,
+    fits: overflow === 0,
     issues,
     health: {
       head: headH,

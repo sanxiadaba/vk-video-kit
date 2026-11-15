@@ -265,6 +265,7 @@ async function renderFiles(files, { shots }) {
         const data = {
           id: fr.id,
           ok: audit.ok,
+          fits: audit.fits,
           issues: audit.issues,
           health: audit.health,
           warns: [...new Set(warns)],
@@ -281,7 +282,7 @@ async function renderFiles(files, { shots }) {
     await browser.close();
   }
   report.ok = report.frames.length > 0;
-  report.clean = report.diagnostics.length === 0 && report.frames.every((f) => f.ok);
+  report.clean = report.diagnostics.length === 0 && report.frames.every((f) => f.ok && f.fits);
   return report;
 }
 

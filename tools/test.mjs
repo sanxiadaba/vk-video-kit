@@ -291,7 +291,8 @@ try {
 ok(overRun.status === 0, '超容量也 exit 0（不拦出图）');
 ok(overReport?.frames?.[0]?.health?.overflow > 0, `体检单报出超出（${overReport?.frames?.[0]?.health?.overflow}px）`);
 ok(fs.existsSync(path.join(overDir, 'overflow.png')), '超容量的帧仍然产生 PNG');
-ok(overReport?.frames?.[0]?.issues?.length === 0, '超容量不算硬错（它是事实，不是坏）');
+ok(overReport?.frames?.[0]?.issues?.length === 0 && overReport?.frames?.[0]?.ok === true, '超容量不算硬错（ok 仍为 true）');
+ok(overReport?.frames?.[0]?.fits === false, 'fits 单独标记放不下');
 fs.rmSync(overFile, { force: true });
 
 /* ------------------------------------------------------------------ 七、对比度 */
