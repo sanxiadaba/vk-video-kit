@@ -108,20 +108,20 @@ function autoSides(a, b) {
 
 /* 目标入线点：落在目标边、与起点同高（不在目标跨度内就取最近的有效高度）。
    返回 tip 与行进方向 u。 */
-function targetEntry(b, ts, start) {
+function targetEntry(b, ts, start, gap = ARROW.tipGap) {
   if (ts === 'left' || ts === 'right') {
     const y = clamp(start.y, b.top + 12, b.bottom - 12);
-    return { x: ts === 'left' ? b.left - ARROW.tipGap : b.right + ARROW.tipGap, y, u: { x: ts === 'left' ? 1 : -1, y: 0 } };
+    return { x: ts === 'left' ? b.left - gap : b.right + gap, y, u: { x: ts === 'left' ? 1 : -1, y: 0 } };
   }
   const x = clamp(start.x, b.left + 12, b.right - 12);
-  return { x, y: ts === 'top' ? b.top - ARROW.tipGap : b.bottom + ARROW.tipGap, u: { x: 0, y: ts === 'top' ? 1 : -1 } };
+  return { x, y: ts === 'top' ? b.top - gap : b.bottom + gap, u: { x: 0, y: ts === 'top' ? 1 : -1 } };
 }
 
 /* 连接件：直连；错位时 90° 折一次。跑道不够（run < 最短跑道）返回 tight，
    由调用方改成「引线 + 点」，绝不把箭头画回源里。 */
-function connectorPath(a, b, fs, ts, startOverride) {
+function connectorPath(a, b, fs, ts, startOverride, gap) {
   const start = startOverride || port(a, fs);
-  const t = targetEntry(b, ts, start);
+  const t = targetEntry(b, ts, start, gap);
   const base = { x: t.x - t.u.x * ARROW.length, y: t.y - t.u.y * ARROW.length };
   const run = (base.x - start.x) * t.u.x + (base.y - start.y) * t.u.y;
   if (run < ARROW.minRun) return { tight: true, start, tip: t, u: t.u };
@@ -284,21 +284,21 @@ export class VkCallout extends VkElement {
       let u;
       if (side === 'right') {
         start = { x: portX, y: arrowY };
-        tip = { x: nx - ARROW.tipGap, y: arrowY };
+        tip = { x: nx - ARROW.textGap, y: arrowY };
         u = { x: 1, y: 0 };
       } else if (side === 'left') {
         start = { x: portLeft, y: arrowY };
-        tip = { x: nx + bw + ARROW.tipGap, y: arrowY };
+        tip = { x: nx + bw + ARROW.textGap, y: arrowY };
         u = { x: -1, y: 0 };
       } else if (side === 'bottom') {
         const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
         start = { x: sx, y: mark.bottom + 6 };
-        tip = { x: sx, y: ny - ARROW.tipGap };
+        tip = { x: sx, y: ny - ARROW.textGap };
         u = { x: 0, y: 1 };
       } else {
         const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
         start = { x: sx, y: mark.top - 6 };
-        tip = { x: sx, y: ny + bh + ARROW.tipGap };
+        tip = { x: sx, y: ny + bh + ARROW.textGap };
         u = { x: 0, y: -1 };
       }
       const run = (tip.x - start.x) * u.x + (tip.y - start.y) * u.y;
@@ -397,7 +397,9 @@ export class VkCallout extends VkElement {
     const start = from.port
       ? { x: from.port.x - origin.left + from.port.n.x * ARROW.clear, y: from.port.y - origin.top + from.port.n.y * ARROW.clear }
       : port(fr, fs);
-    const c = connectorPath(fr, tr, fs, ts, start);
+    /* 指盒子：尖贴边（2）；指文字：退回 24，不然像贴在字上。 */
+    const toText = to.el.matches('vk-text') || !!to.el.closest('[data-vk=\'text\']');
+    const c = connectorPath(fr, tr, fs, ts, start, toText ? ARROW.textGap : ARROW.tipGap);
     if (c.tight) {
       this.setAttribute('data-vk-tight', '1');
       this._svg.appendChild(mk('line', { class: 'vk-co-line', x1: c.start.x, y1: c.start.y, x2: c.tip.x, y2: c.tip.y }));
@@ -413,7 +415,8 @@ export class VkCallout extends VkElement {
       this._label.textContent = label;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
-      /* 标签贴着箭头尖：横箭头放在箭杆上方、头的后面；竖箭头放在头右侧。 */
+      /* 标签住「源件的右边」到「箭头尖」之间那段空白里：
+         贴着尖放，就会和终点那句话挤成一片。 */
       const vertical = Math.abs(c.tip.x - c.start.x) < Math.abs(c.tip.y - c.start.y) - 2;
       let lx;
       let ly;
@@ -422,8 +425,14 @@ export class VkCallout extends VkElement {
         ly = c.tip.y - lh / 2;
       } else {
         const rightward = c.tip.x >= c.start.x;
-        lx = rightward ? c.tip.x - lw - 24 : c.tip.x + 24;
-        ly = c.tip.y - lh - 31;
+        const owner = from.el.closest(COMPONENT);
+        const ob = owner ? rect(owner.getBoundingClientRect(), origin) : null;
+        const a0 = rightward ? Math.max(c.start.x, ob ? ob.right + 16 : c.start.x) : c.tip.x + ARROW.length + 12;
+        /* 指文字的箭头：标签压在箭杆上（纸底把杆断开），像一条边上的注；
+           指盒子的箭头：标签放在杆上方。 */
+        const b0 = rightward ? c.tip.x - (toText ? ARROW.length + 12 : 16) : Math.min(c.start.x, ob ? ob.left - 16 : c.start.x);
+        lx = b0 - a0 > lw ? (a0 + b0) / 2 - lw / 2 : rightward ? c.tip.x - lw - 24 : c.tip.x + 24;
+        ly = toText ? c.tip.y - lh / 2 : c.tip.y - lh - 20;
         if (ly < 8) ly = c.tip.y + 12;
       }
       this._label.style.left = `${clamp(lx, 24, origin.width - lw - 24)}px`;

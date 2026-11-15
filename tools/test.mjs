@@ -236,7 +236,7 @@ if (!browser) {
       under: b.top >= ink.bottom - 6,
       outside: n.left >= c.right + 8,
       sameRow: Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) <= 6,
-      headAtText: Math.abs(h.right - n.left) <= 6,
+      gap: Math.round(n.left - h.right),
       lead: Math.round(lead.getBoundingClientRect().width),
       gutter: c.width <= body.getBoundingClientRect().width - 400,
     };
@@ -245,7 +245,7 @@ if (!browser) {
   ok(anno && anno.covers && anno.under, '标记落在这一行的墨迹下面');
   ok(anno && anno.outside, '注记在卡片外面');
   ok(anno && anno.sameRow, '注记和它指的那一行同高');
-  ok(anno && anno.headAtText, '箭头尖落在文字左缘');
+  ok(anno && anno.gap >= 24 && anno.gap <= 48, `箭头在文字前留净空（${anno && anno.gap}）`);
   ok(anno && anno.lead >= 100, `箭头够长（${anno && anno.lead}）`);
   ok(anno && anno.gutter, '有注记的页给正文让出了一列');
   await annoPage.close();
@@ -284,7 +284,7 @@ if (!browser) {
       isWord: b.width < l.width * 0.8,
       outside: n.left >= c.right + 8,
       sameRow: Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) <= 6,
-      headAtText: Math.abs(head.right - n.left) <= 6,
+      gap: Math.round(n.left - head.right),
       marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
     };
   });
@@ -292,7 +292,7 @@ if (!browser) {
   ok(word && word.isWord, '圈的是一个词，不是整行');
   ok(word && word.outside, '注记在卡片外面');
   ok(word && word.sameRow, '注记和那个词同一行');
-  ok(word && word.headAtText, '箭头尖落在文字左缘');
+  ok(word && word.gap >= 24 && word.gap <= 48, `箭头在文字前留净空（${word && word.gap}）`);
   ok(word && word.marks >= 1, `mark 的词都带锚点（${word && word.marks}）`);
   await wordPage.close();
 

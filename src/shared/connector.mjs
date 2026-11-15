@@ -17,7 +17,8 @@ export const ARROW = {
   length: 52,
   base: 38,
   shaft: 8,
-  tipGap: 2,
+  tipGap: 2, // 指盒子：尖贴边
+  textGap: 32, // 指文字：尖要退开，不然像贴在字上
   clear: 12,
   minRun: 24,
   corner: 16,
@@ -87,4 +88,5 @@ export function headPolygon(t, ux, uy) {
   const hy = ux * (ARROW.base / 2);
   return `${t.x},${t.y} ${bx + hx},${by + hy} ${bx - hx},${by - hy}`;
 }
+
 
