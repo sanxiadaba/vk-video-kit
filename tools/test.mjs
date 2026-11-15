@@ -74,6 +74,13 @@ const usedVars = new Set([...cssAll.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => 
 const missingVars = [...usedVars].filter((v) => !defined.has(v) && !runtimeVars.has(v));
 ok(missingVars.length === 0, 'CSS 用到的 token 都有定义', missingVars.join(', '));
 
+/* 字体必须是真文件：fonts.css 里每个 url() 都要能在 dist 里找到。
+   浏览器里的「字体没加载」可能是环境假警报，这一条不会。 */
+const fontsCss = fs.readFileSync(path.join(ROOT, 'dist', 'fonts.css'), 'utf8');
+const fontUrls = [...fontsCss.matchAll(/url\('\.\/([^)]+)'\)/g)].map((m) => m[1]);
+const fontMissing = fontUrls.filter((u) => !fs.existsSync(path.join(ROOT, 'dist', u)));
+ok(fontUrls.length > 300 && fontMissing.length === 0, `字体文件都在（${fontUrls.length} 个）`, fontMissing.slice(0, 5).join(', '));
+
 /* 层的边界：组件层只写几何，状态层只消费 --vk-tone。 */
 const componentsCss = fs.readFileSync(path.join(ROOT, 'src', 'components.css'), 'utf8');
 const stateCss = fs.readFileSync(path.join(ROOT, 'src', 'state.css'), 'utf8');
@@ -150,7 +157,7 @@ if (report) {
   const bad = report.frames.filter((f) => !f.png || !f.png780 || !f.json);
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
   const withIssues = report.frames.filter((f) => f.issues.length);
-  ok(withIssues.length === 0, '每帧都没有硬错', withIssues.map((f) => `${f.name}: ${f.issues.map((i) => i.code).join(',')}`).join('；'));
+  ok(withIssues.length === 0, '每帧都没有硬错', withIssues.slice(0, 3).map((f) => `${f.name}: ${f.issues.map((i) => `${i.code} ${i.message}`).join(' / ')}`).join('；'));
   const over = report.frames.filter((f) => f.health?.overflow);
   ok(over.length === 0, '每帧都放得下（overflow = 0）', over.map((f) => `${f.name} 超出 ${f.health.overflow}`).join('；'));
   const tooMany = report.frames.filter((f) => (f.health?.focus ?? 0) > 1);

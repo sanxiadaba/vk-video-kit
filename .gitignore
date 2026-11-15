@@ -9,6 +9,7 @@ out/
 # 本地缓存 / 临时
 .tmp/
 .tmp*/
+.tmp_*
 *.log
 *.bak
 

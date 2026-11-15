@@ -281,7 +281,14 @@ VK.ready = async () => {
   }
   await document.fonts?.ready;
   const families = ['Inter', 'JetBrains Mono', 'Noto Sans SC'];
-  VK._fonts = families.map((f) => ({ family: f, ok: [400, 500, 600].some((w) => document.fonts?.check?.(`${w} 16px "${f}"`)) ?? true }));
+  /* 用这个字体真正要渲染的字去问：默认的探测文本是空格，
+     而中文字体的 unicode-range 切片里没有空格，不同版本会给出不同答案。 */
+  VK._fonts = families.map((family) => {
+    const canCheck = typeof document !== 'undefined' && document.fonts && typeof document.fonts.check === 'function';
+    if (!canCheck) return { family, ok: true };
+    const probe = family === 'Noto Sans SC' ? '中' : 'A';
+    return { family, ok: [400, 500, 600].some((w) => document.fonts.check(`${w} 16px "${family}"`, probe)) };
+  });
   await Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
 
   let prev = '';
