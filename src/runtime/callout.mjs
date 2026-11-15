@@ -317,14 +317,18 @@ export class VkCallout extends VkElement {
       const tr = rel(to.rect);
       const horizontal = Math.abs(cx(fr) - cx(tr)) >= Math.abs(cy(fr) - cy(tr));
       const standoff = 32;
+      const labelText = this.getAttribute('label');
+      /* 选边时把标签的位置也算进去：线放得下、标签放不下，等于没放下。 */
+      const reserve = labelText ? 200 : 0;
       let a;
       let b;
       let extA;
       let extB;
+      let below = false;
+      let left = false;
       if (horizontal) {
         let y = Math.min(fr.top, tr.top) - standoff;
-        let below = false;
-        if (y < 24) {
+        if (y - (labelText ? 80 : 0) < 24) {
           y = Math.max(fr.bottom, tr.bottom) + standoff;
           below = true;
         }
@@ -334,8 +338,7 @@ export class VkCallout extends VkElement {
         extB = { x: b.x, y: below ? tr.bottom : tr.top };
       } else {
         let x = Math.max(fr.right, tr.right) + standoff;
-        let left = false;
-        if (x > origin.width - 24) {
+        if (x + reserve > origin.width - 24) {
           x = Math.min(fr.left, tr.left) - standoff;
           left = true;
         }
@@ -354,14 +357,14 @@ export class VkCallout extends VkElement {
         this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${a.x - TICK / 2} ${a.y} L ${a.x + TICK / 2} ${a.y}` }));
         this._svg.appendChild(mk('path', { class: 'vk-co-line', d: `M ${b.x - TICK / 2} ${b.y} L ${b.x + TICK / 2} ${b.y}` }));
       }
-      const label = this.getAttribute('label');
+      const label = labelText;
       if (label) {
         this._label.hidden = false;
         this._label.textContent = label;
         const lw = this._label.offsetWidth;
         const lh = this._label.offsetHeight;
-        const lx = horizontal ? (a.x + b.x) / 2 - lw / 2 : Math.max(a.x, b.x) + 16;
-        const ly = horizontal ? a.y - lh - 12 : (a.y + b.y) / 2 - lh / 2;
+        const lx = horizontal ? (a.x + b.x) / 2 - lw / 2 : left ? Math.min(a.x, b.x) - lw - 16 : Math.max(a.x, b.x) + 16;
+        const ly = horizontal ? (below ? Math.max(a.y, b.y) + 12 : a.y - lh - 12) : (a.y + b.y) / 2 - lh / 2;
         this._label.style.left = `${clamp(lx, 8, origin.width - lw - 8)}px`;
         this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
       }
