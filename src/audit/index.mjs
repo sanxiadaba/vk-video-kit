@@ -10,7 +10,7 @@
  */
 const PAGE_W = 1920;
 const PAGE_H = 1080;
-const CLIENTS = '.vk-lc, .vk-dc, .vk-aaddr, .vk-ftitle, .vk-tname, .vk-cap, .vk-bhex, .vk-bascii, .vk-tl-label, .vk-tl-note, .vk-bar-l, .vk-bar-v, .vk-cell-v, .vk-step-t, .vk-seq-l, .vk-seq-note, .vk-gn-l, .vk-co-note';
+const CLIENTS = '.vk-lc, .vk-dc, .vk-aaddr, .vk-bit-i, .vk-field-bits, .vk-bits-body, .vk-ftitle, .vk-tname, .vk-cap, .vk-bhex, .vk-bascii, .vk-tl-label, .vk-tl-note, .vk-bar-l, .vk-bar-v, .vk-cell-v, .vk-step-t, .vk-seq-l, .vk-seq-note, .vk-gn-l, .vk-co-note';
 
 export function auditPage(stage) {
   const issues = [];

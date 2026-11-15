@@ -576,12 +576,17 @@
   display: flex;
   align-items: stretch;
   gap: var(--vk-space-6);
+  /* 一行 16 位必须装得下正文带：谁都不许把最后一个字段顶出右边界。 */
+  width: 100%;
+  min-width: 0;
 }
 .vk-field {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: var(--vk-space-2);
   justify-items: center;
+  flex: 0 1 auto;
+  min-width: 0;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-sm);
   padding: var(--vk-space-2) var(--vk-space-3) var(--vk-space-3);
@@ -594,14 +599,16 @@
 .vk-field-bits {
   display: flex;
   align-items: end;
-  gap: var(--vk-space-5);
+  gap: var(--vk-space-4);
+  min-width: 0;
 }
 .vk-bit {
   display: grid;
   justify-items: center;
   gap: 2px;
   width: 80px;
-  flex: 0 0 80px;
+  flex: 0 1 80px;
+  min-width: 0;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
   font-style: normal;
