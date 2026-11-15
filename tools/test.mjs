@@ -456,6 +456,9 @@ for (const mode of [0, 1]) {
   for (const key of ['comment', 'operator', 'string', 'number', 'keyword']) ok(ratio(SYNTAX[key][mode], bg) >= 4.5, `${mode ? '暗' : '亮'}色语法 ${key} ≥ 4.5（${ratio(SYNTAX[key][mode], bg).toFixed(2)}）`);
 }
 
+/* 跑完把自己造的临时产物收掉：测试不该在仓库里留 5MB 的图。 */
+fs.rmSync(TMP, { recursive: true, force: true });
+
 console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
 process.exitCode = failed ? 1 : 0;
 
