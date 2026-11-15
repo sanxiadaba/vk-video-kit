@@ -412,7 +412,9 @@
   gap: var(--vk-space-4);
 }
 .vk-cells:has(.vk-cell-p) {
-  padding-top: var(--vk-space-8);
+  /* 指针占的竖向空间是真实的：徽标 96 + 针脚 40，行与行之间也要留出来。 */
+  padding-top: calc(var(--vk-ann-badge) + var(--vk-ann-pin));
+  row-gap: calc(var(--vk-ann-badge) + var(--vk-ann-pin));
 }
 .vk-cell {
   position: relative;
@@ -461,27 +463,32 @@
 }
 .vk-cell-p {
   position: absolute;
-  top: -96px;
   left: 50%;
+  bottom: calc(100% + var(--vk-ann-pin) + var(--vk-line-w-hair));
   transform: translateX(-50%);
-  padding: var(--vk-space-1) var(--vk-space-3);
-  border-radius: var(--vk-radius-pill);
+  min-width: var(--vk-ann-badge);
+  height: var(--vk-ann-badge);
+  display: grid;
+  place-items: center;
+  padding: 0 var(--vk-space-3);
+  border-radius: calc(var(--vk-ann-badge) / 2);
   background: var(--vk-focus);
   color: var(--vk-on-focus);
-  font-size: 64px;
-  line-height: 1.2;
+  font-size: var(--vk-fs-body);
+  line-height: 1;
   font-weight: var(--vk-w-bold);
   font-family: var(--vk-font-mono);
   text-transform: uppercase;
   white-space: nowrap;
 }
+/* 针脚：从徽标底走到格子上边，止于边，不进格。 */
 .vk-cell-p::after {
   content: '';
   position: absolute;
   left: 50%;
   top: 100%;
-  width: var(--vk-line-w-strong);
-  height: 20px;
+  width: var(--vk-line-w-rule);
+  height: var(--vk-ann-pin);
   background: var(--vk-ink-1);
   transform: translateX(-50%);
 }
@@ -933,9 +940,12 @@
 .vk-edge {
   fill: none;
   stroke: var(--vk-ink-2);
-  stroke-width: var(--vk-line-w-connector);
+  stroke-width: var(--vk-conn-shaft);
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+.vk-graph[data-layout='tree'] .vk-edge {
+  stroke-width: var(--vk-line-w-connector);
 }
 .vk-edge[data-current] {
   stroke: var(--vk-focus);

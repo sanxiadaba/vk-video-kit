@@ -6,7 +6,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { CONN } from '../src/shared/connector.mjs';
+import { CONN, ANN } from '../src/shared/connector.mjs';
 import {
   CANVAS,
   CONTENT,
@@ -58,8 +58,9 @@ for (const [name, px] of Object.entries(GAP)) push(`gap-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(RADIUS)) push(`radius-${name}`, px >= 999 ? '999px' : `${px}px`);
 for (const [name, px] of Object.entries(ICON)) push(`icon-${name}`, `${px}px`);
 for (const [name, px] of Object.entries(LINE_W)) push(`line-w-${name}`, `${px}px`);
-/* 连接件几何：CSS 与运行期读同一组数（src/shared/connector.mjs）。 */
-for (const [k, v] of Object.entries({ head: CONN.head, 'head-w': CONN.headW, tip: CONN.tip, clear: CONN.clear, corner: CONN.corner, 'min-gap': CONN.minGap })) push(`conn-${k}`, `${v}px`);
+/* 连接件与标注几何：CSS 与运行期读同一组数（src/shared/connector.mjs）。 */
+for (const [k, v] of Object.entries({ head: CONN.head, 'head-w': CONN.headW, tip: CONN.tip, clear: CONN.clear, corner: CONN.corner, shaft: CONN.shaft, 'min-gap': CONN.minGap })) push(`conn-${k}`, `${v}px`);
+for (const [k, v] of Object.entries(ANN)) push(`ann-${k.replace(/[A-Z]/g, (c) => `-${c.toLowerCase()}`)}`, `${v}px`);
 
 rows.push('');
 push('w-regular', WEIGHT.regular);

@@ -241,18 +241,23 @@ if (!browser) {
   ok(word && word.rw < word.lw * 0.5, `@item 圈的是词不是整行（${word && Math.round(word.rw)} / ${word && Math.round(word.lw)}）`);
   ok(word && word.marks >= 3, `mark 的词都带锚点（${word && word.marks}）`);
 
-  /* 箭头指着词：圆点必须落在那个词的框附近，不能飘在行中间。 */
+  /* 词：下括号必须扣在词上（横向覆盖词的左右），杆从括号引出。 */
   const aim = await wordPage.evaluate(() => {
-    const dot = document.querySelector('.vk-co-dot');
+    const bracket = document.querySelector('.vk-co-bracket');
     const mark = document.querySelectorAll('.vk-mark')[3];
-    if (!dot || !mark) return null;
-    const d = dot.getBoundingClientRect();
+    const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
+    if (!bracket || !mark || !note) return null;
+    const b = bracket.getBoundingClientRect();
     const m = mark.getBoundingClientRect();
-    const dx = Math.max(m.left - d.right, d.left - m.right, 0);
-    const dy = Math.max(m.top - d.bottom, d.top - m.bottom, 0);
-    return Math.round(Math.hypot(dx, dy));
+    const n = note.getBoundingClientRect();
+    return {
+      covers: b.left <= m.left + 2 && b.right >= m.right - 2,
+      below: Math.round(b.top - m.bottom),
+      gap: Math.round(n.left - m.right),
+    };
   });
-  ok(aim !== null && aim <= 10, `note 的圆点贴着词（${aim}px）`);
+  ok(aim && aim.covers, '下括号扣住整个词');
+  ok(aim && aim.gap >= 80, `标签离词 ≥ 80（${aim && aim.gap}）`);
   await wordPage.close();
 
   /* 图：节点之间必须留够连接件的净空，箭头不许落进节点里。 */
@@ -276,7 +281,29 @@ if (!browser) {
   ok(tgeo.levels === 3 && Math.min(...tgeo.gaps) >= 63, `树的三层各留出净空（${tgeo.gaps.join(' / ')}）`);
   await gtPage.close();
 
-  const cmpPage = await load('compare.html');  const cmp = await cmpPage.evaluate(() => {
+  /* 箭头：头部够大，否则在 780 下就是一根没头的线。 */
+  const grPage = await load('graph-row.html');
+  const head = await grPage.evaluate(() => {
+    const h = document.querySelector('.vk-edge-head').getBoundingClientRect();
+    return { w: Math.round(h.width), h: Math.round(h.height) };
+  });
+  ok(head.w >= 30 && head.h >= 24, `箭头头部够大（${head.w}×${head.h}）`);
+  await grPage.close();
+
+  /* P 指针：徽标够大，针脚止于格子上边，不进格。 */
+  const cPage = await load('cells.html');
+  const pin = await cPage.evaluate(() => {
+    const badge = document.querySelector('.vk-cell-p').getBoundingClientRect();
+    const cell = document.querySelector('.vk-cell[current]').getBoundingClientRect();
+    return { badge: Math.round(badge.height), gap: Math.round(cell.top - badge.bottom), inside: badge.bottom > cell.top + 1 };
+  });
+  ok(pin.badge >= 96, `P 徽标高度 ≥ 96（${pin.badge}）`);
+  ok(pin.gap >= 50, `针脚长度 ≥ 50（${pin.gap}）`);
+  ok(!pin.inside, '针脚不进入格子');
+  await cPage.close();
+
+  const cmpPage = await load('compare.html');
+  const cmp = await cmpPage.evaluate(() => {
     const cards = [...document.querySelectorAll('vk-card[tone]')];
     return cards.map((c) => ({ tone: c.getAttribute('tone'), border: getComputedStyle(c).borderColor, bg: getComputedStyle(c).backgroundColor }));
   });

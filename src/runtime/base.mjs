@@ -82,6 +82,19 @@ export function inkRect(el) {
   return union(rects) || base;
 }
 
+/** 一行里最后一个字的右缘：块级行盒的 width 是整栏，不是字的宽度。 */
+export function textRight(el) {
+  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  let last = null;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent.trim()) last = n;
+  if (!last) return el.getBoundingClientRect().right;
+  const text = last.textContent.replace(/\s+$/, '');
+  const range = document.createRange();
+  range.setStart(last, Math.max(0, text.length - 1));
+  range.setEnd(last, text.length);
+  return range.getBoundingClientRect().right;
+}
+
 /* ---------------------------------------------------------------- 锚点
    只认：#id、#id@line:3、#id@line:3-4、#id@item:2、#id@bit:5、#id@side:left。 */
 const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));

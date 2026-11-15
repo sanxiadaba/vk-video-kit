@@ -22,7 +22,16 @@
 .vk-co-ring {
   fill: none;
   stroke: var(--vk-ink-1);
-  stroke-width: var(--vk-line-w-hair);
+  stroke-width: var(--vk-ann-ring);
+  stroke-linejoin: round;
+}
+
+/* 词的落点：下括号 */
+.vk-co-bracket {
+  fill: none;
+  stroke: var(--vk-ink-1);
+  stroke-width: var(--vk-ann-bracket);
+  stroke-linecap: round;
   stroke-linejoin: round;
 }
 
@@ -30,7 +39,7 @@
 .vk-co-lead {
   fill: none;
   stroke: var(--vk-tone, var(--vk-info));
-  stroke-width: var(--vk-line-w-connector);
+  stroke-width: var(--vk-conn-shaft);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -62,11 +71,11 @@
 .vk-co-note {
   position: absolute;
   max-width: 720px;
-  padding: var(--vk-space-3) var(--vk-space-4);
+  padding: var(--vk-space-1) var(--vk-space-4);
   border-radius: var(--vk-radius-sm);
   border: var(--vk-line-w-hair) solid var(--vk-ink-1);
   background: var(--vk-paper);
   color: var(--vk-ink-1);
-  font-size: var(--vk-fs-body);
-  line-height: 1.35;
+  font-size: var(--vk-fs-caption);
+  line-height: 1.25;
 }

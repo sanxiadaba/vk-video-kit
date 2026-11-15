@@ -9,8 +9,8 @@
  *
  * 锚点：#id / #id@line:3 / #id@line:3-4 / #id@item:2 / #id@bit:5 / #id@side:left。
  */
-import { VkElement, define, resolveAnchor, inkRect } from './base.mjs';
-import { CONN } from '../shared/connector.mjs';
+import { VkElement, define, resolveAnchor, inkRect, textRight } from './base.mjs';
+import { CONN, ANN } from '../shared/connector.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -249,7 +249,8 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      const gap = 24;
+      const gap = ANN.standoff;
+      const isWord = t.el.matches('.vk-mark');
       this._note.hidden = false;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
@@ -281,23 +282,39 @@ export class VkCallout extends VkElement {
 
       const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
 
-      /* 代码行里的 note（整行或某个词）一律贴在这一行的文字右侧，短横线直连；不参与碰撞投票。
-         比「挪到窗口外」近得多，也不会横穿别的代码行。 */
+      /* 代码行里的标注：标签放在这一行文字的右侧（同一条线），杆走行内下方/中线。 */
       const lineEl = t.el.closest('.vk-line');
       if (lineEl) {
         const lr = rel(lineEl.getBoundingClientRect());
-        const inkRight = rel(inkRect(lineEl)).right;
-        const nx = Math.max(inkRight, r.right) + gap;
+        const runRight = textRight(lineEl) - origin.left;
+        /* 整行标注：标签挂在环外（行盒右侧）；词标注：标签贴在这一行文字右侧。 */
+        const isLineTarget = t.el.matches('.vk-line');
+        const baseRight = isLineTarget ? lr.right : runRight;
+        const nx = baseRight + ANN.standoff;
         const ny = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
         if (nx + bw <= origin.width - 8) {
-          /* 词：落在字的右上角，不挡住后一个字符；整行：落在行右缘。 */
-          const isWord = t.el.matches('.vk-mark');
-          const tx2 = isWord ? r.right - 2 : r.right;
-          const ty2 = isWord ? r.top - 2 : cy(r);
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${ny}px`;
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: nx, y1: cy(lr), x2: tx2, y2: ty2 }));
-          this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: tx2, cy: ty2, r: 8 }));
+          if (isWord) {
+            /* 词：下括号（横线 + 两端向下的小竖线）；杆先沿字下方走到这一行文字之外，再上到标签。 */
+            const by = r.bottom + ANN.bracketGap + 2;
+            const x1 = r.left - 8;
+            const x2 = r.right + 8;
+            const tick = ANN.tick;
+            this._svg.appendChild(
+              mk('path', {
+                class: 'vk-co-bracket',
+                d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}`,
+              })
+            );
+            const bendX = Math.min(nx, runRight + 24);
+            this._svg.appendChild(mk('path', { class: 'vk-co-lead', d: `M ${x2} ${by} L ${bendX} ${by} L ${nx} ${cy(lr)}` }));
+          } else {
+            const px = baseRight;
+            const py = cy(lr);
+            this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: nx, y1: py, x2: px, y2: py }));
+            this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
+          }
           return;
         }
       }
@@ -330,7 +347,7 @@ export class VkCallout extends VkElement {
       const a = sourcePoint(bubble, as);
       const b = edgeTip(r, a);
       this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
-      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: b.x, cy: b.y, r: 8 }));
+      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: b.x, cy: b.y, r: ANN.dot / 2 }));
       return;
     }
 
