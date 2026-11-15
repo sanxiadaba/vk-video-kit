@@ -7,7 +7,7 @@ import { parseRange, lineSet } from '../shared/range.mjs';
 import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, inferLang, langKey } from '../shared/code.mjs';
 import { parseAsm, splitInsn } from '../shared/asm.mjs';
 import { SYNTAX } from '../vocab.mjs';
-import { frame } from './layout.mjs';
+import { frame } from './frame.mjs';
 
 const TOKEN_THEME = {
   name: 'vk',
@@ -82,21 +82,20 @@ function inlineSource(node) {
   return (s.childNodes || []).map((c) => c.value || '').join('');
 }
 
-function readSource(node, ctx) {
+function readSource(node, ctx, who) {
   const src = attrOf(node, 'src');
   const inline = inlineSource(node);
   if (src && inline != null) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: `<${node.tagName}> 同时写了 src 和内联源码：只能二选一`, fix: '删掉 src，或删掉内联 <script data-vk-source>' });
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: `${who} 同时写了 src 和内联源码：只能二选一`, fix: '删掉 src，或删掉内联 <script data-vk-source>' });
     return null;
   }
   if (!src && inline == null) return null;
   if (inline != null) return dedent(expandLeadingTabs(stripAnsi(inline)));
-  const abs = path.resolve(path.dirname(path.resolve(ctx.file)), src);
-  if (!fs.existsSync(abs)) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `<${node.tagName}> 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
+  const abs = ctx.resolveAsset(src);
+  if (!abs) {
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
     return null;
   }
-  ctx.assets.add(abs);
   return dedent(expandLeadingTabs(stripAnsi(fs.readFileSync(abs, 'utf8'))));
 }
 
@@ -128,36 +127,37 @@ function cmdHtml(cmd) {
 
 export async function buildSource(node, ctx) {
   const as = attrOf(node, 'as') || 'code';
-  const text = readSource(node, ctx);
+  const who = as === 'code' ? '<vk-code>' : `<vk-code as="${as}">`;
+  const text = readSource(node, ctx, who);
   if (text == null) {
     if (!ctx.diag.some((d) => d.tag === node.tagName && d.line === 1)) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `<${node.tagName}> 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
+      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
     }
-    return `<div class="vk-missing">${esc(node.tagName)} 缺内容：写 src 或 data-vk-source</div>`;
+    return `<div class="vk-missing">${who} 缺内容：写 src 或 data-vk-source</div>`;
   }
 
   const rangeText = attrOf(node, 'range');
   const range = rangeText ? parseRange(rangeText) : null;
   if (rangeText && !range) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_RANGE_ATTR', message: `<${node.tagName}> 的 range="${rangeText}" 不是单段`, fix: '写法："3" / "3-7" / "4-"' });
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_RANGE_ATTR', message: `${who} 的 range="${rangeText}" 不是单段`, fix: '写法："3" / "3-7" / "4-"' });
     return `<div class="vk-missing">range 写法不对</div>`;
   }
   const { start, rows: srcRows, count } = sliceRange(text, range);
   if (range && range[0] > count) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'RANGE_OUT_OF_RANGE', message: `<${node.tagName}> 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
     return `<div class="vk-missing">range 超出源码范围</div>`;
   }
 
   const fold = lineSet(attrOf(node, 'fold'));
   const cur = lineSet(attrOf(node, 'current'));
   if (attrOf(node, 'current') && !cur) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `<${node.tagName}> 的 current="${attrOf(node, 'current')}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `${who} 的 current="${attrOf(node, 'current')}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
   }
   if (cur && [...cur].some((n) => n > srcRows.length)) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `<${node.tagName}> 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `${who} 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
   }
   const mark = attrOf(node, 'mark') || '';
-  if (mark && !text.includes(mark)) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `<${node.tagName}> 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
+  if (mark && !text.includes(mark)) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
   const title = attrOf(node, 'title') || '';
 
   let body = '';

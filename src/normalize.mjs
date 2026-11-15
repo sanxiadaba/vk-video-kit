@@ -1,16 +1,16 @@
 /**
- * v24 · 归一化
+ * v25 · 归一化
  * ----------------------------------------------------------------------------
  * 作者写的是「人话属性」，运行期只认「一种形状」。这一步在解析之后、渲染之前，
  * 把三件事一次做完，后面所有层都不再各自兜底：
  *
- *   1. 默认值落地：schema 里写了默认值的属性，缺省就写进 DOM。
+ *   1. 默认值落地：schema 里写了默认值的属性，缺省就写进 DOM（变体优先）。
  *   2. 间距归一：gap 的档名与像素值统一换成 --vk-gap。
- *   3. style 合并：一个元素最多一个 style。作者写的保留，生成的合并进去。
+ *   3. 组件身份：每个件写一个 data-vk="<变体>"，CSS 只认这一个钩子。
  *
  * 这里不发明值：所有默认值来自 schema.mjs，所有间距档位来自 vocab.mjs。
  */
-import { attrsOf } from './schema.mjs';
+import { TAGS, attrsOf, variantOf } from './schema.mjs';
 import { GAP } from './vocab.mjs';
 
 export const spacePx = (value, fallback = 0) => {
@@ -60,16 +60,18 @@ export function setStyle(node, decls) {
   node.attrs = rest;
 }
 
-/** 在整棵树里落地默认值、间距与样式。返回同一棵树。 */
+/** 在整棵树里落地默认值、间距、组件身份。返回同一棵树。 */
 export function normalizeTree(root) {
   for (const node of walk(root)) {
     const tag = node.tagName;
     if (!tag?.startsWith('vk-')) continue;
-    const spec = attrsOf(tag);
+    const as = variantOf(tag, attrOf(node, 'as'));
+    const spec = attrsOf(tag, as);
     const decls = {};
 
     for (const [name, def] of Object.entries(spec)) {
       if (def.default === undefined || def.when || NO_DEFAULT.has(name)) continue;
+      if (name === 'as' && !TAGS[tag].variants) continue;
       setAttr(node, name, def.default);
     }
 
@@ -82,6 +84,7 @@ export function normalizeTree(root) {
     }
 
     if (Object.keys(decls).length) setStyle(node, decls);
+    node.attrs.push({ name: 'data-vk', value: as || tag.slice(3) });
   }
   return root;
 }

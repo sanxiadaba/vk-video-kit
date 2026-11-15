@@ -1,17 +1,14 @@
 {
   "name": "vk-video-kit",
-  "version": "24.0.0",
+  "version": "25.0.0",
   "private": true,
-  "description": "1920×1080 单帧画面库：20 个件，构建期预处理，只出图。",
+  "description": "1920×1080 单帧画面库：13 个标签，构建期预处理，只出图。",
   "type": "module",
   "bin": {
     "vk": "bin/vk.mjs"
   },
   "scripts": {
-    "gen": "node tools/gen.mjs",
-    "vendor": "node tools/vendor.mjs",
-    "bundle": "node tools/bundle.mjs",
-    "build": "node tools/gen.mjs && node tools/vendor.mjs && node tools/bundle.mjs",
+    "build": "node tools/build.mjs",
     "render": "node bin/vk.mjs render",
     "test": "node tools/test.mjs"
   },

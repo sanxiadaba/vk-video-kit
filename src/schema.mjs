@@ -1,15 +1,19 @@
 /**
- * v24 · 公开契约
+ * v25 · 公开契约
  * ----------------------------------------------------------------------------
- * 这份文件定义「哪个标签有哪个属性、默认值、取值范围、子节点怎么写、一帧放几行」。
- * 它是唯一来源：构建期校验、vk doc / vk brief、运行期默认值都读它。
+ * 全库只有这一份契约：哪个标签、哪个变体、有哪些属性、默认值、子节点怎么写。
+ * 构建期校验、vk doc / vk brief、docs/CONTRACT.md 全部从这里生成，不许手抄第二份。
+ *
+ * 十三个标签，两类：
+ *   结构件   page / head / flow / text / card / img / callout
+ *   机制件   code（文本网格）/ board（条目图）/ graph / dir / seq / math
+ * 机制件用 as 选变体；变体名沿用旧件名，没有新词。
  *
  * 规矩：
  *   · 属性名与取值只能来自 vocab.mjs；这里不发明数值。
- *   · 每件只做一件事；两件能画同一个东西 = 作者会选错 = 合并。
- *   · 一个概念一个词：theme（页明暗）/ surface（卡片材质）/ place（整块位置）/
- *     current（当前项，写在项上）/ tone（语义）/ size（字号）/ gap·span·bleed（排布）。
- *   · 没有时间维度：没有 at / cue / enter / duration（时间线里的 at 是坐标，不是播放）。
+ *   · 一个概念一个词：theme（页明暗）/ surface（面材质）/ place（整块位置）/
+ *     current（当前项）/ tone（语义）/ size（字号）/ gap·span·bleed（排布）。
+ *   · 没有时间维度：没有 at / cue / enter / duration（时间线里的 at 是坐标）。
  *   · 可见文字写成元素内容；只有 kicker / counter / lede / note / date / value 走属性。
  */
 
@@ -19,14 +23,12 @@ export const LAYERS = [
   { id: 'page', label: 'L0 画布' },
   { id: 'layout', label: 'L1 排布' },
   { id: 'surface', label: 'L2 面与字' },
-  { id: 'content', label: 'L3 内容' },
-  { id: 'diagram', label: 'L4 图' },
-  { id: 'relation', label: 'L5 关系' },
+  { id: 'mechanism', label: 'L3 机制' },
+  { id: 'relation', label: 'L4 标注' },
 ];
 
 /* ------------------------------------------------------------------ 共享
-   span / bleed 是 flow 子项能力，不是某个件的属性。
-   它们不出现在每个 tag 的 attrs 里，只在 flowChild 里声明一次。 */
+   span / bleed 是 flow 子项能力，不是某个件的属性。 */
 export const FLOW_CHILD = {
   span: { type: 'int', min: 1, max: 12, group: 'layout', label: '跨几栏（只在 flow 子项）' },
   bleed: { type: 'enum', values: ['x'], group: 'layout', label: '出血到画布边（只在 flow 子项）' },
@@ -45,7 +47,6 @@ const selector = (group, label, extra = {}) => ({ type: 'selector', group, label
 const cols = (def, label) => ({ type: 'cols', default: def, group: 'layout', label });
 const tone = (values = TONE, def = 'neutral') => ({ type: 'enum', values, default: def, group: 'appearance', label: '语调' });
 const currentItem = () => ({ type: 'bool', group: 'state', label: '当前项（写属性名，不写值）' });
-
 const ITEM_TONE = { type: 'enum', values: TONE, default: 'neutral', group: 'appearance', label: '语调' };
 
 /* ------------------------------------------------------------------ 子节点 */
@@ -56,6 +57,9 @@ const source = (hint) => ({ kind: 'source', hint });
 const table = (hint) => ({ kind: 'table', hint });
 const none = (hint) => ({ kind: 'none', hint });
 
+/* ------------------------------------------------------------------ 变体 */
+const variant = (label, summary, attrs, children, example) => ({ label, summary, attrs, children, example });
+
 /* ------------------------------------------------------------------ 标签 */
 export const TAGS = {
   /* ---------------------------------------------------------------- 画布 */
@@ -64,8 +68,7 @@ export const TAGS = {
     name: '画布',
     summary: '一帧 1920×1080 的坐标系。子项直接写，不用再包一层；place 决定标题带与正文在版心里的纵向位置。',
     attrs: {
-      id: text('content', '帧名（出图文件名）'),
-      place: enumv(['band', 'top', 'center', 'bottom'], 'band', 'layout', '竖排位置：band 标题带锁顶、正文居中；center 整块居中'),
+      place: enumv(['band', 'top', 'center', 'bottom'], 'band', 'layout', '竖排：band 标题带锁顶、正文居中；center 整块居中'),
       theme: enumv(THEME, 'light', 'appearance', '主题：light / dark'),
     },
     children: blocks('直接写 <vk-head> 与内容；下一层要分栏时写 <vk-flow>。'),
@@ -75,7 +78,7 @@ export const TAGS = {
   'vk-head': {
     layer: 'page',
     name: '标题带',
-    summary: '一帧的起手：眉标 + 标题 +（可选）一句为什么。它把标题带的位置与间距固定下来，帧与帧的标题不会跳。',
+    summary: '一帧的起手：眉标 + 标题 +（可选）一句为什么。位置与间距固定，帧与帧的标题不会跳。',
     attrs: {
       kicker: text('content', '眉标（集数 / 分类）'),
       counter: text('appearance', '序号，如 "3 / 8"（等宽，跟在眉标后）'),
@@ -92,7 +95,7 @@ export const TAGS = {
   'vk-flow': {
     layer: 'layout',
     name: '流',
-    summary: '唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 让子项叠放；valign 管子项纵向对齐。不画任何东西。',
+    summary: '唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 叠放；valign 管子项纵向。不画任何东西。',
     attrs: {
       cols: cols('1', '列：1–12、比例 "1 2 1"、或 auto（按内容宽）'),
       gap: space('normal'),
@@ -107,12 +110,12 @@ export const TAGS = {
   'vk-card': {
     layer: 'surface',
     name: '卡片',
-    summary: '一块有材质的面：paper / soft / dark，边框、圆角、内距由库决定；可带标题栏。代码/终端/目录共用窗口皮。',
+    summary: '一块有材质的面：paper / soft / dark。边框、圆角、内距由库决定；可带标题栏。',
     attrs: {
       surface: enumv(CARD_SURFACE, 'paper', 'appearance', '材质：paper 白纸 / soft 软底 / dark 暗面'),
       title: text('appearance', '标题（写了才有标题带）'),
     },
-    children: blocks('卡片里放块级内容；不要用卡片只为了分组，纯分组用 <vk-flow>。'),
+    children: blocks('卡片里放块级内容；纯分组用 <vk-flow>，卡片是「一块面」。'),
     example: '<vk-card surface="paper" title="输出"><vk-text>一行说明。</vk-text></vk-card>',
   },
 
@@ -146,52 +149,126 @@ export const TAGS = {
     example: '<vk-img src="shot.png" ratio="16 / 9" fill="cover" alt="截图"></vk-img>',
   },
 
-  /* ---------------------------------------------------------------- 内容 */
+  /* ---------------------------------------------------------------- 机制 */
   'vk-code': {
-    layer: 'content',
-    name: '源码窗',
-    summary: '唯一的「源码窗」：as 选内容类型（源码 / 终端 / 改动 / 汇编）。构建期高亮或解析，运行期零依赖。',
+    layer: 'mechanism',
+    name: '文本网格',
+    summary: '等宽文本的网格：源码、终端、改动、汇编、字节、位。构建期高亮/解析，运行期零依赖。用 as 选一种。',
     attrs: {
-      as: enumv(['code', 'term', 'diff', 'asm'], 'code', 'content', '内容类型'),
-      lang: text('content', '语言（as="code" / "diff" 用）', { when: { attr: 'as', values: ['code', 'diff'] } }),
-      src: text('content', '源文件'),
-      range: range('源文件行段，如 "4-6"（只接受单段；4- 表示到底）'),
+      as: enumv(['code', 'term', 'diff', 'asm', 'bytes', 'bits'], 'code', 'content', '内容类型'),
       title: text('content', '标题栏文字（文件名 / 命令行）'),
-      current: lines('当前行（窗口内第几行，1 起）'),
-      fold: lines('折叠行（窗口内第几行）', { when: { attr: 'as', values: ['code'] } }),
-      mark: text('state', '标出的词（窗口里所有出现处）', { when: { attr: 'as', values: ['code', 'diff'] } }),
-      size: enumv(['caption', 'body'], 'body', 'type', '代码字号'),
-      prompt: text('appearance', '终端提示符（as="term"）', { default: '$', when: { attr: 'as', values: ['term'] } }),
-      hex: bool('appearance', '显示机器码列（as="asm"）', { when: { attr: 'as', values: ['asm'] } }),
     },
-    example: '<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>\nint a[3] = {1, 2, 3};\na[1]\n</script></vk-code>',
-    children: source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。'),
+    variants: {
+      code: variant('源码', '真实源码：语法高亮、行号、当前行、折叠、标词。', {
+        lang: text('content', '语言，如 c / js / py（必填：不写就没有语法色）', { required: true }),
+        src: text('content', '源文件'),
+        range: range('源文件行段，如 "4-6"（只接受单段；4- 表示到底）'),
+        current: lines('当前行（窗口内第几行，1 起）'),
+        fold: lines('折叠行（窗口内第几行）'),
+        mark: text('state', '标出的词（窗口里所有出现处，按词边界）'),
+        size: enumv(['caption', 'body'], 'body', 'type', '代码字号'),
+      }, source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。'),
+        '<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>\nint a[3] = {1, 2, 3};\na[1]\n</script></vk-code>'),
+      term: variant('终端', '命令与输出：提示符、命令、输出各自一色。', {
+        src: text('content', '记录文件'),
+        current: lines('当前行（窗口内第几行，1 起）'),
+        size: enumv(['caption', 'body'], 'body', 'type', '字号'),
+        prompt: text('appearance', '提示符', { default: '$' }),
+      }, source('src 指向 .txt/.log，或内联 <script type="text/plain" data-vk-source>。'),
+        '<vk-code as="term" title="bash"><script type="text/plain" data-vk-source>\n$ cc hello.c -o hello\n$ ./hello\nhello\n</script></vk-code>'),
+      diff: variant('改动', '一段 diff：增删行、hunk 头、标词。', {
+        lang: text('content', '语言（可选，用于给增删行上语法色）'),
+        src: text('content', 'diff 文件'),
+        current: lines('当前行（窗口内第几行，1 起）'),
+        mark: text('state', '标出的词'),
+        size: enumv(['caption', 'body'], 'body', 'type', '字号'),
+      }, source('src 指向 .diff，或内联 <script type="text/plain" data-vk-source>。'),
+        '<vk-code as="diff" title="a.c"><script type="text/plain" data-vk-source>\n- a[1] = 7;\n+ a[1] = 8;\n</script></vk-code>'),
+      asm: variant('汇编', '汇编清单：地址、机器码、助记符、操作数。', {
+        src: text('content', '反汇编文件'),
+        current: lines('当前行（窗口内第几行，1 起）'),
+        hex: bool('appearance', '显示机器码列'),
+        size: enumv(['caption', 'body'], 'body', 'type', '字号'),
+      }, source('src 指向 objdump 输出，或内联 <script type="text/plain" data-vk-source>。'),
+        '<vk-code as="asm" hex current="2"><script type="text/plain" data-vk-source>\n0x1004 48 89 f8 mov %rdi,%rax\n0x1007 48 01 f0 add %rsi,%rax\n</script></vk-code>'),
+      bytes: variant('字节', '十六进制转储：地址 + 十六进制 + ASCII 三列。', {
+        src: text('content', '二进制文件'),
+        addr: text('content', '起始地址', { default: '0x0' }),
+        offset: int(0, 65535, 0, 'content', '起始字节'),
+        length: int(1, 4096, 32, 'content', '字节数'),
+        cols: enumv(['4', '8'], '8', 'layout', '每行几列'),
+        current: lines('当前字节段，如 "4-7"（1 起）'),
+      }, source('src 指向二进制；也可内联十六进制（68 65 6c 6c 6f）。'),
+        '<vk-code as="bytes" title="hello.bin" current="1-3"><script type="text/plain" data-vk-source>\n68 65 6c 6c 6f\n</script></vk-code>'),
+      bits: variant('位', '一行二进制位：索引、分段、符号位。用 | 分段，field-labels 给每段起名。', {
+        value: text('content', '位串，可含空格；用 | 分段'),
+        current: lines('当前位段，如 "4-7"（1 起，从左数）'),
+        label: text('appearance', '左边一行说明'),
+        'field-labels': text('appearance', '各段名，逗号分隔（个数要与 | 的段数一致）'),
+        index: enumv(['down', 'up', 'none', 'sparse'], 'down', 'appearance', '位序号：down 按位权；up 从左数；sparse 只标 8 的倍数'),
+        sign: bool('appearance', '标出符号位'),
+      }, none('位串写在 value 属性里。'),
+        '<vk-code as="bits" value="0|01111|0000000000" field-labels="符号,阶码,尾数" current="2-6"></vk-code>'),
+    },
   },
 
-  'vk-table': {
-    layer: 'content',
-    name: '表格',
-    summary: '原生 <table>：数字列自动右对齐、等宽数字；行可写 tone / current，单元格可写 current。',
+  'vk-board': {
+    layer: 'mechanism',
+    name: '条目图',
+    summary: '把条目排成一张图：要点、步骤、条、时间线、表格、内存格。一个 <li> 一项；用 as 选一种。',
     attrs: {
-      caption: text('content', '表题（表上方一行小字）'),
+      as: enumv(['list', 'steps', 'bars', 'timeline', 'table', 'cells'], 'list', 'content', '条目形态'),
     },
-    example: '<vk-table caption="读一次要多久"><table><tr><th>层</th><th>延迟</th></tr><tr><td>内存</td><td>100ns</td></tr><tr><td>L1</td><td>1ns</td></tr></table></vk-table>',
-    children: table('写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err"，行/格可写 current。'),
+    variants: {
+      list: variant('列表', '要点 / 清单 / 有序。条目写成 <li>。', {
+        variant: enumv(['bullet', 'check', 'ordered'], 'bullet', 'appearance', '形态'),
+      }, items({ tone: ITEM_TONE, current: currentItem() }, '每一项写成 <li>；当前项写 current。'),
+        '<vk-board><li>取首地址</li><li current>加下标 × 4</li></vk-board>'),
+      steps: variant('步骤', '编号 + 连线 + 当前步。容器窄时自动竖排。', {
+        direction: enumv(['auto', 'horizontal', 'vertical'], 'auto', 'layout', '方向'),
+      }, items({ tone: ITEM_TONE, note: text('content', '小字说明'), icon: text('content', '图标（Lucide 名）'), current: currentItem() }, '每一步写成 <li>；当前步写 current。'),
+        '<vk-board as="steps"><li icon="file-code">预处理</li><li icon="cpu" current>编译</li></vk-board>'),
+      bars: variant('条', '一组横向条：标签、值、单位。值只写数字。', {
+        max: num(1, undefined, 'appearance', '最大值（不写按最大一条）'),
+        unit: text('appearance', '单位'),
+        scale: enumv(['linear', 'log'], 'linear', 'appearance', '刻度'),
+      }, items({ value: { type: 'num', min: 0, group: 'content', label: '数值' }, tone: ITEM_TONE, current: currentItem() }, '<li value="120">hello.o</li>；值写数字，不写单位。'),
+        '<vk-board as="bars" unit="ms"><li value="6">解析</li><li value="24" current>链接</li></vk-board>'),
+      timeline: variant('时间线', '一条轴上的点：给了 at + start/end 就按比例摆，否则等距。', {
+        start: num(undefined, undefined, 'content', '起点（数字，如 1963）'),
+        end: num(undefined, undefined, 'content', '终点'),
+      }, items({ at: { type: 'num', group: 'content', label: '位置（数字）' }, date: text('content', '日期标签（不写就用 at）'), note: text('content', '小字说明'), icon: text('content', '节点图标（Lucide 名）'), tone: ITEM_TONE, current: currentItem() }, '<li at="1972">C 诞生</li>；当前点写 current。'),
+        '<vk-board as="timeline" start="1963" end="2010"><li at="1963">ASCII</li><li at="2010" icon="smile" current>Emoji</li></vk-board>'),
+      table: variant('表格', '原生 <table>：数字列自动右对齐、等宽数字；行可写 tone / current。', {
+        caption: text('content', '表题（表上方一行小字）'),
+      }, table('写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err"、current。'),
+        '<vk-board as="table" caption="读一次要多久"><table><tr><th>层</th><th>延迟</th></tr><tr><td>内存</td><td>100ns</td></tr></table></vk-board>'),
+      cells: variant('内存格', '一格一个 <li>：值、标签、指针、旧值。地址由 addr + 序号 × stride 算出。', {
+        addr: text('content', '起始地址，如 "0x1000"'),
+        stride: int(1, 16, 1, 'content', '每格占几字节（int 数组写 4）'),
+        cols: int(1, 8, 4, 'layout', '每行几格'),
+      }, items({ value: text('content', '值'), label: text('content', '标签'), ptr: text('content', '指针名，如 "lo"（空格分隔多个）'), was: text('content', '旧值（显示「旧 → 新」）'), tone: ITEM_TONE, current: currentItem() }, '<li value="61" label="s[0]" ptr="lo">；地址自动算。'),
+        '<vk-board as="cells" addr="0x1000" stride="4"><li value="1" label="a[0]"></li><li value="2" label="a[1]" current></li></vk-board>'),
+    },
   },
 
-  'vk-list': {
-    layer: 'content',
-    name: '列表',
-    summary: '列表：要点 / 清单 / 有序。条目写成 <li>；顺序本身就是信息时用 ordered。',
+  'vk-graph': {
+    layer: 'mechanism',
+    name: '关系图',
+    summary: '节点写成 <li id>文字</li>，边写在节点上（after="父id"）或写成独立子项（from/to，支持环、双向、边标）。',
     attrs: {
-      variant: enumv(['bullet', 'check', 'ordered'], 'bullet', 'appearance', '形态'),
+      as: enumv(['row', 'tree', 'layered', 'mesh'], 'row', 'layout', '布局'),
+      direction: enumv(['horizontal', 'vertical'], 'horizontal', 'layout', '方向（只对 row）'),
     },
-    children: items({ tone: ITEM_TONE, current: currentItem() }, '每一项写成 <li>；当前项写 current。'),
-    example: '<vk-list><li>取首地址</li><li current>加下标 × 4</li></vk-list>',
+    children: items(
+      { id: text('content', '节点 id（边用它引用）'), note: text('content', '节点下的小字'), after: text('content', '父节点 id（空格分隔多个）'), lane: int(0, 9, undefined, 'layout', 'layered 布局里放第几条泳道'), from: text('content', '显式边的起点'), to: text('content', '显式边的终点'), tone: ITEM_TONE, current: currentItem() },
+      '<li id="a">head</li> → <li id="b" after="a">next</li>；不写 after 的节点是根。'
+    ),
+    example: '<vk-graph><li id="a">head</li><li id="b" after="a">next</li></vk-graph>',
   },
 
   'vk-dir': {
-    layer: 'content',
+    layer: 'mechanism',
     name: '目录树',
     summary: '目录层级：src 指向真实目录，构建期扫描；缩进与树线是真的。也可用内联 JSON 描述任意层级。',
     attrs: {
@@ -205,8 +282,24 @@ export const TAGS = {
     example: '<vk-dir><script type="text/plain" data-vk-tree>["src","README.md"]</script></vk-dir>',
   },
 
+  'vk-seq': {
+    layer: 'mechanism',
+    name: '时序',
+    summary: '两条以上生命线之间的往返：一行一条消息，按阅读顺序从上往下。2–4 个参与者。',
+    attrs: {
+      participants: text('content', '参与者，逗号分隔，如 "客户端,服务端,缓存"（2–4 个）'),
+      a: text('content', '左端名称（只有两条泳道时用）'),
+      b: text('content', '右端名称（只有两条泳道时用）'),
+    },
+    children: items(
+      { from: text('content', '起点（参与者名或 1 起的序号）'), to: text('content', '终点'), direction: enumv(['right', 'left'], 'right', 'layout', '方向（两条泳道时用）'), note: text('content', '消息下的小字'), tone: ITEM_TONE, current: currentItem() },
+      '<li>SYN</li>；<li direction="left">SYN+ACK</li>；三条以上用 from/to="客户端"。'
+    ),
+    example: '<vk-seq a="客户端" b="服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>',
+  },
+
   'vk-math': {
-    layer: 'content',
+    layer: 'mechanism',
     name: '公式',
     summary: '公式：src 指向 .tex 或直接写 TeX，构建期用 KaTeX 排版，运行期零依赖。inline 写在句子里。',
     attrs: {
@@ -214,158 +307,8 @@ export const TAGS = {
       inline: bool('appearance', '行内（跟在句子里）'),
       align: enumv(['left', 'center'], 'center', 'layout', '对齐'),
     },
-    children: source('src 指向 .tex 文件；或把 TeX 直接写在标签里；或用 <script type="text/plain" data-vk-source>。'),
+    children: source('src 指向 .tex 文件；或把 TeX 直接写在标签里。'),
     example: '<vk-math>T(n) = 2T(n/2) + O(n)</vk-math>',
-  },
-
-  'vk-cells': {
-    layer: 'content',
-    name: '内存格',
-    summary: '一格一个 <li>：值、标签、指针、旧值。地址由 addr + 序号 × stride 算出，不手写。',
-    attrs: {
-      addr: text('content', '起始地址，如 "0x1000"'),
-      stride: int(1, 16, 1, 'content', '每格占几字节（int 数组写 4）'),
-      cols: int(1, 8, 4, 'layout', '每行几格'),
-    },
-    children: items(
-      {
-        value: text('content', '值'),
-        label: text('content', '标签'),
-        ptr: text('content', '指针名，如 "lo"（空格分隔多个）'),
-        was: text('content', '旧值（显示「旧 → 新」）'),
-        tone: ITEM_TONE,
-        current: currentItem(),
-      },
-      '<li value="61" label="s[0]" ptr="lo">；地址自动按 addr + 序号 × stride 算。'
-    ),
-    example: '<vk-cells addr="0x1000" stride="4"><li value="1" label="a[0]"></li><li value="2" label="a[1]" current></li></vk-cells>',
-  },
-
-  'vk-bytes': {
-    layer: 'content',
-    name: '字节',
-    summary: '字节窗：src 指向真实二进制；地址 + 十六进制 + ASCII 三列，current 标出一段。',
-    attrs: {
-      src: text('content', '二进制文件'),
-      addr: text('content', '起始地址', { default: '0x0' }),
-      offset: int(0, 65535, 0, 'content', '起始字节'),
-      length: int(1, 4096, 32, 'content', '字节数'),
-      cols: enumv(['4', '8'], '8', 'layout', '每行几列'),
-      current: lines('当前字节段，如 "4-7"（1 起）'),
-      title: text('content', '标题栏文字'),
-    },
-    children: source('src 指向真实二进制文件；也可以内联十六进制（68 65 6c 6c 6f）。'),
-    example: '<vk-bytes><script type="text/plain" data-vk-source>68 65 6c 6c 6f</script></vk-bytes>',
-  },
-
-  'vk-bits': {
-    layer: 'content',
-    name: '位',
-    summary: '一行二进制位：索引、分段、符号位。用 | 分段（符号 | 阶码 | 尾数），field-labels 给每段起名。',
-    attrs: {
-      value: text('content', '位串，可含空格；用 | 分段'),
-      current: lines('当前位段，如 "4-7"（1 起，从左数）'),
-      label: text('appearance', '左边一行说明'),
-      'field-labels': text('appearance', '各段名，逗号分隔（个数要与 | 的段数一致）'),
-      index: enumv(['down', 'up', 'none', 'sparse'], 'down', 'appearance', '位序号：down 按位权；up 从左数；sparse 只标 8 的倍数'),
-      sign: bool('appearance', '标出符号位'),
-    },
-    children: none('位串写在 value 属性里。'),
-    example: '<vk-bits value="0|01111|0000000000" field-labels="符号,阶码,尾数" current="2-6"></vk-bits>',
-  },
-
-  /* ---------------------------------------------------------------- 图 */
-  'vk-steps': {
-    layer: 'diagram',
-    name: '步骤',
-    summary: '步骤条：编号 + 连线 + 当前步。容器窄时自动竖排，不压字。',
-    attrs: {
-      direction: enumv(['auto', 'horizontal', 'vertical'], 'auto', 'layout', '方向'),
-    },
-    children: items({ tone: ITEM_TONE, note: text('content', '小字说明'), icon: text('content', '步骤图标（Lucide 名）'), current: currentItem() }, '每一步写成 <li>；当前步写 current。'),
-    example: '<vk-steps><li icon="file-code">预处理</li><li icon="cpu" current>编译</li><li icon="link">链接</li></vk-steps>',
-  },
-
-  'vk-bars': {
-    layer: 'diagram',
-    name: '条',
-    summary: '一组横向条：标签、值、单位。用来讲大小对比；值只写数字。',
-    attrs: {
-      max: num(1, undefined, 'appearance', '最大值（不写按最大一条）'),
-      unit: text('appearance', '单位'),
-      scale: enumv(['linear', 'log'], 'linear', 'appearance', '刻度'),
-    },
-    children: items({ value: { type: 'num', min: 0, group: 'content', label: '数值' }, tone: ITEM_TONE, current: currentItem() }, '<li value="120">hello.o</li>；值写数字，不写单位。当前条写 current。'),
-    example: '<vk-bars unit="ms"><li value="6">解析</li><li value="24" current>链接</li></vk-bars>',
-  },
-
-  'vk-timeline': {
-    layer: 'diagram',
-    name: '时间线',
-    summary: '时间线：给了 at + start/end 就按比例摆，否则等距。一条事项一个 <li>。',
-    attrs: {
-      start: num(undefined, undefined, 'content', '起点（数字，如 1963）'),
-      end: num(undefined, undefined, 'content', '终点'),
-    },
-    children: items(
-      {
-        at: { type: 'num', group: 'content', label: '位置（数字；配 start/end 按比例摆）' },
-        date: text('content', '日期标签（不写就用 at）'),
-        note: text('content', '小字说明'),
-        icon: text('content', '节点图标（Lucide 名）'),
-        tone: ITEM_TONE,
-        current: currentItem(),
-      },
-      '<li at="1972">C 诞生</li>；当前点写 current。'
-    ),
-    example: '<vk-timeline start="1963" end="2010"><li at="1963">ASCII</li><li at="2010" icon="smile" current>Emoji</li></vk-timeline>',
-  },
-
-  'vk-graph': {
-    layer: 'diagram',
-    name: '关系图',
-    summary: '关系图：节点写成 <li id>文字</li>，边可以写在节点上（after="父id"），也可以写成独立子项（from/to，支持环、双向、边标）。row 链表/队列，tree 递归树/堆，layered DAG（git），mesh 环图（BFS/死锁/事件循环）。',
-    attrs: {
-      layout: enumv(['row', 'tree', 'layered', 'mesh'], 'row', 'layout', '布局'),
-      direction: enumv(['horizontal', 'vertical'], 'horizontal', 'layout', '方向（只对 row）', { when: { attr: 'layout', values: ['row'] } }),
-    },
-    children: items(
-      {
-        id: text('content', '节点 id（边用它引用）'),
-        note: text('content', '节点下的小字'),
-        after: text('content', '父节点 id（空格分隔多个）'),
-        lane: int(0, 9, undefined, 'layout', 'layered 布局里放第几条泳道'),
-        from: text('content', '显式边的起点 id'),
-        to: text('content', '显式边的终点 id'),
-        tone: ITEM_TONE,
-        current: currentItem(),
-      },
-      '<li id="a">head</li> → <li id="b" after="a">next</li>；不写 after 的节点是根。显式边写成 <li from="a" to="b">next</li>。'
-    ),
-    example: '<vk-graph layout="row"><li id="a">head</li><li id="b" after="a">next</li></vk-graph>',
-  },
-
-  'vk-seq': {
-    layer: 'diagram',
-    name: '时序',
-    summary: '两条以上生命线之间的往返：一行一条消息，按阅读顺序从上往下。2–4 个参与者，适合握手、请求/响应、缓存往返。',
-    attrs: {
-      participants: text('content', '参与者，逗号分隔，如 "客户端,服务端,缓存"（2–4 个）'),
-      a: text('content', '左端名称（只有两条泳道时用）'),
-      b: text('content', '右端名称（只有两条泳道时用）'),
-    },
-    children: items(
-      {
-        from: text('content', '起点（参与者名或 1 起的序号）'),
-        to: text('content', '终点（参与者名或 1 起的序号）'),
-        direction: enumv(['right', 'left'], 'right', 'layout', '方向（两条泳道时用）'),
-        note: text('content', '消息下的小字'),
-        tone: ITEM_TONE,
-        current: currentItem(),
-      },
-      '<li>SYN</li>；<li direction="left">SYN+ACK</li>；三条以上用 from/to="客户端" / "服务端"。'
-    ),
-    example: '<vk-seq a="客户端" b="服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>',
   },
 
   /* ---------------------------------------------------------------- 关系 */
@@ -389,10 +332,30 @@ export const TAGS = {
 
 export const TAG_NAMES = Object.keys(TAGS);
 
-/** 一个标签自己的属性表；span / bleed 不在里面，见 FLOW_CHILD。 */
-export function attrsOf(tag) {
+/** 一个标签的变体表；没有变体的标签返回 null。 */
+export const VARIANTS = (tag) => TAGS[tag]?.variants || null;
+
+/** 当前节点的变体名：有 as 用 as，没写用默认；没有变体的标签返回 null。 */
+export function variantOf(tag, as) {
+  const v = TAGS[tag]?.variants;
+  if (!v) return null;
+  return as && v[as] ? as : TAGS[tag].attrs.as.default;
+}
+
+/** 一个标签（某变体）自己的属性表；span / bleed 不在里面，见 FLOW_CHILD。 */
+export function attrsOf(tag, as) {
   const t = TAGS[tag];
-  return t ? { ...t.attrs } : {};
+  if (!t) return {};
+  const v = variantOf(tag, as);
+  return { ...t.attrs, ...(v ? t.variants[v].attrs : {}) };
+}
+
+/** 子节点模型：变体优先，其次标签。 */
+export function childrenOf(tag, as) {
+  const t = TAGS[tag];
+  if (!t) return null;
+  const v = variantOf(tag, as);
+  return (v && t.variants[v].children) || t.children || null;
 }
 
 /** 可以作为 flow 子项的标签（page / head / callout 除外）。 */
@@ -416,9 +379,9 @@ a[1]
 /** 契约顶部印的几条硬规则；不再只藏在 GUIDE 里。 */
 export const RULES = [
   '可见文字写成元素内容；kicker / counter / lede / note / date / value 才是属性。',
-  'current 写在项上（布尔）；code / bytes / bits 用行段，dir 用路径。',
+  'current 写在项上（布尔）；code 的 code/term/diff/asm/bytes 与 bits 用行段；dir 用路径。',
   '用 lede 写“为什么看这里”，正文里的重点用 mark。',
-  'src 载体：code 用 data-vk-source，math 写 TeX，bytes 写十六进制，dir 用 data-vk-tree。',
+  'src 载体：code/term/diff/asm 用 data-vk-source，math 写 TeX，bytes 写十六进制，dir 用 data-vk-tree。',
   '主题：page theme="light|dark"；card surface="paper|soft|dark"。',
   'span / bleed 只写在 <vk-flow> 的直接子项上；bleed="all" 只给 <vk-img>。',
 ];

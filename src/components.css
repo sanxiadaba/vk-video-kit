@@ -1,12 +1,12 @@
 /* ============================================================================
-   v24 · 组件
+   v25 · 组件
    ----------------------------------------------------------------------------
    组件只做五组原语的组合：字 / 距 / 面 / 线 / 态。
    这里不出现裸字号、裸间距、裸圆角；拿不准就回 vocab.mjs 加 token。
    ========================================================================== */
 
 /* ================================================================ 源码窗 */
-vk-code {
+[data-vk='code'] {
   display: block;
   width: 100%;
   max-width: 100%;
@@ -20,7 +20,7 @@ vk-code {
 .vk-dc {
   font-variant-ligatures: none;
 }
-vk-code[size='caption'] {
+[data-vk='code'][size='caption'] {
   font-size: var(--vk-fs-caption);
 }
 .vk-lines {
@@ -28,7 +28,7 @@ vk-code[size='caption'] {
   gap: 0;
   font-size: 1em;
   line-height: 1.5;
-  padding: var(--vk-space-4) 0;
+  padding: var(--vk-space-2) 0;
 }
 .vk-line {
   display: grid;
@@ -242,7 +242,7 @@ vk-code[size='caption'] {
 }
 
 /* ================================================================ 表格 */
-vk-table {
+[data-vk='table'] {
   display: block;
   width: 100%;
   min-width: 0;
@@ -253,83 +253,84 @@ vk-table {
   color: var(--vk-ink-3);
   margin-bottom: var(--vk-space-4);
 }
-vk-table table {
+[data-vk='table'] table {
   border-collapse: collapse;
   width: 100%;
   max-width: 100%;
 }
-vk-table th,
-vk-table td {
-  padding: var(--vk-space-4) var(--vk-space-5);
+[data-vk='table'] th,
+[data-vk='table'] td {
+  padding: var(--vk-space-2) var(--vk-space-5);
+  line-height: 1.25;
   text-align: left;
   vertical-align: baseline;
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
 }
-vk-table th {
+[data-vk='table'] th {
   color: var(--vk-ink-3);
   font-size: var(--vk-fs-body);
   font-weight: var(--vk-w-medium);
   letter-spacing: 0.02em;
   border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
 }
-vk-table td {
+[data-vk='table'] td {
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-1);
 }
-vk-table table:has(th:nth-child(3):last-child) {
+[data-vk='table'] table:has(th:nth-child(3):last-child) {
   table-layout: fixed;
 }
-vk-table table:has(th:nth-child(3):last-child) th:nth-child(1) {
+[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(1) {
   width: 32%;
 }
-vk-table table:has(th:nth-child(3):last-child) th:nth-child(2) {
+[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(2) {
   width: 38%;
 }
-vk-table table:has(th:nth-child(3):last-child) th:nth-child(3) {
+[data-vk='table'] table:has(th:nth-child(3):last-child) th:nth-child(3) {
   width: 30%;
 }
-vk-table th:first-child,
-vk-table td:first-child {
+[data-vk='table'] th:first-child,
+[data-vk='table'] td:first-child {
   padding-left: var(--vk-space-6);
 }
-vk-table th:not(:first-child),
-vk-table td:not(:first-child) {
+[data-vk='table'] th:not(:first-child),
+[data-vk='table'] td:not(:first-child) {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
-vk-table td.num,
-vk-table th.num {
+[data-vk='table'] td.num,
+[data-vk='table'] th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--vk-font-mono);
 }
-vk-table tr[tone='ok'] td {
+[data-vk='table'] tr[tone='ok'] td {
   background: var(--vk-tint-ok);
 }
-vk-table tr[tone='warn'] td {
+[data-vk='table'] tr[tone='warn'] td {
   background: var(--vk-tint-warn);
 }
-vk-table tr[tone='err'] td {
+[data-vk='table'] tr[tone='err'] td {
   background: var(--vk-tint-err);
 }
-vk-table tr[current] td {
+[data-vk='table'] tr[current] td {
   background: none;
 }
-vk-table tr[current] td:first-child {
+[data-vk='table'] tr[current] td:first-child {
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
-vk-table td[current] {
+[data-vk='table'] td[current] {
   background: var(--vk-tint-focus);
   box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
 
 /* ================================================================ 列表 */
-vk-list {
+[data-vk='list'] {
   display: grid;
   gap: var(--vk-space-5);
   min-width: 0;
 }
-vk-list > li {
+[data-vk='list'] > li {
   display: grid;
   grid-template-columns: 1.1em minmax(0, 1fr);
   gap: var(--vk-space-4);
@@ -341,7 +342,7 @@ vk-list > li {
   line-height: 1.5;
   position: relative;
 }
-vk-list > li::before {
+[data-vk='list'] > li::before {
   content: '';
   width: 8px;
   height: 8px;
@@ -350,7 +351,7 @@ vk-list > li::before {
   justify-self: center;
   transform: translateY(-0.18em);
 }
-vk-list[variant='check'] > li::before {
+[data-vk='list'][variant='check'] > li::before {
   content: '✓';
   width: auto;
   height: auto;
@@ -363,13 +364,13 @@ vk-list[variant='check'] > li::before {
   align-self: baseline;
   transform: translateY(0.08em);
 }
-vk-list[variant='ordered'] {
+[data-vk='list'][variant='ordered'] {
   counter-reset: vk-li;
 }
-vk-list[variant='ordered'] > li {
+[data-vk='list'][variant='ordered'] > li {
   grid-template-columns: 1.6em minmax(0, 1fr);
 }
-vk-list[variant='ordered'] > li::before {
+[data-vk='list'][variant='ordered'] > li::before {
   content: counter(vk-li);
   transform: none;
   width: auto;
@@ -382,36 +383,36 @@ vk-list[variant='ordered'] > li::before {
   font-variant-numeric: tabular-nums;
   align-self: start;
 }
-vk-list > li[current] {
+[data-vk='list'] > li[current] {
   background: none;
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
   color: var(--vk-ink-1);
 }
-vk-list > li[current]::before {
+[data-vk='list'] > li[current]::before {
   background: var(--vk-focus);
 }
-vk-list[variant='check'] > li[current]::before {
+[data-vk='list'][variant='check'] > li[current]::before {
   color: var(--vk-focus);
   background: none;
 }
-vk-list[variant='ordered'] > li[current]::before {
+[data-vk='list'][variant='ordered'] > li[current]::before {
   background: none;
   color: var(--vk-focus);
 }
-vk-list > li[tone='ok']::before {
+[data-vk='list'] > li[tone='ok']::before {
   background: var(--vk-ok);
 }
-vk-list > li[tone='warn']::before {
+[data-vk='list'] > li[tone='warn']::before {
   background: var(--vk-warn);
 }
-vk-list > li[tone='err']::before {
+[data-vk='list'] > li[tone='err']::before {
   background: var(--vk-err);
 }
 
 /* ================================================================ 目录树
    每个子行画一条从父行中心到本行图标的 L；竖段在父级缩进，横段落到图标左缘。 */
-vk-dir {
+[data-vk='dir'] {
   display: block;
   min-width: 0;
 }
@@ -477,32 +478,32 @@ vk-dir {
 }
 
 /* ================================================================ 公式 */
-vk-math {
+[data-vk='math'] {
   display: block;
   min-width: 0;
   color: var(--vk-ink-1);
 }
-vk-math:not([inline]) {
+[data-vk='math']:not([inline]) {
   font-size: var(--vk-fs-headline);
 }
-vk-math[inline] {
+[data-vk='math'][inline] {
   display: inline-block;
   font-size: 1em;
 }
-vk-math .katex {
+[data-vk='math'] .katex {
   font-size: 1em;
 }
-vk-math .katex-display {
+[data-vk='math'] .katex-display {
   margin: 0;
   text-align: center;
 }
-vk-math[align='left'] .katex-display,
-vk-math[align='left'] .katex-display > .katex {
+[data-vk='math'][align='left'] .katex-display,
+[data-vk='math'][align='left'] .katex-display > .katex {
   text-align: left;
 }
 
 /* ================================================================ 内存格 */
-vk-cells {
+[data-vk='cells'] {
   display: block;
   min-width: 0;
 }
@@ -512,7 +513,7 @@ vk-cells {
   gap: var(--vk-space-4);
 }
 .vk-cells:has(.vk-cell-p) {
-  padding-top: var(--vk-space-9);
+  padding-top: var(--vk-space-8);
 }
 .vk-cell {
   position: relative;
@@ -561,14 +562,14 @@ vk-cells {
 }
 .vk-cell-p {
   position: absolute;
-  top: -124px;
+  top: -96px;
   left: 50%;
   transform: translateX(-50%);
   padding: var(--vk-space-1) var(--vk-space-3);
   border-radius: var(--vk-radius-pill);
   background: var(--vk-focus);
   color: var(--vk-on-focus);
-  font-size: 80px;
+  font-size: 64px;
   line-height: 1.2;
   font-weight: var(--vk-w-bold);
   font-family: var(--vk-font-mono);
@@ -599,7 +600,7 @@ vk-cells {
 }
 
 /* ================================================================ 字节 */
-vk-bytes {
+[data-vk='bytes'] {
   display: block;
   min-width: 0;
 }
@@ -611,7 +612,7 @@ vk-bytes {
 .vk-brow,
 .vk-bhead {
   display: grid;
-  grid-template-columns: var(--vk-bcol, 5.4em) var(--vk-bhexw, calc(var(--vk-cols, 8) * 3ch)) 1fr;
+  grid-template-columns: var(--vk-bcol, 7ch) var(--vk-bhexw, calc(var(--vk-cols, 8) * 3ch)) calc(var(--vk-cols, 8) * 1.15ch);
   gap: var(--vk-space-4);
   align-items: baseline;
   padding: 0 var(--vk-space-5);
@@ -654,10 +655,15 @@ vk-bytes {
 
 /* ================================================================ 位
    一段一个边框；位是段里的等宽格子。 */
-vk-bits {
+[data-vk='bits'] {
+  display: block;
+  min-width: 0;
+}
+.vk-bits {
   display: flex;
-  align-items: flex-end;
-  gap: var(--vk-space-6);
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--vk-space-3);
   min-width: 0;
 }
 .vk-bits-label {
@@ -694,8 +700,8 @@ vk-bits {
   display: grid;
   justify-items: center;
   gap: 2px;
-  width: 80px;
-  flex: 0 0 80px;
+  width: 64px;
+  flex: 0 0 64px;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
   font-style: normal;
@@ -736,7 +742,7 @@ vk-bits {
 
 /* ================================================================ 步骤
    圈 96 固定，数字 40 固定；标签才吃外层的字。 */
-vk-steps {
+[data-vk='steps'] {
   display: block;
   container-type: inline-size;
   min-width: 0;
@@ -874,7 +880,7 @@ vk-steps {
 }
 
 /* ================================================================ 条 */
-vk-bars {
+[data-vk='bars'] {
   display: block;
   min-width: 0;
 }
@@ -939,7 +945,7 @@ vk-bars {
 
 /* ================================================================ 时间线
    轴分段（build 写 .vk-tl-seg），节点处留缝。 */
-vk-timeline {
+[data-vk='timeline'] {
   display: block;
   min-width: 0;
 }
@@ -1045,7 +1051,7 @@ vk-timeline {
 }
 
 /* ================================================================ 关系图 */
-vk-graph {
+[data-vk='graph'] {
   display: block;
   min-width: 0;
 }
@@ -1181,7 +1187,7 @@ vk-graph {
 
 /* ================================================================ 时序
    2–4 条生命线；每条消息从 --vk-left 画到 --vk-w。 */
-vk-seq {
+[data-vk='seq'] {
   display: block;
   min-width: 0;
 }
@@ -1203,7 +1209,7 @@ vk-seq {
 .vk-seq-body {
   position: relative;
   display: grid;
-  gap: var(--vk-space-4);
+  gap: var(--vk-space-2);
   padding: var(--vk-space-2) 0;
 }
 .vk-seq-lane {

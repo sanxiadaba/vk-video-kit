@@ -1,18 +1,18 @@
 /**
- * v24 · 契约
+ * v25 · 契约
  * ----------------------------------------------------------------------------
  * 构建期校验与文档生成只有这一条路径，全部由 schema.mjs 驱动：
  *
  *   validate(tree, file)   作者写错了什么（一次报全，带 file:line 和改法；不抛异常）
  *   contract()             机器可读的完整契约（vk brief --json）
- *   markdown() / docText() 人/AI 读的契约
+ *   markdown() / docText() 人/AI 读的契约（docs/CONTRACT.md 就是 markdown() 的输出）
  *
  * 规矩：这里不出现任何组件知识。要加一条校验，先在 schema 里加字段。
  */
 
 import fs from 'node:fs';
-import { TAGS, TAG_NAMES, attrsOf, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS } from './schema.mjs';
-import { GAP, FONT, LINE, MEASURE, FLOOR, INDEX_RULE, CANVAS, CONTENT, LINE_W, SYNTAX, PAINT, THEME, CARD_SURFACE } from './vocab.mjs';
+import { TAGS, TAG_NAMES, attrsOf, childrenOf, variantOf, VARIANTS, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS } from './schema.mjs';
+import { GAP, FONT, LINE, MEASURE, INDEX_RULE, CANVAS, CONTENT, LINE_W, SYNTAX, PAINT, THEME, CARD_SURFACE } from './vocab.mjs';
 import { attrOf, hasAttr, flatten, kids, lineOf, directText, textOf } from './shared/dom.mjs';
 import { parseLines, parseRange } from './shared/range.mjs';
 
@@ -23,6 +23,7 @@ export const VERSION = JSON.parse(fs.readFileSync(new URL('../package.json', imp
 export const CODES = {
   UNKNOWN_TAG: 'UNKNOWN_TAG',
   UNKNOWN_ATTR: 'UNKNOWN_ATTR',
+  UNKNOWN_VARIANT: 'UNKNOWN_VARIANT',
   VALUE_ENUM: 'VALUE_ENUM',
   VALUE_BOOL: 'VALUE_BOOL',
   VALUE_NUMBER: 'VALUE_NUMBER',
@@ -89,11 +90,19 @@ const suggest = (name, pool) => {
   return dist <= Math.max(2, Math.floor(name.length / 3)) ? best : '';
 };
 
-const GLOBAL_ATTRS = new Set(['id', 'style']);
 const INLINE_TAGS = new Set(['em', 'strong', 'mark', 'code', 'kbd', 'small', 'br', 'span']);
 const COLS_OK = /^((auto|[1-9]\d*)(\s+(auto|[1-9]\d*))*)$/;
 
 export { parseLines, parseRange };
+
+/* 节点当前的变体：读 as，未知就退回默认。 */
+export const asOf = (node) => {
+  const tag = node.tagName;
+  const t = TAGS[tag];
+  if (!t?.variants) return null;
+  const v = attrOf(node, 'as');
+  return v && t.variants[v] ? v : t.attrs.as.default;
+};
 
 /* ------------------------------------------------------------------ 值 */
 export function checkValue(file, node, tag, name, spec, value, errors) {
@@ -163,7 +172,7 @@ function checkStyle(file, node, tag, errors) {
 }
 
 function checkChildModel(file, node, tag, errors) {
-  const model = TAGS[tag].children;
+  const model = childrenOf(tag, asOf(node));
   if (!model) return;
   const children = kids(node);
   const vkKids = children.filter((c) => c.tagName.startsWith('vk-'));
@@ -206,8 +215,9 @@ function checkChildModel(file, node, tag, errors) {
     if (!lis.length) errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_MISSING, message: `<${tag}> 还没有条目`, fix: '每一条写成 <li>' });
     for (const li of lis) {
       for (const { name, value } of li.attrs || []) {
-        if (name === 'id' || name === 'style') {
-          if (name === 'style') checkStyle(file, li, `${tag} <li>`, errors);
+        if (name === 'id') continue;
+        if (name === 'style') {
+          checkStyle(file, li, `${tag} <li>`, errors);
           continue;
         }
         const spec = model.attrs?.[name];
@@ -238,11 +248,13 @@ function checkChildModel(file, node, tag, errors) {
     if (children.some((c) => c.tagName !== 'table')) errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_KIND, message: `<${tag}> 里只能放一个 <table>`, fix: '表题用 caption 属性' });
     if (directText(node)) errors.push({ file, line: lineOf(node), tag, code: CODES.STRAY_TEXT, message: `<${tag}> 里有一段裸文字`, fix: '文字放进表格单元格' });
     const rows = flatten(table).filter((n) => n.tagName === 'tr');
-    for (const tr of rows) {      for (const { name, value } of tr.attrs || []) {
+    for (const tr of rows) {
+      for (const { name, value } of tr.attrs || []) {
         if (name === 'tone' && !['ok', 'warn', 'err'].includes(value)) errors.push({ file, line: lineOf(tr), tag, code: CODES.VALUE_ENUM, message: `<tr> 的 tone="${value}" 不在词表里`, fix: '可用：ok / warn / err' });
         else if (name === 'current') {
           if (value !== '' && value !== 'true') errors.push({ file, line: lineOf(tr), tag, code: CODES.VALUE_BOOL, message: `<tr> 的 current 是开关，只写属性名`, fix: '删掉 ="…"' });
-        } else if (!['tone', 'current'].includes(name)) errors.push({ file, line: lineOf(tr), tag, code: CODES.UNKNOWN_ATTR, message: `<tr> 不认识属性 ${name}="${value}"`, fix: `可用：tone / current` });
+        } else if (name === 'style') checkStyle(file, tr, `${tag} <tr>`, errors);
+        else if (!['tone', 'current'].includes(name)) errors.push({ file, line: lineOf(tr), tag, code: CODES.UNKNOWN_ATTR, message: `<tr> 不认识属性 ${name}="${value}"`, fix: `可用：tone / current` });
       }
       const cells = kids(tr);
       for (const cell of cells) {
@@ -255,7 +267,8 @@ function checkChildModel(file, node, tag, errors) {
             if (value !== '' && value !== 'true') errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_BOOL, message: `<${cell.tagName}> 的 current 是开关，只写属性名`, fix: '删掉 ="…"' });
           } else if (name === 'colspan' || name === 'rowspan') {
             if (!/^\d+$/.test(value) || Number(value) < 1) errors.push({ file, line: lineOf(cell), tag, code: CODES.VALUE_NUMBER, message: `<${cell.tagName}> 的 ${name} 要是正整数`, fix: '写 ≥ 1 的整数' });
-          } else {
+          } else if (name === 'class') continue;
+          else {
             errors.push({ file, line: lineOf(cell), tag, code: CODES.UNKNOWN_ATTR, message: `<td> 不认识属性 ${name}="${value}"`, fix: `可用：current / colspan / rowspan` });
           }
         }
@@ -273,9 +286,9 @@ function checkChildModel(file, node, tag, errors) {
       if (!data) errors.push({ file, line: lineOf(script), tag, code: CODES.CHILD_MISSING, message: `<${tag}> 的 <script> 要写 data-vk-source 或 data-vk-tree`, fix: '改成 <script type="text/plain" data-vk-source>' });
     }
     if (src && script) errors.push({ file, line: lineOf(node), tag, code: CODES.SRC_CONFLICT, message: `<${tag}> 同时写了 src 和内联内容：只能二选一`, fix: '删掉 src，或删掉内联 script' });
-    const textOk = tag === 'vk-math' || tag === 'vk-bytes';
-    if (!src && !script && !(textOk && textOf(node).trim())) {
-      errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_MISSING, message: `<${tag}> 没有内容`, fix: TAGS[tag].children.hint });
+    const inlineOk = tag === 'vk-math' || (tag === 'vk-code' && asOf(node) === 'bytes');
+    if (!src && !script && !(inlineOk && textOf(node).trim())) {
+      errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_MISSING, message: `<${tag}> 没有内容`, fix: model.hint });
     }
   }
 }
@@ -294,7 +307,17 @@ export function validate(tree, file = '<page>') {
       errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_TAG, message: `未知标签 <${tag}>`, fix: hint ? `是想写 <${hint}>？` : `可用：${TAG_NAMES.join(', ')}` });
       continue;
     }
-    const spec = attrsOf(tag);
+
+    /* 先定变体：as 错了一切属性表都不对。 */
+    const hasVariants = !!TAGS[tag].variants;
+    if (hasVariants) {
+      const raw = attrOf(node, 'as');
+      if (raw != null && !TAGS[tag].variants[raw]) {
+        errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_VARIANT, message: `<${tag}> 没有 as="${raw}"`, fix: `可用：${Object.keys(TAGS[tag].variants).join(' / ')}` });
+      }
+    }
+    const as = asOf(node);
+    const spec = attrsOf(tag, as);
     const parent = node.parentNode?.tagName;
 
     for (const { name, value } of node.attrs || []) {
@@ -316,7 +339,8 @@ export function validate(tree, file = '<page>') {
       if (!def) {
         const pool = Object.keys(spec);
         const hint = suggest(name, pool);
-        errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_ATTR, message: `<${tag}> 不认识属性 ${name}="${value}"`, fix: hint ? `是想写 ${hint}？` : `可用：${pool.join(', ')}${FLOW_CHILD_TAGS.includes(tag) ? '；在 flow 里还可写 span / bleed' : ''}` });
+        const variantNote = hasVariants && as && TAGS[tag].variants[as] ? `（as="${as}" 时）` : '';
+        errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_ATTR, message: `<${tag}>${variantNote} 不认识属性 ${name}="${value}"`, fix: hint ? `是想写 ${hint}？` : `可用：${pool.join(', ')}${FLOW_CHILD_TAGS.includes(tag) ? '；在 flow 里还可写 span / bleed' : ''}` });
         continue;
       }
       checkValue(file, node, tag, name, def, value, errors);
@@ -438,12 +462,14 @@ export const fmtAttr = (name, spec) => {
   return { name, values, def, range, label: [spec.label || '', required, when].filter(Boolean).join('；') };
 };
 
+const contentOf = (children) =>
+  children?.kind === 'source' ? 'source' : children?.kind === 'items' ? 'item' : children?.kind === 'table' ? 'table' : children?.kind === 'inline' ? 'text' : 'slot';
+
 /** 机器可读契约：vk brief --json 的输出。 */
 export function contract() {
   return {
     version: VERSION,
     canvas: { w: CANVAS.w, h: CANVAS.h, marginX: CANVAS.marginX, marginY: CANVAS.marginY, content: CONTENT },
-    floor: FLOOR,
     indexRule: INDEX_RULE,
     theme: THEME,
     surface: CARD_SURFACE,
@@ -463,6 +489,14 @@ export function contract() {
     tags: Object.fromEntries(
       TAG_NAMES.map((tag) => {
         const t = TAGS[tag];
+        const variants = t.variants
+          ? Object.fromEntries(
+              Object.entries(t.variants).map(([id, v]) => [
+                id,
+                { label: v.label, summary: v.summary, attrs: attrsOf(tag, id), children: v.children, content: contentOf(v.children), example: v.example || null },
+              ])
+            )
+          : null;
         return [
           tag,
           {
@@ -470,9 +504,10 @@ export function contract() {
             layer: t.layer,
             summary: t.summary,
             example: t.example || null,
-            content: t.content || (t.children?.kind === 'source' ? 'source' : t.children?.kind === 'items' ? 'item' : t.children?.kind === 'table' ? 'table' : t.children?.kind === 'inline' ? 'text' : 'slot'),
+            content: contentOf(childrenOf(tag, null)),
             children: t.children || null,
-            attrs: attrsOf(tag),
+            attrs: t.attrs,
+            variants,
           },
         ];
       })
@@ -480,13 +515,33 @@ export function contract() {
   };
 }
 
-/** 一页人/AI 读的契约：vk brief 默认输出。 */
+/* 一个变体的小节。 */
+function variantBlock(out, tag, as, label, summary, attrs, children, example) {
+  out.push(`#### ${label}${as ? ` · as="${as}"` : ''} —— ${summary}`);
+  const rows = Object.entries(attrs).map(([n, s]) => fmtAttr(n, s));
+  if (rows.length) {
+    out.push('', '| 属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
+    for (const r of rows) out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
+  }
+  if (children?.hint) out.push('', children.hint);
+  if (children?.attrs && Object.keys(children.attrs).length) {
+    out.push('', '子项属性：', '', '| 子项属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
+    for (const [n, s] of Object.entries(children.attrs)) {
+      const r = fmtAttr(n, s);
+      out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
+    }
+  }
+  if (example) out.push('', '```html', example, '```');
+  out.push('');
+}
+
+/** 一页人/AI 读的契约：vk brief 默认输出，也是 docs/CONTRACT.md。 */
 export function markdown() {
   const c = contract();
   const out = [];
   out.push(`# vk 契约 ${c.version}`, '');
   out.push(`画布 ${c.canvas.w}×${c.canvas.h}，版心 ${c.canvas.content.w}×${c.canvas.content.h}（左右 ${c.canvas.marginX} / 上下 ${c.canvas.marginY}）。观众在手机横屏看，实际约 780 宽（0.406×）。`);
-  out.push(`自动缩小的地板 **${c.floor}px**（手机 16.2px）。索引一律 ${c.indexRule}。`, '');
+  out.push(`索引一律 ${c.indexRule}。字只从 vocab 来，这份文档由 \`vk brief --md\` 生成。`, '');
 
   out.push('## 规则', '');
   for (const r of c.rules) out.push(`- ${r}`);
@@ -502,27 +557,17 @@ export function markdown() {
 
   out.push('', '## 标签', '');
   for (const layer of LAYERS) {
-    out.push(`### ${layer.label}`, '');
+    out.push('', `### ${layer.label}`, '');
     for (const [tag, t] of Object.entries(c.tags)) {
       if (t.layer !== layer.id) continue;
       out.push(`**\`${tag}\`** · ${t.name} —— ${t.summary}`);
-      const rows = Object.entries(t.attrs).map(([n, s]) => fmtAttr(n, s));
-      if (rows.length) {
-        out.push('', '| 属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
-        for (const r of rows) out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
-      }
       if (FLOW_CHILD_TAGS.includes(tag)) out.push('', '可用 flow 子项属性：`span` / `bleed`。');
-      if (t.children?.hint) out.push('', t.children.hint);
-      if (t.children?.attrs && Object.keys(t.children.attrs).length) {
-        out.push('', '子项属性：');
-        out.push('', '| 子项属性 | 取值 | 默认 | 范围 | 说明 |', '|---|---|---|---|---|');
-        for (const [n, s] of Object.entries(t.children.attrs)) {
-          const r = fmtAttr(n, s);
-          out.push(`| \`${r.name}\` | ${r.values} | ${r.def} | ${r.range} | ${r.label} |`);
-        }
-      }
-      if (t.example) out.push('', '```html', t.example, '```');
       out.push('');
+      if (t.variants) {
+        for (const [as, v] of Object.entries(t.variants)) variantBlock(out, tag, as, v.label, v.summary, v.attrs, v.children, v.example);
+      } else {
+        variantBlock(out, tag, null, t.name, t.summary, t.attrs, t.children, t.example);
+      }
     }
   }
   return out.join('\n');
@@ -533,25 +578,39 @@ export function docText(tag) {
   const t = TAGS[tag];
   if (!t) return '';
   const out = [`${tag} · ${t.name}  (${t.layer})`, t.summary];
-  if (t.children?.hint) out.push(`内容：${t.children.hint}`);
   if (FLOW_CHILD_TAGS.includes(tag)) out.push('flow 子项可用：span / bleed');
-  const groups = {};
-  for (const [name, spec] of Object.entries(attrsOf(tag))) (groups[spec.group || 'other'] ||= []).push([name, spec]);
   const LABEL = { type: '字', appearance: '外观', layout: '布局', state: '状态', content: '内容', target: '目标', other: '其它' };
-  for (const [g, list] of Object.entries(groups)) {
-    out.push('', LABEL[g] || g);
-    for (const [name, spec] of list) {
-      const r = fmtAttr(name, spec);
-      out.push(`  ${name.padEnd(13)} ${r.values}${r.def !== '—' ? `  默认 ${r.def}` : ''}${r.range ? `  范围 ${r.range}` : ''}  ${r.label}`);
+  const dump = (attrs, indent = '  ') => {
+    const groups = {};
+    for (const [name, spec] of Object.entries(attrs)) (groups[spec.group || 'other'] ||= []).push([name, spec]);
+    for (const [g, list] of Object.entries(groups)) {
+      out.push('', LABEL[g] || g);
+      for (const [name, spec] of list) {
+        const r = fmtAttr(name, spec);
+        out.push(`${indent}${name.padEnd(13)} ${r.values}${r.def !== '—' ? `  默认 ${r.def}` : ''}${r.range ? `  范围 ${r.range}` : ''}  ${r.label}`);
+      }
+    }
+  };
+  if (!t.variants) {
+    dump(t.attrs);
+    if (t.children?.hint) out.push('', `内容：${t.children.hint}`);
+  } else {
+    for (const [as, v] of Object.entries(t.variants)) {
+      out.push('', `## as="${as}" · ${v.label} —— ${v.summary}`);
+      dump(attrsOf(tag, as));
+      if (v.children?.hint) out.push('', `内容：${v.children.hint}`);
+      if (v.children?.attrs && Object.keys(v.children.attrs).length) {
+        out.push('', '子项 (<li>)');
+        for (const [name, spec] of Object.entries(v.children.attrs)) {
+          const r = fmtAttr(name, spec);
+          out.push(`  ${name.padEnd(13)} ${r.values}${r.def !== '—' ? `  默认 ${r.def}` : ''}${r.range ? `  范围 ${r.range}` : ''}  ${r.label}`);
+        }
+      }
+      if (v.example) out.push('', '示例：', v.example);
     }
   }
-  if (t.children?.attrs && Object.keys(t.children.attrs).length) {
-    out.push('', '子项 (<li>)');
-    for (const [name, spec] of Object.entries(t.children.attrs)) {
-      const r = fmtAttr(name, spec);
-      out.push(`  ${name.padEnd(13)} ${r.values}${r.def !== '—' ? `  默认 ${r.def}` : ''}${r.range ? `  范围 ${r.range}` : ''}  ${r.label}`);
-    }
-  }
-  if (t.example) out.push('', '示例：', t.example);
+  if (t.example && !t.variants) out.push('', '示例：', t.example);
   return out.join('\n');
 }
+
+export { VARIANTS, variantOf };

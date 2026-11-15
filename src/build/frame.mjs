@@ -7,6 +7,7 @@ import { GAP } from '../vocab.mjs';
 
 export const ROOT = path.resolve(import.meta.dirname, '..', '..');
 
+/* 所有「文本网格」共用这一张皮：4px 边、三点、标题、右侧范围。 */
 export function frame({ title, body, range, digits, dots = true, kind = 'code' }) {
   const hd = title
     ? `<div class="vk-fhd">${dots ? '<span class="vk-dots" aria-hidden="true"><i></i><i></i><i></i></span>' : ''}<span class="vk-ftitle">${esc(title)}</span>${
@@ -29,11 +30,7 @@ export function buildFlow(node) {
   const tags = (node.childNodes || []).filter((c) => c.tagName);
   const texts = tags.filter((c) => c.tagName === 'vk-text');
   const others = tags.filter((c) => c.tagName !== 'vk-text');
-  const shortNote =
-    texts.length === 1 &&
-    others.length === 1 &&
-    ['vk-card', 'vk-img'].includes(others[0].tagName) &&
-    textOf(texts[0]).trim().length <= 15;
+  const shortNote = texts.length === 1 && others.length === 1 && ['vk-card', 'vk-img'].includes(others[0].tagName) && textOf(texts[0]).trim().length <= 15;
   if (shortNote) {
     template = 'minmax(0, 1fr)';
     node.attrs.push({ name: 'data-vk-stack', value: '1' });

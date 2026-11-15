@@ -1,5 +1,5 @@
 /**
- * v24 · 运行期底座
+ * v25 · 运行期底座
  * ----------------------------------------------------------------------------
  * 构建期已经把所有能算的几何算完了。运行期只做四件事：
  *   1. 等字体与图片真正就绪，并等到布局不再变化
@@ -256,12 +256,12 @@ export function define(tag, ctor) {
 }
 
 /* ---------------------------------------------------------------- 就绪
-   等到布局不再变化，而不是「等两帧」。字体/图片失败要显形，不静默回退。 */
+   等到版式不再变化：只量 stage 与会被运行期改动的件，不做全树比对。 */
 const signature = () => {
   const parts = [];
-  for (const el of document.querySelectorAll('vk-page, vk-page *')) {
+  for (const el of document.querySelectorAll('.vk-stage, .vk-gstage, .vk-co-note')) {
     const r = el.getBoundingClientRect();
-    parts.push(`${Math.round(r.left * 2)},${Math.round(r.top * 2)},${Math.round(r.width * 2)},${Math.round(r.height * 2)}`);
+    parts.push(`${Math.round(r.top)},${Math.round(r.height)},${Math.round(r.width)}`);
   }
   return parts.join('|');
 };
@@ -279,7 +279,7 @@ VK.ready = async () => {
   await Promise.all([...document.images].map((img) => (img.decode ? img.decode().catch(() => {}) : Promise.resolve())));
 
   let prev = '';
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 5; i++) {
     layout();
     await nextFrame();
     const now = signature();

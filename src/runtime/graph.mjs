@@ -1,5 +1,5 @@
 /**
- * v24 · 关系图
+ * v25 · 关系图
  * ----------------------------------------------------------------------------
  * 节点是构建期写好的 .vk-gnode；边有两种写法：
  *   1. 简写：节点上 after="父id"（单亲、向后）
@@ -53,7 +53,7 @@ function hit(cx, cy, w, h, dx, dy) {
 }
 
 export class VkGraph extends VkElement {
-  static __observed = ['layout', 'direction'];
+  static __observed = ['as', 'direction'];
 
   paint() {
     if (!this._stage) {
@@ -67,9 +67,13 @@ export class VkGraph extends VkElement {
     if (!this._stage) return;
     const nodes = [...this._stage.querySelectorAll('.vk-gnode')];
     if (!nodes.length) return;
-    const layout = this.getAttribute('layout') || 'row';
+    const layout = this.getAttribute('as') || 'row';
     const dir = this.getAttribute('direction') || 'horizontal';
 
+    const bodyEl = this.closest('.vk-body');
+    const legendEl = this.querySelector('.vk-glegend');
+    const legendH = legendEl ? legendEl.offsetHeight + 12 : 0;
+    const bodyH = bodyEl ? Math.max(0, bodyEl.clientHeight - legendH) : 0;
     const sizes = nodes.map((n) => ({ w: n.offsetWidth, h: n.offsetHeight }));
     const byId = new Map(nodes.map((n, i) => [n.dataset.id, i]));
 
@@ -143,7 +147,7 @@ export class VkGraph extends VkElement {
       }
     } else if (layout === 'mesh') {
       viewW = Math.min(availW, 1100);
-      H = 520;
+      H = bodyH ? Math.max(280, bodyH - 24) : 520;
       const n = nodes.length;
       const Rx = Math.max(160, (viewW - maxW - pad * 2) / 2);
       const Ry = Math.max(120, (H - maxH - pad * 2) / 2);
@@ -196,7 +200,7 @@ export class VkGraph extends VkElement {
       const slot = new Map(order.map((i, k) => [i, k]));
       const maxDepth = Math.max(...layers.keys(), 0);
       const gapX = 72;
-      const gapY = 72;
+      const gapY = 56;
       nodes.forEach((_, i) => {
         const d = depth[i] || 0;
         const lane = slot.get(i) ?? 0;
@@ -220,6 +224,20 @@ export class VkGraph extends VkElement {
         p.y += pad;
       });
       H = Math.max(...pos.map((p) => p.y + p.h)) + pad;
+    }
+
+    /* 图比正文带高时，只压行距（不动字号），让整张图落进安全区。 */
+    const availH = bodyH ? bodyH - 4 : 0;
+    if (availH > 0 && H > availH) {
+      const span = Math.max(1, H - maxH - pad);
+      const k = Math.max(0.35, (availH - maxH - pad * 2) / span);
+      pos.forEach((p) => {
+        p.y = pad + (p.y - pad) * k;
+      });
+      H = availH;
+      pos.forEach((p) => {
+        p.y = Math.min(p.y, Math.max(pad, H - p.h - pad));
+      });
     }
 
     /* 平移到左上角，留 pad；比目标窄时居中。 */

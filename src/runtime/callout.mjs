@@ -1,5 +1,5 @@
 /**
- * v24 · 标注
+ * v25 · 标注
  * ----------------------------------------------------------------------------
  * 标注不是“画在别人身上的一层装饰”，而是一套连接件：
  *   端口 → 出线空隙 → 直角路由 → 箭头 → 标签板
@@ -26,7 +26,7 @@ const HEAD_W = 16;
 const CORNER = 16;
 const TICK = 20;
 
-const COMPONENT = 'vk-code, vk-cells, vk-bytes, vk-bits, vk-table, vk-list, vk-dir, vk-graph, vk-timeline, vk-steps, vk-bars, vk-seq, vk-card, vk-img, vk-text';
+const COMPONENT = 'vk-code, vk-board, vk-graph, vk-dir, vk-math, vk-seq, vk-card, vk-img, vk-text';
 
 /** 圆角折线：每个拐点用 16px 二次曲线收一下。 */
 function roundedPath(points, r = CORNER) {
@@ -225,7 +225,7 @@ export class VkCallout extends VkElement {
       const r = rel(t.rect);
       /* 行盒本身已包含行高，圈线贴着走；圈物件时才外扩 12。 */
       const pad = t.el.matches('.vk-line') ? 0 : 12;
-      this._svg.appendChild(mk('rect', { class: 'vk-co-ring', x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2, rx: 8 }));
+      this._svg.appendChild(mk('rect', { class: 'vk-co-ring', x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2, rx: 24 }));
       return;
     }
 

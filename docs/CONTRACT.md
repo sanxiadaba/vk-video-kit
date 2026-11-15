@@ -1,464 +1,551 @@
-# vk 契约（生成物，不要手改）
+# vk 契约 25.0.0
 
-画布 1920×1080，版心 1680×888。观众在手机横屏看，实际约 780 宽（0.406×）。
-最小可读字号 **44px**（手机 17.9px）。索引一律 1 起；-1 = 没有当前。
+画布 1920×1080，版心 1680×888（左右 120 / 上下 96）。观众在手机横屏看，实际约 780 宽（0.406×）。
+索引一律 1 起。字只从 vocab 来，这份文档由 `vk brief --md` 生成。
 
-## 一帧的容量
+## 规则
 
-| 项 | 一帧最多 |
-|---|---|
-| 行级单元（合计） | 8 |
-| 代码行 | 6 |
-| 终端行 | 7 |
-| diff 行 | 5 |
-| 汇编行 | 5 |
-| 表格数据行 | 4 |
-| 文件树行 | 5 |
-| 内存格行 | 2 |
-| 位 | 16 |
-| 步骤（横排） | 5 |
-| 横条 | 6 |
-| 时间线点 | 4 |
+- 可见文字写成元素内容；kicker / counter / lede / note / date / value 才是属性。
+- current 写在项上（布尔）；code 的 code/term/diff/asm/bytes 与 bits 用行段；dir 用路径。
+- 用 lede 写“为什么看这里”，正文里的重点用 mark。
+- src 载体：code/term/diff/asm 用 data-vk-source，math 写 TeX，bytes 写十六进制，dir 用 data-vk-tree。
+- 主题：page theme="light|dark"；card surface="paper|soft|dark"。
+- span / bleed 只写在 <vk-flow> 的直接子项上；bleed="all" 只给 <vk-img>。
+
+## 骨架
+
+```html
+<vk-page>
+  <vk-head kicker="第 1 集 · 主题" counter="1 / 8">一句<mark>结论</mark>。</vk-head>
+  <vk-code lang="c" title="a.c" current="2">
+    <script type="text/plain" data-vk-source>
+int a[3] = {1, 2, 3};
+a[1]
+    </script>
+  </vk-code>
+  <vk-text ink="secondary">一句解释。</vk-text>
+</vk-page>
+```
 
 ## 字号
 
-| 档 | px | 手机 | 用在哪 |
-|---|---|---|---|
-| caption | 56 | 22.7 | 元信息（来源、单位、编号） |
-| body | 56 | 22.7 | 正文与数据（地板） |
-| subhead | 84 | 34.1 | 一句话的主张 |
-| headline | 132 | 53.6 | 一帧的标题 |
-| display | 200 | 81.2 | 一页最多一次 |
-| hero | 280 | 113.7 | 一个数字 / 一个词 |
+| 档 | px | 手机 | 行高 | 行宽（字） |
+|---|---|---|---|---|
+| caption | 56 | 22.7 | 1.5 | 26 |
+| body | 64 | 26.0 | 1.5 | 25 |
+| subhead | 96 | 39.0 | 1.35 | 18 |
+| headline | 144 | 58.5 | 1.3 | 13 |
+| display | 216 | 87.7 | 1.2 | 8 |
+| hero | 300 | 121.8 | 1.1 | 4 |
+
+## 间距
+
+档名：none=0 / close=16 / normal=32 / wide=64 / section=96；也可以写像素数（gap="48"）。
+
+## flow 子项
+
+任何块级件放进 <vk-flow> 后还可以写：`span` / `bleed`。
 
 ## 标签
 
+
 ### L0 画布
 
-**`vk-page`** · 画布 —— 一帧 1920×1080 的坐标系。align 决定内容在版心（1680×888）里的纵向位置。
+**`vk-page`** · 画布 —— 一帧 1920×1080 的坐标系。子项直接写，不用再包一层；place 决定标题带与正文在版心里的纵向位置。
+
+#### 画布 —— 一帧 1920×1080 的坐标系。子项直接写，不用再包一层；place 决定标题带与正文在版心里的纵向位置。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `id` | 文本 | — |  | 帧名（出图文件名） |
-| `align` | band / center / top / bottom | band |  | 纵向对齐 |
-| `surface` | paper / dark | paper |  | 底色 |
+| `place` | band / top / center / bottom | band |  | 竖排：band 标题带锁顶、正文居中；center 整块居中 |
+| `theme` | light / dark | light |  | 主题：light / dark |
+
+直接写 <vk-head> 与内容；下一层要分栏时写 <vk-flow>。
+
+```html
+<vk-page place="band" theme="light">…</vk-page>
+```
+
+**`vk-head`** · 标题带 —— 一帧的起手：眉标 + 标题 +（可选）一句为什么。位置与间距固定，帧与帧的标题不会跳。
+
+#### 标题带 —— 一帧的起手：眉标 + 标题 +（可选）一句为什么。位置与间距固定，帧与帧的标题不会跳。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `kicker` | 文本 | — |  | 眉标（集数 / 分类） |
+| `counter` | 文本 | — |  | 序号，如 "3 / 8"（等宽，跟在眉标后） |
+| `lede` | 文本 | — |  | 导语：这一帧的「为什么」 |
+| `size` | subhead / headline / display | headline |  | 标题字号 |
+| `align` | left / center | left |  | 对齐 |
+
+标签里的文字就是标题，可以写 <mark> / <code> / <vk-math inline>。
+
+```html
+<vk-head kicker="第 1 集 · 指针" counter="1 / 8" lede="一句为什么。">标题<mark>重点</mark></vk-head>
+```
+
 
 ### L1 排布
 
-**`vk-stack`** · 竖排 —— 把子项按一条轴排开，只给间距、对齐和份数。不画任何东西。
+**`vk-flow`** · 流 —— 唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 叠放；valign 管子项纵向。不画任何东西。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 流 —— 唯一的排布：列数（或比例、auto）由容器给，子项用 span 跨栏；overlay 叠放；valign 管子项纵向。不画任何东西。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `gap` | 间距 | normal |  | 间距（档名或像素） |
-| `direction` | column / row | column |  | 方向 |
-| `pad` | 间距 | none |  | 内距（档名或像素） |
-| `align` | start / center / end / stretch | stretch |  | 交叉轴 |
-| `justify` | start / center / end / between | start |  | 主轴 |
-| `weights` | 序列 | — |  | 按份数分剩余高度，如 "1 2 1" |
+| `cols` | 列 | 1 |  | 列：1–12、比例 "1 2 1"、或 auto（按内容宽） |
+| `gap` | 间距 | normal |  | 分栏间距（档名或像素） |
+| `valign` | start / center / end / between / stretch | stretch |  | 子项纵向对齐 |
+| `overlay` | 开关 | — |  | 叠放：子项落在同一格里 |
 
-**`vk-grid`** · 网格 —— 12 栏网格。子项用 span / row-span 占份；列宽由份数算出，不能手写像素。
+子项直接写；span / bleed 只在这里生效。
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `cols` | 整数 | 2 | 1–12 | 列数 |
-| `ratio` | 序列 | — |  | 按比例分列，如 "1 8 23"（写了就不看 cols） |
-| `pad` | 间距 | none |  | 内距（档名或像素） |
-| `gap` | 间距 | normal |  | 间距（档名或像素） |
-| `align` | start / center / end / stretch | stretch |  | 纵向对齐 |
+```html
+<vk-flow cols="7 5" gap="wide"><vk-code …></vk-code><vk-text>右侧批注</vk-text></vk-flow>
+```
 
-**`vk-canvas`** · 坐标画布 —— 坐标空间：子项用 x / y 明确摆放。只有这里认 x / y / w / h / z。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `w` | 数字 | — | 48–1920 | 宽（不写按内容） |
-| `h` | 数字 | — | 48–1080 | 高（不写按内容） |
-| `pad` | 间距 | none |  | 内距（档名或像素） |
-
-**`vk-layer`** · 叠层 —— 叠放：第一个子项铺满当底，其余按顺序叠上去。它只负责叠，不画面。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `pad` | 间距 | none |  | 内距（档名或像素） |
-
-**`vk-pair`** · 并置 —— 两块并置对照：左右（或上下）两块，中间一条轴，轴上可放 → / = / vs。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `split` | 数字 | 50 | 20–80 | 左块占比（%） |
-| `direction` | horizontal / vertical | horizontal |  | 方向 |
-| `symbol` | none / → / = / vs | none |  | 轴上符号 |
-| `gap` | 间距 | wide |  | 间距（档名或像素） |
 
 ### L2 面与字
 
-**`vk-box`** · 面 —— 一块面：底、描边、圆角、内距，可带标题带与窗口标题栏。它只描述这一块，不排别人。
+**`vk-card`** · 卡片 —— 一块有材质的面：paper / soft / dark。边框、圆角、内距由库决定；可带标题栏。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 卡片 —— 一块有材质的面：paper / soft / dark。边框、圆角、内距由库决定；可带标题栏。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `surface` | none / paper / soft / tint / dark | none |  | 表面 |
-| `tone` | neutral / info / focus / ok / warn / err | neutral |  | 语调 |
-| `pad` | 间距 | normal |  | 内距（档名或像素） |
-| `radius` | none / md / pill | md |  | 圆角 |
-| `border` | none / hair / strong | none |  | 描边 |
+| `surface` | paper / soft / dark | paper |  | 材质：paper 白纸 / soft 软底 / dark 暗面 |
 | `title` | 文本 | — |  | 标题（写了才有标题带） |
-| `chrome` | none / dots | none |  | 窗口标题栏三点 |
-| `ring` | 开关 | — |  | 强调环（不占布局） |
 
-**`vk-text`** · 文字 —— 一段文字：字号、字重、墨阶、对齐、行宽。行内可用 <em> 强调、<strong> 加重、<mark> 标一段原文。
+卡片里放块级内容；纯分组用 <vk-flow>，卡片是「一块面」。
+
+```html
+<vk-card surface="paper" title="输出"><vk-text>一行说明。</vk-text></vk-card>
+```
+
+**`vk-text`** · 文字 —— 一段文字：字号、墨阶、对齐、行首图标。行内可用 <em> 强调、<strong> 加重、<mark> 标原文、<code> 行内代码、<kbd> 键位。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 文字 —— 一段文字：字号、墨阶、对齐、行首图标。行内可用 <em> 强调、<strong> 加重、<mark> 标原文、<code> 行内代码、<kbd> 键位。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
 | `size` | caption / body / subhead / headline / display / hero | body |  | 字号 |
-| `weight` | regular / medium / bold | regular |  | 字重 |
 | `ink` | primary / secondary / muted | primary |  | 墨阶 |
-| `tone` | neutral / focus | neutral |  | 语调 |
 | `align` | left / center / right | left |  | 对齐 |
-| `measure` | 行宽 | — |  | 行宽（字数；none = 铺满） |
-| `icon` | 文本 | — |  | 图标（Lucide 名） |
-| `mono` | 开关 | — |  | 等宽 |
+| `icon` | 文本 | — |  | 行首图标（Lucide 名） |
 
-**`vk-label`** · 标签 —— 一行小字：分类、编号、状态。kicker 纯字 / chip 浅底 / badge 实色。
+文字写在这里；块级内容请包 <vk-flow>。
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `variant` | kicker / chip / badge | kicker |  | 形态 |
-| `tone` | neutral / info / focus / ok / warn / err | neutral |  | 语调 |
-| `icon` | 文本 | — |  | 图标（Lucide 名） |
-| `counter` | 文本 | — |  | 序号，如 "3 / 5" 或 "03" |
+```html
+<vk-text size="body" ink="secondary">一句解释。</vk-text>
+```
 
-**`vk-inline`** · 行内 —— 句子里的行内元素：代码、公式、上下标、键位。字号跟着所在文本走。
+**`vk-img`** · 图片 —— 一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说；bleed="all" 可整帧铺满当底。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 图片 —— 一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说；bleed="all" 可整帧铺满当底。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `variant` | code / math / sup / sub / keys | code |  | 形态 |
-
-**`vk-img`** · 图片 —— 一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
 | `src` | 文本 | — |  | 图片地址 |
-| `alt` | 文本 | — |  | 替代文字 |
+| `alt` | 文本 | — |  | 替代文字（图坏了会显示） |
 | `ratio` | 文本 | — |  | 比例，如 "16 / 9" |
 | `fill` | cover / contain | contain |  | 填充（cover 会裁掉超出的部分） |
-| `radius` | none / md / pill | md |  | 圆角 |
 | `position` | 文本 | 50% 50% |  | 焦点 |
 
-### L3 内容
+图片标签里不写内容。
 
-**`vk-code`** · 代码 —— 代码窗。构建期高亮；可截取真实文件的行段，标当前行、只亮几行、折叠。
-  一帧容量：8 行。
+```html
+<vk-img src="shot.png" ratio="16 / 9" fill="cover" alt="截图"></vk-img>
+```
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `lang` | 文本 | — |  | 语言 |
-| `src` | 文本 | — |  | 源文件 |
-| `lines` | 文本 | — |  | 行段，如 "4-6" |
-| `file` | 文本 | — |  | 窗口标题栏文件名 |
-| `current` | 行段 | — |  | 当前行（1 起） |
-| `focus` | 行段 | — |  | 只亮这几行 |
-| `fold` | 行段 | — |  | 折叠行（缺口） |
-| `size` | caption / body / subhead | body |  | 字号 |
-| `long` | clip / wrap | clip |  | 长行 |
-| `chrome` | min / none | min |  | 窗口标题栏 |
-| `mark` | 文本 | — |  | 标出的词（窗口里所有出现处） |
 
-src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。构建期高亮，运行期零依赖。
+### L3 机制
 
-**`vk-term`** · 终端 —— 终端 transcript：提示符、命令、输出、报错各自一色。
-  一帧容量：10 行。
+**`vk-code`** · 文本网格 —— 等宽文本的网格：源码、终端、改动、汇编、字节、位。构建期高亮/解析，运行期零依赖。用 as 选一种。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 源码 · as="code" —— 真实源码：语法高亮、行号、当前行、折叠、标词。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `lang` | 文本 | — |  | 语言，如 c / js / py（必填：不写就没有语法色）；必填 |
 | `src` | 文本 | — |  | 源文件 |
-| `title` | 文本 | — |  | 窗口标题栏标题 |
+| `range` | 单段行段 | — |  | 源文件行段，如 "4-6"（只接受单段；4- 表示到底） |
+| `current` | 行段 | — |  | 当前行（窗口内第几行，1 起） |
+| `fold` | 行段 | — |  | 折叠行（窗口内第几行） |
+| `mark` | 文本 | — |  | 标出的词（窗口里所有出现处，按词边界） |
+| `size` | caption / body | body |  | 代码字号 |
+
+src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。
+
+```html
+<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>
+int a[3] = {1, 2, 3};
+a[1]
+</script></vk-code>
+```
+
+#### 终端 · as="term" —— 命令与输出：提示符、命令、输出各自一色。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `src` | 文本 | — |  | 记录文件 |
+| `current` | 行段 | — |  | 当前行（窗口内第几行，1 起） |
+| `size` | caption / body | body |  | 字号 |
 | `prompt` | 文本 | $ |  | 提示符 |
-| `current` | 行段 | — |  | 当前行（1 起） |
-| `size` | caption / body / subhead | body |  | 字号 |
-| `surface` | paper / dark | paper |  | 表面 |
-| `chrome` | min / none | min |  | 窗口标题栏 |
 
-src 指向真实 transcript，或内联 <script type="text/plain" data-vk-source>；每行一条命令或一段输出。
+src 指向 .txt/.log，或内联 <script type="text/plain" data-vk-source>。
 
-**`vk-diff`** · 改动 —— diff：原生 diff 文本，加/删/同各自一色，底部一句改了几行。
-  一帧容量：8 行。
+```html
+<vk-code as="term" title="bash"><script type="text/plain" data-vk-source>
+$ cc hello.c -o hello
+$ ./hello
+hello
+</script></vk-code>
+```
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `src` | 文本 | — |  | 源文件 |
-| `file` | 文本 | — |  | 窗口标题栏文件名 |
-| `lang` | 文本 | — |  | 语言（给改动行上语法色） |
-| `current` | 行段 | — |  | 当前行（1 起） |
-| `size` | caption / body / subhead | body |  | 字号 |
-
-src 指向真实 diff 文本，或内联 <script type="text/plain" data-vk-source>。
-
-**`vk-table`** · 表格 —— 表格：原生 <table>，数字列自动右对齐、等宽数字。行可写 tone / state。
-  一帧容量：5 数据行。
+#### 改动 · as="diff" —— 一段 diff：增删行、hunk 头、标词。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `mono` | 开关 | — |  | 等宽 |
-| `size` | caption / body / subhead | body |  | 字号 |
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `lang` | 文本 | — |  | 语言（可选，用于给增删行上语法色） |
+| `src` | 文本 | — |  | diff 文件 |
+| `current` | 行段 | — |  | 当前行（窗口内第几行，1 起） |
+| `mark` | 文本 | — |  | 标出的词 |
+| `size` | caption / body | body |  | 字号 |
+
+src 指向 .diff，或内联 <script type="text/plain" data-vk-source>。
+
+```html
+<vk-code as="diff" title="a.c"><script type="text/plain" data-vk-source>
+- a[1] = 7;
++ a[1] = 8;
+</script></vk-code>
+```
+
+#### 汇编 · as="asm" —— 汇编清单：地址、机器码、助记符、操作数。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `src` | 文本 | — |  | 反汇编文件 |
+| `current` | 行段 | — |  | 当前行（窗口内第几行，1 起） |
+| `hex` | 开关 | — |  | 显示机器码列 |
+| `size` | caption / body | body |  | 字号 |
+
+src 指向 objdump 输出，或内联 <script type="text/plain" data-vk-source>。
+
+```html
+<vk-code as="asm" hex current="2"><script type="text/plain" data-vk-source>
+0x1004 48 89 f8 mov %rdi,%rax
+0x1007 48 01 f0 add %rsi,%rax
+</script></vk-code>
+```
+
+#### 字节 · as="bytes" —— 十六进制转储：地址 + 十六进制 + ASCII 三列。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `src` | 文本 | — |  | 二进制文件 |
+| `addr` | 文本 | 0x0 |  | 起始地址 |
+| `offset` | 整数 | 0 | 0–65535 | 起始字节 |
+| `length` | 整数 | 32 | 1–4096 | 字节数 |
+| `cols` | 4 / 8 | 8 |  | 每行几列 |
+| `current` | 行段 | — |  | 当前字节段，如 "4-7"（1 起） |
+
+src 指向二进制；也可内联十六进制（68 65 6c 6c 6f）。
+
+```html
+<vk-code as="bytes" title="hello.bin" current="1-3"><script type="text/plain" data-vk-source>
+68 65 6c 6c 6f
+</script></vk-code>
+```
+
+#### 位 · as="bits" —— 一行二进制位：索引、分段、符号位。用 | 分段，field-labels 给每段起名。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | code / term / diff / asm / bytes / bits | code |  | 内容类型 |
+| `title` | 文本 | — |  | 标题栏文字（文件名 / 命令行） |
+| `value` | 文本 | — |  | 位串，可含空格；用 | 分段 |
+| `current` | 行段 | — |  | 当前位段，如 "4-7"（1 起，从左数） |
+| `label` | 文本 | — |  | 左边一行说明 |
+| `field-labels` | 文本 | — |  | 各段名，逗号分隔（个数要与 | 的段数一致） |
+| `index` | down / up / none / sparse | down |  | 位序号：down 按位权；up 从左数；sparse 只标 8 的倍数 |
+| `sign` | 开关 | — |  | 标出符号位 |
+
+位串写在 value 属性里。
+
+```html
+<vk-code as="bits" value="0|01111|0000000000" field-labels="符号,阶码,尾数" current="2-6"></vk-code>
+```
+
+**`vk-board`** · 条目图 —— 把条目排成一张图：要点、步骤、条、时间线、表格、内存格。一个 <li> 一项；用 as 选一种。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 列表 · as="list" —— 要点 / 清单 / 有序。条目写成 <li>。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
+| `variant` | bullet / check / ordered | bullet |  | 形态 |
+
+每一项写成 <li>；当前项写 current。
+
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-board><li>取首地址</li><li current>加下标 × 4</li></vk-board>
+```
+
+#### 步骤 · as="steps" —— 编号 + 连线 + 当前步。容器窄时自动竖排。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
+| `direction` | auto / horizontal / vertical | auto |  | 方向 |
+
+每一步写成 <li>；当前步写 current。
+
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `note` | 文本 | — |  | 小字说明 |
+| `icon` | 文本 | — |  | 图标（Lucide 名） |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-board as="steps"><li icon="file-code">预处理</li><li icon="cpu" current>编译</li></vk-board>
+```
+
+#### 条 · as="bars" —— 一组横向条：标签、值、单位。值只写数字。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
+| `max` | 数字 | — | ≥ 1 | 最大值（不写按最大一条） |
+| `unit` | 文本 | — |  | 单位 |
+| `scale` | linear / log | linear |  | 刻度 |
+
+<li value="120">hello.o</li>；值写数字，不写单位。
+
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `value` | 数字 | — | ≥ 0 | 数值 |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-board as="bars" unit="ms"><li value="6">解析</li><li value="24" current>链接</li></vk-board>
+```
+
+#### 时间线 · as="timeline" —— 一条轴上的点：给了 at + start/end 就按比例摆，否则等距。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
+| `start` | 数字 | — |  | 起点（数字，如 1963） |
+| `end` | 数字 | — |  | 终点 |
+
+<li at="1972">C 诞生</li>；当前点写 current。
+
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `at` | 数字 | — |  | 位置（数字） |
+| `date` | 文本 | — |  | 日期标签（不写就用 at） |
+| `note` | 文本 | — |  | 小字说明 |
+| `icon` | 文本 | — |  | 节点图标（Lucide 名） |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-board as="timeline" start="1963" end="2010"><li at="1963">ASCII</li><li at="2010" icon="smile" current>Emoji</li></vk-board>
+```
+
+#### 表格 · as="table" —— 原生 <table>：数字列自动右对齐、等宽数字；行可写 tone / current。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
 | `caption` | 文本 | — |  | 表题（表上方一行小字） |
 
-写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err" state="current"。
+写原生 <table>：<tr><th>…</th></tr>；行可写 tone="ok|warn|err"、current。
 
-**`vk-list`** · 列表 —— 列表：要点 / 清单 / 有序。条目写成 <li>。
+```html
+<vk-board as="table" caption="读一次要多久"><table><tr><th>层</th><th>延迟</th></tr><tr><td>内存</td><td>100ns</td></tr></table></vk-board>
+```
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `variant` | bullet / check / ordered | bullet |  | 形态 |
-| `gap` | 间距 | close |  | 间距（档名或像素） |
-| `size` | caption / body / subhead | body |  | 字号 |
-
-每一项写成 <li>；可写 tone 标语义、state="current" 标当前。
-
-**`vk-math`** · 公式 —— 公式：src 指向真实 .tex，构建期用 KaTeX 排版，运行期零依赖。
+#### 内存格 · as="cells" —— 一格一个 <li>：值、标签、指针、旧值。地址由 addr + 序号 × stride 算出。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `src` | 文本 | — |  | 源文件 |
-| `display` | 开关 | — |  | 独立成行 |
-| `size` | caption / body / subhead | body |  | 字号 |
+| `as` | list / steps / bars / timeline / table / cells | list |  | 条目形态 |
+| `addr` | 文本 | — |  | 起始地址，如 "0x1000" |
+| `stride` | 整数 | 1 | 1–16 | 每格占几字节（int 数组写 4） |
+| `cols` | 整数 | 4 | 1–8 | 每行几格 |
 
-src 指向 .tex 文件，或内联 <script type="text/plain" data-vk-source> 写 TeX。
+<li value="61" label="s[0]" ptr="lo">；地址自动算。
 
-**`vk-tree`** · 文件树 —— 文件树：src 指向真实目录，构建期扫描层级；缩进与树线是真的，不是列表。
-  一帧容量：5 行。
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `value` | 文本 | — |  | 值 |
+| `label` | 文本 | — |  | 标签 |
+| `ptr` | 文本 | — |  | 指针名，如 "lo"（空格分隔多个） |
+| `was` | 文本 | — |  | 旧值（显示「旧 → 新」） |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-board as="cells" addr="0x1000" stride="4"><li value="1" label="a[0]"></li><li value="2" label="a[1]" current></li></vk-board>
+```
+
+**`vk-graph`** · 关系图 —— 节点写成 <li id>文字</li>，边写在节点上（after="父id"）或写成独立子项（from/to，支持环、双向、边标）。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 关系图 —— 节点写成 <li id>文字</li>，边写在节点上（after="父id"）或写成独立子项（from/to，支持环、双向、边标）。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
+| `as` | row / tree / layered / mesh | row |  | 布局 |
+| `direction` | horizontal / vertical | horizontal |  | 方向（只对 row） |
+
+<li id="a">head</li> → <li id="b" after="a">next</li>；不写 after 的节点是根。
+
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `id` | 文本 | — |  | 节点 id（边用它引用） |
+| `note` | 文本 | — |  | 节点下的小字 |
+| `after` | 文本 | — |  | 父节点 id（空格分隔多个） |
+| `lane` | 整数 | — | 0–9 | layered 布局里放第几条泳道 |
+| `from` | 文本 | — |  | 显式边的起点 |
+| `to` | 文本 | — |  | 显式边的终点 |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-graph><li id="a">head</li><li id="b" after="a">next</li></vk-graph>
+```
+
+**`vk-dir`** · 目录树 —— 目录层级：src 指向真实目录，构建期扫描；缩进与树线是真的。也可用内联 JSON 描述任意层级。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 目录树 —— 目录层级：src 指向真实目录，构建期扫描；缩进与树线是真的。也可用内联 JSON 描述任意层级。
+
+| 属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
 | `src` | 文本 | — |  | 目录 |
-| `title` | 文本 | — |  | 窗口标题栏标题 |
+| `title` | 文本 | — |  | 标题栏文字 |
 | `depth` | 整数 | 3 | 1–6 | 最大深度 |
-| `max` | 整数 | 10 | 1–40 | 最多显示几行（超了会留一行说明） |
-| `current` | 文本 | — |  | 当前节点路径 |
-| `size` | caption / body / subhead | body |  | 字号 |
-| `icons` | auto / none | auto |  | 图标 |
-| `icon-dir` | 文本 | — |  | 目录图标（Lucide 名） |
-| `icon-code` | 文本 | — |  | 代码文件图标 |
-| `icon-binary` | 文本 | — |  | 二进制文件图标 |
-| `icon-file` | 文本 | — |  | 普通文件图标 |
-| `chrome` | min / none | min |  | 窗口标题栏 |
+| `limit` | 整数 | 6 | 1–40 | 最多显示几行（超了会留一行说明） |
+| `current` | 文本 | — |  | 当前节点路径，如 "src/main.c" |
 
 src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。
 
-**`vk-asm`** · 汇编 —— 汇编清单：地址 / 机器码 / 指令 / 操作数四列。行与地址都能被锚定。
-  一帧容量：8 行。
+```html
+<vk-dir><script type="text/plain" data-vk-tree>["src","README.md"]</script></vk-dir>
+```
+
+**`vk-seq`** · 时序 —— 两条以上生命线之间的往返：一行一条消息，按阅读顺序从上往下。2–4 个参与者。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 时序 —— 两条以上生命线之间的往返：一行一条消息，按阅读顺序从上往下。2–4 个参与者。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `src` | 文本 | — |  | 源文件（objdump 文本） |
-| `lines` | 文本 | — |  | 行段 |
-| `file` | 文本 | — |  | 窗口标题栏文件名 |
-| `current` | 行段 | — |  | 当前行（1 起） |
-| `size` | caption / body / subhead | body |  | 字号 |
-| `chrome` | min / none | min |  | 窗口标题栏 |
-| `bytes` | 开关 | — |  | 显示机器码列（默认不显示） |
+| `participants` | 文本 | — |  | 参与者，逗号分隔，如 "客户端,服务端,缓存"（2–4 个） |
+| `a` | 文本 | — |  | 左端名称（只有两条泳道时用） |
+| `b` | 文本 | — |  | 右端名称（只有两条泳道时用） |
 
-src 指向 objdump 文本，或内联 <script type="text/plain" data-vk-source>。
+<li>SYN</li>；<li direction="left">SYN+ACK</li>；三条以上用 from/to="客户端"。
 
-**`vk-cells`** · 内存格 —— 一格一个 <li>：标签、值、地址。地址由 addr + 序号 × stride 算出，不手写。
-  一帧容量：2 行（cols 列一行）。
+子项属性：
+
+| 子项属性 | 取值 | 默认 | 范围 | 说明 |
+|---|---|---|---|---|
+| `from` | 文本 | — |  | 起点（参与者名或 1 起的序号） |
+| `to` | 文本 | — |  | 终点 |
+| `direction` | right / left | right |  | 方向（两条泳道时用） |
+| `note` | 文本 | — |  | 消息下的小字 |
+| `tone` | neutral / info / ok / warn / err | neutral |  | 语调 |
+| `current` | 开关 | — |  | 当前项（写属性名，不写值） |
+
+```html
+<vk-seq a="客户端" b="服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>
+```
+
+**`vk-math`** · 公式 —— 公式：src 指向 .tex 或直接写 TeX，构建期用 KaTeX 排版，运行期零依赖。inline 写在句子里。
+
+可用 flow 子项属性：`span` / `bleed`。
+
+#### 公式 —— 公式：src 指向 .tex 或直接写 TeX，构建期用 KaTeX 排版，运行期零依赖。inline 写在句子里。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `addr` | 文本 | — |  | 起始地址，如 "0x1000" |
-| `stride` | 整数 | 1 |  | 每格占几字节（int 数组写 4） |
-| `cols` | 整数 | 4 | 1–8 | 每行几格 |
-| `current` | 序号 | -1 |  | 当前项（1 起；-1 = 没有） |
-| `markers` | 文本 | — |  | 额外的指针，如 "lo:1,hi:8,mid:3"（最多 3 个） |
-| `size` | caption / body / subhead | body |  | 字号 |
+| `src` | 文本 | — |  | 源文件 |
+| `inline` | 开关 | — |  | 行内（跟在句子里） |
+| `align` | left / center | center |  | 对齐 |
 
-<li value="61" label="s[0]">；地址自动按 addr + 序号 × stride 算。
+src 指向 .tex 文件；或把 TeX 直接写在标签里。
 
-**`vk-bytes`** · 字节 —— 字节窗：src 指向真实二进制；十六进制 + ASCII + 地址，current 标出一段。
+```html
+<vk-math>T(n) = 2T(n/2) + O(n)</vk-math>
+```
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `src` | 文本 | — |  | 二进制文件 |
-| `addr` | 文本 | 0x0 |  | 起始地址 |
-| `offset` | 整数 | 0 |  | 起始字节 |
-| `length` | 整数 | 32 | 1–4096 | 字节数 |
-| `cols` | 4 / 8 | 8 |  | 每行几列 |
-| `current` | 文本 | — |  | 当前字节段，如 "4-7"（1 起） |
 
-src 指向真实二进制文件。数值是读出来的，不是手写的。
+### L4 标注
 
-**`vk-bits`** · 位 —— 一行二进制位：索引、分组、符号位。用来讲位域与浮点布局。
-  一帧容量：16 位（32 位请用 index="sparse"）。
+**`vk-callout`** · 标注 —— 画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，measure 量两点之间。它不改布局。
+
+#### 标注 —— 画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，measure 量两点之间。它不改布局。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `value` | 文本 | — |  | 位串，可含空格；用 | 分段（符号 | 指数 | 尾数） |
-| `label` | 文本 | — |  | 左边一行说明 |
-| `field-labels` | 文本 | — |  | 各段名，逗号分隔（配合 value 的 |） |
-| `index` | down / up / none / sparse | down |  | 位序号：down 按位权 7,6,5…；up 从左往右数 0,1,2…；sparse 只标 8 的倍数 |
-| `group` | 1 / 4 / 8 | 4 |  | 分组 |
-| `sign` | 开关 | — |  | 标出符号位 |
-| `size` | caption / body / subhead | body |  | 字号 |
+| `mode` | arrow / ring / note / measure | arrow |  | 形态 |
+| `for` | 锚点 | — |  | 目标；必填；只对 mode=ring|note |
+| `from` | 锚点 | — |  | 起点；必填；只对 mode=arrow|measure |
+| `to` | 锚点 | — |  | 终点；必填；只对 mode=arrow|measure |
+| `label` | 文本 | — |  | 连线上的字；只对 mode=arrow|measure |
+| `tone` | neutral / info / ok / warn / err | info |  | 语调 |
 
-### L4 图
+note 的文字写在这里；label 是连线上的字。
 
-**`vk-steps`** · 步骤 —— 步骤条：编号 + 连线 + 当前步。条目写成 <li>；容器窄时自动竖排，不压字。
-  一帧容量：5 步（横排）。
+```html
+<vk-callout mode="note" for="#c@line:2">这里改了 0 号字节</vk-callout>
+```
 
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `current` | 序号 | -1 |  | 当前项（1 起；-1 = 没有） |
-| `direction` | auto / horizontal / vertical | auto |  | 方向 |
-| `connector` | arrow / line / none | arrow |  | 连接线 |
-| `size` | caption / body / subhead | body |  | 字号 |
-
-每一步写成 <li>；可写 tone 标语义。
-
-**`vk-bars`** · 条 —— 一组横向条：标签、值、单位。用来讲大小对比。
-  一帧容量：6 条。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `max` | 数字 | — |  | 最大值（不写按最大一条） |
-| `unit` | 文本 | — |  | 单位 |
-| `tone` | neutral / info / focus / ok / warn / err | neutral |  | 语调 |
-| `scale` | linear / log | linear |  | 刻度 |
-| `size` | caption / body / subhead | body |  | 字号 |
-
-<li value="120" label="hello.o">；值写数字，不写单位。
-
-**`vk-timeline`** · 时间线 —— 时间线：给了 at + start/end 就按比例摆；否则等距。一条事项一个 <li>。
-  一帧容量：4 点。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `variant` | events / lanes | events |  | 形态 |
-| `start` | 文本 | — |  | 起点 |
-| `end` | 文本 | — |  | 终点 |
-| `lanes` | 文本 | — |  | 泳道名（逗号分隔） |
-| `size` | caption / body / subhead | body |  | 字号 |
-| `current` | 序号 | -1 |  | 当前项（1 起；-1 = 没有） |
-
-<li date="1972" label="C 诞生" note="小字说明">；lanes 形态写 lane="名字"。
-
-**`vk-compare`** · 对照 —— 两张图对照：默认左右并排（每张完整、不裁），也可上下；mark="auto" 按像素差自动标出改动。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `labels` | 文本 | — |  | 两张图与角标："a.png,b.png|改前|改后" |
-| `variant` | side / stack | side |  | 形态 |
-| `mark` | 文本 | — |  | 差异框：auto 按像素差自动定框；或手写 x1,y1,x2,y2（%） |
-
-### L5 关系
-
-**`vk-callout`** · 标注 —— 画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标（按字的范围取框，不按整行盒子），note 是带引线的注释气泡，badge 是编号点。它不改布局。
-
-| 属性 | 取值 | 默认 | 范围 | 说明 |
-|---|---|---|---|---|
-| `span` | 整数 | 1 | 1–12 | 占几份 |
-| `row-span` | 整数 | 1 | 1–12 | 跨几行 |
-| `grow` | 开关 | — |  | 吃掉剩余空间 |
-| `bleed` | x / all | — |  | 出血到画布边 |
-| `mode` | arrow / ring / note / badge | arrow |  | 形态 |
-| `for` | 锚点 | — |  | 目标 |
-| `from` | 锚点 | — |  | 起点 |
-| `to` | 锚点 | — |  | 终点 |
-| `side` | auto / top / right / bottom / left | auto |  | 优先贴哪一侧（放不下会自动顺延） |
-| `gap` | 间距 | normal |  | 间距（档名或像素） |
-| `shape` | straight / ortho / curve | curve |  | 连线形状 |
-| `label` | 文本 | — |  | 连线上的字 |
-| `tone` | neutral / info / focus / ok / warn / err | info |  | 语调 |

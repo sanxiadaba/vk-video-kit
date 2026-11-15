@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * vk —— 单帧画面库 CLI（v24）
+ * vk —— 单帧画面库 CLI（v25）
  *
  *   vk build                        重建 dist/（tokens / fonts / vk.css / vk.js / audit.js）
  *   vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview]
@@ -16,6 +16,7 @@ import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { contract, markdown, docText, VERSION } from '../src/contract.mjs';
 import { TAGS, TAG_NAMES } from '../src/schema.mjs';
+import { build as buildDist, ensure as ensureDist } from '../tools/build.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const OUT = path.join(ROOT, 'out');
@@ -91,34 +92,6 @@ const onlyFrame = val('--frame');
 if (has('--help') || has('-h')) {
   console.log(usage);
   process.exit(0);
-}
-
-/* ---------------------------------------------------------------- 构建产物 */
-const runTool = (file, args = []) =>
-  execFileSync(process.execPath, [path.join(ROOT, 'tools', file), ...args], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
-
-function buildLibrary() {
-  runTool('gen.mjs');
-  runTool('vendor.mjs');
-  runTool('bundle.mjs');
-}
-
-function ensureLibrary() {
-  let ok = true;
-  try {
-    runTool('gen.mjs', ['--check']);
-    runTool('vendor.mjs');
-    runTool('bundle.mjs', ['--check']);
-  } catch {
-    ok = false;
-  }
-  if (!ok) {
-    try {
-      buildLibrary();
-    } catch (e) {
-      throw new Error(`构建 dist/ 失败：${String(e.stderr || e.message || e).trim().split('\n').slice(-4).join(' / ')}`);
-    }
-  }
 }
 
 /* ---------------------------------------------------------------- 构建页 */
@@ -291,8 +264,9 @@ async function renderFiles(files, { shots }) {
 
         const data = {
           id: fr.id,
-          ok: audit.issues.length === 0,
+          ok: audit.ok,
           issues: audit.issues,
+          health: audit.health,
           warns: [...new Set(warns)],
         };
         const jsonPath = path.join(dir, `${name}.json`);
@@ -314,23 +288,33 @@ function printReport(report) {
   for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
+    const h = f.health;
+    const facts = h
+      ? `正文带 ${h.band} · 内容 ${h.content}${h.overflow ? ` · 超出 ${h.overflow}px` : ''} · 焦点 ${h.focus} · ${
+          h.blocks.map((b) => `${b.vk} ${b.h}px@${b.font}`).join(' / ') || '空'
+        }`
+      : '';
     if (f.issues.length) {
       console.log(`✗ ${f.file}${tag}`);
       for (const x of f.issues) console.log(`   · [${x.code}] ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
+    } else if (h?.overflow) {
+      console.log(`! ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
     } else {
       console.log(`✓ ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
     }
+    if (facts) console.log(`   ${facts}`);
     for (const w of f.warns) console.log(`   提示：${w}`);
   }
   const n = report.diagnostics.length + report.frames.reduce((k, f) => k + f.issues.length, 0);
-  console.log(n ? `\n已出图：${report.frames.length} 帧，${n} 条问题（不拦出图）` : `\n干净：${report.frames.length} 帧`);
+  const over = report.frames.filter((f) => f.health?.overflow).length;
+  const tail = [n ? `${n} 条问题` : '', over ? `${over} 帧放不下` : ''].filter(Boolean).join('，');
+  console.log(tail ? `\n已出图：${report.frames.length} 帧（不拦出图）：${tail}` : `\n干净：${report.frames.length} 帧`);
 }
 
 /* ---------------------------------------------------------------- 命令 */
 if (cmd === 'build') {
   try {
-    buildLibrary();
-    console.log('✓ dist/ 已重建');
+    buildDist();
   } catch (e) {
     die(`[vk] 构建失败：${String(e.stderr || e.message).trim()}`, 3);
   }
@@ -345,7 +329,7 @@ if (cmd === 'render' || cmd === 'check') {
   });
   if (!files.length) die(`[vk] 找不到 ${inputs.join(' ')}`);
   try {
-    ensureLibrary();
+    ensureDist();
   } catch (e) {
     die(`[vk] ${e.message}`, 3);
   }

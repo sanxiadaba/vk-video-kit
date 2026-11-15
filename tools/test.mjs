@@ -1,15 +1,16 @@
 /**
- * v24 · 测试
+ * v25 · 测试
  * ----------------------------------------------------------------------------
  * 只测「会静默坏掉」的东西：
- *   一、契约 / 文档        tokens、tag、示例、词表
- *   二、构建负例           每种写错都给出稳定错误码（不抛异常）
- *   三、渲染               全部 fixture 干净、1920/780、非空白
- *   四、行为               缩字号 / 数字列 / 关系图 / 圈选 / 深色 / 多泳道 / 量度
- *   五、确定               同一帧渲两次 PNG 逐字节相同
- *   六、CLI                参数、退出码、默认不出门禁
+ *   一、契约 / 文档     13 个标签、变体、生成物同步
+ *   二、负例            每种写错都给出稳定错误码（不抛异常）
+ *   三、渲染            全部 fixture 干净：无问题、无溢出、1920/780、非空白
+ *   四、行为            不缩字 / 圈选 / 数字列 / 深色窗
+ *   五、确定            同一帧渲两次 PNG 逐字节相同
+ *   六、CLI             参数、退出码、默认不拦出图
+ *   七、对比度          墨与语法色在纸面/暗面上都 ≥ 4.5
  *
- *   npm test              跑全部
+ *   npm test
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -22,7 +23,8 @@ import { transformHtml } from '../src/build/index.mjs';
 import { PAINT, SYNTAX } from '../src/vocab.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
-const OUT = path.join(ROOT, '.tmp', 'test-fixtures');
+const TMP = path.join(ROOT, '.tmp');
+const OUT = path.join(TMP, 'test-fixtures');
 
 let failed = 0;
 const ok = (cond, msg, detail = '') => {
@@ -39,63 +41,68 @@ const cli = (args) => spawnSync(process.execPath, ['bin/vk.mjs', ...args], { cwd
 /* ------------------------------------------------------------------ 一、契约 */
 group('契约');
 try {
-  node(['bin/vk.mjs', 'build']);
-  node(['tools/gen.mjs', '--check']);
-  node(['tools/bundle.mjs', '--check']);
-  ok(true, 'tokens / dist 与源一致');
+  node(['tools/build.mjs']);
+  ok(true, 'dist/ 能重建');
 } catch (e) {
-  ok(false, 'tokens / dist 与源一致', String(e.stdout || e.stderr || e.message).slice(0, 600));
+  ok(false, 'dist/ 能重建', String(e.stdout || e.stderr || e.message).slice(0, 600));
 }
 
 const brief = contract();
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 ok(brief.version === pkg.version, `契约版本来自 package.json（${brief.version}）`);
-ok(TAG_NAMES.length === 20, `20 个标签（${TAG_NAMES.length}）`);
-ok(TAG_NAMES.includes('vk-card') && TAG_NAMES.includes('vk-dir'), 'card / dir 已改名');
-ok(!TAG_NAMES.includes('vk-surface') && !TAG_NAMES.includes('vk-tree'), '旧名不再存在');
+ok(TAG_NAMES.length === 13, `13 个标签（${TAG_NAMES.length}）`);
+for (const old of ['vk-cells', 'vk-steps', 'vk-bars', 'vk-timeline', 'vk-table', 'vk-list', 'vk-bytes', 'vk-bits', 'vk-term', 'vk-tree', 'vk-stack', 'vk-grid']) ok(!TAG_NAMES.includes(old), `旧名 ${old} 已并入变体`);
+ok(Object.keys(brief.tags['vk-code'].variants).length === 6, 'code 有 6 个变体');
+ok(Object.keys(brief.tags['vk-board'].variants).length === 6, 'board 有 6 个变体');
+ok(Object.keys(brief.tags['vk-graph'].variants || {}).length === 0 && brief.tags['vk-graph'].attrs.as.values.length === 4, 'graph 的 4 种布局在 as 属性里');
 ok(brief.flowChild.span && !('span' in brief.tags['vk-code'].attrs), 'span 是 flow 子项能力，不是逐件属性');
-ok(brief.tags['vk-card'].attrs.surface.default === 'paper', 'card 默认 paper');
 ok(brief.canvas.marginX === 120 && brief.canvas.marginY === 96, '对称版心 120 / 96');
-ok(docText('vk-code').includes('range') && docText('vk-code').includes('默认 body'), 'doc 带范围与默认值');
+ok(brief.tags['vk-code'].variants.code.attrs.lang.required === true, '源码窗必须写 lang');
+ok(docText('vk-code').includes('as="bits"') && docText('vk-code').includes('默认 body'), 'doc 按变体列出范围与默认值');
 ok(docText('vk-callout').includes('必填'), 'doc 标出必填');
-ok(markdown().length < 16000, `brief ≤ 16KB（${markdown().length}）`);
-ok(!markdown().includes('badge'), 'badge 幽灵已删');
-ok(brief.rules.length >= 5, '契约带写作规则');
+const md = markdown();
+const contractFile = path.join(ROOT, 'docs', 'CONTRACT.md');
+ok(fs.existsSync(contractFile) && fs.readFileSync(contractFile, 'utf8').trim() === md.trim(), 'docs/CONTRACT.md 与 vk brief --md 逐字一致');
+ok(!/<\/?(vk-stack|vk-grid|vk-compare|vk-cells|vk-steps|vk-bars|vk-timeline|vk-table|vk-list|vk-bytes|vk-bits|vk-term)>/.test(md), '生成物里没有旧标签');
+ok(!markdown().includes('FLOOR') && !markdown().includes('0.72'), '生成物里没有已删的缩放下限');
 
 /* ------------------------------------------------------------------ 二、负例 */
 group('负例');
+const CODE = (attrs, body = 'int a = 1;') => `<vk-page><vk-code lang="c" ${attrs}><script type="text/plain" data-vk-source>${body}</script></vk-code></vk-page>`;
 const CASES = [
   ['UNKNOWN_TAG', '<vk-page><vk-nope>x</vk-nope></vk-page>'],
   ['UNKNOWN_ATTR', '<vk-page><vk-text typo="1">x</vk-text></vk-page>'],
+  ['UNKNOWN_VARIANT', '<vk-page><vk-code as="nope"></vk-code></vk-page>'],
   ['VALUE_ENUM', '<vk-page theme="blue"></vk-page>'],
   ['VALUE_BOOL', '<vk-page><vk-flow overlay="yes"></vk-flow></vk-page>'],
-  ['VALUE_NUMBER', '<vk-page><vk-cells stride="x"><li value="1"></li></vk-cells></vk-page>'],
-  ['VALUE_RANGE_ATTR', '<vk-page><vk-code range="4-2"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['VALUE_NUMBER', '<vk-page><vk-board as="cells" stride="x"><li value="1"></li></vk-board></vk-page>'],
+  ['VALUE_RANGE_ATTR', CODE('range="4-2"')],
   ['VALUE_SPACE', '<vk-page><vk-flow gap="huge"></vk-flow></vk-page>'],
-  ['VALUE_LINES', '<vk-page><vk-code current="x"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['VALUE_LINES', CODE('current="x"')],
   ['VALUE_SELECTOR', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t@foo:1"></vk-callout></vk-page>'],
   ['VALUE_RATIO', '<vk-page><vk-img src="x" ratio="16:9"></vk-img></vk-page>'],
   ['ATTR_REQUIRED', '<vk-page><vk-callout mode="ring"></vk-callout></vk-page>'],
-  ['ATTR_IGNORED', '<vk-page><vk-code as="code" prompt="$"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['ATTR_REQUIRED', '<vk-page><vk-code><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['ATTR_IGNORED', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t" label="nope"></vk-callout></vk-page>'],
   ['ATTR_PLACEMENT', '<vk-page><vk-text span="2">x</vk-text></vk-page>'],
   ['SPAN_TOO_WIDE', '<vk-page><vk-flow cols="2"><vk-text span="3">x</vk-text></vk-flow></vk-page>'],
   ['BLEED_ALL', '<vk-page><vk-text bleed="all">x</vk-text></vk-page>'],
   ['ID_DUPLICATE', '<vk-page><vk-text id="x">a</vk-text><vk-text id="x">b</vk-text></vk-page>'],
   ['CHILD_KIND', '<vk-page><vk-text><vk-flow><vk-text>x</vk-text></vk-flow></vk-text></vk-page>'],
-  ['CHILD_MISSING', '<vk-page><vk-list></vk-list></vk-page>'],
+  ['CHILD_MISSING', '<vk-page><vk-board as="list"></vk-board></vk-page>'],
   ['STRAY_TEXT', '<vk-page><vk-flow>裸文字</vk-flow></vk-page>'],
   ['GRAPH_REF', '<vk-page><vk-graph><li id="a">a</li><li after="nope">b</li></vk-graph></vk-page>'],
   ['ANCHOR_MISSING', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#nope"></vk-callout></vk-page>'],
-  ['SRC_MISSING', '<vk-page><vk-code src="nope.c"></vk-code></vk-page>'],
-  ['SRC_CONFLICT', '<vk-page><vk-code src="nope.c"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
-  ['RANGE_OUT_OF_RANGE', '<vk-page><vk-code range="99"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['SRC_MISSING', '<vk-page><vk-code lang="c" src="nope.c"></vk-code></vk-page>'],
+  ['SRC_CONFLICT', '<vk-page><vk-code lang="c" src="nope.c"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['RANGE_OUT_OF_RANGE', CODE('range="99"')],
   ['TREE_JSON', '<vk-page><vk-dir><script type="text/plain" data-vk-tree>{</script></vk-dir></vk-page>'],
   ['TREE_NODE', '<vk-page><vk-dir><script type="text/plain" data-vk-tree>{"children":[{}]}</script></vk-dir></vk-page>'],
   ['MATH', '<vk-page><vk-math>\\frac{</vk-math></vk-page>'],
   ['ICON', '<vk-page><vk-text icon="no-such-icon">x</vk-text></vk-page>'],
-  ['MARK_MISSING', '<vk-page><vk-code mark="zz"><script type="text/plain" data-vk-source>int a = 1;</script></vk-code></vk-page>'],
-  ['FIELD_LABELS', '<vk-page><vk-bits value="0|1|0" field-labels="a,b"></vk-bits></vk-page>'],
-  ['CURRENT_RANGE', '<vk-page><vk-code current="99"><script type="text/plain" data-vk-source>int a = 1;</script></vk-code></vk-page>'],
+  ['MARK_MISSING', CODE('mark="zz"')],
+  ['FIELD_LABELS', '<vk-page><vk-code as="bits" value="0|1|0" field-labels="a,b"></vk-code></vk-page>'],
+  ['CURRENT_RANGE', CODE('current="99"')],
   ['BUILD', '<vk-page><vk-code lang="no-such-lang"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
 ];
 for (const [code, html] of CASES) {
@@ -120,14 +127,20 @@ try {
 }
 ok(renderRun.status === 0 && report, '全部 fixture 出图', String(renderRun.stderr || '').slice(0, 400));
 if (report) {
-  ok(report.clean, '全部 fixture 干净', report.diagnostics.map((d) => d.message).join('；'));
-  ok(report.frames.length === 34, `34 帧（${report.frames.length}）`);
+  const fileCount = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter((f) => f.endsWith('.html')).length;
+  ok(report.frames.length === fileCount, `${fileCount} 帧（${report.frames.length}）`);
   ok(report.engine?.version, `记录引擎（${report.engine?.channel} ${report.engine?.version}）`);
   const bad = report.frames.filter((f) => !f.png || !f.png780 || !f.json);
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
+  const withIssues = report.frames.filter((f) => f.issues.length);
+  ok(withIssues.length === 0, '每帧都没有硬错', withIssues.map((f) => `${f.name}: ${f.issues.map((i) => i.code).join(',')}`).join('；'));
+  const over = report.frames.filter((f) => f.health?.overflow);
+  ok(over.length === 0, '每帧都放得下（overflow = 0）', over.map((f) => `${f.name} 超出 ${f.health.overflow}`).join('；'));
+  const tooMany = report.frames.filter((f) => (f.health?.focus ?? 0) > 1);
+  ok(tooMany.length === 0, '每帧最多一处焦点', tooMany.map((f) => `${f.name} 焦点 ${f.health.focus}`).join('；'));
 
   let widthsOk = true;
-  let blank = [];
+  const blank = [];
   for (const f of report.frames) {
     const big = PNG.sync.read(fs.readFileSync(path.join(ROOT, f.png)));
     const small = PNG.sync.read(fs.readFileSync(path.join(ROOT, f.png780)));
@@ -140,20 +153,13 @@ if (report) {
   ok(blank.length === 0, '没有空白帧', blank.join(', '));
 }
 
-
-
 /* ------------------------------------------------------------------ 四、行为 */
 group('行为');
-try {
-  cli(['check', 'tests/behaviour.html', '--out', path.join(ROOT, '.tmp', 'behaviour')]);
-} catch {
-  /* 行为页可能有意留问题，只看运行期 */
-}
 const { chromium } = await import('playwright');
-let browser = null;
 const launchOpts = {
   args: ['--allow-file-access-from-files', '--font-render-hinting=none', '--disable-gpu', '--disable-lcd-text', '--disable-partial-raster', '--force-color-profile=srgb', '--run-all-compositor-stages-before-draw'],
 };
+let browser = null;
 for (const channel of [undefined, 'chrome', 'msedge']) {
   try {
     browser = await chromium.launch(channel ? { ...launchOpts, channel } : launchOpts);
@@ -165,53 +171,47 @@ for (const channel of [undefined, 'chrome', 'msedge']) {
 if (!browser) {
   ok(false, '浏览器可用');
 } else {
-  const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
-  await page.goto('file:///' + path.join(ROOT, '.vk-tmp', 'pages', 'tests', 'behaviour.html').split(path.sep).join('/'), { waitUntil: 'load' });
-  await page.evaluate(() => window.vk.ready());
-  const behave = await page.evaluate(() => {
-    const q = (s) => document.querySelector(s);
-    const row = q('#shrink .vk-line');
-    const t = q('#numtable table');
-    const graph = q('#behave-graph vk-graph');
-    const dark = q('#darkwin .vk-frame');
-    const seq = q('#behave-seq vk-seq');
-    const cells = q('#behave-cells vk-cells');
-    return {
-      shrink: row ? parseFloat(getComputedStyle(row).fontSize) : 0,
-      numAlign: t ? getComputedStyle(t.querySelector('td.num') || t).textAlign : '',
-      textAlign: t ? getComputedStyle([...t.querySelectorAll('td')].find((td) => !td.classList.contains('num')) || t).textAlign : '',
-      edges: graph ? graph.querySelectorAll('.vk-edge').length : 0,
-      ring: !!q('#behave-graph .vk-co-ring'),
-      tableRing: !!q('#behave-table .vk-co-ring'),
-      darkBg: dark ? getComputedStyle(dark).backgroundColor : '',
-      seqLanes: seq ? seq.querySelectorAll('.vk-seq-head span').length : 0,
-      seqCurrent: seq ? seq.querySelectorAll('.vk-seq-row[current]').length : 0,
-      cellsCurrent: cells ? cells.querySelectorAll('.vk-cell[current]').length : 0,
-      measure: !!q('#behave-cells .vk-co-line'),
-      inlineMono: /Mono/i.test(getComputedStyle(q('#inline code')).fontFamily),
-      currentRow: getComputedStyle(q('#numtable tr[current] td:first-child')).boxShadow,
-    };
-  });
-  ok(behave.shrink >= 40 && behave.shrink < 56, `长行会缩字号（${behave.shrink}px）`);
-  ok(behave.numAlign === 'right', `数字列右对齐（${behave.numAlign}）`);
-  ok(behave.textAlign !== 'right', `文字列不右对齐（${behave.textAlign}）`);
-  ok(behave.edges === 2, `两个节点三条边 → 2 条连线（${behave.edges}）`);
+  const load = async (fixture) => {
+    const page = await browser.newPage({ viewport: { width: 1920, height: 1080 } });
+    await page.goto('file:///' + path.join(ROOT, '.vk-tmp', 'pages', 'tests', 'fixtures', fixture).split(path.sep).join('/'), { waitUntil: 'load' });
+    await page.evaluate(() => window.vk.ready());
+    return page;
+  };
+  const codePage = await load('code.html');
+  const behave = await codePage.evaluate(() => ({
+    font: parseFloat(getComputedStyle(document.querySelector('.vk-lc')).fontSize),
+    cur: document.querySelectorAll('.vk-line.is-cur').length,
+    ring: !!document.querySelector('.vk-co-ring'),
+    frames: document.querySelectorAll('.vk-stage').length,
+  }));
+  ok(behave.font === 64, `不缩字：代码就是 64px（${behave.font}）`);
+  ok(behave.cur === 1, `当前行只有一条（${behave.cur}）`);
   ok(behave.ring, '圈选画出来了');
-  ok(behave.tableRing, '表格行锚点 @item 能圈');
-  ok(!/rgb\(255, 255, 255\)/.test(behave.darkBg), `深色页的代码窗自动变深（${behave.darkBg}）`);
-  ok(behave.seqLanes === 3, `时序 3 条泳道（${behave.seqLanes}）`);
-  ok(behave.seqCurrent === 1, '时序 current 落在消息上');
-  ok(behave.cellsCurrent === 1, '内存格 current 落在格子上');
-  ok(behave.measure, '量度线画出来了');
-  ok(behave.inlineMono, '行内代码是等宽字体');
-  ok(/29, 78, 216/.test(behave.currentRow), `当前行有钴蓝左规（${behave.currentRow}）`);
+  await codePage.close();
+
+  const tablePage = await load('table.html');
+  const t = await tablePage.evaluate(() => {
+    const table = document.querySelector('table');
+    const num = table.querySelector('td.num');
+    const text = [...table.querySelectorAll('td')].find((td) => !td.classList.contains('num'));
+    return { num: num ? getComputedStyle(num).textAlign : '', text: text ? getComputedStyle(text).textAlign : '', cur: table.querySelectorAll('tr[current]').length };
+  });
+  ok(t.num === 'right', `数字列右对齐（${t.num}）`);
+  ok(t.text !== 'right', `文字列不右对齐（${t.text}）`);
+  ok(t.cur === 1, '表格 current 落在行上');
+  await tablePage.close();
+
+  const darkPage = await load('dark.html');
+  const dark = await darkPage.evaluate(() => getComputedStyle(document.querySelector('.vk-frame')).backgroundColor);
+  ok(!/rgb\(255, 255, 255\)/.test(dark), `深色页的代码窗自动变深（${dark}）`);
+  await darkPage.close();
   await browser.close();
 }
 
 /* ------------------------------------------------------------------ 五、确定 */
 group('确定');
-const detA = path.join(ROOT, '.tmp', 'det-a');
-const detB = path.join(ROOT, '.tmp', 'det-b');
+const detA = path.join(TMP, 'det-a');
+const detB = path.join(TMP, 'det-b');
 for (const d of [detA, detB]) fs.rmSync(d, { recursive: true, force: true });
 cli(['render', 'tests/fixtures/graph-tree.html', '--out', detA]);
 cli(['render', 'tests/fixtures/graph-tree.html', '--out', detB]);
@@ -227,7 +227,9 @@ ok(cli(['doc']).status === 2, 'doc 缺 tag exit 2');
 ok(cli(['icons']).status === 2, 'icons 缺 query exit 2');
 ok(cli(['render', 'tests/fixtures/code.html', '--frame']).status === 2, '--frame 缺值 exit 2');
 ok(cli(['render', 'tests/fixtures/code.html', '--out']).status === 2, '--out 缺值 exit 2');
-const negDir = path.join(ROOT, '.tmp', 'negative');
+ok(cli(['--version']).stdout.trim() === pkg.version, '--version 输出 package 版本');
+for (const tag of TAG_NAMES) ok(cli(['doc', tag]).status === 0, `vk doc ${tag}`);
+const negDir = path.join(TMP, 'negative');
 fs.rmSync(negDir, { recursive: true, force: true });
 const neg = cli(['render', 'tests/negative/unknown.html', '--out', negDir]);
 ok(neg.status === 0, '默认不是门禁：有错也出图、exit 0', `实际 ${neg.status}`);

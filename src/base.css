@@ -1,5 +1,5 @@
 /* ============================================================================
-   v24 · 底座
+   v25 · 底座
    ----------------------------------------------------------------------------
    画布、标题、流、卡片、字、墨。这一层只有「一帧怎样算立住」，不画具体件。
    所有值来自 tokens（由 vocab.mjs 生成）；这里不出现裸字号/裸间距。
@@ -33,7 +33,7 @@ body {
 }
 
 /* ------------------------------------------------------------------ 画布 */
-vk-page {
+[data-vk='page'] {
   position: relative;
   display: block;
   width: var(--vk-canvas-w);
@@ -45,7 +45,7 @@ vk-page {
   color-scheme: light;
 }
 
-vk-page[theme='dark'] {
+[data-vk='page'][theme='dark'] {
   color-scheme: dark;
 }
 
@@ -69,29 +69,29 @@ vk-page[theme='dark'] {
   align-content: start;
   min-height: 0;
 }
-vk-page[place='band'] .vk-body {
-  align-content: center;
+[data-vk='page'][place='band'] .vk-body {
+  align-content: safe center;
 }
-vk-page[place='top'] .vk-body {
+[data-vk='page'][place='top'] .vk-body {
   align-content: start;
 }
-vk-page[place='center'] .vk-stage {
+[data-vk='page'][place='center'] .vk-stage {
   justify-content: center;
 }
-vk-page[place='center'] .vk-body {
+[data-vk='page'][place='center'] .vk-body {
   flex: 0 1 auto;
 }
-vk-page[place='bottom'] .vk-stage {
+[data-vk='page'][place='bottom'] .vk-stage {
   justify-content: flex-end;
 }
-vk-page[place='bottom'] .vk-body {
+[data-vk='page'][place='bottom'] .vk-body {
   flex: 0 1 auto;
   align-content: end;
 }
 
 /* ------------------------------------------------------------------ 标题带
    眉标 40 / 标题 84–200 / 导语 56；标题→内容 64（stage 的 gap）。 */
-vk-head {
+[data-vk='head'] {
   display: grid;
   gap: var(--vk-space-5);
   align-content: start;
@@ -101,7 +101,7 @@ vk-head {
   position: relative;
   z-index: 2;
 }
-vk-head[align='center'] {
+[data-vk='head'][align='center'] {
   justify-items: center;
   text-align: center;
 }
@@ -136,18 +136,18 @@ vk-head[align='center'] {
   max-width: var(--vk-measure-headline);
   color: var(--vk-ink-1);
 }
-vk-head[size='subhead'] .vk-title {
+[data-vk='head'][size='subhead'] .vk-title {
   font-size: var(--vk-fs-subhead);
   line-height: var(--vk-lh-subhead);
   max-width: var(--vk-measure-subhead);
 }
-vk-head[size='display'] .vk-title {
+[data-vk='head'][size='display'] .vk-title {
   font-size: var(--vk-fs-display);
   line-height: var(--vk-lh-display);
   letter-spacing: var(--vk-track-display);
   max-width: var(--vk-measure-display);
 }
-vk-head[size='display'][align='center'] .vk-title {
+[data-vk='head'][size='display'][align='center'] .vk-title {
   padding-left: 0.3em;
 }
 .vk-lede {
@@ -159,7 +159,7 @@ vk-head[size='display'][align='center'] .vk-title {
 
 /* ------------------------------------------------------------------ 流
    唯一的排布：列数由容器给，子项 span 跨栏，overlay 叠放。 */
-vk-flow {
+[data-vk='flow'] {
   display: grid;
   grid-template-columns: var(--vk-cols-template, repeat(var(--vk-cols, 1), minmax(0, 1fr)));
   grid-auto-rows: minmax(0, auto);
@@ -170,52 +170,52 @@ vk-flow {
   min-width: 0;
   text-align: start;
 }
-vk-flow > vk-code,
-vk-flow > vk-dir {
+[data-vk='flow'] > [data-vk='code'],
+[data-vk='flow'] > [data-vk='dir'] {
   width: 100%;
 }
-vk-flow[valign='start'] {
+[data-vk='flow'][valign='start'] {
   align-items: start;
 }
-vk-flow[valign='center'] {
+[data-vk='flow'][valign='center'] {
   align-items: center;
 }
-vk-flow[valign='end'] {
+[data-vk='flow'][valign='end'] {
   align-items: end;
 }
-vk-flow[valign='between'] {
+[data-vk='flow'][valign='between'] {
   align-content: space-between;
 }
-vk-flow[data-cols='auto'] {
+[data-vk='flow'][data-cols='auto'] {
   grid-auto-flow: column;
   grid-auto-columns: max-content;
   grid-template-columns: none;
   justify-content: start;
 }
-vk-flow[data-vk-stack] {
+[data-vk='flow'][data-vk-stack] {
   grid-template-columns: minmax(0, 1fr) !important;
 }
-vk-flow[data-vk-stack] > vk-text {
+[data-vk='flow'][data-vk-stack] > [data-vk='text'] {
   max-width: var(--vk-measure-body);
 }
-vk-flow[overlay] > * {
+[data-vk='flow'][overlay] > * {
   grid-area: 1 / 1;
   position: relative;
   z-index: 1;
 }
-vk-flow[overlay] > vk-card {
+[data-vk='flow'][overlay] > [data-vk='card'] {
   width: calc(100% - var(--vk-space-7));
   justify-self: center;
   align-self: end;
   margin-bottom: var(--vk-space-3);
 }
-vk-flow[overlay] > vk-card .vk-fbd {
+[data-vk='flow'][overlay] > [data-vk='card'] .vk-fbd {
   padding: var(--vk-space-2) var(--vk-space-5);
 }
-vk-flow[overlay] > vk-card vk-text {
+[data-vk='flow'][overlay] > [data-vk='card'] [data-vk='text'] {
   font-size: var(--vk-fs-caption);
 }
-vk-flow > * {
+[data-vk='flow'] > * {
   grid-column: span var(--vk-span, 1);
   min-width: 0;
 }
@@ -226,7 +226,7 @@ vk-flow > * {
   margin-left: calc(var(--vk-margin-x) * -1);
   margin-right: calc(var(--vk-margin-x) * -1);
 }
-vk-img[bleed='all'] {
+[data-vk='img'][bleed='all'] {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -234,11 +234,11 @@ vk-img[bleed='all'] {
   border-radius: 0;
   background: transparent;
 }
-.vk-body > *:not(vk-img[bleed='all']) {
+.vk-body > *:not([data-vk='img'][bleed='all']) {
   position: relative;
   z-index: 2;
 }
-vk-img[bleed='all'] .vk-img-el {
+[data-vk='img'][bleed='all'] .vk-img-el {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -246,7 +246,7 @@ vk-img[bleed='all'] .vk-img-el {
 
 /* ------------------------------------------------------------------ 卡片
    材质：paper 白纸 / soft 软底 / dark 暗面。谁声明材质，谁写 color-scheme。 */
-vk-card {
+[data-vk='card'] {
   display: block;
   min-width: 0;
   height: fit-content;
@@ -254,14 +254,14 @@ vk-card {
   border-radius: var(--vk-radius-md);
   color-scheme: light;
 }
-vk-card[surface='paper'] {
+[data-vk='card'][surface='paper'] {
   background: var(--vk-paper);
   color-scheme: light;
 }
-vk-card[surface='soft'] {
+[data-vk='card'][surface='soft'] {
   background: var(--vk-soft);
 }
-vk-card[surface='dark'] {
+[data-vk='card'][surface='dark'] {
   background: var(--vk-paper);
   color-scheme: dark;
 }
@@ -324,22 +324,22 @@ vk-card[surface='dark'] {
 .vk-fbd {
   padding: 0;
 }
-vk-code .vk-fbd {
+[data-vk='code'] .vk-fbd {
   padding: var(--vk-space-2);
 }
-vk-card .vk-fbd {
+[data-vk='card'] .vk-fbd {
   padding: var(--vk-space-6);
 }
-vk-card vk-img {
+[data-vk='card'] [data-vk='img'] {
   border: 0;
   border-radius: var(--vk-radius-sm);
 }
-vk-card:has(vk-img) {
+[data-vk='card']:has([data-vk='img']) {
   align-self: center;
 }
 
 /* ------------------------------------------------------------------ 字 */
-vk-text {
+[data-vk='text'] {
   display: block;
   margin: 0;
   font-size: var(--vk-fs-body);
@@ -349,55 +349,55 @@ vk-text {
   text-align: start;
   text-wrap: pretty;
 }
-vk-text[size='caption'] {
+[data-vk='text'][size='caption'] {
   font-size: var(--vk-fs-caption);
   line-height: var(--vk-lh-caption);
   max-width: var(--vk-measure-caption);
 }
-vk-text[size='subhead'] {
+[data-vk='text'][size='subhead'] {
   font-size: var(--vk-fs-subhead);
   line-height: var(--vk-lh-subhead);
   max-width: var(--vk-measure-subhead);
 }
-vk-text[size='headline'] {
+[data-vk='text'][size='headline'] {
   font-size: var(--vk-fs-headline);
   line-height: var(--vk-lh-headline);
   letter-spacing: var(--vk-track-headline);
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-headline);
 }
-vk-text[size='display'] {
+[data-vk='text'][size='display'] {
   font-size: var(--vk-fs-display);
   line-height: var(--vk-lh-display);
   letter-spacing: var(--vk-track-display);
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-display);
 }
-vk-text[size='hero'] {
+[data-vk='text'][size='hero'] {
   font-size: var(--vk-fs-hero);
   line-height: var(--vk-lh-hero);
   letter-spacing: var(--vk-track-hero);
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-hero);
 }
-vk-text[size='headline'],
-vk-text[size='subhead'],
-vk-text[size='display'],
-vk-text[size='hero'] {
+[data-vk='text'][size='headline'],
+[data-vk='text'][size='subhead'],
+[data-vk='text'][size='display'],
+[data-vk='text'][size='hero'] {
   text-wrap: balance;
 }
-vk-text[align='center'] {
+[data-vk='text'][align='center'] {
   text-align: center;
   margin-inline: auto;
 }
-vk-text[align='right'] {
+[data-vk='text'][align='right'] {
   text-align: right;
   margin-inline: auto 0;
 }
-vk-text[align='left'] {
+[data-vk='text'][align='left'] {
   margin-inline: 0 auto;
 }
-vk-text[icon] {
+[data-vk='text'][icon] {
   display: grid;
   grid-template-columns: auto 1fr;
   align-items: start;
@@ -436,8 +436,8 @@ vk-text[icon] {
 
 /* ------------------------------------------------------------------ 强调
    em / mark 共用同一套暖黄高亮；强调只留一处。 */
-vk-text em,
-vk-head em,
+[data-vk='text'] em,
+[data-vk='head'] em,
 .vk-title em,
 .vk-lede em {
   font-style: normal;
@@ -448,12 +448,12 @@ vk-head em,
   padding: 0 0.06em;
   box-decoration-break: clone;
 }
-vk-text strong,
-vk-head strong {
+[data-vk='text'] strong,
+[data-vk='head'] strong {
   font-weight: var(--vk-w-bold);
 }
-vk-text mark,
-vk-head mark,
+[data-vk='text'] mark,
+[data-vk='head'] mark,
 .vk-mark {
   background: var(--vk-mark);
   color: var(--vk-ink-1);
@@ -462,14 +462,14 @@ vk-head mark,
 }
 
 /* 行内：代码、键位、小字、公式。作者不用学新词。 */
-vk-text small {
+[data-vk='text'] small {
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
   font-weight: var(--vk-w-medium);
   margin-left: 0.06em;
 }
-vk-text code,
-vk-head code,
+[data-vk='text'] code,
+[data-vk='head'] code,
 .vk-lc code {
   font-family: var(--vk-font-mono);
   font-size: 0.9em;
@@ -478,8 +478,8 @@ vk-head code,
   background: var(--vk-soft);
   color: var(--vk-ink-1);
 }
-vk-text kbd,
-vk-head kbd {
+[data-vk='text'] kbd,
+[data-vk='head'] kbd {
   font-family: var(--vk-font-mono);
   font-size: 0.78em;
   padding: 0.08em 0.32em;
@@ -504,12 +504,12 @@ vk-head kbd {
   width: 100%;
   height: 100%;
 }
-vk-text[icon] > .vk-ic {
+[data-vk='text'][icon] > .vk-ic {
   margin-top: 0.18em;
 }
 
 /* ------------------------------------------------------------------ 图片 */
-vk-img {
+[data-vk='img'] {
   display: block;
   position: relative;
   overflow: hidden;
@@ -518,7 +518,7 @@ vk-img {
   border-radius: var(--vk-radius-md);
   background: var(--vk-soft);
 }
-vk-img[ratio] {
+[data-vk='img'][ratio] {
   width: 100%;
 }
 .vk-img-el {
@@ -527,19 +527,19 @@ vk-img[ratio] {
   height: 100%;
   max-width: none;
 }
-vk-img:not([ratio]) .vk-img-el {
+[data-vk='img']:not([ratio]) .vk-img-el {
   height: auto;
 }
-vk-img[bleed='all']:not([ratio]) .vk-img-el {
+[data-vk='img'][bleed='all']:not([ratio]) .vk-img-el {
   height: 100%;
 }
-vk-img[fill='contain'] .vk-img-el {
+[data-vk='img'][fill='contain'] .vk-img-el {
   object-fit: contain;
 }
-vk-img[fill='cover'] .vk-img-el {
+[data-vk='img'][fill='cover'] .vk-img-el {
   object-fit: cover;
 }
-vk-img[data-broken]::after {
+[data-vk='img'][data-broken]::after {
   content: attr(data-broken);
   position: absolute;
   inset: 0;
@@ -566,4 +566,18 @@ vk-img[data-broken]::after {
 [data-vk-issue] {
   outline: var(--vk-line-w-hair) dashed var(--vk-err);
   outline-offset: 4px;
+}
+
+/* -------------------------------------------------------------- 机制件的宿主
+   自定义元素默认是 inline；这里一次性给所有块级宿主 display:block。 */
+[data-vk='board'],
+[data-vk='bytes'],
+[data-vk='bits'],
+[data-vk='graph'],
+[data-vk='dir'],
+[data-vk='seq'],
+[data-vk='math'],
+[data-vk='callout'] {
+  display: block;
+  min-width: 0;
 }

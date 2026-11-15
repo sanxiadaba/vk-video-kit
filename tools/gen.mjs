@@ -22,7 +22,6 @@ import {
   PAINT,
   SYNTAX,
   FONT_FAMILY,
-  FLOOR,
 } from '../src/vocab.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
@@ -42,7 +41,6 @@ push('margin-x', `${CANVAS.marginX}px`);
 push('margin-y', `${CANVAS.marginY}px`);
 push('content-w', `${CONTENT.w}px`);
 push('content-h', `${CONTENT.h}px`);
-push('floor', `${FLOOR}px`);
 
 
 rows.push('');
