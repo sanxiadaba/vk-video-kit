@@ -303,7 +303,8 @@ export class VkGraph extends VkElement {
         const dy = bCy - aCy;
         points = [hit(aCx, aCy, a.w, a.h, dx, dy), hit(bCx, bCy, b.w, b.h, -dx, -dy)];
       } else if (dir === 'vertical') {
-        points = [{ x: aCx, y: a.y + a.h }, { x: bCx, y: b.y }];
+        /* 竖链的线走左侧栏，和文字起点对齐；箭头落在下一行的上沿。 */
+        points = [{ x: a.x + 48, y: a.y + a.h }, { x: b.x + 48, y: b.y }];
       } else {
         points = [{ x: a.x + a.w, y: aCy }, { x: b.x, y: bCy }];
       }
