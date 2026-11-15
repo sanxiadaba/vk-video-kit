@@ -237,12 +237,18 @@ if (!browser) {
     const n = note.getBoundingClientRect();
     const l = line.getBoundingClientRect();
     const m = line.querySelector('.vk-mark').getBoundingClientRect();
+    const card = document.querySelector('vk-code').getBoundingClientRect();
+    const lead = document.querySelector('.vk-co-lead').getBoundingClientRect();
     return {
       adjacent: n.left > m.right + 40 && Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) < 70,
+      outside: n.left > card.right,
+      lead: Math.round(lead.width),
       marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
     };
   });
   ok(word && word.adjacent, '注记贴着被注的那一行');
+  ok(word && word.outside, '注记在代码卡右侧的独立栏');
+  ok(word && word.lead >= 60, `注记横线够长（${word && word.lead}）`);
   ok(word && word.marks >= 1, `mark 的词都带锚点（${word && word.marks}）`);
 
   /* 词：下括号必须扣在词上（横向覆盖词的左右），杆从括号引出。 */

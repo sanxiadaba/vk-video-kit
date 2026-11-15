@@ -286,25 +286,27 @@ export class VkCallout extends VkElement {
         obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
       const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
 
-      /* 注记贴着被注的行：优先放在行尾 +88 的空白里（不放卡片当代码）；
-         放不下才退到卡片外。引线只从括号/行尾走到注记，永远短。 */
+      /* 右栏注记卡：卡片在代码卡外侧，与所注行同高；一条 88 的横线 + 卡片左缘的小三角指向那一行。 */
       if (lineEl) {
-        const y = cy(lr) - bh / 2;
-        const insideX = textRight(lineEl) - origin.left + ANN.standoff;
-        const rightX = ob.right + ANN.standoff;
-        const leftX = ob.left - ANN.standoff - bw;
-        let nx = null;
-        if (insideX + bw <= ob.right - 16) nx = insideX;
-        else if (rightX + bw <= bodyRect.right) nx = rightX;
-        else if (leftX >= bodyRect.left) nx = leftX;
-        if (nx !== null) {
+        const y = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
+        const gap = 88;
+        let nx = ob.right + gap;
+        let side = 1;
+        if (nx + bw > bodyRect.right) {
+          nx = ob.left - gap - bw;
+          side = -1;
+        }
+        if (nx >= bodyRect.left && nx + bw <= bodyRect.right) {
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${y}px`;
-          const bubble = { left: nx, top: y, right: nx + bw, bottom: y + bh, width: bw, height: bh };
-          let startX;
-          let startY;
+          const lineY = cy(lr);
+          const tipX = side === 1 ? nx - 16 : nx + bw + 16;
+          const baseX = side === 1 ? nx : nx + bw;
+          this._svg.appendChild(mk('path', { class: 'vk-co-tip', d: `M ${baseX} ${lineY - 16} L ${tipX} ${lineY} L ${baseX} ${lineY + 16}` }));
+          const startX = side === 1 ? ob.right : ob.left;
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: lineY, x2: tipX, y2: lineY }));
           if (isWord) {
-            /* 词：下括号标住词，引线从括号右端到注记左下。 */
+            /* 词：下括号标住词；卡片指向这一行，括号指向这个词。 */
             const by = r.bottom + ANN.bracketGap + 2;
             const x1 = r.left - 8;
             const x2 = r.right + 8;
@@ -312,17 +314,7 @@ export class VkCallout extends VkElement {
             this._svg.appendChild(
               mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
             );
-            startX = x2;
-            startY = by;
-          } else {
-            startX = textRight(lineEl) - origin.left;
-            startY = cy(lr);
-            if (!page.querySelector('.vk-co-ring')) {
-              this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: startX, cy: startY, r: ANN.dot / 2 }));
-            }
           }
-          const p = nearest(bubble, { x: startX, y: startY });
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: startY, x2: p.x, y2: p.y }));
           return;
         }
       }
