@@ -37,8 +37,9 @@ const getHighlighter = async () => {
   return highlighter;
 };
 
-/** 把一段纯文本里的 needle 包成 mark，其余转义。单词按边界匹配，避免把 i 标进 int。 */
-export function markText(text, needle) {
+/** 把一段纯文本里的 needle 包成 mark，其余转义。单词按边界匹配，避免把 i 标进 int。
+    每个 mark 同时是锚点：data-vk-item 从 1 起，@item:N 圈第 N 个标出的词。 */
+export function markText(text, needle, counter) {
   const s = String(text ?? '');
   if (!needle) return esc(s);
   const word = /^[A-Za-z0-9_$]+$/.test(needle);
@@ -49,18 +50,19 @@ export function markText(text, needle) {
   let last = 0;
   for (const m of s.matchAll(re)) {
     out.push(esc(s.slice(last, m.index)));
-    out.push(`<mark class="vk-mark">${esc(m[0])}</mark>`);
+    const n = counter ? ++counter.n : 0;
+    out.push(`<mark class="vk-mark"${n ? ` data-vk-item="${n}"` : ''}>${esc(m[0])}</mark>`);
     last = m.index + m[0].length;
   }
   out.push(esc(s.slice(last)));
   return out.join('');
 }
 
-function lineHtml(tokens, needle) {
+function lineHtml(tokens, needle, counter) {
   const out = [];
   for (const t of tokens) {
     const cls = COLOR_CLASS[(t.color || '').toUpperCase()] || '';
-    const html = needle ? markText(t.content, needle) : esc(t.content);
+    const html = needle ? markText(t.content, needle, counter) : esc(t.content);
     out.push(cls ? `<span class="${cls}">${html}</span>` : html);
   }
   return out.join('');
@@ -157,6 +159,7 @@ export async function buildSource(node, ctx) {
     ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `${who} 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
   }
   const mark = attrOf(node, 'mark') || '';
+  const markCounter = { n: 0 };
   if (mark && !text.includes(mark)) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
   const title = attrOf(node, 'title') || '';
 
@@ -180,7 +183,7 @@ export async function buildSource(node, ctx) {
         folded = 0;
       }
       const cls = cur?.has(win) ? ' is-cur' : '';
-      out.push(`<div class="vk-line${cls}" data-vk-line="${win}" data-src="${srcNo}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${lineHtml(tokens[i] || [], mark)}</span></div>`);
+      out.push(`<div class="vk-line${cls}" data-vk-line="${win}" data-src="${srcNo}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${lineHtml(tokens[i] || [], mark, markCounter)}</span></div>`);
     });
     if (folded) out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-lc">省略 ${folded} 行</span></div>`);
     body = out.join('');
@@ -257,7 +260,7 @@ export async function buildSource(node, ctx) {
       if (r.kind === 'del') del++;
       const cls = r.kind === 'same' ? '' : ` ${r.kind}`;
       out.push(
-        `<div class="vk-drow${cls}${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-ln">${ln}</span><span class="vk-sign">${r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '}</span><span class="vk-dc">${markText(r.text, mark) || ' '}</span></div>`
+        `<div class="vk-drow${cls}${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-ln">${ln}</span><span class="vk-sign">${r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '}</span><span class="vk-dc">${markText(r.text, mark, markCounter) || ' '}</span></div>`
       );
     }
     body = out.join('');

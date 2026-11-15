@@ -1,0 +1,13 @@
+<vk-page id="callout-word">
+  <vk-head kicker="标注" counter="38" size="subhead">指着某个词说一句。</vk-head>
+  <vk-code id="w" lang="c" title="sum.c" mark="i" current="2">
+    <script type="text/plain" data-vk-source>
+int s = 0;
+for (i = 0; i < n; i++)
+  s += a[i];
+return s;
+    </script>
+  </vk-code>
+  <vk-callout mode="ring" for="#w@item:2"></vk-callout>
+  <vk-callout mode="note" for="#w@item:3">这里越界了</vk-callout>
+</vk-page>

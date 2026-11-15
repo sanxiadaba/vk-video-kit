@@ -239,9 +239,14 @@ export class VkCallout extends VkElement {
       const bh = this._note.offsetHeight;
 
       /* 气泡不许盖字：先按「压到多少字的面积」排，面积相同再按离目标远近排。 */
+      const body = page.querySelector('.vk-body');
+      const safeBottom = body ? body.getBoundingClientRect().bottom - origin.top - 8 : origin.height - 8;
+      /* note 不许压标题带：上边界是 head 的底，不是画布顶。 */
+      const head = page.querySelector('[data-vk="head"]');
+      const safeTop = head ? head.getBoundingClientRect().bottom - origin.top + 8 : 8;
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
-      const obstacles = [ob];
+      const obstacles = [ob, ...(head ? [rel(head.getBoundingClientRect())] : [])];
       for (const el of page.querySelectorAll('vk-code .vk-line, vk-code .vk-dhunk, vk-text, .vk-title, .vk-lede, vk-table tr, vk-list li, .vk-step, .vk-bar, .vk-cell, .vk-bit, .vk-gnode, .vk-tl-i, .vk-node, .vk-brow')) {
         if (el.closest('vk-callout')) continue;
         const q = el.getBoundingClientRect();
@@ -259,14 +264,12 @@ export class VkCallout extends VkElement {
       };
 
       const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
-      const body = page.querySelector('.vk-body');
-      const safeBottom = body ? body.getBoundingClientRect().bottom - origin.top - 8 : origin.height - 8;
 
       /* 行锚点的 note 一律贴在同一条线的右侧，短实线直连；不参与碰撞投票。 */
       if (t.el.matches('.vk-line')) {
         const nx = ob.right + gap;
         const ny = cy(r) - bh / 2;
-        if (nx + bw <= origin.width - 8 && ny >= 8 && ny + bh <= safeBottom) {
+        if (nx + bw <= origin.width - 8 && ny >= safeTop && ny + bh <= safeBottom) {
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${ny}px`;
           this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: r.right, y1: cy(r), x2: nx, y2: cy(r) }));
@@ -288,13 +291,13 @@ export class VkCallout extends VkElement {
           if (w > 0 && h > 0) overlap += w * h;
         }
         const outX = Math.max(0, 8 - c.x) + Math.max(0, c.x + bw - (origin.width - 8));
-        const outY = Math.max(0, 8 - c.y) + Math.max(0, c.y + bh - safeBottom);
+        const outY = Math.max(0, safeTop - c.y) + Math.max(0, c.y + bh - safeBottom);
         const dist = Math.hypot(c.x + bw / 2 - tx, c.y + bh / 2 - ty);
         const key = [overlap + (outX + outY) * bh * 10, dist];
         if (!best || key[0] < best.key[0] || (key[0] === best.key[0] && key[1] < best.key[1])) best = { ...c, key };
       }
       const x = clamp(Math.max(best.x, t.el.matches('.vk-line') && best.x > ob.left ? ob.right + gap : best.x), 8, origin.width - bw - 8);
-      const y = clamp(best.y, 8, safeBottom - bh);
+      const y = clamp(best.y, safeTop, safeBottom - bh);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };

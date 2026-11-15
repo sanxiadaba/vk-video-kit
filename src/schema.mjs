@@ -166,7 +166,7 @@ export const TAGS = {
         range: range('源文件行段，如 "4-6"（只接受单段；4- 表示到底）'),
         current: lines('当前行（窗口内第几行，1 起）'),
         fold: lines('折叠行（窗口内第几行）'),
-        mark: text('state', '标出的词（窗口里所有出现处，按词边界）'),
+        mark: text('state', '标出的词（窗口里所有出现处，按词边界；每个词就是一个 @item 锚点）'),
         size: enumv(['caption', 'body'], 'body', 'type', '代码字号'),
       }, source('src 指向真实文件，或内联 <script type="text/plain" data-vk-source>。'),
         '<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>\nint a[3] = {1, 2, 3};\na[1]\n</script></vk-code>'),

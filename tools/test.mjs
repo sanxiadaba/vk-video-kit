@@ -221,8 +221,20 @@ if (!browser) {
   ok(!/rgb\(255, 255, 255\)/.test(dark), `深色页的代码窗自动变深（${dark}）`);
   await darkPage.close();
 
-  const cmpPage = await load('compare.html');
-  const cmp = await cmpPage.evaluate(() => {
+  const wordPage = await load('callout-word.html');
+  const word = await wordPage.evaluate(() => {
+    const ring = document.querySelector('.vk-co-ring');
+    const line = document.querySelector('.vk-line');
+    if (!ring || !line) return null;
+    const r = ring.getBoundingClientRect();
+    const l = line.getBoundingClientRect();
+    return { rw: r.width, lw: l.width, marks: document.querySelectorAll('.vk-mark[data-vk-item]').length };
+  });
+  ok(word && word.rw < word.lw * 0.5, `@item 圈的是词不是整行（${word && Math.round(word.rw)} / ${word && Math.round(word.lw)}）`);
+  ok(word && word.marks >= 3, `mark 的词都带锚点（${word && word.marks}）`);
+  await wordPage.close();
+
+  const cmpPage = await load('compare.html');  const cmp = await cmpPage.evaluate(() => {
     const cards = [...document.querySelectorAll('vk-card[tone]')];
     return cards.map((c) => ({ tone: c.getAttribute('tone'), border: getComputedStyle(c).borderColor, bg: getComputedStyle(c).backgroundColor }));
   });
