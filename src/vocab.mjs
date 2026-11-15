@@ -45,14 +45,16 @@ export const LINE = {
   hero: 1.1,
 };
 
-/* 行宽：单位是 em。中文 1 字 ≈ 1em。正文 25 字是阅读宽。 */
+/* 行宽：单位是 em。中文 1 字 ≈ 1em。
+   上限 = 版心 1680 ÷ 字号：caption 30 / body 26 / subhead 17 / headline 11 / display 7 / hero 5。
+   取比上限小一档，留一个字的余量。 */
 export const MEASURE = {
   caption: 26,
   body: 25,
-  subhead: 18,
-  headline: 13,
-  display: 8,
-  hero: 4,
+  subhead: 17,
+  headline: 11,
+  display: 7,
+  hero: 5,
 };
 
 export const TRACKING = {

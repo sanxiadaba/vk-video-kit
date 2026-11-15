@@ -12,6 +12,7 @@
  *   mesh     环形摆放（BFS/DFS、死锁、事件循环）
  */
 import { VkElement, define, warn } from './base.mjs';
+import { CONN, headPolygon } from '../shared/connector.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -133,14 +134,14 @@ export class VkGraph extends VkElement {
       if (dir === 'vertical') {
         /* 竖链的行距由可用高度算出来：宁可溢出报错，也不把节点压在一起。 */
         const availH = bodyH ? bodyH - 4 : 0;
-        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(16, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : 48) : 0;
+        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(CONN.minGap, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : CONN.minGap) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: 0, y: i * (maxH + gapY) + (maxH - sizes[i].h) / 2, w: sizes[i].w, h: sizes[i].h };
         });
         viewW = maxW + pad * 2;
         H = nodes.length * maxH + (nodes.length - 1) * gapY + pad * 2;
       } else {
-        const gapX = nodes.length > 1 ? Math.max(48, Math.min(160, (viewW - nodes.length * maxW) / (nodes.length - 1))) : 0;
+        const gapX = nodes.length > 1 ? Math.max(CONN.minGap, Math.min(160, (viewW - nodes.length * maxW) / (nodes.length - 1))) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: i * (maxW + gapX) + (maxW - sizes[i].w) / 2, y: 0, w: sizes[i].w, h: sizes[i].h };
         });
@@ -165,7 +166,7 @@ export class VkGraph extends VkElement {
       const maxDepth = Math.max(...depth, 0);
       const lanes = nodes.map((n) => Number(n.dataset.lane) || 0);
       const maxLane = Math.max(...lanes, 0);
-      const colGap = maxDepth > 0 ? (viewW - maxW - pad * 2) / maxDepth : 0;
+      const colGap = maxDepth > 0 ? Math.max(CONN.minGap, (viewW - maxW - pad * 2) / maxDepth) : 0;
       const laneGap = maxLane > 0 ? (H - maxH - pad * 2) / maxLane : 0;
       nodes.forEach((_, i) => {
         const d = depth[i] || 0;
@@ -204,7 +205,7 @@ export class VkGraph extends VkElement {
       const gapX = 72;
       /* 层间距按可用高度算：三层树在 426 的正文带里也放得下，四层就老实溢出。 */
       const treeAvail = bodyH ? bodyH - pad * 2 : 0;
-      const gapY = maxDepth > 0 ? (treeAvail > 0 ? Math.max(16, Math.min(56, Math.floor((treeAvail - (maxDepth + 1) * maxH) / maxDepth))) : 56) : 0;
+      const gapY = maxDepth > 0 ? (treeAvail > 0 ? Math.max(CONN.minGap, Math.min(72, Math.floor((treeAvail - (maxDepth + 1) * maxH) / maxDepth))) : CONN.minGap) : 0;
       nodes.forEach((_, i) => {
         const d = depth[i] || 0;
         const lane = slot.get(i) ?? 0;
@@ -284,7 +285,7 @@ export class VkGraph extends VkElement {
         const p1 = { x: aCx, y: a.y + a.h };
         const p2 = { x: bCx, y: b.y };
         const my = p1.y + (p2.y - p1.y) / 2;
-        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, { x: p2.x, y: p2.y - 4 }];
+        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, { x: p2.x, y: p2.y }];
       } else if (layout === 'layered') {
         if (Math.abs(a.x - b.x) < 2) {
           const upward = aCy > bCy;
@@ -302,44 +303,39 @@ export class VkGraph extends VkElement {
         const dy = bCy - aCy;
         points = [hit(aCx, aCy, a.w, a.h, dx, dy), hit(bCx, bCy, b.w, b.h, -dx, -dy)];
       } else if (dir === 'vertical') {
-        const p1 = { x: aCx, y: a.y + a.h };
-        const p2 = { x: bCx, y: b.y };
-        const my = p1.y + 36;
-        points = [p1, { x: p1.x, y: my }, { x: p2.x, y: my }, p2];
+        points = [{ x: aCx, y: a.y + a.h }, { x: bCx, y: b.y }];
       } else {
-        const p1 = { x: a.x + a.w, y: aCy };
-        const p2 = { x: b.x, y: bCy };
-        const mx = p1.x + (p2.x - p1.x) / 2;
-        points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
+        points = [{ x: a.x + a.w, y: aCy }, { x: b.x, y: bCy }];
       }
 
+      /* 尖端统一留 4px 净空；树干从头到尾一条线，不贴脸。 */
       const tipBase = points[points.length - 2];
-      const p2 = points[points.length - 1];
-      const dx = p2.x - tipBase.x;
-      const dy = p2.y - tipBase.y;
-      const len = Math.hypot(dx, dy) || 1;
-      const ux = dx / len;
-      const uy = dy / len;
-      const tip = { x: p2.x - ux * 4, y: p2.y - uy * 4 };
-      const base = { x: tip.x - ux * 28, y: tip.y - uy * 28 };
-      points[points.length - 1] = layout === 'tree' ? tip : base;
+      const end = points[points.length - 1];
+      const ddx = end.x - tipBase.x;
+      const ddy = end.y - tipBase.y;
+      const dlen = Math.hypot(ddx, ddy) || 1;
+      const ux = ddx / dlen;
+      const uy = ddy / dlen;
+      const tip = { x: end.x - ux * CONN.tip, y: end.y - uy * CONN.tip };
+      const base = { x: tip.x - ux * CONN.head, y: tip.y - uy * CONN.head };
+      points[points.length - 1] = layout === 'tree' || dlen < CONN.head + CONN.shaft ? tip : base;
 
-      group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, 12), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
-      const b2 = { x: base.x - 14 * uy, y: base.y + 14 * ux };
-      const b3 = { x: base.x + 14 * uy, y: base.y - 14 * ux };
-      if (layout !== 'tree') group.appendChild(mk('polygon', { class: 'vk-edge-head', points: `${tip.x},${tip.y} ${b2.x},${b2.y} ${b3.x},${b3.y}`, 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+      group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, CONN.corner), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+      if (layout !== 'tree') {
+        group.appendChild(mk('polygon', { class: 'vk-edge-head', points: headPolygon(tip, ux, uy), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+      }
 
       if (l.label) {
         const from = points[0];
-        const dx = p2.x - from.x;
-        const dy = p2.y - from.y;
+        const dx = end.x - from.x;
+        const dy = end.y - from.y;
         const vertical = Math.abs(dx) < Math.abs(dy);
         let lx;
         let ly;
         let anchor;
         if (vertical) {
-          lx = Math.max(from.x, p2.x) + 28;
-          ly = (from.y + p2.y) / 2;
+          lx = Math.max(from.x, end.x) + 28;
+          ly = (from.y + end.y) / 2;
           anchor = 'start';
         } else {
           /* 斜线也按法线外推，并强制推到上方：线不被字打断，字不压箭头。 */
@@ -350,8 +346,8 @@ export class VkGraph extends VkElement {
             nx = -nx;
             ny = -ny;
           }
-          lx = (from.x + p2.x) / 2 + nx * 52;
-          ly = (from.y + p2.y) / 2 + ny * 52;
+          lx = (from.x + end.x) / 2 + nx * 52;
+          ly = (from.y + end.y) / 2 + ny * 52;
           anchor = 'middle';
         }
         const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });

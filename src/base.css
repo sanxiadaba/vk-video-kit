@@ -135,6 +135,7 @@ body {
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-headline);
   color: var(--vk-ink-1);
+  text-wrap: pretty;
 }
 [data-vk='head'][size='subhead'] .vk-title {
   font-size: var(--vk-fs-subhead);
@@ -155,6 +156,7 @@ body {
   line-height: var(--vk-lh-body);
   color: var(--vk-ink-2);
   max-width: var(--vk-measure-body);
+  text-wrap: pretty;
 }
 
 /* ------------------------------------------------------------------ 流

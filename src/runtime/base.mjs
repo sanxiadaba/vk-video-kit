@@ -106,7 +106,9 @@ const inRange = (n, args) => {
 const pick = (host, attr, args) => {
   const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));
   if (!els.length) return null;
-  return { el: els[0], rect: union(els.map((el) => el.getBoundingClientRect())), side: null };
+  /* 词（mark）按墨迹取框：尖端落在字上，不落在行盒的空白里。 */
+  const rectOf = (el) => (el.matches('.vk-mark') ? inkRect(el) : el.getBoundingClientRect());
+  return { el: els[0], rect: union(els.map(rectOf)), side: null };
 };
 
 export function resolveAnchor(root, expr, owner) {

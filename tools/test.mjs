@@ -240,7 +240,41 @@ if (!browser) {
   });
   ok(word && word.rw < word.lw * 0.5, `@item 圈的是词不是整行（${word && Math.round(word.rw)} / ${word && Math.round(word.lw)}）`);
   ok(word && word.marks >= 3, `mark 的词都带锚点（${word && word.marks}）`);
+
+  /* 箭头指着词：圆点必须落在那个词的框附近，不能飘在行中间。 */
+  const aim = await wordPage.evaluate(() => {
+    const dot = document.querySelector('.vk-co-dot');
+    const mark = document.querySelectorAll('.vk-mark')[3];
+    if (!dot || !mark) return null;
+    const d = dot.getBoundingClientRect();
+    const m = mark.getBoundingClientRect();
+    const dx = Math.max(m.left - d.right, d.left - m.right, 0);
+    const dy = Math.max(m.top - d.bottom, d.top - m.bottom, 0);
+    return Math.round(Math.hypot(dx, dy));
+  });
+  ok(aim !== null && aim <= 10, `note 的圆点贴着词（${aim}px）`);
   await wordPage.close();
+
+  /* 图：节点之间必须留够连接件的净空，箭头不许落进节点里。 */
+  const gvPage = await load('graph-vertical.html');
+  const geo = await gvPage.evaluate(() => {
+    const nodes = [...document.querySelectorAll('.vk-gnode')].map((n) => n.getBoundingClientRect()).sort((a, b) => a.top - b.top);
+    const gaps = nodes.slice(1).map((r, i) => Math.round(r.top - nodes[i].bottom));
+    const heads = [...document.querySelectorAll('.vk-edge-head')].map((h) => h.getBoundingClientRect());
+    const inside = heads.some((h) => nodes.some((n) => h.top > n.top + 1 && h.bottom < n.bottom - 1));
+    return { minGap: Math.min(...gaps), inside };
+  });
+  ok(geo.minGap >= 63, `竖链节点间距 ≥ 64（${geo.minGap}）`);
+  ok(!geo.inside, '箭头不落进节点');
+  await gvPage.close();
+
+  const gtPage = await load('graph-tree.html');
+  const tgeo = await gtPage.evaluate(() => {
+    const tops = [...new Set([...document.querySelectorAll('.vk-gnode')].map((n) => Math.round(n.getBoundingClientRect().top)))].sort((a, b) => a - b);
+    return { levels: tops.length, gaps: tops.slice(1).map((t, i) => t - tops[i]) };
+  });
+  ok(tgeo.levels === 3 && Math.min(...tgeo.gaps) >= 63, `树的三层各留出净空（${tgeo.gaps.join(' / ')}）`);
+  await gtPage.close();
 
   const cmpPage = await load('compare.html');  const cmp = await cmpPage.evaluate(() => {
     const cards = [...document.querySelectorAll('vk-card[tone]')];

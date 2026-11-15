@@ -9,7 +9,8 @@
  *
  * 锚点：#id / #id@line:3 / #id@line:3-4 / #id@item:2 / #id@bit:5 / #id@side:left。
  */
-import { VkElement, define, resolveAnchor } from './base.mjs';
+import { VkElement, define, resolveAnchor, inkRect } from './base.mjs';
+import { CONN } from '../shared/connector.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -19,11 +20,11 @@ const mk = (tag, attrs = {}) => {
 };
 
 const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-const GAP = 10;
-const TIP_GAP = 4;
-const HEAD = 32;
-const HEAD_W = 16;
-const CORNER = 16;
+const GAP = CONN.clear;
+const TIP_GAP = CONN.tip;
+const HEAD = CONN.head;
+const HEAD_W = CONN.headW;
+const CORNER = CONN.corner;
 const TICK = 20;
 
 const COMPONENT = 'vk-code, vk-board, vk-graph, vk-dir, vk-math, vk-seq, vk-card, vk-img, vk-text';
@@ -78,6 +79,21 @@ const targetUnit = (side) => {
   if (side === 'top') return { x: 0, y: 1 };
   return { x: 0, y: -1 };
 };
+
+/** 从外一点射向矩形：落在边界上的点 + 4px 外推。词很小的时候，这比「取某一边的中点」准得多。 */
+function edgeTip(r, from) {
+  const cxx = r.left + r.width / 2;
+  const cyy = r.top + r.height / 2;
+  const dx = from.x - cxx;
+  const dy = from.y - cyy;
+  const tx = dx ? r.width / 2 / Math.abs(dx) : Infinity;
+  const ty = dy ? r.height / 2 / Math.abs(dy) : Infinity;
+  const t = Math.min(tx, ty);
+  const px = cxx + dx * t;
+  const py = cyy + dy * t;
+  const len = Math.hypot(dx, dy) || 1;
+  return { x: px + (dx / len) * 4, y: py + (dy / len) * 4 };
+}
 
 /** 自动端口：有正面空隙就直连；空隙太短就绕到上/下/左/右，避免箭头贴脸。 */
 function autoSides(a, b) {
@@ -265,15 +281,23 @@ export class VkCallout extends VkElement {
 
       const sides = t.el.matches('.vk-line') ? ['bottom', 'right', 'left'] : ['right', 'left', 'bottom', 'top'];
 
-      /* 行锚点的 note 一律贴在同一条线的右侧，短实线直连；不参与碰撞投票。 */
-      if (t.el.matches('.vk-line')) {
-        const nx = ob.right + gap;
-        const ny = cy(r) - bh / 2;
-        if (nx + bw <= origin.width - 8 && ny >= safeTop && ny + bh <= safeBottom) {
+      /* 代码行里的 note（整行或某个词）一律贴在这一行的文字右侧，短横线直连；不参与碰撞投票。
+         比「挪到窗口外」近得多，也不会横穿别的代码行。 */
+      const lineEl = t.el.closest('.vk-line');
+      if (lineEl) {
+        const lr = rel(lineEl.getBoundingClientRect());
+        const inkRight = rel(inkRect(lineEl)).right;
+        const nx = Math.max(inkRight, r.right) + gap;
+        const ny = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
+        if (nx + bw <= origin.width - 8) {
+          /* 词：落在字的右上角，不挡住后一个字符；整行：落在行右缘。 */
+          const isWord = t.el.matches('.vk-mark');
+          const tx2 = isWord ? r.right - 2 : r.right;
+          const ty2 = isWord ? r.top - 2 : cy(r);
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${ny}px`;
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: r.right, y1: cy(r), x2: nx, y2: cy(r) }));
-          this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: r.right, cy: cy(r), r: 6 }));
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: nx, y1: cy(lr), x2: tx2, y2: ty2 }));
+          this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: tx2, cy: ty2, r: 8 }));
           return;
         }
       }
@@ -285,11 +309,12 @@ export class VkCallout extends VkElement {
       for (const c of cands) {
         const box = { left: c.x, top: c.y, width: bw, height: bh };
         let overlap = 0;
-        for (const o of obstacles) {
+        obstacles.forEach((o, oi) => {
           const w = Math.min(box.left + box.width, o.right) - Math.max(box.left, o.left);
           const h = Math.min(box.top + box.height, o.bottom) - Math.max(box.top, o.top);
-          if (w > 0 && h > 0) overlap += w * h;
-        }
+          /* 压自己的容器是最难看的：权重 ×10，优先挪到容器外。 */
+          if (w > 0 && h > 0) overlap += w * h * (oi === 0 ? 10 : 1);
+        });
         const outX = Math.max(0, 8 - c.x) + Math.max(0, c.x + bw - (origin.width - 8));
         const outY = Math.max(0, safeTop - c.y) + Math.max(0, c.y + bh - safeBottom);
         const dist = Math.hypot(c.x + bw / 2 - tx, c.y + bh / 2 - ty);
@@ -301,11 +326,11 @@ export class VkCallout extends VkElement {
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };
-      const [as, bs] = autoSides(bubble, r);
+      const [as] = autoSides(bubble, r);
       const a = sourcePoint(bubble, as);
-      const b = targetTip(r, bs);
+      const b = edgeTip(r, a);
       this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: a.x, y1: a.y, x2: b.x, y2: b.y }));
-      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: b.x, cy: b.y, r: 6 }));
+      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: b.x, cy: b.y, r: 8 }));
       return;
     }
 

@@ -904,6 +904,18 @@
   min-height: 160px;
   align-content: center;
 }
+/* 竖链不是「窄盒子摞起来」：一条一条的宽行，标签和注并排，箭头在行间通过。 */
+.vk-graph[data-layout='row'][data-dir='vertical'] .vk-gnode {
+  min-width: 640px;
+  max-width: 100%;
+  padding: var(--vk-space-1) var(--vk-space-5);
+  grid-auto-flow: column;
+  align-items: baseline;
+  justify-items: start;
+  justify-content: start;
+  gap: var(--vk-space-5);
+  text-align: left;
+}
 .vk-gn-n {
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
@@ -1004,17 +1016,17 @@
   content: '';
   position: absolute;
   top: 50%;
-  width: 30px;
-  height: 30px;
+  width: var(--vk-conn-head);
+  height: var(--vk-conn-head);
   transform: translateY(-50%);
   background: var(--vk-seq-c);
 }
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
-  right: -15px;
+  right: calc(var(--vk-conn-head) / -2);
   clip-path: polygon(0 0, 100% 50%, 0 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
-  left: -15px;
+  left: calc(var(--vk-conn-head) / -2);
   clip-path: polygon(100% 0, 0 50%, 100% 100%);
 }
 .vk-seq-l {
