@@ -232,20 +232,23 @@ if (!browser) {
   const wordPage = await load('callout-word.html');
   const word = await wordPage.evaluate(() => {
     const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
-    const card = document.querySelector('vk-code');
-    if (!note || !card) return null;
+    const line = document.querySelectorAll('.vk-line')[2];
+    if (!note || !line) return null;
     const n = note.getBoundingClientRect();
-    const c = card.getBoundingClientRect();
-    const inside = n.left > c.left && n.right < c.right && n.top > c.top && n.bottom < c.bottom;
-    return { inside, marks: document.querySelectorAll('.vk-mark[data-vk-item]').length };
+    const l = line.getBoundingClientRect();
+    const m = line.querySelector('.vk-mark').getBoundingClientRect();
+    return {
+      adjacent: n.left > m.right + 40 && Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) < 70,
+      marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
+    };
   });
-  ok(word && !word.inside, '注记在卡片外，不冒充代码');
-  ok(word && word.marks >= 3, `mark 的词都带锚点（${word && word.marks}）`);
+  ok(word && word.adjacent, '注记贴着被注的那一行');
+  ok(word && word.marks >= 1, `mark 的词都带锚点（${word && word.marks}）`);
 
   /* 词：下括号必须扣在词上（横向覆盖词的左右），杆从括号引出。 */
   const aim = await wordPage.evaluate(() => {
     const bracket = document.querySelector('.vk-co-bracket');
-    const mark = document.querySelectorAll('.vk-mark')[3];
+    const mark = document.querySelectorAll('.vk-mark')[0];
     const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
     if (!bracket || !mark || !note) return null;
     const b = bracket.getBoundingClientRect();

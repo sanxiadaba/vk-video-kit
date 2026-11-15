@@ -68,12 +68,14 @@
   white-space: nowrap;
 }
 
-/* 一句注释：无框，只在纸面上写一行字；引线负责连接。 */
+/* 一句注释：贴着行尾的空白，左侧一道竖杠，和代码区分；引线负责连接。 */
 .vk-co-note {
   position: absolute;
   max-width: 720px;
-  padding: 4px 10px;
+  padding: 2px 12px 2px 16px;
+  border-left: var(--vk-ann-lead) solid var(--vk-ink-2);
+  background: var(--vk-paper);
   color: var(--vk-ink-1);
-  font-size: var(--vk-fs-caption);
-  line-height: 1.35;
+  font-size: var(--vk-fs-body);
+  line-height: 1.2;
 }

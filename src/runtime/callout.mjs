@@ -286,43 +286,43 @@ export class VkCallout extends VkElement {
         obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
       const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
 
-      /* 代码行/词的注记是「边注」：和这一行同高、贴在卡片外侧，引线只从卡片边走到注记，
-         长度永远是 88——代码多长都不会把引线拉长。 */
+      /* 注记贴着被注的行：优先放在行尾 +88 的空白里（不放卡片当代码）；
+         放不下才退到卡片外。引线只从括号/行尾走到注记，永远短。 */
       if (lineEl) {
-        /* 钩在这一行的下沿：注记挂在行下面，引线沿行底走到注记，不飘在行中线。 */
-        const hookY = r.bottom + ANN.bracketGap + 2;
-        const y = clamp(hookY - bh / 2, safeTop, safeBottom - bh);
+        const y = cy(lr) - bh / 2;
+        const insideX = textRight(lineEl) - origin.left + ANN.standoff;
         const rightX = ob.right + ANN.standoff;
         const leftX = ob.left - ANN.standoff - bw;
         let nx = null;
-        let dir = 1;
-        if (rightX + bw <= bodyRect.right) {
-          nx = rightX;
-          dir = 1;
-        } else if (leftX >= bodyRect.left) {
-          nx = leftX;
-          dir = -1;
-        }
+        if (insideX + bw <= ob.right - 16) nx = insideX;
+        else if (rightX + bw <= bodyRect.right) nx = rightX;
+        else if (leftX >= bodyRect.left) nx = leftX;
         if (nx !== null) {
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${y}px`;
+          const bubble = { left: nx, top: y, right: nx + bw, bottom: y + bh, width: bw, height: bh };
           let startX;
+          let startY;
           if (isWord) {
-            /* 词：下括号 + 从括号右端沿行底拉出去。 */
+            /* 词：下括号标住词，引线从括号右端到注记左下。 */
+            const by = r.bottom + ANN.bracketGap + 2;
             const x1 = r.left - 8;
             const x2 = r.right + 8;
             const tick = ANN.tick;
             this._svg.appendChild(
-              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${hookY} L ${x1} ${hookY + tick} M ${x1} ${hookY} L ${x2} ${hookY} M ${x2} ${hookY} L ${x2} ${hookY + tick}` })
+              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
             );
             startX = x2;
+            startY = by;
           } else {
             startX = textRight(lineEl) - origin.left;
+            startY = cy(lr);
             if (!page.querySelector('.vk-co-ring')) {
-              this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: startX, cy: hookY, r: ANN.dot / 2 }));
+              this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: startX, cy: startY, r: ANN.dot / 2 }));
             }
           }
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: hookY, x2: nx, y2: hookY }));
+          const p = nearest(bubble, { x: startX, y: startY });
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: startY, x2: p.x, y2: p.y }));
           return;
         }
       }
