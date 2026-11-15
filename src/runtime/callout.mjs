@@ -415,8 +415,8 @@ export class VkCallout extends VkElement {
       this._label.textContent = label;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
-      /* 标签住「源件的右边」到「箭头尖」之间那段空白里：
-         贴着尖放，就会和终点那句话挤成一片。 */
+      /* 标签住在「源件的右边」到「箭头根部」之间那段空白的上方：
+         不压线（线是连续的），也不贴箭尖（不然和终点那句话连成一行）。 */
       const vertical = Math.abs(c.tip.x - c.start.x) < Math.abs(c.tip.y - c.start.y) - 2;
       let lx;
       let ly;
@@ -427,13 +427,12 @@ export class VkCallout extends VkElement {
         const rightward = c.tip.x >= c.start.x;
         const owner = from.el.closest(COMPONENT);
         const ob = owner ? rect(owner.getBoundingClientRect(), origin) : null;
-        const a0 = rightward ? Math.max(c.start.x, ob ? ob.right + 16 : c.start.x) : c.tip.x + ARROW.length + 12;
-        /* 指文字的箭头：标签压在箭杆上（纸底把杆断开），像一条边上的注；
-           指盒子的箭头：标签放在杆上方。 */
-        const b0 = rightward ? c.tip.x - (toText ? ARROW.length + 12 : 16) : Math.min(c.start.x, ob ? ob.left - 16 : c.start.x);
-        lx = b0 - a0 > lw ? (a0 + b0) / 2 - lw / 2 : rightward ? c.tip.x - lw - 24 : c.tip.x + 24;
-        ly = toText ? c.tip.y - lh / 2 : c.tip.y - lh - 20;
-        if (ly < 8) ly = c.tip.y + 12;
+        const a0 = rightward ? Math.max(c.start.x, ob ? ob.right + 16 : c.start.x) : c.tip.x + ARROW.length + 16;
+        const b0 = rightward ? c.tip.x - ARROW.length - 16 : Math.min(c.start.x, ob ? ob.left - 16 : c.start.x);
+        lx = b0 - a0 > lw ? a0 : rightward ? c.tip.x - lw - ARROW.length - 24 : c.tip.x + ARROW.length + 24;
+        /* 指文字：抬到那块字的上沿之上，别和第一行贴成一行；指盒子：杆上方 24。 */
+        ly = c.tip.y - lh - 40;
+        if (ly < 8) ly = c.tip.y + 24;
       }
       this._label.style.left = `${clamp(lx, 24, origin.width - lw - 24)}px`;
       this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
@@ -442,6 +441,8 @@ export class VkCallout extends VkElement {
 }
 
 define('vk-callout', VkCallout);
+
+
 
 
 
