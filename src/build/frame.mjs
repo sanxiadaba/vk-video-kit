@@ -58,6 +58,9 @@ export function buildPage(node) {
   const list = node.childNodes || [];
   const head = list.find((c) => c.tagName === 'vk-head');
   const rest = list.filter((c) => c !== head);
+  /* 有「一句话」的注记：正文右侧让出一列，注记只用这一列，永远不压内容。 */
+  const hasNote = rest.some((c) => c.tagName === 'vk-callout' && (attrOf(c, 'mode') || 'note') === 'note');
+  if (hasNote) node.attrs.push({ name: 'data-vk-anno', value: 'right' });
   const stage = `<div class="vk-stage">${head ? serialize(head) : ''}<div class="vk-body">${rest.map(serialize).join('')}</div></div>`;
   node.childNodes = [raw(stage)];
 }

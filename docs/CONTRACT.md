@@ -531,18 +531,17 @@ src 指向 .tex 文件；或把 TeX 直接写在标签里。
 
 ### L4 标注
 
-**`vk-callout`** · 标注 —— 画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，measure 量两点之间。它不改布局。
+**`vk-callout`** · 标注 —— 画在别人身上的一层：mark 在目标下面划一道，note 是「标记 + 箭头 + 一句话」，arrow 从一处指到另一处，measure 量同一条边到同一条边。它不改布局。
 
-#### 标注 —— 画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，measure 量两点之间。它不改布局。
+#### 标注 —— 画在别人身上的一层：mark 在目标下面划一道，note 是「标记 + 箭头 + 一句话」，arrow 从一处指到另一处，measure 量同一条边到同一条边。它不改布局。
 
 | 属性 | 取值 | 默认 | 范围 | 说明 |
 |---|---|---|---|---|
-| `mode` | arrow / ring / note / measure | arrow |  | 形态 |
-| `for` | 锚点 | — |  | 目标；必填；只对 mode=ring|note |
+| `mode` | mark / note / measure / arrow | note |  | 形态 |
+| `for` | 锚点 | — |  | 目标；必填；只对 mode=mark|note |
 | `from` | 锚点 | — |  | 起点；必填；只对 mode=arrow|measure |
 | `to` | 锚点 | — |  | 终点；必填；只对 mode=arrow|measure |
 | `label` | 文本 | — |  | 连线上的字；只对 mode=arrow|measure |
-| `tone` | neutral / info / ok / warn / err | info |  | 语调 |
 
 note 的文字写在这里；label 是连线上的字。
 

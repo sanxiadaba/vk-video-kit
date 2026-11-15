@@ -95,12 +95,12 @@ const CASES = [
   ['VALUE_RANGE_ATTR', CODE('range="4-2"')],
   ['VALUE_SPACE', '<vk-page><vk-flow gap="huge"></vk-flow></vk-page>'],
   ['VALUE_LINES', CODE('current="x"')],
-  ['VALUE_SELECTOR', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t@foo:1"></vk-callout></vk-page>'],
+  ['VALUE_SELECTOR', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="mark" for="#t@foo:1"></vk-callout></vk-page>'],
   ['VALUE_RATIO', '<vk-page><vk-img src="x" ratio="16:9"></vk-img></vk-page>'],
   ['SRC_MISSING', '<vk-page><vk-img src="nope.png" alt="缺图"></vk-img></vk-page>'],
-  ['ATTR_REQUIRED', '<vk-page><vk-callout mode="ring"></vk-callout></vk-page>'],
+  ['ATTR_REQUIRED', '<vk-page><vk-callout mode="mark"></vk-callout></vk-page>'],
   ['ATTR_REQUIRED', '<vk-page><vk-code><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
-  ['ATTR_IGNORED', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t" label="nope"></vk-callout></vk-page>'],
+  ['ATTR_IGNORED', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="mark" for="#t" label="nope"></vk-callout></vk-page>'],
   ['ATTR_PLACEMENT', '<vk-page><vk-text span="2">x</vk-text></vk-page>'],
   ['SPAN_TOO_WIDE', '<vk-page><vk-flow cols="2"><vk-text span="3">x</vk-text></vk-flow></vk-page>'],
   ['BLEED_ALL', '<vk-page><vk-text bleed="all">x</vk-text></vk-page>'],
@@ -109,7 +109,7 @@ const CASES = [
   ['CHILD_MISSING', '<vk-page><vk-board as="list"></vk-board></vk-page>'],
   ['STRAY_TEXT', '<vk-page><vk-flow>裸文字</vk-flow></vk-page>'],
   ['GRAPH_REF', '<vk-page><vk-graph><li id="a">a</li><li after="nope">b</li></vk-graph></vk-page>'],
-  ['ANCHOR_MISSING', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#nope"></vk-callout></vk-page>'],
+  ['ANCHOR_MISSING', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="mark" for="#nope"></vk-callout></vk-page>'],
   ['SRC_MISSING', '<vk-page><vk-code lang="c" src="nope.c"></vk-code></vk-page>'],
   ['SRC_CONFLICT', '<vk-page><vk-code lang="c" src="nope.c"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
   ['RANGE_OUT_OF_RANGE', CODE('range="99"')],
@@ -204,13 +204,51 @@ if (!browser) {
   const behave = await codePage.evaluate(() => ({
     font: parseFloat(getComputedStyle(document.querySelector('.vk-lc')).fontSize),
     cur: document.querySelectorAll('.vk-line.is-cur').length,
-    ring: !!document.querySelector('.vk-co-ring'),
     frames: document.querySelectorAll('.vk-stage').length,
   }));
   ok(behave.font === 64, `不缩字：代码就是 64px（${behave.font}）`);
   ok(behave.cur === 1, `当前行只有一条（${behave.cur}）`);
-  ok(behave.ring, '圈选画出来了');
   await codePage.close();
+
+  /* 标注 = 墨下一条 + 卡片外一句话 + 一条指到文字的水平箭头。 */
+  const annoPage = await load('callout.html');
+  const anno = await annoPage.evaluate(() => {
+    const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
+    const bars = [...document.querySelectorAll('.vk-co-bar')];
+    const head = document.querySelector('.vk-co-head');
+    const lead = document.querySelector('.vk-co-line');
+    const card = document.querySelector('.vk-frame');
+    const body = document.querySelector('.vk-body');
+    const line = document.querySelectorAll('.vk-line')[1];
+    if (!note || !bars.length || !head || !lead) return null;
+    const n = note.getBoundingClientRect();
+    const c = card.getBoundingClientRect();
+    const l = line.getBoundingClientRect();
+    const lc = line.querySelector('.vk-lc').getBoundingClientRect();
+    const rg = document.createRange();
+    rg.selectNodeContents(line.querySelector('.vk-lc'));
+    const ink = rg.getBoundingClientRect();
+    const b = bars[0].getBoundingClientRect();
+    const h = head.getBoundingClientRect();
+    return {
+      bars: bars.length,
+      covers: b.left <= ink.left && b.right >= ink.right,
+      under: b.top >= ink.bottom - 6,
+      outside: n.left >= c.right + 8,
+      sameRow: Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) <= 6,
+      headAtText: Math.abs(h.right - n.left) <= 6,
+      lead: Math.round(lead.getBoundingClientRect().width),
+      gutter: c.width <= body.getBoundingClientRect().width - 400,
+    };
+  });
+  ok(anno && anno.bars === 1, `一条行只有一个标记（${anno && anno.bars}）`);
+  ok(anno && anno.covers && anno.under, '标记落在这一行的墨迹下面');
+  ok(anno && anno.outside, '注记在卡片外面');
+  ok(anno && anno.sameRow, '注记和它指的那一行同高');
+  ok(anno && anno.headAtText, '箭头尖落在文字左缘');
+  ok(anno && anno.lead >= 100, `箭头够长（${anno && anno.lead}）`);
+  ok(anno && anno.gutter, '有注记的页给正文让出了一列');
+  await annoPage.close();
 
   const tablePage = await load('table.html');
   const t = await tablePage.evaluate(() => {
@@ -233,29 +271,35 @@ if (!browser) {
   const word = await wordPage.evaluate(() => {
     const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
     const line = document.querySelectorAll('.vk-line')[2];
-    const ring = document.querySelector('.vk-co-ring');
-    if (!note || !line || !ring) return null;
+    const bar = document.querySelector('.vk-co-bar');
+    if (!note || !line || !bar) return null;
     const n = note.getBoundingClientRect();
     const l = line.getBoundingClientRect();
     const m = line.querySelector('.vk-mark').getBoundingClientRect();
-    const rg = ring.getBoundingClientRect();
+    const b = bar.getBoundingClientRect();
+    const c = document.querySelector('.vk-frame').getBoundingClientRect();
     const head = document.querySelector('.vk-co-head').getBoundingClientRect();
-    const lead = document.querySelector('.vk-co-line').getBoundingClientRect();
     return {
-      ringCovers: rg.left <= m.left + 2 && rg.right >= m.right - 2,
-      ringIsWord: rg.width < l.width * 0.5,
-      adjacent: Math.abs((n.top + n.bottom) / 2 - rg.bottom) < 14,
-      headAtText: Math.abs(head.right - n.left) <= 4,
-      lead: Math.round(lead.width),
+      underWord: b.left <= m.left && b.right >= m.right && b.top >= m.bottom - 6,
+      isWord: b.width < l.width * 0.6,
+      outside: n.left >= c.right + 8,
+      sameRow: Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) <= 6,
+      headAtText: Math.abs(head.right - n.left) <= 6,
       marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
     };
   });
-  ok(word && word.ringCovers && word.ringIsWord, '圈住的是词，不是整行');
-  ok(word && word.adjacent, '文字贴着圈的下沿');
+  ok(word && word.underWord, '词下面一条，不是整行一个框');
+  ok(word && word.isWord, '标记只覆盖那个词');
+  ok(word && word.outside, '注记在卡片外面');
+  ok(word && word.sameRow, '注记和那个词同一行');
   ok(word && word.headAtText, '箭头尖落在文字左缘');
-  ok(word && word.lead >= 60, `箭头够长（${word && word.lead}）`);
   ok(word && word.marks >= 1, `mark 的词都带锚点（${word && word.marks}）`);
   await wordPage.close();
+
+  const rangePage = await load('callout-range.html');
+  const range = await rangePage.evaluate(() => document.querySelectorAll('.vk-co-bar').length);
+  ok(range === 2, `两行两条标记（${range}）`);
+  await rangePage.close();
 
   /* 图：节点之间必须留够连接件的净空，箭头不许落进节点里。 */
   const gvPage = await load('graph-vertical.html');
@@ -411,3 +455,4 @@ for (const mode of [0, 1]) {
 
 console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
 process.exitCode = failed ? 1 : 0;
+

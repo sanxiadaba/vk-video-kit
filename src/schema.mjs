@@ -45,7 +45,6 @@ const lines = (label, extra = {}) => ({ type: 'lines', group: 'state', label, ..
 const range = (label, extra = {}) => ({ type: 'range', group: 'content', label, ...extra });
 const selector = (group, label, extra = {}) => ({ type: 'selector', group, label, ...extra });
 const cols = (def, label) => ({ type: 'cols', default: def, group: 'layout', label });
-const tone = (values = TONE, def = 'neutral') => ({ type: 'enum', values, default: def, group: 'appearance', label: '语调' });
 const currentItem = () => ({ type: 'bool', group: 'state', label: '当前项（写属性名，不写值）' });
 const ITEM_TONE = { type: 'enum', values: TONE, default: 'neutral', group: 'appearance', label: '语调' };
 
@@ -316,14 +315,13 @@ export const TAGS = {
   'vk-callout': {
     layer: 'relation',
     name: '标注',
-    summary: '画在别人身上的一层：arrow 从一处指向另一处，ring 圈住目标，note 是带引线的气泡，measure 量两点之间。它不改布局。',
+    summary: '画在别人身上的一层：mark 在目标下面划一道，note 是「标记 + 箭头 + 一句话」，arrow 从一处指到另一处，measure 量同一条边到同一条边。它不改布局。',
     attrs: {
-      mode: enumv(['arrow', 'ring', 'note', 'measure'], 'arrow', 'appearance', '形态'),
-      for: selector('target', '目标', { when: { attr: 'mode', values: ['ring', 'note'] }, required: true }),
+      mode: enumv(['mark', 'note', 'measure', 'arrow'], 'note', 'appearance', '形态'),
+      for: selector('target', '目标', { when: { attr: 'mode', values: ['mark', 'note'] }, required: true }),
       from: selector('target', '起点', { when: { attr: 'mode', values: ['arrow', 'measure'] }, required: true }),
       to: selector('target', '终点', { when: { attr: 'mode', values: ['arrow', 'measure'] }, required: true }),
       label: text('target', '连线上的字', { when: { attr: 'mode', values: ['arrow', 'measure'] } }),
-      tone: tone(TONE, 'info'),
     },
     content: 'text',
     children: inline('note 的文字写在这里；label 是连线上的字。'),

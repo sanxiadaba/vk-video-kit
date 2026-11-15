@@ -128,7 +128,8 @@ const pick = (host, attr, args) => {
     }
     return el.getBoundingClientRect();
   };
-  return { el: els[0], rect: union(els.map(rectOf)), side: null, box: els[0].getBoundingClientRect() };
+  const rects = els.map(rectOf);
+  return { el: els[0], rect: union(rects), rects, side: null, box: els[0].getBoundingClientRect() };
 };
 
 export function resolveAnchor(root, expr, owner) {
@@ -175,7 +176,7 @@ export function resolveAnchor(root, expr, owner) {
         x: side === 'left' ? comp.left : side === 'right' ? comp.right : cx0,
         y: side === 'top' ? comp.top : side === 'bottom' ? comp.bottom : cy0,
       };
-      target = { el: lineEl, rect: lr, side, box: comp, port: { ...point, n } };
+      target = { el: lineEl, rect: lr, rects: target.rects || [lr], side, box: comp, port: { ...point, n } };
     } else if (side) {
       target = { ...target, side };
     }

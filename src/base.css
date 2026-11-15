@@ -69,6 +69,10 @@ body {
   align-content: start;
   min-height: 0;
 }
+/* 注栏：有「一句话」的注记时，正文让出一列；标题带不缩，仍整宽。 */
+[data-vk='page'][data-vk-anno='right'] .vk-body {
+  padding-right: var(--vk-ann-gutter);
+}
 [data-vk='page'][place='band'] .vk-body {
   align-content: safe center;
 }
@@ -471,12 +475,17 @@ body {
   font-weight: var(--vk-w-bold);
 }
 [data-vk='text'] mark,
-[data-vk='head'] mark,
-.vk-mark {
+[data-vk='head'] mark {
   background: var(--vk-mark);
   color: var(--vk-ink-1);
   border-radius: 2px;
   padding: 0 0.06em;
+}
+/* 代码里的 mark 只是「给一个词起名字」用的锚点：视觉由标注给（墨下的钴蓝条），
+   自己不画高亮，免得同一个词被标两次。 */
+.vk-mark {
+  background: none;
+  color: inherit;
 }
 
 /* 行内：代码、键位、小字、公式。作者不用学新词。 */

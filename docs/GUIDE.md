@@ -55,7 +55,7 @@ a[1]
 | 公式 | `vk-math` | — |
 | 版面（面、字、图） | `vk-card` / `vk-text` / `vk-img` | — |
 | 排布 | `vk-flow` | — |
-| 指着某处说一句、量两点之间 | `vk-callout` | `mode="arrow" / "ring" / "note" / "measure"` |
+| 指着某处说一句、量两点之间 | `vk-callout` | `mode="note" / "mark" / "arrow" / "measure"` |
 
 ### 对照帧：一块说错，一块说对
 
@@ -160,19 +160,21 @@ a[1]
 ## 九、标注与锚点
 
 ```html
-<vk-callout mode="ring" for="#c@line:2"></vk-callout>
-<vk-callout mode="arrow" from="#a@side:right" to="#b@side:left" label="next"></vk-callout>
-<vk-callout mode="note" for="#c@line:3">它们加起来，也不是 0.3</vk-callout>
+<vk-callout for="#c@line:3">它们加起来，也不是 0.3</vk-callout>
+<vk-callout mode="mark" for="#c@line:2"></vk-callout>
+<vk-callout mode="arrow" from="#a" to="#b" label="next"></vk-callout>
 <vk-callout mode="measure" from="#cells@item:1" to="#cells@item:2" label="+4"></vk-callout>
 ```
 
+- 一个标注就是「一条标记 + 一条连接 + 一句话」：标记画在目标墨迹下面，连接从行尾走到话，
+  话住在页面右侧的注栏里（有注记的页，正文自动让出 480）。
 - 锚点只认四种部件：`#id@line:3`（窗口第 3 行，可写 `3-4`）、`#id@item:2`（第 2 个单元 / 段 / 行）、
   `#id@bit:5`（第 5 位，可写 `4-7`）、`#id@side:left`。
-- 表格的数据行也是 `@item`；内存格 / 位域的当前段也能圈。
-- `mark` 标出的每个词都是一个 `@item`：`#c@item:2` 圈第 2 个标出的词，note 也能指到词上。
+- 表格的数据行也是 `@item`；内存格 / 位域的当前段也能划。
+- `mark` 标出的每个词都是一个 `@item`：`#c@item:2` 是第 2 个标出的词。
 - 写错 / 指空会进 JSON、在图上标红；不会静默。
-- 圈选是 8px 结构线、圆角、无填充；焦点蓝只给 `current`；note 是 64px 票，clamp 到正文安全区。
-- `side` / `shape` / `gap` 不是作者属性：位置和线形由库选。
+- 标注一律 focus 色（钴蓝），和 `current` 同一个意思：「正在看这里」。一帧只标注一处。
+- `mode` / `side` / `shape` / `gap` 不是作者属性：形态和位置由库选。
 
 ## 十、手机尺度
 

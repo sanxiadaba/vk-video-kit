@@ -1,8 +1,8 @@
 /* ============================================================================
    v25 · 标注
    ----------------------------------------------------------------------------
-   不改布局：绝对定位覆盖整帧，只画线、圈、气泡、量度。
-   标注线一律 ink-2（纯黑只留给文字）；圈/括号/引线/箭头同档 8px。
+   不改布局：绝对定位覆盖整帧，只画标记条、连接件、量度。
+   标注只有一种颜色（focus）：它表示「正在看这里」。文字仍是墨色。
    ========================================================================== */
 
 [data-vk='callout'] {
@@ -19,29 +19,17 @@
   overflow: visible;
 }
 
-/* 圈：贴代码文字，ink-2，不再比卡片重三档。 */
-.vk-co-ring {
-  fill: none;
-  stroke: var(--vk-ink-2);
-  stroke-width: var(--vk-ann-ring);
-  stroke-linejoin: round;
-}
-
-/* 词的落点：下括号 */
-.vk-co-bracket {
-  fill: none;
-  stroke: var(--vk-ink-2);
-  stroke-width: var(--vk-ann-bracket);
-  stroke-linecap: round;
-  stroke-linejoin: round;
+/* 标记：目标墨迹下面的一条，方端，厚度/间距由 ANN 给。 */
+.vk-co-bar {
+  fill: var(--vk-focus);
 }
 
 .vk-co-line,
 .vk-co-lead {
   fill: none;
-  stroke: var(--vk-ink-2);
+  stroke: var(--vk-focus);
   stroke-width: var(--vk-conn-shaft);
-  stroke-linecap: round;
+  stroke-linecap: butt;
   stroke-linejoin: round;
 }
 .vk-co-lead {
@@ -49,32 +37,36 @@
 }
 
 .vk-co-head {
-  fill: var(--vk-ink-2);
+  fill: var(--vk-focus);
 }
 
 .vk-co-dot {
-  fill: var(--vk-ink-2);
+  fill: var(--vk-focus);
 }
 
-/* 连接件上的短标签：不是卡片，是压在线上的一行字，纸色底把线打断。 */
+/* 连接件上的短标签：压在线上的一行字，纸色底把线打断。 */
 .vk-co-label {
   position: absolute;
-  padding: 0 10px;
+  padding: 0 12px;
   background: var(--vk-paper);
-  color: var(--vk-ink-1);
-  font-family: var(--vk-font-mono);
+  color: var(--vk-ink-2);
+  font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
-  line-height: 1.5;
+  font-weight: var(--vk-w-medium);
+  line-height: 1.2;
   white-space: nowrap;
 }
 
-/* 注记的文字：纯文字、纸色底做遮罩，不加框。 */
+/* 标注的一句话：卡片外，与标记同高；纯文字，不加框。 */
 .vk-co-note {
   position: absolute;
-  max-width: 460px;
-  padding: 4px 8px;
+  max-width: 512px;
+  padding: 8px 0;
   background: var(--vk-paper);
   color: var(--vk-ink-1);
+  font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-body);
-  line-height: 1.25;
+  font-weight: var(--vk-w-bold);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
 }
