@@ -62,7 +62,7 @@ const BUILDERS = {
   'vk-text': (n, ctx) => buildText(n, ctx),
   'vk-card': (n) => buildCard(n),
   'vk-flow': (n) => buildFlow(n),
-  'vk-img': (n, ctx) => buildImg(n, ctx.file),
+  'vk-img': (n, ctx) => buildImg(n, ctx),
   'vk-page': (n) => buildPage(n),
 };
 

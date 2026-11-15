@@ -62,14 +62,19 @@ export function buildPage(node) {
   node.childNodes = [raw(stage)];
 }
 
-export function buildImg(node, file) {
+export function buildImg(node, ctx) {
   const src = attrOf(node, 'src');
   if (!src) return;
   const alt = attrOf(node, 'alt') || '';
   const position = attrOf(node, 'position') || '50% 50%';
   const ratio = attrOf(node, 'ratio');
-  let href = src;
-  if (!/^[a-z]+:|^\/\//i.test(src)) href = pathToFileURL(path.resolve(path.dirname(path.resolve(file)), src)).href;
+  const remote = /^[a-z]+:|^\/\//i.test(src);
+  if (!remote && !ctx.resolveAsset(src)) {
+    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `图片不存在：${src}`, fix: '路径相对页面文件解析；写错了就在图上画一块占位，不会出破图标' });
+    node.childNodes = [raw(`<div class="vk-missing">图片不存在：${esc(src)}</div>`)];
+    return;
+  }
+  const href = remote ? src : pathToFileURL(path.resolve(path.dirname(path.resolve(ctx.file)), src)).href;
   if (ratio) setStyle(node, { 'aspect-ratio': ratio });
   node.childNodes = [raw(`<img class="vk-img-el" src="${esc(href)}" alt="${esc(alt)}" style="object-position:${esc(position)}">`)];
 }

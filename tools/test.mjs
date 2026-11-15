@@ -90,6 +90,7 @@ const CASES = [
   ['VALUE_LINES', CODE('current="x"')],
   ['VALUE_SELECTOR', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t@foo:1"></vk-callout></vk-page>'],
   ['VALUE_RATIO', '<vk-page><vk-img src="x" ratio="16:9"></vk-img></vk-page>'],
+  ['SRC_MISSING', '<vk-page><vk-img src="nope.png" alt="缺图"></vk-img></vk-page>'],
   ['ATTR_REQUIRED', '<vk-page><vk-callout mode="ring"></vk-callout></vk-page>'],
   ['ATTR_REQUIRED', '<vk-page><vk-code><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
   ['ATTR_IGNORED', '<vk-page><vk-text id="t">x</vk-text><vk-callout mode="ring" for="#t" label="nope"></vk-callout></vk-page>'],
