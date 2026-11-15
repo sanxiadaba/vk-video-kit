@@ -247,7 +247,7 @@ export const TAGS = {
         addr: text('content', '起始地址，如 "0x1000"'),
         stride: int(1, 16, 1, 'content', '每格占几字节（int 数组写 4）'),
         cols: int(1, 8, 4, 'layout', '每行几格'),
-      }, items({ value: text('content', '值'), label: text('content', '标签'), ptr: text('content', '指针名，如 "lo"（空格分隔多个）'), was: text('content', '旧值（显示「旧 → 新」）'), tone: ITEM_TONE, current: currentItem() }, '<li value="61" label="s[0]" ptr="lo">；地址自动算。'),
+      }, items({ value: text('content', '值'), label: text('content', '标签'), ptr: text('content', '指针名，如 "lo"（一个词）'), was: text('content', '旧值（显示「旧 → 新」）'), tone: ITEM_TONE, current: currentItem() }, '<li value="61" label="s[0]" ptr="lo">；地址自动算。'),
         '<vk-board as="cells" addr="0x1000" stride="4"><li value="1" label="a[0]"></li><li value="2" label="a[1]" current></li></vk-board>'),
     },
   },
