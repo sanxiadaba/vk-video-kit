@@ -22,6 +22,7 @@ export const CONN = {
   shaft: 12,
   shaftMin: 20,
   minGap: 64,
+  arrowGap: 88,
   sibling: 48,
 };
 
@@ -32,6 +33,7 @@ export const ANN = {
   ring: 8,
   ringR: 24,
   bracket: 8,
+  lead: 8,
   tick: 10,
   bracketGap: 4,
   pin: 56,

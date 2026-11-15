@@ -129,40 +129,25 @@ function pointsFor(a, b, fs, ts) {
   const tip = targetTip(b, ts);
   const u = targetUnit(ts);
   const base = { x: tip.x - u.x * HEAD, y: tip.y - u.y * HEAD };
-  let points;
-  const horiz = (fs === 'right' && ts === 'left') || (fs === 'left' && ts === 'right');
-  const vert = (fs === 'bottom' && ts === 'top') || (fs === 'top' && ts === 'bottom');
-
-  if (horiz) {
-    if (Math.abs(start.y - base.y) < 2) points = [start, base];
-    else if (Math.abs(start.y - base.y) <= 48) points = [start, base];
-    else {
+  const hFrom = fs === 'left' || fs === 'right';
+  const hTo = ts === 'left' || ts === 'right';
+  const pts = [start];
+  /* 只走横竖：两轴都不重合时最多两次拐弯，绝不画斜线。 */
+  if (hFrom && hTo) {
+    if (Math.abs(start.y - base.y) >= 2) {
       const mid = (start.x + base.x) / 2;
-      points = [start, { x: mid, y: start.y }, { x: mid, y: base.y }, base];
+      pts.push({ x: mid, y: start.y }, { x: mid, y: base.y });
     }
-  } else if (vert) {
-    if (Math.abs(start.x - base.x) < 2) points = [start, base];
-    else {
-      const mid = (start.y + base.y) / 2;
-      points = [start, { x: start.x, y: mid }, { x: base.x, y: mid }, base];
-    }
-  } else if (fs === 'top' && ts === 'top') {
-    const routeY = Math.min(a.top, b.top) - GAP - 32;
-    points = [start, { x: start.x, y: routeY }, { x: base.x, y: routeY }, base];
-  } else if (fs === 'bottom' && ts === 'bottom') {
-    const routeY = Math.max(a.bottom, b.bottom) + GAP + 32;
-    points = [start, { x: start.x, y: routeY }, { x: base.x, y: routeY }, base];
-  } else if (fs === 'left' && ts === 'left') {
-    const routeX = Math.min(a.left, b.left) - GAP - 32;
-    points = [start, { x: routeX, y: start.y }, { x: routeX, y: base.y }, base];
-  } else if (fs === 'right' && ts === 'right') {
-    const routeX = Math.max(a.right, b.right) + GAP + 32;
-    points = [start, { x: routeX, y: start.y }, { x: routeX, y: base.y }, base];
-  } else if (fs === 'right' || fs === 'left') {
-    points = [start, { x: base.x, y: start.y }, base];
-  } else {
-    points = [start, { x: start.x, y: base.y }, base];
+  } else if (hFrom && !hTo) {
+    if (Math.abs(start.y - base.y) >= 2) pts.push({ x: base.x, y: start.y });
+  } else if (!hFrom && hTo) {
+    if (Math.abs(start.x - base.x) >= 2) pts.push({ x: start.x, y: base.y });
+  } else if (Math.abs(start.x - base.x) >= 2) {
+    const mid = (start.y + base.y) / 2;
+    pts.push({ x: start.x, y: mid }, { x: base.x, y: mid });
   }
+  pts.push(base);
+  const points = pts.filter((p, i) => i === 0 || Math.hypot(p.x - pts[i - 1].x, p.y - pts[i - 1].y) > 0.5);
   return { points, tip, base, u };
 }
 
@@ -239,8 +224,8 @@ export class VkCallout extends VkElement {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
       const r = rel(t.rect);
-      /* 行盒本身已包含行高，圈线贴着走；圈物件时才外扩 12。 */
-      const pad = t.el.matches('.vk-line') ? 0 : 12;
+      /* 锚点已经是墨迹框：圈统一外扩 12，不再按行盒贴边。 */
+      const pad = 12;
       this._svg.appendChild(mk('rect', { class: 'vk-co-ring', x: r.left - pad, y: r.top - pad, width: r.width + pad * 2, height: r.height + pad * 2, rx: 24 }));
       return;
     }
@@ -289,7 +274,7 @@ export class VkCallout extends VkElement {
         const runRight = textRight(lineEl) - origin.left;
         /* 整行标注：标签挂在环外（行盒右侧）；词标注：标签贴在这一行文字右侧。 */
         const isLineTarget = t.el.matches('.vk-line');
-        const baseRight = isLineTarget ? lr.right : runRight;
+        const baseRight = isLineTarget ? runRight + ANN.ring : runRight;
         const nx = baseRight + ANN.standoff;
         const ny = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
         if (nx + bw <= origin.width - 8) {
@@ -307,8 +292,8 @@ export class VkCallout extends VkElement {
                 d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}`,
               })
             );
-            const bendX = Math.min(nx, runRight + 24);
-            this._svg.appendChild(mk('path', { class: 'vk-co-lead', d: `M ${x2} ${by} L ${bendX} ${by} L ${nx} ${cy(lr)}` }));
+            const bendX = Math.min(nx - 24, runRight + 24);
+            this._svg.appendChild(mk('path', { class: 'vk-co-lead', d: `M ${x2} ${by} L ${bendX} ${by} L ${bendX} ${cy(lr)} L ${nx} ${cy(lr)}` }));
           } else {
             const px = baseRight;
             const py = cy(lr);
@@ -413,32 +398,16 @@ export class VkCallout extends VkElement {
       return;
     }
 
-    /* arrow */
+    /* arrow：两端都取墨迹框；方向由显式 side 或几何决定；线只有横竖两段。 */
     const from = resolveAnchor(page, this.getAttribute('from'), this);
     const to = resolveAnchor(page, this.getAttribute('to'), this);
     if (!from || !to) return missing();
-    const lineAnchor = from.el.matches('.vk-line') ? rel(from.el.getBoundingClientRect()) : null;
-    const fr = lineAnchor
-      ? (() => {
-          const cb = rel((from.el.closest(COMPONENT) || from.el).getBoundingClientRect());
-          return { ...cb, top: lineAnchor.top, bottom: lineAnchor.bottom };
-        })()
-      : boxOf(from, true);
-    const tr = boxOf(to, true);
-    const lineFrom = !!lineAnchor;
-    const [fs, ts] = from.side && to.side
-      ? [from.side, to.side]
-      : lineFrom
-        ? to.rect.top > from.rect.bottom
-          ? ['bottom', 'top']
-          : to.rect.left >= from.rect.right
-            ? ['right', 'left']
-            : ['left', 'right']
-        : autoSides(fr, tr);
+    const fr = rel(from.rect);
+    const tr = rel(to.rect);
+    const [fs, ts] = from.side && to.side ? [from.side, to.side] : autoSides(fr, tr);
     const { points, tip, u } = pointsFor(fr, tr, fs, ts);
     this._svg.appendChild(mk('path', { class: 'vk-co-line', d: roundedPath(points) }));
     this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(tip, u) }));
-    this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: points[0].x, cy: points[0].y, r: 6 }));
 
     const label = this.getAttribute('label');
     if (label) {
@@ -446,44 +415,29 @@ export class VkCallout extends VkElement {
       this._label.textContent = label;
       const lw = this._label.offsetWidth;
       const lh = this._label.offsetHeight;
-      const seg = longestSegment(points) || { a: points[0], b: points[points.length - 1] };
-      const horizontal = Math.abs(seg.b.x - seg.a.x) >= Math.abs(seg.b.y - seg.a.y);
-      const mx = (seg.a.x + seg.b.x) / 2;
-      const my = (seg.a.y + seg.b.y) / 2;
-      const boxes = [...page.querySelectorAll(COMPONENT)].map((el) => rel(el.getBoundingClientRect()));
-      const score = (x, y) => {
-        let out = Math.max(0, 8 - x) + Math.max(0, x + lw - (origin.width - 8)) + Math.max(0, 8 - y) + Math.max(0, y + lh - (origin.height - 8));
-        for (const b of boxes) {
-          const w = Math.min(x + lw, b.right) - Math.max(x, b.left);
-          const h = Math.min(y + lh, b.bottom) - Math.max(y, b.top);
-          if (w > 0 && h > 0) out += (w * h) / 400;
-        }
-        return out;
-      };
-      const cands = horizontal
-        ? [
-            [mx - lw / 2, my - lh - 12],
-            [mx - lw / 2, my + 12],
-            [tip.x + 12, my - lh - 12],
-            [tip.x - lw - 12, my - lh - 12],
-            [tip.x + 12, my + 12],
-            [tip.x - lw - 12, my + 12],
-          ]
-        : [
-            [mx + 12, my - lh / 2],
-            [mx - lw - 12, my - lh / 2],
-            [mx + 12, tip.y - lh - 12],
-            [mx + 12, tip.y + 12],
-          ];
-      let best = null;
-      for (const [x, y] of cands) {
-        const cx2 = clamp(x, 8, origin.width - lw - 8);
-        const cy2 = clamp(y, 8, origin.height - lh - 8);
-        const k = score(cx2, cy2);
-        if (!best || k < best.k) best = { x: cx2, y: cy2, k };
+      const xs = points.map((p) => p.x);
+      const ys = points.map((p) => p.y);
+      const minX = Math.min(...xs);
+      const maxX = Math.max(...xs);
+      const minY = Math.min(...ys);
+      const maxY = Math.max(...ys);
+      const seg = longestSegment(points);
+      let lx;
+      let ly;
+      if (seg && seg.len >= lw + 24 && Math.abs(seg.b.y - seg.a.y) < 2) {
+        /* 线够长：字直接压在横线上，线从字后面穿过。 */
+        lx = (seg.a.x + seg.b.x) / 2 - lw / 2;
+        ly = seg.a.y - lh / 2;
+      } else if (seg && seg.len >= lh + 24 && Math.abs(seg.b.x - seg.a.x) < 2) {
+        lx = seg.a.x - lw / 2;
+        ly = (seg.a.y + seg.b.y) / 2 - lh / 2;
+      } else {
+        lx = (minX + maxX) / 2 - lw / 2;
+        ly = minY - lh - 10;
+        if (ly < 8) ly = maxY + 10;
       }
-      this._label.style.left = `${best.x}px`;
-      this._label.style.top = `${best.y}px`;
+      this._label.style.left = `${clamp(lx, 8, origin.width - lw - 8)}px`;
+      this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
     }
   }
 }

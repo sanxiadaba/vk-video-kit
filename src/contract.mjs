@@ -142,12 +142,15 @@ export function checkValue(file, node, tag, name, spec, value, errors) {
       const id = value.slice(1, at);
       if (!id) bad(CODES.VALUE_SELECTOR, '缺少 id', '#id@part:arg');
       else {
-        const [part, ...args] = value.slice(at + 1).split(':');
-        const arg = (args[0] || '').trim();
-        if (!ANCHOR_PARTS.includes(part)) bad(CODES.VALUE_SELECTOR, `里的 @${part} 不认识`, `可用：${ANCHOR_PARTS.join(' / ')}`);
-        else if (part === 'side' && !['top', 'right', 'bottom', 'left'].includes(arg))
-          bad(CODES.VALUE_SELECTOR, '里的 side 不认识', '可用：top / right / bottom / left');
-        else if (part !== 'side' && !parseLines(arg)) bad(CODES.VALUE_SELECTOR, `里的 ${part}:… 要一个 1 起的行段`, '如 #c@line:3 / #c@line:3-4 / #buf@item:2');
+        /* 可以多段：#c@line:2@side:right。 */
+        for (const piece of value.slice(at + 1).split('@')) {
+          const i = piece.indexOf(':');
+          const part = (i < 0 ? piece : piece.slice(0, i)).trim();
+          const arg = (i < 0 ? '' : piece.slice(i + 1)).trim();
+          if (!ANCHOR_PARTS.includes(part)) bad(CODES.VALUE_SELECTOR, `里的 @${part} 不认识`, `可用：${ANCHOR_PARTS.join(' / ')}`);
+          else if (part === 'side' && !['top', 'right', 'bottom', 'left'].includes(arg)) bad(CODES.VALUE_SELECTOR, '里的 side 不认识', '可用：top / right / bottom / left');
+          else if (part !== 'side' && !parseLines(arg)) bad(CODES.VALUE_SELECTOR, `里的 ${part}:… 要一个 1 起的行段`, '如 #c@line:3 / #c@line:3-4 / #buf@item:2');
+        }
       }
     }
   }

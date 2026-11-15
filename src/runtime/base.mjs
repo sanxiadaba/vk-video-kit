@@ -119,38 +119,61 @@ const inRange = (n, args) => {
 const pick = (host, attr, args) => {
   const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));
   if (!els.length) return null;
-  /* 词（mark）按墨迹取框：尖端落在字上，不落在行盒的空白里。 */
-  const rectOf = (el) => (el.matches('.vk-mark') ? inkRect(el) : el.getBoundingClientRect());
-  return { el: els[0], rect: union(els.map(rectOf)), side: null };
+  /* 行与词都按墨迹取框：锚点是「那几个字」，不是整栏行盒。 */
+  const rectOf = (el) => (el.matches('.vk-line, .vk-mark') ? inkRect(el) : el.getBoundingClientRect());
+  return { el: els[0], rect: union(els.map(rectOf)), side: null, box: els[0].getBoundingClientRect() };
 };
 
 export function resolveAnchor(root, expr, owner) {
   const rawExpr = String(expr ?? '').trim();
   if (!rawExpr) return null;
-  if (rawExpr.startsWith('#') && rawExpr.includes('@')) {
-    const at = rawExpr.indexOf('@');
+  const at = rawExpr.indexOf('@');
+  if (rawExpr.startsWith('#') && at > 0) {
     const host = safeQuery(root, rawExpr.slice(0, at), owner);
     if (!host) return null;
-    const [part, ...args] = rawExpr.slice(at + 1).split(':');
-    const arg = (args[0] || '').trim();
-    if (part === 'line') return pick(host, 'data-vk-line', arg);
-    if (part === 'item') return pick(host, 'data-vk-item', arg);
-    if (part === 'bit') return pick(host, 'data-vk-bit', arg);
-    if (part === 'side') {
-      const r = host.getBoundingClientRect();
-      if (!['top', 'right', 'bottom', 'left'].includes(arg)) return null;
-      const rect = {
-        left: arg === 'left' ? r.left : arg === 'right' ? r.right : r.left + r.width / 2,
-        top: arg === 'top' ? r.top : arg === 'bottom' ? r.bottom : r.top + r.height / 2,
-        width: 0,
-        height: 0,
-      };
-      return { el: host, rect, side: arg, box: r };
+    /* 一个锚点可以带多段：#c@line:2@side:right。 */
+    const parts = rawExpr
+      .slice(at + 1)
+      .split('@')
+      .map((p) => {
+        const i = p.indexOf(':');
+        return i < 0 ? { name: p.trim(), arg: '' } : { name: p.slice(0, i).trim(), arg: p.slice(i + 1).trim() };
+      });
+    let target = { el: host, rect: host.getBoundingClientRect(), side: null, box: host.getBoundingClientRect() };
+    let lineEl = null;
+    let side = null;
+    for (const { name, arg } of parts) {
+      if (name === 'line' || name === 'item' || name === 'bit') {
+        const attr = name === 'line' ? 'data-vk-line' : name === 'item' ? 'data-vk-item' : 'data-vk-bit';
+        const hit = pick(host, attr, arg);
+        if (!hit) return null;
+        target = hit;
+        if (name === 'line') lineEl = hit.el;
+      } else if (name === 'side') {
+        if (!['top', 'right', 'bottom', 'left'].includes(arg)) return null;
+        side = arg;
+      } else {
+        return null;
+      }
     }
-    return null;
+    /* 行 + 边：意思是「这个件在这一行高度上的那条边」，箭头从件的外沿出发。 */
+    if (side && lineEl) {
+      const comp = host.getBoundingClientRect();
+      const lr = inkRect(lineEl);
+      const cx = (lr.left + lr.right) / 2;
+      const cy = (lr.top + lr.bottom) / 2;
+      const rect =
+        side === 'left' || side === 'right'
+          ? { left: comp.left, right: comp.right, top: cy, bottom: cy, width: comp.width, height: 0 }
+          : { left: cx, right: cx, top: comp.top, bottom: comp.bottom, width: 0, height: comp.height };
+      target = { el: lineEl, rect, side, box: comp };
+    } else if (side) {
+      target = { ...target, side };
+    }
+    return target;
   }
   const el = safeQuery(root, rawExpr, owner);
-  return el ? { el, rect: el.getBoundingClientRect(), side: null } : null;
+  return el ? { el, rect: el.getBoundingClientRect(), side: null, box: el.getBoundingClientRect() } : null;
 }
 
 /* ---------------------------------------------------------------- 布局循环 */

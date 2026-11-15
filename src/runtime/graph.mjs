@@ -134,14 +134,14 @@ export class VkGraph extends VkElement {
       if (dir === 'vertical') {
         /* 竖链的行距由可用高度算出来：宁可溢出报错，也不把节点压在一起。 */
         const availH = bodyH ? bodyH - 4 : 0;
-        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(CONN.minGap, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : CONN.minGap) : 0;
+        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(CONN.arrowGap, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : CONN.minGap) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: 0, y: i * (maxH + gapY) + (maxH - sizes[i].h) / 2, w: sizes[i].w, h: sizes[i].h };
         });
         viewW = maxW + pad * 2;
         H = nodes.length * maxH + (nodes.length - 1) * gapY + pad * 2;
       } else {
-        const gapX = nodes.length > 1 ? Math.max(CONN.minGap, Math.min(160, (viewW - nodes.length * maxW) / (nodes.length - 1))) : 0;
+        const gapX = nodes.length > 1 ? Math.max(CONN.arrowGap, Math.min(160, (viewW - nodes.length * maxW) / (nodes.length - 1))) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: i * (maxW + gapX) + (maxW - sizes[i].w) / 2, y: 0, w: sizes[i].w, h: sizes[i].h };
         });
@@ -166,7 +166,7 @@ export class VkGraph extends VkElement {
       const maxDepth = Math.max(...depth, 0);
       const lanes = nodes.map((n) => Number(n.dataset.lane) || 0);
       const maxLane = Math.max(...lanes, 0);
-      const colGap = maxDepth > 0 ? Math.max(CONN.minGap, (viewW - maxW - pad * 2) / maxDepth) : 0;
+      const colGap = maxDepth > 0 ? Math.max(CONN.arrowGap, (viewW - maxW - pad * 2) / maxDepth) : 0;
       const laneGap = maxLane > 0 ? (H - maxH - pad * 2) / maxLane : 0;
       nodes.forEach((_, i) => {
         const d = depth[i] || 0;
@@ -328,29 +328,10 @@ export class VkGraph extends VkElement {
 
       if (l.label) {
         const from = points[0];
-        const dx = end.x - from.x;
-        const dy = end.y - from.y;
-        const vertical = Math.abs(dx) < Math.abs(dy);
-        let lx;
-        let ly;
-        let anchor;
-        if (vertical) {
-          lx = Math.max(from.x, end.x) + 28;
-          ly = (from.y + end.y) / 2;
-          anchor = 'start';
-        } else {
-          /* 斜线也按法线外推，并强制推到上方：线不被字打断，字不压箭头。 */
-          const len = Math.hypot(dx, dy) || 1;
-          let nx = -dy / len;
-          let ny = dx / len;
-          if (ny > 0) {
-            nx = -nx;
-            ny = -ny;
-          }
-          lx = (from.x + end.x) / 2 + nx * 52;
-          ly = (from.y + end.y) / 2 + ny * 52;
-          anchor = 'middle';
-        }
+        /* 标签写在线上：纸色 halo 把线打断，不再飘到半空。 */
+        const lx = (from.x + end.x) / 2;
+        const ly = (from.y + end.y) / 2;
+        const anchor = 'middle';
         const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });
         t.textContent = l.label;
         group.appendChild(t);

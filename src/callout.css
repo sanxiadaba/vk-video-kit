@@ -38,33 +38,32 @@
 .vk-co-line,
 .vk-co-lead {
   fill: none;
-  stroke: var(--vk-tone, var(--vk-info));
+  stroke: var(--vk-ink-1);
   stroke-width: var(--vk-conn-shaft);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 .vk-co-lead {
-  stroke-width: var(--vk-line-w-hair);
+  stroke-width: var(--vk-ann-lead);
 }
 
 .vk-co-head {
-  fill: var(--vk-tone, var(--vk-info));
+  fill: var(--vk-ink-1);
 }
 
 .vk-co-dot {
-  fill: var(--vk-tone, var(--vk-info));
+  fill: var(--vk-ink-1);
 }
 
+/* 连接件上的短标签：不是卡片，是写在线上的一行字，纸色 halo 把线打断。 */
 .vk-co-label {
   position: absolute;
-  padding: var(--vk-space-2) var(--vk-space-4);
-  border-radius: var(--vk-radius-sm);
-  border: var(--vk-line-w-hair) solid var(--vk-ink-1);
+  padding: 0 10px;
   background: var(--vk-paper);
   color: var(--vk-ink-1);
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
-  line-height: 1.2;
+  font-size: var(--vk-fs-caption);
+  line-height: 1.5;
   white-space: nowrap;
 }
 
