@@ -90,10 +90,21 @@
   background: var(--vk-tone);
 }
 
+/* 目录的当前项：竖条贴在这一行缩进处，不是面板左缘——否则它离那一行 100px。 */
 .vk-node[current] > .vk-nrow {
   background: none;
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
   font-weight: var(--vk-w-medium);
+}
+
+.vk-node[current] > .vk-nrow::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-depth, 1) * 40px);
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-strong);
+  background: var(--vk-focus);
+  border-radius: 2px;
 }
 
 .vk-node[current] > .vk-nrow .vk-ic {

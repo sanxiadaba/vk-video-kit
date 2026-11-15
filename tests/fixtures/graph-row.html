@@ -1,9 +1,12 @@
 <vk-page id="graph-row">
-  <vk-head kicker="链表" counter="16" lede="前一个和后一个，各改一处。">插入 13，改两个指针。</vk-head>
+  <vk-head kicker="链表" counter="16" lede="7 的后一个、13 的后一个，各改一处。">插入 13，改两个指针。</vk-head>
   <vk-graph as="row">
     <li id="a">head</li>
-    <li id="b" after="a">7</li>
-    <li id="c" after="b" current>13</li>
-    <li id="d" after="c">null</li>
+    <li id="b">7</li>
+    <li id="c" current>13</li>
+    <li id="d">null</li>
+    <li from="a" to="b"></li>
+    <li from="b" to="c" current></li>
+    <li from="c" to="d" current></li>
   </vk-graph>
 </vk-page>

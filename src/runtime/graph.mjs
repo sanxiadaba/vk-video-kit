@@ -272,6 +272,7 @@ export class VkGraph extends VkElement {
     svg.setAttribute('width', viewW);
     svg.setAttribute('height', H);
     const group = mk('g');
+    svg.appendChild(group);
     for (const l of links) {
       const a = pos[l.i];
       const b = pos[l.j];
@@ -311,7 +312,8 @@ export class VkGraph extends VkElement {
         points = [{ x: a.x + a.w, y: aCy }, { x: b.x, y: bCy }];
       }
 
-      /* 尖端统一留 2px 净空；树没有箭头，终点直接落在节点边上。 */
+      /* 尖端统一留 2px 净空；树没有箭头，终点直接落在节点边上。
+         短边（< 88）画不出一个像样的头，退化成「线 + 点」。 */
       const tipBase = points[points.length - 2];
       const end = points[points.length - 1];
       const ddx = end.x - tipBase.x;
@@ -321,17 +323,23 @@ export class VkGraph extends VkElement {
       const uy = ddy / dlen;
       const tip = { x: end.x - ux * CONN.tip, y: end.y - uy * CONN.tip };
       const base = { x: tip.x - ux * CONN.head, y: tip.y - uy * CONN.head };
-      points[points.length - 1] = layout === 'tree' ? end : dlen < CONN.head + CONN.shaft ? tip : base;
+      const tight = dlen < CONN.head + CONN.tip + 34;
+      points[points.length - 1] = layout === 'tree' ? end : tight ? tip : base;
 
       group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, CONN.corner), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
       if (layout !== 'tree') {
-        group.appendChild(mk('polygon', { class: 'vk-edge-head', points: headPolygon(tip, ux, uy), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+        if (tight) {
+          group.appendChild(mk('circle', { class: 'vk-edge-dot', cx: tip.x, cy: tip.y, r: CONN.shaft * 1.25, 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+        } else {
+          group.appendChild(mk('polygon', { class: 'vk-edge-head', points: headPolygon(tip, ux, uy), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
+        }
       }
 
       if (l.label) {
         const from = points[0];
-        /* 锚在实际画出的线段中点上；外推 = 字半高 + 头半宽 + 8，别用裸 32。 */
-        const segEnd = layout === 'tree' || dlen < CONN.head + CONN.shaft ? end : base;
+        /* 锚在实际画出的线段中点上。横边：字在杆上方；竖边：字在杆右侧，
+           用 start/end 锚点，不靠量字宽，也就永远不会压在杆上。 */
+        const segEnd = layout === 'tree' || tight ? end : base;
         const dx = segEnd.x - from.x;
         const dy = segEnd.y - from.y;
         const len = Math.hypot(dx, dy) || 1;
@@ -341,16 +349,25 @@ export class VkGraph extends VkElement {
           nx = -nx;
           ny = -ny;
         }
-        const off = 34 + CONN.headW / 2 + 8;
-        const lx = clamp((from.x + segEnd.x) / 2 + nx * off, 40, viewW - 40);
-        const ly = clamp((from.y + segEnd.y) / 2 + ny * off, 40, H - 40);
-        const anchor = 'middle';
-        const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });
+        const midX = (from.x + segEnd.x) / 2;
+        const midY = (from.y + segEnd.y) / 2;
+        const vertical = Math.abs(nx) > Math.abs(ny);
+        const t = mk('text', {
+          class: 'vk-edge-label',
+          x: 0,
+          y: 0,
+          'text-anchor': vertical ? (nx > 0 ? 'start' : 'end') : 'middle',
+          'dominant-baseline': 'middle',
+          style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)',
+        });
         t.textContent = l.label;
         group.appendChild(t);
+        const lx = clamp(vertical ? midX + (nx > 0 ? 18 : -18) : midX, 40, viewW - 40);
+        const ly = clamp(vertical ? midY : midY + (ny > 0 ? 52 : -52), 40, H - 40);
+        t.setAttribute('x', lx);
+        t.setAttribute('y', ly);
       }
     }
-    svg.appendChild(group);
   }
 }
 

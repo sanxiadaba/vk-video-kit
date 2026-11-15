@@ -22,6 +22,42 @@ const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
 const COMPONENT = 'vk-code, vk-board, vk-graph, vk-dir, vk-math, vk-seq, vk-card, vk-img, vk-text';
 
+/* 词的边界：一个 mark 常常只是 token 的一截（a[i] 里的 i）。
+   框要套得住整个 token，才不吃进隔壁的括号。 */
+const TOKEN_CH = /[A-Za-z0-9_[\]().;]/;
+function locate(root, offset) {
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+  let pos = 0;
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const len = n.textContent.length;
+    if (pos + len >= offset) return { node: n, offset: offset - pos };
+    pos += len;
+  }
+  return null;
+}
+/** 词的边界：mark 常常只是 token 的一截（a[i] 里的 i），框要套住整个 token。 */
+function tokenRect(el) {
+  const root = el.closest('.vk-lc') || el.parentNode;
+  if (!root) return el.getBoundingClientRect();
+  const before = document.createRange();
+  before.selectNodeContents(root);
+  before.setEndBefore(el);
+  const start = before.toString().length;
+  const full = root.textContent || '';
+  let a = start;
+  let b = start + (el.textContent || '').length;
+  while (a > 0 && TOKEN_CH.test(full[a - 1])) a--;
+  while (b < full.length && TOKEN_CH.test(full[b])) b++;
+  const s = locate(root, a);
+  const e = locate(root, b);
+  if (!s || !e) return el.getBoundingClientRect();
+  const range = document.createRange();
+  range.setStart(s.node, s.offset);
+  range.setEnd(e.node, e.offset);
+  const r = range.getBoundingClientRect();
+  return r.width || r.height ? r : el.getBoundingClientRect();
+}
+
 /** 圆角折线：每个拐点用 16px 二次曲线收一下。 */
 function roundedPath(points, r = ARROW.corner) {
   if (points.length < 2) return '';
@@ -129,19 +165,55 @@ export class VkCallout extends VkElement {
     }
   }
 
-  /** 标记：目标墨迹下方一条条。词一条，行一条，行段每行一条。 */
-  markBars(anchor, rel) {
-    const rects = (anchor.rects && anchor.rects.length ? anchor.rects : [anchor.rect]).map(rel);
-    const bars = rects.map((r) => ({
-      left: r.left - ANN.over,
-      right: r.right + ANN.over,
-      y: r.bottom + ANN.barGap + ANN.bar / 2,
-      cy: (r.top + r.bottom) / 2,
-    }));
-    for (const b of bars) {
-      this._svg.appendChild(mk('rect', { class: 'vk-co-bar', x: b.left, y: b.y - ANN.bar / 2, width: b.right - b.left, height: ANN.bar }));
+  /** 标记的形状跟着目标走：词套一个框，行划一道，行段用右括号，块用框。 */
+  drawMark(t, rel) {
+    const isWord = t.el.matches('.vk-mark');
+    const isLine = t.el.matches('.vk-line');
+    const boxOf = (r) => ({ left: r.left - ANN.boxPad, top: r.top - ANN.boxPadY, right: r.right + ANN.boxPad, bottom: r.bottom + ANN.boxPadY });
+
+    /* 词：套住整个 token 的框。闭合才说得清「这一个」，也才不会吃进隔壁括号。 */
+    if (isWord) {
+      const box = boxOf(rel(tokenRect(t.el)));
+      this._svg.appendChild(
+        mk('rect', { class: 'vk-co-box', x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top, rx: ANN.boxR })
+      );
+      return { cy: (box.top + box.bottom) / 2, right: box.right, left: box.left, top: box.top, bottom: box.bottom };
     }
-    return bars;
+
+    const rects = (t.rects && t.rects.length ? t.rects : [t.rect]).map(rel);
+
+    /* 行段：右侧一只括号，把 N 行箍成一块——两行不是两次单行标注。 */
+    if (isLine && rects.length > 1) {
+      const right = Math.max(...rects.map((r) => r.right));
+      const top = rects[0].top - ANN.barGap;
+      const bottom = rects[rects.length - 1].bottom + ANN.barGap;
+      const x = right + ANN.bracket;
+      const arm = ANN.arm + ANN.over;
+      this._svg.appendChild(mk('path', { class: 'vk-co-bracket', d: `M ${x - arm} ${top} L ${x} ${top} L ${x} ${bottom} L ${x - arm} ${bottom}` }));
+      return { cy: (top + bottom) / 2, right: x, left: x - arm, top, bottom };
+    }
+
+    /* 行：墨迹下面一条。 */
+    if (isLine) {
+      const bars = rects.map((r) => ({
+        left: r.left - ANN.over,
+        right: r.right + ANN.over,
+        y: r.bottom + ANN.barGap + ANN.bar / 2,
+        cy: (r.top + r.bottom) / 2,
+      }));
+      for (const b of bars) {
+        this._svg.appendChild(mk('rect', { class: 'vk-co-bar', x: b.left, y: b.y - ANN.bar / 2, width: b.right - b.left, height: ANN.bar }));
+      }
+      const last = bars[bars.length - 1];
+      return { cy: last.cy, right: last.right, left: bars[0].left, top: bars[0].y - ANN.bar / 2, bottom: last.y + ANN.bar / 2 };
+    }
+
+    /* 块：一个框。闭合才说得清「这一块」，开线只能指「这里」。 */
+    const box = boxOf(rects[0]);
+    this._svg.appendChild(
+      mk('rect', { class: 'vk-co-box', x: box.left, y: box.top, width: box.right - box.left, height: box.bottom - box.top, rx: ANN.boxR })
+    );
+    return { cy: (box.top + box.bottom) / 2, right: box.right, left: box.left, top: box.top, bottom: box.bottom };
   }
 
   draw() {
@@ -165,7 +237,7 @@ export class VkCallout extends VkElement {
     if (mode === 'mark' || mode === 'note') {
       const t = resolveAnchor(page, this.getAttribute('for'), this);
       if (!t) return missing();
-      const bars = this.markBars(t, rel);
+      const mark = this.drawMark(t, rel);
       if (mode === 'mark') return;
 
       /* 文字：注栏里的一列。正文已经让出这一列，所以它可以比目标宽得多。 */
@@ -180,17 +252,19 @@ export class VkCallout extends VkElement {
       const safeBottom = Math.min(bodyRect.bottom, origin.height - 24);
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
-      const last = bars[bars.length - 1];
-      /* 箭头走目标的水平中心：文字因此和它指的那一行同高，而不是低半行。 */
-      const lineEl = t.el.matches('.vk-mark') ? t.el.closest('.vk-line') : t.el;
-      const lineR = lineEl ? rel(inkRect(lineEl)) : last;
-      const arrowY = last.cy;
+      const arrowY = mark.cy;
       const gutterLeft = bodyRect.right - ANN.gutter;
+
+      /* 出线口：行从「这一行的末尾」出，词/块/行段从标记自己的右缘出。 */
+      const isLine = t.el.matches('.vk-line');
+      const lineR = isLine ? rel(inkRect(t.el)) : null;
+      const portX = lineR ? Math.max(mark.right, lineR.right + ARROW.clear) : mark.right;
+      const portLeft = lineR ? Math.min(mark.left, lineR.left - ARROW.clear) : mark.left;
 
       let side = 'right';
       let nx = gutterLeft + ANN.standoff;
       let ny = arrowY - bh / 2;
-      if (nx + bw > bodyRect.right || last.right > gutterLeft - 8) {
+      if (nx + bw > bodyRect.right || portX > gutterLeft - 8) {
         side = 'bottom';
         nx = bodyRect.left;
         ny = ob.bottom + ANN.standoff;
@@ -204,28 +278,26 @@ export class VkCallout extends VkElement {
       this._note.style.left = `${nx}px`;
       this._note.style.top = `${ny}px`;
 
-      /* 连接：从标记右端水平到文字左缘，箭头尖落在文字上。 */
+      /* 连接：从出线口水平到文字左缘，箭头尖落在文字上。 */
       let start;
       let tip;
       let u;
       if (side === 'right') {
-        start = { x: Math.max(last.right, lineR.right + ARROW.clear), y: arrowY };
+        start = { x: portX, y: arrowY };
         tip = { x: nx - ARROW.tipGap, y: arrowY };
         u = { x: 1, y: 0 };
       } else if (side === 'left') {
-        start = { x: Math.min(bars[bars.length - 1].left, lineR.left - ARROW.clear), y: arrowY };
+        start = { x: portLeft, y: arrowY };
         tip = { x: nx + bw + ARROW.tipGap, y: arrowY };
         u = { x: -1, y: 0 };
       } else if (side === 'bottom') {
-        const b = last;
-        const sx = clamp(cx({ left: b.left, width: b.right - b.left }), nx + 24, nx + bw - 24);
-        start = { x: sx, y: b.y + ANN.bar / 2 };
+        const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
+        start = { x: sx, y: mark.bottom + 6 };
         tip = { x: sx, y: ny - ARROW.tipGap };
         u = { x: 0, y: 1 };
       } else {
-        const b = bars[0];
-        const sx = clamp(cx({ left: b.left, width: b.right - b.left }), nx + 24, nx + bw - 24);
-        start = { x: sx, y: b.y - ANN.bar / 2 };
+        const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
+        start = { x: sx, y: mark.top - 6 };
         tip = { x: sx, y: ny + bh + ARROW.tipGap };
         u = { x: 0, y: -1 };
       }
@@ -351,7 +423,7 @@ export class VkCallout extends VkElement {
       } else {
         const rightward = c.tip.x >= c.start.x;
         lx = rightward ? c.tip.x - lw - 24 : c.tip.x + 24;
-        ly = c.tip.y - lh - 12;
+        ly = c.tip.y - lh - 31;
         if (ly < 8) ly = c.tip.y + 12;
       }
       this._label.style.left = `${clamp(lx, 24, origin.width - lw - 24)}px`;
@@ -361,5 +433,7 @@ export class VkCallout extends VkElement {
 }
 
 define('vk-callout', VkCallout);
+
+
 
 

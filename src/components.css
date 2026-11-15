@@ -965,13 +965,19 @@
   stroke-width: var(--vk-line-w-connector);
 }
 .vk-edge[data-current] {
-  stroke: var(--vk-ink-2);
+  stroke: var(--vk-focus);
 }
 .vk-edge-head {
   fill: var(--vk-ink-2);
 }
 .vk-edge-head[data-current] {
+  fill: var(--vk-focus);
+}
+.vk-edge-dot {
   fill: var(--vk-ink-2);
+}
+.vk-edge-dot[data-current] {
+  fill: var(--vk-focus);
 }
 .vk-edge-label {
   font-family: var(--vk-font-sans);

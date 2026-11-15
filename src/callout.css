@@ -19,9 +19,22 @@
   overflow: visible;
 }
 
-/* 标记：目标墨迹下面的一条，方端，厚度/间距由 ANN 给。 */
+/* 标记：文本一条线；行段一只右括号；块一个框。三种形状，一种意思。 */
 .vk-co-bar {
   fill: var(--vk-focus);
+}
+.vk-co-bracket {
+  fill: none;
+  stroke: var(--vk-focus);
+  stroke-width: var(--vk-ann-bar);
+  stroke-linejoin: miter;
+  stroke-linecap: butt;
+}
+.vk-co-box {
+  fill: none;
+  stroke: var(--vk-focus);
+  stroke-width: var(--vk-ann-box);
+  stroke-linejoin: round;
 }
 
 .vk-co-line,

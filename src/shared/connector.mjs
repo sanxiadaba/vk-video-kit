@@ -37,9 +37,15 @@ export const CONN = {
 
 export const ANN = {
   bar: 14, // 标记条厚
-  barGap: 8, // 条顶离墨迹底
-  over: 10, // 条两端出头
-  standoff: 64, // 文字离卡片
+  barGap: 2, // 条顶离墨迹底
+  over: 10, // 行条两端出头（词条不出头）
+  bracket: 24, // 行段括号离字右缘
+  arm: 32, // 括号上下两只脚
+  boxPad: 24, // 块框左右外扩
+  boxPadY: 12, // 块框上下外扩
+  box: 12, // 块框线宽
+  boxR: 8, // 块框圆角（sm）
+  standoff: 64, // 文字离出线点
   gutter: 480, // 有注记的页，右侧让出的注栏宽
   dot: 20,
   lead: 8,
@@ -80,3 +86,4 @@ export function headPolygon(t, ux, uy) {
   const hy = ux * (ARROW.base / 2);
   return `${t.x},${t.y} ${bx + hx},${by + hy} ${bx - hx},${by - hy}`;
 }
+

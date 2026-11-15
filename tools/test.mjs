@@ -255,11 +255,11 @@ if (!browser) {
     const table = document.querySelector('table');
     const num = table.querySelector('td.num');
     const text = [...table.querySelectorAll('td')].find((td) => !td.classList.contains('num'));
-    return { num: num ? getComputedStyle(num).textAlign : '', text: text ? getComputedStyle(text).textAlign : '', cur: table.querySelectorAll('tr[current]').length };
+    return { num: num ? getComputedStyle(num).textAlign : '', text: text ? getComputedStyle(text).textAlign : '', rows: table.querySelectorAll('tr').length };
   });
   ok(t.num === 'right', `数字列右对齐（${t.num}）`);
   ok(t.text !== 'right', `文字列不右对齐（${t.text}）`);
-  ok(t.cur === 1, '表格 current 落在行上');
+  ok(t.rows === 5, `表格 4 行数据 + 1 行表头（${t.rows}）`);
   await tablePage.close();
 
   const darkPage = await load('dark.html');
@@ -271,25 +271,25 @@ if (!browser) {
   const word = await wordPage.evaluate(() => {
     const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden);
     const line = document.querySelectorAll('.vk-line')[2];
-    const bar = document.querySelector('.vk-co-bar');
-    if (!note || !line || !bar) return null;
+    const box = document.querySelector('.vk-co-box');
+    if (!note || !line || !box) return null;
     const n = note.getBoundingClientRect();
     const l = line.getBoundingClientRect();
     const m = line.querySelector('.vk-mark').getBoundingClientRect();
-    const b = bar.getBoundingClientRect();
+    const b = box.getBoundingClientRect();
     const c = document.querySelector('.vk-frame').getBoundingClientRect();
     const head = document.querySelector('.vk-co-head').getBoundingClientRect();
     return {
-      underWord: b.left <= m.left && b.right >= m.right && b.top >= m.bottom - 6,
-      isWord: b.width < l.width * 0.6,
+      covers: b.left <= m.left && b.right >= m.right,
+      isWord: b.width < l.width * 0.8,
       outside: n.left >= c.right + 8,
       sameRow: Math.abs((n.top + n.bottom) / 2 - (l.top + l.bottom) / 2) <= 6,
       headAtText: Math.abs(head.right - n.left) <= 6,
       marks: document.querySelectorAll('.vk-mark[data-vk-item]').length,
     };
   });
-  ok(word && word.underWord, '词下面一条，不是整行一个框');
-  ok(word && word.isWord, '标记只覆盖那个词');
+  ok(word && word.covers, '圈住那个词（连同它的 token）');
+  ok(word && word.isWord, '圈的是一个词，不是整行');
   ok(word && word.outside, '注记在卡片外面');
   ok(word && word.sameRow, '注记和那个词同一行');
   ok(word && word.headAtText, '箭头尖落在文字左缘');
@@ -297,8 +297,11 @@ if (!browser) {
   await wordPage.close();
 
   const rangePage = await load('callout-range.html');
-  const range = await rangePage.evaluate(() => document.querySelectorAll('.vk-co-bar').length);
-  ok(range === 2, `两行两条标记（${range}）`);
+  const range = await rangePage.evaluate(() => ({
+    bracket: !!document.querySelector('.vk-co-bracket'),
+    bars: document.querySelectorAll('.vk-co-bar').length,
+  }));
+  ok(range.bracket && range.bars === 0, '两行用一只括号，不是两条线');
   await rangePage.close();
 
   /* 图：节点之间必须留够连接件的净空，箭头不许落进节点里。 */
