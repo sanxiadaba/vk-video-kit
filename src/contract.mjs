@@ -597,7 +597,9 @@ export function docText(tag) {
   } else {
     for (const [as, v] of Object.entries(t.variants)) {
       out.push('', `## as="${as}" · ${v.label} —— ${v.summary}`);
-      dump(attrsOf(tag, as));
+      const attrs = { ...attrsOf(tag, as) };
+      delete attrs.as;
+      dump(attrs);
       if (v.children?.hint) out.push('', `内容：${v.children.hint}`);
       if (v.children?.attrs && Object.keys(v.children.attrs).length) {
         out.push('', '子项 (<li>)');

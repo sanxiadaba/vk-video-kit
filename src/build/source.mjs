@@ -4,7 +4,7 @@ import path from 'node:path';
 import { createHighlighter } from 'shiki';
 import { attrOf, hasAttr, esc } from '../shared/dom.mjs';
 import { parseRange, lineSet } from '../shared/range.mjs';
-import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, inferLang, langKey } from '../shared/code.mjs';
+import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, langKey } from '../shared/code.mjs';
 import { parseAsm, splitInsn } from '../shared/asm.mjs';
 import { SYNTAX } from '../vocab.mjs';
 import { frame } from './frame.mjs';

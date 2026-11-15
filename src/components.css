@@ -1059,19 +1059,19 @@
   display: grid;
   justify-items: center;
   gap: var(--vk-space-1);
-  padding: var(--vk-space-4) var(--vk-space-5);
+  padding: var(--vk-space-3) var(--vk-space-5);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-md);
   background: var(--vk-raised);
   white-space: normal;
   text-align: center;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-subhead);
+  font-size: var(--vk-fs-body);
   line-height: 1.2;
   transform: translate(-50%, -50%);
 }
-.vk-graph[data-layout='row'] .vk-gnode {
-  min-height: 200px;
+.vk-graph[data-layout='row'][data-dir='horizontal'] .vk-gnode {
+  min-height: 160px;
   align-content: center;
 }
 .vk-gn-n {

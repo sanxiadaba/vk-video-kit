@@ -131,7 +131,9 @@ export class VkGraph extends VkElement {
 
     if (layout === 'row') {
       if (dir === 'vertical') {
-        const gapY = nodes.length > 1 ? Math.max(48, Math.min(120, (560 - nodes.length * maxH) / (nodes.length - 1))) : 0;
+        /* 竖链的行距由可用高度算出来：宁可溢出报错，也不把节点压在一起。 */
+        const availH = bodyH ? bodyH - 4 : 0;
+        const gapY = nodes.length > 1 ? (availH > 0 ? Math.max(16, Math.min(120, Math.floor((availH - pad * 2 - nodes.length * maxH) / (nodes.length - 1)))) : 48) : 0;
         nodes.forEach((_, i) => {
           pos[i] = { x: 0, y: i * (maxH + gapY) + (maxH - sizes[i].h) / 2, w: sizes[i].w, h: sizes[i].h };
         });
@@ -159,7 +161,7 @@ export class VkGraph extends VkElement {
       });
     } else if (layout === 'layered') {
       viewW = Math.min(availW, 1200);
-      H = 480;
+      H = bodyH ? Math.min(480, Math.max(240, bodyH - 4)) : 480;
       const maxDepth = Math.max(...depth, 0);
       const lanes = nodes.map((n) => Number(n.dataset.lane) || 0);
       const maxLane = Math.max(...lanes, 0);
@@ -200,7 +202,9 @@ export class VkGraph extends VkElement {
       const slot = new Map(order.map((i, k) => [i, k]));
       const maxDepth = Math.max(...layers.keys(), 0);
       const gapX = 72;
-      const gapY = 56;
+      /* 层间距按可用高度算：三层树在 426 的正文带里也放得下，四层就老实溢出。 */
+      const treeAvail = bodyH ? bodyH - pad * 2 : 0;
+      const gapY = maxDepth > 0 ? (treeAvail > 0 ? Math.max(16, Math.min(56, Math.floor((treeAvail - (maxDepth + 1) * maxH) / maxDepth))) : 56) : 0;
       nodes.forEach((_, i) => {
         const d = depth[i] || 0;
         const lane = slot.get(i) ?? 0;
@@ -226,19 +230,7 @@ export class VkGraph extends VkElement {
       H = Math.max(...pos.map((p) => p.y + p.h)) + pad;
     }
 
-    /* 图比正文带高时，只压行距（不动字号），让整张图落进安全区。 */
-    const availH = bodyH ? bodyH - 4 : 0;
-    if (availH > 0 && H > availH) {
-      const span = Math.max(1, H - maxH - pad);
-      const k = Math.max(0.35, (availH - maxH - pad * 2) / span);
-      pos.forEach((p) => {
-        p.y = pad + (p.y - pad) * k;
-      });
-      H = availH;
-      pos.forEach((p) => {
-        p.y = Math.min(p.y, Math.max(pad, H - p.h - pad));
-      });
-    }
+    /* 图比正文带高时不再压行距：行距在各自布局里已按可用高度算过。 */
 
     /* 平移到左上角，留 pad；比目标窄时居中。 */
     const minX = Math.min(...pos.map((p) => p.x));

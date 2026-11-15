@@ -1,8 +1,18 @@
 <vk-page id="flow">
-  <vk-head kicker="排布" counter="28" lede="span 跨栏。">一个 flow，跨两栏。</vk-head>
-  <vk-flow cols="1 1" gap="wide" valign="center">
-    <vk-text size="subhead" span="2">跨两栏的一行。</vk-text>
-    <vk-text ink="secondary">左栏。</vk-text>
-    <vk-text ink="secondary">右栏。</vk-text>
+  <vk-head kicker="排布" counter="28" size="subhead">左边摆代码，右边说三句。</vk-head>
+  <vk-flow cols="7 5" gap="wide" valign="start">
+    <vk-code lang="c" title="sum.c" size="caption" current="2">
+      <script type="text/plain" data-vk-source>
+int s = 0;
+for (i = 0; i < n; i++)
+  s += a[i];
+return s;
+      </script>
+    </vk-code>
+    <vk-board as="list">
+      <li>n 是元素个数</li>
+      <li>i 从 0 走到 n-1</li>
+      <li>每次把 a[i] 累加</li>
+    </vk-board>
   </vk-flow>
 </vk-page>

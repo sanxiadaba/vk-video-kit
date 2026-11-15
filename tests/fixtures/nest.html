@@ -1,0 +1,18 @@
+<vk-page id="nest" theme="dark">
+  <vk-head kicker="嵌套" counter="36" size="subhead">暗面里放浅面，浅面里再放暗面。</vk-head>
+  <vk-flow cols="1 1" gap="wide" valign="stretch">
+    <vk-card surface="paper" title="白卡">
+      <vk-text ink="secondary">浅色面上的字是深的。</vk-text>
+      <vk-card surface="dark" title="卡里的暗面">
+        <vk-text ink="secondary">暗面又翻回浅字。</vk-text>
+      </vk-card>
+    </vk-card>
+    <vk-card surface="soft" title="软底">
+      <vk-text>软底也是浅面，字跟着变深。</vk-text>
+      <vk-board as="list" variant="check">
+        <li current>数据跟着面走</li>
+        <li>不手写 ink</li>
+      </vk-board>
+    </vk-card>
+  </vk-flow>
+</vk-page>

@@ -1,7 +1,6 @@
 /** 构建期：条目图（list / steps / bars / timeline / table / cells）与两个文本网格（bytes / bits）。 */
 import { attrOf, hasAttr, kids, flatten, serialize, textOf, raw, esc } from '../shared/dom.mjs';
 import { lineSet } from '../shared/range.mjs';
-import { FONT } from '../vocab.mjs';
 import { frame } from './frame.mjs';
 
 const labelOf = (li) => (li.childNodes || []).map(serialize).join('');
