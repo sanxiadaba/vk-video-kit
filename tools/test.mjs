@@ -287,7 +287,7 @@ if (!browser) {
     const h = document.querySelector('.vk-edge-head').getBoundingClientRect();
     return { w: Math.round(h.width), h: Math.round(h.height) };
   });
-  ok(head.w >= 40 && head.h >= 24, `箭头够宽够长（${head.w}×${head.h}）`);
+  ok(head.w === 52 && head.h === 38, `箭头 52×38（${head.w}×${head.h}）`);
   await grPage.close();
 
   /* 泳道箭头：尖端必须落在泳道线上，偏一点都不行。 */
@@ -310,6 +310,14 @@ if (!browser) {
     });
   });
   ok(tips.every((d) => Math.abs(d) <= 1), `泳道箭头尖端对齐竖线（偏差 ${tips.join(' / ')}）`);
+  const gaps = await sqPage.evaluate(() =>
+    [...document.querySelectorAll('.vk-seq-row')].map((row) => {
+      const label = row.querySelector('.vk-seq-l').getBoundingClientRect();
+      const arrow = row.querySelector('.vk-seq-arrow').getBoundingClientRect();
+      return Math.round(arrow.top - label.bottom);
+    })
+  );
+  ok(gaps.every((g) => g >= 8), `seq 标签不压杆（${gaps.join(' / ')}）`);
   await sqPage.close();
 
   /* P 指针：徽标够大，针脚止于格子上边，不进格。 */

@@ -943,7 +943,11 @@
 .vk-gedge {
   display: none;
 }
+.vk-gstage {
+  z-index: 1;
+}
 .vk-gedges {
+  z-index: 0;
   position: absolute;
   left: 0;
   top: 0;
@@ -1023,7 +1027,7 @@
 }
 .vk-seq-arrow {
   position: absolute;
-  top: 70px;
+  top: 88px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
 }

@@ -163,17 +163,19 @@ export function resolveAnchor(root, expr, owner) {
         return null;
       }
     }
-    /* 行 + 边：意思是「这个件在这一行高度上的那条边」，箭头从件的外沿出发。 */
+    /* 行 + 边：矩形仍取行的墨迹（圈/注记要用完整矩形）；
+       箭头端口另给一个「件在这一行高度上的边点」，两者分离。 */
     if (side && lineEl) {
       const comp = host.getBoundingClientRect();
       const lr = inkRect(lineEl);
-      const cx = (lr.left + lr.right) / 2;
-      const cy = (lr.top + lr.bottom) / 2;
-      const rect =
-        side === 'left' || side === 'right'
-          ? { left: comp.left, right: comp.right, top: cy, bottom: cy, width: comp.width, height: 0 }
-          : { left: cx, right: cx, top: comp.top, bottom: comp.bottom, width: 0, height: comp.height };
-      target = { el: lineEl, rect, side, box: comp };
+      const cx0 = (lr.left + lr.right) / 2;
+      const cy0 = (lr.top + lr.bottom) / 2;
+      const n = side === 'right' ? { x: 1, y: 0 } : side === 'left' ? { x: -1, y: 0 } : side === 'bottom' ? { x: 0, y: 1 } : { x: 0, y: -1 };
+      const point = {
+        x: side === 'left' ? comp.left : side === 'right' ? comp.right : cx0,
+        y: side === 'top' ? comp.top : side === 'bottom' ? comp.bottom : cy0,
+      };
+      target = { el: lineEl, rect: lr, side, box: comp, port: { ...point, n } };
     } else if (side) {
       target = { ...target, side };
     }

@@ -5,12 +5,12 @@
  *   端口 → 出线空隙 → 直角路由 → 箭头 → 标签板
  *
  * 统一几何（与 seq/graph 共用同一套连接件语言）：
- *   线宽 6，箭头长 28 / 宽 14，端口空隙 12，目标间隙 4，拐角 16。
+ *   杆 8，箭头长 44 / 底宽 32，端口空隙 12，目标间隙 2，拐角 16。
  *
  * 锚点：#id / #id@line:3 / #id@line:3-4 / #id@item:2 / #id@bit:5 / #id@side:left。
  */
 import { VkElement, define, resolveAnchor, inkRect, textRight } from './base.mjs';
-import { CONN, ANN, headPolygon } from '../shared/connector.mjs';
+import { CONN, ANN, ARROW, port, tip, headPolygon } from '../shared/connector.mjs';
 
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
@@ -124,37 +124,37 @@ function measureSides(a, b) {
   return autoSides(a, b);
 }
 
-/* 连接件：尖端落在目标边的「与起点同高」处，箭头垂直于边；线是直的。
-   只有错位大过 72 时才折一次（90°），不再画 S 曲线。 */
-function connectorPath(a, b, fs, ts) {
-  const start = sourcePoint(a, fs);
-  const u = targetUnit(ts);
-  const horiz = ts === 'left' || ts === 'right';
-  let tip;
-  if (horiz) {
-    const y = clamp(start.y, b.top + 10, b.bottom - 10);
-    tip = { x: ts === 'left' ? b.left - CONN.tip : b.right + CONN.tip, y };
-  } else {
-    const x = clamp(start.x, b.left + 10, b.right - 10);
-    tip = { x, y: ts === 'top' ? b.top - CONN.tip : b.bottom + CONN.tip };
+/* 目标入线点：落在目标边、与起点同高（不在目标跨度内就取最近的有效高度）。
+   返回 tip 与行进方向 u。 */
+function targetEntry(b, ts, start) {
+  if (ts === 'left' || ts === 'right') {
+    const y = clamp(start.y, b.top + 12, b.bottom - 12);
+    return { x: ts === 'left' ? b.left - ARROW.tipGap : b.right + ARROW.tipGap, y, u: { x: ts === 'left' ? 1 : -1, y: 0 } };
   }
-  const base = { x: tip.x - u.x * HEAD, y: tip.y - u.y * HEAD };
+  const x = clamp(start.x, b.left + 12, b.right - 12);
+  return { x, y: ts === 'top' ? b.top - ARROW.tipGap : b.bottom + ARROW.tipGap, u: { x: 0, y: ts === 'top' ? 1 : -1 } };
+}
+
+/* 连接件：直连；错位时 90° 折一次。跑道不够（run < 最短跑道）返回 tight，
+   由调用方改成「引线 + 点」，绝不把箭头画回源里。 */
+function connectorPath(a, b, fs, ts, startOverride) {
+  const start = startOverride || port(a, fs);
+  const t = targetEntry(b, ts, start);
+  const base = { x: t.x - t.u.x * ARROW.length, y: t.y - t.u.y * ARROW.length };
+  const run = (base.x - start.x) * t.u.x + (base.y - start.y) * t.u.y;
+  if (run < ARROW.minRun) return { tight: true, start, tip: t, u: t.u };
+  const horiz = t.u.x !== 0;
   const perp = horiz ? Math.abs(base.y - start.y) : Math.abs(base.x - start.x);
-  const along = horiz ? Math.abs(base.x - start.x) : Math.abs(base.y - start.y);
   let d;
-  if (perp < 2 || perp < along * 0.35) {
+  if (perp < 2) {
     d = `M ${start.x} ${start.y} L ${base.x} ${base.y}`;
-  } else if (perp <= 72) {
-    const dx = Math.sign(base.x - start.x) * perp;
-    const dy = Math.sign(base.y - start.y) * perp;
-    d = `M ${start.x} ${start.y} L ${start.x + dx} ${start.y + dy} L ${base.x} ${base.y}`;
   } else {
     const mid = horiz ? (start.x + base.x) / 2 : (start.y + base.y) / 2;
     d = horiz
       ? `M ${start.x} ${start.y} L ${mid} ${start.y} L ${mid} ${base.y} L ${base.x} ${base.y}`
       : `M ${start.x} ${start.y} L ${start.x} ${mid} L ${base.x} ${mid} L ${base.x} ${base.y}`;
   }
-  return { d, start, base, tip, u, mid: { x: (start.x + base.x) / 2, y: (start.y + base.y) / 2 }, dist: Math.hypot(base.x - start.x, base.y - start.y) };
+  return { tight: false, d, start, base, tip: t, u: t.u, mid: { x: (start.x + base.x) / 2, y: (start.y + base.y) / 2 } };
 }
 
 /* 点 p 到矩形 b 的最近点。 */
@@ -249,12 +249,12 @@ export class VkCallout extends VkElement {
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
 
-      /* 气泡不许盖字：先按「压到多少字的面积」排，面积相同再按离目标远近排。 */
+      /* 安全区是正文版心，不是画布：左右各 120，上下不越过标题带。 */
       const body = page.querySelector('.vk-body');
-      const safeBottom = body ? body.getBoundingClientRect().bottom - origin.top - 8 : origin.height - 8;
-      /* note 不许压标题带：上边界是 head 的底，不是画布顶。 */
+      const bodyRect = body ? rel(body.getBoundingClientRect()) : { left: 24, top: 24, right: origin.width - 24, bottom: origin.height - 24 };
       const head = page.querySelector('[data-vk="head"]');
-      const safeTop = head ? head.getBoundingClientRect().bottom - origin.top + 8 : 8;
+      const safeTop = Math.max(bodyRect.top, head ? head.getBoundingClientRect().bottom - origin.top + 8 : 24);
+      const safeBottom = Math.min(bodyRect.bottom, origin.height - 24);
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
       const obstacles = head ? [rel(head.getBoundingClientRect())] : [];
@@ -281,9 +281,10 @@ export class VkCallout extends VkElement {
       const lr = lineEl ? rel(lineEl.getBoundingClientRect()) : null;
       const targetY = lineEl ? cy(lr) - bh / 2 : cy(r) - bh / 2;
 
-      const fits = (x, y) => x >= 24 && x + bw <= origin.width - 24 && y >= safeTop && y + bh <= safeBottom;
+      const fits = (x, y) => x >= bodyRect.left && x + bw <= bodyRect.right && y >= safeTop && y + bh <= safeBottom;
       const hits = (x, y) =>
         obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
+      const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
       const insideX = lineEl ? textRight(lineEl) - origin.left + 60 : r.right + 60;
       const cands = [
         /* 件内空白优先：无框文字，离目标 60，读起来像代码旁的一句注。 */
@@ -294,8 +295,9 @@ export class VkCallout extends VkElement {
         { x: cx(r) - bw / 2, y: ob.top - 32 - bh },
       ];
       const ok = (c) => fits(c.x, c.y) && !hits(c.x, c.y) && (!c.inside || c.x + bw <= ob.right - 16);
-      const box = cands.find(ok) || cands.find((c) => fits(c.x, c.y)) || cands[0];
-      const x = clamp(box.x, 16, origin.width - bw - 16);
+      const pool = cands.filter((c) => fits(c.x, c.y));
+      const box = pool.find(ok) || (pool.length ? pool.slice().sort((a, b) => area(a.x, a.y) - area(b.x, b.y))[0] : cands[0]);
+      const x = clamp(box.x, bodyRect.left, bodyRect.right - bw);
       const y = clamp(box.y, safeTop, safeBottom - bh);
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
@@ -313,8 +315,10 @@ export class VkCallout extends VkElement {
         const p = nearest(bubble, { x: x2, y: by });
         this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: x2, y1: by, x2: p.x, y2: p.y }));
       } else {
-        const px = lineEl ? textRight(lineEl) - origin.left : r.right;
-        const py = lineEl ? cy(lr) : cy(r);
+        /* 落点从「目标上离气泡最近的点」求，别固定用右缘。 */
+        const anchorP = nearest(r, { x: cx(bubble), y: cy(bubble) });
+        const px = lineEl ? textRight(lineEl) - origin.left : anchorP.x;
+        const py = lineEl ? cy(lr) : anchorP.y;
         const p = nearest(bubble, { x: px, y: py });
         this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: px, y1: py, x2: p.x, y2: p.y }));
         this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
@@ -384,38 +388,56 @@ export class VkCallout extends VkElement {
       return;
     }
 
-    /* arrow：两端都取墨迹框；方向由显式 side 或几何决定；线只有横竖两段。 */
+    /* arrow：起终点都从「端口/入线点」模型来；跑道不够就退化成引线 + 点。 */
     const from = resolveAnchor(page, this.getAttribute('from'), this);
     const to = resolveAnchor(page, this.getAttribute('to'), this);
     if (!from || !to) return missing();
     const fr = rel(from.rect);
     const tr = rel(to.rect);
-    const [fs, ts] = from.side && to.side ? [from.side, to.side] : autoSides(fr, tr);
-    const c = connectorPath(fr, tr, fs, ts);
-    this._svg.appendChild(mk('path', { class: 'vk-co-line', d: c.d }));
-    this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(c.tip, c.u.x, c.u.y) }));
+    let fs = from.side;
+    let ts = to.side;
+    if (!fs || !ts) {
+      const [afs, ats] = autoSides(fr, tr);
+      fs = fs || afs;
+      ts = ts || ats;
+    }
+    const start = from.port
+      ? { x: from.port.x - origin.left + from.port.n.x * ARROW.clear, y: from.port.y - origin.top + from.port.n.y * ARROW.clear }
+      : port(fr, fs);
+    const c = connectorPath(fr, tr, fs, ts, start);
+    this.removeAttribute('data-vk-tight');
+    if (c.tight) {
+      this.setAttribute('data-vk-tight', '1');
+      this._svg.appendChild(mk('line', { class: 'vk-co-line', x1: c.start.x, y1: c.start.y, x2: c.tip.x, y2: c.tip.y }));
+      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: c.tip.x, cy: c.tip.y, r: ANN.dot / 2 }));
+    } else {
+      this._svg.appendChild(mk('path', { class: 'vk-co-line', d: c.d }));
+      this._svg.appendChild(mk('polygon', { class: 'vk-co-head', points: headPolygon(c.tip, c.u.x, c.u.y) }));
+    }
 
     const label = this.getAttribute('label');
     if (label) {
+      const lw0 = this._label.offsetWidth;
+      const lh0 = this._label.offsetHeight;
       this._label.hidden = false;
       this._label.textContent = label;
-      const lw = this._label.offsetWidth;
-      const lh = this._label.offsetHeight;
-      const minY = Math.min(c.start.y, c.base.y, c.tip.y);
-      const maxY = Math.max(c.start.y, c.base.y, c.tip.y);
+      const lw = this._label.offsetWidth || lw0;
+      const lh = this._label.offsetHeight || lh0;
+      /* 标签放在箭杆上方 16；纵向箭头放右侧。 */
+      const ys = [c.start.y, c.tip.y, c.base ? c.base.y : c.tip.y];
+      const xs = [c.start.x, c.tip.x, c.base ? c.base.x : c.tip.x];
+      const vertical = Math.abs(c.tip.x - c.start.x) < Math.abs(c.tip.y - c.start.y) - 2;
       let lx;
       let ly;
-      if (c.dist >= lw * 1.6) {
-        /* 线够长：字写在曲线上（中点），纸色底把线打断。 */
-        lx = c.mid.x - lw / 2;
-        ly = c.mid.y - lh - 6;
-        if (ly < 8) ly = c.mid.y + 6;
+      if (vertical) {
+        lx = (c.start.x + c.tip.x) / 2 + 16;
+        ly = (Math.min(...ys) + Math.max(...ys)) / 2 - lh / 2;
       } else {
-        lx = c.mid.x - lw / 2;
-        ly = minY - lh - 10;
-        if (ly < 8) ly = maxY + 10;
+        lx = (Math.min(...xs) + Math.max(...xs)) / 2 - lw / 2;
+        ly = Math.min(...ys) - lh - 16;
+        if (ly < 8) ly = Math.max(...ys) + 16;
       }
-      this._label.style.left = `${clamp(lx, 8, origin.width - lw - 8)}px`;
+      this._label.style.left = `${clamp(lx, 24, origin.width - lw - 24)}px`;
       this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
     }
   }

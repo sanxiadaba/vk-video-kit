@@ -14,6 +14,8 @@
 import { VkElement, define, warn } from './base.mjs';
 import { CONN, headPolygon } from '../shared/connector.mjs';
 
+const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
+
 const NS = 'http://www.w3.org/2000/svg';
 const mk = (tag, attrs = {}) => {
   const el = document.createElementNS(NS, tag);
@@ -309,7 +311,7 @@ export class VkGraph extends VkElement {
         points = [{ x: a.x + a.w, y: aCy }, { x: b.x, y: bCy }];
       }
 
-      /* 尖端统一留 4px 净空；树干从头到尾一条线，不贴脸。 */
+      /* 尖端统一留 2px 净空；树没有箭头，终点直接落在节点边上。 */
       const tipBase = points[points.length - 2];
       const end = points[points.length - 1];
       const ddx = end.x - tipBase.x;
@@ -319,7 +321,7 @@ export class VkGraph extends VkElement {
       const uy = ddy / dlen;
       const tip = { x: end.x - ux * CONN.tip, y: end.y - uy * CONN.tip };
       const base = { x: tip.x - ux * CONN.head, y: tip.y - uy * CONN.head };
-      points[points.length - 1] = layout === 'tree' || dlen < CONN.head + CONN.shaft ? tip : base;
+      points[points.length - 1] = layout === 'tree' ? end : dlen < CONN.head + CONN.shaft ? tip : base;
 
       group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, CONN.corner), 'data-current': current ? '1' : null, 'data-tone': tone || null }));
       if (layout !== 'tree') {
@@ -328,9 +330,10 @@ export class VkGraph extends VkElement {
 
       if (l.label) {
         const from = points[0];
-        /* 标签放在线的外侧 32px，绝不压线。 */
-        const dx = end.x - from.x;
-        const dy = end.y - from.y;
+        /* 锚在实际画出的线段中点上；外推 = 字半高 + 头半宽 + 8，别用裸 32。 */
+        const segEnd = layout === 'tree' || dlen < CONN.head + CONN.shaft ? end : base;
+        const dx = segEnd.x - from.x;
+        const dy = segEnd.y - from.y;
         const len = Math.hypot(dx, dy) || 1;
         let nx = -dy / len;
         let ny = dx / len;
@@ -338,8 +341,9 @@ export class VkGraph extends VkElement {
           nx = -nx;
           ny = -ny;
         }
-        const lx = (from.x + end.x) / 2 + nx * 32;
-        const ly = (from.y + end.y) / 2 + ny * 32;
+        const off = 34 + CONN.headW / 2 + 8;
+        const lx = clamp((from.x + segEnd.x) / 2 + nx * off, 40, viewW - 40);
+        const ly = clamp((from.y + segEnd.y) / 2 + ny * off, 40, H - 40);
         const anchor = 'middle';
         const t = mk('text', { class: 'vk-edge-label', x: lx, y: ly, 'text-anchor': anchor, 'dominant-baseline': 'middle', style: 'font-size: var(--vk-fs-caption); font-family: var(--vk-font-sans)' });
         t.textContent = l.label;
