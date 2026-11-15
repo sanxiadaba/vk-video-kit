@@ -254,17 +254,21 @@ body {
   height: fit-content;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
   border-radius: var(--vk-radius-md);
+  color: var(--vk-ink-1);
   color-scheme: light;
 }
 [data-vk='card'][surface='paper'] {
   background: var(--vk-paper);
+  color: var(--vk-ink-1);
   color-scheme: light;
 }
 [data-vk='card'][surface='soft'] {
   background: var(--vk-soft);
+  color: var(--vk-ink-1);
 }
 [data-vk='card'][surface='dark'] {
   background: var(--vk-paper);
+  color: var(--vk-ink-1);
   color-scheme: dark;
 }
 /* 语义面：对照 / 对错示范。只换描边与一层极淡的底，不改字色。 */

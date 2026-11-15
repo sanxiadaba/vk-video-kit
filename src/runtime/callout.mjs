@@ -285,11 +285,48 @@ export class VkCallout extends VkElement {
       const hits = (x, y) =>
         obstacles.some((o) => Math.min(x + bw, o.right) - Math.max(x, o.left) > 1 && Math.min(y + bh, o.bottom) - Math.max(y, o.top) > 1);
       const area = (x, y) => obstacles.reduce((s, o) => s + Math.max(0, Math.min(x + bw, o.right) - Math.max(x, o.left)) * Math.max(0, Math.min(y + bh, o.bottom) - Math.max(y, o.top)), 0);
+
+      /* 代码行/词的注记是「边注」：和这一行同高、贴在卡片外侧，引线只从卡片边走到注记，
+         长度永远是 88——代码多长都不会把引线拉长。 */
+      if (lineEl) {
+        const y = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
+        const rightX = ob.right + ANN.standoff;
+        const leftX = ob.left - ANN.standoff - bw;
+        let nx = null;
+        let portX = 0;
+        if (rightX + bw <= bodyRect.right) {
+          nx = rightX;
+          portX = ob.right;
+        } else if (leftX >= bodyRect.left) {
+          nx = leftX;
+          portX = ob.left;
+        }
+        if (nx !== null) {
+          this._note.style.left = `${nx}px`;
+          this._note.style.top = `${y}px`;
+          if (isWord) {
+            /* 词：下括号标住词；引线从件的边走，不横穿代码。 */
+            const by = r.bottom + ANN.bracketGap + 2;
+            const x1 = r.left - 8;
+            const x2 = r.right + 8;
+            const tick = ANN.tick;
+            this._svg.appendChild(
+              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
+            );
+          } else if (!page.querySelector('.vk-co-ring')) {
+            /* 整行已有圈就不再画点；没有圈才点一下行尾。 */
+            this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: textRight(lineEl) - origin.left, cy: cy(lr), r: ANN.dot / 2 }));
+          }
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: portX, y1: cy(lr), x2: nx, y2: cy(lr) }));
+          return;
+        }
+      }
+
       const insideX = lineEl ? textRight(lineEl) - origin.left + 60 : r.right + 60;
-      /* 注记只许在件外：右 → 左 → 下 → 上；件内空白只作最后兜底。 */
+      /* 其它件（没有行高可依）：右 → 左 → 下 → 上；件内空白只作最后兜底。 */
       const cands = [
-        { x: ob.right + 40, y: targetY },
-        { x: ob.left - 40 - bw, y: targetY },
+        { x: ob.right + ANN.standoff, y: targetY },
+        { x: ob.left - ANN.standoff - bw, y: targetY },
         { x: cx(r) - bw / 2, y: ob.bottom + 32 },
         { x: cx(r) - bw / 2, y: ob.top - 32 - bh },
         { x: insideX, y: targetY, inside: true },
@@ -302,27 +339,10 @@ export class VkCallout extends VkElement {
       this._note.style.left = `${x}px`;
       this._note.style.top = `${y}px`;
       const bubble = { left: x, top: y, right: x + bw, bottom: y + bh, width: bw, height: bh };
-
-      if (isWord) {
-        /* 词：下括号 + 一条直引线到气泡最近点。 */
-        const by = r.bottom + ANN.bracketGap + 2;
-        const x1 = r.left - 8;
-        const x2 = r.right + 8;
-        const tick = ANN.tick;
-        this._svg.appendChild(
-          mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
-        );
-        const p = nearest(bubble, { x: x2, y: by });
-        this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: x2, y1: by, x2: p.x, y2: p.y }));
-      } else {
-        /* 落点从「目标上离气泡最近的点」求；整行目标已有圈，就不再画点。 */
-        const anchorP = nearest(r, { x: cx(bubble), y: cy(bubble) });
-        const px = lineEl ? textRight(lineEl) - origin.left + ANN.ring : anchorP.x;
-        const py = lineEl ? cy(lr) : anchorP.y;
-        const p = nearest(bubble, { x: px, y: py });
-        this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: px, y1: py, x2: p.x, y2: p.y }));
-        if (!lineEl) this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: px, cy: py, r: ANN.dot / 2 }));
-      }
+      const anchorP = nearest(r, { x: cx(bubble), y: cy(bubble) });
+      const p = nearest(bubble, anchorP);
+      this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: anchorP.x, y1: anchorP.y, x2: p.x, y2: p.y }));
+      this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: anchorP.x, cy: anchorP.y, r: ANN.dot / 2 }));
       return;
     }
 
@@ -381,7 +401,7 @@ export class VkCallout extends VkElement {
         const lw = this._label.offsetWidth;
         const lh = this._label.offsetHeight;
         const lx = horizontal ? (a.x + b.x) / 2 - lw / 2 : left ? Math.min(a.x, b.x) - lw - 16 : Math.max(a.x, b.x) + 16;
-        const ly = horizontal ? (below ? Math.max(a.y, b.y) + 12 : a.y - lh - 12) : (a.y + b.y) / 2 - lh / 2;
+        const ly = horizontal ? (below ? Math.max(a.y, b.y) + 16 : a.y - lh - 16) : (a.y + b.y) / 2 - lh / 2;
         this._label.style.left = `${clamp(lx, 8, origin.width - lw - 8)}px`;
         this._label.style.top = `${clamp(ly, 8, origin.height - lh - 8)}px`;
       }
