@@ -289,35 +289,40 @@ export class VkCallout extends VkElement {
       /* 代码行/词的注记是「边注」：和这一行同高、贴在卡片外侧，引线只从卡片边走到注记，
          长度永远是 88——代码多长都不会把引线拉长。 */
       if (lineEl) {
-        const y = clamp(cy(lr) - bh / 2, safeTop, safeBottom - bh);
+        /* 钩在这一行的下沿：注记挂在行下面，引线沿行底走到注记，不飘在行中线。 */
+        const hookY = r.bottom + ANN.bracketGap + 2;
+        const y = clamp(hookY - bh / 2, safeTop, safeBottom - bh);
         const rightX = ob.right + ANN.standoff;
         const leftX = ob.left - ANN.standoff - bw;
         let nx = null;
-        let portX = 0;
+        let dir = 1;
         if (rightX + bw <= bodyRect.right) {
           nx = rightX;
-          portX = ob.right;
+          dir = 1;
         } else if (leftX >= bodyRect.left) {
           nx = leftX;
-          portX = ob.left;
+          dir = -1;
         }
         if (nx !== null) {
           this._note.style.left = `${nx}px`;
           this._note.style.top = `${y}px`;
+          let startX;
           if (isWord) {
-            /* 词：下括号标住词；引线从件的边走，不横穿代码。 */
-            const by = r.bottom + ANN.bracketGap + 2;
+            /* 词：下括号 + 从括号右端沿行底拉出去。 */
             const x1 = r.left - 8;
             const x2 = r.right + 8;
             const tick = ANN.tick;
             this._svg.appendChild(
-              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${by} L ${x1} ${by + tick} M ${x1} ${by} L ${x2} ${by} M ${x2} ${by} L ${x2} ${by + tick}` })
+              mk('path', { class: 'vk-co-bracket', d: `M ${x1} ${hookY} L ${x1} ${hookY + tick} M ${x1} ${hookY} L ${x2} ${hookY} M ${x2} ${hookY} L ${x2} ${hookY + tick}` })
             );
-          } else if (!page.querySelector('.vk-co-ring')) {
-            /* 整行已有圈就不再画点；没有圈才点一下行尾。 */
-            this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: textRight(lineEl) - origin.left, cy: cy(lr), r: ANN.dot / 2 }));
+            startX = x2;
+          } else {
+            startX = textRight(lineEl) - origin.left;
+            if (!page.querySelector('.vk-co-ring')) {
+              this._svg.appendChild(mk('circle', { class: 'vk-co-dot', cx: startX, cy: hookY, r: ANN.dot / 2 }));
+            }
           }
-          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: portX, y1: cy(lr), x2: nx, y2: cy(lr) }));
+          this._svg.appendChild(mk('line', { class: 'vk-co-lead', x1: startX, y1: hookY, x2: nx, y2: hookY }));
           return;
         }
       }
