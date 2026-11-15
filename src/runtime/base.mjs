@@ -31,20 +31,6 @@ export const nextFrame = () =>
     setTimeout(fin, 32);
   });
 
-/* ---------------------------------------------------------------- 读属性 */
-export function attrRaw(el, name) {
-  const v = el.getAttribute(name);
-  return v == null || v === '' ? null : v;
-}
-export const attrText = (el, name, fallback = '') => attrRaw(el, name) ?? fallback;
-export const attrBool = (el, name) => el.hasAttribute(name);
-export const attrNum = (el, name, fallback = 0) => {
-  const v = attrRaw(el, name);
-  if (v == null) return fallback;
-  const n = Number(v);
-  return Number.isFinite(n) ? n : fallback;
-};
-
 export function warn(el, message) {
   const key = message.slice(0, 60);
   el._warned ||= new Set();
@@ -54,8 +40,6 @@ export function warn(el, message) {
 }
 
 /* ---------------------------------------------------------------- 几何 */
-export const rectOf = (el) => el.getBoundingClientRect();
-
 const union = (rects) => {
   let out = null;
   for (const r of rects) {
@@ -82,23 +66,8 @@ export function inkRect(el) {
   return union(rects) || base;
 }
 
-/** 一行里最后一个字的右缘：块级行盒的 width 是整栏，不是字的宽度。 */
-export function textRight(el) {
-  const walker = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
-  let last = null;
-  for (let n = walker.nextNode(); n; n = walker.nextNode()) if (n.textContent.trim()) last = n;
-  if (!last) return el.getBoundingClientRect().right;
-  const text = last.textContent.replace(/\s+$/, '');
-  const range = document.createRange();
-  range.setStart(last, Math.max(0, text.length - 1));
-  range.setEnd(last, text.length);
-  return range.getBoundingClientRect().right;
-}
-
 /* ---------------------------------------------------------------- 锚点
    只认：#id、#id@line:3、#id@line:3-4、#id@item:2、#id@bit:5、#id@side:left。 */
-const cssEscape = (s) => (typeof CSS !== 'undefined' && CSS.escape ? CSS.escape(String(s)) : String(s).replace(/["\\]/g, '\\$&'));
-
 function safeQuery(root, sel, owner) {
   try {
     return root.querySelector(sel);
@@ -129,7 +98,8 @@ const pick = (host, attr, args) => {
     return el.getBoundingClientRect();
   };
   const rects = els.map(rectOf);
-  return { el: els[0], rect: union(rects), rects, side: null, box: els[0].getBoundingClientRect() };
+  const box = els[0].getBoundingClientRect();
+  return { el: els[0], rect: union(rects) || box, rects, side: null, box };
 };
 
 export function resolveAnchor(root, expr, owner) {
@@ -188,7 +158,6 @@ export function resolveAnchor(root, expr, owner) {
 
 /* ---------------------------------------------------------------- 布局循环 */
 export const PLACE = (VK._place ||= new Set());
-export const FIT = (VK._fit ||= new Set());
 export const EDGES = (VK._edges ||= new Set());
 
 export function layout() {
@@ -200,17 +169,6 @@ export function layout() {
     }
     try {
       el.place?.();
-    } catch (e) {
-      el.fail?.(e);
-    }
-  }
-  for (const el of FIT) {
-    if (!el.isConnected) {
-      FIT.delete(el);
-      continue;
-    }
-    try {
-      el.fit?.();
     } catch (e) {
       el.fail?.(e);
     }

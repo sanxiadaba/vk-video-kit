@@ -1,5 +1,5 @@
 <vk-page id="callout-word">
-  <vk-head kicker="标注" counter="38" size="subhead">指着某个词说一句。</vk-head>
+  <vk-head kicker="标注" size="subhead">指着某个词说一句。</vk-head>
   <vk-flow>
     <vk-code id="w" lang="c" title="sum.c" mark="i">
       <script type="text/plain" data-vk-source>
@@ -10,5 +10,6 @@ return s;
       </script>
     </vk-code>
   </vk-flow>
-  <vk-callout mode="note" for="#w@item:1">这里会越界</vk-callout>
+  <vk-callout mode="note" for="#w@item:1">i 没有赋值</vk-callout>
 </vk-page>
+

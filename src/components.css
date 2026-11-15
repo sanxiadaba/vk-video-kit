@@ -594,21 +594,21 @@
 .vk-field-bits {
   display: flex;
   align-items: end;
-  gap: var(--vk-space-1);
+  gap: var(--vk-space-5);
 }
 .vk-bit {
   display: grid;
   justify-items: center;
   gap: 2px;
-  width: 64px;
-  flex: 0 0 64px;
+  width: 80px;
+  flex: 0 0 80px;
   padding: 2px 0;
   font-family: var(--vk-font-mono);
   font-style: normal;
   position: relative;
 }
 .vk-bit .vk-bit-i {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-regular);
   color: var(--vk-ink-3);
   line-height: 1;
@@ -718,16 +718,16 @@
   height: auto;
 }
 @container (max-width: 760px) {
-  .vk-steps {
+  .vk-steps[data-dir='auto'] {
     grid-template-columns: minmax(0, 1fr);
   }
-  .vk-step {
+  .vk-steps[data-dir='auto'] .vk-step {
     grid-template-columns: auto minmax(0, 1fr);
     justify-items: start;
     text-align: left;
     align-items: center;
   }
-  .vk-step::after {
+  .vk-steps[data-dir='auto'] .vk-step::after {
     top: 96px;
     left: 48px;
     bottom: calc(var(--vk-space-6) * -1);
@@ -747,7 +747,7 @@
 }
 .vk-bar {
   display: grid;
-  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 120px;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 160px;
   gap: var(--vk-space-5);
   align-items: center;
 }

@@ -73,7 +73,7 @@
 /* 标注的一句话：卡片外，与标记同高；纯文字，不加框。 */
 .vk-co-note {
   position: absolute;
-  max-width: 512px;
+  max-width: calc(var(--vk-ann-gutter) - var(--vk-ann-standoff) - 8px);
   padding: 8px 0;
   background: var(--vk-paper);
   color: var(--vk-ink-1);

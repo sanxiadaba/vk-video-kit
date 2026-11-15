@@ -315,7 +315,7 @@ export const TAGS = {
   'vk-callout': {
     layer: 'relation',
     name: '标注',
-    summary: '画在别人身上的一层：mark 在目标下面划一道，note 是「标记 + 箭头 + 一句话」，arrow 从一处指到另一处，measure 量同一条边到同一条边。它不改布局。',
+    summary: '画在别人身上的一层：mark 按目标形状划标记（词/块用框、行用一道、行段用括号），note 再在正文右侧的注栏里说一句，arrow 从一处指到另一处，measure 量同一条边到同一条边。note 占的那一列是排版事实，其余形态不改布局。',
     attrs: {
       mode: enumv(['mark', 'note', 'measure', 'arrow'], 'note', 'appearance', '形态'),
       for: selector('target', '目标', { when: { attr: 'mode', values: ['mark', 'note'] }, required: true }),

@@ -61,14 +61,14 @@ node bin/vk.mjs render my-frame.html
 
 ## 自检只判五类
 
-没有画布 / 画布尺寸不对 / 组件渲染失败 / 资源没加载 / 文字被裁 / 标注指空。
+没有画布（含尺寸不对）/ 组件渲染失败 / 资源没加载 / 文字被裁 / 标注指空。
 外加一行**事实**：正文带多高、内容多高、超出多少、焦点几处、每个块的真实字号。
 容量、留白、焦点数都不拦，只报数。
 
 ## 测试
 
 ```bash
-npm test               # 契约 + 负例 + 出图 + 体检单 + 确定性 + CLI，约两分钟
+npm test               # 契约 / 负例 / 出图与体检单 / 行为 / 确定性 / CLI / 对比度，约两分钟
 ```
 
 ## 结构
@@ -83,10 +83,10 @@ src/runtime/         运行期：底座 / 关系图 / 标注（只做测量）
 src/audit/           自检：单独打进 dist/audit.js，不进交付页
 src/base.css         画布 / 标题 / 流 / 卡片 / 字 / 窗口
 src/components.css   机制件（几何与排布）
-src/state.css        状态层：current / tone / mark，全库只有这几种渲染
+src/state.css        状态层：current / tone（mark 锚点样式在 base.css）
 src/callout.css      标注层
 bin/vk.mjs           命令行
-tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 产物清单）
+tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 契约 → 产物清单）
 tools/gen.mjs        vocab → dist/tokens.css
 tools/vendor.mjs     字体与 KaTeX（自托管到 dist/fonts）
 tools/bundle.mjs     打 dist/vk.css、dist/vk.js、dist/audit.js

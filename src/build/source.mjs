@@ -293,7 +293,7 @@ export async function buildSource(node, ctx) {
     });
     body = out.join('');
     digits = String(win).length;
-    const addrW = Math.max(88, Math.round(addrLen * 0.62 * 40 + 16));
+    const addrW = Math.max(88, Math.round(addrLen * 0.62 * 56 + 16));
     return frame({ title, body: `<div class="vk-lines vk-asm" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
   }
 

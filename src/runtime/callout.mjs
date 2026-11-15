@@ -229,7 +229,7 @@ export class VkCallout extends VkElement {
     this.removeAttribute('data-vk-anchor-missing');
     this.removeAttribute('data-vk-tight');
 
-    const mode = this.getAttribute('mode') || 'arrow';
+    const mode = this.getAttribute('mode') || 'note';
     const rel = (r) => rect(r, origin);
     const missing = () => this.setAttribute('data-vk-anchor-missing', '1');
 

@@ -31,6 +31,7 @@ export const CONN = {
   corner: ARROW.corner,
   shaft: ARROW.shaft,
   minGap: 64,
+  minEdge: ARROW.length + ARROW.tipGap + 34, // 短于这个就不画箭头，改「线 + 点」
   arrowGap: ARROW.length + ARROW.tipGap + 40,
   sibling: 48,
 };

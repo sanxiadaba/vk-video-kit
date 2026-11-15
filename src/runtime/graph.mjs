@@ -221,12 +221,6 @@ export class VkGraph extends VkElement {
           pos[i].x = Math.max(0, ccx - pos[i].w / 2);
         }
       }
-      const minX = Math.min(...pos.map((p) => p.x));
-      const maxX = Math.max(...pos.map((p) => p.x + p.w));
-      const scale = 1;
-      void minX;
-      void maxX;
-      void scale;
       pos.forEach((p) => {
         p.y += pad;
       });
@@ -298,7 +292,9 @@ export class VkGraph extends VkElement {
         } else {
           const p1 = { x: a.x + a.w, y: aCy };
           const p2 = { x: b.x, y: bCy };
-          const mx = p1.x + (p2.x - p1.x) / 2;
+          /* 分叉要贴着源节点拐下去：走中点会让分支看起来从中间那条边上长出来。 */
+          const fork = p2.x > p1.x ? Math.min(40, (p2.x - p1.x) / 2) : 0;
+          const mx = p1.x + fork;
           points = [p1, { x: mx, y: p1.y }, { x: mx, y: p2.y }, p2];
         }
       } else if (layout === 'mesh') {
@@ -323,7 +319,7 @@ export class VkGraph extends VkElement {
       const uy = ddy / dlen;
       const tip = { x: end.x - ux * CONN.tip, y: end.y - uy * CONN.tip };
       const base = { x: tip.x - ux * CONN.head, y: tip.y - uy * CONN.head };
-      const tight = dlen < CONN.head + CONN.tip + 34;
+      const tight = dlen < CONN.minEdge;
       points[points.length - 1] = layout === 'tree' ? end : tight ? tip : base;
 
       group.appendChild(mk('path', { class: 'vk-edge', d: roundedPath(points, CONN.corner), 'data-current': current ? '1' : null, 'data-tone': tone || null }));

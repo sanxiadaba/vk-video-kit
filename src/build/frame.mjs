@@ -19,7 +19,16 @@ export function frame({ title, body, range, digits, dots = true, kind = 'code' }
 
 export function buildFlow(node) {
   const cols = attrOf(node, 'cols') || '1';
-  const gap = Number(attrOf(node, 'gap') in GAP ? GAP[attrOf(node, 'gap')] : Number(String(attrOf(node, 'gap') || '').replace(/px$/i, '')) || GAP.normal);
+  /* gap 可以写 0：以前的 `|| 默认` 会把 0 吞成 32。 */
+  const rawGap = attrOf(node, 'gap');
+  let gap = GAP.normal;
+  if (rawGap != null && rawGap !== '') {
+    if (rawGap in GAP) gap = GAP[rawGap];
+    else {
+      const n = Number(String(rawGap).replace(/px$/i, ''));
+      if (Number.isFinite(n) && n >= 0) gap = n;
+    }
+  }
   /* 每一层 flow 都把列模板写死：否则子 flow 会继承父级模板。 */
   let template;
   if (cols === 'auto') template = 'none';
@@ -58,8 +67,14 @@ export function buildPage(node) {
   const list = node.childNodes || [];
   const head = list.find((c) => c.tagName === 'vk-head');
   const rest = list.filter((c) => c !== head);
-  /* 有「一句话」的注记：正文右侧让出一列，注记只用这一列，永远不压内容。 */
-  const hasNote = rest.some((c) => c.tagName === 'vk-callout' && (attrOf(c, 'mode') || 'note') === 'note');
+  /* 有「一句话」的注记：正文右侧让出一列，注记只用这一列，永远不压内容。
+     注记也可能写在 flow 里，所以递归找。 */
+  const hasNote = (function walk(nodes) {
+    return (nodes || []).some((c) => {
+      if (c.tagName === 'vk-callout' && (attrOf(c, 'mode') || 'note') === 'note') return true;
+      return walk(c.childNodes);
+    });
+  })(rest);
   if (hasNote) node.attrs.push({ name: 'data-vk-anno', value: 'right' });
   const stage = `<div class="vk-stage">${head ? serialize(head) : ''}<div class="vk-body">${rest.map(serialize).join('')}</div></div>`;
   node.childNodes = [raw(stage)];

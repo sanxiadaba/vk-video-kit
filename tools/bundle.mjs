@@ -26,31 +26,13 @@ const LAYERS = [
   ['callout', ['src/callout.css']],
 ];
 
-const inputs = [
-  ...LAYERS.flatMap(([, files]) => files),
-  'src/vocab.mjs',
-  'src/schema.mjs',
-  'src/contract.mjs',
-  'src/normalize.mjs',
-  'src/build/index.mjs',
-  'src/build/source.mjs',
-  'src/build/content.mjs',
-  'src/build/diagram.mjs',
-  'src/build/layout.mjs',
-  'src/shared/dom.mjs',
-  'src/shared/range.mjs',
-  'src/shared/code.mjs',
-  'src/shared/asm.mjs',
-  'src/runtime/index.mjs',
-  'src/runtime/base.mjs',
-  'src/runtime/elements.mjs',
-  'src/runtime/graph.mjs',
-  'src/runtime/callout.mjs',
-  'src/audit/index.mjs',
-  'package.json',
-];
+/* stamp 覆盖整个 src/：任何源文件变了，--check 都必须报不一致。
+   以前是一张手写清单，漏了 connector.mjs，改箭头尺寸也查不出来。 */
+const walk = (dir) =>
+  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
+const files = [...walk(path.join(ROOT, 'src')), path.join(ROOT, 'package.json')].sort();
 const hash = crypto.createHash('sha1').update(pkg.version);
-for (const f of inputs) hash.update(f).update('\0').update(fs.existsSync(path.join(ROOT, f)) ? fs.readFileSync(path.join(ROOT, f)) : 'missing');
+for (const f of files) hash.update(path.relative(ROOT, f)).update('\0').update(fs.readFileSync(f));
 const key = hash.digest('hex');
 
 if (process.argv.includes('--check')) {
