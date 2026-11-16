@@ -104,6 +104,7 @@ docs/DESIGN.md       视觉与几何契约
 docs/CONTRACT.md     生成物，别手改
 tests/fixtures/      一帧一件的最小验收帧
 tests/negative/      负例
+tests/assets/        测试用的真实文件（src= 读源码）
 ```
 
 主题只有一条规则：**谁声明表面，谁写 `color-scheme`**。页面用 `theme="light|dark"`，卡片用 `surface="paper|soft|dark"`；

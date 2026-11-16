@@ -139,6 +139,12 @@ for (const [code, html] of CASES) {
   }
 }
 
+/* src= 是「从真实文件读源码」的唯一入口：正例必须有，否则删了 code/ 就没人走过这条路。 */
+{
+  const res = await transformHtml('<vk-page><vk-code lang="c" src="../assets/src-demo.c"></vk-code></vk-page>', { file: path.join(ROOT, 'tests', 'fixtures', '_src.html') });
+  ok(res.html.includes('stdio.h') && !res.diagnostics.some((d) => d.code === 'SRC_MISSING'), 'src= 从文件读源码');
+}
+
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
 fs.rmSync(OUT, { recursive: true, force: true });
@@ -468,4 +474,5 @@ fs.rmSync(TMP, { recursive: true, force: true });
 
 console.log(failed ? `\n${failed} 条没通过` : '\n全部通过');
 process.exitCode = failed ? 1 : 0;
+
 
