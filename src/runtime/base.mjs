@@ -1,5 +1,5 @@
 /**
- * v25 · 运行期底座
+ * v26 · 运行期底座
  * ----------------------------------------------------------------------------
  * 构建期已经把所有能算的几何算完了。运行期只做四件事：
  *   1. 等字体与图片真正就绪，并等到布局不再变化
@@ -91,7 +91,7 @@ const pick = (host, attr, args) => {
   /* 行按「代码文字」取墨迹：行号不算目标，圈也不该把行号圈进去。 */
   const rectOf = (el) => {
     if (el.matches('.vk-mark')) return inkRect(el);
-    if (el.matches('.vk-line')) {
+    if (el.matches('.vk-line, .vk-arow')) {
       const lc = el.querySelector('.vk-lc');
       return lc ? inkRect(lc) : inkRect(el);
     }

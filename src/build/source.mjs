@@ -89,14 +89,14 @@ function readSource(node, ctx, who) {
   const src = attrOf(node, 'src');
   const inline = inlineSource(node);
   if (src && inline != null) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: `${who} 同时写了 src 和内联源码：只能二选一`, fix: '删掉 src，或删掉内联 <script data-vk-source>' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: `${who} 同时写了 src 和内联源码：只能二选一`, fix: '删掉 src，或删掉内联 <script data-vk-source>' });
     return null;
   }
   if (!src && inline == null) return null;
   if (inline != null) return dedent(expandLeadingTabs(stripAnsi(inline)));
   const abs = ctx.resolveAsset(src);
   if (!abs) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
     return null;
   }
   return dedent(expandLeadingTabs(stripAnsi(fs.readFileSync(abs, 'utf8'))));
@@ -133,8 +133,8 @@ export async function buildSource(node, ctx) {
   const who = as === 'code' ? '<vk-code>' : `<vk-code as="${as}">`;
   const text = readSource(node, ctx, who);
   if (text == null) {
-    if (!ctx.diag.some((d) => d.tag === node.tagName && d.line === 1)) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
+    if (!ctx.diag.has(node, 'SRC_MISSING')) {
+      ctx.diag(node, { code: 'SRC_MISSING', message: `${who} 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
     }
     return `<div class="vk-missing">${who} 缺内容：写 src 或 data-vk-source</div>`;
   }
@@ -142,26 +142,26 @@ export async function buildSource(node, ctx) {
   const rangeText = attrOf(node, 'range');
   const range = rangeText ? parseRange(rangeText) : null;
   if (rangeText && !range) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_RANGE_ATTR', message: `${who} 的 range="${rangeText}" 不是单段`, fix: '写法："3" / "3-7" / "4-"' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_RANGE_ATTR', message: `${who} 的 range="${rangeText}" 不是单段`, fix: '写法："3" / "3-7" / "4-"' });
     return `<div class="vk-missing">range 写法不对</div>`;
   }
   const { start, rows: srcRows, count } = sliceRange(text, range);
   if (range && range[0] > count) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
     return `<div class="vk-missing">range 超出源码范围</div>`;
   }
 
   const fold = lineSet(attrOf(node, 'fold'));
   const cur = lineSet(attrOf(node, 'current'));
   if (attrOf(node, 'current') && !cur) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `${who} 的 current="${attrOf(node, 'current')}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `${who} 的 current="${attrOf(node, 'current')}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
   }
   if (cur && [...cur].some((n) => n > srcRows.length)) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `${who} 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `${who} 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
   }
   const mark = attrOf(node, 'mark') || '';
   const markCounter = { n: 0 };
-  if (mark && !text.includes(mark)) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
+  if (mark && !text.includes(mark)) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
   const title = attrOf(node, 'title') || '';
 
   let body = '';
@@ -270,36 +270,57 @@ export async function buildSource(node, ctx) {
   } else {
     /* asm */
     const showHex = hasAttr(node, 'hex');
+    const showAddr = attrOf(node, 'show-addr') !== 'off';
+    const fold = lineSet(attrOf(node, 'fold'));
     const parsed = parseAsm(srcRows.join('\n'));
     const out = [];
     let win = 0;
+    let folded = 0;
     let addrLen = 0;
     parsed.rows.forEach((r) => {
       if (r.kind === 'blank') return;
       win++;
+      if (fold?.has(win)) {
+        folded++;
+        return;
+      }
+      if (folded) {
+        out.push(`<div class="vk-arow vk-alabel" data-meta><span class="vk-ainsn">⋯ 省略 ${folded} 行</span></div>`);
+        folded = 0;
+      }
       if (r.kind === 'label') {
-        out.push(`<div class="vk-arow vk-alabel${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-aaddr"></span><span class="vk-ainsn">${esc(`<${r.text}>:`)}</span></div>`);
+        out.push(`<div class="vk-arow vk-alabel${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-ainsn">${esc(`<${r.text}>:`)}</span></div>`);
         return;
       }
       const { mnemonic, operands } = splitInsn(r.text);
       const addrText = r.addr ? (/^0x/i.test(r.addr) ? r.addr : `0x${r.addr}`) : '';
       addrLen = Math.max(addrLen, addrText.length);
+      const mnemonicHtml = mark ? markText(mnemonic, mark, markCounter) : esc(mnemonic);
+      const opsHtml = (mark ? markText(operands, mark, markCounter) : esc(operands))
+        .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)
+        .replace(/\$?0x[0-9a-f]+/gi, (m) => `<i class="vk-aimm">${m}</i>`);
       out.push(
-        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-aaddr">${esc(addrText)}</span>${
+        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}">${showAddr ? `<span class="vk-aaddr">${esc(addrText)}</span>` : ''}${
           showHex ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
-        }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)
-          .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)
-          .replace(/\$?0x[0-9a-f]+/gi, (m) => `<i class="vk-aimm">${m}</i>`)}</span></div>`
+        }<span class="vk-ainsn">${mnemonicHtml}</span><span class="vk-aops">${opsHtml}</span></div>`
       );
     });
+    if (folded) out.push(`<div class="vk-arow vk-alabel" data-meta><span class="vk-ainsn">⋯ 省略 ${folded} 行</span></div>`);
     body = out.join('');
     digits = String(win).length;
     const addrW = Math.max(88, Math.round(addrLen * 0.62 * FONT.caption + 16));
+    if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
+      ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成汇编里真实出现的一个词，如 add / mov / rdi' });
+    }
     return frame({ title, body: `<div class="vk-lines vk-asm" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
   }
 
 
   const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
   const dim = as === 'code' && cur?.size ? ' data-dim="1"' : '';
+  /* 词被 Shiki 切成多个 token 时，逐 token 匹配会一个都标不上——必须说破。 */
+  if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
+    ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成一个完整的 token；a[i] 这种跨 token 的写法先只 mark i' });
+  }
   return frame({ title, body: `<div class="vk-lines${cls}"${dim}>${body}</div>`, range: rangeLabel, digits, dots: true, kind: as });
 }

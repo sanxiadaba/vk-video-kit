@@ -1,5 +1,5 @@
 /**
- * v25 · 公开契约
+ * v26 · 公开契约
  * ----------------------------------------------------------------------------
  * 全库只有这一份契约：哪个标签、哪个变体、有哪些属性、默认值、子节点怎么写。
  * 构建期校验、vk doc / vk brief、docs/CONTRACT.md 全部从这里生成，不许手抄第二份。
@@ -31,7 +31,7 @@ export const LAYERS = [
    span / bleed 是 flow 子项能力，不是某个件的属性。 */
 export const FLOW_CHILD = {
   span: { type: 'int', min: 1, max: 12, group: 'layout', label: '跨几栏（只在 flow 子项）' },
-  bleed: { type: 'enum', values: ['x'], group: 'layout', label: '出血到画布边（只在 flow 子项）' },
+  bleed: { type: 'enum', values: ['x', 'all'], group: 'layout', label: '出血到画布边（只在 flow 子项；all 只给 vk-img）' },
 };
 
 /* ------------------------------------------------------------------ 取值 */
@@ -53,7 +53,20 @@ const blocks = (hint) => ({ kind: 'blocks', hint });
 const inline = (hint) => ({ kind: 'inline', hint });
 const items = (attrs, hint) => ({ kind: 'items', item: 'li', attrs, hint });
 const source = (hint) => ({ kind: 'source', hint });
-const table = (hint) => ({ kind: 'table', hint });
+const table = (hint) => ({
+  kind: 'table',
+  hint,
+  /* <tr> 能写的属性 */
+  attrs: { tone: ITEM_TONE, current: { type: 'bool', group: 'state', label: '当前行（写属性名）' } },
+  /* <td>/<th> 能写的属性；单元格 tone 让 DP 表、哈希桶、流水线矩阵能上色 */
+  cellAttrs: {
+    tone: ITEM_TONE,
+    align: enumv(['left', 'center', 'right'], 'left', 'layout', '单元格对齐'),
+    current: { type: 'bool', group: 'state', label: '当前格（写属性名）' },
+    colspan: int(1, 12, undefined, 'layout', '跨几列'),
+    rowspan: int(1, 12, undefined, 'layout', '跨几行'),
+  },
+});
 const none = (hint) => ({ kind: 'none', hint });
 
 /* ------------------------------------------------------------------ 变体 */
@@ -139,11 +152,11 @@ export const TAGS = {
     name: '图片',
     summary: '一张图：比例、填充方式、焦点。默认完整显示（contain），要裁切得明说；bleed="all" 可整帧铺满当底。',
     attrs: {
-      src: text('content', '图片地址'),
+      src: text('content', '图片地址', { required: true }),
       alt: text('content', '替代文字（图坏了会显示）'),
       ratio: text('appearance', '比例，如 "16 / 9"'),
       fill: enumv(['cover', 'contain'], 'contain', 'appearance', '填充（cover 会裁掉超出的部分）'),
-      position: text('appearance', '焦点', { default: '50% 50%' }),
+      position: text('appearance', '焦点，如 "50% 50%"', { default: '50% 50%' }),
     },
     children: none('图片标签里不写内容。'),
     example: '<vk-img src="shot.png" ratio="16 / 9" fill="cover" alt="截图"></vk-img>',
@@ -171,14 +184,15 @@ export const TAGS = {
         '<vk-code lang="c" title="a.c" current="2"><script type="text/plain" data-vk-source>\nint a[3] = {1, 2, 3};\na[1]\n</script></vk-code>'),
       term: variant('终端', '命令与输出：提示符、命令、输出各自一色。', {
         src: text('content', '记录文件'),
+        range: range('源文件行段，如 "4-6"（只接受单段）'),
         current: lines('当前行（窗口内第几行，1 起）'),
         size: enumv(['caption', 'body'], 'body', 'type', '字号'),
         prompt: text('appearance', '提示符', { default: '$' }),
       }, source('src 指向 .txt/.log，或内联 <script type="text/plain" data-vk-source>。'),
         '<vk-code as="term" title="bash"><script type="text/plain" data-vk-source>\n$ cc hello.c -o hello\n$ ./hello\nhello\n</script></vk-code>'),
       diff: variant('改动', '一段 diff：增删行、hunk 头、标词。', {
-        lang: text('content', '语言（可选，用于给增删行上语法色）'),
         src: text('content', 'diff 文件'),
+        range: range('源文件行段，如 "4-6"（只接受单段）'),
         current: lines('当前行（窗口内第几行，1 起）'),
         mark: text('state', '标出的词'),
         size: enumv(['caption', 'body'], 'body', 'type', '字号'),
@@ -186,8 +200,11 @@ export const TAGS = {
         '<vk-code as="diff" title="a.c"><script type="text/plain" data-vk-source>\n- a[1] = 7;\n+ a[1] = 8;\n</script></vk-code>'),
       asm: variant('汇编', '汇编清单：地址、机器码、助记符、操作数。', {
         src: text('content', '反汇编文件'),
+        range: range('源文件行段，如 "4-6"（只接受单段）'),
         current: lines('当前行（窗口内第几行，1 起）'),
+        fold: lines('折叠行（窗口内第几行）'),
         hex: bool('appearance', '显示机器码列'),
+        'show-addr': enumv(['on', 'off'], 'on', 'appearance', '显示地址列（off 可省 88px）'),
         size: enumv(['caption', 'body'], 'body', 'type', '字号'),
       }, source('src 指向 objdump 输出，或内联 <script type="text/plain" data-vk-source>。'),
         '<vk-code as="asm" hex current="2"><script type="text/plain" data-vk-source>\n0x1004 48 89 f8 mov %rdi,%rax\n0x1007 48 01 f0 add %rsi,%rax\n</script></vk-code>'),
@@ -201,7 +218,7 @@ export const TAGS = {
       }, source('src 指向二进制；也可内联十六进制（68 65 6c 6c 6f）。'),
         '<vk-code as="bytes" title="hello.bin" current="1-3"><script type="text/plain" data-vk-source>\n68 65 6c 6c 6f\n</script></vk-code>'),
       bits: variant('位', '一行二进制位：索引、分段、符号位。用 | 分段，field-labels 给每段起名。', {
-        value: text('content', '位串，可含空格；用 | 分段'),
+        value: text('content', '位串（只含 0/1），可含空格；用 | 分段', { required: true }),
         current: lines('当前位段，如 "4-7"（1 起，从左数）'),
         label: text('appearance', '左边一行说明'),
         'field-labels': text('appearance', '各段名，逗号分隔（个数要与 | 的段数一致）'),
@@ -257,11 +274,11 @@ export const TAGS = {
     name: '关系图',
     summary: '节点写成 <li id>文字</li>，边写在节点上（after="父id"）或写成独立子项（from/to，支持环、双向、边标）。',
     attrs: {
-      as: enumv(['row', 'tree', 'layered', 'mesh'], 'row', 'layout', '布局'),
-      direction: enumv(['horizontal', 'vertical'], 'horizontal', 'layout', '方向（只对 row）'),
+      as: enumv(['row', 'tree', 'layered', 'mesh'], 'row', 'layout', '布局：row 横排 / tree 树 / layered 泳道 / mesh 任意'),
+      direction: enumv(['horizontal', 'vertical'], 'horizontal', 'layout', '方向（只对 row）', { when: { attr: 'as', values: ['row'] } }),
     },
     children: items(
-      { id: text('content', '节点 id（边用它引用）'), note: text('content', '节点下的小字'), after: text('content', '父节点 id（空格分隔多个）'), lane: int(0, 9, undefined, 'layout', 'layered 布局里放第几条泳道'), from: text('content', '显式边的起点'), to: text('content', '显式边的终点'), tone: ITEM_TONE, current: currentItem() },
+      { id: text('content', '节点 id（边用它引用）'), note: text('content', '节点下的小字'), after: text('content', '父节点 id（空格分隔多个）'), lane: { ...int(0, 9, undefined, 'layout', 'layered 布局里放第几条泳道'), when: { attr: 'as', values: ['layered'] } }, from: text('content', '显式边的起点'), to: text('content', '显式边的终点'), tone: ITEM_TONE, current: currentItem() },
       '<li id="a">head</li> → <li id="b" after="a">next</li>；不写 after 的节点是根。'
     ),
     example: '<vk-graph><li id="a">head</li><li id="b" after="a">next</li></vk-graph>',
@@ -287,15 +304,13 @@ export const TAGS = {
     name: '时序',
     summary: '两条以上生命线之间的往返：一行一条消息，按阅读顺序从上往下。2–4 个参与者。',
     attrs: {
-      participants: text('content', '参与者，逗号分隔，如 "客户端,服务端,缓存"（2–4 个）'),
-      a: text('content', '左端名称（只有两条泳道时用）'),
-      b: text('content', '右端名称（只有两条泳道时用）'),
+      participants: text('content', '参与者，逗号分隔，如 "客户端,服务端,缓存"（2–4 个）', { required: true }),
     },
     children: items(
       { from: text('content', '起点（参与者名或 1 起的序号）'), to: text('content', '终点'), direction: enumv(['right', 'left'], 'right', 'layout', '方向（两条泳道时用）'), note: text('content', '消息下的小字'), tone: ITEM_TONE, current: currentItem() },
       '<li>SYN</li>；<li direction="left">SYN+ACK</li>；三条以上用 from/to="客户端"。'
     ),
-    example: '<vk-seq a="客户端" b="服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>',
+    example: '<vk-seq participants="客户端,服务端"><li>SYN</li><li direction="left">SYN+ACK</li><li>ACK</li></vk-seq>',
   },
 
   'vk-math': {
@@ -374,11 +389,32 @@ a[1]
 
 /** 契约顶部印的几条硬规则；不再只藏在 GUIDE 里。 */
 export const RULES = [
-  '可见文字写成元素内容；kicker / counter / lede / note / date / value 才是属性。',
+  '一帧一件事：一个 current（或一次标注）说清“正在看这里”。',
+  '可见文字写成元素内容；kicker / counter / lede / note / date / value / label / 窗口标题 / 表题 / 单位 / 目录名 / alt 才走属性。',
   'current 写在项上（布尔）；code 的 code/term/diff/asm/bytes 与 bits 用行段；dir 用路径。',
   '用 lede 写“为什么看这里”，正文里的重点用 mark。',
   'src 载体：code/term/diff/asm 用 data-vk-source，math 写 TeX，bytes 写十六进制，dir 用 data-vk-tree。',
   '主题：page theme="light|dark"；card surface="paper|soft|dark"。',
   'span / bleed 只写在 <vk-flow> 的直接子项上；bleed="all" 只给 <vk-img>。',
+];
+
+/** 作者可写的全局属性；不属于某一个标签。 */
+export const AUTHOR_GLOBALS = {
+  id: '所有件都可写；同一帧唯一，锚点用它；只能字母/数字/下划线/短横线/汉字',
+  style: '只写颜色 token（--vk-focus / --vk-syn-* / --vk-ink-* / --vk-tone）；字号、间距、线宽、版心不归作者',
+};
+
+/** 当前几何下的实测容量；不是门禁，是给 AI 拆帧用的预算。 */
+export const CAPACITY = [
+  { what: '代码窗', max: '3 行（带导语）/ 4 行（不带）', note: '每行 64×1.5，窗口头 80' },
+  { what: '表格', max: '4 个数据行 + 表头', note: '行高约 103；带 caption 再减一行' },
+  { what: '内存格', max: '1 行 4 格 + 一句注', note: '半栏并排时用紧凑档（2×2）' },
+  { what: '时序', max: '2 条（带导语）/ 4 条（subhead）/ 6 条（无标题带）', note: '一条 108' },
+  { what: '关系图', max: '3 层 / 环上 4 节点', note: '超了压行距，不缩字；row 不换行' },
+  { what: '步骤', max: '4 步横排', note: '容器窄时自动竖排' },
+  { what: '条', max: '4–6 条', note: '' },
+  { what: '时间线', max: '3 点', note: '带区间时 2 段' },
+  { what: '位', max: '16 位', note: '32 位只标 8 的倍数' },
+  { what: '字节', max: '2 行 × 8 字节 + 一句注', note: '' },
 ];
 

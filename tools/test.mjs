@@ -1,10 +1,10 @@
 /**
- * v25 · 测试
+ * v26 · 测试
  * ----------------------------------------------------------------------------
  * 只测「会静默坏掉」的东西：
  *   一、契约 / 文档     13 个标签、变体、生成物同步
  *   二、负例            每种写错都给出稳定错误码（不抛异常）
- *   三、渲染            全部 fixture 干净：无问题、无溢出、1920/780、非空白
+ *   三、渲染            全部 fixture 干净：无问题、无溢出、1920/693、非空白
  *   四、行为            不缩字 / 圈选 / 数字列 / 深色窗
  *   五、确定            同一帧渲两次 PNG 逐字节相同
  *   六、CLI             参数、退出码、默认不拦出图
@@ -61,8 +61,8 @@ ok(brief.tags['vk-code'].variants.code.attrs.lang.required === true, '源码窗�
 ok(docText('vk-code').includes('as="bits"') && docText('vk-code').includes('默认 body'), 'doc 按变体列出范围与默认值');
 ok(docText('vk-callout').includes('必填'), 'doc 标出必填');
 const md = markdown();
-const contractFile = path.join(ROOT, 'docs', 'CONTRACT.md');
-ok(fs.existsSync(contractFile) && fs.readFileSync(contractFile, 'utf8').trim() === md.trim(), 'docs/CONTRACT.md 与 vk brief --md 逐字一致');
+ok(/^# vk 契约 26\.0\.0/.test(md), '紧凑契约能生成');
+ok(md.includes('693') && !md.includes('780'), '契约按真机 693 写，不再提 780');
 ok(!/<\/?(vk-stack|vk-grid|vk-compare|vk-cells|vk-steps|vk-bars|vk-timeline|vk-table|vk-list|vk-bytes|vk-bits|vk-term)>/.test(md), '生成物里没有旧标签');
 
 /* CSS 里用到的 token 必须有定义（或由构建/运行期写入）。 */
@@ -128,6 +128,10 @@ const CASES = [
   ['FIELD_LABELS', '<vk-page><vk-code as="bits" value="0|1|0" field-labels="a,b"></vk-code></vk-page>'],
   ['CURRENT_RANGE', CODE('current="99"')],
   ['BUILD', '<vk-page><vk-code lang="no-such-lang"><script type="text/plain" data-vk-source>x</script></vk-code></vk-page>'],
+  ['ID_FORMAT', '<vk-page><vk-text id="a/b">x</vk-text></vk-page>'],
+  ['ATTR_REQUIRED', '<vk-page><vk-img alt="x"></vk-img></vk-page>'],
+  ['ATTR_REQUIRED', '<vk-page><vk-code as="bits"></vk-code></vk-page>'],
+  ['ATTR_PLACEMENT', '<vk-page><vk-card><vk-callout mode="mark" for="#x"></vk-callout></vk-card></vk-page>'],
 ];
 for (const [code, html] of CASES) {
   try {
@@ -165,6 +169,15 @@ const probe = async (html) => transformHtml(html, { file: path.join(ROOT, 'tests
   ok(bytes.html.includes('0x0012') && /vk-bhex">(<i[^>]*>[0-9a-f]{2}<\/i>){4}/.test(bytes.html), 'bytes 的 offset / length 生效');
   const cap = await probe('<vk-page><vk-board as="table"><table><caption>表</caption><tr><th>a</th></tr></table></vk-board></vk-page>');
   ok(cap.html.includes('<caption>表</caption>'), 'table 的 caption 保留');
+  const asm = await probe('<vk-page><vk-code as="asm" mark="nop" fold="2"><script type="text/plain" data-vk-source>0x0 90 nop\n0x1 90 nop\n0x2 90 nop\n0x3 90 nop</script></vk-code></vk-page>');
+  ok(asm.html.includes('省略 1 行'), 'asm fold 折掉已知行');
+  ok(/<mark class="vk-mark"/.test(asm.html), 'asm mark 标助记符');
+  const td = await probe('<vk-page><vk-board as="table"><table><tr><th>a</th></tr><tr><td tone="ok" align="right">1</td></tr></table></vk-board></vk-page>');
+  ok(td.html.includes('tone="ok"') && td.html.includes('align="right"'), 'table 单元格 tone / align 保留');
+  const spaceBits = await probe('<vk-page><vk-code as="bits" value="0 | 0111" index="up"></vk-code></vk-page>');
+  ok(spaceBits.html.includes('<b class="vk-bit-i">4</b>'), 'bits 的空格不占位索引');
+  const full = await probe('<!doctype html><html><head><title>x</title></head><body><vk-page><vk-text>x</vk-text></vk-page></body></html>');
+  ok(/vk\.css/.test(full.html) && /vk\.js/.test(full.html), '整页 HTML 也注入 dist 三件');
 }
 
 /* ------------------------------------------------------------------ 三、渲染 */
@@ -173,16 +186,16 @@ fs.rmSync(OUT, { recursive: true, force: true });
 const renderRun = cli(['render', 'tests/fixtures', '--out', OUT, '--json']);
 let report = null;
 try {
-  report = JSON.parse(renderRun.stdout.slice(renderRun.stdout.indexOf('{')));
+  report = JSON.parse(renderRun.stdout);
 } catch {
   /* 下面报 */
 }
-ok(renderRun.status === 0 && report, '全部 fixture 出图', String(renderRun.stderr || '').slice(0, 400));
+ok(renderRun.status === 0 && report, '全部 fixture 出图，--json 是纯 JSON', String(renderRun.stderr || '').slice(0, 400));
 if (report) {
   const fileCount = fs.readdirSync(path.join(ROOT, 'tests', 'fixtures')).filter((f) => f.endsWith('.html')).length;
   ok(report.frames.length === fileCount, `${fileCount} 帧（${report.frames.length}）`);
   ok(report.engine?.version, `记录引擎（${report.engine?.channel} ${report.engine?.version}）`);
-  const bad = report.frames.filter((f) => !f.png || !f.png780 || !f.json);
+  const bad = report.frames.filter((f) => !f.png || !f.preview || !f.json);
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
   const withIssues = report.frames.filter((f) => f.issues.length);
   ok(withIssues.length === 0, '每帧都没有硬错', withIssues.slice(0, 3).map((f) => `${f.name}: ${f.issues.map((i) => `${i.code} ${i.message}`).join(' / ')}`).join('；'));
@@ -195,18 +208,53 @@ if (report) {
   const blank = [];
   for (const f of report.frames) {
     const big = PNG.sync.read(fs.readFileSync(path.join(ROOT, f.png)));
-    const small = PNG.sync.read(fs.readFileSync(path.join(ROOT, f.png780)));
-    if (big.width !== 1920 || small.width !== 780) widthsOk = false;
+    const small = PNG.sync.read(fs.readFileSync(path.join(ROOT, f.preview)));
+    if (big.width !== 1920 || small.width !== 693) widthsOk = false;
     const colors = new Set();
     for (let i = 0; i < big.data.length; i += 4 * 97) colors.add(`${big.data[i]},${big.data[i + 1]},${big.data[i + 2]}`);
     if (colors.size < 4) blank.push(f.name);
   }
-  ok(widthsOk, '1920 / 780 出图');
+  ok(widthsOk, '1920 / 693 出图');
   ok(blank.length === 0, '没有空白帧', blank.join(', '));
 }
 
-/* 出图页的 DOM 里不许出现旧标签（构建层已经换过一遍，防止回潮）。 */
-const builtPages = path.join(ROOT, '.vk-tmp', 'pages', 'tests', 'fixtures');
+/* ------------------------------------------------------------------ 三·五、自检
+   体检单自己也要被体检：故意造三种坏帧，断言 audit 真的报出来。 */
+group('自检');
+{
+  const dir = path.join(TMP, 'audit');
+  fs.rmSync(dir, { recursive: true, force: true });
+  fs.mkdirSync(dir, { recursive: true });
+  const file = path.join(dir, 'audit.html');
+  fs.writeFileSync(
+    file,
+    `<vk-page id="clip">
+  <vk-code lang="c" title="long.c"><script type="text/plain" data-vk-source>
+int this_is_a_very_long_line_that_will_not_fit_in_the_window_at_all = 1;
+  </script></vk-code>
+</vk-page>
+<vk-page id="empty"><vk-head>只有标题</vk-head></vk-page>
+<vk-page id="outside">
+  <vk-code lang="c" title="big.c"><script type="text/plain" data-vk-source>
+${Array.from({ length: 12 }, (_, i) => `int v${i} = ${i};`).join('\n')}
+  </script></vk-code>
+</vk-page>`
+  );
+  const run = cli(['check', file, '--out', path.join(dir, 'out'), '--json']);
+  let rep = null;
+  try {
+    rep = JSON.parse(run.stdout);
+  } catch {
+    /* 下面报 */
+  }
+  const codes = (rep?.frames || []).flatMap((f) => f.issues.map((i) => i.code));
+  ok(codes.includes('CLIPPED'), '自检抓横向裁切', codes.join(', '));
+  ok(codes.includes('EMPTY'), '自检抓空帧', codes.join(', '));
+  ok(codes.includes('OUTSIDE'), '自检抓出画布', codes.join(', '));
+  ok(rep?.frames?.[0]?.ok === false, '坏帧不再报 ok:true');
+}
+
+/* 出图页的 DOM 里不许出现旧标签（构建层已经换过一遍，防止回潮）。 */const builtPages = path.join(ROOT, '.vk-tmp', 'pages', 'tests', 'fixtures');
 const builtHtml = fs.existsSync(builtPages) ? fs.readdirSync(builtPages).filter((f) => f.endsWith('.html')).map((f) => fs.readFileSync(path.join(builtPages, f), 'utf8')).join('\n') : '';
 ok(builtHtml.length > 0, '出图页已生成');
 ok(!/<vk-(cells|steps|bars|timeline|table|list|bytes|bits|term|tree|stack|grid|compare|surface|box|label)\b/.test(builtHtml), '出图页里没有旧标签');
@@ -360,7 +408,7 @@ if (!browser) {
   ok(tgeo.levels === 3 && Math.min(...tgeo.gaps) >= 63, `树的三层各留出净空（${tgeo.gaps.join(' / ')}）`);
   await gtPage.close();
 
-  /* 箭头：头部够大，否则在 780 下就是一根没头的线。 */
+  /* 箭头：头部够大，否则在 693 下就是一根没头的线。 */
   const grPage = await load('graph-row.html');
   const head = await grPage.evaluate(() => {
     const h = document.querySelector('.vk-edge-head').getBoundingClientRect();
@@ -419,6 +467,15 @@ if (!browser) {
   ok(cmp.length === 2 && cmp[0].border !== cmp[1].border, `语义卡两种色（${cmp.map((c) => c.tone + ' ' + c.border).join(' / ')}）`);
   ok(cmp.every((c) => c.bg !== 'rgba(0, 0, 0, 0)'), '语义卡有淡底');
   await cmpPage.close();
+
+  const mixPage = await load('mix-cells.html');
+  const marks = await mixPage.evaluate(() => ({
+    current: document.querySelectorAll('[current]').length,
+    bars: document.querySelectorAll('.vk-co-bar, .vk-co-box').length,
+  }));
+  ok(marks.bars >= 2, `多目标标注画了两处（${marks.bars}）`);
+  ok(marks.current === 0, '标注跨两件时不需要额外 current');
+  await mixPage.close();
   await browser.close();
 }
 
@@ -430,8 +487,8 @@ for (const d of [detA, detB]) fs.rmSync(d, { recursive: true, force: true });
 cli(['render', 'tests/fixtures/graph-tree.html', '--out', detA]);
 cli(['render', 'tests/fixtures/graph-tree.html', '--out', detB]);
 const hash = (f) => crypto.createHash('sha1').update(fs.readFileSync(f)).digest('hex');
-const fileA = fs.existsSync(detA) ? fs.readdirSync(detA).find((f) => f.endsWith('.png') && !f.includes('.780.')) : null;
-const fileB = fs.existsSync(detB) ? fs.readdirSync(detB).find((f) => f.endsWith('.png') && !f.includes('.780.')) : null;
+const fileA = fs.existsSync(detA) ? fs.readdirSync(detA).find((f) => f.endsWith('.png') && !f.includes('.phone.')) : null;
+const fileB = fs.existsSync(detB) ? fs.readdirSync(detB).find((f) => f.endsWith('.png') && !f.includes('.phone.')) : null;
 ok(fileA && fileB && hash(path.join(detA, fileA)) === hash(path.join(detB, fileB)), '同一帧渲两次，PNG 逐字节相同');
 
 /* ------------------------------------------------------------------ 六、CLI */
@@ -461,15 +518,15 @@ fs.rmSync(overDir, { recursive: true, force: true });
 const overRun = cli(['render', overFile, '--out', overDir, '--json']);
 let overReport = null;
 try {
-  overReport = JSON.parse(overRun.stdout.slice(overRun.stdout.indexOf('{')));
+  overReport = JSON.parse(overRun.stdout);
 } catch {
   /* 下面报 */
 }
 ok(overRun.status === 0, '超容量也 exit 0（不拦出图）');
 ok(overReport?.frames?.[0]?.health?.overflow > 0, `体检单报出超出（${overReport?.frames?.[0]?.health?.overflow}px）`);
 ok(fs.existsSync(path.join(overDir, 'overflow.png')), '超容量的帧仍然产生 PNG');
-ok(overReport?.frames?.[0]?.issues?.length === 0 && overReport?.frames?.[0]?.ok === true, '超容量不算硬错（ok 仍为 true）');
 ok(overReport?.frames?.[0]?.fits === false, 'fits 单独标记放不下');
+ok(overReport?.frames?.[0]?.issues?.some((i) => i.code === 'OUTSIDE'), '超出画布记为硬错（内容真的丢了）');
 fs.rmSync(overFile, { force: true });
 
 /* ------------------------------------------------------------------ 七、对比度 */

@@ -78,7 +78,7 @@ export function buildImg(node, ctx) {
   const ratio = attrOf(node, 'ratio');
   const remote = /^[a-z]+:|^\/\//i.test(src);
   if (!remote && !ctx.resolveAsset(src)) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `图片不存在：${src}`, fix: '路径相对页面文件解析；写错了就在图上画一块占位，不会出破图标' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `图片不存在：${src}`, fix: '路径相对页面文件解析；写错了就在图上画一块占位，不会出破图标' });
     node.childNodes = [raw(`<div class="vk-missing">图片不存在：${esc(src)}</div>`)];
     return;
   }
@@ -107,6 +107,22 @@ ${body}
 </body>
 </html>
 `;
+}
+
+/** 作者写了整页 HTML 时，补上 dist 的三件；已有就尊重。 */
+export function ensureLibs(doc) {
+  const html = (doc.childNodes || []).find((n) => n.tagName === 'html');
+  const head = (html?.childNodes || []).find((n) => n.tagName === 'head');
+  const body = (html?.childNodes || []).find((n) => n.tagName === 'body');
+  if (head) {
+    const links = (head.childNodes || []).filter((n) => n.tagName === 'link').map((n) => attrOf(n, 'href') || '');
+    if (!links.includes(LIBS.fonts)) head.childNodes.push(raw(`<link rel="stylesheet" href="${LIBS.fonts}">`));
+    if (!links.includes(LIBS.css)) head.childNodes.push(raw(`<link rel="stylesheet" href="${LIBS.css}">`));
+  }
+  if (body) {
+    const scripts = (body.childNodes || []).filter((n) => n.tagName === 'script').map((n) => attrOf(n, 'src') || '');
+    if (!scripts.includes(LIBS.js)) body.childNodes.push(raw(`<script src="${LIBS.js}"></script>`));
+  }
 }
 
 export function rewriteLinks(doc, file) {

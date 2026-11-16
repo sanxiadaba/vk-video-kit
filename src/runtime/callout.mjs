@@ -1,5 +1,5 @@
 /**
- * v25 · 标注
+ * v26 · 标注
  * ----------------------------------------------------------------------------
  * 标注由三件组成，形状跟着目标走：
  *   标记  词/块用框，行用墨下一条，行段用右侧括号
@@ -139,7 +139,7 @@ export class VkCallout extends VkElement {
   /** 标记的形状跟着目标走：词套一个框，行划一道，行段用右括号，块用框。 */
   drawMark(t, rel) {
     const isWord = t.el.matches('.vk-mark');
-    const isLine = t.el.matches('.vk-line');
+    const isLine = t.el.matches('.vk-line, .vk-arow');
     const boxOf = (r) => ({ left: r.left - ANN.boxPad, top: r.top - ANN.boxPadY, right: r.right + ANN.boxPad, bottom: r.bottom + ANN.boxPadY });
 
     /* 词：套住整个 token 的框。闭合才说得清「这一个」，也才不会吃进隔壁括号。 */
@@ -206,9 +206,16 @@ export class VkCallout extends VkElement {
 
     /* ---------------------------------------------------------------- 标记 */
     if (mode === 'mark' || mode === 'note') {
-      const t = resolveAnchor(page, this.getAttribute('for'), this);
-      if (!t) return missing();
-      const mark = this.drawMark(t, rel);
+      /* for 可以是一串目标：「这行代码写进那一格」是一个故事，不是两个焦点。 */
+      const exprs = String(this.getAttribute('for') || '')
+        .trim()
+        .split(/\s+/)
+        .filter(Boolean);
+      const targets = exprs.map((e) => resolveAnchor(page, e, this));
+      if (!targets.length || targets.some((t) => !t)) return missing();
+      const marks = targets.map((t) => this.drawMark(t, rel));
+      const t = targets[0];
+      const mark = marks[0];
       if (mode === 'mark') return;
 
       /* 文字：注栏里的一列。正文已经让出这一列，所以它可以比目标宽得多。 */

@@ -139,7 +139,7 @@ body {
   font-weight: var(--vk-w-bold);
   max-width: var(--vk-measure-headline);
   color: var(--vk-ink-1);
-  text-wrap: pretty;
+  text-wrap: balance;
 }
 [data-vk='head'][size='subhead'] .vk-title {
   font-size: var(--vk-fs-subhead);
@@ -153,7 +153,7 @@ body {
   max-width: var(--vk-measure-display);
 }
 [data-vk='head'][size='display'][align='center'] .vk-title {
-  padding-left: 0.3em;
+  padding-left: 0;
 }
 .vk-lede {
   font-size: var(--vk-fs-body);
@@ -315,13 +315,13 @@ body {
   width: 12px;
   height: 12px;
   border-radius: 50%;
-  background: #ff5f57;
+  background: #e8695f;
 }
 .vk-dots i:nth-child(2) {
-  background: #febc2e;
+  background: #e3b34d;
 }
 .vk-dots i:nth-child(3) {
-  background: #28c840;
+  background: #4fae6d;
 }
 .vk-ftitle {
   font-family: var(--vk-font-mono);
@@ -466,7 +466,7 @@ body {
   font-weight: var(--vk-w-bold);
   background: var(--vk-mark);
   color: var(--vk-ink-1);
-  border-radius: 2px;
+  border-radius: 0.04em;
   padding: 0 0.06em;
   box-decoration-break: clone;
 }
@@ -478,7 +478,7 @@ body {
 [data-vk='head'] mark {
   background: var(--vk-mark);
   color: var(--vk-ink-1);
-  border-radius: 2px;
+  border-radius: 0.04em;
   padding: 0 0.06em;
 }
 /* 代码里的 mark 只是「给一个词起名字」用的锚点：视觉由标注给（墨下的钴蓝条），
@@ -509,7 +509,7 @@ body {
 [data-vk='text'] kbd,
 [data-vk='head'] kbd {
   font-family: var(--vk-font-mono);
-  font-size: 0.78em;
+  font-size: 0.875em;
   padding: 0.08em 0.32em;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-radius: var(--vk-radius-sm);

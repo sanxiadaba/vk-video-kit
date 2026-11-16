@@ -1,7 +1,8 @@
 /* v25 · 状态层：current / tone / mark，全库只有这几种渲染。 */
-/* 聚光：有 current 时其余行压到 72%；当前行满对比 + 12px 左条。 */
+/* 聚光：有 current 时其余行压到 85%；当前行满对比 + 12px 左条。
+   之前压到 72%，在手机 + 540p 压缩下语法色只剩 3.2:1，等于把要读的字弄没。 */
 .vk-lines[data-dim] .vk-line:not(.is-cur) .vk-lc {
-  opacity: 0.72;
+  opacity: 0.85;
 }
 
 .vk-line.is-cur {
@@ -56,6 +57,28 @@
   background: none;
 }
 
+/* 单元格语义色：DP 表、哈希桶、流水线矩阵靠它标一格，不靠整行。 */
+[data-vk='board'][data-as='table'] td[tone='info'] {
+  background: var(--vk-tint-info);
+}
+[data-vk='board'][data-as='table'] td[tone='ok'] {
+  background: var(--vk-tint-ok);
+}
+[data-vk='board'][data-as='table'] td[tone='warn'] {
+  background: var(--vk-tint-warn);
+}
+[data-vk='board'][data-as='table'] td[tone='err'] {
+  background: var(--vk-tint-err);
+}
+[data-vk='board'][data-as='table'] td[align='right'],
+[data-vk='board'][data-as='table'] th[align='right'] {
+  text-align: right;
+}
+[data-vk='board'][data-as='table'] td[align='center'],
+[data-vk='board'][data-as='table'] th[align='center'] {
+  text-align: center;
+}
+
 [data-vk='board'][data-as='table'] tr[current] td:first-child {
   box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
 }
@@ -104,7 +127,8 @@
   bottom: 0;
   width: var(--vk-line-w-strong);
   background: var(--vk-focus);
-  border-radius: 2px;
+  border-radius: 0;
+  z-index: 3;
 }
 
 .vk-node[current] > .vk-nrow .vk-ic {

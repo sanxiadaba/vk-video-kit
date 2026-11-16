@@ -1,5 +1,5 @@
 /**
- * v25 · 构建期入口
+ * v26 · 构建期入口
  * ----------------------------------------------------------------------------
  * 读作者页 → 校验 → 落地默认值 → 把「要算的东西」算好 → 输出一张自包含的页。
  *
@@ -18,7 +18,7 @@ import { buildBoard } from './board.mjs';
 import { buildBytes, buildBits } from './grid.mjs';
 import { buildGraph, buildSeq } from './graph.mjs';
 import { buildHead, buildText, buildDir, buildMath } from './block.mjs';
-import { buildFlow, buildCard, buildPage, buildImg, wrapFragment, rewriteLinks, ROOT } from './frame.mjs';
+import { buildFlow, buildCard, buildPage, buildImg, wrapFragment, rewriteLinks, ensureLibs, ROOT } from './frame.mjs';
 
 const label = (f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join('/') || String(f);
 
@@ -71,9 +71,18 @@ const BUILDERS = {
 export async function transformHtml(rawHtml, { file }) {
   const isFull = /<html[\s>]/i.test(rawHtml);
   const doc = isFull ? parse(rawHtml, { sourceCodeLocationInfo: true }) : parseFragment(rawHtml, { sourceCodeLocationInfo: true });
-  if (isFull) rewriteLinks(doc, file);
+  if (isFull) {
+    rewriteLinks(doc, file);
+    ensureLibs(doc);
+  }
 
   const nodes = flatten(doc);
+  const pages = nodes.filter((n) => n.tagName === 'vk-page');
+  const pageIndex = new Map(pages.map((p, i) => [p, i]));
+  const frameOf = (node) => {
+    for (let n = node; n; n = n.parentNode) if (pageIndex.has(n)) return pageIndex.get(n);
+    return null;
+  };
   const diagnostics = validate(doc, label(file));
 
   /* 把有问题的位置标出来：不是门禁，是让 AI/人一眼看到是哪一块。 */
@@ -88,7 +97,10 @@ export async function transformHtml(rawHtml, { file }) {
   const ctx = {
     file,
     label,
-    diag: diagnostics,
+    diag(node, d) {
+      const line = lineOf(node);
+      diagnostics.push({ ...d, file: label(file), line, tag: node.tagName, frame: frameOf(node) });
+    },
     assets,
     resolveAsset(src) {
       const abs = path.resolve(path.dirname(path.resolve(file)), src);
@@ -100,6 +112,7 @@ export async function transformHtml(rawHtml, { file }) {
     icon: (name) => ctx.icons.get(slug(name)) || '',
     icons: new Map(),
   };
+  ctx.diag.has = (node, code) => diagnostics.some((d) => d.code === code && d.line === lineOf(node) && d.frame === frameOf(node));
 
   /* 图标按实际出现的名字惰性解析；目录树另有三个内建名。 */
   const iconNames = new Set();
@@ -121,7 +134,7 @@ export async function transformHtml(rawHtml, { file }) {
       const html = await build(node, ctx);
       if (typeof html === 'string') node.childNodes = [raw(html)];
     } catch (e) {
-      diagnostics.push({ file: label(file), line: lineOf(node), tag: node.tagName, code: 'BUILD', message: `<${node.tagName}> 构建失败：${e.message}`, fix: '看这一条的上下文；通常是 src 路径或行段写错' });
+      ctx.diag(node, { code: 'BUILD', message: `<${node.tagName}> 构建失败：${e.message}`, fix: '看这一条的上下文；通常是 src 路径或行段写错' });
       node.childNodes = [raw(`<div class="vk-missing">${node.tagName} 构建失败：${String(e.message).replace(/[<>&]/g, '')}</div>`)];
     }
   }
@@ -131,6 +144,7 @@ export async function transformHtml(rawHtml, { file }) {
     html: isFull ? body : wrapFragment(body),
     diagnostics,
     assets: [...assets],
-    count: nodes.filter((n) => n.tagName === 'vk-page').length,
+    frames: pages.map((p, i) => ({ index: i, id: p.attrs?.find((a) => a.name === 'id')?.value || '' })),
+    count: pages.length,
   };
 }

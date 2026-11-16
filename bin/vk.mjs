@@ -1,12 +1,12 @@
 #!/usr/bin/env node
 /**
- * vk —— 单帧画面库 CLI（v25）
+ * vk —— 单帧画面库 CLI（v26）
  *
  *   vk build                        重建 dist/（tokens / fonts / vk.css / vk.js / audit.js）
  *   vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]
  *   vk check  <file|dir> [--frame id] [--out DIR] [--json]
- *   vk doc    <tag> [--json]        一个件的属性表
- *   vk brief  [--json|--md]         全部契约
+ *   vk doc    <tag> [--json]        一个件的属性表（含子项）
+ *   vk brief  [--json] [--full]     全部契约；默认紧凑
  *   vk icons  <query>               搜 Lucide 图标名
  *   vk clean  [--all]               删 .vk-tmp；--all 连 out/ 一起删
  *
@@ -14,7 +14,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { contract, markdown, docText, VERSION } from '../src/contract.mjs';
+import { contract, compact, markdown, docText, VERSION } from '../src/contract.mjs';
 import { TAGS, TAG_NAMES } from '../src/schema.mjs';
 import { build as buildDist, ensure as ensureDist } from '../tools/build.mjs';
 import { renderFiles, collect } from '../tools/render.mjs';
@@ -38,26 +38,27 @@ const FLAGS = {
   render: new Set(['--frame', '--out', '--json', '--no-preview', '--sheet', '--help', '-h']),
   check: new Set(['--frame', '--out', '--json', '--help', '-h']),
   doc: new Set(['--json', '--help', '-h']),
-  brief: new Set(['--json', '--md', '--help', '-h']),
+  brief: new Set(['--json', '--md', '--full', '--help', '-h']),
   icons: new Set(['--help', '-h']),
   clean: new Set(['--all', '--help', '-h']),
   build: new Set(['--help', '-h']),
 };
 
-const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，手机上约 780 宽）
+const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，手机上约 693 宽）
 
   vk build                         重建 dist/
   vk render <file|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]
-      构建 + 自检 + 出三件：<name>.png / <name>.780.png / <name>.json；--sheet 再拼一张联系表
+      构建 + 自检 + 出三件：<name>.png / <name>.phone.png / <name>.json；--sheet 再拼一张联系表
   vk check  <file|dir> [--frame id] [--out DIR] [--json]
       只构建 + 自检 + 写 json（不出图）
-  vk doc    <tag> [--json]         一个件的属性表
-  vk brief  [--json|--md]          全部契约
+  vk doc    <tag> [--json]         一个件的属性表（含子项）
+  vk brief  [--json] [--full]      全部契约；默认紧凑，--full 含颜色/字号/线宽
   vk icons  <query>                搜 Lucide 图标名
   vk clean  [--all]                删 .vk-tmp；--all 连 out/ 一起删
   vk --version | --help
 
-默认只管出图：内容/版式有问题也出图，exit 0；只有一张图都没出来才 exit 1。`;
+默认只管出图：内容/版式有问题也出图，exit 0；只有一张图都没出来才 exit 1。
+--json 的 stdout 只有 JSON，日志走 stderr。`;
 
 const die = (msg, code = 2) => {
   console.error(msg);
@@ -99,16 +100,17 @@ function printReport(report) {
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
     const h = f.health;
+    const files = f.png ? `  → ${f.png}${f.preview ? ` + ${f.preview}` : ''}` : '';
     const facts = h
-      ? `正文带 ${h.band} · 内容 ${h.content}${h.overflow ? ` · 超出 ${h.overflow}px` : ''} · 焦点 ${h.focus} · ${h.blocks.map((b) => `${b.vk} ${b.h}px@${b.font}`).join(' / ') || '空'}`
+      ? `正文带 ${h.band} · 内容 ${h.content}${h.overflow ? ` · 超出 ${h.overflow}px` : ''} · 焦点 ${h.focus}${h.callout ? `+${h.callout}` : ''} · 最小字 ${h.minFont} · ${h.blocks.map((b) => `${b.vk} ${b.h}px@${b.font}`).join(' / ') || '空'}`
       : '';
     if (f.issues.length) {
       console.log(`✗ ${f.file}${tag}`);
-      for (const x of f.issues) console.log(`   · [${x.code}] ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
+      for (const x of f.issues) console.log(`   · [${x.code}]${x.line ? ` 第 ${x.line} 行` : ''} ${x.message}${x.fix ? ` → ${x.fix}` : ''}`);
     } else if (h?.overflow) {
-      console.log(`! ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
+      console.log(`! ${f.file}${tag}${files}`);
     } else {
-      console.log(`✓ ${f.file}${tag}${f.png ? `  → ${f.png}${f.png780 ? ` + ${f.png780}` : ''}` : ''}`);
+      console.log(`✓ ${f.file}${tag}${files}`);
     }
     if (facts) console.log(`   ${facts}`);
     for (const w of f.warns) console.log(`   提示：${w}`);
@@ -158,7 +160,7 @@ if (cmd === 'render' || cmd === 'check') {
   if (has('--json')) console.log(JSON.stringify(contract().tags[tag], null, 2));
   else console.log(docText(tag));
 } else if (cmd === 'brief') {
-  if (has('--json')) console.log(JSON.stringify(contract(), null, 2));
+  if (has('--json')) console.log(JSON.stringify(has('--full') ? contract() : compact()));
   else console.log(markdown());
 } else if (cmd === 'icons') {
   const q = (inputs[0] || '').toLowerCase();

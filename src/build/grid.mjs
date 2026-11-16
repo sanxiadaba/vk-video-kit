@@ -1,5 +1,5 @@
 /**
- * v25 · 字节与位域
+ * v26 · 字节与位域
  * ----------------------------------------------------------------------------
  * 两件都是「把一串二进制摊成格子」：字节窗按 8 列排十六进制 + ASCII，位域按字段分段。
  * 它们不属于 board 的条目图（列表 / 步骤 / 条 / 时间线），所以单独一层。
@@ -25,15 +25,15 @@ export function buildBytes(node, ctx) {
   const src = attrOf(node, 'src');
   const inline = src ? null : inlineBytes(node);
   if (src && inlineBytes(node)) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: '字节窗同时写了 src 和内联字节：只能二选一', fix: '删掉 src，或删掉内联内容' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_CONFLICT', message: '字节窗同时写了 src 和内联字节：只能二选一', fix: '删掉 src，或删掉内联内容' });
     return '<div class="vk-missing">字节源冲突</div>';
   }
   if (!src && !inline) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '字节窗没有内容', fix: '写 src="文件.bin"，或内联十六进制如 68 65 6c 6c 6f' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '字节窗没有内容', fix: '写 src="文件.bin"，或内联十六进制如 68 65 6c 6c 6f' });
     return '<div class="vk-missing">字节缺内容</div>';
   }
   if (inline?.error) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `内联字节里有 "${inline.error}"，不是两位十六进制`, fix: '每字节写两位十六进制，如 68 65 6c' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `内联字节里有 "${inline.error}"，不是两位十六进制`, fix: '每字节写两位十六进制，如 68 65 6c' });
     return '<div class="vk-missing">内联字节格式不对</div>';
   }
 
@@ -42,7 +42,7 @@ export function buildBytes(node, ctx) {
     const { resolveAsset } = ctx;
     const abs = resolveAsset(src);
     if (!abs) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `字节窗的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `字节窗的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
       return '<div class="vk-missing">字节文件不存在</div>';
     }
     buf = ctx.read(abs);
@@ -56,7 +56,7 @@ export function buildBytes(node, ctx) {
   const base = Number(attrOf(node, 'addr') || '0x0');
   const curText = attrOf(node, 'current');
   const cur = curText ? lineSet(curText) : null;
-  if (curText && !cur) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `字节窗的 current="${curText}" 不是行段`, fix: '写法："4-7" / "3"' });
+  if (curText && !cur) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `字节窗的 current="${curText}" 不是行段`, fix: '写法："4-7" / "3"' });
   const width = Math.max(4, (base + start + len).toString(16).length);
   const rows = [];
   for (let i = 0; i < len; i += cols) {
@@ -75,25 +75,30 @@ export function buildBytes(node, ctx) {
 export function buildBits(node, ctx) {
   const rawValue = attrOf(node, 'value') || '';
   if (!rawValue.trim()) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '位域没有 value', fix: 'value="0|01111|0000000000"' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '位域没有 value', fix: 'value="0|01111|0000000000"' });
     return '<div class="vk-missing">位串缺 value</div>';
   }
   const segments = rawValue.split('|');
   const labels = (attrOf(node, 'field-labels') || '').split(',').map((s) => s.trim());
   if (labels.length > 1 && labels.length !== segments.length) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'FIELD_LABELS', message: `位域有 ${segments.length} 段，但 field-labels 有 ${labels.filter(Boolean).length} 个`, fix: '逗号分隔的段名个数要与 | 的段数一致' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'FIELD_LABELS', message: `位域有 ${segments.length} 段，但 field-labels 有 ${labels.filter(Boolean).length} 个`, fix: '逗号分隔的段名个数要与 | 的段数一致' });
   }
   const index = attrOf(node, 'index') || 'down';
   const sign = hasAttr(node, 'sign');
   const curText = attrOf(node, 'current');
   const cur = curText ? lineSet(curText) : null;
-  if (curText && !cur) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `位域的 current="${curText}" 不是行段`, fix: '写法："4-7" / "3"' });
-  const all = segments.join('').replace(/\s+/g, '');
+  if (curText && !cur) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `位域的 current="${curText}" 不是行段`, fix: '写法："4-7" / "3"' });
+  /* 空格只是排版：先剥掉再算长度，否则第二段的位索引会多 1。 */
+  const clean = segments.map((s) => s.replace(/\s+/g, ''));
+  const all = clean.join('');
+  if (!/^[01]*$/.test(all)) {
+    const bad = [...all].find((c) => c !== '0' && c !== '1') || '';
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_ENUM', message: `位串里有 "${bad}"，只认 0 / 1 / |`, fix: 'value="0|01111|0000000000"' });
+  }
 
-  const fieldHtml = segments.map((seg, fi) => {
-    const bits = [...seg.replace(/\s+/g, '')];
-    const offset = [...segments.slice(0, fi).join('')].length;
-    const cells = bits
+  const fieldHtml = clean.map((bits, fi) => {
+    const offset = clean.slice(0, fi).join('').length;
+    const cells = [...bits]
       .map((b, bi) => {
         const globalIdx = offset + bi;
         const weight = all.length - 1 - globalIdx;
@@ -103,7 +108,7 @@ export function buildBits(node, ctx) {
         return `<i class="vk-bit${isSign ? ' is-sign' : ''}${isCur}" data-vk-bit="${globalIdx + 1}"><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
       })
       .join('');
-    const fieldCur = cur && bits.some((_, bi) => cur.has(offset + bi + 1));
+    const fieldCur = cur && [...bits].some((_, bi) => cur.has(offset + bi + 1));
     return `<div class="vk-field${fieldCur ? ' is-cur' : ''}" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
   });
   const left = attrOf(node, 'label') ? `<span class="vk-bits-label">${esc(attrOf(node, 'label'))}</span>` : '';

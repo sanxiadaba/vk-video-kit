@@ -22,7 +22,7 @@ export function buildText(node, ctx) {
   if (!icon) return;
   const svg = ctx.icon(icon);
   if (!svg) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `文字的行首图标 "${icon}" 找不到`, fix: '写 Lucide 的 kebab 名；用 vk icons <词> 搜' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `文字的行首图标 "${icon}" 找不到`, fix: '写 Lucide 的 kebab 名；用 vk icons <词> 搜' });
     return;
   }
   node.childNodes = [raw(svg), ...(node.childNodes || [])];
@@ -74,7 +74,7 @@ export function buildDir(node, ctx) {
       budget--;
       const name = typeof it === 'string' ? it : it.name;
       if (!name) {
-        ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'TREE_NODE', message: '目录节点缺 name', fix: '每个节点写成 "src" 或 {"name":"src","children":[]}' });
+        ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'TREE_NODE', message: '目录节点缺 name', fix: '每个节点写成 "src" 或 {"name":"src","children":[]}' });
         continue;
       }
       const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
@@ -89,7 +89,7 @@ export function buildDir(node, ctx) {
   if (src) {
     const abs = ctx.resolveAsset(src);
     if (!abs || !fs.statSync(abs).isDirectory()) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `目录树的 src="${src}" 找不到目录`, fix: '路径相对页面文件解析' });
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `目录树的 src="${src}" 找不到目录`, fix: '路径相对页面文件解析' });
       return `<div class="vk-missing">目录不存在：${esc(src)}</div>`;
     }
     rootName = path.basename(abs);
@@ -110,13 +110,13 @@ export function buildDir(node, ctx) {
       const data = JSON.parse((s.childNodes || []).map((c) => c.value || '').join(''));
       list = Array.isArray(data) ? data : data.children || [data];
     } catch (e) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'TREE_JSON', message: `目录树的内联 JSON 解析失败：${e.message}`, fix: '检查逗号与引号' });
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'TREE_JSON', message: `目录树的内联 JSON 解析失败：${e.message}`, fix: '检查逗号与引号' });
       return `<div class="vk-missing">目录 JSON 解析失败</div>`;
     }
   }
 
   const more = truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '';
-  const body = rootName ? nodeHtml(rootName, true, '', 1, walk(list, 2, '')) + more : walk(list, 1, '') + more;
+  const body = rootName ? nodeHtml(rootName, true, rootName, 1, walk(list, 2, rootName)) + more : walk(list, 1, '') + more;
   return frame({ title: attrOf(node, 'title'), body: `<div class="vk-tree">${body}</div>`, dots: false, kind: 'dir' });
 }
 
@@ -127,7 +127,7 @@ export function buildMath(node, ctx) {
   if (src) {
     const abs = ctx.resolveAsset(src);
     if (!abs) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `公式的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `公式的 src="${src}" 找不到文件`, fix: '路径相对页面文件解析' });
       return '<div class="vk-missing">公式文件不存在</div>';
     }
     text = fs.readFileSync(abs, 'utf8');
@@ -136,13 +136,13 @@ export function buildMath(node, ctx) {
     text = s ? (s.childNodes || []).map((c) => c.value || '').join('') : textOf(node);
   }
   if (!text.trim()) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '公式没有内容', fix: 'src 指向 .tex，或把 TeX 直接写在标签里' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '公式没有内容', fix: 'src 指向 .tex，或把 TeX 直接写在标签里' });
     return '<div class="vk-missing">公式缺内容</div>';
   }
   try {
     return katex.renderToString(text.trim(), { displayMode: !hasAttr(node, 'inline'), throwOnError: true, strict: false, output: 'htmlAndMathml' });
   } catch (e) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MATH', message: `公式排版失败：${e.message}`, fix: '检查 TeX 括号是否配对' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MATH', message: `公式排版失败：${e.message}`, fix: '检查 TeX 括号是否配对' });
     return '<div class="vk-missing">公式排版失败</div>';
   }
 }

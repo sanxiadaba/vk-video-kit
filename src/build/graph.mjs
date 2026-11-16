@@ -46,10 +46,10 @@ const seqLane = (v, names) => {
 
 export function buildSeq(node, ctx) {
   const partText = attrOf(node, 'participants');
-  let names = partText ? partText.split(',').map((s) => s.trim()).filter(Boolean) : [attrOf(node, 'a') || '', attrOf(node, 'b') || ''];
-  if (!partText && (!names[0] || !names[1])) names = ['A', 'B'];
+  let names = partText ? partText.split(',').map((s) => s.trim()).filter(Boolean) : [];
+  if (!names.length) names = ['A', 'B'];
   if (names.length < 2 || names.length > 4) {
-    ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_ENUM', message: `时序需要 2–4 个参与者，现在 ${names.length} 个`, fix: '写 participants="客户端,服务端,缓存"' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_ENUM', message: `时序需要 2–4 个参与者，现在 ${names.length} 个`, fix: '写 participants="客户端,服务端,缓存"' });
     names = names.slice(0, 4);
     while (names.length < 2) names.push(names.length ? 'B' : 'A');
   }
@@ -67,7 +67,7 @@ export function buildSeq(node, ctx) {
     else if (a == null) a = Math.max(0, b - 1);
     else if (b == null) b = Math.min(n - 1, a + 1);
     if (a < 0 || a >= n || b < 0 || b >= n) {
-      ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_ENUM', message: `时序的第 ${i + 1} 条消息指向不存在的参与者`, fix: `可用：${names.join(' / ')} 或 1–${n}` });
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_ENUM', message: `时序的第 ${i + 1} 条消息指向不存在的参与者`, fix: `可用：${names.join(' / ')} 或 1–${n}` });
       a = 0;
       b = Math.min(1, n - 1);
     }

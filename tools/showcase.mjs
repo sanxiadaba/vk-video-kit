@@ -5,7 +5,7 @@
  *
  * 输出：
  *   <out>/index.html          一页：7 组、37 帧、点开看 1920 原图
- *   <out>/frames/*.png        每帧 1920 + 780 两张，外加体检单 json 与联系表
+ *   <out>/frames/*.png        每帧 1920 + 693 两张，外加体检单 json 与联系表
  *   <out>/.nojekyll           GitHub Pages 不跑 Jekyll
  *
  * 规矩：
@@ -24,7 +24,7 @@ const OUT = path.resolve(ROOT, outArg >= 0 ? args[outArg + 1] : '.showcase');
 const SRC = path.join(ROOT, 'tests', 'fixtures');
 const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
-/** 7 组 37 帧：顺序就是看板顺序；每帧一句“它演示什么”。 */
+/** 8 组 40 帧：顺序就是看板顺序；每帧一句“它演示什么”。 */
 const GROUPS = [
   ['layout', '版式', [
     ['cover', '封面：一帧只讲一件事'],
@@ -77,6 +77,11 @@ const GROUPS = [
     ['callout-measure', '量两个格子之间的距离'],
     ['math', '居中公式'],
   ]],
+  ['mix', '组合', [
+    ['mix-cells', '代码 + 内存：一行改一格，标注跨两件'],
+    ['mix-asm', 'O0 / O2 汇编对照'],
+    ['table-tone', '表格单元格语义色与当前格'],
+  ]],
 ];
 
 const fixtures = fs.readdirSync(SRC).filter((f) => f.endsWith('.html')).map((f) => f.replace(/\.html$/, '')).sort();
@@ -115,11 +120,12 @@ const sections = GROUPS.map(([id, title, items]) => {
   const cards = items
     .map(([name, desc]) => {
       const h = health(name);
-      const bad = h && h.fits === false;
-      const over = bad ? h.health.overflow : 0;
+      const bad = h && (h.ok === false || h.fits === false);
+      const over = h?.health?.overflow || 0;
+      const issues = h?.issues?.length || 0;
       return `<a class="card${bad ? ' bad' : ''}" href="frames/${name}.png" target="_blank" rel="noopener">
-  <img src="frames/${name}.780.png" width="780" height="439" loading="lazy" decoding="async" alt="${esc(name)}：${esc(desc)}">
-  <span class="cap"><b>${esc(name)}</b><em>${esc(desc)}</em><i>${bad ? `超出 ${over}px` : '1920'}</i></span>
+  <img src="frames/${name}.phone.png" width="693" height="390" loading="lazy" decoding="async" alt="${esc(name)}：${esc(desc)}">
+  <span class="cap"><b>${esc(name)}</b><em>${esc(desc)}</em><i>${issues ? `${issues} 个问题` : over ? `超出 ${over}px` : '1920'}</i></span>
 </a>`;
     })
     .join('\n');
@@ -176,7 +182,7 @@ const html = `<!doctype html>
 <header>
   <div class="bar">
     <h1>vk · ${fixtures.length} 帧</h1>
-    <p>13 个标签 · 1920×1080 · 手机 780 · v${esc(PKG.version)}</p>
+    <p>13 个标签 · 1920×1080 · 手机 693 · v${esc(PKG.version)}</p>
     <a class="sheet" href="frames/sheet.png" target="_blank" rel="noopener">整集联系表 →</a>
   </div>
   <nav>${nav}</nav>

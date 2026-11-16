@@ -11,7 +11,6 @@ import fs from 'node:fs';
 import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { markdown } from '../src/contract.mjs';
 
 export const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
@@ -21,7 +20,8 @@ const ARTIFACTS = ['tokens.css', 'fonts.css', 'katex.css', 'vk.css', 'vk.js', 'a
 const step = (file, args = []) =>
   execFileSync(process.execPath, [path.join(ROOT, 'tools', file), ...args], { cwd: ROOT, stdio: ['ignore', 'pipe', 'pipe'], encoding: 'utf8' });
 
-/* 源哈希：src/**、tools/**、package.json 全算。改任何一个字节，产物就不再被信任。 */
+/* 源哈希：src/**、三个构建脚本、package.json、lockfile。改字节，产物就不再被信任。
+   测试/showcase 不影响 dist，不进哈希。 */
 function sourceKey() {
   const files = [];
   const walk = (dir) => {
@@ -33,8 +33,10 @@ function sourceKey() {
     }
   };
   walk(path.join(ROOT, 'src'));
-  walk(path.join(ROOT, 'tools'));
+  for (const f of ['gen.mjs', 'vendor.mjs', 'bundle.mjs']) files.push(path.join(ROOT, 'tools', f));
   files.push(path.join(ROOT, 'package.json'));
+  const lock = path.join(ROOT, 'package-lock.json');
+  if (fs.existsSync(lock)) files.push(lock);
   const hash = crypto.createHash('sha1');
   for (const f of files.sort()) hash.update(path.relative(ROOT, f)).update('\0').update(fs.readFileSync(f));
   return hash.digest('hex');
@@ -49,8 +51,6 @@ export function check() {
   const fontsCss = fs.readFileSync(path.join(DIST, 'fonts.css'), 'utf8');
   const missing = [...fontsCss.matchAll(/url\('\.\/([^)]+)'\)/g)].map((x) => x[1]).filter((rel) => !fs.existsSync(path.join(DIST, rel)));
   if (missing.length) throw new Error(`dist 里少了 ${missing.length} 个字体文件（如 ${missing[0]}）：跑 node tools/build.mjs`);
-  const contractPath = path.join(ROOT, 'docs/CONTRACT.md');
-  if (!fs.existsSync(contractPath) || fs.readFileSync(contractPath, 'utf8').trim() !== markdown().trim()) throw new Error('docs/CONTRACT.md 与 schema 不一致：跑 node tools/build.mjs');
   return m;
 }
 
@@ -58,12 +58,10 @@ export function build() {
   fs.mkdirSync(DIST, { recursive: true });
   for (const [file, args] of [['gen.mjs', []], ['vendor.mjs', []], ['bundle.mjs', []]]) {
     const out = step(file, args);
-    for (const line of out.trim().split('\n').filter(Boolean)) console.log(line);
+    for (const line of out.trim().split('\n').filter(Boolean)) console.error(line);
   }
-  fs.mkdirSync(path.join(ROOT, 'docs'), { recursive: true });
-  fs.writeFileSync(path.join(ROOT, 'docs/CONTRACT.md'), markdown() + '\n');
   fs.writeFileSync(MANIFEST, JSON.stringify({ key: sourceKey(), version: JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8')).version, artifacts: ARTIFACTS }, null, 1) + '\n');
-  console.log('✓ dist/ 已重建');
+  console.error('✓ dist/ 已重建');
 }
 
 /** 产物可信就直接用，否则重建一次；重建后再校验，仍然不行就把原因抛出去。 */

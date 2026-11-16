@@ -4,7 +4,7 @@
  *   import { renderFiles, collect } from '../tools/render.mjs';
  *
  * 这里是 CLI 的“手”，不是命令层：不解析参数、不打印报表，只把文件变成产物。
- * 页面先进 .vk-tmp/pages/，再逐帧截图；780 预览由 1920 原图缩放得到（同一台机器、同一套像素）。
+ * 页面先进 .vk-tmp/pages/，再逐帧截图；693 预览由 1920 原图缩放得到（同一台机器、同一套像素）。
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -14,8 +14,19 @@ import { VERSION } from '../src/contract.mjs';
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PAGES = path.join(ROOT, '.vk-tmp', 'pages');
+/** 手机横屏满屏：390×844 的屏幕放 16:9 视频，有效宽度 693（不是 780）。 */
+export const PREVIEW_W = 693;
 
 const rel = (p) => path.relative(process.cwd(), p).split(path.sep).join('/');
+const show = (p) => {
+  const r = rel(p);
+  return r.startsWith('..') ? path.resolve(p).split(path.sep).join('/') : r;
+};
+const safeId = (s) =>
+  String(s || '')
+    .replace(/[^A-Za-z0-9_\-\u4e00-\u9fa5]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 60);
 
 /** 一个路径 → 里面所有 .html（目录递归；跳过点文件与 node_modules）。 */
 export function collect(p) {
@@ -44,7 +55,7 @@ async function buildPage(file) {
     const res = await transformHtml(html, { file: abs });
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, res.html);
-    return { file, ok: true, out, diagnostics: res.diagnostics };
+    return { file, ok: true, out, diagnostics: res.diagnostics, frames: res.frames };
   } catch (e) {
     return { file, ok: false, diagnostics: e.diagnostics || [{ file: fileRel, line: 1, code: 'BUILD', message: e.message, fix: '看这一条的上下文' }] };
   }
@@ -76,7 +87,7 @@ async function launch() {
   throw new Error(`找不到可用浏览器：跑 npx playwright install chromium，或装 Chrome/Edge（${last?.message || ''}）`);
 }
 
-/* 盒式缩放：每个目标像素取源像素的平均值。780 预览就靠它，不用 canvas。 */
+/* 盒式缩放：每个目标像素取源像素的平均值。693 预览就靠它，不用 canvas。 */
 export async function downscale(buf, targetW) {
   const { PNG } = await import('pngjs');
   const src = PNG.sync.read(buf);
@@ -121,7 +132,7 @@ export async function downscale(buf, targetW) {
  *   shots    false = 只构建 + 自检（vk check）
  *   output   产物目录（绝对路径）
  *   onlyFrame 只出这一帧（按 vk-page 的 id）
- *   preview  false = 不出 780 预览
+ *   preview  false = 不出 693 预览
  *   sheet    true = 再拼一张联系表
  */
 export async function renderFiles(files, { shots = true, output = path.join(ROOT, 'out'), onlyFrame = null, preview = true, sheet = false } = {}) {
@@ -131,7 +142,7 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
     const built = await buildPage(f);
     if (!built.ok) report.diagnostics.push(...built.diagnostics);
     else {
-      report.diagnostics.push(...built.diagnostics);
+      for (const d of built.diagnostics) if (d.frame == null) report.diagnostics.push(d);
       builtList.push(built);
     }
   }
@@ -151,8 +162,20 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
         else if (m.type() === 'warning') warns.push(m.text().replace(/\s*JSHandle@node\s*$/, ''));
       });
       await page.goto(pathToFileURL(built.out).href, { waitUntil: 'load' });
-      await page.evaluate(() => window.vk?.ready?.());
+      const ready = await page.evaluate(async () => {
+        if (!window.vk?.ready) return 'no-runtime';
+        try {
+          await window.vk.ready();
+        } catch (e) {
+          return `error: ${e?.message || e}`;
+        }
+        return document.documentElement.hasAttribute('data-vk-ready') ? 'ok' : 'not-ready';
+      });
       await page.addScriptTag({ path: path.join(DIST, 'audit.js') });
+      const runtimeIssue =
+        ready === 'ok'
+          ? null
+          : { code: 'RUNTIME', message: `运行期没有就绪（${ready}）：画面可能没量过`, fix: '检查 dist/vk.js 是否在页面里；重新 vk build' };
 
       const frames = await page.evaluate(() =>
         [...document.querySelectorAll('vk-page')].map((p, i) => {
@@ -168,32 +191,43 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
 
       const base = path.basename(f, '.html');
       for (const fr of picked) {
-        const name = frames.length > 1 ? `${base}-${fr.id || String(fr.index + 1).padStart(2, '0')}` : base;
+        const tag = safeId(fr.id) || String(fr.index + 1).padStart(2, '0');
+        let name = frames.length > 1 ? `${base}-${tag}` : base;
+        for (let n = 2; report.frames.some((x) => x.name === name); n++) name = `${base}-${tag}-${n}`;
         const audit = await page.evaluate((idx) => {
           const stage = document.querySelectorAll('.vk-stage')[idx];
-          if (!window.vkAudit) return { issues: [{ code: 'FRAME', message: '页面里没有自检运行时', fix: '重新 vk build' }] };
+          if (!window.vkAudit) return { issues: [{ code: 'FRAME', message: '页面里没有自检运行时', fix: '重新 vk build' }], health: null, fits: false };
           return window.vkAudit.page(stage);
         }, fr.index);
 
+        /* 构建期诊断按帧归位：坏帧不再是一张「ok: true」的绿纸。 */
+        const buildIssues = built.diagnostics
+          .filter((d) => d.frame === fr.index)
+          .map((d) => ({ code: d.code, message: d.message, fix: d.fix, line: d.line, origin: 'build' }));
+        const buildCodes = new Set(buildIssues.map((i) => i.code));
+        const auditIssues = (audit.issues || []).filter((i) => !(i.code === 'ANCHOR' && buildCodes.has('ANCHOR_MISSING')));
+        const issues = [...(runtimeIssue ? [runtimeIssue] : []), ...buildIssues, ...auditIssues];
+        const ok = issues.length === 0;
+
         let png = null;
-        let png780 = null;
+        let previewFile = null;
         if (shots) {
           fs.mkdirSync(output, { recursive: true });
           png = path.join(output, `${name}.png`);
           const buf = await page.locator('vk-page').nth(fr.index).screenshot();
           fs.writeFileSync(png, buf);
           if (preview) {
-            png780 = path.join(output, `${name}.780.png`);
-            const small = await downscale(buf, 780);
-            if (small) fs.writeFileSync(png780, small);
+            previewFile = path.join(output, `${name}.phone.png`);
+            const small = await downscale(buf, PREVIEW_W);
+            if (small) fs.writeFileSync(previewFile, small);
           }
         }
 
-        const data = { id: fr.id, ok: audit.ok, fits: audit.fits, issues: audit.issues, health: audit.health, warns: [...new Set(warns)] };
+        const data = { id: fr.id, ok, fits: audit.fits, issues, health: audit.health, warns: [...new Set(warns)] };
         const jsonPath = path.join(output, `${name}.json`);
         fs.mkdirSync(path.dirname(jsonPath), { recursive: true });
-        fs.writeFileSync(jsonPath, JSON.stringify({ file: rel(f), ...data }, null, 1) + '\n');
-        report.frames.push({ file: rel(f), name, png: png ? rel(png) : null, png780: png780 ? rel(png780) : null, json: rel(jsonPath), ...data });
+        fs.writeFileSync(jsonPath, JSON.stringify({ file: show(f), ...data }, null, 1) + '\n');
+        report.frames.push({ file: show(f), name, png: png ? show(png) : null, preview: previewFile ? show(previewFile) : null, json: show(jsonPath), ...data });
       }
       await page.close();
     }
@@ -206,28 +240,28 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
   return report;
 }
 
-/* 联系表：把所有 780 预览拼成一张，给人一眼扫完整集（验收工具，不是模板）。 */
+/* 联系表：把所有手机预览拼成一张，给人一眼扫完整集（验收工具，不是模板）。 */
 async function makeSheet(browser, frames, dir) {
-  const withShot = frames.filter((f) => f.png780);
+  const withShot = frames.filter((f) => f.preview);
   if (!withShot.length) return;
   const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const cells = withShot
     .map((f) => {
-      const url = pathToFileURL(path.resolve(process.cwd(), f.png780)).href;
+      const url = pathToFileURL(path.resolve(process.cwd(), f.preview)).href;
       const h = f.health;
-      const fact = h ? `${h.content}/${h.band}${h.overflow ? ` 超出 ${h.overflow}` : ''} · 焦点 ${h.focus}` : '';
+      const fact = h ? `${h.content}/${h.band}${h.overflow ? ` 超出 ${h.overflow}` : ''} · 焦点 ${h.focus} · 最小字 ${h.minFont}` : '';
       return `<figure><img src="${url}" alt=""><figcaption><b>${esc(f.name)}</b> ${esc(fact)}</figcaption></figure>`;
     })
     .join('');
   const html = `<!doctype html><meta charset="utf-8"><style>
     body{margin:0;padding:20px;background:#eef1f5;font:15px/1.5 "Inter","Segoe UI",system-ui,sans-serif;color:#20242a}
-    main{display:grid;grid-template-columns:repeat(2,780px);gap:20px;width:1580px}
+    main{display:grid;grid-template-columns:repeat(2,${PREVIEW_W}px);gap:20px;width:${PREVIEW_W * 2 + 20}px}
     figure{margin:0;background:#fff;border-radius:6px;overflow:hidden;box-shadow:0 0 0 1px #cfd6df}
-    img{display:block;width:780px;height:auto}
+    img{display:block;width:${PREVIEW_W}px;height:auto}
     figcaption{padding:8px 12px;color:#5b6472;border-top:1px solid #e3e8ee}
     figcaption b{color:#20242a;font-weight:600}
   </style><main>${cells}</main>`;
-  const page = await browser.newPage({ viewport: { width: 1620, height: 900 } });
+  const page = await browser.newPage({ viewport: { width: PREVIEW_W * 2 + 60, height: 900 } });
   const tmp = path.join(dir, '.sheet.html');
   fs.writeFileSync(tmp, html);
   await page.goto(pathToFileURL(tmp).href, { waitUntil: 'load' });
@@ -236,5 +270,5 @@ async function makeSheet(browser, frames, dir) {
   await page.screenshot({ path: out, fullPage: true });
   await page.close();
   fs.rmSync(tmp, { force: true });
-  console.log(`联系表：${rel(out)}`);
+  console.error(`联系表：${rel(out)}`);
 }

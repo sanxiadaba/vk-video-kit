@@ -190,7 +190,7 @@
 .vk-arow .vk-ainsn {
   color: var(--vk-syn-keyword);
   font-weight: var(--vk-w-bold);
-  flex: 0 0 4.4em;
+  flex: 0 0 3.2em;
 }
 .vk-aops {
   flex: 1 1 auto;
@@ -338,8 +338,8 @@
   top: calc(-0.75em - 8px);
   width: 60px;
   height: calc(1.5em + 16px);
-  border-left: 6px solid var(--vk-ink-3);
-  border-bottom: 6px solid var(--vk-ink-3);
+  border-left: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-bottom-left-radius: var(--vk-radius-sm);
   z-index: 2;
   pointer-events: none;
@@ -405,6 +405,7 @@
 [data-vk='board'][data-as='cells'] {
   display: block;
   min-width: 0;
+  container-type: inline-size;
 }
 .vk-cells {
   display: grid;
@@ -503,6 +504,25 @@
   border: calc(var(--vk-line-w-rule) / 2) solid var(--vk-ink-2);
   background: var(--vk-paper);
   box-sizing: border-box;
+}
+
+/* 半栏并排：四格放不下地址，改成 2×2 紧凑格——仍不缩字，只收紧内距。 */
+@container (max-width: 980px) {
+  .vk-cells {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--vk-space-3);
+  }
+  .vk-cell {
+    padding: var(--vk-space-2) var(--vk-space-3);
+    gap: var(--vk-space-1);
+  }
+  .vk-cell-v {
+    font-size: var(--vk-fs-body);
+  }
+  .vk-cell-l,
+  .vk-cell-a {
+    font-size: var(--vk-fs-caption);
+  }
 }
 
 /* ================================================================ 字节 */

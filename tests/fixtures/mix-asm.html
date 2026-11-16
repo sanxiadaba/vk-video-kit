@@ -1,0 +1,20 @@
+<vk-page id="mix-asm">
+  <vk-head kicker="对照">同一个函数，两种优化。</vk-head>
+  <vk-flow cols="1 1" gap="wide" valign="start">
+    <vk-code id="o0" as="asm" title="add_O0" show-addr="off" size="caption">
+      <script type="text/plain" data-vk-source>
+   0: 55                    push   %rbp
+   1: 48 89 e5              mov    %rsp,%rbp
+   4: 8b 45 fc              mov    -4(%rbp),%eax
+   7: 03 45 f8              add    %esi,%eax
+      </script>
+    </vk-code>
+    <vk-code id="o2" as="asm" title="add_O2" show-addr="off" size="caption">
+      <script type="text/plain" data-vk-source>
+   0: 8d 04 37              lea    (%rdi,%rsi),%eax
+   3: c3                    ret
+      </script>
+    </vk-code>
+  </vk-flow>
+  <vk-callout mode="mark" for="#o0@line:4 #o2@line:1"></vk-callout>
+</vk-page>

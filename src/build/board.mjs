@@ -77,7 +77,7 @@ function buildSteps(node, ctx) {
       const note = attrOf(li, 'note');
       const icon = attrOf(li, 'icon');
       const svg = icon ? ctx.icon(icon) : '';
-      if (icon && !svg) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `步骤的 icon="${icon}" 找不到`, fix: '用 vk icons <词> 搜 Lucide 名' });
+      if (icon && !svg) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `步骤的 icon="${icon}" 找不到`, fix: '用 vk icons <词> 搜 Lucide 名' });
       return `<div class="vk-step" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-tone="${esc(tone)}"><span class="vk-step-n">${i + 1}</span><span class="vk-step-t">${svg || ''}<span class="vk-step-l">${labelOf(li)}</span></span>${note ? `<span class="vk-step-note">${esc(note)}</span>` : ''}</div>`;
     })
     .join('');
@@ -133,7 +133,7 @@ function buildTimeline(node, ctx) {
       const note = attrOf(li, 'note');
       const icon = attrOf(li, 'icon');
       const svg = icon ? ctx.icon(icon) : '';
-      if (icon && !svg) ctx.diag.push({ file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `时间线的 icon="${icon}" 找不到`, fix: '用 vk icons <词> 搜 Lucide 名' });
+      if (icon && !svg) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'ICON', message: `时间线的 icon="${icon}" 找不到`, fix: '用 vk icons <词> 搜 Lucide 名' });
       const nodeMark = icon ? `<span class="vk-tl-node">${svg}</span>` : '<span class="vk-tl-dot"></span>';
       return `<div class="vk-tl-i" data-vk-item="${i + 1}"${hasAttr(li, 'current') ? ' current' : ''} data-tone="${esc(attrOf(li, 'tone') || 'neutral')}" style="--vk-at:${left.toFixed(2)}%"><span class="vk-tl-date">${esc(date)}</span>${nodeMark}<span class="vk-tl-label">${labelOf(li)}</span>${note ? `<span class="vk-tl-note">${esc(note)}</span>` : ''}</div>`;
     })
