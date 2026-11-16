@@ -23,8 +23,7 @@ const LABEL_PLAIN = /^\s*([\w.$@][\w.$@:]*):\s*(?:#.*)?$/;
  *
  * `hello.exe: file format pei-i386`、`Disassembly of section .text:`、
  * `objdump: warning: ...` 甚至会把 `objdump` 拆成助记符。
- * 这些行必须整行跳过，但跳过不能静默：parseAsm 返回 skipped 计数，
- * 运行时 vk-asm 用它 _warnOnce 说明。
+ * 这些行必须整行跳过：它们不是作者写的指令，也不该出现在帧里。
  */
 const ASM_NOISE = [
   /^\s*[^\s:][^:]*:\s+file format\s+\S+.*$/i,
@@ -39,9 +38,6 @@ export function isAsmNoise(line) {
 
 export function parseAsm(text) {
   const rows = [];
-  const labels = [];
-  let skipped = 0;
-  let unmerged = 0;
   const lines = String(text ?? '')
     .replace(/\r\n?/g, '\n')
     .split('\n');
@@ -49,7 +45,6 @@ export function parseAsm(text) {
   lines.forEach((raw, i) => {
     const line = i + 1;
     if (isAsmNoise(raw)) {
-      skipped++;
       return;
     }
     const cont = raw.match(OBJDUMP_CONT);
@@ -61,11 +56,9 @@ export function parseAsm(text) {
         return;
       }
       // 前面没有可接的地址行：不猜，仍按普通行处理，并让运行时说一声。
-      unmerged++;
     }
     const lab = raw.match(LABEL_ADDR);
     if (lab) {
-      labels.push({ addr: normAddr(lab[1]), name: lab[2], line });
       rows.push({ line, kind: 'label', addr: normAddr(lab[1]), bytes: '', text: lab[2] });
       return;
     }
@@ -83,7 +76,6 @@ export function parseAsm(text) {
     }
     const plain = raw.match(LABEL_PLAIN);
     if (plain && !raw.match(/^\s/)) {
-      labels.push({ addr: '', name: plain[1], line });
       rows.push({ line, kind: 'label', addr: '', bytes: '', text: plain[1] });
       return;
     }
@@ -95,7 +87,7 @@ export function parseAsm(text) {
     rows.push({ line, kind: 'insn', addr: '', bytes: '', text: body });
   });
 
-  return { rows, labels, skipped, unmerged };
+  return { rows };
 }
 
 /** 把一条指令拆成助记符与操作数；只是显示辅助，不改变原文。 */

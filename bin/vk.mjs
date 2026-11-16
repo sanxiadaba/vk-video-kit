@@ -12,7 +12,6 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { execFileSync } from 'node:child_process';
 import { pathToFileURL } from 'node:url';
 import { contract, markdown, docText, VERSION } from '../src/contract.mjs';
 import { TAGS, TAG_NAMES } from '../src/schema.mjs';
@@ -105,7 +104,7 @@ async function buildPage(file) {
     const res = await transformHtml(html, { file: abs });
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, res.html);
-    return { file, ok: true, out, diagnostics: res.diagnostics, assets: res.assets };
+    return { file, ok: true, out, diagnostics: res.diagnostics };
   } catch (e) {
     return { file, ok: false, diagnostics: e.diagnostics || [{ file: rel, line: 1, code: 'BUILD', message: e.message, fix: '看这一条的上下文' }] };
   }

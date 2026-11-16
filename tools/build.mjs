@@ -45,6 +45,12 @@ export function check() {
   const m = JSON.parse(fs.readFileSync(MANIFEST, 'utf8'));
   if (m.key !== sourceKey()) throw new Error('dist/ 与源不一致：跑 node tools/build.mjs');
   for (const f of ARTIFACTS) if (!fs.existsSync(path.join(DIST, f))) throw new Error(`dist/${f} 丢了：跑 node tools/build.mjs`);
+  /* 字体是产物的一部分：fonts.css 引用的每个 woff2 都必须在。 */
+  const fontsCss = fs.readFileSync(path.join(DIST, 'fonts.css'), 'utf8');
+  const missing = [...fontsCss.matchAll(/url\('\.\/([^)]+)'\)/g)].map((x) => x[1]).filter((rel) => !fs.existsSync(path.join(DIST, rel)));
+  if (missing.length) throw new Error(`dist 里少了 ${missing.length} 个字体文件（如 ${missing[0]}）：跑 node tools/build.mjs`);
+  const contractPath = path.join(ROOT, 'docs/CONTRACT.md');
+  if (!fs.existsSync(contractPath) || fs.readFileSync(contractPath, 'utf8').trim() !== markdown().trim()) throw new Error('docs/CONTRACT.md 与 schema 不一致：跑 node tools/build.mjs');
   return m;
 }
 

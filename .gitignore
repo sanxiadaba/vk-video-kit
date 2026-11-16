@@ -5,6 +5,7 @@ node_modules/
 dist/
 out/
 .vk-tmp/
+.showcase/
 
 # 本地缓存 / 临时
 .tmp/

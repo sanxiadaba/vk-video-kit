@@ -32,6 +32,3 @@ export function lineSet(value, limit = 4000) {
   return set;
 }
 
-export function inRanges(n, ranges) {
-  return ranges?.some(([a, b]) => n >= a && n <= b) ?? false;
-}

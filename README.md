@@ -3,55 +3,62 @@
 给编程科普视频用的**单帧画面库**：一帧 = 1920×1080 一张图。
 不做文案、分镜、动画、视频渲染——这是画面层。
 
+![四帧预览：封面、代码、递归树、目录](docs/preview.png)
+
+**13 个标签写一帧，一条命令出两张图**：1920 成片 + 780 手机预览（观众在手机横屏看的就是 780）。
+[看全部 37 帧 →](https://sanxiadaba.github.io/vk-video-kit/)
+
+```bash
+git clone https://github.com/sanxiadaba/vk-video-kit && cd vk-video-kit
+npm ci
+node bin/vk.mjs render tests/fixtures/cover.html
+```
+
+产物在 `out/`：`cover.png`（1920）、`cover.780.png`（手机尺度）、`cover.json`（体检单）。
+还没发布到 npm，只能克隆使用；依赖 Node ≥ 20.11，出图用 Playwright（优先自带 Chromium，找不到回退系统 Chrome / Edge）。
+
+## 一帧长什么样
+
+```html
+<vk-page id="demo">
+  <vk-head kicker="标注">指着某处说一句。</vk-head>
+  <vk-flow>
+    <vk-code id="c" lang="c" title="a.c">
+      <script type="text/plain" data-vk-source>
+int a[3] = {1, 2, 3};
+a[1] = 7;
+      </script>
+    </vk-code>
+  </vk-flow>
+  <vk-callout mode="note" for="#c@line:2">写进 a[1]</vk-callout>
+</vk-page>
+```
+
 - **13 个标签**：结构 7（`vk-page` / `vk-head` / `vk-flow` / `vk-text` / `vk-card` / `vk-img` / `vk-callout`）+ 机制 6（`vk-code` / `vk-board` / `vk-graph` / `vk-dir` / `vk-seq` / `vk-math`）。
-  机制件用 `as` 选变体，变体名沿用旧件名：`vk-code as="code|term|diff|asm|bytes|bits"`。
+  机制件用 `as` 选变体：`vk-code as="code|term|diff|asm|bytes|bits"`。
 - **一套刻度**：字号 56 / 64 / 96 / 144 / 216 / 300；线宽 6 / 8 / 12；间距 4 起。
 - **视觉由库决定**：作者只写内容、`current`、`tone`、`theme`、`size`。
 - **构建期预处理**：语法高亮、公式、字节、目录、汇编、图标全部在构建期算完；运行期只量关系和标注。
 - **只出图**：每帧三件产物，1920 PNG + 780 PNG + 体检单 JSON。
 
-观众在手机横屏看：1920 的帧缩到约 **780 宽（0.406×）**。版心对称 **1680×888**（左右 120 / 上下 96）。
-正文 64px（手机 26px），元信息 56px（手机 22.7px），结构线 6px（手机 2.4px）。
-
-## 安装
-
-```bash
-npm ci
-node tools/build.mjs
-```
-
-依赖 Node ≥ 20.11。出图用 Playwright：优先自带 Chromium，找不到时回退系统 Chrome / Edge。
-
-## 一条命令
-
-```bash
-node bin/vk.mjs render my-frame.html
-```
-
-产物在 `out/`：
-
-| 文件 | 用来 |
-|---|---|
-| `my-frame.png` | 1920 成片 |
-| `my-frame.780.png` | 手机尺度预览（视频里就长这样） |
-| `my-frame.json` | 这一帧的体检单：问题 + 真实数字 |
-
-`vk render` 会先确保 `dist/` 与源一致，再构建页面、自检、出图。
-加 `--sheet` 会额外拼一张 `sheet.png`：所有帧按 780 宽排成两列，带每帧的占用与焦点，扫一眼就知道整集齐不齐。
-
-**不是门禁**：内容放不下也照样出图，终端与 JSON 里写清事实（`正文带 546 · 内容 648 · 超出 102px`）；只有一张图都没出来才 exit 1。
+版心对称 **1680×888**（左右 120 / 上下 96）。正文 64px（手机 26px），元信息 56px（手机 22.7px），结构线 6px（手机 2.4px）。
 
 ## 命令
 
 | 命令 | 作用 |
 |---|---|
-| `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js），写产物清单 |
 | `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]` | 构建 + 自检 + 出图；`--sheet` 再拼一张联系表 |
 | `vk check <file\|dir> [--frame id] [--out DIR] [--json]` | 只构建 + 自检 + json（不出图） |
 | `vk doc <tag> [--json]` | 一个件的全部变体、属性、默认值、示例 |
 | `vk brief [--json\|--md]` | 全部契约（唯一权威）；`--md` 就是 `docs/CONTRACT.md` |
 | `vk icons <query>` | 搜 Lucide 图标名 |
+| `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js），写产物清单 |
 | `vk clean [--all]` | 删 `.vk-tmp`；`--all` 连 `out/` |
+
+`vk render` 会先确保 `dist/` 与源一致，再构建页面、自检、出图。
+加 `--sheet` 会额外拼一张 `sheet.png`：所有帧按 780 宽排成两列，带每帧的占用与焦点，扫一眼就知道整集齐不齐。
+
+**不是门禁**：内容放不下也照样出图，终端与 JSON 里写清事实（`正文带 546 · 内容 648 · 超出 102px`）；只有一张图都没出来才 exit 1。
 
 ## 写一帧
 
@@ -90,6 +97,7 @@ tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 契�
 tools/gen.mjs        vocab → dist/tokens.css
 tools/vendor.mjs     字体与 KaTeX（自托管到 dist/fonts）
 tools/bundle.mjs     打 dist/vk.css、dist/vk.js、dist/audit.js
+tools/showcase.mjs   37 帧 → 静态看板（GitHub Pages 用）
 tools/test.mjs       测试
 docs/GUIDE.md        写作判断与选件
 docs/DESIGN.md       视觉与几何契约

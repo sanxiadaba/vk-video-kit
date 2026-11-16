@@ -69,48 +69,6 @@ export const LANG_ALIAS = {
   assembly: 'asm',
 };
 
-/** 扩展名 -> 语言；构建期 inferLang 与运行时文件树共用这一份。 */
-export const EXT_LANG = {
-  '.c': 'c',
-  '.h': 'c',
-  '.cc': 'cpp',
-  '.cpp': 'cpp',
-  '.cxx': 'cpp',
-  '.hpp': 'cpp',
-  '.py': 'python',
-  '.js': 'javascript',
-  '.mjs': 'javascript',
-  '.cjs': 'javascript',
-  '.ts': 'typescript',
-  '.tsx': 'tsx',
-  '.jsx': 'jsx',
-  '.json': 'json',
-  '.rs': 'rust',
-  '.go': 'go',
-  '.java': 'java',
-  '.rb': 'ruby',
-  '.php': 'php',
-  '.kt': 'kotlin',
-  '.swift': 'swift',
-  '.lua': 'lua',
-  '.sh': 'bash',
-  '.s': 'asm',
-  '.asm': 'asm',
-  '.sql': 'sql',
-  '.html': 'html',
-  '.css': 'css',
-  '.md': 'markdown',
-  '.diff': 'diff',
-  '.yml': 'yaml',
-  '.yaml': 'yaml',
-  '.toml': 'toml',
-};
-
-export const inferLang = (file) => {
-  const s = String(file || '');
-  const dot = s.lastIndexOf('.');
-  return dot >= 0 ? EXT_LANG[s.slice(dot).toLowerCase()] || 'text' : 'text';
-};
 export const LANG_LABEL = {
   python: 'Python',
   javascript: 'JavaScript',

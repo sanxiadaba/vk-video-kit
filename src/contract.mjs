@@ -11,7 +11,7 @@
  */
 
 import fs from 'node:fs';
-import { TAGS, TAG_NAMES, attrsOf, childrenOf, variantOf, VARIANTS, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS } from './schema.mjs';
+import { TAGS, TAG_NAMES, attrsOf, childrenOf, variantOf, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS } from './schema.mjs';
 import { GAP, FONT, LINE, MEASURE, INDEX_RULE, CANVAS, CONTENT, LINE_W, SYNTAX, PAINT, THEME, CARD_SURFACE } from './vocab.mjs';
 import { attrOf, hasAttr, flatten, kids, lineOf, directText, textOf } from './shared/dom.mjs';
 import { parseLines, parseRange } from './shared/range.mjs';
@@ -621,4 +621,4 @@ export function docText(tag) {
   return out.join('\n');
 }
 
-export { VARIANTS, variantOf };
+export { variantOf };

@@ -21,9 +21,6 @@ export const spacePx = (value, fallback = 0) => {
   return Number.isFinite(n) ? n : fallback;
 };
 
-/* 这些属性不写默认值：写进去会改变「有没有写」的语义，或者属于子项/内部属性。 */
-const NO_DEFAULT = new Set(['span', 'bleed', 'current', 'fold', 'range', 'src', 'id', 'class', 'style', 'role', 'hidden', 'alt', 'href', 'state']);
-
 const attrOf = (node, name) => (node.attrs || []).find((a) => a.name === name)?.value ?? null;
 const hasAttr = (node, name) => (node.attrs || []).some((a) => a.name === name);
 const setAttr = (node, name, value) => {
@@ -70,7 +67,7 @@ export function normalizeTree(root) {
     const decls = {};
 
     for (const [name, def] of Object.entries(spec)) {
-      if (def.default === undefined || def.when || NO_DEFAULT.has(name)) continue;
+      if (def.default === undefined || def.when) continue;
       if (name === 'as' && !TAGS[tag].variants) continue;
       setAttr(node, name, def.default);
     }

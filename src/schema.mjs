@@ -331,9 +331,6 @@ export const TAGS = {
 
 export const TAG_NAMES = Object.keys(TAGS);
 
-/** 一个标签的变体表；没有变体的标签返回 null。 */
-export const VARIANTS = (tag) => TAGS[tag]?.variants || null;
-
 /** 当前节点的变体名：有 as 用 as，没写用默认；没有变体的标签返回 null。 */
 export function variantOf(tag, as) {
   const v = TAGS[tag]?.variants;

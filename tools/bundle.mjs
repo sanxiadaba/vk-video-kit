@@ -6,16 +6,13 @@
  *   dist/audit.js   自检，单独注入，不进 vk.js
  *
  *   node tools/bundle.mjs
- *   node tools/bundle.mjs --check   只校验 stamp
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import crypto from 'node:crypto';
 import { build } from 'esbuild';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
-const STAMP = path.join(DIST, '.bundle-stamp');
 const pkg = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
 const LAYERS = [
@@ -25,25 +22,6 @@ const LAYERS = [
   ['components', ['src/components.css', 'src/state.css']],
   ['callout', ['src/callout.css']],
 ];
-
-/* stamp 覆盖整个 src/：任何源文件变了，--check 都必须报不一致。
-   以前是一张手写清单，漏了 connector.mjs，改箭头尺寸也查不出来。 */
-const walk = (dir) =>
-  fs.readdirSync(dir, { withFileTypes: true }).flatMap((e) => (e.isDirectory() ? walk(path.join(dir, e.name)) : [path.join(dir, e.name)]));
-const files = [...walk(path.join(ROOT, 'src')), path.join(ROOT, 'package.json')].sort();
-const hash = crypto.createHash('sha1').update(pkg.version);
-for (const f of files) hash.update(path.relative(ROOT, f)).update('\0').update(fs.readFileSync(f));
-const key = hash.digest('hex');
-
-if (process.argv.includes('--check')) {
-  const now = fs.existsSync(STAMP) ? fs.readFileSync(STAMP, 'utf8').trim() : '';
-  if (now !== key) {
-    console.error('✗ dist 产物与源不一致：跑 node tools/bundle.mjs');
-    process.exit(1);
-  }
-  console.log('✓ dist 产物与源一致');
-  process.exit(0);
-}
 
 let css = `/*! vk v${pkg.version} — generated from src/, do not edit */\n@layer ${LAYERS.map(([n]) => `vk.${n}`).join(', ')};\n`;
 for (const [layer, files] of LAYERS) {
@@ -89,6 +67,5 @@ const audit = await build({
 fs.writeFileSync(path.join(DIST, 'audit.js'), audit.outputFiles[0].contents);
 
 fs.mkdirSync(DIST, { recursive: true });
-fs.writeFileSync(STAMP, key + '\n');
 const kb = (n) => (n / 1024).toFixed(1) + 'kb';
 console.log(`bundle: vk.css ${kb(fs.statSync(path.join(DIST, 'vk.css')).size)} · vk.js ${kb(fs.statSync(path.join(DIST, 'vk.js')).size)} · audit.js ${kb(fs.statSync(path.join(DIST, 'audit.js')).size)}`);

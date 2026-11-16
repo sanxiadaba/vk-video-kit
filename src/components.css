@@ -754,7 +754,7 @@
 }
 .vk-bar {
   display: grid;
-  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 160px;
+  grid-template-columns: minmax(6em, max-content) minmax(0, 1fr) 176px;
   gap: var(--vk-space-5);
   align-items: center;
 }

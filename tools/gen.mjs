@@ -2,7 +2,6 @@
  * vk gen：从 vocab 生成 CSS 变量。
  *
  *   node tools/gen.mjs            生成 dist/tokens.css
- *   node tools/gen.mjs --check    只校验（测试用），不一致就退出 1
  */
 import fs from 'node:fs';
 import path from 'node:path';
@@ -97,15 +96,6 @@ ${rows.join('\n')}
 }
 `;
 
-if (process.argv.includes('--check')) {
-  const now = fs.existsSync(TOKENS) ? fs.readFileSync(TOKENS, 'utf8') : '';
-  if (now !== css) {
-    console.error('✗ dist/tokens.css 与 vocab.mjs 不一致：跑 node tools/gen.mjs');
-    process.exit(1);
-  }
-  console.log('✓ tokens 与 vocab 一致');
-} else {
-  fs.mkdirSync(DIST, { recursive: true });
-  fs.writeFileSync(TOKENS, css);
-  console.log(`✓ dist/tokens.css（${rows.length} 个变量）`);
-}
+fs.mkdirSync(DIST, { recursive: true });
+fs.writeFileSync(TOKENS, css);
+console.log(`✓ dist/tokens.css（${rows.length} 个变量）`);
