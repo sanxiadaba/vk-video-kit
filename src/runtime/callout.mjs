@@ -1,24 +1,16 @@
 /**
  * v25 · 标注
  * ----------------------------------------------------------------------------
- * 标注只有三件，缺一不成标注：
- *   标记  目标墨迹下方一条钴蓝实心横条（词、行、行段都只有这一种）
- *   连接  从标记右端水平走到文字，杆 8，箭头落在文字左缘
+ * 标注由三件组成，形状跟着目标走：
+ *   标记  词/块用框，行用墨下一条，行段用右侧括号
+ *   连接  从标记右缘水平走到文字，杆 8，尖离文字 32（指盒子才贴边）
  *   文字  卡片外的一句话，与标记同高；永远不进卡片、不压代码
  *
  * 锚点：#id / #id@line:3 / #id@line:3-4 / #id@item:2 / #id@bit:5 / #id@side:left。
  */
 import { VkElement, define, resolveAnchor, inkRect } from './base.mjs';
+import { mk, clamp } from '../shared/svg.mjs';
 import { CONN, ANN, ARROW, port, headPolygon } from '../shared/connector.mjs';
-
-const NS = 'http://www.w3.org/2000/svg';
-const mk = (tag, attrs = {}) => {
-  const el = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) el.setAttribute(k, String(v));
-  return el;
-};
-
-const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
 
 const COMPONENT = 'vk-code, vk-board, vk-graph, vk-dir, vk-math, vk-seq, vk-card, vk-img, vk-text';
 
@@ -56,27 +48,6 @@ function tokenRect(el) {
   range.setEnd(e.node, e.offset);
   const r = range.getBoundingClientRect();
   return r.width || r.height ? r : el.getBoundingClientRect();
-}
-
-/** 圆角折线：每个拐点用 16px 二次曲线收一下。 */
-function roundedPath(points, r = ARROW.corner) {
-  if (points.length < 2) return '';
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length - 1; i++) {
-    const p = points[i];
-    const prev = points[i - 1];
-    const next = points[i + 1];
-    const v1 = { x: p.x - prev.x, y: p.y - prev.y };
-    const v2 = { x: next.x - p.x, y: next.y - p.y };
-    const l1 = Math.hypot(v1.x, v1.y) || 1;
-    const l2 = Math.hypot(v2.x, v2.y) || 1;
-    const rr = Math.min(r, l1 / 2, l2 / 2);
-    const a = { x: p.x - (v1.x / l1) * rr, y: p.y - (v1.y / l1) * rr };
-    const b = { x: p.x + (v2.x / l2) * rr, y: p.y + (v2.y / l2) * rr };
-    d += ` L ${a.x} ${a.y} Q ${p.x} ${p.y} ${b.x} ${b.y}`;
-  }
-  const last = points[points.length - 1];
-  return d + ` L ${last.x} ${last.y}`;
 }
 
 const rect = (r, origin) => ({

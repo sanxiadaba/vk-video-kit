@@ -7,6 +7,7 @@ import { parseRange, lineSet } from '../shared/range.mjs';
 import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, langKey } from '../shared/code.mjs';
 import { parseAsm, splitInsn } from '../shared/asm.mjs';
 import { SYNTAX } from '../vocab.mjs';
+import { FONT } from '../vocab.mjs';
 import { frame } from './frame.mjs';
 
 const TOKEN_THEME = {
@@ -293,7 +294,7 @@ export async function buildSource(node, ctx) {
     });
     body = out.join('');
     digits = String(win).length;
-    const addrW = Math.max(88, Math.round(addrLen * 0.62 * 56 + 16));
+    const addrW = Math.max(88, Math.round(addrLen * 0.62 * FONT.caption + 16));
     return frame({ title, body: `<div class="vk-lines vk-asm" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
   }
 

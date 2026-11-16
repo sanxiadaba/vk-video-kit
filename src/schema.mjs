@@ -381,3 +381,4 @@ export const RULES = [
   '主题：page theme="light|dark"；card surface="paper|soft|dark"。',
   'span / bleed 只写在 <vk-flow> 的直接子项上；bleed="all" 只给 <vk-img>。',
 ];
+

@@ -84,15 +84,18 @@ npm test               # 契约 / 负例 / 出图与体检单 / 行为 / 确定�
 src/vocab.mjs        值：字号 / 行距 / 间距 / 颜色（light-dark 成对）/ 线宽 / 图标
 src/schema.mjs       契约：13 个标签、变体、属性、默认值、子节点、示例、写作规则
 src/normalize.mjs    归一化：默认值落地、间距换像素、data-vk 身份
-src/contract.mjs     校验 + 契约生成（schema 驱动的唯一路径）
-src/build/           构建：入口 / 源码窗 / 条目图 / 关系图 / 块 / 页面壳
+src/contract.mjs     契约门面
+src/contract/        校验（validate.mjs）与文档生成（doc.mjs）
+src/build/           构建：入口 / 源码窗 / 条目图 / 字节与位域 / 关系图 / 块 / 页面壳
 src/runtime/         运行期：底座 / 关系图 / 标注（只做测量）
+src/shared/          构建与运行期共用的纯函数（连接件几何 / SVG / 源码 / 汇编 / 区间）
 src/audit/           自检：单独打进 dist/audit.js，不进交付页
 src/base.css         画布 / 标题 / 流 / 卡片 / 字 / 窗口
 src/components.css   机制件（几何与排布）
 src/state.css        状态层：current / tone（mark 锚点样式在 base.css）
 src/callout.css      标注层
-bin/vk.mjs           命令行
+bin/vk.mjs           命令行（只解析参数、调用、打印）
+tools/render.mjs     出图管线：开浏览器 / 截图 / 780 缩放 / 联系表
 tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 契约 → 产物清单）
 tools/gen.mjs        vocab → dist/tokens.css
 tools/vendor.mjs     字体与 KaTeX（自托管到 dist/fonts）

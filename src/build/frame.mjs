@@ -3,7 +3,6 @@ import path from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { attrOf, hasAttr, serialize, raw, esc, textOf } from '../shared/dom.mjs';
 import { setStyle } from '../normalize.mjs';
-import { GAP } from '../vocab.mjs';
 
 export const ROOT = path.resolve(import.meta.dirname, '..', '..');
 
@@ -19,16 +18,6 @@ export function frame({ title, body, range, digits, dots = true, kind = 'code' }
 
 export function buildFlow(node) {
   const cols = attrOf(node, 'cols') || '1';
-  /* gap 可以写 0：以前的 `|| 默认` 会把 0 吞成 32。 */
-  const rawGap = attrOf(node, 'gap');
-  let gap = GAP.normal;
-  if (rawGap != null && rawGap !== '') {
-    if (rawGap in GAP) gap = GAP[rawGap];
-    else {
-      const n = Number(String(rawGap).replace(/px$/i, ''));
-      if (Number.isFinite(n) && n >= 0) gap = n;
-    }
-  }
   /* 每一层 flow 都把列模板写死：否则子 flow 会继承父级模板。 */
   let template;
   if (cols === 'auto') template = 'none';
@@ -45,7 +34,8 @@ export function buildFlow(node) {
     node.attrs.push({ name: 'data-vk-stack', value: '1' });
   }
 
-  setStyle(node, { '--vk-gap': `${gap}px`, '--vk-cols-template': template });
+  /* gap 由 normalize 统一定（见 normalize.mjs）：这里只写列模板。 */
+  setStyle(node, { '--vk-cols-template': template });
   if (cols === 'auto') node.attrs.push({ name: 'data-cols', value: 'auto' });
 
   for (const child of (node.childNodes || []).filter((c) => c.tagName)) {

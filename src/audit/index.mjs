@@ -8,8 +8,10 @@
  *
  * 「放不下」不再被偷偷缩字掩盖：这里只报「内容 640，正文带 546，超出 94px」。
  */
-const PAGE_W = 1920;
-const PAGE_H = 1080;
+import { CANVAS } from '../vocab.mjs';
+
+const PAGE_W = CANVAS.w;
+const PAGE_H = CANVAS.h;
 const CLIENTS = '.vk-lc, .vk-dc, .vk-aaddr, .vk-bit-i, .vk-field-bits, .vk-bits-body, .vk-ftitle, .vk-tname, .vk-cap, .vk-bhex, .vk-bascii, .vk-tl-label, .vk-tl-note, .vk-bar-l, .vk-bar-v, .vk-cell-v, .vk-step-t, .vk-seq-l, .vk-seq-note, .vk-gn-l, .vk-co-note';
 
 export function auditPage(stage) {

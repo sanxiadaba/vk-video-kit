@@ -76,7 +76,9 @@ export function normalizeTree(root) {
       if (def.type !== 'space') continue;
       const value = attrOf(node, name);
       if (value == null) continue;
-      const px = spacePx(value, 0);
+      /* 间距只在这一处落地：buildFlow 不再自己算一遍 gap。写错档名时回落到 normal，
+         而不是 0——0 会让两栏贴在一起。 */
+      const px = spacePx(value, name === 'gap' ? GAP.normal : 0);
       if (name === 'gap') decls['--vk-gap'] = `${px}px`;
     }
 

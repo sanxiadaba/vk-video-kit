@@ -145,6 +145,28 @@ for (const [code, html] of CASES) {
   ok(res.html.includes('stdio.h') && !res.diagnostics.some((d) => d.code === 'SRC_MISSING'), 'src= 从文件读源码');
 }
 
+/* ------------------------------------------------------------------ 二·五、没走到的口子
+   契约里写了、37 帧里没有的能力。不补帧，用构建结果断言它们真的生效——
+   一个属性如果没人走、也没人测，它就是空头支票。 */
+group('契约口子');
+const probe = async (html) => transformHtml(html, { file: path.join(ROOT, 'tests', 'fixtures', '_probe.html') });
+{
+  const hero = await probe('<vk-page><vk-text size="hero">封面</vk-text></vk-page>');
+  ok(hero.html.includes('size="hero"') && !hero.diagnostics.some((d) => d.code === 'VALUE_ENUM'), 'size=hero（300 档）可达');
+  const log = await probe('<vk-page><vk-board as="bars" scale="log" max="100"><li value="10">a</li><li value="100">b</li></vk-board></vk-page>');
+  ok(log.html.includes('width:52.0%'), 'bars scale=log 改变条长（10/100 → 52%，线性是 10%）');
+  const span = await probe('<vk-page><vk-flow cols="2"><vk-text span="2">x</vk-text></vk-flow></vk-page>');
+  ok(span.html.includes('--vk-span:2'), 'flow 子项 span 跨列');
+  const bits = await probe('<vk-page><vk-code as="bits" value="0|010|1" index="up"></vk-code></vk-page>');
+  ok(bits.html.includes('<b class="vk-bit-i">4</b>'), 'bits index=up 从 0 往上数');
+  const term = await probe('<vk-page><vk-code as="term"><script type="text/plain" data-vk-source>$ ls -l\ntotal 0</script></vk-code></vk-page>');
+  ok(term.html.includes('vk-prompt') && term.html.includes('vk-cmd'), 'term 的提示符与命令分开渲染');
+  const bytes = await probe('<vk-page><vk-code as="bytes" addr="0x10" cols="4" offset="2" length="4"><script type="text/plain" data-vk-source>00 01 02 03 04 05 06 07</script></vk-code></vk-page>');
+  ok(bytes.html.includes('0x0012') && /vk-bhex">(<i[^>]*>[0-9a-f]{2}<\/i>){4}/.test(bytes.html), 'bytes 的 offset / length 生效');
+  const cap = await probe('<vk-page><vk-board as="table"><table><caption>表</caption><tr><th>a</th></tr></table></vk-board></vk-page>');
+  ok(cap.html.includes('<caption>表</caption>'), 'table 的 caption 保留');
+}
+
 /* ------------------------------------------------------------------ 三、渲染 */
 group('渲染');
 fs.rmSync(OUT, { recursive: true, force: true });

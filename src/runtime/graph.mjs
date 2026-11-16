@@ -12,39 +12,8 @@
  *   mesh     环形摆放（BFS/DFS、死锁、事件循环）
  */
 import { VkElement, define, warn } from './base.mjs';
+import { mk, clamp, roundedPath } from '../shared/svg.mjs';
 import { CONN, headPolygon } from '../shared/connector.mjs';
-
-const clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));
-
-const NS = 'http://www.w3.org/2000/svg';
-const mk = (tag, attrs = {}) => {
-  const el = document.createElementNS(NS, tag);
-  for (const [k, v] of Object.entries(attrs)) {
-    if (v == null || v === false) continue;
-    el.setAttribute(k, String(v));
-  }
-  return el;
-};
-
-/** 圆角折线：每个拐点用 12px 二次曲线收一下。 */function roundedPath(points, r = 12) {
-  if (points.length < 2) return '';
-  let d = `M ${points[0].x} ${points[0].y}`;
-  for (let i = 1; i < points.length - 1; i++) {
-    const p = points[i];
-    const prev = points[i - 1];
-    const next = points[i + 1];
-    const v1 = { x: p.x - prev.x, y: p.y - prev.y };
-    const v2 = { x: next.x - p.x, y: next.y - p.y };
-    const l1 = Math.hypot(v1.x, v1.y) || 1;
-    const l2 = Math.hypot(v2.x, v2.y) || 1;
-    const rr = Math.min(r, l1 / 2, l2 / 2);
-    const a = { x: p.x - (v1.x / l1) * rr, y: p.y - (v1.y / l1) * rr };
-    const b = { x: p.x + (v2.x / l2) * rr, y: p.y + (v2.y / l2) * rr };
-    d += ` L ${a.x} ${a.y} Q ${p.x} ${p.y} ${b.x} ${b.y}`;
-  }
-  const last = points[points.length - 1];
-  return d + ` L ${last.x} ${last.y}`;
-}
 
 /** 从矩形中心沿 (dx,dy) 打到边框上的点。 */
 function hit(cx, cy, w, h, dx, dy) {
