@@ -4,8 +4,8 @@ import path from 'node:path';
 import { createHighlighter } from 'shiki';
 import { attrOf, hasAttr, esc } from '../shared/dom.mjs';
 import { parseRange, lineSet } from '../shared/range.mjs';
-import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, langKey } from '../shared/code.mjs';
-import { parseAsm, splitInsn } from '../shared/asm.mjs';
+import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, langKey } from './code.mjs';
+import { parseAsm, splitInsn } from './asm.mjs';
 import { SYNTAX } from '../vocab.mjs';
 import { FONT } from '../vocab.mjs';
 import { frame } from './frame.mjs';
@@ -96,10 +96,15 @@ function readSource(node, ctx, who) {
   if (inline != null) return dedent(expandLeadingTabs(stripAnsi(inline)));
   const abs = ctx.resolveAsset(src);
   if (!abs) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
+    ctx.diag(node, { code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
     return null;
   }
-  return dedent(expandLeadingTabs(stripAnsi(fs.readFileSync(abs, 'utf8'))));
+  const buf = fs.readFileSync(abs);
+  if (buf.subarray(0, 4096).includes(0)) {
+    ctx.diag(node, { code: 'SRC_BINARY', message: `${who} 的 src="${src}" 是二进制文件，不能当源码读`, fix: '换一个文本文件；二进制用 vk-code as="bytes"' });
+    return null;
+  }
+  return dedent(expandLeadingTabs(stripAnsi(buf.toString('utf8'))));
 }
 
 function sliceRange(text, range) {
@@ -133,7 +138,7 @@ export async function buildSource(node, ctx) {
   const who = as === 'code' ? '<vk-code>' : `<vk-code as="${as}">`;
   const text = readSource(node, ctx, who);
   if (text == null) {
-    if (!ctx.diag.has(node, 'SRC_MISSING')) {
+    if (!ctx.diag.has(node, 'SRC_MISSING') && !ctx.diag.has(node, 'SRC_BINARY')) {
       ctx.diag(node, { code: 'SRC_MISSING', message: `${who} 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
     }
     return `<div class="vk-missing">${who} 缺内容：写 src 或 data-vk-source</div>`;
@@ -147,8 +152,11 @@ export async function buildSource(node, ctx) {
   }
   const { start, rows: srcRows, count } = sliceRange(text, range);
   if (range && range[0] > count) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
+    ctx.diag(node, { code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
     return `<div class="vk-missing">range 超出源码范围</div>`;
+  }
+  if (range && Number.isFinite(range[1]) && range[1] > count) {
+    ctx.diag(node, { code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 上界 ${range[1]} 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
   }
 
   const fold = lineSet(attrOf(node, 'fold'));
@@ -166,6 +174,13 @@ export async function buildSource(node, ctx) {
 
   let body = '';
   let digits = String(start + srcRows.length - 1).length;
+  /* 有的行被 fold 掉、term/asm 还会跳过空行：current 指过去可能一个都不亮。
+     不能静默成功。 */
+  const checkCurrent = () => {
+    if (cur && !body.includes('is-cur') && !ctx.diag.has(node, 'CURRENT_RANGE')) {
+      ctx.diag(node, { code: 'CURRENT_MISSING', message: `${who} 的 current 没有命中任何可见行`, fix: '按窗口里真实可见的行号写；被 fold 的行不会亮' });
+    }
+  };
   let rangeLabel = rangeText || '';
 
   if (as === 'code') {
@@ -308,6 +323,7 @@ export async function buildSource(node, ctx) {
     if (folded) out.push(`<div class="vk-arow vk-alabel" data-meta><span class="vk-ainsn">⋯ 省略 ${folded} 行</span></div>`);
     body = out.join('');
     digits = String(win).length;
+    checkCurrent();
     const addrW = Math.max(88, Math.round(addrLen * 0.62 * FONT.caption + 16));
     if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
       ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成汇编里真实出现的一个词，如 add / mov / rdi' });
@@ -318,6 +334,7 @@ export async function buildSource(node, ctx) {
 
   const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
   const dim = as === 'code' && cur?.size ? ' data-dim="1"' : '';
+  checkCurrent();
   /* 词被 Shiki 切成多个 token 时，逐 token 匹配会一个都标不上——必须说破。 */
   if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
     ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成一个完整的 token；a[i] 这种跨 token 的写法先只 mark i' });

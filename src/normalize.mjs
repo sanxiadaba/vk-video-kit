@@ -11,7 +11,7 @@
  * 这里不发明值：所有默认值来自 schema.mjs，所有间距档位来自 vocab.mjs。
  */
 import { TAGS, attrsOf, variantOf } from './schema.mjs';
-import { GAP } from './vocab.mjs';
+import { GAP, STYLE_LOCKED } from './vocab.mjs';
 
 export const spacePx = (value, fallback = 0) => {
   const t = String(value ?? '').trim();
@@ -57,10 +57,31 @@ export function setStyle(node, decls) {
   node.attrs = rest;
 }
 
+/** style 只留颜色 token；锁定的字号/间距/字体等一律删掉，报错交给 validate。
+    只报不删会让作者以为被拦了，画面却已经变了。 */
+function sanitizeStyle(node) {
+  const style = attrOf(node, 'style');
+  if (!style) return;
+  const kept = [];
+  for (const piece of String(style).split(';')) {
+    const at = piece.indexOf(':');
+    if (at < 0) continue;
+    const prop = piece.slice(0, at).trim();
+    if (!prop.startsWith('--vk-')) continue;
+    if (STYLE_LOCKED.test(prop)) continue;
+    kept.push(piece.trim());
+  }
+  const rest = (node.attrs || []).filter((a) => a.name !== 'style');
+  if (kept.length) rest.push({ name: 'style', value: kept.join(';') });
+  node.attrs = rest;
+}
+
 /** 在整棵树里落地默认值、间距、组件身份。返回同一棵树。 */
 export function normalizeTree(root) {
   for (const node of walk(root)) {
     const tag = node.tagName;
+    /* 锁定的 style 任何元素都不许生效，不只是 vk-* 宿主。 */
+    sanitizeStyle(node);
     if (!tag?.startsWith('vk-')) continue;
     const as = variantOf(tag, attrOf(node, 'as'));
     const spec = attrsOf(tag, as);
@@ -87,6 +108,19 @@ export function normalizeTree(root) {
        机制决定宿主样式，变体只决定这一块的画法。 */
     node.attrs.push({ name: 'data-vk', value: tag.slice(3) });
     if (as) node.attrs.push({ name: 'data-as', value: as });
+  }
+  /* 标注可以写在 flow 里（文档允许），但覆盖层的坐标是相对画布的。
+     留在一个 position:relative 的 flow 里会被当成本地坐标，整条注记飞出画布。
+     统一提升到 page：锚点仍按 id 找，视觉与坐标只认画布。 */
+  for (const node of [...walk(root)]) {
+    if (node.tagName !== 'vk-callout' || node.parentNode?.tagName !== 'vk-flow') continue;
+    let page = node.parentNode;
+    while (page && page.tagName !== 'vk-page') page = page.parentNode;
+    if (!page) continue;
+    const flow = node.parentNode;
+    flow.childNodes = (flow.childNodes || []).filter((n) => n !== node);
+    page.childNodes = [...(page.childNodes || []), node];
+    node.parentNode = page;
   }
   return root;
 }

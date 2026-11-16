@@ -93,7 +93,6 @@ export async function transformHtml(rawHtml, { file }) {
 
   normalizeTree(doc);
 
-  const assets = new Set();
   const ctx = {
     file,
     label,
@@ -101,12 +100,9 @@ export async function transformHtml(rawHtml, { file }) {
       const line = lineOf(node);
       diagnostics.push({ ...d, file: label(file), line, tag: node.tagName, frame: frameOf(node) });
     },
-    assets,
     resolveAsset(src) {
       const abs = path.resolve(path.dirname(path.resolve(file)), src);
-      if (!fs.existsSync(abs)) return null;
-      assets.add(abs);
-      return abs;
+      return fs.existsSync(abs) ? abs : null;
     },
     read: (abs) => fs.readFileSync(abs),
     icon: (name) => ctx.icons.get(slug(name)) || '',
@@ -143,8 +139,5 @@ export async function transformHtml(rawHtml, { file }) {
   return {
     html: isFull ? body : wrapFragment(body),
     diagnostics,
-    assets: [...assets],
-    frames: pages.map((p, i) => ({ index: i, id: p.attrs?.find((a) => a.name === 'id')?.value || '' })),
-    count: pages.length,
   };
 }

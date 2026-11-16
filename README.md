@@ -14,7 +14,7 @@ npm ci
 node bin/vk.mjs render tests/fixtures/cover.html
 ```
 
-产物在 `out/`：`cover.png`、`cover.phone.png`、`cover.json`。
+产物在 `out/`：`cover.png`、`cover.phone.png`、`cover.json`。单页 `<base>.png`，多页 `<base>-<id>.png`；`--out` 不能指向 `src/bin/tools/tests/docs`。
 依赖 Node ≥ 20.11；出图用 Playwright（优先自带 Chromium，找不到回退系统 Chrome / Edge）。
 
 ## 一帧长什么样
@@ -34,7 +34,7 @@ a[1] = 7;
 
 - **13 个标签**：结构 7（`vk-page` / `vk-head` / `vk-flow` / `vk-text` / `vk-card` / `vk-img` / `vk-callout`）+ 机制 6（`vk-code` / `vk-board` / `vk-graph` / `vk-dir` / `vk-seq` / `vk-math`）。
   机制件用 `as` 选变体：`vk-code as="code|term|diff|asm|bytes|bits"`、`vk-board as="list|steps|bars|timeline|table|cells"`。
-- **一套刻度**：字号 56 / 64 / 96 / 144 / 216 / 300；线宽 8 / 8 / 12；间距 4 起。
+- **一套刻度**：字号 56 / 64 / 96 / 144 / 216 / 300；线宽 8 / 8 / 8 / 12；间距 4 起。
 - **视觉由库决定**：作者只写内容、`current`、`tone`、`theme`、`size`。
 - **两块能并排**：代码 + 内存 / 表格 / 图，在 1680 版心里按 1:1 或 7:5 分栏；`cells` 窄栏自动变 2×2 紧凑格。
 - **构建期预处理**：语法高亮、公式、字节、目录、汇编、图标全部在构建期算完；运行期只量关系、连线、标注。
@@ -49,8 +49,9 @@ a[1] = 7;
 |---|---|
 | `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]` | 构建 + 自检 + 出图；`--sheet` 再拼一张联系表 |
 | `vk check <file\|dir> [--frame id] [--out DIR] [--json]` | 只构建 + 自检 + json（不出图） |
-| `vk doc <tag> [--json]` | 一个件的全部变体、属性、子项属性、示例 |
-| `vk brief [--json] [--full]` | 全部契约；默认紧凑（AI 入口），`--full` 含颜色/字号/线宽 |
+| `vk doc <tag> [--json]` | 一个件的全部变体、属性、子项属性、完整示例 |
+| `vk example <tag> [as]` | 一个件的完整可跑最小帧（不是模板库） |
+| `vk brief [--json] [--full] [--tag a,b] [--codes]` | 机器契约；默认紧凑（约29KB），`--tag` 只取几个件，`--codes` 只取错误表 |
 | `vk icons <query>` | 搜 Lucide 图标名 |
 | `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js） |
 | `vk clean [--all]` | 删 `.vk-tmp`；`--all` 连 `out/` |
@@ -59,7 +60,7 @@ a[1] = 7;
 `--json` 的 stdout 只有 JSON，构建日志走 stderr，机器可以直接 parse。
 
 **不是门禁**：内容放不下也照样出图，终端与 JSON 里写清事实（`正文带 546 · 内容 648 · 超出 102px`）；只有一张图都没出来才 exit 1。
-`ok` 只表示有没有硬错；`fits` 单独表示放不放得下。
+`ok` 只表示有没有硬错；`fits` 单独表示放不放得下。顶层 `ok` = 所有帧都没有硬错且没有文件级诊断；`produced` 是帧数，`inputs` 是输入文件数，`clean` 是全部 ok 且 fits。都不阻止出图。
 
 ## 自检只判硬的
 
@@ -73,7 +74,7 @@ a[1] = 7;
 
 先读 [`docs/QUICK.md`](docs/QUICK.md)（AI 只读这一份就能写），需要判断时读
 [`docs/GUIDE.md`](docs/GUIDE.md)，调视觉时读 [`docs/DESIGN.md`](docs/DESIGN.md)。
-机器契约用 `vk brief --json`，单件用 `vk doc <tag>`。
+机器契约用 `vk brief --tag code,board --json`（只取要用的件），单件用 `vk doc <tag>` 或 `vk example <tag>`。
 本库不提供模板、版式库或演示剧集。
 
 ## 测试
@@ -86,13 +87,14 @@ npm test               # 契约 / 负例 / 出图与体检单 / 行为 / 确定�
 
 ```
 src/vocab.mjs        值：字号 / 行距 / 间距 / 颜色 / 线宽 / 图标
-src/schema.mjs       契约：13 个标签、变体、属性、子节点、示例、容量、规则
+src/schema.mjs       契约：13 个标签、变体、属性、子节点、示例、容量、排版事实、规则
 src/normalize.mjs    归一化：默认值落地、间距换像素、data-vk 身份
 src/contract.mjs     契约门面
-src/contract/        校验（validate.mjs）与文档（doc.mjs）
-src/build/           构建：入口 / 源码窗 / 条目图 / 字节与位域 / 关系图 / 块 / 页面壳
+src/contract/        校验（validate.mjs）、错误码（codes.mjs）、文档（doc.mjs）
+src/version.mjs      版本唯一来源（package.json）
+src/build/           构建：入口 / 源码窗 / 汇编解析 / 条目图 / 字节与位域 / 关系图 / 块 / 页面壳
 src/runtime/         运行期：底座 / 关系图 / 标注（只做测量与连线）
-src/shared/          构建与运行期共用的纯函数（连接件几何 / SVG / 源码 / 汇编 / 区间）
+src/shared/          构建与运行期共用的纯函数（连接件几何 / SVG / 区间）
 src/audit/           自检：单独打进 dist/audit.js，不进交付页
 src/*.css            底座 / 机制件 / 状态 / 标注
 bin/vk.mjs           命令行（只解析参数、调用、打印）

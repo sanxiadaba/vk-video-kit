@@ -27,23 +27,32 @@ function buildTable(node) {
     return;
   }
   const rows = flatten(table).filter((n) => n.tagName === 'tr');
-  const cols = Math.max(0, ...rows.map((r) => flatten(r).filter((c) => c.tagName === 'th' || c.tagName === 'td').length));
-  node.attrs = [...(node.attrs || []).filter((a) => a.name !== 'data-cols'), { name: 'data-cols', value: String(cols) }];
+  const span = (cell) => Math.max(1, Number(attrOf(cell, 'colspan') || 1));
+  const cols = Math.max(0, ...rows.map((r) => kids(r).filter((c) => c.tagName === 'th' || c.tagName === 'td').reduce((a, c) => a + span(c), 0)));
 
   const numeric = new Set();
   for (let c = 0; c < cols; c++) {
-    const cells = rows.map((r) => flatten(r).filter((n) => n.tagName === 'th' || n.tagName === 'td')[c]).filter(Boolean);
+    const cells = [];
+    for (const r of rows) {
+      let pos = 0;
+      for (const cell of kids(r).filter((n) => n.tagName === 'th' || n.tagName === 'td')) {
+        if (pos <= c && c < pos + span(cell)) cells.push(cell);
+        pos += span(cell);
+      }
+    }
     const body = cells.filter((cell) => cell.tagName === 'td');
     if (body.length >= 2 && body.filter(colNum).length * 3 >= body.length * 2) numeric.add(c);
   }
   rows.forEach((tr) => {
-    flatten(tr)
-      .filter((n) => n.tagName === 'th' || n.tagName === 'td')
-      .forEach((cell, c) => {
-        if (!numeric.has(c)) return;
+    let pos = 0;
+    for (const cell of kids(tr).filter((n) => n.tagName === 'th' || n.tagName === 'td')) {
+      const s = span(cell);
+      if ([...numeric].some((c) => c >= pos && c < pos + s)) {
         const cls = attrOf(cell, 'class');
         cell.attrs = [...(cell.attrs || []).filter((a) => a.name !== 'class'), { name: 'class', value: cls ? `${cls} num` : 'num' }];
-      });
+      }
+      pos += s;
+    }
   });
 
   /* 行锚点：只给数据行编号，表头不算「第几项」。 */
@@ -63,7 +72,11 @@ function buildList(node) {
   kids(node)
     .filter((c) => c.tagName === 'li')
     .forEach((li, i) => {
-      li.attrs = [...(li.attrs || []).filter((a) => a.name !== 'data-vk-item'), { name: 'data-vk-item', value: String(i + 1) }];
+      const attrs = (li.attrs || []).filter((a) => a.name !== 'data-vk-item');
+      attrs.push({ name: 'data-vk-item', value: String(i + 1) });
+      const note = attrOf(li, 'note');
+      if (note) attrs.push({ name: 'data-vk-note', value: note });
+      li.attrs = attrs;
     });
 }
 
@@ -128,6 +141,9 @@ function buildTimeline(node, ctx) {
   const html = items
     .map((li, i) => {
       const at = Number(attrOf(li, 'at'));
+      if (proportional && Number.isFinite(at) && (at < start || at > end)) {
+        ctx.diag(node, { code: 'VALUE_RANGE', message: `时间线的 at=${at} 不在 ${start}–${end} 之间，被夹到边上`, fix: `改成 ${start}–${end}；夹取会让时间轴说谎` });
+      }
       const left = lefts[i];
       const date = attrOf(li, 'date') || (Number.isFinite(at) ? String(at) : '');
       const note = attrOf(li, 'note');

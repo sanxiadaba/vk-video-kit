@@ -43,6 +43,7 @@ export function buildDir(node, ctx) {
   let truncated = false;
   const current = attrOf(node, 'current');
   let itemNo = 0;
+  let currentHit = 0;
   let rootName = '';
 
   const iconFor = (name, isDir) => {
@@ -53,6 +54,7 @@ export function buildDir(node, ctx) {
   const nodeHtml = (name, isDir, p, level, children = '') => {
     const kind = ICON_KIND(name, isDir);
     const cur = current && p === current ? ' current' : '';
+    if (cur) currentHit++;
     return (
       `<div class="vk-node" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}"${cur} style="--vk-depth:${level}">` +
       `<span class="vk-nrow">${iconFor(name, isDir)}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
@@ -117,6 +119,9 @@ export function buildDir(node, ctx) {
 
   const more = truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '';
   const body = rootName ? nodeHtml(rootName, true, rootName, 1, walk(list, 2, rootName)) + more : walk(list, 1, '') + more;
+  if (current && !currentHit) {
+    ctx.diag(node, { code: 'CURRENT_MISSING', message: `目录树的 current="${current}" 没有命中任何路径`, fix: '用根名开头的完整路径，如 src/main.c；先看目录树里真实的名字' });
+  }
   return frame({ title: attrOf(node, 'title'), body: `<div class="vk-tree">${body}</div>`, dots: false, kind: 'dir' });
 }
 

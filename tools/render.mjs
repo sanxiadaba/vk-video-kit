@@ -8,14 +8,16 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
+import crypto from 'node:crypto';
 import { pathToFileURL } from 'node:url';
 import { VERSION } from '../src/contract.mjs';
+import { PHONE_W } from '../src/vocab.mjs';
 
 const ROOT = path.resolve(import.meta.dirname, '..');
 const DIST = path.join(ROOT, 'dist');
 const PAGES = path.join(ROOT, '.vk-tmp', 'pages');
 /** 手机横屏满屏：390×844 的屏幕放 16:9 视频，有效宽度 693（不是 780）。 */
-export const PREVIEW_W = 693;
+export const PREVIEW_W = PHONE_W;
 
 const rel = (p) => path.relative(process.cwd(), p).split(path.sep).join('/');
 const show = (p) => {
@@ -38,7 +40,7 @@ export function collect(p) {
       if (e.name.startsWith('.') || e.name === 'node_modules') continue;
       const abs = path.join(d, e.name);
       if (e.isDirectory()) walk(abs);
-      else if (abs.endsWith('.html')) out.push(abs);
+      else if (abs.toLowerCase().endsWith('.html')) out.push(abs);
     }
   };
   walk(p);
@@ -50,12 +52,14 @@ async function buildPage(file) {
   const html = fs.readFileSync(file, 'utf8');
   const abs = path.resolve(file);
   const fileRel = path.relative(ROOT, abs);
-  const out = path.join(PAGES, fileRel.startsWith('..') ? path.join('_outside', path.basename(abs)) : fileRel);
+  /* 仓外文件不能只按 basename 落暂存页：ep1/index.html 和 ep2/index.html 会互相覆盖。 */
+  const outsideName = `${crypto.createHash('sha1').update(abs).digest('hex').slice(0, 10)}-${path.basename(abs)}`;
+  const out = path.join(PAGES, fileRel.startsWith('..') ? path.join('_outside', outsideName) : fileRel);
   try {
     const res = await transformHtml(html, { file: abs });
     fs.mkdirSync(path.dirname(out), { recursive: true });
     fs.writeFileSync(out, res.html);
-    return { file, ok: true, out, diagnostics: res.diagnostics, frames: res.frames };
+    return { file, ok: true, out, diagnostics: res.diagnostics };
   } catch (e) {
     return { file, ok: false, diagnostics: e.diagnostics || [{ file: fileRel, line: 1, code: 'BUILD', message: e.message, fix: '看这一条的上下文' }] };
   }
@@ -187,13 +191,23 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
       if (!frames.length) report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: '这一页没有 <vk-page>：什么都没画出来', fix: '把内容包进 <vk-page>…</vk-page>' });
       else if (onlyFrame && !picked.length)
         report.diagnostics.push({ file: rel(f), line: 1, code: 'FRAME', message: `这一页没有 id="${onlyFrame}" 的帧`, fix: `这一页的 id：${frames.map((x) => x.id || '(无 id)').join(' / ')}` });
-      for (const err of errors) report.diagnostics.push({ file: rel(f), line: 1, code: 'RUNTIME', message: `运行期错误：${err}`, fix: '这是页面脚本/组件抛的，不是版式问题' });
+      for (const err of errors) report.diagnostics.push({ file: rel(f), code: 'RUNTIME', message: `运行期错误：${err}`, fix: '这是页面脚本/组件抛的，不是版式问题' });
 
-      const base = path.basename(f, '.html');
+      const base = path.parse(f).name;
       for (const fr of picked) {
         const tag = safeId(fr.id) || String(fr.index + 1).padStart(2, '0');
         let name = frames.length > 1 ? `${base}-${tag}` : base;
         for (let n = 2; report.frames.some((x) => x.name === name); n++) name = `${base}-${tag}-${n}`;
+        /* 同一个 out/ 里再放另一个同名文件：加源路径短 hash，别静默覆盖。 */
+        const priorJson = path.join(output, `${name}.json`);
+        if (fs.existsSync(priorJson)) {
+          try {
+            const prior = JSON.parse(fs.readFileSync(priorJson, 'utf8'));
+            if (prior.file && prior.file !== show(f)) name = `${base}-${tag}-${crypto.createHash('sha1').update(String(show(f))).digest('hex').slice(0, 6)}`;
+          } catch {
+            /* 旧的坏 JSON 不挡新产物 */
+          }
+        }
         const audit = await page.evaluate((idx) => {
           const stage = document.querySelectorAll('.vk-stage')[idx];
           if (!window.vkAudit) return { issues: [{ code: 'FRAME', message: '页面里没有自检运行时', fix: '重新 vk build' }], health: null, fits: false };
@@ -235,8 +249,10 @@ export async function renderFiles(files, { shots = true, output = path.join(ROOT
   } finally {
     await browser.close();
   }
-  report.ok = report.frames.length > 0;
-  report.clean = report.diagnostics.length === 0 && report.frames.every((x) => x.ok && x.fits);
+  report.produced = report.frames.length;
+  report.inputs = files.length;
+  report.ok = report.frames.length > 0 && report.diagnostics.length === 0 && report.frames.every((f) => f.ok);
+  report.clean = report.ok && report.frames.every((f) => f.fits);
   return report;
 }
 

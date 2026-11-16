@@ -1,8 +1,7 @@
 /**
- * vk 共享纯函数 —— 构建期与运行时唯一的一份。
+ * 源码文本清洗 —— 只在构建期用。
  *
- * 这里不允许出现 DOM / Node API：src/build.mjs 与 src/runtime/*.mjs 都 import 它，
- * 由 esbuild 打进浏览器 bundle。
+ * 不进程运行时 bundle：这里允许 Node/构建期约定，但不碰 DOM。
  *
  * 同一套规则只有这一份：去缩进、去 ANSI、行段、语言别名。
  */

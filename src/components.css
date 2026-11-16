@@ -172,8 +172,8 @@
 .vk-arow {
   display: flex;
   align-items: baseline;
-  gap: var(--vk-space-4);
-  padding: 0 var(--vk-space-5);
+  gap: var(--vk-space-3);
+  padding: 0 var(--vk-space-4);
   white-space: pre;
 }
 .vk-aaddr {
@@ -190,7 +190,7 @@
 .vk-arow .vk-ainsn {
   color: var(--vk-syn-keyword);
   font-weight: var(--vk-w-bold);
-  flex: 0 0 3.2em;
+  flex: 0 0 2.8em;
 }
 .vk-aops {
   flex: 1 1 auto;
@@ -198,7 +198,7 @@
 }
 .vk-areg {
   font-style: normal;
-  color: var(--vk-syn-keyword);
+  color: var(--vk-syn-fn);
 }
 .vk-aimm {
   font-style: normal;
@@ -265,7 +265,7 @@
 }
 [data-vk='board'][data-as='list'] > li {
   display: grid;
-  grid-template-columns: 1.1em minmax(0, 1fr);
+  grid-template-columns: 1.1em minmax(0, 1fr) auto;
   gap: var(--vk-space-4);
   align-items: baseline;
   list-style: none;
@@ -274,6 +274,15 @@
   font-size: var(--vk-fs-body);
   line-height: 1.5;
   position: relative;
+}
+[data-vk='board'][data-as='list'] > li::after {
+  content: attr(data-vk-note);
+  justify-self: end;
+  color: var(--vk-ink-3);
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 [data-vk='board'][data-as='list'] > li::before {
   content: '';
@@ -301,7 +310,7 @@
   counter-reset: vk-li;
 }
 [data-vk='board'][data-as='list'][variant='ordered'] > li {
-  grid-template-columns: 1.6em minmax(0, 1fr);
+  grid-template-columns: 1.6em minmax(0, 1fr) auto;
 }
 [data-vk='board'][data-as='list'][variant='ordered'] > li::before {
   content: counter(vk-li);
@@ -538,7 +547,7 @@
 .vk-brow,
 .vk-bhead {
   display: grid;
-  grid-template-columns: var(--vk-bcol, 7ch) var(--vk-bhexw, calc(var(--vk-cols, 8) * 3ch)) calc(var(--vk-cols, 8) * 1.15ch);
+  grid-template-columns: var(--vk-bcol, 269px) var(--vk-bhexw, 922px) var(--vk-bascii-w, 353px);
   gap: var(--vk-space-4);
   align-items: baseline;
   padding: 0 var(--vk-space-5);
@@ -594,22 +603,34 @@
 }
 .vk-bits-body {
   display: flex;
-  align-items: stretch;
-  gap: var(--vk-space-6);
+  align-items: end;
+  justify-content: center;
+  gap: 0;
   /* 一行 16 位必须装得下正文带：谁都不许把最后一个字段顶出右边界。 */
   width: 100%;
   min-width: 0;
 }
+/* 位域不做独立盒子：盒子会跟着字段名宽度变，位距就断了。
+   一条底线做分组，位本身是连续的 80px 网格；字段之间只留 16px 呼吸。 */
 .vk-field {
   display: grid;
   grid-template-rows: auto 1fr;
   gap: var(--vk-space-2);
   justify-items: center;
-  flex: 0 1 auto;
+  flex: 0 0 auto;
   min-width: 0;
-  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-sm);
-  padding: var(--vk-space-2) var(--vk-space-3) var(--vk-space-3);
+  padding: 0 0 var(--vk-space-2);
+  border: 0;
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  border-radius: 0;
+}
+.vk-field + .vk-field {
+  margin-left: var(--vk-space-4);
+}
+/* 单比特字段只占一个位宽；字段名允许溢出到两侧的呼吸里，不能把位距撑开。 */
+.vk-field:has(.vk-bit:only-child) {
+  width: 80px;
+  grid-template-columns: 80px;
 }
 .vk-field-l {
   font-size: var(--vk-fs-caption);
@@ -682,10 +703,11 @@
   content: '';
   position: absolute;
   top: calc(48px - var(--vk-line-w-rule) / 2);
-  left: calc(50% + 60px);
-  width: calc(100% + var(--vk-space-6) - 120px);
+  /* 线从圆边走到下一个圆边，不留悬空缝；颜色与关系图边一致。 */
+  left: calc(50% + 48px);
+  width: calc(100% + var(--vk-space-6) - 96px);
   height: var(--vk-line-w-rule);
-  background: var(--vk-ink-3);
+  background: var(--vk-ink-2);
   z-index: 0;
 }
 .vk-step:last-child::after {
@@ -714,6 +736,21 @@
   min-width: 0;
   font-size: var(--vk-fs-body);
   line-height: 1.4;
+}
+
+/* 横排：标签文字压在圆心上，图标挂到文字左边，不参与居中计算。
+   否则「图标 + 文字」整组居中，文字会被图标顶到圆心右边。 */
+@container (min-width: 761px) {
+  .vk-steps:not([data-dir='vertical']) .vk-step-t {
+    position: relative;
+  }
+  .vk-steps:not([data-dir='vertical']) .vk-step-t .vk-ic {
+    position: absolute;
+    right: 100%;
+    top: 50%;
+    transform: translateY(-50%);
+    margin-right: var(--vk-space-3);
+  }
 }
 .vk-step-t .vk-ic {
   width: var(--vk-icon-2xl);
@@ -808,7 +845,7 @@
   font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
-  margin-left: var(--vk-space-1);
+  margin-left: var(--vk-space-2);
 }
 /* ================================================================ 时间线
    轴分段（build 写 .vk-tl-seg），节点处留缝。 */
@@ -1028,7 +1065,7 @@
   font-weight: var(--vk-w-bold);
   color: var(--vk-ink-1);
   font-size: var(--vk-fs-body);
-  margin-bottom: var(--vk-space-4);
+  margin-bottom: var(--vk-space-5);
 }
 .vk-seq-head span {
   position: absolute;
@@ -1051,7 +1088,8 @@
   width: var(--vk-line-w-hair);
   margin-left: calc(var(--vk-line-w-hair) / -2);
   border-radius: 2px;
-  background: var(--vk-ink-3);
+  background: var(--vk-line-strong);
+  z-index: 0;
 }
 .vk-seq-row {
   --vk-seq-c: var(--vk-info);
@@ -1063,6 +1101,7 @@
   top: 88px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
+  z-index: 1;
 }
 .vk-seq-row[data-dir='right'] .vk-seq-arrow,
 .vk-seq-row[data-dir='left'] .vk-seq-arrow {
@@ -1081,11 +1120,12 @@
 /* 尖端正好落在泳道线上：右向的头贴右端，左向的头贴左端。 */
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
   right: 0;
-  clip-path: polygon(0 0, 100% 50%, 0 100%);
+  /* 前尖 + 凹底：两角收尖，中间 V 形缺口；平底会让 693 下的箭头显钝。 */
+  clip-path: polygon(100% 50%, 0 0, 35% 50%, 0 100%);
 }
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
   left: 0;
-  clip-path: polygon(100% 0, 0 50%, 100% 100%);
+  clip-path: polygon(0 50%, 100% 0, 65% 50%, 100% 100%);
 }
 .vk-seq-l {
   position: absolute;
@@ -1098,6 +1138,7 @@
   font-size: var(--vk-fs-body);
   line-height: 1.2;
   font-weight: var(--vk-w-medium);
+  z-index: 2;
 }
 .vk-seq-note {
   margin-left: var(--vk-space-3);

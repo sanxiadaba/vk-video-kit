@@ -10,7 +10,7 @@
  */
 import { VkElement, define, resolveAnchor, inkRect } from './base.mjs';
 import { mk, clamp } from '../shared/svg.mjs';
-import { CONN, ANN, ARROW, port, headPolygon } from '../shared/connector.mjs';
+import { ANN, ARROW, port, headPolygon } from '../shared/connector.mjs';
 
 const COMPONENT = 'vk-code, vk-board, vk-graph, vk-dir, vk-math, vk-seq, vk-card, vk-img, vk-text';
 
@@ -199,6 +199,7 @@ export class VkCallout extends VkElement {
     this._note.hidden = true;
     this.removeAttribute('data-vk-anchor-missing');
     this.removeAttribute('data-vk-tight');
+    this.removeAttribute('data-vk-side');
 
     const mode = this.getAttribute('mode') || 'note';
     const rel = (r) => rect(r, origin);
@@ -223,40 +224,68 @@ export class VkCallout extends VkElement {
       this._note.style.maxWidth = `${Math.max(200, ANN.gutter - ANN.standoff - 8)}px`;
       const bw = this._note.offsetWidth;
       const bh = this._note.offsetHeight;
+      const ncs = getComputedStyle(this._note);
+      /* 箭头对齐第一行，不是整块的中心。两行注记居中时，箭头会落在两行之间，
+         看起来像字压在箭头上。 */
+      const firstLine = (parseFloat(ncs.paddingTop) || 0) + (parseFloat(ncs.lineHeight) || 0) / 2;
       const body = page.querySelector('.vk-body');
       const bodyRect = body ? rel(body.getBoundingClientRect()) : { left: 24, top: 24, right: origin.width - 24, bottom: origin.height - 24 };
       const head = page.querySelector('[data-vk="head"]');
       const safeTop = Math.max(bodyRect.top, head ? head.getBoundingClientRect().bottom - origin.top + 16 : 24);
-      const safeBottom = Math.min(bodyRect.bottom, origin.height - 24);
+      const safeBottom = origin.height - 24;
       const owner = t.el.closest(COMPONENT) || t.el;
       const ob = rel(owner.getBoundingClientRect());
       const arrowY = mark.cy;
       const gutterLeft = bodyRect.right - ANN.gutter;
 
-      /* 出线口：行从「这一行的末尾」出，词/块/行段从标记自己的右缘出。 */
+      /* 出线口：行从「这一行的末尾」出；词/块从「画出来的框」外面出。
+         mark 是字墨迹，框还向外扩 boxPad/boxPadY；从墨迹起杆会落在框里面。
+         框外再让 24：这条是尾段/头背与框线的净空，不是文字净空。 */
       const isLine = t.el.matches('.vk-line');
       const lineR = isLine ? rel(inkRect(t.el)) : null;
-      const portX = lineR ? Math.max(mark.right, lineR.right + ARROW.clear) : mark.right;
-      const portLeft = lineR ? Math.min(mark.left, lineR.left - ARROW.clear) : mark.left;
+      const portX = lineR ? Math.max(mark.right, lineR.right + ARROW.clear) : mark.right + 16;
+      const portLeft = lineR ? Math.min(mark.left, lineR.left - ARROW.clear) : mark.left - 16;
 
       let side = 'right';
       let nx = gutterLeft + ANN.standoff;
-      let ny = arrowY - bh / 2;
+      let ny = arrowY - firstLine;
       if (nx + bw > bodyRect.right || portX > gutterLeft - 8) {
         side = 'bottom';
         nx = bodyRect.left;
         ny = ob.bottom + ANN.standoff;
       }
+      /* 右注记的横线不能跨过另一块正文：否则箭头会压在中间那块文字上。 */
+      if (side === 'right') {
+        const x1 = portX;
+        const x2 = nx - ARROW.textGap;
+        const blocks = [...page.querySelectorAll('[data-vk="body"] > *, [data-vk="flow"] > *')].filter((el) => {
+          if (el === this || el.contains(this) || el.contains(t.el)) return false;
+          if (el.closest('.vk-co')) return false;
+          const cs = getComputedStyle(el);
+          return cs.display !== 'none' && cs.visibility !== 'hidden';
+        });
+        const crosses = blocks.some((el) => {
+          const r = rel(el.getBoundingClientRect());
+          return r.width > 1 && r.height > 1 && arrowY > r.top - 8 && arrowY < r.bottom + 8 && x2 > r.left - 8 && x1 < r.right + 8;
+        });
+        if (crosses) {
+          side = 'bottom';
+          nx = bodyRect.left;
+          ny = ob.bottom + ANN.standoff;
+        }
+      }
+      if (side === 'bottom') ny = ob.bottom + ANN.standoffY;
       if (side === 'bottom' && ny + bh > safeBottom) {
         side = 'top';
-        ny = ob.top - ANN.standoff - bh;
+        ny = ob.top - ANN.standoffY - bh;
       }
       if (side !== 'right') nx = clamp(nx, bodyRect.left, Math.max(bodyRect.left, bodyRect.right - bw));
       ny = clamp(ny, safeTop, Math.max(safeTop, safeBottom - bh));
+      this.setAttribute('data-vk-side', side);
       this._note.style.left = `${nx}px`;
       this._note.style.top = `${ny}px`;
 
-      /* 连接：从出线口水平到文字左缘，箭头尖落在文字上。 */
+      /* 连接：从出线口到文字；头长按可用净空缩短。 */
       let start;
       let tip;
       let u;
@@ -270,17 +299,18 @@ export class VkCallout extends VkElement {
         u = { x: -1, y: 0 };
       } else if (side === 'bottom') {
         const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
-        start = { x: sx, y: mark.bottom + 6 };
+        start = { x: sx, y: mark.bottom + 16 };
         tip = { x: sx, y: ny - ARROW.textGap };
         u = { x: 0, y: 1 };
       } else {
         const sx = clamp((mark.left + mark.right) / 2, nx + 24, nx + bw - 24);
-        start = { x: sx, y: mark.top - 6 };
+        start = { x: sx, y: mark.top - 16 };
         tip = { x: sx, y: ny + bh + ARROW.textGap };
         u = { x: 0, y: -1 };
       }
       const run = (tip.x - start.x) * u.x + (tip.y - start.y) * u.y;
-      if (run < ARROW.length + ARROW.minRun) {
+      const minRun = ARROW.length + ARROW.minRun;
+      if (run < minRun) {
         this.setAttribute('data-vk-tight', '1');
         this._svg.appendChild(mk('line', { class: 'vk-co-line', x1: start.x, y1: start.y, x2: tip.x, y2: tip.y }));
         return;

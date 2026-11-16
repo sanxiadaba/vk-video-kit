@@ -2,7 +2,8 @@
  * v26 · 公开契约
  * ----------------------------------------------------------------------------
  * 全库只有这一份契约：哪个标签、哪个变体、有哪些属性、默认值、子节点怎么写。
- * 构建期校验、vk doc / vk brief、docs/CONTRACT.md 全部从这里生成，不许手抄第二份。
+ * 构建期校验、vk doc / vk brief 全部从这里生成，不许手抄第二份。
+ * docs/CONTRACT.md 不再入库；需要机器契约用 vk brief，需要错误表用 vk brief --codes。
  *
  * 十三个标签，两类：
  *   结构件   page / head / flow / text / card / img / callout
@@ -17,7 +18,8 @@
  *   · 可见文字写成元素内容；只有 kicker / counter / lede / note / date / value 走属性。
  */
 
-import { TONE, THEME, CARD_SURFACE, INK, SIZE } from './vocab.mjs';
+import { TONE, THEME, CARD_SURFACE, INK, SIZE, CANVAS, CONTENT, PHONE_W } from './vocab.mjs';
+import { ANN } from './shared/connector.mjs';
 
 export const LAYERS = [
   { id: 'page', label: 'L0 画布' },
@@ -84,7 +86,7 @@ export const TAGS = {
       theme: enumv(THEME, 'light', 'appearance', '主题：light / dark'),
     },
     children: blocks('直接写 <vk-head> 与内容；下一层要分栏时写 <vk-flow>。'),
-    example: '<vk-page place="band" theme="light">…</vk-page>',
+    example: '<vk-page place="band" theme="light"><vk-head>一句标题。</vk-head><vk-text>正文。</vk-text></vk-page>',
   },
 
   'vk-head': {
@@ -115,7 +117,7 @@ export const TAGS = {
       overlay: bool('layout', '叠放：子项落在同一格里'),
     },
     children: blocks('子项直接写；span / bleed 只在这里生效。'),
-    example: '<vk-flow cols="7 5" gap="wide"><vk-code …></vk-code><vk-text>右侧批注</vk-text></vk-flow>',
+    example: '<vk-flow cols="2" gap="normal"><vk-text>左栏。</vk-text><vk-text>右栏。</vk-text></vk-flow>',
   },
 
   /* ------------------------------------------------------------ 面与字 */
@@ -159,7 +161,7 @@ export const TAGS = {
       position: text('appearance', '焦点，如 "50% 50%"', { default: '50% 50%' }),
     },
     children: none('图片标签里不写内容。'),
-    example: '<vk-img src="shot.png" ratio="16 / 9" fill="cover" alt="截图"></vk-img>',
+    example: '<vk-img src="data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' width=\'16\' height=\'9\'%3E%3Crect width=\'16\' height=\'9\' fill=\'%23dbeafe\'/%3E%3C/svg%3E" ratio="16 / 9" alt="示例图"></vk-img>',
   },
 
   /* ---------------------------------------------------------------- 机制 */
@@ -207,13 +209,13 @@ export const TAGS = {
         'show-addr': enumv(['on', 'off'], 'on', 'appearance', '显示地址列（off 可省 88px）'),
         size: enumv(['caption', 'body'], 'body', 'type', '字号'),
       }, source('src 指向 objdump 输出，或内联 <script type="text/plain" data-vk-source>。'),
-        '<vk-code as="asm" hex current="2"><script type="text/plain" data-vk-source>\n0x1004 48 89 f8 mov %rdi,%rax\n0x1007 48 01 f0 add %rsi,%rax\n</script></vk-code>'),
+        '<vk-code as="asm" hex current="2" size="caption"><script type="text/plain" data-vk-source>\n1004: 48 89 f8 mov %rdi,%rax\n1007: 48 01 f0 add %rsi,%rax\n</script></vk-code>'),
       bytes: variant('字节', '十六进制转储：地址 + 十六进制 + ASCII 三列。', {
         src: text('content', '二进制文件'),
         addr: text('content', '起始地址', { default: '0x0' }),
         offset: int(0, 65535, 0, 'content', '起始字节'),
         length: int(1, 4096, 32, 'content', '字节数'),
-        cols: enumv(['4', '8'], '8', 'layout', '每行几列'),
+        cols: enumv(['4', '6', '8'], '8', 'layout', '每行几列'),
         current: lines('当前字节段，如 "4-7"（1 起）'),
       }, source('src 指向二进制；也可内联十六进制（68 65 6c 6c 6f）。'),
         '<vk-code as="bytes" title="hello.bin" current="1-3"><script type="text/plain" data-vk-source>\n68 65 6c 6c 6f\n</script></vk-code>'),
@@ -237,10 +239,10 @@ export const TAGS = {
       as: enumv(['list', 'steps', 'bars', 'timeline', 'table', 'cells'], 'list', 'content', '条目形态'),
     },
     variants: {
-      list: variant('列表', '要点 / 清单 / 有序。条目写成 <li>。', {
+      list: variant('列表', '要点 / 清单 / 有序。条目写成 <li>，可选右侧小字。', {
         variant: enumv(['bullet', 'check', 'ordered'], 'bullet', 'appearance', '形态'),
-      }, items({ tone: ITEM_TONE, current: currentItem() }, '每一项写成 <li>；当前项写 current。'),
-        '<vk-board><li>取首地址</li><li current>加下标 × 4</li></vk-board>'),
+      }, items({ tone: ITEM_TONE, note: text('content', '右侧小字（值 / 地址 / 单位）'), current: currentItem() }, '每一项写成 <li>；当前项写 current。'),
+        '<vk-board><li note="a">取首地址</li><li current note="a + i × 4">加下标 × 4</li></vk-board>'),
       steps: variant('步骤', '编号 + 连线 + 当前步。容器窄时自动竖排。', {
         direction: enumv(['auto', 'horizontal', 'vertical'], 'auto', 'layout', '方向'),
       }, items({ tone: ITEM_TONE, note: text('content', '小字说明'), icon: text('content', '图标（Lucide 名）'), current: currentItem() }, '每一步写成 <li>；当前步写 current。'),
@@ -296,7 +298,7 @@ export const TAGS = {
       current: text('state', '当前节点路径，如 "src/main.c"'),
     },
     children: source('src 指向真实目录；也可用 <script type="text/plain" data-vk-tree> 写 JSON。'),
-    example: '<vk-dir><script type="text/plain" data-vk-tree>["src","README.md"]</script></vk-dir>',
+    example: '<vk-dir><script type="text/plain" data-vk-tree>[{"name":"src","children":[{"name":"main.c"}]}]</script></vk-dir>',
   },
 
   'vk-seq': {
@@ -404,7 +406,18 @@ export const AUTHOR_GLOBALS = {
   style: '只写颜色 token（--vk-focus / --vk-syn-* / --vk-ink-* / --vk-tone）；字号、间距、线宽、版心不归作者',
 };
 
-/** 当前几何下的实测容量；不是门禁，是给 AI 拆帧用的预算。 */
+/** 排版事实：不是门禁，是写帧前要先算的几何。 */
+export const LAYOUT_FACTS = {
+  canvas: { w: CANVAS.w, h: CANVAS.h },
+  content: { w: CONTENT.w, h: CONTENT.h },
+  phoneWidth: PHONE_W,
+  head: { withLede: 398, withoutLede: 278, subhead: 221 },
+  note: { gutter: ANN.gutter, width: ANN.gutter - ANN.standoff - 8, standoffY: ANN.standoffY },
+  halfColumnChars: { body: 20, caption: 24, withNote: 11 },
+  cellsCompact: '半栏 2×2；值 64、标签/地址 56；不要放 ptr（+152）',
+  tableWithLede: '4 个数据行 + caption 在带导语的正文带里放不下',
+  oneNotePerFrame: true,
+};
 export const CAPACITY = [
   { what: '代码窗', max: '3 行（带导语）/ 4 行（不带）', note: '每行 64×1.5，窗口头 80' },
   { what: '表格', max: '4 个数据行 + 表头', note: '行高约 103；带 caption 再减一行' },

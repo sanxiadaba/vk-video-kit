@@ -14,7 +14,7 @@
  */
 import fs from 'node:fs';
 import path from 'node:path';
-import { contract, compact, markdown, docText, VERSION } from '../src/contract.mjs';
+import { contract, compact, markdown, markdownFull, docText, exampleFrame, VERSION } from '../src/contract.mjs';
 import { TAGS, TAG_NAMES } from '../src/schema.mjs';
 import { build as buildDist, ensure as ensureDist } from '../tools/build.mjs';
 import { renderFiles, collect } from '../tools/render.mjs';
@@ -38,7 +38,8 @@ const FLAGS = {
   render: new Set(['--frame', '--out', '--json', '--no-preview', '--sheet', '--help', '-h']),
   check: new Set(['--frame', '--out', '--json', '--help', '-h']),
   doc: new Set(['--json', '--help', '-h']),
-  brief: new Set(['--json', '--md', '--full', '--help', '-h']),
+  example: new Set(['--help', '-h']),
+  brief: new Set(['--json', '--full', '--codes', '--tag', '--help', '-h']),
   icons: new Set(['--help', '-h']),
   clean: new Set(['--all', '--help', '-h']),
   build: new Set(['--help', '-h']),
@@ -52,6 +53,7 @@ const usage = `vk ${VERSION} —— 单帧画面库（一帧一张 1920×1080，
   vk check  <file|dir> [--frame id] [--out DIR] [--json]
       只构建 + 自检 + 写 json（不出图）
   vk doc    <tag> [--json]         一个件的属性表（含子项）
+  vk example <tag> [as]             一个件的完整可跑最小帧
   vk brief  [--json] [--full]      全部契约；默认紧凑，--full 含颜色/字号/线宽
   vk icons  <query>                搜 Lucide 图标名
   vk clean  [--all]                删 .vk-tmp；--all 连 out/ 一起删
@@ -96,7 +98,10 @@ if (has('--help') || has('-h')) {
 
 /* 报表：只打印事实，不评价。 */
 function printReport(report) {
-  for (const d of report.diagnostics) console.log(`✗ ${d.file}:${d.line} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
+  for (const d of report.diagnostics) {
+    const at = d.line ? `${d.file}:${d.line}` : d.file;
+    console.log(`✗ ${at} [${d.code || 'ERROR'}] ${d.message}${d.fix ? ` → ${d.fix}` : ''}`);
+  }
   for (const f of report.frames) {
     const tag = f.id ? ` #${f.id}` : '';
     const h = f.health;
@@ -143,14 +148,22 @@ if (cmd === 'render' || cmd === 'check') {
   } catch (e) {
     die(`[vk] ${e.message}`, 3);
   }
-  const report = await renderFiles(files, {
-    shots: cmd === 'render',
-    output: path.resolve(process.cwd(), val('--out') || OUT),
-    onlyFrame: val('--frame'),
-    preview: !has('--no-preview'),
-    sheet: has('--sheet'),
-  });
-  if (has('--json')) console.log(JSON.stringify(report, null, 2));
+  const outAbs = path.resolve(process.cwd(), val('--out') || OUT);
+  const forbidden = [path.join(ROOT, 'src'), path.join(ROOT, 'bin'), path.join(ROOT, 'tools'), path.join(ROOT, 'tests'), path.join(ROOT, 'docs')];
+  if (forbidden.some((p) => outAbs === p || outAbs.startsWith(p + path.sep))) die(`[vk] --out 不能指向源码目录：${outAbs}`);
+  let report;
+  try {
+    report = await renderFiles(files, {
+      shots: cmd === 'render',
+      output: outAbs,
+      onlyFrame: val('--frame'),
+      preview: !has('--no-preview'),
+      sheet: has('--sheet'),
+    });
+  } catch (e) {
+    die(`[vk] 出图失败：${e.message}`, 3);
+  }
+  if (has('--json')) console.log(JSON.stringify(report));
   else printReport(report);
   process.exitCode = report.frames.length === 0 ? 1 : 0;
 } else if (cmd === 'doc') {
@@ -159,9 +172,34 @@ if (cmd === 'render' || cmd === 'check') {
   if (!TAGS[tag]) die(`未知标签 ${tag}。可用：${TAG_NAMES.join(', ')}`);
   if (has('--json')) console.log(JSON.stringify(contract().tags[tag], null, 2));
   else console.log(docText(tag));
+} else if (cmd === 'example') {
+  const tag = inputs[0];
+  const as = inputs[1];
+  if (!tag) die('用法：vk example <tag> [as]');
+  if (!TAGS[tag]) die(`未知标签 ${tag}。可用：${TAG_NAMES.join(', ')}`);
+  if (tag === 'vk-callout' && as) die('[vk] vk-callout 用 mode="mark|note|arrow|measure"，不用 as');
+  const text = exampleFrame(tag, as);
+  if (!text) die(`[vk] ${tag}${as ? ` 没有 as="${as}"` : ''} 没有示例；callout 用 mode，不是 as。先看 vk doc ${tag}`);
+  console.log(text);
 } else if (cmd === 'brief') {
-  if (has('--json')) console.log(JSON.stringify(has('--full') ? contract() : compact()));
-  else console.log(markdown());
+  const full = has('--full');
+  const base = full ? contract() : compact();
+  if (has('--codes')) {
+    if (has('--json')) console.log(JSON.stringify(base.codes));
+    else console.log(markdown().split('## 错误码')[1]?.trim() || '');
+  } else if (has('--tag')) {
+    if (!val('--tag')) die('[vk] --tag 需要值，例如 --tag vk-code,vk-board');
+    const names = String(val('--tag') || '')
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .map((n) => (n.startsWith('vk-') ? n : `vk-${n}`));
+    const picked = Object.fromEntries(names.map((n) => [n, base.tags[n]]).filter(([, v]) => v));
+    if (!has('--json')) {
+      for (const n of Object.keys(picked)) console.log(docText(n) + '\n');
+    } else console.log(JSON.stringify({ ...base, tags: picked }));
+  } else if (has('--json')) console.log(JSON.stringify(base));
+  else console.log(full ? markdownFull() : markdown());
 } else if (cmd === 'icons') {
   const q = (inputs[0] || '').toLowerCase();
   if (!q) die('用法：vk icons <query>');

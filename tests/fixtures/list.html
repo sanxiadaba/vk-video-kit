@@ -1,8 +1,8 @@
 <vk-page id="list">
   <vk-head size="subhead" kicker="寻址" lede="前两步只算地址，最后一步才读内存。">取一个值，分三步。</vk-head>
   <vk-board as="list" variant="ordered">
-    <li>取数组首地址</li>
-    <li>加上下标 × 4</li>
-    <li current>读出那 4 个字节</li>
+    <li note="a">取数组首地址</li>
+    <li note="+ i × 4">加上下标 × 4</li>
+    <li current note="a[i]">读出那 4 个字节</li>
   </vk-board>
 </vk-page>

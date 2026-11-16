@@ -21,6 +21,8 @@ export const CONTENT = {
   w: CANVAS.w - CANVAS.marginX * 2,
   h: CANVAS.h - CANVAS.marginY * 2,
 };
+/** 手机横屏满屏：390×844 的屏幕放 16:9 视频，有效宽度 693（0.361×）。 */
+export const PHONE_W = 693;
 
 /** 线宽。8 分隔 / 8 连接 / 8 结构 / 12 焦点；手机 0.361× 之后：2.9 / 2.9 / 4.3px。
     6px 在 540p 压缩后只剩 1.7px，配 .22 的透明度会先消失。 */
@@ -74,8 +76,11 @@ export const WEIGHT = { regular: 400, medium: 500, bold: 600 };
    8 档，4px 基准。组件只用这些值，不再写 10/14/28/44 这种裸数。 */
 export const SPACE = { '1': 4, '2': 8, '3': 12, '4': 16, '5': 24, '6': 32, '7': 48, '8': 64, '9': 96 };
 
-/* 作者能写的分栏间距：五档 + 像素值（gap="48"）。 */
+/** 作者能写的分栏间距：五档 + 像素值（gap="48"）。 */
 export const GAP = { none: 0, close: 16, normal: 32, wide: 64, section: 96 };
+
+/** style 里不许作者碰的 token：字号、间距、线宽、版心、字体、字重、字距。 */
+export const STYLE_LOCKED = /^--vk-(fs|lh|line|space|margin|canvas|measure|radius|gap|ann|conn|icon|font|w|track|cols|span)/;
 
 /* ------------------------------------------------------------------ 形 */
 export const RADIUS = { none: 0, sm: 8, md: 12, pill: 999 };

@@ -17,8 +17,8 @@ import path from 'node:path';
 import crypto from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { PNG } from 'pngjs';
-import { TAG_NAMES } from '../src/schema.mjs';
-import { contract, docText, markdown } from '../src/contract.mjs';
+import { TAG_NAMES, TAGS } from '../src/schema.mjs';
+import { contract, docText, markdown, exampleFrame } from '../src/contract.mjs';
 import { transformHtml } from '../src/build/index.mjs';
 import { PAINT, SYNTAX } from '../src/vocab.mjs';
 
@@ -61,7 +61,7 @@ ok(brief.tags['vk-code'].variants.code.attrs.lang.required === true, '源码窗�
 ok(docText('vk-code').includes('as="bits"') && docText('vk-code').includes('默认 body'), 'doc 按变体列出范围与默认值');
 ok(docText('vk-callout').includes('必填'), 'doc 标出必填');
 const md = markdown();
-ok(/^# vk 契约 26\.0\.0/.test(md), '紧凑契约能生成');
+ok(md.startsWith(`# vk 契约 ${pkg.version}`), '紧凑契约能生成');
 ok(md.includes('693') && !md.includes('780'), '契约按真机 693 写，不再提 780');
 ok(!/<\/?(vk-stack|vk-grid|vk-compare|vk-cells|vk-steps|vk-bars|vk-timeline|vk-table|vk-list|vk-bytes|vk-bits|vk-term)>/.test(md), '生成物里没有旧标签');
 
@@ -69,7 +69,7 @@ ok(!/<\/?(vk-stack|vk-grid|vk-compare|vk-cells|vk-steps|vk-bars|vk-timeline|vk-t
 const cssAll = ['dist/vk.css'].map((f) => fs.readFileSync(path.join(ROOT, f), 'utf8')).join('\n');
 const tokensCss = fs.readFileSync(path.join(ROOT, 'dist', 'tokens.css'), 'utf8');
 const defined = new Set([...tokensCss.matchAll(/(--vk-[\w-]+)\s*:/g)].map((m) => m[1]));
-const runtimeVars = new Set(['--vk-gap', '--vk-cols', '--vk-cols-template', '--vk-span', '--vk-tone', '--vk-tint', '--vk-ln-digits', '--vk-aaddr-w', '--vk-depth', '--vk-bcol', '--vk-bhexw', '--vk-n', '--vk-at', '--vk-x', '--vk-seq-c', '--vk-x1', '--vk-x2', '--vk-mid']);
+const runtimeVars = new Set(['--vk-gap', '--vk-cols', '--vk-cols-template', '--vk-span', '--vk-tone', '--vk-tint', '--vk-ln-digits', '--vk-aaddr-w', '--vk-bascii-w', '--vk-depth', '--vk-bcol', '--vk-bhexw', '--vk-n', '--vk-at', '--vk-x', '--vk-seq-c', '--vk-x1', '--vk-x2', '--vk-mid']);
 const usedVars = new Set([...cssAll.matchAll(/var\((--vk-[\w-]+)/g)].map((m) => m[1]));
 const missingVars = [...usedVars].filter((v) => !defined.has(v) && !runtimeVars.has(v));
 ok(missingVars.length === 0, 'CSS 用到的 token 都有定义', missingVars.join(', '));
@@ -132,6 +132,13 @@ const CASES = [
   ['ATTR_REQUIRED', '<vk-page><vk-img alt="x"></vk-img></vk-page>'],
   ['ATTR_REQUIRED', '<vk-page><vk-code as="bits"></vk-code></vk-page>'],
   ['ATTR_PLACEMENT', '<vk-page><vk-card><vk-callout mode="mark" for="#x"></vk-callout></vk-card></vk-page>'],
+  ['NOTE_MULTI', '<vk-page><vk-text id="a">x</vk-text><vk-callout mode="note" for="#a">一</vk-callout><vk-callout mode="note" for="#a">二</vk-callout></vk-page>'],
+  ['SELF_REF', '<vk-page><vk-seq participants="A,B"><li from="A" to="A">x</li></vk-seq></vk-page>'],
+  ['GRAPH_CYCLE', '<vk-page><vk-graph><li id="a" after="b">a</li><li id="b" after="a">b</li></vk-graph></vk-page>'],
+  ['CALLOUT_DEGENERATE', '<vk-page><vk-text id="a">x</vk-text><vk-callout mode="arrow" from="#a" to="#a"></vk-callout></vk-page>'],
+  ['CURRENT_MISSING', '<vk-page><vk-code lang="c" fold="2" current="2"><script type="text/plain" data-vk-source>a\nb\nc</script></vk-code></vk-page>'],
+  ['SRC_RANGE', '<vk-page><vk-code as="bytes" offset="999" length="4"><script type="text/plain" data-vk-source>00 01 02 03</script></vk-code></vk-page>'],
+  ['SRC_BINARY', '<vk-page><vk-code lang="c" src="../fixtures/backdrop.png"></vk-code></vk-page>'],
 ];
 for (const [code, html] of CASES) {
   try {
@@ -150,7 +157,7 @@ for (const [code, html] of CASES) {
 }
 
 /* ------------------------------------------------------------------ 二·五、没走到的口子
-   契约里写了、37 帧里没有的能力。不补帧，用构建结果断言它们真的生效——
+   契约里写了、验收帧里没有的能力。不补帧，用构建结果断言它们真的生效——
    一个属性如果没人走、也没人测，它就是空头支票。 */
 group('契约口子');
 const probe = async (html) => transformHtml(html, { file: path.join(ROOT, 'tests', 'fixtures', '_probe.html') });
@@ -176,8 +183,32 @@ const probe = async (html) => transformHtml(html, { file: path.join(ROOT, 'tests
   ok(td.html.includes('tone="ok"') && td.html.includes('align="right"'), 'table 单元格 tone / align 保留');
   const spaceBits = await probe('<vk-page><vk-code as="bits" value="0 | 0111" index="up"></vk-code></vk-page>');
   ok(spaceBits.html.includes('<b class="vk-bit-i">4</b>'), 'bits 的空格不占位索引');
+  const upper = await probe('<vk-page><vk-code lang="c" range="2-999"><script type="text/plain" data-vk-source>a\nb\nc</script></vk-code></vk-page>');
+  ok(upper.diagnostics.some((d) => d.code === 'RANGE_OUT_OF_RANGE'), 'range 上界越界要报，不静默截断');
+  const tl = await probe('<vk-page><vk-board as="timeline" start="1963" end="2010"><li at="3000">x</li></vk-board></vk-page>');
+  ok(tl.diagnostics.some((d) => d.code === 'VALUE_RANGE'), 'timeline at 越界要报，不静默夹取');
   const full = await probe('<!doctype html><html><head><title>x</title></head><body><vk-page><vk-text>x</vk-text></vk-page></body></html>');
   ok(/vk\.css/.test(full.html) && /vk\.js/.test(full.html), '整页 HTML 也注入 dist 三件');
+  const styled = await probe('<vk-page><vk-text style="--vk-fs-body:200px;--vk-focus:#f00">x</vk-text></vk-page>');
+  ok(!/--vk-fs-body/.test(styled.html) && /--vk-focus/.test(styled.html), 'style 锁定 token 被删掉，颜色保留');
+}
+
+/* 每个 tag/变体的示例都必须是完整可跑帧，不是带 … 的片段。 */
+group('示例');
+for (const tag of TAG_NAMES) {
+  const variants = TAGS[tag].variants ? Object.keys(TAGS[tag].variants) : [null];
+  for (const as of variants) {
+    const html = exampleFrame(tag, as);
+    let codes = ['NO_EXAMPLE'];
+    if (html) {
+      try {
+        codes = (await transformHtml(html, { file: path.join(ROOT, 'tests', 'fixtures', '_example.html') })).diagnostics.map((d) => d.code);
+      } catch (e) {
+        codes = [`THROW ${e.message}`];
+      }
+    }
+    ok(codes.length === 0, `${tag}${as ? ` as="${as}"` : ''} 示例可跑`, codes.join(', '));
+  }
 }
 
 /* ------------------------------------------------------------------ 三、渲染 */
@@ -199,6 +230,12 @@ if (report) {
   ok(bad.length === 0, '每帧三件产物都在', bad.map((f) => f.name).join(', '));
   const withIssues = report.frames.filter((f) => f.issues.length);
   ok(withIssues.length === 0, '每帧都没有硬错', withIssues.slice(0, 3).map((f) => `${f.name}: ${f.issues.map((i) => `${i.code} ${i.message}`).join(' / ')}`).join('；'));
+  const listFrame = report.frames.find((f) => f.name === 'list');
+  ok(listFrame?.health?.blocks?.[0]?.font === 64, `list 的 block 字号是真实 64（${listFrame?.health?.blocks?.[0]?.font}）`);
+  const bitsFrame = report.frames.find((f) => f.name === 'bits');
+  ok(bitsFrame?.health?.blocks?.[0]?.font === 56, `bits 的 block 字号是真实 56（${bitsFrame?.health?.blocks?.[0]?.font}）`);
+  const calloutFrame = report.frames.find((f) => f.name === 'callout');
+  ok(calloutFrame?.health?.bodyWidth === 1120, `有 note 的正文宽度是 1120（${calloutFrame?.health?.bodyWidth}）`);
   const over = report.frames.filter((f) => f.health?.overflow);
   ok(over.length === 0, '每帧都放得下（overflow = 0）', over.map((f) => `${f.name} 超出 ${f.health.overflow}`).join('；'));
   const tooMany = report.frames.filter((f) => (f.health?.focus ?? 0) > 1);
@@ -233,7 +270,9 @@ group('自检');
 int this_is_a_very_long_line_that_will_not_fit_in_the_window_at_all = 1;
   </script></vk-code>
 </vk-page>
-<vk-page id="empty"><vk-head>只有标题</vk-head></vk-page>
+<vk-page id="empty"></vk-page>
+<vk-page id="headonly"><vk-head>下一节</vk-head></vk-page>
+<vk-page id="wide"><vk-graph as="row">${Array.from({ length: 20 }, (_, i) => `<li id="n${i}">${i}</li>`).join('')}</vk-graph></vk-page>
 <vk-page id="outside">
   <vk-code lang="c" title="big.c"><script type="text/plain" data-vk-source>
 ${Array.from({ length: 12 }, (_, i) => `int v${i} = ${i};`).join('\n')}
@@ -251,6 +290,10 @@ ${Array.from({ length: 12 }, (_, i) => `int v${i} = ${i};`).join('\n')}
   ok(codes.includes('CLIPPED'), '自检抓横向裁切', codes.join(', '));
   ok(codes.includes('EMPTY'), '自检抓空帧', codes.join(', '));
   ok(codes.includes('OUTSIDE'), '自检抓出画布', codes.join(', '));
+  const wide = rep?.frames?.find((f) => f.id === 'wide');
+  ok(wide?.issues.some((i) => i.code === 'OUTSIDE'), '宽图越界的节点也能抓到（不只正文第一层）');
+  const headOnly = rep?.frames?.find((f) => f.id === 'headonly');
+  ok(headOnly?.ok === true && headOnly?.health?.empty === false, '只有标题的章节帧不算空帧');
   ok(rep?.frames?.[0]?.ok === false, '坏帧不再报 ok:true');
 }
 
@@ -340,10 +383,65 @@ if (!browser) {
     const text = [...table.querySelectorAll('td')].find((td) => !td.classList.contains('num'));
     return { num: num ? getComputedStyle(num).textAlign : '', text: text ? getComputedStyle(text).textAlign : '', rows: table.querySelectorAll('tr').length };
   });
+  const align = await tablePage.evaluate(() => {
+    const td = document.querySelector('td');
+    td.setAttribute('align', 'center');
+    const center = getComputedStyle(td).textAlign;
+    td.setAttribute('align', 'right');
+    const right = getComputedStyle(td).textAlign;
+    td.removeAttribute('align');
+    return { center, right };
+  });
+  ok(align.center === 'center' && align.right === 'right', `表格 align 真的生效（${align.center}/${align.right}）`);
   ok(t.num === 'right', `数字列右对齐（${t.num}）`);
   ok(t.text !== 'right', `文字列不右对齐（${t.text}）`);
   ok(t.rows === 5, `表格 4 行数据 + 1 行表头（${t.rows}）`);
   await tablePage.close();
+
+  const bitsPage = await load('bits.html');
+  const bgap = await bitsPage.evaluate(() => {
+    const lefts = [...document.querySelectorAll('.vk-bit')].map((b) => b.getBoundingClientRect().left);
+    const gaps = lefts.slice(1).map((x, i) => Math.round(x - lefts[i]));
+    return { n: lefts.length, min: Math.min(...gaps), max: Math.max(...gaps) };
+  });
+  ok(bgap.n === 16 && bgap.min === bgap.max, `16 位等距（${bgap.min}–${bgap.max}）`);
+  await bitsPage.close();
+
+  const seqPage = await load('seq3.html');
+  const seqClip = await seqPage.evaluate(() => {
+    const arrow = [...document.querySelectorAll('.vk-seq-arrow')].find((a) => a.closest(".vk-seq-row[data-dir='right']"));
+    return getComputedStyle(arrow, '::after').clipPath;
+  });
+  ok(seqClip.split(',').length === 4 && seqClip.includes('35%'), `时序箭头是凹底，不是平底（${seqClip}）`);
+  await seqPage.close();
+
+  const flowPage = await load('flow-callout.html');
+  const fc = await flowPage.evaluate(() => {
+    const page = document.querySelector('vk-page').getBoundingClientRect();
+    const note = [...document.querySelectorAll('.vk-co-note')].find((n) => !n.hidden).getBoundingClientRect();
+    const side = document.querySelector('vk-callout').getAttribute('data-vk-side');
+    return { inside: note.left >= page.left && note.right <= page.right && note.top >= page.top && note.bottom <= page.bottom, side };
+  });
+  ok(fc.inside, 'flow 里的标注仍在画布内');
+  ok(fc.side === 'bottom' || fc.side === 'top', `flow 里的标注不横穿中间那块（${fc.side}）`);
+  const fgap = await flowPage.evaluate(() => {
+    const line = document.querySelector('.vk-co-line');
+    const box = document.querySelector('.vk-co-box').getBoundingClientRect();
+    const side = document.querySelector('vk-callout').getAttribute('data-vk-side');
+    const y = Number(line.getAttribute('y1'));
+    return Math.round(side === 'top' ? box.top - y : y - box.bottom);
+  });
+  ok(fgap >= 10, `竖箭头先离开目标框再起杆（${fgap}px）`);
+  await flowPage.close();
+
+  const wordGapPage = await load('callout-word.html');
+  const wgap = await wordGapPage.evaluate(() => {
+    const line = document.querySelector('.vk-co-line');
+    const box = document.querySelector('.vk-co-box').getBoundingClientRect();
+    return Math.round(Number(line.getAttribute('x1')) - box.right);
+  });
+  ok(wgap >= 10, `横箭头先离开词框再起杆（${wgap}px）`);
+  await wordGapPage.close();
 
   const darkPage = await load('dark.html');
   const dark = await darkPage.evaluate(() => getComputedStyle(document.querySelector('.vk-frame')).backgroundColor);
@@ -500,6 +598,8 @@ ok(cli(['render', 'tests/fixtures/code.html', '--frame']).status === 2, '--frame
 ok(cli(['render', 'tests/fixtures/code.html', '--out']).status === 2, '--out 缺值 exit 2');
 ok(cli(['--version']).stdout.trim() === pkg.version, '--version 输出 package 版本');
 for (const tag of TAG_NAMES) ok(cli(['doc', tag]).status === 0, `vk doc ${tag}`);
+ok(cli(['example', 'vk-code']).stdout.includes('<vk-page'), 'vk example 出完整帧');
+ok(cli(['render', 'tests/fixtures/code.html', '--out', 'src/vk-out']).status === 2, '--out 不能指向源码目录');
 const negDir = path.join(TMP, 'negative');
 fs.rmSync(negDir, { recursive: true, force: true });
 const neg = cli(['render', 'tests/negative/unknown.html', '--out', negDir]);
@@ -528,6 +628,23 @@ ok(fs.existsSync(path.join(overDir, 'overflow.png')), '超容量的帧仍然产�
 ok(overReport?.frames?.[0]?.fits === false, 'fits 单独标记放不下');
 ok(overReport?.frames?.[0]?.issues?.some((i) => i.code === 'OUTSIDE'), '超出画布记为硬错（内容真的丢了）');
 fs.rmSync(overFile, { force: true });
+
+/* 部分失败：文件名级诊断不能让顶层 ok 装作全绿。 */
+{
+  const mixDir = path.join(TMP, 'mixed');
+  fs.rmSync(mixDir, { recursive: true, force: true });
+  fs.mkdirSync(mixDir, { recursive: true });
+  fs.copyFileSync(path.join(ROOT, 'tests/fixtures/code.html'), path.join(mixDir, 'good.html'));
+  fs.writeFileSync(path.join(mixDir, 'nopage.html'), '<div>没有 vk-page</div>');
+  const r = cli(['render', mixDir, '--out', path.join(mixDir, 'out'), '--json']);
+  let rep = null;
+  try {
+    rep = JSON.parse(r.stdout);
+  } catch {
+    /* 下面报 */
+  }
+  ok(r.status === 0 && rep?.produced === 1 && rep?.ok === false, '部分失败：exit 0 但顶层 ok=false、produced=1');
+}
 
 /* ------------------------------------------------------------------ 七、对比度 */
 group('对比度');

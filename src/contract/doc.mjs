@@ -2,13 +2,14 @@
  * v26 · 契约文档
  * ----------------------------------------------------------------------------
  * 三个出口，同一份 schema：
- *   vk brief            给 AI 的紧凑契约（默认，--json / --md）
+ *   vk brief            给 AI 的紧凑契约（默认，--json）
  *   vk brief --full     实现者全量（含颜色/字号/线宽）
  *   vk doc <tag>        单件下钻，含子项属性
  */
-import { TAGS, TAG_NAMES, attrsOf, childrenOf, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS, AUTHOR_GLOBALS, CAPACITY } from '../schema.mjs';
+import { TAGS, TAG_NAMES, attrsOf, childrenOf, LAYERS, ANCHOR_PARTS, SKELETON, RULES, FLOW_CHILD, FLOW_CHILD_TAGS, AUTHOR_GLOBALS, CAPACITY, LAYOUT_FACTS } from '../schema.mjs';
 import { GAP, FONT, LINE, MEASURE, INDEX_RULE, CANVAS, CONTENT, LINE_W, SYNTAX, PAINT, THEME, CARD_SURFACE } from '../vocab.mjs';
-import { CODES, CODES_INFO, VERSION } from './validate.mjs';
+import { CODES, CODES_INFO } from './codes.mjs';
+import { VERSION } from '../version.mjs';
 
 const TYPE_LABEL = {
   text: '文本',
@@ -57,6 +58,7 @@ export function contract() {
     anchorParts: ANCHOR_PARTS,
     anchors: '#id / #id@line:3 / #id@item:2 / #id@bit:5 / #id@side:left',
     capacity: CAPACITY,
+    layoutFacts: LAYOUT_FACTS,
     codes: Object.fromEntries(Object.keys(CODES).map((k) => [k, CODES_INFO[k] ? { when: CODES_INFO[k][0], fix: CODES_INFO[k][1] } : null])),
     space: GAP,
     lineWidth: LINE_W,
@@ -122,6 +124,7 @@ export function compact() {
     anchors: full.anchors,
     flowChild: full.flowChild,
     capacity: full.capacity,
+    layoutFacts: full.layoutFacts,
     skeleton: full.skeleton,
     tags,
     codes: full.codes,
@@ -149,7 +152,7 @@ function variantBlock(out, tag, as, label, summary, attrs, children, example) {
   out.push('');
 }
 
-/** 人/AI 读的紧凑契约：vk brief --md。 */
+/** 人/AI 读的紧凑契约：vk brief。 */
 export function markdown() {
   const c = compact();
   const out = [];
@@ -159,6 +162,12 @@ export function markdown() {
   for (const r of c.rules) out.push(`- ${r}`);
   out.push('', `锚点：${c.anchors}。id：${c.global.id}。style：${c.global.style}。`, '');
   out.push('## 骨架', '', '```html', c.skeleton, '```', '');
+  out.push('## 排版事实', '');
+  const lf = c.layoutFacts;
+  out.push(`- 标题带：带 lede ${lf.head.withLede} / 不带 ${lf.head.withoutLede} / subhead ${lf.head.subhead}。`);
+  out.push(`- 有 note：正文让出 ${lf.note.gutter}，右注栏宽 ≤ ${lf.note.width}。无 note 半栏约 ${lf.halfColumnChars.body} 字（caption ${lf.halfColumnChars.caption}），有 note 只剩约 ${lf.halfColumnChars.withNote} 字。`);
+  out.push(`- cells：${lf.cellsCompact}。`);
+  out.push(`- 表格：${lf.tableWithLede}。一帧一条 note：${lf.oneNotePerFrame ? '是' : '否'}。`, '');
   out.push('## 拆帧预算（实测参考，不是门禁）', '');
   out.push('| 内容 | 一帧上限 | 说明 |', '|---|---|---|');
   for (const x of c.capacity) out.push(`| ${x.what} | ${x.max} | ${x.note || ''} |`);
@@ -181,6 +190,56 @@ export function markdown() {
   out.push('| 码 | 什么时候 | 怎么改 |', '|---|---|---|');
   for (const [k, v] of Object.entries(c.codes)) out.push(`| \`${k}\` | ${v?.when || ''} | ${v?.fix || ''} |`);
   return out.join('\n');
+}
+
+/** 一个 tag（或某个变体）的完整可跑最小帧。不是模板库，是契约示例。 */
+export function exampleFrame(tag, as) {
+  const t = TAGS[tag];
+  if (!t) return '';
+  if (tag === 'vk-callout' && as) return ''; /* callout 用 mode，不是 as */
+  let id = as || null;
+  if (!id && t.variants) id = t.attrs.as?.default || Object.keys(t.variants)[0];
+  const v = id && t.variants ? t.variants[id] : null;
+  if (id && t.variants && !v) return '';
+  const frag = String((v && v.example) || t.example || '').trim();
+  if (!frag) return '';
+  if (tag === 'vk-page') return frag;
+  if (tag === 'vk-head') return `<vk-page id="demo">\n${frag}\n  <vk-text>正文。</vk-text>\n</vk-page>`;
+  if (tag === 'vk-callout') {
+    return `<vk-page id="demo">
+  <vk-head kicker="示例">指着某处说一句。</vk-head>
+  <vk-code id="c" lang="c" title="a.c" current="1"><script type="text/plain" data-vk-source>
+int a = 1;
+  </script></vk-code>
+  ${frag.replace('#c@line:2', '#c@line:1')}
+</vk-page>`;
+  }
+  if (tag === 'vk-graph' && as) {
+    if (!(t.attrs.as?.values || []).includes(as)) return '';
+    return `<vk-page id="demo">\n  <vk-head kicker="示例">一句标题。</vk-head>\n  ${frag.replace('<vk-graph', `<vk-graph as="${as}"`)}\n</vk-page>`;
+  }
+  return `<vk-page id="demo">\n  <vk-head kicker="示例">一句标题。</vk-head>\n  ${frag}\n</vk-page>`;
+}
+
+/** 实现者全量文本：vk brief --full。 */
+export function markdownFull() {
+  const c = contract();
+  const type = Object.entries(c.type).map(([k, v]) => `| ${k} | ${v} | ${c.lineHeight[k]} | ${c.measure[k]} |`).join('\n');
+  return `${markdown()}
+
+## 实现者数值（--full）
+
+字号 / 行高 / 行宽：
+
+| 档 | px | 行高 | em |
+|---|---|---|---|
+${type}
+
+线宽：${Object.entries(c.lineWidth).map(([k, v]) => `${k}=${v}`).join(' / ')}。
+
+间距：${Object.entries(c.space).map(([k, v]) => `${k}=${v}`).join(' / ')}。
+
+颜色：focus ${c.colors.focus.join(' / ')}；ink ${c.colors.inks.map((x) => x.join('/')).join(' · ')}；syntax ${Object.entries(c.colors.syntax).map(([k, v]) => `${k} ${v.join('/')}`).join(' · ')}。`;
 }
 
 /** 单件说明：vk doc <tag>。 */
@@ -222,9 +281,13 @@ export function docText(tag) {
       delete attrs.as;
       dump(attrs);
       dumpChildren(v.children);
-      if (v.example) out.push('', '示例：', v.example);
+      const ex = exampleFrame(tag, as) || v.example;
+      if (ex) out.push('', '示例（完整帧）：', ex);
     }
   }
-  if (t.example && !t.variants) out.push('', '示例：', t.example);
+  if (t.example && !t.variants) {
+    const ex = exampleFrame(tag) || t.example;
+    out.push('', '示例（完整帧）：', ex);
+  }
   return out.join('\n');
 }

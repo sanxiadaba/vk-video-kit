@@ -4,109 +4,11 @@
  * 作者写错了什么：一次报全，带 file:line 和改法；不抛异常。
  * 组件知识全在 schema.mjs，这里只按字段表做检查。
  */
-import fs from 'node:fs';
 import { TAGS, TAG_NAMES, attrsOf, childrenOf, ANCHOR_PARTS, FLOW_CHILD, FLOW_CHILD_TAGS } from '../schema.mjs';
-import { GAP } from '../vocab.mjs';
+import { GAP, STYLE_LOCKED } from '../vocab.mjs';
 import { attrOf, hasAttr, flatten, kids, lineOf, directText, textOf } from '../shared/dom.mjs';
 import { parseLines, parseRange } from '../shared/range.mjs';
-/* 版本只有一个来源：package.json。 */
-export const VERSION = JSON.parse(fs.readFileSync(new URL('../../package.json', import.meta.url), 'utf8')).version;
-/* ------------------------------------------------------------------ 错误码 */
-export const CODES = {
-  UNKNOWN_TAG: 'UNKNOWN_TAG',
-  UNKNOWN_ATTR: 'UNKNOWN_ATTR',
-  UNKNOWN_VARIANT: 'UNKNOWN_VARIANT',
-  VALUE_ENUM: 'VALUE_ENUM',
-  VALUE_BOOL: 'VALUE_BOOL',
-  VALUE_NUMBER: 'VALUE_NUMBER',
-  VALUE_RANGE: 'VALUE_RANGE',
-  VALUE_SPACE: 'VALUE_SPACE',
-  VALUE_LINES: 'VALUE_LINES',
-  VALUE_RANGE_ATTR: 'VALUE_RANGE_ATTR',
-  VALUE_SELECTOR: 'VALUE_SELECTOR',
-  VALUE_RATIO: 'VALUE_RATIO',
-  ATTR_REQUIRED: 'ATTR_REQUIRED',
-  ATTR_IGNORED: 'ATTR_IGNORED',
-  ATTR_PLACEMENT: 'ATTR_PLACEMENT',
-  SPAN_TOO_WIDE: 'SPAN_TOO_WIDE',
-  ID_DUPLICATE: 'ID_DUPLICATE',
-  ID_FORMAT: 'ID_FORMAT',
-  CHILD_KIND: 'CHILD_KIND',
-  CHILD_MISSING: 'CHILD_MISSING',
-  STRAY_TEXT: 'STRAY_TEXT',
-  GRAPH_REF: 'GRAPH_REF',
-  ANCHOR_MISSING: 'ANCHOR_MISSING',
-  BLEED_ALL: 'BLEED_ALL',
-  /* 构建期：内容来源与解析 */
-  SRC_MISSING: 'SRC_MISSING',
-  SRC_CONFLICT: 'SRC_CONFLICT',
-  RANGE_OUT_OF_RANGE: 'RANGE_OUT_OF_RANGE',
-  TREE_JSON: 'TREE_JSON',
-  TREE_NODE: 'TREE_NODE',
-  MATH: 'MATH',
-  ICON: 'ICON',
-  MARK_MISSING: 'MARK_MISSING',
-  FIELD_LABELS: 'FIELD_LABELS',
-  CURRENT_RANGE: 'CURRENT_RANGE',
-  BUILD: 'BUILD',
-  /* 运行期：只看「坏没坏」 */
-  FRAME: 'FRAME',
-  RUNTIME: 'RUNTIME',
-  RENDER: 'RENDER',
-  ASSET: 'ASSET',
-  ANCHOR: 'ANCHOR',
-  CLIPPED: 'CLIPPED',
-  OUTSIDE: 'OUTSIDE',
-  OVERLAP: 'OVERLAP',
-  EMPTY: 'EMPTY',
-};
-/* 每个码一句话：什么时候出现、怎么改。给 AI 看，给文档用。 */
-export const CODES_INFO = {
-  UNKNOWN_TAG: ['标签不在 13 个里', '用 vk brief 看可用标签，别发明新件'],
-  UNKNOWN_ATTR: ['属性名拼错，或这个变体没有这个属性', '用 vk doc <tag> 看当前变体的属性表'],
-  UNKNOWN_VARIANT: ['as 的取值不在变体表里', '看 vk doc <tag> 的 as 列表'],
-  VALUE_ENUM: ['取值不在词表', '按消息里的可取值改'],
-  VALUE_BOOL: ['开关只写属性名', '删掉 ="false" / ="true"'],
-  VALUE_NUMBER: ['要数字或整数', '写一个数'],
-  VALUE_RANGE: ['数值越界', '按消息里的上下限改；要更多就拆帧'],
-  VALUE_SPACE: ['间距不是档名也不是像素', '用 none/close/normal/wide/section，或 "48"'],
-  VALUE_LINES: ['行段写法不对', '写 "3" / "3-7" / "3,7,9" / "4-"'],
-  VALUE_RANGE_ATTR: ['range 不是单段', '写 "3" / "3-7" / "4-"'],
-  VALUE_SELECTOR: ['锚点写法不对', '只用 #id@line / @item / @bit / @side'],
-  VALUE_RATIO: ['比例写法不对', '写 "16 / 9"'],
-  ATTR_REQUIRED: ['缺必填属性', '按消息补 for / from / to / lang / src / value / participants'],
-  ATTR_IGNORED: ['这个属性在当前形态下不生效', '删掉它，或换 as / mode'],
-  ATTR_PLACEMENT: ['属性或件放错了位置', 'span/bleed 只给 flow 子项；callout 只挂 page/flow；head 只挂 page'],
-  SPAN_TOO_WIDE: ['span 超过父级栏数', '改 span 或 cols'],
-  ID_DUPLICATE: ['同一帧里 id 重复', '跨帧可重名；同帧只能一个'],
-  ID_FORMAT: ['id 里有不能进文件名/锚点的字符', '只用字母、数字、下划线、短横线、汉字'],
-  CHILD_KIND: ['子节点类型不对', '按消息换标签；块级内容用 vk- 件'],
-  CHILD_MISSING: ['缺内容', '按消息写 li / table / script / src'],
-  STRAY_TEXT: ['块里有一段裸文字', '包进 vk-text 或 li'],
-  GRAPH_REF: ['关系图的边指向不存在的节点', '检查 after / from / to 的 id'],
-  ANCHOR_MISSING: ['锚点指不到这一帧里的 id', '给目标加 id，或改锚点'],
-  BLEED_ALL: ['bleed="all" 只给 vk-img', '删掉，或换成 bleed="x"'],
-  SRC_MISSING: ['源文件/目录找不到', '路径相对页面文件解析'],
-  SRC_CONFLICT: ['src 与内联内容只能二选一', '删一个'],
-  RANGE_OUT_OF_RANGE: ['range 超出源码行数', '改成 1–总行数'],
-  TREE_JSON: ['目录 JSON 解析失败', '检查逗号与引号'],
-  TREE_NODE: ['目录节点缺 name', '写 "src" 或 {"name":"src"}'],
-  MATH: ['公式排版失败', '检查 TeX 括号'],
-  ICON: ['图标名找不到', '用 vk icons <词> 搜 Lucide 名'],
-  MARK_MISSING: ['mark 的词在窗口里没标出来', '改成源码里真实出现、且在 range 内的词'],
-  FIELD_LABELS: ['field-labels 个数与 | 段数不一致', '按段数补/删名字'],
-  CURRENT_RANGE: ['current 越界', 'current 按窗口第几行算，不是源码行号'],
-  BUILD: ['组件构建抛异常', '看消息里的 src/行段'],
-  FRAME: ['没有画布或画布尺寸不对', '包进 vk-page；别覆盖宽高'],
-  RUNTIME: ['运行期没就绪或抛错', '检查 dist/vk.js 与页面脚本'],
-  RENDER: ['组件渲染失败', '看控制台 [vk] 错误'],
-  ASSET: ['图片/字体没加载', '检查路径与 dist/fonts'],
-  ANCHOR: ['运行期锚点指空', '给目标加 id；build 期也会报'],
-  CLIPPED: ['文字横向被裁', '缩短这一行、拆帧、或给更多宽度'],
-  OUTSIDE: ['元素出了画布', '往版心里收；整帧铺满只给 vk-img bleed="all"'],
-  OVERLAP: ['块与块叠在一起', '调节间距、换 flow 或拆帧'],
-  EMPTY: ['这一帧没有内容', '写内容，或删掉这一帧'],
-};
+import { CODES } from './codes.mjs';
 /* ------------------------------------------------------------------ 工具 */
 const editDistance = (a, b) => {
   const m = a.length;
@@ -201,7 +103,7 @@ export function checkValue(file, node, tag, name, spec, value, errors) {
 function checkStyle(file, node, tag, errors) {
   const style = attrOf(node, 'style');
   if (!style) return;
-  const LOCKED = /^--vk-(fs|lh|line|space|margin|canvas|measure|radius|gap|ann|conn|icon|cols|span)/;
+  const LOCKED = STYLE_LOCKED;
   for (const piece of String(style).split(';')) {
     const at = piece.indexOf(':');
     if (at < 0) continue;
@@ -258,10 +160,7 @@ function checkChildModel(file, node, tag, errors) {
     for (const li of lis) {
       for (const { name, value } of li.attrs || []) {
         if (name === 'id') continue;
-        if (name === 'style') {
-          checkStyle(file, li, `${tag} <li>`, errors);
-          continue;
-        }
+        if (name === 'style') continue;
         const spec = model.attrs?.[name];
         if (!spec) {
           const hint = suggest(name, Object.keys(model.attrs || {}));
@@ -299,10 +198,7 @@ function checkChildModel(file, node, tag, errors) {
     const rows = flatten(table).filter((n) => n.tagName === 'tr');
     for (const tr of rows) {
       for (const { name, value } of tr.attrs || []) {
-        if (name === 'style') {
-          checkStyle(file, tr, `${tag} <tr>`, errors);
-          continue;
-        }
+        if (name === 'style') continue;
         const spec = rowSpec[name];
         if (!spec) {
           const hint = suggest(name, Object.keys(rowSpec));
@@ -318,10 +214,7 @@ function checkChildModel(file, node, tag, errors) {
           continue;
         }
         for (const { name, value } of cell.attrs || []) {
-          if (name === 'style') {
-            checkStyle(file, cell, `${tag} <${cell.tagName}>`, errors);
-            continue;
-          }
+          if (name === 'style') continue;
           const spec = cellSpec[name];
           if (!spec) {
             const hint = suggest(name, Object.keys(cellSpec));
@@ -365,6 +258,7 @@ export function validate(tree, file = '<page>') {
   const elIds = new Map();
   for (const node of all) {
     const tag = node.tagName;
+    if (node.attrs?.some((a) => a.name === 'style')) checkStyle(file, node, tag || '?', errors);
     if (!tag?.startsWith('vk-')) continue;
     if (!TAGS[tag]) {
       const hint = suggest(tag, TAG_NAMES);
@@ -386,10 +280,7 @@ export function validate(tree, file = '<page>') {
     const spec = attrsOf(tag, as);
     const parent = node.parentNode?.tagName;
     for (const { name, value } of node.attrs || []) {
-      if (name === 'style') {
-        checkStyle(file, node, tag, errors);
-        continue;
-      }
+      if (name === 'style') continue;
       if (name === 'id') continue;
       if (name.startsWith('data-')) {
         errors.push({ file, line: lineOf(node), tag, code: CODES.UNKNOWN_ATTR, message: `<${tag}> 不能用 ${name}`, fix: 'data-* 是库内部属性；作者只写契约里的属性' });
@@ -439,6 +330,7 @@ export function validate(tree, file = '<page>') {
     if (hasAttr(node, 'bleed')) {
       const bleed = attrOf(node, 'bleed');
       if (bleed === 'all' && tag !== 'vk-img') errors.push({ file, line: lineOf(node), tag, code: CODES.BLEED_ALL, message: `<${tag}> 不能用 bleed="all"`, fix: '整帧铺满只给 <vk-img>' });
+      else if (bleed === 'all' && parent !== 'vk-page') errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 bleed="all" 只能放在 <vk-page> 第一层`, fix: '移到 page 下；要跟文字并排请用普通图片' });
       else if (bleed !== 'all' && parent !== 'vk-flow') errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: `<${tag}> 的 bleed 只属于 <vk-flow> 的直接子项`, fix: '要么放进 flow，要么删掉 bleed' });
     }
     if (hasAttr(node, 'span') && parent === 'vk-flow') {
@@ -454,14 +346,23 @@ export function validate(tree, file = '<page>') {
       const body = textOf(node).trim();
       if (cmode !== 'note' && body) errors.push({ file, line: lineOf(node), tag, code: CODES.STRAY_TEXT, message: `<vk-callout mode="${cmode}"> 里不显示文字「${body.slice(0, 18)}」`, fix: '要说话就写 mode="note"；只画标记就删掉文字' });
       if (cmode === 'note' && !body) errors.push({ file, line: lineOf(node), tag, code: CODES.CHILD_MISSING, message: '<vk-callout mode="note"> 没有一句话', fix: '在标签里写这一句；只画标记用 mode="mark"' });
+      if (cmode === 'arrow' || cmode === 'measure') {
+        const a1 = attrOf(node, 'from');
+        const a2 = attrOf(node, 'to');
+        if (a1 && a2 && a1 === a2) errors.push({ file, line: lineOf(node), tag, code: CODES.CALLOUT_DEGENERATE, message: `arrows/measure 的 from 和 to 是同一个锚点 ${a1}`, fix: '换一个终点，或改成 mode="mark"' });
+      }
     }
     /* 标注是覆盖层：只能挂在 page 或 flow 上，放进 card 会让正文不让出注栏。 */
     if (tag === 'vk-callout' && parent !== 'vk-page' && parent !== 'vk-flow') {
       errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: '<vk-callout> 只能放在 <vk-page> 或 <vk-flow> 下', fix: '把它移到 page 的第一层；标注是覆盖层，不参与卡片内部排布' });
     }
     /* 位置规则。 */
-    if (tag === 'vk-page' && parent && parent !== '#document-fragment' && parent !== '#document') {
+    if (tag === 'vk-page' && parent && parent !== '#document-fragment' && parent !== '#document' && parent !== 'body') {
       errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: '<vk-page> 不能嵌套', fix: '一页一个 vk-page，并排写多个' });
+    }
+    if (tag === 'vk-page') {
+      const notes = flatten(node).filter((n) => n.tagName === 'vk-callout' && (attrOf(n, 'mode') ?? 'note') === 'note');
+      if (notes.length > 1) errors.push({ file, line: lineOf(notes[1]), tag, code: CODES.NOTE_MULTI, message: `这一帧有 ${notes.length} 条 note`, fix: '注栏只有一列，会叠字；拆帧，或把其中一条改成 mode="mark"' });
     }
     if (tag === 'vk-head') {
       if (parent !== 'vk-page') errors.push({ file, line: lineOf(node), tag, code: CODES.ATTR_PLACEMENT, message: '<vk-head> 只能直接放在 <vk-page> 下', fix: '把它移到 page 的第一层；标题带不参与分栏' });
@@ -475,7 +376,7 @@ export function validate(tree, file = '<page>') {
       if (!ID_OK.test(id))
         errors.push({ file, line: lineOf(node), tag, code: CODES.ID_FORMAT, message: `id \`${id}\` 只能有字母、数字、下划线、短横线、汉字`, fix: '出图文件名与锚点都用它；去掉空格、斜杠、@、冒号' });
       if (tag === 'vk-page') {
-        if (pageIds.has(id)) errors.push({ file, line: lineOf(node), tag, code: CODES.ID_DUPLICATE, message: `帧 id \`${id}\` 重复了（上一处在第 ${pageIds.get(id)} 行）`, fix: '出图会互相覆盖；给每一帧一个唯一 id' });
+        if (pageIds.has(id)) errors.push({ file, line: lineOf(node), tag, code: CODES.ID_DUPLICATE, message: `帧 id \`${id}\` 重复了（上一处在第 ${pageIds.get(id)} 行）`, fix: '给每一帧一个唯一 id；产物重名会加短 hash，但引用会分不清' });
         else pageIds.set(id, lineOf(node));
       } else {
         const frame = pageOf(node);
@@ -516,6 +417,27 @@ export function validate(tree, file = '<page>') {
       const nodes = lis.filter((li) => !hasFromTo(li));
       const edges = lis.filter(hasFromTo);
       const nodeIds = new Set(nodes.map((li) => attrOf(li, 'id')).filter(Boolean));
+      const seenNode = new Map();
+      for (const li of nodes) {
+        const id = attrOf(li, 'id');
+        if (!id) continue;
+        if (seenNode.has(id)) errors.push({ file, line: lineOf(li), tag, code: CODES.ID_DUPLICATE, message: `<vk-graph> 的节点 id \`${id}\` 重复了`, fix: '节点 id 是边的目标，重复会让边接到错的节点' });
+        else seenNode.set(id, lineOf(li));
+      }
+      /* after 不能成环：树/链没有根就没法排。 */
+      const adj = new Map(nodes.map((li) => [attrOf(li, 'id'), (attrOf(li, 'after') || '').split(/\s+/).filter(Boolean)]));
+      const mark = new Map();
+      const dfs = (id, path) => {
+        if (mark.get(id) === 1) {
+          errors.push({ file, line: seenNode.get(id) || 1, tag, code: CODES.GRAPH_CYCLE, message: `<vk-graph> 的 after 成环：${[...path, id].join(' → ')}`, fix: '树/链不能成环；环用显式 from/to 边' });
+          return;
+        }
+        if (mark.get(id) === 2) return;
+        mark.set(id, 1);
+        for (const p of adj.get(id) || []) if (adj.has(p)) dfs(p, [...path, id]);
+        mark.set(id, 2);
+      };
+      for (const id of adj.keys()) if (id) dfs(id, []);
       for (const li of nodes) {
         const after = attrOf(li, 'after');
         if (!after) continue;
@@ -530,6 +452,14 @@ export function validate(tree, file = '<page>') {
           if (!ref) errors.push({ file, line: lineOf(li), tag, code: CODES.ATTR_REQUIRED, message: `<vk-graph> 的边缺 ${key}`, fix: '边要写成 <li from="起点id" to="终点id">文字</li>' });
           else if (!nodeIds.has(ref)) errors.push({ file, line: lineOf(li), tag, code: CODES.GRAPH_REF, message: `<vk-graph> 的边 ${key}="${ref}" 找不到节点`, fix: `这一张图里的节点 id：${[...nodeIds].join(', ') || '无'}` });
         }
+        if (attrOf(li, 'from') && attrOf(li, 'from') === attrOf(li, 'to')) errors.push({ file, line: lineOf(li), tag, code: CODES.SELF_REF, message: '<vk-graph> 的边 from 和 to 是同一个节点', fix: '换终点；自环请用 mesh 布局的独立节点表达' });
+      }
+    }
+    if (tag === 'vk-seq') {
+      for (const li of kids(node).filter((c) => c.tagName === 'li')) {
+        const f = attrOf(li, 'from');
+        const t = attrOf(li, 'to');
+        if (f && t && f === t) errors.push({ file, line: lineOf(li), tag, code: CODES.SELF_REF, message: '<vk-seq> 的消息 from 和 to 是同一条泳道', fix: '改终点；时序自消息暂不支持，用 note 说明' });
       }
     }
   }

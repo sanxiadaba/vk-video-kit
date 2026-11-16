@@ -52,6 +52,9 @@ export function buildBytes(node, ctx) {
 
   const start = Number(attrOf(node, 'offset') || 0) || 0;
   const len = Math.max(0, Math.min(Number(attrOf(node, 'length') || 32), buf.length - start));
+  if (start >= buf.length || len === 0) {
+    ctx.diag(node, { code: 'SRC_RANGE', message: `字节窗的 offset=${start} 超出了文件（共 ${buf.length} 字节）`, fix: `offset 改成 0–${Math.max(0, buf.length - 1)}` });
+  }
   const cols = Number(attrOf(node, 'cols') || 8);
   const base = Number(attrOf(node, 'addr') || '0x0');
   const curText = attrOf(node, 'current');
@@ -66,9 +69,16 @@ export function buildBytes(node, ctx) {
     rows.push(`<div class="vk-brow"><span class="vk-baddr">0x${(base + start + i).toString(16).padStart(width, '0')}</span><span class="vk-bhex">${hex}</span><span class="vk-bascii">${ascii}</span></div>`);
   }
   const head = '<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>';
-  const bcol = '7ch';
-  const bhexw = `${cols * 3}ch`;
-  return frame({ title: attrOf(node, 'title'), body: `<div class="vk-bytes" style="--vk-cols:${cols};--vk-bcol:${bcol};--vk-bhexw:${bhexw}">${head}${rows.join('')}</div>`, kind: 'bytes' });
+  if (curText && cur && !rows.join('').includes('is-cur')) {
+    ctx.diag(node, { code: 'CURRENT_MISSING', message: `字节窗的 current="${curText}" 没有命中任何字节`, fix: `改成 1–${len}` });
+  }
+  /* 列宽用 px，不用 ch：表头 56、行 64，ch 在不同元素上会解析成不同宽度，
+     表头与行就会错开（v26 的真 bug）。0.6em 是 JetBrains Mono 的 1ch。 */
+  const CH = 0.6 * 64;
+  const bcol = `${Math.round((2 + width) * CH)}px`;
+  const bhexw = `${Math.round(cols * 3 * CH)}px`;
+  const bascii = `${Math.round(cols * 1.15 * CH)}px`;
+  return frame({ title: attrOf(node, 'title'), body: `<div class="vk-bytes" style="--vk-cols:${cols};--vk-bcol:${bcol};--vk-bhexw:${bhexw};--vk-bascii-w:${bascii}">${head}${rows.join('')}</div>`, kind: 'bytes' });
 }
 
 /* ------------------------------------------------------------------ 位 */
@@ -113,6 +123,9 @@ export function buildBits(node, ctx) {
   });
   const left = attrOf(node, 'label') ? `<span class="vk-bits-label">${esc(attrOf(node, 'label'))}</span>` : '';
   const body = `<div class="vk-bits" data-index="${index}">${left}<div class="vk-bits-body">${fieldHtml.join('')}</div></div>`;
+  if (curText && cur && !fieldHtml.join('').includes('is-cur')) {
+    ctx.diag(node, { code: 'CURRENT_MISSING', message: `位域的 current="${curText}" 没有命中任何位`, fix: `改成 1–${all.length}` });
+  }
   const title = attrOf(node, 'title');
   return title ? frame({ title, body, kind: 'bits' }) : body;
 }

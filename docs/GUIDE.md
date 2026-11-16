@@ -3,7 +3,7 @@
 一帧 = 一个 `<vk-page>`。1920×1080，版心 **1680×888**（左右 120 / 上下 96）。
 观众在手机横屏看，整帧缩到约 **693 宽（0.361×）**。一帧只说一件事。
 
-数字不在这里抄：`vk doc <tag>` 看一个件，`vk brief` 看全部契约，`vk brief --md` 看错误码表。
+数字不在这里抄：`vk doc <tag>` 看一个件，`vk brief --tag <tag> --json` 看指定件，`vk brief --codes` 看错误码表。
 
 ## 一、结构：page → head → 内容
 
@@ -23,7 +23,7 @@ a[1]
 - `<vk-page>` 自己就是流：直接写 head 与内容，不用再包一层。
 - `<vk-head>` 由内容实测：带 lede 约 398，不带约 278；标题→正文 64。
 - `place` 决定纵向位置：`band` 标题带锁顶、正文在剩余区居中且溢出时贴顶；`top` 贴顶；`center` 整块居中（封面）；`bottom` 贴底。
-- 一页多帧就并排写多个 `<vk-page id="…">`，`vk render` 按 id 拆产物；同一帧里 id 唯一，跨帧可以重名。
+- 一页多帧就并排写多个 `<vk-page id="…">`，`vk render` 按 id 拆产物；帧 id 在同一文件内唯一，元素 id 同一帧里唯一、跨帧可以重名。不同文件重名时产物会自动加短 hash，不会互相覆盖。
 
 ## 二、六个词
 
@@ -82,7 +82,7 @@ a[1]
 <vk-callout mode="mark" for="#c@line:2 #m@item:2"></vk-callout>
 ```
 
-- 半栏的 `cells` 会自动变成 2×2 紧凑格（地址折行、字号 64），不需要作者选密度；这一档不要放 `ptr` 徽标（会多占 152px）。
+- 半栏的 `cells` 会自动变成 2×2 紧凑格（值 64、标签/地址 56，地址折行），不需要作者选密度；这一档不要放 `ptr` 徽标（会多占 152px）。
 - 半栏代码建议 `size="caption"`（56）；一行大约 20 个等宽字符，超了会被裁。
 - 两块的高度不一定要相等：`valign="start"` 让两块的标题对齐；`valign="center"` 让短的那块居中。
 - 两块 + 导语常常放不下：先去掉 lede，或把其中一块拆到下一帧。
@@ -97,8 +97,7 @@ a[1]
 ```
 
 - `cols`：`1`–`12`（等分）、`"7 5"`（比例）、`auto`（按内容宽），或混排 `"auto 1"`。
-- 子项 `span="N"` 跨栏；`bleed="x"` 出血到画布边（只有图片能 `bleed="all"` 整帧铺满）。
-- `overlay`：子项叠在同一格里（图 + 图注）。
+- 子项 `span="N"` 跨栏；`bleed="x"` 让图片横向出血到画布边（只给 flow 子项），`bleed="all"` 整帧铺满（只给 `vk-img`，放在 page 第一层）。- `overlay`：子项叠在同一格里（图 + 图注）。
 - `valign` 管子项纵向（start / center / end / between / stretch）。
 - 右栏批注不超过 15 字、且主件是卡片/图片时，flow 会自动堆叠：主件占满全宽，批注落到件下。
 
@@ -136,10 +135,10 @@ a[1]
 ```
 
 - 一个标注就是「标记 + 连接 + 一句话」：词和块用框，行用一道线，行段用一只括号——形状由库按目标选，
-  连接从标记走到话，话住在页面右侧的注栏里（有注记的页，正文自动让出 560）。
+  连接从标记走到话，话先住页面右侧的注栏（有注记的页，正文自动让出 560）；右侧横线会穿过中间的块时，自动转到目标下/上方，多行注记对齐第一行。
 - 锚点只认四种部件：`#id@line:3`（窗口第 3 行，可写 `3-4`）、`#id@item:2`（第 2 个单元 / 段 / 行）、
   `#id@bit:5`（第 5 位，可写 `4-7`）、`#id@side:left`。
-- 表格的数据行 / 单元格也是 `@item`；内存格 / 位域的当前段也能划。
+- 表格的数据行是 `@item`（不是单元格）；内存格 / 位域的当前段也能划。
 - `mark` 标出的每个词都是一个 `@item`：`#c@item:2` 是第 2 个标出的词。
 - `for` 可以写多个目标（空格分隔）：标记都画，注记只一条，连接从第一个目标出。
 - 写错 / 指空会进 JSON、在图上标红；不会静默。
@@ -186,25 +185,31 @@ a[1]
 
 ## 十一、常见报错与修法
 
+下面是常见组，不是全部（全部 51 个见 `vk brief --codes`）。
 | 错误码 | 意思 |
 |---|---|
 | `UNKNOWN_TAG` / `UNKNOWN_ATTR` / `UNKNOWN_VARIANT` | 标签 / 属性 / 变体名不对；`vk doc <tag>` 看可用值 |
 | `VALUE_ENUM` / `VALUE_NUMBER` / `VALUE_RANGE` / `VALUE_SPACE` / `VALUE_LINES` | 取值不在词表 / 不是数 / 越界 / 间距不对 / 行段写法不对 |
+| `VALUE_BOOL` / `VALUE_RANGE_ATTR` / `VALUE_SELECTOR` / `VALUE_RATIO` | 开关写了值 / range 不是单段 / 锚点写法不对 / 比例写法不对 |
 | `ATTR_REQUIRED` | 缺必填：`for` / `from` / `to` / `lang` / `src` / `value` / `participants` |
 | `ATTR_IGNORED` / `ATTR_PLACEMENT` | 这个属性在当前形态下不生效 / 放错了位置 |
 | `SPAN_TOO_WIDE` / `ID_DUPLICATE` / `ID_FORMAT` | 跨栏超了 / id 重复 / id 里有不能进文件名的字符 |
 | `CHILD_KIND` / `CHILD_MISSING` / `STRAY_TEXT` | 子节点类型不对 / 缺内容 / 块里有裸文字 |
 | `ANCHOR_MISSING` / `ANCHOR` | 锚点指空（构建期 / 运行期） |
+| `BLEED_ALL` / `NOTE_MULTI` / `SELF_REF` | 整帧出血只给图片 / 一帧多条 note / 边指向自己 |
+| `GRAPH_CYCLE` / `CALLOUT_DEGENERATE` | after 成环 / 标注两端同一点 |
 | `CLIPPED` / `OUTSIDE` / `OVERLAP` / `EMPTY` | 横向被裁 / 出画布 / 块重叠 / 空帧 |
-| `SRC_MISSING` / `SRC_CONFLICT` / `RANGE_OUT_OF_RANGE` / `CURRENT_RANGE` | 源文件问题 / 同时写两种源 / 行段越界 / current 越界 |
+| `SRC_MISSING` / `SRC_CONFLICT` / `SRC_RANGE` / `SRC_BINARY` | 源文件问题 / 同时写两种源 / 行段越界 / 二进制当源码 |
+| `CURRENT_MISSING` / `CURRENT_RANGE` / `RANGE_OUT_OF_RANGE` | current 没命中 / current 越界 / range 越界 |
 | `MARK_MISSING` / `FIELD_LABELS` / `GRAPH_REF` | 标不上词 / 段名个数不对 / 图边指向不存在节点 |
 | `TREE_JSON` / `TREE_NODE` / `MATH` / `ICON` | 目录 JSON / 目录节点 / 公式 / 图标 |
-| `RUNTIME` / `RENDER` / `ASSET` / `FRAME` | 运行期没就绪 / 组件抛错 / 资源失败 / 画布不对 |
+| `BUILD` / `RUNTIME` / `RENDER` / `ASSET` / `FRAME` | 组件构建抛错 / 运行期没就绪 / 组件抛错 / 资源失败 / 画布不对 |
 
-完整的「什么时候 + 怎么改」在 `vk brief --md`。
+完整的「什么时候 + 怎么改」在 `vk brief --codes`。
 
 ## 十二、不做什么
 
+- 不做竖屏 9:16：手机横屏满屏 693 是唯一验收宽度；竖屏是另一个产品。
 - 不做文案、分镜、配音、动画、视频渲染：那是外层的事。
 - 不提供模板：`tests/fixtures/` 是验收帧，不是让你照着抄的版式库。
 - 不加门禁：容量、留白、焦点不拦；只有「写不出来 / 确实坏了」才报硬错。

@@ -567,16 +567,6 @@ body {
 [data-vk='img'][fill='cover'] .vk-img-el {
   object-fit: cover;
 }
-[data-vk='img'][data-broken]::after {
-  content: attr(data-broken);
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  color: var(--vk-ink-3);
-  font-size: var(--vk-fs-caption);
-  background: var(--vk-soft);
-}
 
 /* ------------------------------------------------------------------ 可见错误
    不是门禁：出图照样出，问题在图上和 JSON 里都看得见。 */

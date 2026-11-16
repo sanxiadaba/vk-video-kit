@@ -10,6 +10,8 @@
  * 组件只有一种 DOM 形状：宿主 > 构建期写好的静态内容。运行期不重建内容。
  */
 
+import { inRange } from '../shared/range.mjs';
+
 export const VK = ((typeof window !== 'undefined' ? window : globalThis).vk ||= {});
 VK.version = typeof __VK_VERSION__ !== 'undefined' ? __VK_VERSION__ : 'dev';
 
@@ -76,14 +78,6 @@ function safeQuery(root, sel, owner) {
     return null;
   }
 }
-
-const inRange = (n, args) => {
-  const m = String(args).match(/^(\d+)(?:\s*-\s*(\d+))?$/);
-  if (!m) return false;
-  const a = Number(m[1]);
-  const b = m[2] === undefined ? a : Number(m[2]);
-  return n >= a && n <= b;
-};
 
 const pick = (host, attr, args) => {
   const els = [...host.querySelectorAll(`[${attr}]`)].filter((el) => inRange(Number(el.getAttribute(attr)), args));

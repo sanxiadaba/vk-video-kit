@@ -36,42 +36,65 @@ function visible(root) {
   return out;
 }
 
-/** 横向被裁：元素自己的内容比盒子宽，且它（或祖先）会裁掉。取最深的那个，不重复报祖先。 */
+/** 横向被裁：元素自己的内容比盒子宽，且它（或中间祖先）会裁掉。取最深的那个，不重复报祖先。 */
 function clipped(root) {
   const hits = [];
+  const page = root;
   for (const el of visible(root)) {
     if (!textOf(el)) continue;
     const cs = getComputedStyle(el);
-    const clips =
+    const own =
       cs.overflowX === 'hidden' ||
       cs.overflowX === 'clip' ||
       cs.whiteSpace === 'nowrap' ||
       cs.whiteSpace === 'pre' ||
-      /* 正常换行的块里，一个超长 URL / 单词也会横着出去；叶子节点才判。 */
+      /* 正常换行的叶子也可能被一个不可断的长词顶出去。 */
       (cs.overflowX === 'visible' && cs.whiteSpace === 'normal' && !el.children.length);
-    if (!clips) continue;
+    /* 只看中间祖先：页面自己的 overflow:hidden 是画布边界，越界交给 outside。 */
+    let anc = false;
+    for (let p = el.parentElement; p && p !== page; p = p.parentElement) {
+      const ps = getComputedStyle(p);
+      if (ps.overflowX === 'hidden' || ps.overflowX === 'clip') {
+        anc = true;
+        break;
+      }
+    }
+    if (!own && !anc) continue;
     if (el.clientWidth <= 0) continue;
     if (el.scrollWidth <= el.clientWidth + EPS) continue;
     hits.push(el);
   }
+  /* 注记是覆盖层，但它的字也会被右边缘裁掉。 */
+  for (const el of root.querySelectorAll('.vk-co-note')) {
+    if (el.hidden) continue;
+    if (el.clientWidth > 0 && el.scrollWidth > el.clientWidth + EPS) hits.push(el);
+  }
   return hits
     .filter((el) => !hits.some((other) => other !== el && el.contains(other)))
     .map((el) => ({
-      vk: el.getAttribute('data-as') || el.getAttribute('data-vk') || el.localName,
+      vk: el.closest('[data-as]')?.getAttribute('data-as') || el.closest('[data-vk]')?.getAttribute('data-vk') || el.localName,
+      id: el.closest('[id]')?.id || null,
+      line: el.closest('[data-vk-line]')?.getAttribute('data-vk-line') || null,
       text: textOf(el).slice(0, 36),
       over: Math.round(el.scrollWidth - el.clientWidth),
     }));
 }
 
-/** 出画布：只看正文的直接块与注记；坐标一律相对画布左上角。 */
+/** 出画布：正文块、图节点、时间点、注记，全都量；坐标一律相对画布左上角。 */
 function outside(root, body, origin) {
   const out = [];
-  const list = body ? [...body.children] : [];
-  for (const el of list) {
+  const seen = new Set();
+  const els = [
+    ...(body ? [...body.children] : []),
+    ...root.querySelectorAll('[data-vk], .vk-lc, .vk-line, .vk-arow, .vk-gnode, .vk-tl-i, .vk-tl-label, .vk-tl-note, .vk-seq-row, .vk-cell, .vk-bit, .vk-co-note'),
+  ];
+  for (const el of els) {
+    if (el === root || seen.has(el)) continue;
+    seen.add(el);
     if (el.matches('vk-callout')) continue;
-    if (el.matches("vk-img[bleed='all']")) continue;
+    if (el.closest('svg, .vk-co-svg, .vk-co-label, [bleed="all"]')) continue;
     const cs = getComputedStyle(el);
-    if (cs.position === 'absolute' || cs.position === 'fixed') continue;
+    if (cs.display === 'none' || cs.visibility === 'hidden' || cs.position === 'fixed') continue;
     const r = rectOf(el);
     if (r.width < 1 && r.height < 1) continue;
     const left = r.left - origin.left;
@@ -83,40 +106,46 @@ function outside(root, body, origin) {
     if (right > PAGE_W + EPS) sides.push('right');
     if (top < -EPS) sides.push('top');
     if (bottom > PAGE_H + EPS) sides.push('bottom');
-    if (sides.length) out.push({ vk: el.getAttribute('data-as') || el.getAttribute('data-vk') || el.localName, sides, over: Math.round(Math.max(0, -left, right - PAGE_W, -top, bottom - PAGE_H)) });
-  }
-  for (const note of root.querySelectorAll('.vk-co-note')) {
-    if (note.hidden) continue;
-    const r = rectOf(note);
-    const left = r.left - origin.left;
-    const top = r.top - origin.top;
-    const right = r.right - origin.left;
-    const bottom = r.bottom - origin.top;
-    const sides = [];
-    if (left < -EPS) sides.push('left');
-    if (right > PAGE_W + EPS) sides.push('right');
-    if (top < -EPS) sides.push('top');
-    if (bottom > PAGE_H + EPS) sides.push('bottom');
-    if (sides.length) out.push({ vk: 'callout note', sides, over: Math.round(Math.max(0, -left, right - PAGE_W, -top, bottom - PAGE_H)) });
+    if (!sides.length) continue;
+    const id = el.closest('[id]')?.id || null;
+    const line = el.closest('[data-vk-line]')?.getAttribute('data-vk-line') || null;
+    out.push({
+      vk: el.closest('[data-as]')?.getAttribute('data-as') || el.closest('[data-vk]')?.getAttribute('data-vk') || el.localName,
+      id,
+      item: el.getAttribute('data-vk-item') || null,
+      line,
+      sides,
+      over: Math.round(Math.max(0, -left, right - PAGE_W, -top, bottom - PAGE_H)),
+    });
+    if (out.length >= 30) break;
   }
   return out;
 }
 
-/** 块与块重叠：只查正文的第一层块，绝对定位的标注层不算。 */
-function overlaps(body) {
+/** 块与块重叠：正文第一层、flow 的子项、注记；绝对定位的标注 host 不算。 */
+function overlaps(body, root) {
   const list = body
-    ? [...body.children].filter((el) => {
-        if (el.matches('vk-callout')) return false;
-        const cs = getComputedStyle(el);
-        return cs.position !== 'absolute' && cs.position !== 'fixed' && rectOf(el).height > 1;
+    ? [...body.children].flatMap((el) => {
+        if (el.getAttribute('data-vk') !== 'flow') return [el];
+        if (el.hasAttribute('overlay')) return [el]; /* overlay 是有意叠放 */
+        return [...el.children];
       })
     : [];
+  const notes = [...root.querySelectorAll('.vk-co-note')].filter((n) => !n.hidden);
+  const all = [...list, ...notes].filter((el) => {
+    if (el.matches('vk-callout')) return false;
+    if (el.matches('[bleed="all"]')) return false;
+    const cs = getComputedStyle(el);
+    return cs.position !== 'fixed' && rectOf(el).height > 1;
+  });
   const out = [];
-  for (let i = 0; i < list.length; i++)
-    for (let j = i + 1; j < list.length; j++) {
-      const a = rectOf(list[i]);
-      const b = rectOf(list[j]);
-      if (intersects(a, b)) out.push({ a: list[i].getAttribute('data-as') || list[i].getAttribute('data-vk') || list[i].localName, b: list[j].getAttribute('data-as') || list[j].getAttribute('data-vk') || list[j].localName, over: Math.round(Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) });
+  const name = (el, i) => el.id || el.getAttribute('data-vk-item') || el.getAttribute('data-vk-line') || el.closest('[data-as]')?.getAttribute('data-as') || el.closest('[data-vk]')?.getAttribute('data-vk') || `${el.localName}${i + 1}`;
+  for (let i = 0; i < all.length; i++)
+    for (let j = i + 1; j < all.length; j++) {
+      if (all[i].contains(all[j]) || all[j].contains(all[i])) continue;
+      const a = rectOf(all[i]);
+      const b = rectOf(all[j]);
+      if (intersects(a, b)) out.push({ a: name(all[i], i), b: name(all[j], j), over: Math.round(Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top)) });
     }
   return out;
 }
@@ -128,9 +157,7 @@ function images(root) {
     const fit = getComputedStyle(img).objectFit || 'fill';
     const nw = img.naturalWidth || 0;
     const nh = img.naturalHeight || 0;
-    const aspect = (w, h) => (h > 0 ? w / h : 0);
-    const stretched = fit === 'fill' && nw > 0 && box.width > 1 && box.height > 1 && Math.abs(aspect(nw, nh) - aspect(box.width, box.height)) > 0.02;
-    out.push({ src: img.getAttribute('src') || '', natural: [nw, nh], box: [Math.round(box.width), Math.round(box.height)], fit, stretched });
+    out.push({ src: img.getAttribute('src') || '', natural: [nw, nh], box: [Math.round(box.width), Math.round(box.height)], fit });
   }
   return out;
 }
@@ -186,7 +213,9 @@ export function auditPage(stage) {
       push('ASSET', `图片没加载：${img.getAttribute('src') || '(没有 src)'}`, host?.getAttribute('alt') ? `alt="${host.getAttribute('alt')}"` : '检查路径是否相对页面文件');
     }
   }
-  const usedFamily = [...page.querySelectorAll('*')].map((e) => getComputedStyle(e).fontFamily).join(' ');
+  /* 只有真的渲染了字，才要求字体；空帧/坏块不该报字体。 */
+  const textEls = [...page.querySelectorAll('*')].filter((e) => textOf(e) && !e.closest('.vk-missing'));
+  const usedFamily = textEls.map((e) => getComputedStyle(e).fontFamily).join(' ');
   for (const f of window.vk?._fonts || []) {
     if (!f.ok && usedFamily.includes(f.family)) push('ASSET', `字体没加载：${f.family}`, '跑一次 vk build 会重建字体；检查 dist/fonts 是否完整');
   }
@@ -203,16 +232,18 @@ export function auditPage(stage) {
   const outs = outside(page, body, rectOf(page));
   for (const o of outs) push('OUTSIDE', `<${o.vk}> 出了画布（${o.sides.join('/')}，${o.over}px）`, '往版心里收；整帧铺满只给 vk-img bleed="all"');
 
-  const empty = body ? !textOf(body) && !body.querySelector('img, vk-img') : true;
+  const head = stage.querySelector('[data-vk="head"]');
+  const empty = !(head && textOf(head)) && (body ? !textOf(body) && !body.querySelector('img, vk-img') : true);
   if (empty && !page.querySelector('vk-img[bleed="all"]')) push('EMPTY', '这一帧没有内容', '写内容，或删掉这一帧');
-  const overlapList = overlaps(body);
+  const overlapList = overlaps(body, page);
   for (const o of overlapList) push('OVERLAP', `<${o.a}> 和 <${o.b}> 叠在一起（${o.over}px）`, '调节间距、换 flow 或拆帧；块与块不该重叠');
 
   /* ---------------------------------------------------------------- 事实 */
-  const head = stage.querySelector('[data-vk="head"]');
   const bodyRect = body ? rectOf(body) : { top: 0, bottom: 0, left: 0, right: 0, height: 0 };
   const headH = head ? Math.round(rectOf(head).height) : 0;
   const bodyH = body ? Math.round(bodyRect.height) : 0;
+  const bodyCs = body ? getComputedStyle(body) : null;
+  const bodyWidth = body ? Math.round(body.clientWidth - (parseFloat(bodyCs.paddingLeft) || 0) - (parseFloat(bodyCs.paddingRight) || 0)) : 0;
 
   const direct = body
     ? [...body.children].filter((el) => {
@@ -233,11 +264,23 @@ export function auditPage(stage) {
 
   const blockFacts = blocks.map((el, i) => {
     const r = rects[i];
-    const leaves = el.querySelectorAll('td, th, .vk-lc, .vk-dc, .vk-step-l, .vk-tl-label, .vk-bar-v, .vk-cell-v, .vk-seq-l, .vk-gn-l, .vk-field-l, .vk-bit-v, .vk-tname, .vk-ftitle, .vk-lede');
-    const sizes = [...(leaves.length ? leaves : [el])].map((n) => parseFloat(getComputedStyle(n).fontSize) || 0);
+    /* 不能只量固定类名：list/card 的 text 在 li/span 上，宿主自身是 16px。
+       量所有真在显示文字的叶子，取最大字号。 */
+    const leaves = [el, ...el.querySelectorAll('*')].filter((n) => {
+      if (n.closest('.vk-co')) return false;
+      const direct = [...(n.childNodes || [])].some((c) => c.nodeType === 3 && String(c.nodeValue || '').trim());
+      if (!direct) return false;
+      const cs = getComputedStyle(n);
+      return cs.display !== 'none' && cs.visibility !== 'hidden';
+    });
+    const sizes = leaves.map((n) => parseFloat(getComputedStyle(n).fontSize) || 0).filter(Boolean);
+    const rowSel = el.getAttribute('data-as') === 'bytes' ? '.vk-brow' : el.getAttribute('data-as') === 'bits' ? '.vk-field' : '[data-vk-line], li, tr';
     return {
       vk: el.getAttribute('data-as') || el.getAttribute('data-vk') || el.localName,
+      id: el.id || null,
       h: Math.round(r.height),
+      top: Math.round(r.top - bodyRect.top),
+      rows: el.querySelectorAll(rowSel).length,
       font: Math.round(Math.max(...sizes, 0)),
       overflow: Math.max(0, Math.round(r.bottom - bodyRect.bottom)),
     };
@@ -247,6 +290,16 @@ export function auditPage(stage) {
   const st = smallText(page);
   const imgs = images(page);
   const anchors = [...page.querySelectorAll('vk-callout[data-vk-anchor-missing]')].length;
+  const callouts = [...page.querySelectorAll('vk-callout')].map((el) => {
+    const note = el.querySelector('.vk-co-note');
+    const nr = note && !note.hidden ? rectOf(note) : null;
+    return {
+      mode: el.getAttribute('mode') || 'note',
+      side: el.getAttribute('data-vk-side') || null,
+      tight: el.hasAttribute('data-vk-tight'),
+      note: nr ? { left: Math.round(nr.left - pr.left), top: Math.round(nr.top - pr.top), w: Math.round(nr.width), h: Math.round(nr.height) } : null,
+    };
+  });
 
   return {
     ok: issues.length === 0,
@@ -255,12 +308,14 @@ export function auditPage(stage) {
     health: {
       head: headH,
       band: bodyH,
+      bodyWidth,
       content: contentH,
       overflow,
       slackTop,
       slackBottom,
       focus: f.current,
       callout: f.callout,
+      callouts,
       anchors,
       empty: !!empty,
       minFont: st.min,

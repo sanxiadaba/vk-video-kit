@@ -16,6 +16,7 @@
 export const ARROW = {
   length: 52,
   base: 38,
+  back: 18, // 凹底缺口深度：后缘两角收尖，中间 V 形收进去
   shaft: 8,
   tipGap: 2, // 指盒子：尖贴边
   textGap: 32, // 指文字：尖要退开，不然像贴在字上
@@ -38,16 +39,17 @@ export const CONN = {
 };
 
 export const ANN = {
-  bar: 14, // 标记条厚
-  barGap: 2, // 条顶离墨迹底
+  bar: 12, // 标记条厚
+  barGap: 8, // 条顶离墨迹底（给 p/g/y 的下伸笔画留空气）
   over: 10, // 行条两端出头（词条不出头）
-  bracket: 24, // 行段括号离字右缘
+  bracket: 40, // 行段括号离字右缘
   arm: 32, // 括号上下两只脚
-  boxPad: 24, // 块框左右外扩
+  boxPad: 16, // 块框左右外扩
   boxPadY: 12, // 块框上下外扩
   box: 12, // 块框线宽
   boxR: 8, // 块框圆角（sm）
-  standoff: 64, // 文字离出线点
+  standoff: 112, // 右注栏：箭头长 + 文字净空 + 分栏余量
+  standoffY: 160, // 上/下注记：箭头 + 文字 + 框线余量；竖向要更长才不挤
   gutter: 560, // 有注记的页，右侧让出的注栏宽（408 时一行只有 6.4 字）
   dot: 20,
   lead: 8,
@@ -80,13 +82,15 @@ export function tip(rect, side, gap = ARROW.tipGap) {
   return { x, y, u: { x: -u.x, y: -u.y } };
 }
 
-/** 箭头三角形：尖端 tip，方向单位 (ux,uy)，底边全宽 base。 */
-export function headPolygon(t, ux, uy) {
-  const bx = t.x - ux * ARROW.length;
-  const by = t.y - uy * ARROW.length;
-  const hx = -uy * (ARROW.base / 2);
-  const hy = ux * (ARROW.base / 2);
-  return `${t.x},${t.y} ${bx + hx},${by + hy} ${bx - hx},${by - hy}`;
+/** 凹底箭头：前尖，后缘收成两个尖角 + 中间一个 V 形缺口。
+    平底三角形在 693 下会像一个钝楔子，尤其是水平时序箭头。 */
+export function headPolygon(t, ux, uy, len = ARROW.length, base = ARROW.base) {
+  const back = (ARROW.back * len) / ARROW.length;
+  const tail = { x: t.x - ux * len, y: t.y - uy * len };
+  const notch = { x: t.x - ux * (len - back), y: t.y - uy * (len - back) };
+  const hx = -uy * (base / 2);
+  const hy = ux * (base / 2);
+  return `${t.x},${t.y} ${tail.x + hx},${tail.y + hy} ${notch.x},${notch.y} ${tail.x - hx},${tail.y - hy}`;
 }
 
 

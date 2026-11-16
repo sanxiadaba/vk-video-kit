@@ -24,7 +24,7 @@ const OUT = path.resolve(ROOT, outArg >= 0 ? args[outArg + 1] : '.showcase');
 const SRC = path.join(ROOT, 'tests', 'fixtures');
 const PKG = JSON.parse(fs.readFileSync(path.join(ROOT, 'package.json'), 'utf8'));
 
-/** 8 组 40 帧：顺序就是看板顺序；每帧一句“它演示什么”。 */
+/** 8 组 41 帧：顺序就是看板顺序；每帧一句“它演示什么”。 */
 const GROUPS = [
   ['layout', '版式', [
     ['cover', '封面：一帧只讲一件事'],
@@ -80,6 +80,7 @@ const GROUPS = [
   ['mix', '组合', [
     ['mix-cells', '代码 + 内存：一行改一格，标注跨两件'],
     ['mix-asm', 'O0 / O2 汇编对照'],
+    ['flow-callout', '标注写在 flow 里也不会飞出画布'],
     ['table-tone', '表格单元格语义色与当前格'],
   ]],
 ];

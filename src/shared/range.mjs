@@ -23,6 +23,12 @@ export function parseRange(value) {
   return ranges[0];
 }
 
+/** n 是否落在 "3" / "3-7" / "3,7,9" / "4-" 里（构建期与运行期共用）。 */
+export function inRange(n, value) {
+  const ranges = parseLines(value);
+  return !!ranges && ranges.some(([a, b]) => n >= a && n <= b);
+}
+
 /** 展开成 1 起的行号集合（Infinity 用 limit 截）。 */
 export function lineSet(value, limit = 4000) {
   const ranges = parseLines(value);

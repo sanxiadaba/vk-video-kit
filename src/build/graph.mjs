@@ -71,7 +71,6 @@ export function buildSeq(node, ctx) {
       a = 0;
       b = Math.min(1, n - 1);
     }
-    if (a === b) b = a === 0 ? 1 : a - 1;
     const x1 = x(a);
     const x2 = x(b);
     const rightward = x2 >= x1;
