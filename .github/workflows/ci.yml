@@ -2,6 +2,7 @@ name: ci
 
 on:
   push:
+    branches: [main]
     paths:
       - 'src/**'
       - 'tests/**'
@@ -10,8 +11,10 @@ on:
       - 'docs/**'
       - 'package.json'
       - 'package-lock.json'
+      - '.gitattributes'
       - '.github/workflows/ci.yml'
   pull_request:
+    branches: [main]
   workflow_dispatch:
 
 concurrency:
