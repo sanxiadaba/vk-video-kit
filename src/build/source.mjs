@@ -184,7 +184,7 @@ export async function buildSource(node, ctx) {
         folded = 0;
       }
       const cls = cur?.has(win) ? ' is-cur' : '';
-      out.push(`<div class="vk-line${cls}" data-vk-line="${win}" data-src="${srcNo}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${lineHtml(tokens[i] || [], mark, markCounter)}</span></div>`);
+      out.push(`<div class="vk-line${cls}" data-vk-line="${win}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${lineHtml(tokens[i] || [], mark, markCounter)}</span></div>`);
     });
     if (folded) out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-lc">省略 ${folded} 行</span></div>`);
     body = out.join('');
@@ -285,7 +285,7 @@ export async function buildSource(node, ctx) {
       const addrText = r.addr ? (/^0x/i.test(r.addr) ? r.addr : `0x${r.addr}`) : '';
       addrLen = Math.max(addrLen, addrText.length);
       out.push(
-        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"${addrText ? ` data-vk-addr="${esc(addrText)}"` : ''}><span class="vk-aaddr">${esc(addrText)}</span>${
+        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-aaddr">${esc(addrText)}</span>${
           showHex ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
         }<span class="vk-ainsn">${esc(mnemonic)}</span><span class="vk-aops">${esc(operands)
           .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)

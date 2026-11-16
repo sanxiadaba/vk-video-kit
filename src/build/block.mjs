@@ -50,11 +50,11 @@ export function buildDir(node, ctx) {
     return ctx.icon(isDir ? 'folder' : kind === 'code' ? 'file-code' : 'file-text') || '';
   };
 
-  const nodeHtml = (name, isDir, p, level, children = '', isLast = false) => {
+  const nodeHtml = (name, isDir, p, level, children = '') => {
     const kind = ICON_KIND(name, isDir);
     const cur = current && p === current ? ' current' : '';
     return (
-      `<div class="vk-node" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}" data-path="${esc(p)}"${isLast ? ' data-last="1"' : ''}${cur} style="--vk-depth:${level}">` +
+      `<div class="vk-node" data-vk-item="${++itemNo}" data-depth="${level}" data-kind="${kind}"${cur} style="--vk-depth:${level}">` +
       `<span class="vk-nrow">${iconFor(name, isDir)}<span class="vk-tname">${esc(name)}${isDir ? '/' : ''}</span></span>` +
       (children ? `<div class="vk-kids">${children}</div>` : '') +
       `</div>`
@@ -79,7 +79,7 @@ export function buildDir(node, ctx) {
       }
       const isDir = typeof it === 'string' ? false : !!(it.dir || it.children?.length);
       const p = base ? `${base}/${name}` : name;
-      out.push(nodeHtml(name, isDir, p, level, it.children ? walk(it.children, level + 1, p) : '', i === items.length - 1));
+      out.push(nodeHtml(name, isDir, p, level, it.children ? walk(it.children, level + 1, p) : ''));
     }
     return out.join('');
   };
@@ -116,7 +116,7 @@ export function buildDir(node, ctx) {
   }
 
   const more = truncated ? `<div class="vk-node is-more">还有 ${skipped} 项…</div>` : '';
-  const body = rootName ? nodeHtml(rootName, true, '', 1, walk(list, 2, ''), false) + more : walk(list, 1, '') + more;
+  const body = rootName ? nodeHtml(rootName, true, '', 1, walk(list, 2, '')) + more : walk(list, 1, '') + more;
   return frame({ title: attrOf(node, 'title'), body: `<div class="vk-tree">${body}</div>`, dots: false, kind: 'dir' });
 }
 
