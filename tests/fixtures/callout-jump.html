@@ -1,0 +1,14 @@
+<vk-page id="callout-jump">
+  <vk-head kicker="跳转" size="subhead">n 为 0 时，直接跳到收尾。</vk-head>
+  <vk-code id="c" lang="c" size="caption">
+    <script type="text/plain" data-vk-source>
+int sum(int *a, int n) {
+  if (n == 0) goto done;
+  int s = 0;
+  for (i = 0; i < n; i++)
+    s += a[i];
+done: return s; }
+    </script>
+  </vk-code>
+  <vk-callout as="jump" from="#c@line:2" to="#c@line:6" label="n == 0"></vk-callout>
+</vk-page>

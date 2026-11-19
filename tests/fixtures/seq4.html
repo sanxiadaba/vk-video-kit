@@ -1,9 +1,9 @@
 <vk-page id="seq4">
-  <vk-head kicker="协议" size="subhead">三次握手，再加一次请求。</vk-head>
+  <vk-head kicker="三次握手" counter="4 / 6" size="subhead">四条消息，一次建连。</vk-head>
   <vk-seq participants="客户端,服务端">
-    <li>SYN</li>
-    <li direction="left">SYN + ACK</li>
-    <li>ACK</li>
-    <li current>GET /</li>
+    <li from="客户端" to="服务端">SYN</li>
+    <li from="服务端" to="客户端">SYN + ACK</li>
+    <li from="客户端" to="服务端">ACK</li>
+    <li from="客户端" to="服务端" current>GET /</li>
   </vk-seq>
 </vk-page>

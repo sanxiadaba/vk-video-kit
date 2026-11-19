@@ -1,8 +1,9 @@
 /* ============================================================================
-   v25 · 标注
+   v27 · 标注
    ----------------------------------------------------------------------------
-   不改布局：绝对定位覆盖整帧，只画标记条、连接件、量度。
+   不改布局：绝对定位覆盖整帧，只画标记条、连接件、量度、跳转。
    标注只有一种颜色（focus）：它表示「正在看这里」。文字仍是墨色。
+   零圆角：SVG 的框也把 rx / ry 归零。
    ========================================================================== */
 
 [data-vk='callout'] {
@@ -34,16 +35,21 @@
   fill: none;
   stroke: var(--vk-focus);
   stroke-width: var(--vk-ann-box);
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
+  rx: 0;
+  ry: 0;
 }
 
+/* 连接 / 引线 / 量度 / 跳转：同一根 8px focus 线。 */
 .vk-co-line,
-.vk-co-lead {
+.vk-co-lead,
+.vk-co-measure,
+.vk-co-jump {
   fill: none;
   stroke: var(--vk-focus);
   stroke-width: var(--vk-conn-shaft);
   stroke-linecap: butt;
-  stroke-linejoin: round;
+  stroke-linejoin: miter;
 }
 .vk-co-lead {
   stroke-width: var(--vk-ann-lead);
@@ -57,17 +63,24 @@
   fill: var(--vk-focus);
 }
 
-/* 连接件上的短标签：压在线上的一行字，纸色底把线打断。 */
-.vk-co-label {
+/* 连接件上的短标签：一行字压在线上，纸色描边把线打断。
+   HTML 标签用纸底，SVG 标签用纸色 stroke；两种写法共用这一条。 */
+.vk-co-label,
+.vk-co-jump-label {
   position: absolute;
   padding: 0 12px;
   background: var(--vk-paper);
   color: var(--vk-ink-2);
+  fill: var(--vk-ink-2);
   font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-medium);
   line-height: 1.2;
   white-space: nowrap;
+  paint-order: stroke;
+  stroke: var(--vk-paper);
+  stroke-width: 16px;
+  stroke-linejoin: round;
 }
 
 /* 标注的一句话：卡片外，与标记同高；纯文字，不加框。 */

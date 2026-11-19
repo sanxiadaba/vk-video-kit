@@ -1,6 +1,6 @@
 <vk-page id="callout-arrow">
   <vk-head kicker="标注" size="subhead">从一行代码，指到一句话。</vk-head>
-  <vk-flow cols="5 3" gap="320" valign="center">
+  <vk-flow split="5 3" gap="320" valign="center">
     <vk-code id="c2" lang="c" title="a.c">
       <script type="text/plain" data-vk-source>
 int a[2] = {1, 2};
@@ -10,5 +10,5 @@ return a[1];
     </vk-code>
     <vk-text id="arrow-target" ink="secondary">这一行把 7 写进第二个 int。</vk-text>
   </vk-flow>
-  <vk-callout mode="arrow" from="#c2@line:2" to="#arrow-target" label="写入"></vk-callout>
+  <vk-callout as="arrow" from="#c2@line:2" to="#arrow-target" label="写入"></vk-callout>
 </vk-page>

@@ -1,5 +1,5 @@
 /**
- * v26 · 构建期入口
+ * v27 · 构建期入口
  * ----------------------------------------------------------------------------
  * 读作者页 → 校验 → 落地默认值 → 把「要算的东西」算好 → 输出一张自包含的页。
  *
@@ -9,41 +9,19 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { parse, parseFragment } from 'parse5';
-import { validate } from '../contract.mjs';
+import { validate, isHint, severityOf } from '../contract.mjs';
 import { asOf } from '../contract.mjs';
+import { dedupe } from '../contract/validate.mjs';
 import { normalizeTree } from '../normalize.mjs';
 import { flatten, lineOf, raw, serialize } from '../shared/dom.mjs';
 import { buildSource } from './source.mjs';
-import { buildBoard } from './board.mjs';
+import { buildBoard, buildBand, buildFrames } from './board.mjs';
 import { buildBytes, buildBits } from './grid.mjs';
 import { buildGraph, buildSeq } from './graph.mjs';
-import { buildHead, buildText, buildDir, buildMath } from './block.mjs';
-import { buildFlow, buildCard, buildPage, buildImg, wrapFragment, rewriteLinks, ensureLibs, ROOT } from './frame.mjs';
+import { buildHead, buildDir, buildMath } from './block.mjs';
+import { buildFlow, buildCard, buildPage, buildImg, buildCallout, wrapFragment, rewriteLinks, ensureLibs, ROOT } from './frame.mjs';
 
 const label = (f) => path.relative(ROOT, path.resolve(f)).split(path.sep).join('/') || String(f);
-
-/* ------------------------------------------------------------------ 图标 */
-let ICON_MAP = null;
-const slug = (name) => String(name).trim().toLowerCase().replace(/[_\s]+/g, '-');
-const loadIcons = async () => {
-  if (ICON_MAP) return ICON_MAP;
-  const lucide = await import('lucide');
-  ICON_MAP = new Map();
-  for (const [name, nodes] of Object.entries(lucide.icons || {})) {
-    ICON_MAP.set(name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').replace(/([A-Z])([A-Z][a-z])/g, '$1-$2').toLowerCase(), nodes);
-  }
-  return ICON_MAP;
-};
-
-const iconInner = (nodes) =>
-  (nodes || []).map(([tag, attrs]) => `<${tag}${Object.entries(attrs || {}).map(([k, v]) => ` ${k}="${String(v).replace(/"/g, '&quot;')}"`).join('')}/>`).join('');
-
-const iconSvg = async (name) => {
-  const map = await loadIcons();
-  const nodes = map.get(slug(name));
-  if (!nodes) return null;
-  return `<span class="vk-ic" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${iconInner(nodes)}</svg></span>`;
-};
 
 /* ------------------------------------------------------------------ 分派
    返回字符串 = 整块 HTML（替换子节点）；返回 undefined = 构建器自己改好了。 */
@@ -52,15 +30,21 @@ const BUILDERS = {
     const as = asOf(n);
     if (as === 'bytes') return buildBytes(n, ctx);
     if (as === 'bits') return buildBits(n, ctx);
+    /* asm / term / diff / code 都由 buildSource 按 lang 自己判断。 */
     return buildSource(n, ctx);
   },
-  'vk-board': (n, ctx) => buildBoard(n, asOf(n), ctx),
-  'vk-graph': (n) => buildGraph(n),
+  'vk-board': (n, ctx) => {
+    const as = asOf(n);
+    if (as === 'band') return buildBand(n, ctx);
+    if (as === 'frames') return buildFrames(n, ctx);
+    return buildBoard(n, as, ctx);
+  },
+  'vk-graph': (n, ctx) => buildGraph(n, ctx),
   'vk-seq': (n, ctx) => buildSeq(n, ctx),
   'vk-dir': (n, ctx) => buildDir(n, ctx),
   'vk-math': (n, ctx) => buildMath(n, ctx),
+  'vk-callout': (n) => buildCallout(n),
   'vk-head': (n) => buildHead(n),
-  'vk-text': (n, ctx) => buildText(n, ctx),
   'vk-card': (n) => buildCard(n),
   'vk-flow': (n) => buildFlow(n),
   'vk-img': (n, ctx) => buildImg(n, ctx),
@@ -85,8 +69,9 @@ export async function transformHtml(rawHtml, { file }) {
   };
   const diagnostics = validate(doc, label(file));
 
-  /* 把有问题的位置标出来：不是门禁，是让 AI/人一眼看到是哪一块。 */
-  const issueLines = new Set(diagnostics.map((d) => d.line));
+  /* 把有问题的位置标出来：不是门禁，是让 AI/人一眼看到是哪一块。
+     hint 不画红框——只能说明「这样做可能不是本意」，画面本身是对。 */
+  const issueLines = new Set(diagnostics.filter((d) => !isHint(d.code)).map((d) => d.line));
   for (const node of nodes) {
     if (node.tagName?.startsWith('vk-') && issueLines.has(lineOf(node))) node.attrs = [...(node.attrs || []), { name: 'data-vk-issue', value: '1' }];
   }
@@ -98,29 +83,15 @@ export async function transformHtml(rawHtml, { file }) {
     label,
     diag(node, d) {
       const line = lineOf(node);
-      diagnostics.push({ ...d, file: label(file), line, tag: node.tagName, frame: frameOf(node) });
+      diagnostics.push({ ...d, severity: d.severity ?? severityOf(d.code), file: label(file), line, tag: node.tagName, frame: frameOf(node) });
     },
     resolveAsset(src) {
       const abs = path.resolve(path.dirname(path.resolve(file)), src);
       return fs.existsSync(abs) ? abs : null;
     },
     read: (abs) => fs.readFileSync(abs),
-    icon: (name) => ctx.icons.get(slug(name)) || '',
-    icons: new Map(),
   };
   ctx.diag.has = (node, code) => diagnostics.some((d) => d.code === code && d.line === lineOf(node) && d.frame === frameOf(node));
-
-  /* 图标按实际出现的名字惰性解析；目录树另有三个内建名。 */
-  const iconNames = new Set();
-  for (const node of nodes) {
-    const n = (node.attrs || []).find((a) => a.name === 'icon')?.value;
-    if (n) iconNames.add(n);
-    if (node.tagName === 'vk-dir') ['folder', 'file-code', 'file-text'].forEach((x) => iconNames.add(x));
-  }
-  for (const name of iconNames) {
-    const svg = await iconSvg(name);
-    if (svg) ctx.icons.set(slug(name), svg);
-  }
 
   /* 逆序：先叶子后父级，父级拿到的子节点已经是排好的 HTML。 */
   for (const node of [...nodes].reverse()) {
@@ -138,6 +109,7 @@ export async function transformHtml(rawHtml, { file }) {
   const body = serialize(doc);
   return {
     html: isFull ? body : wrapFragment(body),
-    diagnostics,
+    /* 校验与构建会在同一行补同一条事实（SRC_CONFLICT / SRC_MISSING…），收尾去重。 */
+    diagnostics: dedupe(diagnostics),
   };
 }

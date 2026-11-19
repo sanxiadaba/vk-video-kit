@@ -1,8 +1,9 @@
 /* ============================================================================
-   v25 · 组件
+   v27 · 组件
    ----------------------------------------------------------------------------
    组件只做五组原语的组合：字 / 距 / 面 / 线 / 态。
-   这里不出现裸字号、裸间距、裸圆角；拿不准就回 vocab.mjs 加 token。
+   组件内部允许裸几何 px（高度、槽宽、偏移、针脚），字号 / 颜色 / 线宽必须用 token。
+   零圆角：所有框、卡片、代码窗、格子、条、节点都是直角；圆只留给「圈」和「点」。
    ========================================================================== */
 
 /* ================================================================ 源码窗 */
@@ -53,19 +54,31 @@
   text-align: start;
   min-width: 0;
 }
+
+/* 折叠行：一条 8px 虚线，不是一串省略号。
+   行号槽留空但保持宽度，折叠加虚线都在代码列里从同一个左缘起。 */
 .vk-line.is-fold {
-  color: var(--vk-ink-1);
-  background: var(--vk-soft);
-  font-size: var(--vk-fs-body);
-  letter-spacing: 0.02em;
+  color: var(--vk-ink-3);
+  min-height: 1.5em;
+}
+.vk-line.is-fold .vk-ln {
+  visibility: hidden;
 }
 .vk-line.is-fold .vk-lc {
   font-family: var(--vk-font-sans);
-  white-space: normal;
-}
-.vk-line.is-fold .vk-ln {
   font-size: var(--vk-fs-caption);
   line-height: 1.5;
+  white-space: nowrap;
+  color: var(--vk-ink-3);
+}
+.vk-line.is-fold .vk-lc::before {
+  content: '';
+  display: inline-block;
+  width: 96px;
+  height: 0;
+  margin-right: var(--vk-space-4);
+  vertical-align: middle;
+  border-top: var(--vk-line-w-hair) dotted var(--vk-line-strong);
 }
 
 /* 语法四色 + 一个灰 + 一个墨。颜色本身来自 tokens，类名只做映射。 */
@@ -121,7 +134,7 @@
   color: var(--vk-err);
 }
 
-/* 改动 */
+/* 改动：增删行只画 8px 左边规，不铺整行淡底。 */
 .vk-dhunk {
   font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
@@ -136,30 +149,46 @@
   margin-top: 0;
   border-top: 0;
 }
+.vk-lrow,
 .vk-drow {
+  position: relative;
   display: grid;
   grid-template-columns: calc(var(--vk-ln-digits, 2) * 0.62em + 24px) 1.2em minmax(0, 1fr);
   gap: var(--vk-space-4);
   align-items: baseline;
-  padding: 0 var(--vk-space-5);
+  padding: 0 var(--vk-space-5) 0 var(--vk-space-2);
   white-space: pre;
 }
-.vk-drow.add {
-  background: var(--vk-tint-ok);
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-ok);
+.vk-lrow.add::before,
+.vk-drow.add::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-hair);
+  background: var(--vk-ok);
 }
-.vk-drow.del {
-  background: var(--vk-tint-err);
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-err);
+.vk-lrow.del::before,
+.vk-drow.del::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-hair);
+  background: var(--vk-err);
 }
 .vk-sign {
   color: var(--vk-ink-3);
   text-align: center;
 }
+.vk-lrow.add .vk-sign,
 .vk-drow.add .vk-sign {
   color: var(--vk-ok);
   font-weight: var(--vk-w-bold);
 }
+.vk-lrow.del .vk-sign,
 .vk-drow.del .vk-sign {
   color: var(--vk-err);
   font-weight: var(--vk-w-bold);
@@ -170,6 +199,7 @@
 
 /* 汇编：地址、机器码、助记符、操作数四列，用 flex 让缺列的行也对齐。 */
 .vk-arow {
+  position: relative;
   display: flex;
   align-items: baseline;
   gap: var(--vk-space-3);
@@ -208,7 +238,8 @@
   color: var(--vk-ink-2);
 }
 
-/* ================================================================ 表格 */
+/* ================================================================ 表格
+   只有横线：行底一条 line-color，表头一条 line-strong。没有竖线。 */
 [data-vk='board'][data-as='table'] {
   display: block;
   width: 100%;
@@ -218,43 +249,53 @@
   font-size: var(--vk-fs-caption);
   line-height: 1.5;
   color: var(--vk-ink-3);
-  margin-bottom: var(--vk-space-4);
+  margin-bottom: var(--vk-space-5);
 }
 [data-vk='board'][data-as='table'] table {
   border-collapse: collapse;
   width: 100%;
   max-width: 100%;
 }
+[data-vk='board'][data-as='table'] caption {
+  caption-side: top;
+  text-align: left;
+  padding: 0 0 var(--vk-space-5);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.5;
+  color: var(--vk-ink-3);
+}
 [data-vk='board'][data-as='table'] th,
 [data-vk='board'][data-as='table'] td {
   padding: var(--vk-space-2) var(--vk-space-5);
-  line-height: 1.25;
+  line-height: 1.5;
   text-align: left;
   vertical-align: baseline;
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
 }
 [data-vk='board'][data-as='table'] th {
   color: var(--vk-ink-3);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-medium);
   letter-spacing: 0.02em;
-  border-bottom: var(--vk-line-w-rule) solid var(--vk-line-strong);
+  border-bottom-color: var(--vk-line-strong);
 }
 [data-vk='board'][data-as='table'] td {
   font-size: var(--vk-fs-body);
   color: var(--vk-ink-1);
 }
-
-[data-vk='board'][data-as='table'] th:first-child,
-[data-vk='board'][data-as='table'] td:first-child {
-  padding-left: var(--vk-space-6);
-}
-
+/* 单元格 align 是契约里的属性，不能被上面的左对齐盖掉。 */
+[data-vk='board'][data-as='table'] :is(td, th)[align='center'] { text-align: center; }
+[data-vk='board'][data-as='table'] :is(td, th)[align='right'] { text-align: right; }
 [data-vk='board'][data-as='table'] td.num,
 [data-vk='board'][data-as='table'] th.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
   font-family: var(--vk-font-mono);
+}
+/* current / tone 的 12px 左规画在第一格左缘，不靠竖线也不靠整行底。 */
+[data-vk='board'][data-as='table'] td:first-child,
+[data-vk='board'][data-as='table'] th:first-child {
+  position: relative;
 }
 
 /* ================================================================ 列表 */
@@ -270,10 +311,11 @@
   align-items: baseline;
   list-style: none;
   counter-increment: vk-li;
+  position: relative;
   padding-left: var(--vk-space-4);
+  border-left: var(--vk-line-w-strong) solid transparent;
   font-size: var(--vk-fs-body);
   line-height: 1.5;
-  position: relative;
 }
 [data-vk='board'][data-as='list'] > li::after {
   content: attr(data-vk-note);
@@ -327,7 +369,8 @@
 }
 
 /* ================================================================ 目录树
-   每个子行画一条从父行中心到本行图标的 L；竖段在父级缩进，横段落到图标左缘。 */
+   每个子行画一条从父行中心到本行的 L；竖段在父级缩进，横段落到行左缘。
+   没有图标：目录名后已有 /，层级由缩进和树线说。 */
 [data-vk='dir'] {
   display: block;
   min-width: 0;
@@ -349,7 +392,6 @@
   height: calc(1.5em + 16px);
   border-left: var(--vk-line-w-hair) solid var(--vk-line-strong);
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-bottom-left-radius: var(--vk-radius-sm);
   z-index: 2;
   pointer-events: none;
 }
@@ -364,21 +406,13 @@
   line-height: 1.5;
   min-height: 1.5em;
 }
-.vk-nrow .vk-ic {
-  width: var(--vk-icon-xl);
-  height: var(--vk-icon-xl);
-  color: var(--vk-ink-2);
-}
-.vk-node[data-kind='binary'] > .vk-nrow .vk-ic,
-.vk-node[data-kind='file'] > .vk-nrow .vk-ic {
-  color: var(--vk-ink-3);
-}
 .vk-node[data-kind='dir'] > .vk-nrow .vk-tname {
   font-weight: var(--vk-w-bold);
 }
-.vk-node.is-more {
+.vk-dir-more {
   color: var(--vk-ink-3);
   font-size: var(--vk-fs-caption);
+  line-height: 1.5;
   padding: var(--vk-space-2) var(--vk-space-5);
 }
 .vk-kids {
@@ -391,10 +425,10 @@
   min-width: 0;
   color: var(--vk-ink-1);
 }
-[data-vk='math']:not([inline]) {
+[data-vk='math']:not([data-inline]) {
   font-size: var(--vk-fs-headline);
 }
-[data-vk='math'][inline] {
+[data-vk='math'][data-inline] {
   display: inline-block;
   font-size: 1em;
 }
@@ -422,7 +456,7 @@
   gap: var(--vk-space-4);
 }
 .vk-cells:has(.vk-cell-p) {
-  /* 指针占的竖向空间是真实的：徽标 96 + 针脚 40，行与行之间也要留出来。 */
+  /* 指针占的竖向空间是真实的：徽标 96 + 针脚 56，行与行之间也要留出来。 */
   padding-top: calc(var(--vk-ann-badge) + var(--vk-ann-pin));
   row-gap: calc(var(--vk-ann-badge) + var(--vk-ann-pin));
 }
@@ -433,7 +467,6 @@
   gap: var(--vk-space-2);
   padding: var(--vk-space-5) var(--vk-space-4);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-sm);
   background: var(--vk-raised);
   min-width: 0;
 }
@@ -451,46 +484,45 @@
 }
 .vk-cell-was {
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
   text-decoration: line-through;
 }
 .vk-cell-arrow {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
 }
 .vk-cell-l {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   line-height: 1.3;
   color: var(--vk-ink-2);
   font-family: var(--vk-font-mono);
 }
 .vk-cell-a {
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   line-height: 1.4;
   color: var(--vk-ink-3);
   font-family: var(--vk-font-mono);
 }
+/* 指针：96 高实心 focus 块 + 56 针脚。没有圆角、没有阴影。 */
 .vk-cell-p {
   position: absolute;
   left: 50%;
-  bottom: calc(100% + var(--vk-ann-pin) + var(--vk-line-w-hair));
+  bottom: calc(100% + var(--vk-ann-pin));
   transform: translateX(-50%);
   min-width: var(--vk-ann-badge);
   height: var(--vk-ann-badge);
   display: grid;
   place-items: center;
   padding: 0 var(--vk-space-3);
-  border-radius: calc(var(--vk-ann-badge) / 2);
-  background: var(--vk-ink-2);
-  color: var(--vk-paper);
+  background: var(--vk-focus);
+  color: var(--vk-on-focus);
   font-size: var(--vk-fs-body);
   line-height: 1;
   font-weight: var(--vk-w-bold);
   font-family: var(--vk-font-mono);
   white-space: nowrap;
 }
-/* 针脚：从徽标底走到格子上边，止于边，不进格；末端一个空心点压在格子边上。 */
 .vk-cell-p::after {
   content: '';
   position: absolute;
@@ -498,21 +530,8 @@
   top: 100%;
   width: var(--vk-conn-shaft);
   height: var(--vk-ann-pin);
-  background: var(--vk-ink-2);
+  background: var(--vk-focus);
   transform: translateX(-50%);
-}
-.vk-cell-p::before {
-  content: '';
-  position: absolute;
-  left: 50%;
-  top: calc(100% + var(--vk-ann-pin) - var(--vk-ann-dot));
-  width: var(--vk-ann-dot);
-  height: var(--vk-ann-dot);
-  margin: 0 0 0 calc(var(--vk-ann-dot) / -2);
-  border-radius: 50%;
-  border: calc(var(--vk-line-w-rule) / 2) solid var(--vk-ink-2);
-  background: var(--vk-paper);
-  box-sizing: border-box;
 }
 
 /* 半栏并排：四格放不下地址，改成 2×2 紧凑格——仍不缩字，只收紧内距。 */
@@ -527,10 +546,6 @@
   }
   .vk-cell-v {
     font-size: var(--vk-fs-body);
-  }
-  .vk-cell-l,
-  .vk-cell-a {
-    font-size: var(--vk-fs-caption);
   }
 }
 
@@ -555,7 +570,7 @@
 }
 .vk-brow {
   font-size: var(--vk-fs-body);
-  line-height: 1.6;
+  line-height: 1.5;
 }
 .vk-bhead {
   font-size: var(--vk-fs-caption);
@@ -583,7 +598,7 @@
 }
 
 /* ================================================================ 位
-   一段一个边框；位是段里的等宽格子。 */
+   一段一条底线；位是段里的等宽格子。不套独立盒子。 */
 [data-vk='code'][data-as='bits'] {
   display: block;
   min-width: 0;
@@ -593,6 +608,7 @@
   flex-direction: column;
   align-items: flex-start;
   gap: var(--vk-space-3);
+  width: 100%;
   min-width: 0;
 }
 .vk-bits-label {
@@ -622,7 +638,6 @@
   padding: 0 0 var(--vk-space-2);
   border: 0;
   border-bottom: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: 0;
 }
 .vk-field + .vk-field {
   margin-left: var(--vk-space-4);
@@ -664,21 +679,21 @@
 }
 .vk-bit .vk-bit-v {
   font-style: normal;
-  font-size: 56px;
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   line-height: 1;
   color: var(--vk-ink-1);
 }
+/* 符号位：8px 左边规，不铺底。 */
 .vk-bit.is-sign {
-  background: var(--vk-tint-info);
-  border-radius: var(--vk-radius-sm);
+  border-left: var(--vk-line-w-hair) solid var(--vk-info);
 }
 .vk-bit.is-sign .vk-bit-v {
   color: var(--vk-ink-2);
 }
 
 /* ================================================================ 步骤
-   圈 96 固定，数字 40 固定；标签才吃外层的字。 */
+   圈 96 固定，数字 56 固定；标签才吃外层的字。圈是唯一的「圆」。 */
 [data-vk='board'][data-as='steps'] {
   display: block;
   container-type: inline-size;
@@ -737,30 +752,6 @@
   font-size: var(--vk-fs-body);
   line-height: 1.4;
 }
-
-/* 横排：标签文字压在圆心上，图标挂到文字左边，不参与居中计算。
-   否则「图标 + 文字」整组居中，文字会被图标顶到圆心右边。 */
-@container (min-width: 761px) {
-  .vk-steps:not([data-dir='vertical']) .vk-step-t {
-    position: relative;
-  }
-  .vk-steps:not([data-dir='vertical']) .vk-step-t .vk-ic {
-    position: absolute;
-    right: 100%;
-    top: 50%;
-    transform: translateY(-50%);
-    margin-right: var(--vk-space-3);
-  }
-}
-.vk-step-t .vk-ic {
-  width: var(--vk-icon-2xl);
-  height: var(--vk-icon-2xl);
-  padding: 0;
-  color: var(--vk-ink-2);
-  background: none;
-  border: 0;
-  border-radius: 0;
-}
 .vk-step-note {
   font-size: var(--vk-fs-caption);
   color: var(--vk-ink-3);
@@ -800,7 +791,8 @@
   }
 }
 
-/* ================================================================ 条 */
+/* ================================================================ 条
+   轨道是 48 高的条 + 一条 8px 底线，不是一整块灰底压着填充条。 */
 [data-vk='board'][data-as='bars'] {
   display: block;
   min-width: 0;
@@ -823,20 +815,19 @@
 }
 .vk-bar-t {
   height: 48px;
-  border-radius: var(--vk-radius-pill);
-  background: var(--vk-line-color);
+  box-sizing: content-box;
+  border-bottom: var(--vk-line-w-hair) solid var(--vk-line-color);
   overflow: hidden;
 }
 .vk-bar-t i {
   display: block;
   height: 100%;
-  border-radius: var(--vk-radius-pill);
   background: var(--vk-ink-3);
 }
 .vk-bar-v {
   text-align: right;
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   font-weight: var(--vk-w-bold);
   white-space: nowrap;
   color: var(--vk-ink-1);
@@ -847,28 +838,29 @@
   color: var(--vk-ink-3);
   margin-left: var(--vk-space-2);
 }
+
 /* ================================================================ 时间线
-   轴分段（build 写 .vk-tl-seg），节点处留缝。 */
+   轴只画数据域（build 写 .vk-tl-seg）；节点是一个 20 的圆。 */
 [data-vk='board'][data-as='timeline'] {
   display: block;
   min-width: 0;
 }
 .vk-tl {
   position: relative;
-  height: 340px;
+  height: 320px;
 }
 .vk-tl-seg {
   position: absolute;
-  top: 124px;
+  top: 120px;
   height: var(--vk-line-w-rule);
-  background: var(--vk-ink-3);
+  background: var(--vk-line-strong);
 }
 .vk-tl-i {
   position: absolute;
   left: var(--vk-at);
   top: 0;
   transform: translateX(-50%);
-  width: 360px;
+  width: 384px;
   text-align: center;
   text-wrap: balance;
 }
@@ -876,48 +868,29 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 32px;
+  top: 24px;
   font-family: var(--vk-font-mono);
   font-size: var(--vk-fs-caption);
-  font-weight: var(--vk-w-bold);
-  color: var(--vk-ink-2);
+  font-weight: var(--vk-w-medium);
+  color: var(--vk-ink-3);
   line-height: 1.2;
-}
-.vk-tl-node {
-  position: absolute;
-  left: 50%;
-  top: 92px;
-  width: 72px;
-  height: 72px;
-  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: 50%;
-  background: var(--vk-paper);
-  display: grid;
-  place-items: center;
-  transform: translateX(-50%);
-  z-index: 2;
-}
-.vk-tl-node .vk-ic {
-  width: var(--vk-icon-xl);
-  height: var(--vk-icon-xl);
-  color: var(--vk-ink-2);
 }
 .vk-tl-dot {
   position: absolute;
   left: 50%;
-  top: 116px;
-  width: 24px;
-  height: 24px;
+  top: 110px;
+  width: 20px;
+  height: 20px;
   border-radius: 50%;
   background: var(--vk-ink-1);
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 2;
 }
 .vk-tl-label {
   position: absolute;
   left: 0;
   right: 0;
-  top: 176px;
+  top: 168px;
   font-size: var(--vk-fs-body);
   line-height: 1.4;
   font-weight: var(--vk-w-medium);
@@ -927,19 +900,205 @@
   position: absolute;
   left: 0;
   right: 0;
-  top: 256px;
+  top: 268px;
   font-size: var(--vk-fs-caption);
   line-height: 1.3;
   white-space: nowrap;
   color: var(--vk-ink-3);
 }
-/* ================================================================ 关系图 */
+
+/* ================================================================ 区间
+   一行一段，行高 96；左 label 320，右 note 收在末尾。
+   轨道是一条 8px 底线，条（i）从 --vk-s 拉到 --vk-e，高 48。 */
+[data-vk='board'][data-as='band'] {
+  display: block;
+  min-width: 0;
+}
+.vk-band {
+  display: grid;
+  grid-template-columns: 320px minmax(0, 1fr) auto;
+  column-gap: var(--vk-space-5);
+  row-gap: 0;
+  width: 100%;
+}
+/* 行与轴线共用同一条列网格（subgrid）：轴线正好在轨道下面，
+   不会因为右侧 note 的宽度而错位。 */
+.vk-band-rows {
+  display: contents;
+}
+.vk-band-r {
+  position: relative;
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: subgrid;
+  align-items: center;
+  min-height: 96px;
+  min-width: 0;
+}
+/* 缺 start / end 的段：构建期已经报了 BAND_RANGE；
+   这里只把整行降成软面，条仍按 [current] / [data-tone] 上色。 */
+.vk-band-r[data-vk-bad='1'] {
+  background: var(--vk-soft);
+}
+.vk-band-r[data-vk-bad='1'] .vk-band-l {
+  color: var(--vk-ink-3);
+}
+.vk-band-l {
+  padding-left: var(--vk-space-5);
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
+  color: var(--vk-ink-1);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.vk-band-t {
+  position: relative;
+  height: 56px;
+  min-width: 0;
+}
+.vk-band-t i {
+  position: absolute;
+  left: var(--vk-s, 0%);
+  bottom: 0;
+  width: calc(var(--vk-e, 0%) - var(--vk-s, 0%));
+  height: 48px;
+  background: var(--vk-ink-2);
+}
+.vk-band-n {
+  font-size: var(--vk-fs-caption);
+  line-height: 1.4;
+  color: var(--vk-ink-3);
+  white-space: nowrap;
+  text-align: right;
+}
+/* 轴线只画在轨道这一列，from / to 数字在两端，单位收在右端。 */
+.vk-band-axis {
+  grid-column: 2;
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  height: 56px;
+  margin-top: var(--vk-space-2);
+  font-size: var(--vk-fs-caption);
+  line-height: 1;
+  color: var(--vk-ink-3);
+}
+.vk-band-axis::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: var(--vk-line-w-hair);
+  background: var(--vk-line-color);
+}
+.vk-band-from,
+.vk-band-to,
+.vk-band-unit {
+  position: relative;
+  top: var(--vk-space-4);
+}
+.vk-band-to {
+  margin-left: auto;
+}
+.vk-band-unit {
+  margin-left: var(--vk-space-2);
+}
+
+/* ================================================================ 栈帧
+   一帧一块面；帧与帧共用一条边线，不留 gap。
+   data-dir="up" 时左侧加一条向低地址生长的轴（8px 线 + 三角）；down 不加。 */
+[data-vk='board'][data-as='frames'] {
+  display: block;
+  min-width: 0;
+}
+.vk-frames {
+  position: relative;
+  display: grid;
+  width: 100%;
+}
+.vk-fr-top {
+  font-size: var(--vk-fs-caption);
+  line-height: 1.5;
+  color: var(--vk-ink-3);
+  padding-bottom: var(--vk-space-3);
+}
+.vk-fr {
+  position: relative;
+  display: grid;
+  gap: var(--vk-space-2);
+  padding: var(--vk-space-2) var(--vk-space-5);
+  border: var(--vk-line-w-hair) solid var(--vk-line-strong);
+  background: var(--vk-raised);
+  min-width: 0;
+}
+.vk-fr + .vk-fr {
+  margin-top: calc(var(--vk-line-w-hair) * -1);
+}
+.vk-fr-h {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--vk-space-5);
+  min-width: 0;
+}
+.vk-fr-t {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
+  line-height: 1.2;
+  color: var(--vk-ink-1);
+}
+.vk-fr-n {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-caption);
+  line-height: 1.2;
+  color: var(--vk-ink-3);
+  text-align: right;
+  white-space: nowrap;
+}
+.vk-fr-b {
+  font-family: var(--vk-font-mono);
+  font-size: var(--vk-fs-body);
+  line-height: 1.5;
+  color: var(--vk-ink-1);
+}
+.vk-frames[data-dir='up'] {
+  padding-left: var(--vk-space-7);
+}
+.vk-frames[data-dir='up']::before {
+  content: '';
+  position: absolute;
+  left: var(--vk-space-2);
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-hair);
+  background: var(--vk-line-strong);
+}
+.vk-frames[data-dir='up']::after {
+  content: '';
+  position: absolute;
+  left: calc(var(--vk-space-2) + var(--vk-line-w-hair) / 2);
+  top: 0;
+  width: 0;
+  height: 0;
+  transform: translateX(-50%);
+  border-left: 16px solid transparent;
+  border-right: 16px solid transparent;
+  border-bottom: 24px solid var(--vk-line-strong);
+}
+
+/* ================================================================ 关系图
+   节点是构建期写好的 .vk-gnode；边由运行期画进 SVG。
+   节点最小 160，内距 16/24；边 8px；边标签 56，纸色描边把线打断。 */
 [data-vk='graph'] {
   display: block;
   min-width: 0;
 }
 .vk-graph {
   position: relative;
+  width: 100%;
   min-height: 180px;
 }
 .vk-glegend {
@@ -965,6 +1124,13 @@
   position: absolute;
   left: 0;
   top: 0;
+  z-index: 1;
+}
+.vk-gstage svg,
+.vk-gedges {
+  width: 100%;
+  height: auto;
+  display: block;
 }
 .vk-gnode {
   min-width: 160px;
@@ -973,9 +1139,8 @@
   display: grid;
   justify-items: center;
   gap: var(--vk-space-1);
-  padding: var(--vk-space-3) var(--vk-space-5);
+  padding: var(--vk-space-4) var(--vk-space-5);
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-md);
   background: var(--vk-raised);
   white-space: normal;
   text-align: center;
@@ -984,21 +1149,10 @@
   line-height: 1.2;
   transform: translate(-50%, -50%);
 }
-.vk-graph[data-layout='row'][data-dir='horizontal'] .vk-gnode {
+.vk-graph[data-as='row'] .vk-gnode,
+.vk-graph[data-layout='row'] .vk-gnode {
   min-height: 240px;
   align-content: center;
-}
-/* 竖链：内容宽度的盒子，居中对齐，箭头走盒子中线。 */
-.vk-graph[data-layout='row'][data-dir='vertical'] .vk-gnode {
-  min-width: 480px;
-  max-width: 100%;
-  padding: var(--vk-space-1) var(--vk-space-5);
-  grid-auto-flow: column;
-  align-items: baseline;
-  justify-items: start;
-  justify-content: start;
-  gap: var(--vk-space-5);
-  text-align: left;
 }
 .vk-gn-n {
   font-size: var(--vk-fs-caption);
@@ -1006,9 +1160,6 @@
 }
 .vk-gedge {
   display: none;
-}
-.vk-gstage {
-  z-index: 1;
 }
 .vk-gedges {
   z-index: 0;
@@ -1021,7 +1172,7 @@
 .vk-edge {
   fill: none;
   stroke: var(--vk-ink-2);
-  stroke-width: var(--vk-conn-shaft);
+  stroke-width: var(--vk-line-w-connector);
   stroke-linecap: round;
   stroke-linejoin: round;
 }
@@ -1043,20 +1194,23 @@
 .vk-edge-dot[data-current] {
   fill: var(--vk-focus);
 }
-.vk-edge-label {
+.vk-gedge-l {
   font-family: var(--vk-font-sans);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   fill: var(--vk-ink-2);
   paint-order: stroke;
   stroke: var(--vk-paper);
-  stroke-width: 12px;
+  stroke-width: 16px;
   stroke-linejoin: round;
 }
 
 /* ================================================================ 时序
-   2–4 条生命线；每条消息从 --vk-left 画到 --vk-w。 */
+   2–4 条生命线；每条消息从 --vk-x1 画到 --vk-x2。
+   一条消息 160 高，可用 --vk-msg-h 压到 120（不小于 120）；
+   标签在箭线上方 40，箭线 8px ink2，泳道线 8px line-color，底部收口。 */
 [data-vk='seq'] {
   display: block;
+  width: 100%;
   min-width: 0;
 }
 .vk-seq-head {
@@ -1077,8 +1231,8 @@
 .vk-seq-body {
   position: relative;
   display: grid;
-  gap: var(--vk-space-2);
-  padding: var(--vk-space-2) 0;
+  gap: 0;
+  padding: 0;
 }
 .vk-seq-lane {
   position: absolute;
@@ -1087,23 +1241,37 @@
   left: var(--vk-x);
   width: var(--vk-line-w-hair);
   margin-left: calc(var(--vk-line-w-hair) / -2);
-  border-radius: 2px;
-  background: var(--vk-line-strong);
+  background: var(--vk-line-color);
   z-index: 0;
 }
+/* 泳道底部收口：一条 24 宽的横线，生命线不悬空。 */
+.vk-seq-lane::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  width: 24px;
+  height: var(--vk-line-w-hair);
+  background: var(--vk-line-color);
+  transform: translateX(-50%);
+}
+.vk-seq-msg,
 .vk-seq-row {
-  --vk-seq-c: var(--vk-info);
+  --vk-seq-c: var(--vk-ink-2);
   position: relative;
-  min-height: 108px;
+  height: var(--vk-msg-h, 160px);
+  min-height: 120px;
 }
 .vk-seq-arrow {
   position: absolute;
-  top: 88px;
+  top: 104px;
   height: var(--vk-line-w-connector);
   background: var(--vk-seq-c);
   z-index: 1;
 }
+.vk-seq-msg[data-dir='right'] .vk-seq-arrow,
 .vk-seq-row[data-dir='right'] .vk-seq-arrow,
+.vk-seq-msg[data-dir='left'] .vk-seq-arrow,
 .vk-seq-row[data-dir='left'] .vk-seq-arrow {
   left: min(var(--vk-x1), var(--vk-x2));
   right: calc(100% - max(var(--vk-x1), var(--vk-x2)));
@@ -1118,11 +1286,13 @@
   background: var(--vk-seq-c);
 }
 /* 尖端正好落在泳道线上：右向的头贴右端，左向的头贴左端。 */
+.vk-seq-msg[data-dir='right'] .vk-seq-arrow::after,
 .vk-seq-row[data-dir='right'] .vk-seq-arrow::after {
   right: 0;
   /* 前尖 + 凹底：两角收尖，中间 V 形缺口；平底会让 693 下的箭头显钝。 */
   clip-path: polygon(100% 50%, 0 0, 35% 50%, 0 100%);
 }
+.vk-seq-msg[data-dir='left'] .vk-seq-arrow::after,
 .vk-seq-row[data-dir='left'] .vk-seq-arrow::after {
   left: 0;
   clip-path: polygon(0 50%, 100% 0, 65% 50%, 100% 100%);
@@ -1132,12 +1302,11 @@
   left: var(--vk-mid);
   top: 0;
   transform: translateX(-50%);
-  padding: 0 var(--vk-space-4);
-  background: var(--vk-paper);
   white-space: nowrap;
   font-size: var(--vk-fs-body);
-  line-height: 1.2;
+  line-height: 1;
   font-weight: var(--vk-w-medium);
+  color: var(--vk-ink-1);
   z-index: 2;
 }
 .vk-seq-note {
@@ -1146,3 +1315,84 @@
   font-weight: var(--vk-w-regular);
   white-space: nowrap;
 }
+
+/* ==================================================================
+   v27.1 手机可读性收敛（审查第一轮）
+   · 记号有最小尺寸，不再由字形承担
+   · 条形共用一套列，原点不再漂
+   · 时间线连续轴 + 方形节点 + 刻度
+   · 位域按结构分组，颜色只表示 current
+   · 边标签离开连线，图例删掉（标签自己会说话）
+   ================================================================== */
+
+/* 列表记号：留在原 grid 槽里，只放大、改方角，不脱离布局 */
+[data-vk='board'][data-as='list'] > li::before {
+  width: 0.26em;
+  height: 0.26em;
+  border-radius: 0;
+  background: var(--vk-ink-1);
+  transform: translateY(-0.12em);
+}
+[data-vk='board'][data-as='list'] > li[current]::before { background: var(--vk-focus); }
+
+/* 条形：全表共用三列（标签列宽由最宽一行定义一次） */
+.vk-bars { grid-template-columns: max-content minmax(0, 1fr) 176px; column-gap: var(--vk-space-5); row-gap: var(--vk-space-4); }
+.vk-bar { display: contents; }
+.vk-bar-t { grid-column: 2; }
+.vk-bar-v { grid-column: 3; justify-self: end; }
+
+/* 时间线：一条连续轴、方形节点、日期到节点之间有刻度 */
+.vk-tl { height: 368px; }
+.vk-tl-seg { top: 116px; left: 0; width: 100%; height: var(--vk-line-w-hair); background: var(--vk-line-strong); }
+.vk-tl-i::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 64px;
+  width: var(--vk-line-w-hair);
+  height: 32px;
+  background: var(--vk-line-color);
+  transform: translateX(-50%);
+}
+.vk-tl-dot { top: 96px; width: 40px; height: 40px; border-radius: 0; background: var(--vk-ink-1); }
+.vk-tl-date { top: 8px; color: var(--vk-ink-2); }
+.vk-tl-label { top: 168px; font-size: var(--vk-fs-body); line-height: 1.4; }
+.vk-tl-i[current] .vk-tl-dot { top: 92px; width: 48px; height: 48px; background: var(--vk-focus); }
+
+/* 位域：组与组之间用结构线，不用颜色 */
+.vk-bits-body { justify-content: flex-start; }
+.vk-field + .vk-field {
+  margin-left: var(--vk-space-5);
+  padding-left: var(--vk-space-5);
+  border-left: var(--vk-line-w-hair) solid var(--vk-line-color);
+}
+.vk-bit { width: 88px; }
+.vk-bit .vk-bit-i { font-size: var(--vk-fs-caption); color: var(--vk-ink-3); }
+.vk-bit .vk-bit-v { font-size: var(--vk-fs-body); font-weight: var(--vk-w-bold); color: var(--vk-ink-1); }
+.vk-field-l { color: var(--vk-ink-2); }
+
+/* 关系图：节点按内容撑开；边标签有底板；图例删掉 */
+.vk-gnode { max-width: calc(var(--vk-fs-body) * 9); width: max-content; }
+.vk-gnode .vk-gn-n { white-space: nowrap; }
+.vk-glegend { display: none; }
+.vk-gedge-l-plate { fill: var(--vk-paper); }
+
+/* 并排卡片等高，底边对齐 */
+[data-vk='flow']:not([overlay]) > :is([data-vk='card'], [data-vk='code'], [data-vk='dir'], [data-vk='board']) { height: 100%; }
+
+/* 目录树按内容收宽 */
+[data-vk='dir'] .vk-frame { width: fit-content; min-width: 40%; max-width: 100%; }
+
+/* 数值 + 单位：单位紧贴数字，不单独成列 */
+.vk-unit { margin-left: 0.25em; }
+
+/* 表格：current 落在单元格上时也要看得见（不仅 tr） */
+[data-vk='board'][data-as='table'] td[current] {
+  background-image: linear-gradient(to right, var(--vk-focus) 0 12px, transparent 12px);
+}
+[data-vk='board'][data-as='table'] td[tone]:not([tone='neutral']) {
+  color: var(--vk-tone);
+}
+
+/* 竖链的节点宽度由内容决定；不要给 min-width，否则宽树的叶子会顶出画布。 */
+

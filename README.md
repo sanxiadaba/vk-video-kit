@@ -1,117 +1,65 @@
 # vk
 
-给编程科普视频用的**单帧画面库**：一帧 = 1920×1080 一张图。
-不做文案、分镜、动画、视频渲染——这是画面层。
+给编程科普视频用的**单帧画面库**：作者写 HTML，构建期预处理，一条命令出 1920×1080 PNG + 693 手机预览 + 体检 JSON。只做画面层，文案、配音、动画、分镜、视频都不在这里。
 
-![四帧预览：封面、代码、递归树、目录](docs/preview.png)
+## 安装
 
-**13 个标签写一帧，一条命令出三件产物**：1920 成片 + 693 手机预览 + 体检单 JSON。
-693 是手机横屏满屏的真实宽度（390×844 的屏幕放 16:9 视频），不是 780。
+Node ≥ 20.11；出图用 Playwright 自带的 Chromium（`npx playwright install chromium`）。浏览器版本不对会直接报错，不会拿系统浏览器出一批颜色错的图。
 
 ```bash
 git clone https://github.com/sanxiadaba/vk-video-kit && cd vk-video-kit
 npm ci
-node bin/vk.mjs render tests/fixtures/cover.html
+node bin/vk.mjs render tests/fixtures/code.html
 ```
 
-产物在 `out/`：`cover.png`、`cover.phone.png`、`cover.json`。单页 `<base>.png`，多页 `<base>-<id>.png`；`--out` 不能指向 `src/bin/tools/tests/docs`。
-依赖 Node ≥ 20.11；出图用 Playwright（优先自带 Chromium，找不到回退系统 Chrome / Edge）。
+产物在 `out/`：`<name>.png`、`<name>.phone.png`、`<name>.json`。多帧文件按 `<base>-<id>.png` 命名；`--out` 不能指向 `src/bin/tools/tests/docs`。
 
-## 一帧长什么样
+## 13 个标签
 
-```html
-<vk-page id="demo">
-  <vk-head kicker="标注" lede="只改第 2 行。">这一行在改内存。</vk-head>
-  <vk-code id="c" lang="c" title="a.c" current="2">
-    <script type="text/plain" data-vk-source>
-int a[3] = {1, 2, 3};
-a[1] = 7;
-    </script>
-  </vk-code>
-  <vk-callout mode="note" for="#c@line:2">写进 a[1]</vk-callout>
-</vk-page>
-```
+- `vk-page` —— 画布
+- `vk-head` —— 标题带
+- `vk-flow` —— 排布
+- `vk-card` —— 面
+- `vk-text` —— 文字
+- `vk-img` —— 图
+- `vk-callout` —— 标注
+- `vk-code` —— 源码 / 终端 / diff / 汇编 / 字节 / 位
+- `vk-board` —— 列表 / 步骤 / 条 / 时间线 / 表格 / 内存格 / 区间 / 栈帧
+- `vk-graph` —— 关系图
+- `vk-dir` —— 目录树
+- `vk-seq` —— 时序
+- `vk-math` —— 公式
 
-- **13 个标签**：结构 7（`vk-page` / `vk-head` / `vk-flow` / `vk-text` / `vk-card` / `vk-img` / `vk-callout`）+ 机制 6（`vk-code` / `vk-board` / `vk-graph` / `vk-dir` / `vk-seq` / `vk-math`）。
-  机制件用 `as` 选变体：`vk-code as="code|term|diff|asm|bytes|bits"`、`vk-board as="list|steps|bars|timeline|table|cells"`。
-- **一套刻度**：字号 56 / 64 / 96 / 144 / 216 / 300；线宽 8 / 8 / 8 / 12；间距 4 起。
-- **视觉由库决定**：作者只写内容、`current`、`tone`、`theme`、`size`。
-- **两块能并排**：代码 + 内存 / 表格 / 图，在 1680 版心里按 1:1 或 7:5 分栏；`cells` 窄栏自动变 2×2 紧凑格。
-- **构建期预处理**：语法高亮、公式、字节、目录、汇编、图标全部在构建期算完；运行期只量关系、连线、标注。
-- **只出图**：每帧三件产物，1920 PNG + 693 PNG + 体检单 JSON。
-
-版心对称 **1680×888**（左右 120 / 上下 96）。正文 64px（693 下约 23px），元信息 56px，结构线 8px。
-标题带 398（带导语）/ 278（不带）。
+机制件用 `as` 选变体；`vk-callout` 的变体是 note / mark / arrow / measure / jump。全部属性与最小帧：`vk doc <tag>`、`vk example <tag>`、`vk brief`。
 
 ## 命令
 
 | 命令 | 作用 |
 |---|---|
-| `vk render <file\|dir> [--frame id] [--out DIR] [--json] [--no-preview] [--sheet]` | 构建 + 自检 + 出图；`--sheet` 再拼一张联系表 |
-| `vk check <file\|dir> [--frame id] [--out DIR] [--json]` | 只构建 + 自检 + json（不出图） |
-| `vk doc <tag> [--json]` | 一个件的全部变体、属性、子项属性、完整示例 |
-| `vk example <tag> [as]` | 一个件的完整可跑最小帧（不是模板库） |
-| `vk brief [--json] [--full] [--tag a,b] [--codes]` | 机器契约；默认紧凑（约29KB），`--tag` 只取几个件，`--codes` 只取错误表 |
-| `vk icons <query>` | 搜 Lucide 图标名 |
-| `vk build` | 重建 `dist/`（tokens、字体、vk.css、vk.js、audit.js） |
+| `vk render <file\|dir> [--check] [--frame id] [--out DIR] [--json]` | 构建 + 体检 + 出三件；`--check` 只体检不出图 |
+| `vk doc <tag>` | 一个件的属性、子项、示例 |
+| `vk example <tag> [as]` | 一个件的完整可跑最小帧 |
+| `vk brief [--facts] [--codes] [--tag a,b] [--json]` | 机器契约 |
+| `vk build` | 重建 `dist/` |
 | `vk clean [--all]` | 删 `.vk-tmp`；`--all` 连 `out/` |
 
-`vk render` 会先确保 `dist/` 与源一致，再构建页面、自检、出图。
-`--json` 的 stdout 只有 JSON，构建日志走 stderr，机器可以直接 parse。
-
-**不是门禁**：内容放不下也照样出图，终端与 JSON 里写清事实（`正文带 546 · 内容 648 · 超出 102px`）；只有一张图都没出来才 exit 1。
-`ok` 只表示有没有硬错；`fits` 单独表示放不放得下。顶层 `ok` = 所有帧都没有硬错且没有文件级诊断；`produced` 是帧数，`inputs` 是输入文件数，`clean` 是全部 ok 且 fits。都不阻止出图。
-
-## 自检只判硬的
-
-- 没有画布 / 画布尺寸不对 / 组件渲染失败 / 资源没加载
-- 文字被裁 / 元素出画布 / 块与块重叠 / 标注指空 / 空帧
-
-外加一行**事实**：正文带多高、内容多高、超出多少、上下余量、焦点几处、最小字号、哪些字被裁。
-容量、留白、焦点数都不拦，只报数。
-
-## 写一帧
-
-先读 [`docs/QUICK.md`](docs/QUICK.md)（AI 只读这一份就能写），需要判断时读
-[`docs/GUIDE.md`](docs/GUIDE.md)，调视觉时读 [`docs/DESIGN.md`](docs/DESIGN.md)。
-机器契约用 `vk brief --tag code,board --json`（只取要用的件），单件用 `vk doc <tag>` 或 `vk example <tag>`。
-本库不提供模板、版式库或演示剧集。
-
-## 测试
-
-```bash
-npm test               # 契约 / 负例 / 出图与体检单 / 行为 / 确定性 / CLI / 对比度，约两分钟
-```
-
-## 结构
+## 目录
 
 ```
-src/vocab.mjs        值：字号 / 行距 / 间距 / 颜色 / 线宽 / 图标
-src/schema.mjs       契约：13 个标签、变体、属性、子节点、示例、容量、排版事实、规则
-src/normalize.mjs    归一化：默认值落地、间距换像素、data-vk 身份
-src/contract.mjs     契约门面
-src/contract/        校验（validate.mjs）、错误码（codes.mjs）、文档（doc.mjs）
-src/version.mjs      版本唯一来源（package.json）
-src/build/           构建：入口 / 源码窗 / 汇编解析 / 条目图 / 字节与位域 / 关系图 / 块 / 页面壳
-src/runtime/         运行期：底座 / 关系图 / 标注（只做测量与连线）
-src/shared/          构建与运行期共用的纯函数（连接件几何 / SVG / 区间）
-src/audit/           自检：单独打进 dist/audit.js，不进交付页
-src/*.css            底座 / 机制件 / 状态 / 标注
-bin/vk.mjs           命令行（只解析参数、调用、打印）
-tools/render.mjs     出图管线：开浏览器 / 截图 / 693 缩放 / 联系表
-tools/build.mjs      唯一构建入口（tokens → 字体 → bundle → 产物清单）
-tools/showcase.mjs   验收帧 → 静态看板（GitHub Pages 用）
-docs/QUICK.md        AI 写帧卡
-docs/GUIDE.md        写作判断与选件
-docs/DESIGN.md       视觉与几何契约
-tests/fixtures/      一帧一件的验收帧
-tests/negative/      负例
-tests/assets/        测试用的真实文件（src= 读源码）
+src/schema.mjs     唯一契约：13 个标签、变体、属性、子节点、示例
+src/vocab.mjs      值：字号 / 行高 / 间距 / 颜色 / 线宽
+src/build/         构建期：源码窗 / 条目图 / 关系图 / 页面壳
+src/runtime/       运行期：测量、连线、标注
+src/audit/         自检：单独打进 dist/audit.js
+src/contract/      校验、错误码、文档出口
+src/shared/        构建与运行期共用的纯函数
+bin/vk.mjs         命令行
+tools/             出图、构建、验收
+docs/QUICK.md      AI 写帧卡（唯一的写帧入口）
+docs/DESIGN.md     视觉契约（维护者）
+tests/fixtures/    一帧一件的验收帧
 ```
-
-主题只有一条规则：**谁声明表面，谁写 `color-scheme`**。页面用 `theme="light|dark"`，卡片用 `surface="paper|soft|dark"`；
-所有颜色 token 都是 `light-dark(浅色, 深色)`，所以深色页里放浅色卡片、卡片里再放深色块，嵌套几层都对。
 
 ## 许可
 
-MIT。字体 OFL 1.1，Shiki MIT，KaTeX MIT，Lucide ISC。
+MIT。字体 OFL 1.1，Shiki MIT，KaTeX MIT。

@@ -1,15 +1,24 @@
-/* v25 · 状态层：current / tone / mark，全库只有这几种渲染。 */
-/* 聚光：有 current 时其余行压到 85%；当前行满对比 + 12px 左条。
-   之前压到 72%，在手机 + 540p 压缩下语法色只剩 3.2:1，等于把要读的字弄没。 */
-.vk-lines[data-dim] .vk-line:not(.is-cur) .vk-lc {
-  opacity: 0.85;
+/* ============================================================================
+   v27 · 状态层
+   ----------------------------------------------------------------------------
+   全库只有三种状态：current（正在看这里）/ tone（语义）/ dim（压暗其余）。
+   钩子统一走属性；源码 / 改动 / 汇编行暂时也认构建期仍在输出的 .is-cur。
+   ========================================================================== */
+
+/* 压暗：当前行以外压到 94%。再低会把语法色压到 4.5:1 以下。 */
+[data-dim] .vk-line:not([current]):not(.is-cur) .vk-lc {
+  opacity: 0.94;
 }
 
-.vk-line.is-cur {
-  background: none;
-}
-
-.vk-line.is-cur::before {
+/* ------------------------------------------------------------------ 行
+   current 只有一种渲染：12px 钴蓝左规，贴着行左缘。
+   源码 / 改动 / 汇编三行暂时也认构建期的 .is-cur：两套标记走同一条渲染。 */
+.vk-line:is([current], .is-cur)::before,
+.vk-lrow:is([current], .is-cur)::before,
+.vk-drow:is([current], .is-cur)::before,
+.vk-arow:is([current], .is-cur)::before,
+.vk-band-r[current]::before,
+.vk-fr[current]::before {
   content: '';
   position: absolute;
   left: 0;
@@ -19,86 +28,74 @@
   background: var(--vk-focus);
 }
 
-.vk-line.is-cur .vk-lc {
+.vk-line:is([current], .is-cur) .vk-lc {
   font-weight: var(--vk-w-medium);
 }
 
-.vk-line.is-cur .vk-ln {
+.vk-line:is([current], .is-cur) .vk-ln {
   color: var(--vk-focus);
   font-weight: var(--vk-w-medium);
 }
 
-.vk-term .vk-line.is-cur {
-  background: none;
-}
-
-.vk-drow.is-cur {
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
-}
-
-.vk-arow.is-cur {
-  background: none;
-  box-shadow: inset var(--vk-line-w-rule) 0 0 var(--vk-focus);
-}
-
-[data-vk='board'][data-as='table'] tr[tone='ok'] td {
-  background: var(--vk-tint-ok);
-}
-
-[data-vk='board'][data-as='table'] tr[tone='warn'] td {
-  background: var(--vk-tint-warn);
-}
-
-[data-vk='board'][data-as='table'] tr[tone='err'] td {
-  background: var(--vk-tint-err);
-}
-
-[data-vk='board'][data-as='table'] tr[current] td {
-  background: none;
-}
-
-/* 单元格语义色：底 + 左竖条。只靠 5% 底在 540p 压缩后会消失，
-   左竖条是「线」，和全库语义色只上线的规则一致。 */
-[data-vk='board'][data-as='table'] td[tone]:not([tone='neutral']),
-[data-vk='board'][data-as='table'] th[tone]:not([tone='neutral']) {
-  background: color-mix(in srgb, var(--vk-tone) 10%, var(--vk-paper));
-  box-shadow: inset var(--vk-line-w-hair) 0 0 var(--vk-tone);
-}
-[data-vk='board'][data-as='table'] th[current] {
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
-}
-[data-vk='board'][data-as='table'] td[align='left'],
-[data-vk='board'][data-as='table'] th[align='left'],
-[data-vk='board'][data-as='table'] td.num[align='left'] {
-  text-align: left;
-}
-[data-vk='board'][data-as='table'] td[align='center'],
-[data-vk='board'][data-as='table'] th[align='center'] {
-  text-align: center;
-}
-[data-vk='board'][data-as='table'] td[align='right'],
-[data-vk='board'][data-as='table'] th[align='right'] {
-  text-align: right;
-}
-
-[data-vk='board'][data-as='table'] tr[current] td:first-child {
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
-}
-
-[data-vk='board'][data-as='table'] td[current] {
-  background: var(--vk-tint-focus);
-  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
-}
-
-[data-vk='board'][data-as='list'] > li[current] {
-  background: none;
-  box-shadow: inset var(--vk-line-w-strong) 0 0 var(--vk-focus);
+.vk-lrow:is([current], .is-cur) .vk-lc,
+.vk-lrow:is([current], .is-cur) .vk-dc,
+.vk-drow:is([current], .is-cur) .vk-dc {
   font-weight: var(--vk-w-medium);
+}
+
+.vk-lrow:is([current], .is-cur) .vk-ln,
+.vk-drow:is([current], .is-cur) .vk-ln {
+  color: var(--vk-focus);
+  font-weight: var(--vk-w-medium);
+}
+
+.vk-arow:is([current], .is-cur) .vk-aaddr {
+  color: var(--vk-focus);
+}
+
+/* ------------------------------------------------------------------ 表格
+   只有横线；current / tone 的 12px 左规画在第一格内侧。 */
+[data-vk='board'][data-as='table'] tr[current] td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-strong);
+  background: var(--vk-focus);
+}
+
+[data-vk='board'][data-as='table'] tr:is([data-tone], [tone]):not([data-tone='neutral'], [tone='neutral']) td:first-child::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: var(--vk-line-w-hair);
+  background: var(--vk-tone);
+}
+
+[data-vk='board'][data-as='table'] tr:is([data-tone], [tone]):not([data-tone='neutral'], [tone='neutral']) td:first-child {
+  color: var(--vk-tone);
+}
+
+/* ------------------------------------------------------------------ 队列 / 目录 */
+[data-vk='board'][data-as='list'] > li[current] {
+  border-left-color: var(--vk-focus);
   color: var(--vk-ink-1);
+  font-weight: var(--vk-w-medium);
 }
 
 [data-vk='board'][data-as='list'] > li[current]::before {
   background: var(--vk-focus);
+}
+
+[data-vk='board'][data-as='list'] > li:is([data-tone], [tone]):not([data-tone='neutral'], [tone='neutral']) {
+  border-left-color: var(--vk-tone);
+}
+
+[data-vk='board'][data-as='list'] > li:is([data-tone], [tone]):not([data-tone='neutral'], [tone='neutral'])::before {
+  background: var(--vk-tone);
 }
 
 [data-vk='board'][data-as='list'][variant='check'] > li[current]::before {
@@ -111,13 +108,8 @@
   color: var(--vk-focus);
 }
 
-[data-vk='board'][data-as='list'] > li[tone]:not([tone='neutral'])::before {
-  background: var(--vk-tone);
-}
-
-/* 目录的当前项：竖条贴在这一行缩进处，不是面板左缘——否则它离那一行 100px。 */
+/* 目录的竖条贴在这一行缩进处，不是面板左缘——否则它离那一行 100px。 */
 .vk-node[current] > .vk-nrow {
-  background: none;
   font-weight: var(--vk-w-medium);
 }
 
@@ -129,41 +121,31 @@
   bottom: 0;
   width: var(--vk-line-w-strong);
   background: var(--vk-focus);
-  border-radius: 0;
   z-index: 3;
 }
 
-.vk-node[current] > .vk-nrow .vk-ic {
-  color: var(--vk-focus);
+/* ------------------------------------------------------------------ 格子 / 位 */
+.vk-cell[current] {
+  border-color: var(--vk-focus);
 }
 
 .vk-cell[data-tone]:not([data-tone='neutral']) {
   border-color: var(--vk-tone);
 }
 
-.vk-cell[current] {
-  border-color: var(--vk-focus);
+.vk-cell[data-tone]:not([data-tone='neutral']) .vk-cell-l {
+  color: var(--vk-tone);
 }
 
-.vk-bhex i.is-cur {
-  background: var(--vk-tint-focus);
-}
-
-.vk-bascii i.is-cur {
-  background: var(--vk-tint-focus);
-}
-
-/* 位域的当前段：标在字段上，不把每一位画成一颗按钮。 */
-.vk-bit.is-cur {
-  background: none;
-  border-radius: 0;
-}
-
-.vk-field.is-cur {
-  background: var(--vk-tint-focus);
+.vk-field:is([current], .is-cur) {
   border-bottom-color: var(--vk-focus);
 }
 
+.vk-bit:is([current], .is-cur) .vk-bit-v {
+  color: var(--vk-focus);
+}
+
+/* ------------------------------------------------------------------ 步骤 */
 .vk-step[current] .vk-step-n {
   background: var(--vk-focus);
   border-color: var(--vk-focus);
@@ -174,20 +156,12 @@
   font-weight: var(--vk-w-bold);
 }
 
-/* current 只让圆变实心：图标再变蓝、标签再加粗就是三重说同一件事。 */
-.vk-step[current] .vk-step-t .vk-ic {
-  color: var(--vk-ink-2);
-}
-
-.vk-step[data-tone]:not([data-tone='neutral']) .vk-step-t .vk-ic {
-  color: var(--vk-tone);
-}
-
 .vk-step[data-tone]:not([data-tone='neutral']) .vk-step-n {
   border-color: var(--vk-tone);
   color: var(--vk-tone);
 }
 
+/* ------------------------------------------------------------------ 条 / 区间 */
 .vk-bar[current] .vk-bar-t i {
   background: var(--vk-focus);
 }
@@ -201,16 +175,25 @@
   background: var(--vk-tone);
 }
 
-.vk-tl-i[current] .vk-tl-dot {
+.vk-band-r[current] .vk-band-t i {
   background: var(--vk-focus);
 }
 
-.vk-tl-i[current] .vk-tl-node {
-  border-color: var(--vk-focus);
+.vk-band-r[current] .vk-band-l {
+  font-weight: var(--vk-w-medium);
 }
 
-.vk-tl-i[current] .vk-tl-node .vk-ic {
-  color: var(--vk-focus);
+.vk-band-r[data-tone]:not([data-tone='neutral']) .vk-band-t i {
+  background: var(--vk-tone);
+}
+
+.vk-band-r[data-tone]:not([data-tone='neutral']) .vk-band-l {
+  color: var(--vk-tone);
+}
+
+/* ------------------------------------------------------------------ 时间线 */
+.vk-tl-i[current] .vk-tl-dot {
+  background: var(--vk-focus);
 }
 
 .vk-tl-i[current] .vk-tl-label {
@@ -221,13 +204,18 @@
   background: var(--vk-tone);
 }
 
-.vk-glegend [data-tone]:not([data-tone='neutral']) i {
-  background: var(--vk-tone);
+/* ------------------------------------------------------------------ 栈帧 */
+.vk-fr[data-tone]:not([data-tone='neutral']) {
+  border-left-color: var(--vk-tone);
 }
 
+.vk-fr[data-tone]:not([data-tone='neutral']) .vk-fr-t {
+  color: var(--vk-tone);
+}
+
+/* ------------------------------------------------------------------ 关系图 */
 .vk-gnode[current] {
   border-color: var(--vk-focus);
-  box-shadow: inset 0 0 0 var(--vk-line-w-hair) var(--vk-focus);
 }
 
 .vk-gnode[data-tone]:not([data-tone='neutral']) {
@@ -242,14 +230,26 @@
   fill: var(--vk-tone);
 }
 
+.vk-edge-dot[data-tone]:not([data-tone='neutral']) {
+  fill: var(--vk-tone);
+}
+
+.vk-glegend [data-tone]:not([data-tone='neutral']) i {
+  background: var(--vk-tone);
+}
+
+/* ------------------------------------------------------------------ 时序 */
+.vk-seq-msg[data-tone]:not([data-tone='neutral']),
 .vk-seq-row[data-tone]:not([data-tone='neutral']) {
   --vk-seq-c: var(--vk-tone);
 }
 
+.vk-seq-msg[current],
 .vk-seq-row[current] {
   --vk-seq-c: var(--vk-focus);
 }
 
+.vk-seq-msg[current] .vk-seq-l,
 .vk-seq-row[current] .vk-seq-l {
   font-weight: var(--vk-w-bold);
 }

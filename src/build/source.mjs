@@ -4,10 +4,9 @@ import path from 'node:path';
 import { createHighlighter } from 'shiki';
 import { attrOf, hasAttr, esc } from '../shared/dom.mjs';
 import { parseRange, lineSet } from '../shared/range.mjs';
-import { dedent, expandLeadingTabs, stripAnsi, SUPPORTED_LANGS, langKey } from './code.mjs';
+import { dedent, stripAnsi, SUPPORTED_LANGS, langKey, isAsmLang, langFromSrc } from './code.mjs';
 import { parseAsm, splitInsn } from './asm.mjs';
-import { SYNTAX } from '../vocab.mjs';
-import { FONT } from '../vocab.mjs';
+import { SYNTAX, FONT } from '../vocab.mjs';
 import { frame } from './frame.mjs';
 
 const TOKEN_THEME = {
@@ -38,32 +37,71 @@ const getHighlighter = async () => {
   return highlighter;
 };
 
-/** 把一段纯文本里的 needle 包成 mark，其余转义。单词按边界匹配，避免把 i 标进 int。
-    每个 mark 同时是锚点：data-vk-item 从 1 起，@item:N 圈第 N 个标出的词。 */
-export function markText(text, needle, counter) {
+/* ------------------------------------------------------------------ 标词
+   mark 可以写多个词（逗号/空格分隔）。整词优先：窗口里只要出现过整词，
+   就只标整词；否则回退子串，并报一条 MARK_PARTIAL（hint）。
+   每个匹配都是锚点：#c@text:i 按 data-vk-text 找，@item:N 按序号找。 */
+const WORD_NEEDLE = /^[A-Za-z0-9_$]+$/;
+const reEsc = (s) => String(s).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const wholeRe = (needle) => new RegExp(`(?<![\\w$])${reEsc(needle)}(?![\\w$])`, 'g');
+
+/** "i" / "i, j" / "i j" → ["i", "j"]（去重，保序）。 */
+export function splitMark(value) {
+  const out = [];
+  for (const piece of String(value ?? '').split(/[,，、\s]+/)) {
+    const w = piece.trim();
+    if (w && !out.includes(w)) out.push(w);
+  }
+  return out;
+}
+
+/** 先定每个词在整个窗口里的匹配方式：整词存在就只认整词。 */
+function planMarks(needles, sourceText) {
+  const whole = new Set();
+  for (const needle of needles) {
+    if (WORD_NEEDLE.test(needle) && wholeRe(needle).test(sourceText)) whole.add(needle);
+  }
+  return whole;
+}
+
+/** 把一段纯文本里的 needles 包成 mark，其余转义。state 记序号与命中（词/子串）。 */
+export function markText(text, needles, state, whole = new Set()) {
   const s = String(text ?? '');
-  if (!needle) return esc(s);
-  const word = /^[A-Za-z0-9_$]+$/.test(needle);
-  const re = word
-    ? new RegExp(`(?<![\\w$])${needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}(?![\\w$])`, 'g')
-    : new RegExp(needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g');
+  const list = Array.isArray(needles) ? needles : splitMark(needles);
+  if (!list.length) return esc(s);
+  state ||= { n: 0 };
+  state.n ||= 0;
+  state.hits ||= new Map();
+
+  const plans = list.map((needle) => ({ needle, escaped: reEsc(needle), whole: whole.has(needle) }));
+  /* 长的先匹配：同一个起点上 "ab" 不能被 "a" 抢先。 */
+  const pattern = [...plans]
+    .sort((a, b) => b.needle.length - a.needle.length)
+    .map((p) => (p.whole ? `(?<![\\w$])${p.escaped}(?![\\w$])` : p.escaped))
+    .join('|');
+  const byText = new Map(plans.map((p) => [p.needle, p]));
   const out = [];
   let last = 0;
-  for (const m of s.matchAll(re)) {
+  for (const m of s.matchAll(new RegExp(pattern, 'g'))) {
     out.push(esc(s.slice(last, m.index)));
-    const n = counter ? ++counter.n : 0;
-    out.push(`<mark class="vk-mark"${n ? ` data-vk-item="${n}"` : ''}>${esc(m[0])}</mark>`);
+    const plan = byText.get(m[0]);
+    const hit = state.hits.get(plan.needle) || { word: 0, sub: 0 };
+    if (plan.whole) hit.word++;
+    else hit.sub++;
+    state.hits.set(plan.needle, hit);
+    const n = ++state.n;
+    out.push(`<mark class="vk-mark" data-vk-item="${n}" data-vk-text="${esc(plan.needle)}">${esc(m[0])}</mark>`);
     last = m.index + m[0].length;
   }
   out.push(esc(s.slice(last)));
   return out.join('');
 }
 
-function lineHtml(tokens, needle, counter) {
+function lineHtml(tokens, needles, state, whole) {
   const out = [];
   for (const t of tokens) {
     const cls = COLOR_CLASS[(t.color || '').toUpperCase()] || '';
-    const html = needle ? markText(t.content, needle, counter) : esc(t.content);
+    const html = needles.length ? markText(t.content, needles, state, whole) : esc(t.content);
     out.push(cls ? `<span class="${cls}">${html}</span>` : html);
   }
   return out.join('');
@@ -73,11 +111,14 @@ async function highlightLines(code, lang) {
   const hl = await getHighlighter();
   const key = langKey(lang);
   if (!hl.getLoadedLanguages().includes(key)) {
-    if (!SUPPORTED_LANGS.includes(key)) throw new Error(`不支持的语言 "${lang}"。可用：${SUPPORTED_LANGS.join(', ')}`);
+    if (!SUPPORTED_LANGS.has(key)) throw new Error(`不支持的语言 "${lang}"。可用：${[...SUPPORTED_LANGS].join(', ')}`);
     await hl.loadLanguage(key);
   }
   return hl.codeToTokens(code, { lang: key, theme: 'vk' }).tokens;
 }
+
+/* ------------------------------------------------------------------ 读源 */
+const UTF8 = new TextDecoder('utf-8', { fatal: true });
 
 function inlineSource(node) {
   const s = (node.childNodes || []).find((c) => c.tagName === 'script' && hasAttr(c, 'data-vk-source'));
@@ -93,7 +134,8 @@ function readSource(node, ctx, who) {
     return null;
   }
   if (!src && inline == null) return null;
-  if (inline != null) return dedent(expandLeadingTabs(stripAnsi(inline)));
+  /* dedent 里已经展开行首 tab，这里不再重复调用。 */
+  if (inline != null) return dedent(stripAnsi(inline));
   const abs = ctx.resolveAsset(src);
   if (!abs) {
     ctx.diag(node, { code: 'SRC_MISSING', message: `${who} 的 src="${src}" 找不到文件`, fix: `路径相对页面文件解析：${path.dirname(ctx.label(ctx.file)) || '.'}/` });
@@ -104,7 +146,16 @@ function readSource(node, ctx, who) {
     ctx.diag(node, { code: 'SRC_BINARY', message: `${who} 的 src="${src}" 是二进制文件，不能当源码读`, fix: '换一个文本文件；二进制用 vk-code as="bytes"' });
     return null;
   }
-  return dedent(expandLeadingTabs(stripAnsi(buf.toString('utf8'))));
+  /* UTF-8 BOM 不算第一行的内容；解不开就是编码不对，不猜 GBK。 */
+  const body = buf.length >= 3 && buf[0] === 0xef && buf[1] === 0xbb && buf[2] === 0xbf ? buf.subarray(3) : buf;
+  let text;
+  try {
+    text = UTF8.decode(body);
+  } catch {
+    ctx.diag(node, { code: 'SRC_ENCODING', message: `${who} 的 src="${src}" 不是 UTF-8 文本`, fix: '用编辑器「另存为 UTF-8」后重试' });
+    return null;
+  }
+  return dedent(stripAnsi(text));
 }
 
 function sliceRange(text, range) {
@@ -121,27 +172,58 @@ function cmdHtml(cmd) {
   let first = true;
   for (const m of cmd.matchAll(/"[^"]*"|'[^']*'|\S+/g)) {
     const tok = m[0];
-    let cls = 'vk-arg';
+    let cls = '';
     if (first) {
       cls = 'vk-cmd';
       first = false;
     } else if (/^--?[\w]/.test(tok)) cls = 'vk-flag';
     else if (/^["']/.test(tok)) cls = 'vk-arg-str';
     else if (tok.includes('/')) cls = 'vk-path';
-    out.push(`<span class="${cls}">${esc(tok)}</span>`);
+    out.push(cls ? `<span class="${cls}">${esc(tok)}</span>` : esc(tok));
   }
   return out.join(' ');
 }
 
 export async function buildSource(node, ctx) {
-  const as = attrOf(node, 'as') || 'code';
+  const authored = attrOf(node, 'as') || 'code';
+  const src = attrOf(node, 'src') || '';
+  const langText = attrOf(node, 'lang') || '';
+  /* src= 没写 lang 就按扩展名推断；内联没写 lang 就按纯文本，不硬错。 */
+  const lang = langText || (src ? langFromSrc(src) : '');
+  /* lang 写 asm / nasm / x86-64… 时也是汇编窗；显式 as 优先（term / diff 不受影响）。 */
+  const as = authored === 'code' && isAsmLang(lang) ? 'asm' : authored;
   const who = as === 'code' ? '<vk-code>' : `<vk-code as="${as}">`;
+  const plain = !lang || langKey(lang) === 'text';
+
   const text = readSource(node, ctx, who);
   if (text == null) {
-    if (!ctx.diag.has(node, 'SRC_MISSING') && !ctx.diag.has(node, 'SRC_BINARY')) {
+    const bad = ['SRC_MISSING', 'SRC_BINARY', 'SRC_ENCODING', 'SRC_CONFLICT'].find((c) => ctx.diag.has(node, c));
+    /* 既没 src 也没 script：validate 已经报过 CHILD_MISSING，这里不再用 SRC_MISSING 重说一遍。 */
+    if (!bad && !ctx.diag.has(node, 'CHILD_MISSING')) {
       ctx.diag(node, { code: 'SRC_MISSING', message: `${who} 没有内容`, fix: '写 src="文件" 或内联 <script type="text/plain" data-vk-source>' });
     }
-    return `<div class="vk-missing">${who} 缺内容：写 src 或 data-vk-source</div>`;
+    const why = !bad
+      ? '缺内容：写 src 或 data-vk-source'
+      : bad === 'SRC_ENCODING'
+        ? '源码不是 UTF-8：另存为 UTF-8'
+        : bad === 'SRC_BINARY'
+          ? '源码是二进制文件'
+          : bad === 'SRC_CONFLICT'
+            ? '只能写 src 或内联源码里的一个'
+            : 'src 找不到文件';
+    return `<div class="vk-missing">${who} ${why}</div>`;
+  }
+  /* 有内容才提示 lang：空节点已经由 CHILD_MISSING 说清，不必再叠一条。
+     hint 的严重度由 contract/codes.mjs 的 LANG_MISSING 定义，这里不重复声明。 */
+  if (as === 'code' && !lang) {
+    ctx.diag(node, {
+      file: ctx.label(ctx.file),
+      line: 1,
+      tag: node.tagName,
+      code: 'LANG_MISSING',
+      message: `${who} 的内联源码没写 lang，按纯文本显示`,
+      fix: '补 lang="c" / "js" / "py" 这类；src= 会按扩展名推断',
+    });
   }
 
   const rangeText = attrOf(node, 'range');
@@ -151,6 +233,8 @@ export async function buildSource(node, ctx) {
     return `<div class="vk-missing">range 写法不对</div>`;
   }
   const { start, rows: srcRows, count } = sliceRange(text, range);
+  /* 窗口的行号是源码行号：窗口第 1 行就是 start。 */
+  const winEnd = start + Math.max(1, srcRows.length) - 1;
   if (range && range[0] > count) {
     ctx.diag(node, { code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
     return `<div class="vk-missing">range 超出源码范围</div>`;
@@ -159,38 +243,76 @@ export async function buildSource(node, ctx) {
     ctx.diag(node, { code: 'RANGE_OUT_OF_RANGE', message: `${who} 的 range 上界 ${range[1]} 超出源码范围（共 ${count} 行）`, fix: `改成 1–${count}` });
   }
 
-  const fold = lineSet(attrOf(node, 'fold'));
-  const cur = lineSet(attrOf(node, 'current'));
-  if (attrOf(node, 'current') && !cur) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `${who} 的 current="${attrOf(node, 'current')}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
+  const foldText = attrOf(node, 'fold');
+  const fold = lineSet(foldText);
+  const curText = attrOf(node, 'current') || '';
+  const cur = curText ? lineSet(curText) : null;
+  if (curText && !cur) {
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'VALUE_LINES', message: `${who} 的 current="${curText}" 不是行段`, fix: '写法："3" / "3-4" / "4-6"' });
   }
-  if (cur && [...cur].some((n) => n > srcRows.length)) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'CURRENT_RANGE', message: `${who} 的 current 越界（窗口里只有 ${srcRows.length} 行）`, fix: `改成 1–${srcRows.length}` });
+  /* current 是源码行号：一行都没落在窗口里，就说清楚是哪一行、窗口在哪。
+     有交集时（如 current="4-"）按窗口截断，不因为尾巴越界而报错。 */
+  let firstOutside = 0;
+  let anyInside = false;
+  for (const n of cur || []) {
+    if (n >= start && n <= winEnd) anyInside = true;
+    else if (!firstOutside || n < firstOutside) firstOutside = n;
   }
-  const mark = attrOf(node, 'mark') || '';
-  const markCounter = { n: 0 };
-  if (mark && !text.includes(mark)) ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 在源码里找不到`, fix: '改成源码里真实出现的词' });
-  const title = attrOf(node, 'title') || '';
+  const missedWindow = !!cur && !anyInside && firstOutside;
+  if (missedWindow) {
+    ctx.diag(node, {
+      file: ctx.label(ctx.file),
+      line: 1,
+      tag: node.tagName,
+      code: 'CURRENT_MISSING',
+      message: `${who} 的 current="${curText}"：源码第 ${firstOutside} 行不在窗口 ${start}–${winEnd} 内`,
+      fix: `current 写源码行号；这个窗口是源码第 ${start}–${winEnd} 行`,
+    });
+  }
 
+  /* term 没有 mark 这个属性；写了也不标，避免再叠一条 MARK_MISSING。 */
+  const needles = as === 'term' ? [] : splitMark(attrOf(node, 'mark'));
+  const sourceText = srcRows.join('\n');
+  const markWhole = planMarks(needles, sourceText);
+  const markState = { n: 0, hits: new Map() };
+  /* 没有命中要分开说：一个词都没标 → MISSING；只有子串命中 → PARTIAL（hint）。 */
+  const reportMarks = () => {
+    for (const needle of needles) {
+      const hit = markState.hits.get(needle) || { word: 0, sub: 0 };
+      if (!hit.word && !hit.sub) {
+        ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'MARK_MISSING', message: `${who} 的 mark="${needle}" 在窗口里找不到`, fix: '改成源码里真实出现、且在 range 内的词' });
+      } else if (!hit.word && WORD_NEEDLE.test(needle)) {
+        ctx.diag(node, {
+          file: ctx.label(ctx.file),
+          line: 1,
+          tag: node.tagName,
+          code: 'MARK_PARTIAL',
+          message: `${who} 的 mark="${needle}" 没有整词出现，只按子串标出`,
+          fix: '确认要标的就是词里的这一段；要整词就把 mark 改成源码里完整的词',
+        });
+      }
+    }
+  };
+  const title = attrOf(node, 'title') || '';
   let body = '';
   let digits = String(start + srcRows.length - 1).length;
+
   /* 有的行被 fold 掉、term/asm 还会跳过空行：current 指过去可能一个都不亮。
      不能静默成功。 */
   const checkCurrent = () => {
-    if (cur && !body.includes('is-cur') && !ctx.diag.has(node, 'CURRENT_RANGE')) {
-      ctx.diag(node, { code: 'CURRENT_MISSING', message: `${who} 的 current 没有命中任何可见行`, fix: '按窗口里真实可见的行号写；被 fold 的行不会亮' });
+    if (cur && !body.includes('is-cur') && !missedWindow) {
+      ctx.diag(node, { code: 'CURRENT_MISSING', message: `${who} 的 current="${curText}" 没有命中任何可见行`, fix: '被 fold 掉的行、空行、diff 的 hunk 头不会亮；按窗口里真实可见的源码行号写' });
     }
   };
   let rangeLabel = rangeText || '';
 
   if (as === 'code') {
-    const tokens = await highlightLines(srcRows.join('\n'), attrOf(node, 'lang') || 'text');
+    const tokens = plain ? null : await highlightLines(sourceText, lang);
     const out = [];
     let folded = 0;
-    srcRows.forEach((_, i) => {
-      const win = i + 1;
+    srcRows.forEach((line, i) => {
       const srcNo = start + i;
-      if (fold?.has(win)) {
+      if (fold?.has(srcNo)) {
         folded++;
         return;
       }
@@ -198,48 +320,48 @@ export async function buildSource(node, ctx) {
         out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-lc">省略 ${folded} 行</span></div>`);
         folded = 0;
       }
-      const cls = cur?.has(win) ? ' is-cur' : '';
-      out.push(`<div class="vk-line${cls}" data-vk-line="${win}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${lineHtml(tokens[i] || [], mark, markCounter)}</span></div>`);
+      const cls = cur?.has(srcNo) ? ' is-cur' : '';
+      const html = tokens ? lineHtml(tokens[i] || [], needles, markState, markWhole) : markText(line, needles, markState, markWhole);
+      out.push(`<div class="vk-line${cls}" data-vk-line="${srcNo}"><span class="vk-ln">${srcNo}</span><span class="vk-lc">${html}</span></div>`);
     });
     if (folded) out.push(`<div class="vk-line is-fold" data-meta><span class="vk-ln">⋯</span><span class="vk-lc">省略 ${folded} 行</span></div>`);
     body = out.join('');
-    digits = String(start + srcRows.length - 1).length;
   } else if (as === 'term') {
     const prompt = attrOf(node, 'prompt') || '$';
     const out = [];
-    let win = 0;
-    for (const line of srcRows) {
+    srcRows.forEach((line, i) => {
+      const srcNo = start + i;
       const t = line.replace(/\s+$/, '');
-      if (!t) continue;
-      win++;
+      if (!t) return;
+      const cls = cur?.has(srcNo) ? ' is-cur' : '';
       if (t.startsWith(prompt)) {
-        out.push(`<div class="vk-line${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-prompt">${esc(prompt)}</span>${cmdHtml(t.slice(prompt.length).trim())}</div>`);
+        out.push(`<div class="vk-line${cls}" data-vk-line="${srcNo}"><span class="vk-prompt">${esc(prompt)}</span>${cmdHtml(t.slice(prompt.length).trim())}</div>`);
       } else {
         const isErr = /\b(error|Error|ERROR|fatal|failed|not found|No such)\b|错误|失败/.test(t);
-        out.push(`<div class="vk-line${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="${isErr ? 'vk-errt' : 'vk-out'}">${esc(t)}</span></div>`);
+        out.push(`<div class="vk-line${cls}" data-vk-line="${srcNo}"><span class="${isErr ? 'vk-errt' : 'vk-out'}">${esc(t)}</span></div>`);
       }
-    }
+    });
     body = out.join('');
-    digits = String(win).length;
   } else if (as === 'diff') {
     const rows = [];
     let oldNo = 1;
     let newNo = 1;
-    for (const line of srcRows) {
-      if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) continue;
+    srcRows.forEach((line, i) => {
+      const srcNo = start + i;
+      if (/^(diff --git|index |--- |\+\+\+ )/.test(line)) return;
       if (line.startsWith('@@')) {
         const m = line.match(/^@@\s+-(\d+)(?:,(\d+))?\s+\+(\d+)(?:,(\d+))?\s+@@/);
         if (m) {
           oldNo = Number(m[1]);
           newNo = Number(m[3]);
         }
-        rows.push({ kind: 'hunk', text: m ? '' : line, header: !!m });
-        continue;
+        rows.push({ kind: 'hunk', text: m ? '' : line, header: !!m, src: srcNo });
+        return;
       }
-      if (line.startsWith('+')) rows.push({ kind: 'add', text: line.slice(1), old: null, new: newNo++ });
-      else if (line.startsWith('-')) rows.push({ kind: 'del', text: line.slice(1), old: oldNo++, new: null });
-      else rows.push({ kind: 'same', text: line.replace(/^ /, ''), old: oldNo++, new: newNo++ });
-    }
+      if (line.startsWith('+')) rows.push({ kind: 'add', text: line.slice(1), old: null, new: newNo++, src: srcNo });
+      else if (line.startsWith('-')) rows.push({ kind: 'del', text: line.slice(1), old: oldNo++, new: null, src: srcNo });
+      else rows.push({ kind: 'same', text: line.replace(/^ /, ''), old: oldNo++, new: newNo++, src: srcNo });
+    });
     const spanOf = (nums) => (Math.min(...nums) === Math.max(...nums) ? `${nums[0]}` : `${Math.min(...nums)}–${Math.max(...nums)}`);
     for (let i = 0; i < rows.length; i++) {
       const h = rows[i];
@@ -260,7 +382,6 @@ export async function buildSource(node, ctx) {
       }
     }
     const out = [];
-    let win = 0;
     let add = 0;
     let del = 0;
     let maxLn = 0;
@@ -269,33 +390,32 @@ export async function buildSource(node, ctx) {
         out.push(`<div class="vk-dhunk">${esc(r.text)}</div>`);
         continue;
       }
-      win++;
       const ln = r.kind === 'del' ? r.old : r.new;
       maxLn = Math.max(maxLn, ln || 0);
       if (r.kind === 'add') add++;
       if (r.kind === 'del') del++;
       const cls = r.kind === 'same' ? '' : ` ${r.kind}`;
       out.push(
-        `<div class="vk-drow${cls}${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-ln">${ln}</span><span class="vk-sign">${r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '}</span><span class="vk-dc">${markText(r.text, mark, markCounter) || ' '}</span></div>`
+        `<div class="vk-drow${cls}${cur?.has(r.src) ? ' is-cur' : ''}" data-vk-line="${r.src}"><span class="vk-ln">${ln}</span><span class="vk-sign">${r.kind === 'add' ? '+' : r.kind === 'del' ? '−' : ' '}</span><span class="vk-dc">${markText(r.text, needles, markState, markWhole) || ' '}</span></div>`
       );
     }
     body = out.join('');
-    digits = String(maxLn).length;
     rangeLabel = `+${add} / −${del}`;
+    digits = String(maxLn).length;
   } else {
-    /* asm */
+    /* asm：行号同样是源码行号；fold / current 都按源码行号。 */
     const showHex = hasAttr(node, 'hex');
-    const showAddr = attrOf(node, 'show-addr') !== 'off';
-    const fold = lineSet(attrOf(node, 'fold'));
-    const parsed = parseAsm(srcRows.join('\n'));
+    /* v27 起叫 addr；旧名 show-addr 照收，避免旧文档/旧帧一夜之间多出一列。 */
+    const addrText = hasAttr(node, 'show-addr') ? attrOf(node, 'show-addr') : attrOf(node, 'addr');
+    const showAddr = addrText !== 'off';
+    const parsed = parseAsm(sourceText);
     const out = [];
-    let win = 0;
     let folded = 0;
     let addrLen = 0;
     parsed.rows.forEach((r) => {
       if (r.kind === 'blank') return;
-      win++;
-      if (fold?.has(win)) {
+      const srcNo = start - 1 + r.line;
+      if (fold?.has(srcNo)) {
         folded++;
         return;
       }
@@ -303,41 +423,36 @@ export async function buildSource(node, ctx) {
         out.push(`<div class="vk-arow vk-alabel" data-meta><span class="vk-ainsn">⋯ 省略 ${folded} 行</span></div>`);
         folded = 0;
       }
+      const cls = cur?.has(srcNo) ? ' is-cur' : '';
       if (r.kind === 'label') {
-        out.push(`<div class="vk-arow vk-alabel${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}"><span class="vk-ainsn">${esc(`<${r.text}>:`)}</span></div>`);
+        out.push(`<div class="vk-arow vk-alabel${cls}" data-vk-line="${srcNo}"><span class="vk-ainsn">${esc(`<${r.text}>:`)}</span></div>`);
         return;
       }
       const { mnemonic, operands } = splitInsn(r.text);
-      const addrText = r.addr ? (/^0x/i.test(r.addr) ? r.addr : `0x${r.addr}`) : '';
-      addrLen = Math.max(addrLen, addrText.length);
-      const mnemonicHtml = mark ? markText(mnemonic, mark, markCounter) : esc(mnemonic);
-      const opsHtml = (mark ? markText(operands, mark, markCounter) : esc(operands))
+      const addrHtml = r.addr ? (/^0x/i.test(r.addr) ? r.addr : `0x${r.addr}`) : '';
+      addrLen = Math.max(addrLen, addrHtml.length);
+      const mnemonicHtml = needles.length ? markText(mnemonic, needles, markState, markWhole) : esc(mnemonic);
+      const opsHtml = (needles.length ? markText(operands, needles, markState, markWhole) : esc(operands))
         .replace(/%[a-z0-9]+/gi, (m) => `<i class="vk-areg">${m}</i>`)
         .replace(/\$?0x[0-9a-f]+/gi, (m) => `<i class="vk-aimm">${m}</i>`);
       out.push(
-        `<div class="vk-arow${cur?.has(win) ? ' is-cur' : ''}" data-vk-line="${win}">${showAddr ? `<span class="vk-aaddr">${esc(addrText)}</span>` : ''}${
+        `<div class="vk-arow${cls}" data-vk-line="${srcNo}">${showAddr ? `<span class="vk-aaddr">${esc(addrHtml)}</span>` : ''}${
           showHex ? `<span class="vk-abytes">${esc(r.bytes)}</span>` : ''
         }<span class="vk-ainsn">${mnemonicHtml}</span><span class="vk-aops">${opsHtml}</span></div>`
       );
     });
     if (folded) out.push(`<div class="vk-arow vk-alabel" data-meta><span class="vk-ainsn">⋯ 省略 ${folded} 行</span></div>`);
     body = out.join('');
-    digits = String(win).length;
     checkCurrent();
+    reportMarks();
     const addrW = Math.max(88, Math.round(addrLen * 0.62 * FONT.caption + 16));
-    if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
-      ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成汇编里真实出现的一个词，如 add / mov / rdi' });
-    }
-    return frame({ title, body: `<div class="vk-lines vk-asm" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
+    return frame({ title, body: `<div class="vk-lines" style="--vk-aaddr-w:${addrW}px">${body}</div>`, range: rangeLabel, dots: true, kind: as });
   }
 
-
-  const cls = as === 'term' ? ' vk-term' : as === 'diff' ? ' vk-diff' : as === 'asm' ? ' vk-asm' : '';
-  const dim = as === 'code' && cur?.size ? ' data-dim="1"' : '';
+  /* 只有 term 有专属皮；diff / asm 的行样式由行自己的 class 决定。 */
+  const cls = as === 'term' ? ' vk-term' : '';
+  const dim = as === 'code' && cur && cur.size ? ' data-dim="1"' : '';
   checkCurrent();
-  /* 词被 Shiki 切成多个 token 时，逐 token 匹配会一个都标不上——必须说破。 */
-  if (mark && markCounter.n === 0 && !ctx.diag.has(node, 'MARK_MISSING')) {
-    ctx.diag(node, { code: 'MARK_MISSING', message: `${who} 的 mark="${mark}" 没有标出任何完整词`, fix: '改成一个完整的 token；a[i] 这种跨 token 的写法先只 mark i' });
-  }
+  reportMarks();
   return frame({ title, body: `<div class="vk-lines${cls}"${dim}>${body}</div>`, range: rangeLabel, digits, dots: true, kind: as });
 }

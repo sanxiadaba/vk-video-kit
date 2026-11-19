@@ -1,6 +1,6 @@
 <vk-page id="mix-cells">
   <vk-head kicker="组合">这一行改了第二格。</vk-head>
-  <vk-flow cols="1 1" gap="wide" valign="center">
+  <vk-flow split="1 1" gap="wide" valign="center">
     <vk-code id="c" lang="c" title="a.c">
       <script type="text/plain" data-vk-source>
 int a[3];
@@ -14,5 +14,5 @@ a[1] = 7;
       <li value="?" label="a[3]"></li>
     </vk-board>
   </vk-flow>
-  <vk-callout mode="mark" for="#c@line:2 #m@item:2"></vk-callout>
+  <vk-callout as="mark" target="#c@line:2 #m@item:2"></vk-callout>
 </vk-page>

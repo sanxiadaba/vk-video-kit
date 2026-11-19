@@ -29,7 +29,10 @@ export function buildBytes(node, ctx) {
     return '<div class="vk-missing">字节源冲突</div>';
   }
   if (!src && !inline) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '字节窗没有内容', fix: '写 src="文件.bin"，或内联十六进制如 68 65 6c 6c 6f' });
+    /* 空字节窗：validate 已经报过 CHILD_MISSING，这里不再用 SRC_MISSING 重说一遍。 */
+    if (!ctx.diag.has?.(node, 'CHILD_MISSING')) {
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '字节窗没有内容', fix: '写 src="文件.bin"，或内联十六进制如 68 65 6c 6c 6f' });
+    }
     return '<div class="vk-missing">字节缺内容</div>';
   }
   if (inline?.error) {
@@ -51,7 +54,7 @@ export function buildBytes(node, ctx) {
   }
 
   const start = Number(attrOf(node, 'offset') || 0) || 0;
-  const len = Math.max(0, Math.min(Number(attrOf(node, 'length') || 32), buf.length - start));
+  const len = Math.max(0, Math.min(Number(attrOf(node, 'length') || 16), buf.length - start));
   if (start >= buf.length || len === 0) {
     ctx.diag(node, { code: 'SRC_RANGE', message: `字节窗的 offset=${start} 超出了文件（共 ${buf.length} 字节）`, fix: `offset 改成 0–${Math.max(0, buf.length - 1)}` });
   }
@@ -69,8 +72,9 @@ export function buildBytes(node, ctx) {
     rows.push(`<div class="vk-brow"><span class="vk-baddr">0x${(base + start + i).toString(16).padStart(width, '0')}</span><span class="vk-bhex">${hex}</span><span class="vk-bascii">${ascii}</span></div>`);
   }
   const head = '<div class="vk-bhead"><span>地址</span><span>十六进制</span><span>ASCII</span></div>';
-  if (curText && cur && !rows.join('').includes('is-cur')) {
-    ctx.diag(node, { code: 'CURRENT_MISSING', message: `字节窗的 current="${curText}" 没有命中任何字节`, fix: `改成 1–${len}` });
+  /* 字节窗的 current 是字节序号（不是源码行号）：越界用 CURRENT_RANGE，和源窗分开。 */
+  if (curText && cur && len > 0 && !rows.join('').includes('is-cur')) {
+    ctx.diag(node, { code: 'CURRENT_RANGE', message: `字节窗的 current="${curText}" 没有命中任何字节（这一窗只有 1–${len}）`, fix: `current 写字节序号，1 起；不要写源码行号` });
   }
   /* 列宽用 px，不用 ch：表头 56、行 64，ch 在不同元素上会解析成不同宽度，
      表头与行就会错开（v26 的真 bug）。0.6em 是 JetBrains Mono 的 1ch。 */
@@ -85,15 +89,25 @@ export function buildBytes(node, ctx) {
 export function buildBits(node, ctx) {
   const rawValue = attrOf(node, 'value') || '';
   if (!rawValue.trim()) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '位域没有 value', fix: 'value="0|01111|0000000000"' });
+    /* value 是必填：validate 已经报过 ATTR_REQUIRED，这里不再重说一遍。 */
+    if (!ctx.diag.has?.(node, 'ATTR_REQUIRED')) {
+      ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'SRC_MISSING', message: '位域没有 value', fix: 'value="0|01111|0000000000"' });
+    }
     return '<div class="vk-missing">位串缺 value</div>';
   }
   const segments = rawValue.split('|');
-  const labels = (attrOf(node, 'field-labels') || '').split(',').map((s) => s.trim());
+  /* v27：field-labels → fields，label → caption。旧名照收、不报错（文档可能滞后），
+     但新名优先。 */
+  const fieldsText = attrOf(node, 'fields') ?? attrOf(node, 'field-labels') ?? '';
+  const labels = fieldsText.split(',').map((s) => s.trim());
   if (labels.length > 1 && labels.length !== segments.length) {
-    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'FIELD_LABELS', message: `位域有 ${segments.length} 段，但 field-labels 有 ${labels.filter(Boolean).length} 个`, fix: '逗号分隔的段名个数要与 | 的段数一致' });
+    ctx.diag(node, { file: ctx.label(ctx.file), line: 1, tag: node.tagName, code: 'FIELD_LABELS', message: `位域有 ${segments.length} 段，但 fields 有 ${labels.filter(Boolean).length} 个`, fix: '逗号分隔的段名个数要与 | 的段数一致' });
   }
-  const index = attrOf(node, 'index') || 'down';
+  /* index：down / up 是 v26 的叫法，按 weight / order 处理，不报错。 */
+  const LEGACY_INDEX = { down: 'weight', up: 'order' };
+  const rawIndex = attrOf(node, 'index') || 'weight';
+  const mapped = LEGACY_INDEX[rawIndex] || rawIndex;
+  const index = ['weight', 'order', 'none', 'sparse'].includes(mapped) ? mapped : 'weight';
   const sign = hasAttr(node, 'sign');
   const curText = attrOf(node, 'current');
   const cur = curText ? lineSet(curText) : null;
@@ -112,7 +126,7 @@ export function buildBits(node, ctx) {
       .map((b, bi) => {
         const globalIdx = offset + bi;
         const weight = all.length - 1 - globalIdx;
-        const label = index === 'none' ? '' : index === 'sparse' ? (weight % 8 === 0 ? String(weight) : '') : index === 'up' ? String(globalIdx) : String(weight);
+        const label = index === 'none' ? '' : index === 'sparse' ? (weight % 8 === 0 ? String(weight) : '') : index === 'order' ? String(globalIdx) : String(weight);
         const isSign = sign && globalIdx === 0;
         const isCur = cur?.has(globalIdx + 1) ? ' is-cur' : '';
         return `<i class="vk-bit${isSign ? ' is-sign' : ''}${isCur}" data-vk-bit="${globalIdx + 1}"><b class="vk-bit-i">${label}</b><span class="vk-bit-v">${esc(b)}</span></i>`;
@@ -121,10 +135,12 @@ export function buildBits(node, ctx) {
     const fieldCur = cur && [...bits].some((_, bi) => cur.has(offset + bi + 1));
     return `<div class="vk-field${fieldCur ? ' is-cur' : ''}" data-vk-item="${fi + 1}">${labels[fi] ? `<span class="vk-field-l">${esc(labels[fi])}</span>` : ''}<span class="vk-field-bits">${cells}</span></div>`;
   });
-  const left = attrOf(node, 'label') ? `<span class="vk-bits-label">${esc(attrOf(node, 'label'))}</span>` : '';
+  const captionText = attrOf(node, 'caption') ?? attrOf(node, 'label') ?? '';
+  const left = captionText ? `<span class="vk-bits-label">${esc(captionText)}</span>` : '';
   const body = `<div class="vk-bits" data-index="${index}">${left}<div class="vk-bits-body">${fieldHtml.join('')}</div></div>`;
-  if (curText && cur && !fieldHtml.join('').includes('is-cur')) {
-    ctx.diag(node, { code: 'CURRENT_MISSING', message: `位域的 current="${curText}" 没有命中任何位`, fix: `改成 1–${all.length}` });
+  /* 位域的 current 是位序号（从左数，1 起）：越界用 CURRENT_RANGE，和源窗分开。 */
+  if (curText && cur && all.length > 0 && !fieldHtml.join('').includes('is-cur')) {
+    ctx.diag(node, { code: 'CURRENT_RANGE', message: `位域的 current="${curText}" 没有命中任何位（这一行只有 1–${all.length}）`, fix: `current 写位序号，1 起、从左数；不要写源码行号` });
   }
   const title = attrOf(node, 'title');
   return title ? frame({ title, body, kind: 'bits' }) : body;

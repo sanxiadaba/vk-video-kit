@@ -1,0 +1,20 @@
+<vk-page id="flow-split">
+  <vk-head kicker="排布" size="subhead">左边代码，右边一张表。</vk-head>
+  <vk-flow split="7 5" gap="wide" valign="start">
+    <vk-code id="c" lang="c" title="a.c" current="2">
+      <script type="text/plain" data-vk-source>
+int a[3] = {1, 7, 3};
+a[1] = 7;
+return a[1];
+      </script>
+    </vk-code>
+    <vk-board as="table">
+      <table>
+        <tr><th>下标</th><th>值</th></tr>
+        <tr><td>0</td><td>1</td></tr>
+        <tr><td>1</td><td>7</td></tr>
+        <tr><td>2</td><td>3</td></tr>
+      </table>
+    </vk-board>
+  </vk-flow>
+</vk-page>

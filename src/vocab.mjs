@@ -83,10 +83,13 @@ export const GAP = { none: 0, close: 16, normal: 32, wide: 64, section: 96 };
 export const STYLE_LOCKED = /^--vk-(fs|lh|line|space|margin|canvas|measure|radius|gap|ann|conn|icon|font|w|track|cols|span)/;
 
 /* ------------------------------------------------------------------ 形 */
-export const RADIUS = { none: 0, sm: 8, md: 12, pill: 999 };
+/** 圆角只有一种：0。方角 + 细线是这套画面的身份；圆角卡片一出现就会读成
+    「网页 / 办公文档」。唯一的例外是没有任何例外。 */
+export const RADIUS = { none: 0 };
 
-/* 图标：只发三档，组件不再自己定尺寸。 */
-export const ICON = { lg: 28, xl: 40, '2xl': 56 };
+/* 没有图标：这套画面的语义由字、线、位置承担。装饰性图标在 693 下只剩
+   14px 的一团，且和「不加图标」的设计宣言冲突，整条链（lucide 依赖 / vk icons /
+   icon 属性 / ICON 错误码）一起删掉。 */
 
 /* ------------------------------------------------------------------ 色
    每一支都是「纸面值 / 暗面值」一对。CSS 侧生成 light-dark()，
@@ -101,29 +104,27 @@ export const PAINT = {
   ink1: ['#111418', '#f4f6f9'],
   ink2: ['#3f4652', '#c3ccd9'],
   ink3: ['#5b6472', '#9aa7b8'],
-  line: ['rgba(17, 20, 24, 0.32)', 'rgba(255, 255, 255, 0.34)'],
-  lineStrong: ['rgba(17, 20, 24, 0.46)', 'rgba(255, 255, 255, 0.5)'],
+  /* 结构线在手机上要活下来：2.8:1 / 4.2:1。旧的 .32 / .46 在 693 下分别只有
+     2.1:1 / 3.1:1，细线会先糊掉，再被视频压缩吃掉。 */
+  line: ['rgba(17, 20, 24, 0.42)', 'rgba(255, 255, 255, 0.44)'],
+  lineStrong: ['rgba(17, 20, 24, 0.55)', 'rgba(255, 255, 255, 0.62)'],
   focus: ['#1d4ed8', '#7aa2ff'],
   info: ['#475569', '#cbd5e1'],
   ok: ['#0f766e', '#5eead4'],
   warn: ['#b45309', '#fbbf24'],
   err: ['#b91c1c', '#fca5a5'],
-  tintInfo: ['#f1f5f9', '#1b2430'],
-  tintFocus: ['#e2e9ff', '#1b2740'],
-  tintOk: ['#ecfdf5', '#10251f'],
-  tintWarn: ['#fffbeb', '#2a2113'],
-  tintErr: ['#fef2f2', '#2a1515'],
   mark: ['#ffe58a', '#5c4614'],
-  // 填色块（当前步骤章、标出的字节、指针胶囊）上的字：浅色模式白字，深色模式黑字。
+  // 填色块（当前步骤章、指针胶囊）上的字：浅色模式白字，深色模式黑字。
   onFocus: ['#ffffff', '#0b0f14'],
 };
 
 /* 语法：四个色相 + 一个灰 + 一个墨。结构词 = 莓红，字面量 = 松绿 / 青铜，注释 = 冷灰。
-   莓红避开了强调蓝：一帧里「蓝」只表示「正在看这里」。 */
+   每一档都按 paper 上 ≥4.5:1 校准：旧 number #92400e 之外还有 #c18401 那种 3.2:1 的橙，
+   小白最该读的数字反而最弱。莓红避开强调蓝：一帧里「蓝」只表示「正在看这里」。 */
 export const SYNTAX = {
-  string: ['#0f766e', '#5eead4'],
+  string: ['#0b6b7d', '#5eead4'],
   comment: ['#5b6472', '#9aa7b8'],
-  number: ['#92400e', '#fbbf24'],
+  number: ['#9a3f00', '#fbbf24'],
   keyword: ['#86198f', '#d8b4fe'],
   operator: ['#4b5563', '#9aa7b8'],
   fn: ['#111418', '#f8fafc'],
@@ -141,7 +142,9 @@ export const FONT_FAMILY = {
 /* ------------------------------------------------------------------ 枚举 */
 export const TONE = ['neutral', 'info', 'ok', 'warn', 'err'];
 export const THEME = ['light', 'dark'];
-export const CARD_SURFACE = ['paper', 'soft', 'dark'];
+/* 面材质：auto 跟随页面（浅页 paper / 暗页 raised），其余三种是显式指定。
+   「谁声明表面，谁写 color-scheme」，所以没有 theme 与 surface 两套明暗词。 */
+export const CARD_SURFACE = ['auto', 'paper', 'soft', 'raised'];
 export const INK = ['primary', 'secondary', 'muted'];
 export const SIZE = Object.keys(FONT);
 

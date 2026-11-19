@@ -3,7 +3,7 @@
  *
  * 不进程运行时 bundle：这里允许 Node/构建期约定，但不碰 DOM。
  *
- * 同一套规则只有这一份：去缩进、去 ANSI、行段、语言别名。
+ * 同一套规则只有这一份：去缩进、去 ANSI、语言别名。
  */
 
 /** 行首 tab 按 4 列展开 */
@@ -26,7 +26,7 @@ export function stripAnsi(text) {
   return String(text ?? '').replace(ANSI_RE, '');
 }
 
-/** 去掉源码缩进带来的公共缩进；统一 CRLF。 */
+/** 去掉源码缩进带来的公共缩进；统一 CRLF。行首 tab 在这一步展开。 */
 export function dedent(text) {
   let t = String(text).replace(/\r\n?/g, '\n');
   t = t.replace(/^\n+/, '').replace(/\s+$/, '');
@@ -68,40 +68,69 @@ export const LANG_ALIAS = {
   assembly: 'asm',
 };
 
-export const LANG_LABEL = {
-  python: 'Python',
-  javascript: 'JavaScript',
-  typescript: 'TypeScript',
-  jsx: 'JSX',
-  tsx: 'TSX',
-  bash: 'Shell',
-  asm: 'ASM',
-  json: 'JSON',
-  sql: 'SQL',
-  html: 'HTML',
-  css: 'CSS',
-  c: 'C',
-  cpp: 'C++',
-  csharp: 'C#',
-  java: 'Java',
-  rust: 'Rust',
-  go: 'Go',
-  ruby: 'Ruby',
-  php: 'PHP',
-  kotlin: 'Kotlin',
-  swift: 'Swift',
-  lua: 'Lua',
-  yaml: 'YAML',
-  toml: 'TOML',
-  ini: 'INI',
-  dockerfile: 'Dockerfile',
-  makefile: 'Makefile',
-  diff: 'Diff',
-  markdown: 'Markdown',
-  vue: 'Vue',
-  svelte: 'Svelte',
-  text: 'Text',
-};
+/** Shiki 能加载的语言（langKey 归一后的名字）。只留集合：标签名由 lang 属性自己说。 */
+export const SUPPORTED_LANGS = new Set([
+  'python',
+  'javascript',
+  'typescript',
+  'jsx',
+  'tsx',
+  'bash',
+  'asm',
+  'json',
+  'sql',
+  'html',
+  'css',
+  'c',
+  'cpp',
+  'csharp',
+  'java',
+  'rust',
+  'go',
+  'ruby',
+  'php',
+  'kotlin',
+  'swift',
+  'lua',
+  'yaml',
+  'toml',
+  'ini',
+  'dockerfile',
+  'makefile',
+  'diff',
+  'markdown',
+  'vue',
+  'svelte',
+  'text',
+]);
 
 export const langKey = (lang) => LANG_ALIAS[String(lang || 'text').toLowerCase()] || String(lang || 'text').toLowerCase();
-export const SUPPORTED_LANGS = Object.freeze(Object.keys(LANG_LABEL));
+
+/* 汇编窗的语言名：写了这些就等于 as="asm"（asm.mjs 自己解析，不走 Shiki）。 */
+export const ASM_LANGS = new Set(['asm', 'att', 'intel', 'x86', 'x86-64', 'x86_64']);
+export const isAsmLang = (lang) => ASM_LANGS.has(langKey(lang));
+
+/** src= 没写 lang 时按扩展名推断；认不出就按纯文本（不硬错）。 */
+const EXT_LANG = {
+  c: 'c',
+  h: 'c',
+  cc: 'cpp',
+  cpp: 'cpp',
+  hpp: 'cpp',
+  js: 'js',
+  mjs: 'js',
+  ts: 'ts',
+  py: 'py',
+  rs: 'rust',
+  go: 'go',
+  java: 'java',
+  sh: 'bash',
+  bash: 'bash',
+  json: 'json',
+  sql: 'sql',
+};
+
+export function langFromSrc(src) {
+  const m = String(src ?? '').split(/[?#]/)[0].match(/\.([A-Za-z0-9]+)$/);
+  return (m && EXT_LANG[m[1].toLowerCase()]) || 'text';
+}

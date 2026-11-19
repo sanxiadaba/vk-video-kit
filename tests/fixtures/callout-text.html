@@ -1,0 +1,12 @@
+<vk-page id="callout-text">
+  <vk-head kicker="标注" size="subhead">a[i] 里的 i 没有赋值。</vk-head>
+  <vk-code id="c" lang="c" title="sum.c" mark="i">
+    <script type="text/plain" data-vk-source>
+int s = 0;
+for (k = 0; k < n; k++)
+  s += a[i];
+return s;
+    </script>
+  </vk-code>
+  <vk-callout as="mark" target="#c@text:i"></vk-callout>
+</vk-page>

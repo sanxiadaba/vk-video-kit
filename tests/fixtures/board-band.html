@@ -1,0 +1,9 @@
+<vk-page id="board-band">
+  <vk-head kicker="时间片" size="subhead">一次请求，四段耗时。</vk-head>
+  <vk-board as="band" start="0" end="16" unit="ms">
+    <li start="0" end="3">读文件</li>
+    <li start="3" end="9" current>计算</li>
+    <li start="9" end="13" tone="warn" note="失败重试">写回</li>
+    <li start="13" end="16">校验</li>
+  </vk-board>
+</vk-page>

@@ -1,12 +1,13 @@
 /**
- * v26 · 归一化
+ * v27 · 归一化
  * ----------------------------------------------------------------------------
  * 作者写的是「人话属性」，运行期只认「一种形状」。这一步在解析之后、渲染之前，
- * 把三件事一次做完，后面所有层都不再各自兜底：
+ * 把四件事一次做完，后面所有层都不再各自兜底：
  *
- *   1. 默认值落地：schema 里写了默认值的属性，缺省就写进 DOM（变体优先）。
- *   2. 间距归一：gap 的档名与像素值统一换成 --vk-gap。
- *   3. 组件身份：每个件写一个 data-vk="<变体>"，CSS 只认这一个钩子。
+ *   1. 布尔归一：current="false" / hex="0" 真的关掉，不再「有属性就真」。
+ *   2. 上下文默认：两栏里的代码窗默认 caption；卡片 surface 默认 auto。
+ *   3. 默认值落地：schema 里写了默认值的属性，缺省就写进 DOM（变体优先）。
+ *   4. 组件身份：每个件写 data-vk / data-as，CSS 只认这两个钩子。
  *
  * 这里不发明值：所有默认值来自 schema.mjs，所有间距档位来自 vocab.mjs。
  */
@@ -26,12 +27,18 @@ const hasAttr = (node, name) => (node.attrs || []).some((a) => a.name === name);
 const setAttr = (node, name, value) => {
   if (!hasAttr(node, name)) node.attrs.push({ name, value: String(value) });
 };
+const dropAttr = (node, name) => {
+  node.attrs = (node.attrs || []).filter((a) => a.name !== name);
+};
 
 const walk = (node, out = []) => {
   out.push(node);
   for (const child of node.childNodes || []) walk(child, out);
   return out;
 };
+
+const FALSEY = new Set(['false', '0', 'no', 'off', 'null', 'none']);
+const TRUTHY = new Set(['true', '1', 'yes', 'on', '']);
 
 /** 把 style 字符串拆成有序 map。 */
 export function styleMap(node) {
@@ -76,19 +83,45 @@ function sanitizeStyle(node) {
   node.attrs = rest;
 }
 
-/** 在整棵树里落地默认值、间距、组件身份。返回同一棵树。 */
+/** flow 的列数：split 是比例，cols 是列数；两栏以上才算「半栏」。 */
+export function flowColumns(flow) {
+  const split = attrOf(flow, 'split');
+  if (split) return split.trim().split(/\s+/).filter(Boolean).length;
+  const cols = String(attrOf(flow, 'cols') ?? '').trim();
+  if (!cols || cols === 'auto') return 1;
+  return cols.split(/\s+/).filter(Boolean).length;
+}
+
+/** 在整棵树里落地默认值、布尔、上下文默认、组件身份。返回同一棵树。 */
 export function normalizeTree(root) {
   for (const node of walk(root)) {
     const tag = node.tagName;
-    /* 锁定的 style 任何元素都不许生效，不只是 vk-* 宿主。 */
     sanitizeStyle(node);
     if (!tag?.startsWith('vk-')) continue;
     const as = variantOf(tag, attrOf(node, 'as'));
     const spec = attrsOf(tag, as);
     const decls = {};
 
+    /* 布尔先归一：存在即真，但 "false" 不是真。 */
+    for (const [name, def] of Object.entries(spec)) {
+      if (def.type !== 'bool') continue;
+      const v = attrOf(node, name);
+      if (v == null) continue;
+      const s = String(v).trim().toLowerCase();
+      if (FALSEY.has(s)) dropAttr(node, name);
+      else if (TRUTHY.has(s)) dropAttr(node, name), setAttr(node, name, '');
+    }
+
+    /* 上下文默认：两栏里的代码窗默认 caption，免得 64px 直接被裁。 */
+    if (tag === 'vk-code' && ['code', 'term', 'diff', 'asm'].includes(as) && !hasAttr(node, 'size')) {
+      const parent = node.parentNode;
+      if (parent?.tagName === 'vk-flow' && flowColumns(parent) > 1) setAttr(node, 'size', 'caption');
+    }
+
     for (const [name, def] of Object.entries(spec)) {
       if (def.default === undefined || def.when) continue;
+      /* infer 的默认值不落 DOM：库要看见「作者没写」才能推断（graph 布局 / callout 形态）。 */
+      if (def.infer && !hasAttr(node, name)) continue;
       if (name === 'as' && !TAGS[tag].variants) continue;
       setAttr(node, name, def.default);
     }

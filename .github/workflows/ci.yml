@@ -8,7 +8,6 @@ on:
       - 'tests/**'
       - 'tools/**'
       - 'bin/**'
-      - 'docs/**'
       - 'package.json'
       - 'package-lock.json'
       - '.gitattributes'
@@ -35,11 +34,5 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - uses: actions/cache@v6
-        id: pw
-        with:
-          path: ~/AppData/Local/ms-playwright
-          key: pw-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
-      - if: steps.pw.outputs.cache-hit != 'true'
-        run: npx playwright install chromium
+      - run: npx playwright install chromium
       - run: npm test

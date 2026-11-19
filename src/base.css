@@ -1,8 +1,9 @@
 /* ============================================================================
-   v25 · 底座
+   v27 · 底座
    ----------------------------------------------------------------------------
    画布、标题、流、卡片、字、墨。这一层只有「一帧怎样算立住」，不画具体件。
-   所有值来自 tokens（由 vocab.mjs 生成）；这里不出现裸字号/裸间距。
+   所有值来自 tokens（由 vocab.mjs 生成）；这里不出现裸字号/裸间距/裸线宽。
+   零圆角：这一层没有任何 border-radius。
    ========================================================================== */
 
 /* ------------------------------------------------------------------ 重置 */
@@ -25,7 +26,7 @@ body {
 }
 
 [hidden] {
-  display: none !important;
+  display: none;
 }
 
 body {
@@ -33,7 +34,7 @@ body {
 }
 
 /* ------------------------------------------------------------------ 画布 */
-[data-vk='page'] {
+:is([data-vk='page'], .vk-page) {
   position: relative;
   display: block;
   width: var(--vk-canvas-w);
@@ -45,7 +46,7 @@ body {
   color-scheme: light;
 }
 
-[data-vk='page'][theme='dark'] {
+:is([data-vk='page'], .vk-page)[theme='dark'] {
   color-scheme: dark;
 }
 
@@ -70,42 +71,47 @@ body {
   min-height: 0;
 }
 /* 注栏：有「一句话」的注记时，正文让出一列；标题带不缩，仍整宽。 */
-[data-vk='page'][data-vk-anno='right'] .vk-body {
+:is([data-vk='page'], .vk-page)[data-vk-anno='right'] .vk-body {
   padding-right: var(--vk-ann-gutter);
 }
-[data-vk='page'][place='band'] .vk-body {
+:is([data-vk='page'], .vk-page)[place='band'] .vk-body {
   align-content: safe center;
 }
-[data-vk='page'][place='top'] .vk-body {
+:is([data-vk='page'], .vk-page)[place='top'] .vk-body {
   align-content: start;
 }
-[data-vk='page'][place='center'] .vk-stage {
+:is([data-vk='page'], .vk-page)[place='center'] .vk-stage {
   justify-content: center;
 }
-[data-vk='page'][place='center'] .vk-body {
+:is([data-vk='page'], .vk-page)[place='center'] .vk-body {
   flex: 0 1 auto;
 }
-[data-vk='page'][place='bottom'] .vk-stage {
+:is([data-vk='page'], .vk-page)[place='bottom'] .vk-stage {
   justify-content: flex-end;
 }
-[data-vk='page'][place='bottom'] .vk-body {
+:is([data-vk='page'], .vk-page)[place='bottom'] .vk-body {
   flex: 0 1 auto;
   align-content: end;
 }
 
 /* ------------------------------------------------------------------ 标题带
-   眉标 40 / 标题 84–200 / 导语 56；标题→内容 64（stage 的 gap）。 */
-[data-vk='head'] {
+   眉标 56 / 标题 144–216 / 导语 64；标题→内容 64（stage 的 gap）。
+   band="lock" 时同一文件的所有帧共用最高那一帧的标题带高度。 */
+:is([data-vk='head'], .vk-head) {
   display: grid;
   gap: var(--vk-space-5);
   align-content: start;
   flex: 0 0 auto;
   min-width: 0;
+  min-height: 0;
   text-align: start;
   position: relative;
   z-index: 2;
 }
-[data-vk='head'][align='center'] {
+:is([data-vk='page'], .vk-page)[band='lock'] :is(.vk-head, [data-vk='head']) {
+  min-height: var(--vk-head-lock, 0);
+}
+:is([data-vk='head'], .vk-head)[align='center'] {
   justify-items: center;
   text-align: center;
 }
@@ -141,18 +147,18 @@ body {
   color: var(--vk-ink-1);
   text-wrap: balance;
 }
-[data-vk='head'][size='subhead'] .vk-title {
+:is([data-vk='head'], .vk-head)[size='subhead'] .vk-title {
   font-size: var(--vk-fs-subhead);
   line-height: var(--vk-lh-subhead);
   max-width: var(--vk-measure-subhead);
 }
-[data-vk='head'][size='display'] .vk-title {
+:is([data-vk='head'], .vk-head)[size='display'] .vk-title {
   font-size: var(--vk-fs-display);
   line-height: var(--vk-lh-display);
   letter-spacing: var(--vk-track-display);
   max-width: var(--vk-measure-display);
 }
-[data-vk='head'][size='display'][align='center'] .vk-title {
+:is([data-vk='head'], .vk-head)[size='display'][align='center'] .vk-title {
   padding-left: 0;
 }
 .vk-lede {
@@ -164,7 +170,8 @@ body {
 }
 
 /* ------------------------------------------------------------------ 流
-   唯一的排布：列数由容器给，子项 span 跨栏，overlay 叠放。 */
+   唯一的排布：列数由容器给，子项 span 跨栏，overlay 叠放。
+   每一栏都是 minmax(0, 1fr)：内容不许把列撑破。 */
 [data-vk='flow'] {
   display: grid;
   grid-template-columns: var(--vk-cols-template, repeat(var(--vk-cols, 1), minmax(0, 1fr)));
@@ -176,9 +183,9 @@ body {
   min-width: 0;
   text-align: start;
 }
-[data-vk='flow'] > [data-vk='code'],
-[data-vk='flow'] > [data-vk='dir'] {
-  width: 100%;
+[data-vk='flow'] > * {
+  grid-column: span var(--vk-span, 1);
+  min-width: 0;
 }
 [data-vk='flow'][valign='start'] {
   align-items: start;
@@ -194,15 +201,9 @@ body {
 }
 [data-vk='flow'][data-cols='auto'] {
   grid-auto-flow: column;
-  grid-auto-columns: max-content;
+  grid-auto-columns: minmax(0, max-content);
   grid-template-columns: none;
   justify-content: start;
-}
-[data-vk='flow'][data-vk-stack] {
-  grid-template-columns: minmax(0, 1fr) !important;
-}
-[data-vk='flow'][data-vk-stack] > [data-vk='text'] {
-  max-width: var(--vk-measure-body);
 }
 [data-vk='flow'][overlay] > * {
   grid-area: 1 / 1;
@@ -221,10 +222,6 @@ body {
 [data-vk='flow'][overlay] > [data-vk='card'] [data-vk='text'] {
   font-size: var(--vk-fs-caption);
 }
-[data-vk='flow'] > * {
-  grid-column: span var(--vk-span, 1);
-  min-width: 0;
-}
 .vk-body > * {
   min-width: 0;
 }
@@ -232,34 +229,26 @@ body {
   margin-left: calc(var(--vk-margin-x) * -1);
   margin-right: calc(var(--vk-margin-x) * -1);
 }
-[data-vk='img'][bleed='all'] {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  border: 0;
-  border-radius: 0;
-  background: transparent;
-}
 .vk-body > *:not([data-vk='img'][bleed='all']) {
   position: relative;
   z-index: 2;
 }
-[data-vk='img'][bleed='all'] .vk-img-el {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
 
 /* ------------------------------------------------------------------ 卡片
-   材质：paper 白纸 / soft 软底 / dark 暗面。谁声明材质，谁写 color-scheme。 */
+   材质：paper 白纸 / soft 软底 / dark 暗面。谁声明材质，谁写 color-scheme。
+   tone 只画 8px 左边规 + 语义标题，不铺淡底。 */
 [data-vk='card'] {
   display: block;
   min-width: 0;
   height: fit-content;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
-  border-radius: var(--vk-radius-md);
   color: var(--vk-ink-1);
-  color-scheme: light;
+  color-scheme: inherit;
+}
+[data-vk='card'][surface='auto'] {
+  background: var(--vk-surface-auto);
+  color: var(--vk-ink-1);
+  color-scheme: inherit;
 }
 [data-vk='card'][surface='paper'] {
   background: var(--vk-paper);
@@ -269,16 +258,18 @@ body {
 [data-vk='card'][surface='soft'] {
   background: var(--vk-soft);
   color: var(--vk-ink-1);
+  color-scheme: inherit;
 }
-[data-vk='card'][surface='dark'] {
-  background: var(--vk-paper);
+[data-vk='card'][surface='raised'] {
+  background: var(--vk-raised);
   color: var(--vk-ink-1);
   color-scheme: dark;
 }
-/* 语义面：对照 / 对错示范。只换描边与一层极淡的底，不改字色。 */
 [data-vk='card'][tone]:not([tone='neutral']) {
-  border-color: var(--vk-tone);
-  background: color-mix(in srgb, var(--vk-tone) 5%, var(--vk-paper));
+  border-left: var(--vk-line-w-hair) solid var(--vk-tone);
+}
+[data-vk='card'][tone]:not([tone='neutral']) :is(.vk-ftitle, .vk-title) {
+  color: var(--vk-tone);
 }
 
 /* 窗口：代码 / 终端 / 改动 / 汇编 / 目录 / 字节共用这一套皮。 */
@@ -286,14 +277,9 @@ body {
   position: relative;
   min-width: 0;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-md);
   background: var(--vk-raised);
   color: var(--vk-ink-1);
   overflow: hidden;
-}
-.vk-frame[data-kind='term'] .vk-fhd {
-  background: var(--vk-soft);
-  border-bottom-color: var(--vk-line-strong);
 }
 .vk-fhd {
   display: flex;
@@ -306,28 +292,11 @@ body {
   font-size: var(--vk-fs-caption);
   line-height: 1;
 }
-.vk-dots {
-  display: inline-flex;
-  flex: 0 0 auto;
-  gap: 8px;
-}
-.vk-dots i {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #e8695f;
-}
-.vk-dots i:nth-child(2) {
-  background: #e3b34d;
-}
-.vk-dots i:nth-child(3) {
-  background: #4fae6d;
-}
 .vk-ftitle {
   font-family: var(--vk-font-mono);
-  font-size: var(--vk-fs-body);
+  font-size: var(--vk-fs-caption);
   line-height: 1.1;
-  color: var(--vk-ink-1);
+  color: var(--vk-ink-2);
   white-space: nowrap;
 }
 .vk-frange {
@@ -348,7 +317,6 @@ body {
 }
 [data-vk='card'] [data-vk='img'] {
   border: 0;
-  border-radius: var(--vk-radius-sm);
 }
 [data-vk='card']:has([data-vk='img']) {
   align-self: center;
@@ -413,12 +381,6 @@ body {
 [data-vk='text'][align='left'] {
   margin-inline: 0 auto;
 }
-[data-vk='text'][icon] {
-  display: grid;
-  grid-template-columns: auto 1fr;
-  align-items: start;
-  gap: var(--vk-space-3);
-}
 
 /* 三档墨 */
 [ink='secondary'] {
@@ -429,63 +391,66 @@ body {
 }
 
 /* 语义色只做变量，具体件自己决定画在哪。
-   作者写 tone="ok"，构建期同时落 data-tone，两种写法都认，渲染只有 var(--vk-tone)。 */
+   作者写 tone="ok"，构建期同时落 data-tone，两种写法都认，渲染只有 var(--vk-tone)。
+   不再发射任何「淡底」变量：tone 不是底色。 */
 [tone='neutral'],
 [data-tone='neutral'] {
   --vk-tone: var(--vk-ink-1);
-  --vk-tint: var(--vk-soft);
 }
 [tone='info'],
 [data-tone='info'] {
   --vk-tone: var(--vk-info);
-  --vk-tint: var(--vk-tint-info);
 }
 [tone='ok'],
 [data-tone='ok'] {
   --vk-tone: var(--vk-ok);
-  --vk-tint: var(--vk-tint-ok);
 }
 [tone='warn'],
 [data-tone='warn'] {
   --vk-tone: var(--vk-warn);
-  --vk-tint: var(--vk-tint-warn);
 }
 [tone='err'],
 [data-tone='err'] {
   --vk-tone: var(--vk-err);
-  --vk-tint: var(--vk-tint-err);
 }
 
 /* ------------------------------------------------------------------ 强调
-   em / mark 共用同一套暖黄高亮；强调只留一处。 */
+   正文强调是暖黄「记号笔」：只盖 62% 行高，文字仍是墨色。
+   同一个写法给 em / mark / 代码里的 .vk-mark：一道横条，不是一个色块。 */
 [data-vk='text'] em,
 [data-vk='head'] em,
 .vk-title em,
-.vk-lede em {
+.vk-lede em,
+[data-vk='text'] mark,
+[data-vk='head'] mark,
+.vk-mark {
   font-style: normal;
-  font-weight: var(--vk-w-bold);
-  background: var(--vk-mark);
   color: var(--vk-ink-1);
-  border-radius: 0.04em;
-  padding: 0 0.06em;
+  background-color: transparent;
+  background-image: linear-gradient(var(--vk-mark), var(--vk-mark));
+  background-size: 100% 62%;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
   box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
 }
+[data-vk='text'] em,
+[data-vk='head'] em,
+.vk-title em,
+.vk-lede em,
+[data-vk='text'] mark,
+[data-vk='head'] mark {
+  font-weight: var(--vk-w-bold);
+  padding: 0 0.06em;
+}
+/* 代码里的 mark 只是「给一个词起名字」用的锚点：只上记号笔，不另加框/底。 */
+.vk-mark {
+  padding: 0;
+}
+
 [data-vk='text'] strong,
 [data-vk='head'] strong {
   font-weight: var(--vk-w-bold);
-}
-[data-vk='text'] mark,
-[data-vk='head'] mark {
-  background: var(--vk-mark);
-  color: var(--vk-ink-1);
-  border-radius: 0.04em;
-  padding: 0 0.06em;
-}
-/* 代码里的 mark 只是「给一个词起名字」用的锚点：视觉由标注给（墨下的钴蓝条），
-   自己不画高亮，免得同一个词被标两次。 */
-.vk-mark {
-  background: none;
-  color: inherit;
 }
 
 /* 行内：代码、键位、小字、公式。作者不用学新词。 */
@@ -502,7 +467,6 @@ body {
   font-size: 0.9em;
   font-variant-ligatures: none;
   padding: 0 0.16em;
-  border-radius: var(--vk-radius-sm);
   background: var(--vk-soft);
   color: var(--vk-ink-1);
 }
@@ -512,42 +476,20 @@ body {
   font-size: 0.875em;
   padding: 0.08em 0.32em;
   border: var(--vk-line-w-hair) solid var(--vk-line-strong);
-  border-radius: var(--vk-radius-sm);
   background: var(--vk-raised);
   color: var(--vk-ink-2);
   white-space: nowrap;
 }
 
-/* 图标：三档，组件不再自己定尺寸。 */
-.vk-ic {
-  display: inline-grid;
-  place-items: center;
-  width: var(--vk-icon-lg);
-  height: var(--vk-icon-lg);
-  flex: 0 0 auto;
-  color: currentColor;
-}
-.vk-ic svg {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-[data-vk='text'][icon] > .vk-ic {
-  margin-top: 0.18em;
-}
-
-/* ------------------------------------------------------------------ 图片 */
+/* ------------------------------------------------------------------ 图片
+   比例与填充由构建期写进 inline（aspect-ratio / object-fit），这里只管面。 */
 [data-vk='img'] {
   display: block;
   position: relative;
   overflow: hidden;
   min-width: 0;
   border: var(--vk-line-w-hair) solid var(--vk-line-color);
-  border-radius: var(--vk-radius-md);
   background: var(--vk-soft);
-}
-[data-vk='img'][ratio] {
-  width: 100%;
 }
 .vk-img-el {
   display: block;
@@ -555,16 +497,14 @@ body {
   height: 100%;
   max-width: none;
 }
-[data-vk='img']:not([ratio]) .vk-img-el {
-  height: auto;
+[data-vk='img'][bleed='all'] {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border: 0;
+  background: transparent;
 }
-[data-vk='img'][bleed='all']:not([ratio]) .vk-img-el {
-  height: 100%;
-}
-[data-vk='img'][fill='contain'] .vk-img-el {
-  object-fit: contain;
-}
-[data-vk='img'][fill='cover'] .vk-img-el {
+[data-vk='img'][bleed='all'] .vk-img-el {
   object-fit: cover;
 }
 
@@ -574,12 +514,11 @@ body {
   display: block;
   padding: var(--vk-space-4) var(--vk-space-5);
   border: var(--vk-line-w-hair) dashed var(--vk-err);
-  border-radius: var(--vk-radius-sm);
   color: var(--vk-err);
   font-family: var(--vk-font-sans);
   font-size: var(--vk-fs-caption);
   line-height: 1.4;
-  background: var(--vk-tint-err);
+  background: var(--vk-paper);
 }
 [data-vk-issue] {
   outline: var(--vk-line-w-hair) dashed var(--vk-err);
